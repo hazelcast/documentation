@@ -1,0 +1,64 @@
+# Index-pass playbook: scoped to the MIGRATED component set only (the ~57 guides
+# repos and hazelcast-code-samples stay external on Antora for now, so they are
+# omitted). URL settings mirror the production hazelcast-docs playbook exactly so
+# the pub URLs recorded in manifest.json are the real current URLs.
+#
+# Reads from the LOCAL clones under docs_repos/. Fetch all version branches into
+# each clone's remote-tracking refs before running:
+#   git -C <repo> fetch origin 'refs/heads/main:refs/remotes/origin/main' \
+#                              'refs/heads/v/*:refs/remotes/origin/v/*'
+site:
+  title: Documentation
+  url: https://docs.hazelcast.com
+  start_page: home::index.adoc
+urls:
+  html_extension_style: drop
+# The index pass never loads the UI, but the playbook schema requires a bundle
+# url; this placeholder is never fetched (no site generator, no convert).
+ui:
+  bundle:
+    url: ./ui-bundle-unused.zip
+runtime:
+  fetch: false
+  cache_dir: ./.cache
+content:
+  # Resolve every branch from git refs, never from the checked-out worktree, so
+  # each source (including whatever branch happens to be checked out) is pinned
+  # to a real commit SHA in the lockfile. Default is '.', which uses the
+  # worktree for the current branch and yields no SHA.
+  worktrees: false
+  sources:
+    - url: ../../hazelcast-docs
+      start_paths: [home, privacy]
+      branches: [main]
+    - url: ../../hz-docs
+      branches: [main, v/*]
+      start_path: docs
+    # management-center also has an 'archived-versions' branch holding pre-2020
+    # versions as subdirs; intentionally skipped (~5 years old, out of scope).
+    - url: ../../management-center-docs
+      branches: [main, v/*]
+      start_path: docs
+    - url: ../../clc-docs
+      branches: [v/*]
+      start_path: docs
+    - url: ../../hazelcast-platform-operator-docs
+      branches: [main, v/*]
+      start_path: docs
+    - url: ../../cloud-docs
+      branches: [main]
+      start_path: docs
+    # jdbc-driver is an exclusion candidate; included here so the manifest holds
+    # its URLs and we can check for inbound xrefs from the migrated set.
+    - url: ../../jdbc-driver-docs
+      branches: [main]
+      start_path: docs
+asciidoc:
+  attributes:
+    page-component-order: '!home, !templates, !imdg, !privacy, !jdbc-driver, hazelcast, management-center, operator, cloud, *'
+    page-excluded-versions: ''
+    page-last-versions-count: 6
+    page-pagination: true@
+    page-experimental: true
+    idprefix: ''
+    idseparator: '-'
