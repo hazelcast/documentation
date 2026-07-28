@@ -28,7 +28,7 @@ const buildPlaybook = require('@antora/playbook-builder')
 const aggregateContent = require('@antora/content-aggregator')
 const classifyContent = require('@antora/content-classifier')
 const { loadAsciiDoc, resolveAsciiDocConfig } = require('@antora/asciidoc-loader')
-const { configureLogger } = require('@antora/logger')
+const { configureLogger, finalizeLogger } = require('@antora/logger')
 
 const { buildLockfile } = require('../antora-extension/emit-manifest')
 const { registerPageAliases } = require('../antora-extension/register-page-aliases')
@@ -80,11 +80,66 @@ function asciidocConfigsByVersion (contentCatalog, siteConfig) {
   return map
 }
 
+// Parse the ndjson render log, keep error-level entries, and group them into a
+// ranked inventory by error class (e.g. "target of include not found") so a
+// flood of thousands of lines becomes a short, legible summary.
+const ERROR_LEVELS = new Set(['error', 'fatal'])
+function summarizeErrors (logPath, outDir) {
+  let lines
+  try {
+    lines = fs.readFileSync(logPath, 'utf8').split('\n').filter(Boolean)
+  } catch {
+    return []
+  }
+  const groups = new Map()
+  for (const line of lines) {
+    let e
+    try { e = JSON.parse(line) } catch { continue }
+    const lvl = e && e.level
+    if (!(ERROR_LEVELS.has(lvl) || (typeof lvl === 'number' && lvl >= 50))) continue
+    const msg = e.msg || ''
+    let cls = msg.slice(0, 80)
+    let target = ''
+    let m
+    if ((m = msg.match(/^target of (include|xref|link) not found: (.+)$/))) {
+      cls = `target of ${m[1]} not found`
+      target = m[2]
+    } else if ((m = msg.match(/^(skipping reference to missing attribute): (.+)$/))) {
+      cls = m[1]
+      target = m[2]
+    }
+    if (!groups.has(cls)) groups.set(cls, { class: cls, count: 0, targets: new Set(), files: new Set() })
+    const g = groups.get(cls)
+    g.count++
+    if (target) g.targets.add(target)
+    if (e.file && e.file.path) g.files.add(e.file.path)
+  }
+  const report = [...groups.values()]
+    .map((g) => ({
+      class: g.class,
+      count: g.count,
+      distinctTargets: g.targets.size,
+      sampleTargets: [...g.targets].slice(0, 10),
+      sampleFiles: [...g.files].slice(0, 5),
+    }))
+    .sort((a, b) => b.count - a.count)
+  fs.writeFileSync(path.join(outDir, 'render-errors.json'), JSON.stringify(report, null, 2) + '\n')
+  return report
+}
+
 async function main () {
   const { playbookFile, outDir, lockfileFile, component } = parseArgs(process.argv)
 
   const playbook = buildPlaybook(['--playbook', playbookFile], {})
-  configureLogger(playbook.runtime.log)
+  // Send Antora/asciidoctor log messages (xref/include-not-found errors, etc.)
+  // to a file instead of flooding the console, so they can be grouped into a
+  // legible inventory after the run (see summarizeErrors).
+  fs.mkdirSync(outDir, { recursive: true })
+  const logPath = path.join(outDir, 'render-log.ndjson')
+  configureLogger({
+    ...playbook.runtime.log,
+    destination: { ...(playbook.runtime.log && playbook.runtime.log.destination), file: logPath, append: false },
+  })
 
   const siteConfig = resolveAsciiDocConfig(playbook)
   console.log(`[snapshot] aggregating content from ${playbookFile} ...`)
@@ -167,6 +222,19 @@ async function main () {
       (errors.length ? ` (${errors.length} failed -> snapshot-errors.json)` : '') +
       `\n[snapshot] key ${renderedKey.slice(0, 12)} -> ${path.join(outDir, 'snapshot-meta.json')}`
   )
+
+  // Flush the log, then group the render errors into a ranked inventory.
+  finalizeLogger()
+  const report = summarizeErrors(logPath, outDir)
+  const total = report.reduce((n, g) => n + g.count, 0)
+  if (total) {
+    console.log(`[snapshot] ${total} render errors in ${report.length} classes -> ${path.join(outDir, 'render-errors.json')}`)
+    for (const g of report.slice(0, 10)) {
+      console.log(`  ${String(g.count).padStart(6)}  ${g.class}  (${g.distinctTargets} distinct targets)`)
+    }
+  } else {
+    console.log('[snapshot] no render errors')
+  }
 }
 
 main().catch((err) => {
