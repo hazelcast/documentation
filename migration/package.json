@@ -5,13 +5,15 @@
   "description": "Disposable migration tooling for the Antora -> Docusaurus migration. Walled off from the Docusaurus site at the repo root; has its own Antora/asciidoctor deps so they never pollute the site build. Removed (git rm -r migration/) once the migration is complete.",
   "license": "UNLICENSED",
   "scripts": {
-    "index-pass": "node index-pass.js antora/index-playbook.yml"
+    "index-pass": "node index-pass.js antora/index-playbook.yml",
+    "fidelity:snapshot": "node fidelity/build-snapshot.js antora/index-playbook.yml"
   },
   "dependencies": {
     "@antora/asciidoc-loader": "3.1.14",
     "@antora/content-aggregator": "3.1.14",
     "@antora/content-classifier": "3.1.14",
     "@antora/logger": "3.1.14",
-    "@antora/playbook-builder": "3.1.14"
+    "@antora/playbook-builder": "3.1.14",
+    "hazelcast-docs-tools": "github:hazelcast/hazelcast-docs-tools#semver:2.5.0"
   }
 }

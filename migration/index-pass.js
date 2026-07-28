@@ -16,6 +16,7 @@ const { resolveAsciiDocConfig } = require('@antora/asciidoc-loader')
 const { configureLogger } = require('@antora/logger')
 
 const { emitManifest } = require('./antora-extension/emit-manifest')
+const { registerPageAliases } = require('./antora-extension/register-page-aliases')
 
 async function main () {
   const args = process.argv.slice(2)
@@ -32,6 +33,12 @@ async function main () {
   const aggregate = await aggregateContent(playbook)
   console.log(`[index-pass] classifying ${aggregate.length} component-version bundles ...`)
   const contentCatalog = classifyContent(playbook, aggregate, siteAsciiDocConfig)
+
+  // Register page aliases so the manifest includes alias URLs and links to
+  // renamed pages resolve (classify alone does not do this).
+  const aliases = registerPageAliases(contentCatalog, siteAsciiDocConfig)
+  console.log(`[index-pass] registered ${aliases.registered} page aliases` +
+    (aliases.problems.length ? ` (${aliases.problems.length} skipped)` : ''))
 
   const { manifest, lockfile } = emitManifest({ contentCatalog, playbook, outDir })
   console.log(

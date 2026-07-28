@@ -1,0 +1,72 @@
+# Migration tooling
+
+Disposable tooling for migrating Hazelcast's Antora docs to this Docusaurus site. Walled off from the site: it has its **own** `package.json` (Antora/asciidoctor deps) so nothing leaks into the root build. Delete the whole `migration/` dir (`git rm -r migration/`) once the migration is done — keep `manifest.json` + `lockfile.json` in git history as the audit record.
+
+## Mental model
+
+Three zones, left to right, that never run as part of each other:
+
+```
+external Antora source repos  ->  migration/ (this dir)  ->  Docusaurus site (repo root)
+     (frozen bare mirrors)          manifest + convert + test        npm run build
+```
+
+Everything here runs offline with `runtime.fetch: false`. The migrated repos are read from **bare mirror clones under `.sources/`** (gitignored) — these `github.com/hazelcast/*` repos (note the repo name ≠ the component/URL name in a few cases). The resolution-only guide repos are pulled from remote instead (see below).
+
+| Mirror (`.sources/*.git`) | Provides component(s) | Branches | Role |
+|---|---|---|---|
+| `hz-docs.git` | `hazelcast` (Platform) | `main`, `v/*` | migrated |
+| `management-center-docs.git` | `management-center` | `main`, `v/*` | migrated |
+| `clc-docs.git` | `clc` | `v/*` | migrated |
+| `hazelcast-platform-operator-docs.git` | `operator` | `main`, `v/*` | migrated |
+| `cloud-docs.git` | `cloud` (+ `tutorials`) | `main` | migrated (+ resolution-only) |
+| `hazelcast-cloud-maven-plugin.git` | `cloud` (the `maven-plugin-hazelcast` page) | `main` | migrated |
+| `jdbc-driver-docs.git` | `jdbc-driver` | `main` | migrated |
+| `hazelcast-docs.git` | `home`, `privacy` (+ `tutorials`) | `main` | migrated (+ resolution-only) |
+| `imdg-docs.git` | `imdg` | `v/*` | resolution-only |
+
+**Migrated** components are converted and their pages appear in the golden snapshot. **Resolution-only** components (`imdg`, `tutorials`) are built *only* so cross-component xrefs from the migrated set resolve to the correct `/imdg/…` and `/tutorials/…` URLs exactly as production does — they're in the content catalog and the manifest, but their pages are **not** converted or emitted to the golden tree (the snapshot builder emits an allowlist of migrated components; everything else is resolution-only). `imdg` has 233 inbound xrefs from the migrated set, `tutorials` 19.
+
+The `tutorials` component is assembled from `hazelcast-docs/tutorials` + `cloud-docs/tutorials` **plus the 56 `hazelcast-guides/*` repos** (each declares `name: tutorials`), which host the actually-referenced tutorial pages. Those 56 are pulled from **remote** (`https://github.com/hazelcast-guides/…`), not mirrored: since nobody edits them, `fetch: false` clones each once into `.cache` on the first run and freezes it — no working-clone-contamination risk (we don't edit them) and no drift risk (they don't change). Their SHAs are recorded in the lockfile.
+
+The mirrors are migration-owned and **frozen** — they don't read your working clones, and they don't move until you deliberately update them, so the pinned SHAs stay fixed no matter what happens on any branch (local or origin). That's what makes the baseline reproducible. Populate them once, from `migration/`:
+
+```
+git clone --mirror https://github.com/hazelcast/<repo>.git .sources/<repo>.git
+```
+
+Out of scope, staying on Antora for now: the external `hazelcast-code-samples` repo and the ~57 `hazelcast-guides/*` repos (each its own Antora component). Not to be confused with hz-docs's *internal* `examples/` tree — the Maven-validated tagged code snippets pulled in via `include::example$` — which is part of hz-docs and migrates with it.
+
+## What produces what
+
+| Script | Produces | Notes |
+|---|---|---|
+| `npm run index-pass` | `build/manifest/manifest.json`, `build/manifest/lockfile.json` | Read-only. Aggregate + classify only, **no rendering**. The link/attribute resolution table + the SHA pin. Both committed. |
+| `npm run fidelity:snapshot` | `build/golden/pages/**.html` + `snapshot-meta.json` | The expensive one: full document render = the "before" image. Gitignored (regenerable). |
+
+**manifest.json** — every resource id → its exact current URL, plus per-version resolved attributes. The converter resolves links against this, so migrated links point at final URLs even before the target page exists.
+
+**lockfile.json** — the resolved git SHA of every source. A **deliberate point-in-time pin**, not a live-latest tracker. Frozen SHAs are fine by design; upstream changes are reconciled in later, never chased.
+
+**golden snapshot** — rendered HTML at the pinned baseline. Keyed to the lockfile: a fidelity run hard-stops if the pin it was built from no longer matches. Regenerate deliberately, never per-check.
+
+## Fidelity harness (the correctness guarantee)
+
+The published content must not change during the migration, so automated fidelity checking is the correctness guarantee. Three layers, run locally on demand and diffed against the golden snapshot, keyed to the lockfile so upstream drift ≠ conversion error:
+
+1. **Text diff** — normalized main-content (strip chrome, collapse whitespace). Primary gate; every diff is a human-review flag.
+2. **Structural inventory** — per-page counts (headings, code blocks, admonitions, tables, images, links). Catches what normalization hides.
+3. **Link/anchor integrity** — every internal link resolves against the manifest. Cheapest; needs no snapshot.
+
+## Gotchas worth remembering
+
+- The pin is enforced by the mirrors **not moving**, not by the lockfile: Antora builds branch *tips*, so `lockfile.json` only *records* the SHAs — freezing them means never updating the mirror. `runtime.fetch: false` guarantees a build never moves a ref.
+- To advance the baseline (fold in upstream changes): `git -C .sources/<repo>.git remote update --prune`, re-run the index pass, regenerate the golden snapshot — together, deliberately. The snapshot's pin check keeps them in step.
+- Runs are offline (mirrors are local); only populating/advancing a mirror needs network.
+- Per-version conditionals (e.g. `ifdef::snapshot`) resolve correctly because each page renders with its **own** component-version AsciiDoc config.
+- The manifest deliberately excludes partials/examples (no URL) — the include graph is separate, unbuilt work.
+- `onBrokenLinks` must be `'warn'` during migration (links point at not-yet-migrated pages); flip to `'throw'` at cutover.
+
+## Status
+
+Built: index pass, golden-snapshot builder (with `--component` scoping for smoke tests). Not yet built: the fidelity runner (layers above), the converter, the include graph, Swagger handling.
