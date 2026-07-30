@@ -115,7 +115,11 @@ function heading ($, node, st) {
   const level = Number(node.name[1])
   const id = node.attribs && node.attribs.id
   const text = inlineFrom($, node.children, st, { skipAnchors: true }).trim()
-  const suffix = id ? ` {#${id}}` : ''
+  // Preserve the Asciidoctor heading id EXACTLY (so cross-page #anchors keep
+  // resolving) via Docusaurus's MDX-safe explicit-id syntax: an MDX comment
+  // `{/* #id */}`. The classic `{#id}` form cannot be used -- in .mdx, `{`
+  // opens a JS expression and `#id` is not parseable, breaking the build.
+  const suffix = id ? ` {/* #${id} */}` : ''
   return '#'.repeat(level) + ' ' + text + suffix
 }
 
@@ -392,13 +396,42 @@ function serNode ($, node, st) {
 
   const attrs = serAttrs(node, st)
   if (VOID_ELEMENTS.has(name)) return `<${name}${attrs} />`
+
+  // Table layout: structural containers put each child on its own line (flow
+  // JSX, readable), but a CELL keeps its entire content on ONE line. MDX parses
+  // a cell as flow JSX at line start; if the cell's nested block content spanned
+  // lines, MDX would try to read it as a markdown paragraph and fail to match
+  // the inner tags ("Expected a closing tag ... before the end of paragraph").
+  if (TABLE_CONTAINERS.has(name)) {
+    const inner = serChildList($, node, st)
+    return inner.length ? `<${name}${attrs}>\n${inner.join('\n')}\n</${name}>` : `<${name}${attrs}></${name}>`
+  }
+  if (TABLE_CELLS.has(name)) {
+    const inner = serChildren($, node, st).replace(/\s*\n\s*/g, ' ').replace(/ {2,}/g, ' ').trim()
+    return `<${name}${attrs}>${inner}</${name}>`
+  }
+
   return `<${name}${attrs}>${serChildren($, node, st)}</${name}>`
 }
+
+const TABLE_CONTAINERS = new Set(['table', 'thead', 'tbody', 'tfoot', 'tr'])
+const TABLE_CELLS = new Set(['td', 'th'])
 
 function serChildren ($, node, st) {
   let out = ''
   for (const c of node.children || []) out += serNode($, c, st)
   return out
+}
+
+// Serialize element/text children, dropping whitespace-only results so a
+// container can join real children with newlines without blank gaps.
+function serChildList ($, node, st) {
+  const parts = []
+  for (const c of node.children || []) {
+    const s = serNode($, c, st)
+    if (s && s.trim()) parts.push(s.trim())
+  }
+  return parts
 }
 
 function serAttrs (node, st) {

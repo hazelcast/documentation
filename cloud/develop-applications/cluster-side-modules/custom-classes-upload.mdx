@@ -1,0 +1,60 @@
+---
+title: "Deploying Cluster-Side Modules to Cloud Clusters"
+sidebar_label: "Deploy Modules"
+sidebar_position: 2
+slug: /custom-classes-upload
+---
+
+Before clusters can execute or store your [cluster-side modules](/cloud/cluster-side-modules), they need to be packaged into a single file and uploaded to the cluster as custom classes. You can upload cluster-side modules, using the console, or the Maven plugin.
+
+## Before you Begin {/* #before-you-begin */}
+
+Check the [requirements and limitations](/cloud/cluster-side-modules#prereqs,) for cluster-side modules to make sure that your code is ready to be packaged.
+
+## Uploading Cluster-Side Modules {/* #package */}
+
+Clusters expect all modules to be packaged into a single ZIP or JAR file. When you’ve built and packaged your cluster-side modules, the final step is to upload the resulting package file to the cluster.
+
+You can upload custom classes, using the following options:
+
+- Maven plugin
+- Cloud console
+
+### Using the Maven Plugin {/* #using-the-maven-plugin */}
+
+**Cloud Standard**
+
+1. [Configure the Cloud Maven plugin](/cloud/maven-plugin-hazelcast) in your `pom.xml` file.
+2. Change into your project’s root directory.
+3. Execute the `deploy` goal to package your project into a JAR file and upload it to the configured cluster.
+
+   ```bash
+   mvn clean package hazelcast-cloud:deploy
+   ```
+
+In the output, you should see that the plugin packaged and deployed your JAR to your Cloud Standard cluster.
+
+### Using the Cloud Console {/* #using-the-cloud-console */}
+
+To upload code to Cloud:
+
+1. Use your build tool such as Gradle or Maven to package the classes into a JAR or ZIP file.
+2. Sign into the [Cloud console](https://cloud.hazelcast.com/) and select your cluster.
+3. Go to **Manage** \> **Custom Classes** and upload your file to Cloud.
+
+When the file is uploaded and ready to use, you will see a success message.
+
+## Removing Cluster-Side Modules {/* #removing-cluster-side-modules */}
+
+To remove cluster-side modules from the cluster, you must use the Cloud console.
+
+1. Sign into the [Cloud console](https://cloud.hazelcast.com/) and select your cluster.
+2. Go to **Manage** \> **Custom Classes** and find your class in the list.
+3. Click on the delete icon next to the class that you want to delete.
+
+## Downloading Cluster-Side Modules {/* #downloading-cluster-side-modules */}
+
+To download a cluster-side module, you must use the Cloud console.
+
+1. Sign into the [Cloud console](https://cloud.hazelcast.com/).
+2. Go to **Manage** \> **Custom Classes**, find your class in the **Uploaded Classes** list and click on it.

@@ -1,0 +1,78 @@
+---
+title: "Sample JDBC Client"
+unlisted: true
+---
+
+Hazelcast provides a sample JDBC client, which you can use to create a custom client.
+
+## Get the Sample Client {/* #get-the-sample-client */}
+
+Download the [sample client](https://github.com/hazelcast/hazelcast-cloud-java-sample-client/blob/master/src/main/java/com/hazelcast/cloud/ClientWithSsl.java) from GitHub.
+
+You also need the *hazelcast-jdbc-enterprise-\{version\}.jar* file. You can download this file from [Releases](https://github.com/hazelcast/hazelcast-jdbc/releases).
+
+A JDBC Driver allows a Java application to connect to Hazelcast using the JDBC API. The Hazelcast JDBC Driver is available from [GitHub](https://github.com/hazelcast/hazelcast-jdbc).
+
+## Configure the Client {/* #configure-the-client */}
+
+To configure the JDBC client for Cloud, you must update the *pom.xml* file included in the sample JDBC client.
+
+In this file, add the JAR dependency, as follows:
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>com.hazelcast</groupId>
+        <artifactId>hazelcast-jdbc-enterprise</artifactId>
+        <version>5.3.1</version>
+    </dependency>
+</dependencies>
+```
+
+You must also specify the repository, as follows:
+
+```xml
+<repositories>
+    <repository>
+        <id>hazelcast-release</id>
+        <name>Hazelcast Repository</name>
+        <url>https://repository.hazelcast.com/release/</url>
+        <releases>
+            <enabled>true</enabled>
+        </releases>
+    </repository>
+</repositories>
+```
+
+## Connect to Your Cluster {/* #connect-to-your-cluster */}
+
+Connect your JDBC client to your Cloud cluster using the following URL:
+
+```none
+jdbc:hazelcast://<cluster-id>/?discoveryToken=<yourDiscoveryToken>&cloudUrl=https://api.cloud.hazelcast.com&sslEnabled=true
+```
+
+This can be understood as follows:
+
+- `jdbc:hazelcast` A required sub-protocol. This is a constant
+- `<cluster-id>` The ID of your cluster as displayed at the top right of the **Cluster Details** in the dashboard for the cluster in your [Cloud console](https://cloud.hazelcast.com/)
+- `discoveryToken` Set this to the discovery token created with your cluster. To find your discovery token select **CONNECT CLUSTER**. The discovery token can be revealed using the **Advanced setup** tab
+- `cloudURL` This must be set to the API base URL, `https://api.cloud.hazelcast.com`. As TLS is mandatory, you must also enable SSL by appending `&sslEnabled=true` to the cloud URL
+
+For further information on the connection properties used by the Hazelcast JDBC driver, refer to the [READ ME](https://github.com/hazelcast/hazelcast-jdbc/blob/main/README.md) file.
+
+## Related Information {/* #related-information */}
+
+You can find out more about using JDBC with Hazelcast in the Platform documentation, as follows:
+
+- For information on importing data from external systems, refer to [Connector Guides](/hazelcast/5.7/integrate/connectors)
+- For information on data ingestion with Hazelcast, refer to [Ingesting Data from External Sources](/hazelcast/5.7/ingest/overview)
+- For information on how Hazelcast can use your database vendor’s JDBC drivers as sources and sinks, refer to [JDBC Connector](/hazelcast/5.7/integrate/jdbc-connector)
+- For an example of creating a JDBC mapping to a MySQL database, refer to [Mapping to JDBC](/hazelcast/5.7/sql/mapping-to-jdbc)
+- For an example data connection to a MySQL database using a JDBC connection, refer to [Example JDBC Data Connection](/hazelcast/5.7/data-connections/data-connections-configuration#JDBC.adoc)
+
+:::note
+
+These links open in a new window or tab, depending on your settings, to ensure that you do not lose your place in the Cloud documentation.
+
+:::

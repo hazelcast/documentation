@@ -1,0 +1,41 @@
+---
+title: "JCache Configuration"
+sidebar_position: 2
+slug: /jcache
+---
+
+## JCache Name {/* #jcache-name */}
+
+You can create custom cache configurations associated with the names of JCache. The JCache data structures that do not have any configuration defined use the default configuration. If you want to set a configuration that is valid for all jcaches, you can name your configuration as `default`. A user-defined `default` configuration applies to every JCache that does not have a specific custom JCache configuration defined with the jcache’s name. You can also use wildcards to associate your configuration with multiple jcache names. See the [configuration documentation](/hazelcast/5.7/configuration/using-wildcards) for more information about wildcards.
+
+## Backup Count {/* #backup-count */}
+
+Number of synchronous backups/replications. The higher the number, the more highly available cluster but performance decreases and memory cost of each entry increases. Synchronous backup operations have a blocking cost which may cause higher latencies.
+
+## Asynchronous Backup Count {/* #asynchronous-backup-count */}
+
+Number of asynchronous backups/replications. The higher the number, the more highly available cluster but performance decreases and memory cost of each entry increases. Asynchronous backups are fire & forget and do not require acknowledgements.
+
+## Key Type {/* #key-type */}
+
+Fully qualified class name of the cache key type. Its default value is `java.lang.Object`.
+
+## Value Type {/* #value-type */}
+
+Fully qualified class name of the cache value type. Its default value is `java.lang.Object`.
+
+## Eviction Policy {/* #eviction-policy */}
+
+Eviction policy that compares values to find the best matching eviction candidate. Its default value is `LRU` (less recently used).
+
+## Max Size Policy {/* #max-size-policy */}
+
+Maximum size policy. If the maximum size is reached, the cache is evicted based on the eviction policy.
+
+## Maximum Size {/* #maximum-size */}
+
+Maximum free/used percentage or maximum size in bytes depending on the selected `maxSizePolicy`.
+
+## Time To Live {/* #time-to-live */}
+
+Time-to-live for cache entries, in seconds.

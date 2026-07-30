@@ -1,0 +1,91 @@
+---
+title: "Cloud Standard Clusters"
+sidebar_label: "Standard"
+sidebar_position: 2
+slug: /serverless-cluster
+---
+
+Cloud Standard is a managed cloud service that offers a pay-as-you-go pricing model. Standard clusters auto-scale to provide the resources that your application needs. You pay only for the resources that your application consumes.
+
+Standard means that Hazelcast manages the cloud infrastructure for you. Each Cloud Standard cluster is an independent deployment of Hazelcast Platform in a Kubernetes container. This design guarantees resource isolation, prevents resource stealing, and provides isolated network access.
+
+When you first create an account on Hazelcast Cloud, you become the administrator of an organization. This means that you can invite users to your organization and share resources, such as clusters. For further information on organizations, see the [Organizations and Accounts](/cloud/organizations-and-accounts) section.
+
+## Cloud Standard Cluster Types {/* #cloud-standard-cluster-types */}
+
+Cloud Standard clusters come in two types:
+
+- **Development:** Capped storage. You can store at most 0.5 GiB of data.
+- **Production:** Uncapped storage. The cluster scales as you add or remove data.
+
+## Development Clusters {/* #dev */}
+
+Development clusters are for fast, iterative development while you prototype your application.
+
+Development clusters have the following limitations:
+
+- Maximum 0.5 GiB of storage
+- Only a single member
+- No cluster scaling
+- No data backups
+- No cluster data persistence
+
+When a development cluster restarts for any reason, you lose all cluster data, such as maps and cluster-side modules. For example, when you manually [resume](/cloud/stop-and-resume) a cluster after a period of inactivity.
+
+:::note
+
+You cannot convert a development cluster to a production cluster.
+
+:::
+
+## Production Clusters {/* #prod */}
+
+Production clusters are for applications that have already been tested and are ready for deployment in real-world scenarios.
+
+Production clusters automatically scale out and in, depending on the amount of resources that you use. If you [pause](/cloud/stop-and-resume) a production cluster, Hazelcast saves your cluster data so that you can resume the cluster at a later time.
+
+### Backups to Disk {/* #backups-to-disk */}
+
+Backup copies of your cluster data are stored on disk so that you can pause and resume your clusters when you want, without losing data. Cluster data consists of the following:
+
+- Configuration settings
+- Cluster-side modules
+- Jobs
+- Map and JCache data structures
+
+Production clusters use the following backups:
+
+- **Automatic backups:** A full backup of your cluster data is copied to disk once every 24 hours, and when a cluster is paused.
+- **Manual backups:** You can take a [manual backup](/cloud/backup-and-restore) of your cluster data at any time. Take up to a maximum of ten backups.
+
+### Backups to Other Members {/* #backups-to-other-members */}
+
+By default, data on production clusters is backed up on one other member in the cluster.
+
+Although you can configure some [data structures](/cloud/data-structures) with a custom backup count, the effective backup count is limited by the number of members in your cluster.
+
+For example, if you configure a map with five backups, but your cluster has only two members, you will have one effective backup. You need to add enough data to the cluster so that it automatically scales up the number of members and backups to your configured count of five.
+
+## Restrictions on Cloud Standard Clusters {/* #restrictions-on-cloud-standard-clusters */}
+
+Development clusters and production clusters are [paused](/cloud/stop-and-resume#pausing-a-cluster) when you don’t connect to them cluster for 24 hours.
+
+If you’re using a production cluster, Hazelcast saves your cluster data so that you can resume the cluster at a later time.
+
+If you’re using a development cluster, all cluster data is lost after the cluster is paused.
+
+## Charges for Cloud Standard Clusters {/* #charges-for-cloud-standard-clusters */}
+
+Cloud Standard clusters are billed monthly only for the amount of storage that you use. You pay for all artifacts that are stored, which includes data, metadata, and custom code. For example, as well as the data that you add to data structures, such as maps, you are charged for backups and metadata.
+
+Additional memory usage is also charged for, and may include the following:
+
+- Indexes that you create
+- Stateful jobs
+- Serialization overhead
+
+For example, the [`HazelcastJsonValue` serializer](/cloud/cluster-side-modules#serializers) includes metadata to allow the cluster to query JSON fields and values. You are charged for this metadata. As a result, the amount of used memory in your cluster may be more than the amount of data that you added to a data structure.
+
+## Next Steps {/* #next-steps */}
+
+- [create-serverless-cluster.adoc](/cloud/create-serverless-cluster)

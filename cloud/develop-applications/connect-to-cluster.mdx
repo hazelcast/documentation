@@ -1,0 +1,107 @@
+---
+title: "Connecting to Cloud Clusters"
+sidebar_label: "Connect to a Cluster"
+sidebar_position: 1
+slug: /connect-to-cluster
+---
+
+To communicate with a cluster, you need a client. Hazelcast offers clients in a variety of languages as well as a command-line client for quick prototyping and scripting.
+
+You can do the following to connect to the cluster:
+
+- Download a [preconfigured sample client](#download).
+- Use [advanced setup](#advanced) to configure your own client.
+- Use the [SQL browser](#sql) in Management Center.
+
+## Before you Begin {/* #before-you-begin */}
+
+If you’re using a cluster on Cloud Dedicated, you need to [authorize](/cloud/authorize-connections) clients to allow them to connect to your cluster.
+
+## Using a Preconfigured Client {/* #download */}
+
+Your cluster comes with the following clients, which are preconfigured to connect to your cluster:
+
+- [Java](/hazelcast/5.7/clients/java#configuring-java-client)
+- [Python](https://hazelcast.readthedocs.io/en/stable/configuration_overview.html)
+- [.NET](http://hazelcast.github.io/hazelcast-csharp-client/latest/doc/index.html)
+- [Hazelcast Command-Line Client (CLC)](/clc/5.5.1/overview)
+
+To download any of these clients, complete the following steps:
+
+1. Sign in to the [Cloud console](https://cloud.hazelcast.com/)
+2. Select your cluster.
+3. Select the relevant option in the **Connect Client** section of your Dashboard.
+
+   :::note
+
+   To download the CLC client, select the **CLI** option.
+
+   :::
+4. Follow the on-screen instructions.
+
+For a complete tutorial, see the [get-started.adoc](/cloud/get-started) topic.
+
+## Configure Your Own Client {/* #advanced */}
+
+You can access the information needed to connect your own clients through the **Advanced** option.
+
+To obtain the connection credentials for your cluster, complete the following steps:
+
+1. Sign in to the [Cloud console](https://cloud.hazelcast.com/).
+2. Select your cluster.
+3. Select the **Advanced** option in the **Connect Client** section of your Dashboard.
+
+   The connection credentials display.
+
+The connection credentials consist of the following:
+
+<table className="tableblock frame-all grid-all stretch">
+<thead>
+<tr>
+<th className="tableblock halign-left valign-top">Credential</th>
+<th className="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td className="tableblock halign-left valign-top"><div className="content"><p>Cluster Name</p></div></td>
+<td className="tableblock halign-left valign-top"><div className="content"><p>A unique name that identifies your cluster.</p> <p>Select the <strong>Copy</strong> icon (overlapping squares) to copy the Cluster Name to your clipboard.</p></div></td>
+</tr>
+<tr>
+<td className="tableblock halign-left valign-top"><div className="content"><p>Discovery Token</p></div></td>
+<td className="tableblock halign-left valign-top"><div className="content"><p>A unique token that maps to the current IP address of the cluster.</p> <p>Cluster IP addresses can change. This token allows clients to identify the current IP address of the cluster and connect to it.</p> <p>Select <strong>Reveal</strong> to display the Discovery Token. Select the <strong>Copy</strong> icon to copy the Discovery Token to your clipboard.</p></div></td>
+</tr>
+<tr>
+<td className="tableblock halign-left valign-top"><div className="content"><p>Keystore and Truststore Password</p></div></td>
+<td className="tableblock halign-left valign-top"><div className="content"><p>The password that a client can use to access the private key file.</p> <p>Select <strong>Reveal</strong> to display the password. Select the <strong>Copy</strong> icon to copy the password to your clipboard.</p></div></td>
+</tr>
+<tr>
+<td className="tableblock halign-left valign-top"><div className="content"><p>Download keystore file</p></div></td>
+<td className="tableblock halign-left valign-top"><div className="content"><p>Select to download the files for the certificate authority, certificate, and private key that a client needs to authenticate over TLS.</p></div></td>
+</tr>
+</tbody>
+</table>
+
+The TLS credentials are necessary only if your cluster has TLS enabled. You can find out if your cluster has TLS enabled in the **Cluster Details** section of your dashboard.
+
+## Using the SQL Browser {/* #sql */}
+
+You can open a SQL shell in your cluster and submit SQL queries directly from your web browser.
+
+1. Sign into the [Cloud console](https://cloud.hazelcast.com/) and select your cluster.
+2. Go to **SQL**.
+3. Enter your SQL queries.
+
+For full details see [execute-sql-queries.adoc](/cloud/execute-sql-queries).
+
+## Next Steps {/* #next-steps */}
+
+[developer-guide.adoc](/cloud/developer-guide).
+
+## Related Resources {/* #related-resources */}
+
+- [Java client](/hazelcast/5.7/clients/java#configuring-java-client)
+- [Python client](https://hazelcast.readthedocs.io/en/stable/configuration_overview.html)
+- [.NET client](http://hazelcast.github.io/hazelcast-csharp-client/latest/doc/index.html)
+- [Hazelcast Command-Line Client (CLC)](/clc/5.5.1/overview)
+- [SQL Browser](/management-center/5.11/tools/sql-browser).
