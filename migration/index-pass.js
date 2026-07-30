@@ -38,9 +38,10 @@ async function main () {
   // renamed pages resolve (classify alone does not do this).
   const aliases = registerPageAliases(contentCatalog, siteAsciiDocConfig)
   console.log(`[index-pass] registered ${aliases.registered} page aliases` +
-    (aliases.problems.length ? ` (${aliases.problems.length} skipped)` : ''))
+    (aliases.problems.length ? ` (${aliases.problems.length} skipped)` : '') +
+    `, captured ${aliases.titles.size} page titles`)
 
-  const { manifest, lockfile } = emitManifest({ contentCatalog, playbook, outDir })
+  const { manifest, lockfile } = emitManifest({ contentCatalog, playbook, outDir, titles: aliases.titles })
   console.log(
     `[index-pass] wrote ${manifest.counts.resources} resources across ${manifest.counts.components} components, ` +
       `${lockfile.counts.sources} pinned sources -> ${outDir}`
