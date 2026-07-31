@@ -131,62 +131,90 @@ To configure a MapStore, complete the following steps:
 The MapStore configuration elements and attributes are as follows:
 
 <dl>
-<dt className="hdlist1"><strong>Class Name</strong></dt>
+<dt>**Class Name**</dt>
 <dd>
-<p>Select the MapStore you require from the dropdown menu.</p>
-<p>The menu options are populated with uploaded files containing MapStores.</p>
+
+Select the MapStore you require from the dropdown menu.
+
+The menu options are populated with uploaded files containing MapStores.
+
 </dd>
-<dt className="hdlist1"><strong>Write Delay Seconds</strong></dt>
+<dt>**Write Delay Seconds**</dt>
 <dd>
-<p>Enter the number of seconds to wait before calling the <code>MapStore.store(key, value)</code> method in the text box.</p>
-<p>Default is <strong>0</strong>.</p>
-<p>A value of zero defines a write-through cache. The <code>MapStore.store(key, value)</code> method is called as soon as the entry is updated.</p>
-<p>Any other value defines a write-behind cache. Updates are stored for the specified period using the <code>Hazelcast.storeAll(map)</code> method.</p>
+
+Enter the number of seconds to wait before calling the `MapStore.store(key, value)` method in the text box.
+
+Default is **0**.
+
+A value of zero defines a write-through cache. The `MapStore.store(key, value)` method is called as soon as the entry is updated.
+
+Any other value defines a write-behind cache. Updates are stored for the specified period using the `Hazelcast.storeAll(map)` method.
+
 </dd>
-<dt className="hdlist1"><strong>Write Batch Size</strong></dt>
+<dt>**Write Batch Size**</dt>
 <dd>
-<p>Enter the number of map entries to include in each batch chunk when writing a map store.</p>
-<p>By default, each batch chunk contains a single entry.</p>
-<p>The minimum meaningful value is <code>2</code>. If you enter a value of less than 2, the default is used.</p>
-<div className="admonition admonition-note">
+
+Enter the number of map entries to include in each batch chunk when writing a map store.
+
+By default, each batch chunk contains a single entry.
+
+The minimum meaningful value is `2`. If you enter a value of less than 2, the default is used.
+
+:::note
+
 If you do not have sufficient entries to form a complete batch chunk, the final entries are included in a smaller batch chunk after a timeout.
-</div>
+
+:::
+
 </dd>
-<dt className="hdlist1"><strong>Write Coalescing</strong></dt>
+<dt>**Write Coalescing**</dt>
 <dd>
-<p>Select or de-select the checkbox to determine how to store updates for a key.</p>
-<div className="admonition admonition-note">
+
+Select or de-select the checkbox to determine how to store updates for a key.
+
+:::note
+
 Applies only when using write-behind caching.
-</div>
-<p>By default, Hazelcast combines updates on a key.</p>
-<p>De-select the checkbox to store all updates on a key.</p>
-<p>Select the checkbox to store only the final update on a key that has been changed multiple times.</p>
+
+:::
+
+By default, Hazelcast combines updates on a key.
+
+De-select the checkbox to store all updates on a key.
+
+Select the checkbox to store only the final update on a key that has been changed multiple times.
+
 </dd>
-<dt className="hdlist1"><strong>Initial Mode</strong></dt>
+<dt>**Initial Mode**</dt>
 <dd>
-<p>Select the initial load mode from the dropdown menu.</p>
-<p>By default, lazy loading is used.</p>
-<p>The menu options are as follows:</p>
-<div className="ulist">
-<ul>
-<li>
-<p><strong>Lazy</strong>. Select to use asynchronous loading.</p>
-</li>
-<li>
-<p><strong>Eager</strong>. Select to pre-load all partitions before loading.</p>
-</li>
-</ul>
-</div>
+
+Select the initial load mode from the dropdown menu.
+
+By default, lazy loading is used.
+
+The menu options are as follows:
+
+- **Lazy**. Select to use asynchronous loading.
+- **Eager**. Select to pre-load all partitions before loading.
+
 </dd>
-<dt className="hdlist1"><strong>Properties</strong></dt>
+<dt>**Properties**</dt>
 <dd>
-<p>Enter the name and value of a property, which can be read inside the MapStore, in the text boxes.</p>
-<p>For example, the connection credentials for a database.</p>
-<p>To add the specified property, select the <strong>Add</strong> button.</p>
-<p>You can continue to add properties in the same way.</p>
-<div className="admonition admonition-note">
+
+Enter the name and value of a property, which can be read inside the MapStore, in the text boxes.
+
+For example, the connection credentials for a database.
+
+To add the specified property, select the **Add** button.
+
+You can continue to add properties in the same way.
+
+:::note
+
 When you save the configuration, the properties are encrypted.
-</div>
+
+:::
+
 </dd>
 </dl>
 

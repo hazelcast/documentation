@@ -101,7 +101,7 @@ function convertBlock ($, node, st, depth) {
   if (cls.includes('tabset')) return convertTabs($, node, st, depth)
   if (cls.includes('olist')) return convertList($, $(node).children('ol')[0], st, depth, true)
   if (cls.includes('ulist')) return convertList($, $(node).children('ul')[0], st, depth, false)
-  if (cls.includes('dlist')) return serializeJsx($, $(node).children('dl')[0], st)
+  if (cls.includes('dlist')) return convertDlist($, $(node).children('dl')[0], st, depth)
   if (cls.includes('quoteblock') || cls.includes('verseblock')) return convertQuote($, node, st, depth)
 
   // Structural wrappers with no output of their own: recurse into their content.
@@ -177,6 +177,37 @@ function convertListItem ($, li, st, depth) {
   for (; idx < children.length; idx++) out.push(convertBlock($, children[idx], st, depth + 1))
   if (out.length === 0) out.push(inline($, li, st))
   return out
+}
+
+// --- description lists -------------------------------------------------------
+
+// A clean <dl> whose <dd> bodies are Markdown (same technique as complex table
+// cells): MDX parses block content -- paragraphs, lists, admonitions -- inside a
+// <dd> when it is blank-line padded, so no Asciidoctor `.hdlist1`/`.paragraph`/
+// `<div className="admonition">` wrappers are emitted. Terms carry inline
+// Markdown (verified: `**term**` parses inside a single-line <dt>).
+function convertDlist ($, dl, st, depth) {
+  if (!dl) return ''
+  const out = ['<dl>']
+  for (const node of dl.children || []) {
+    if (node.type !== 'tag') continue
+    if (node.name === 'dt') {
+      const term = inline($, node, st).replace(/\s*\n\s*/g, ' ').trim()
+      out.push(`<dt>${term}</dt>`)
+    } else if (node.name === 'dd') {
+      const md = blockOrInline($, node, st, depth).trim()
+      // Block (blank-line padded) form when the dd holds block content; a plain
+      // single-paragraph dd stays inline. Asciidoctor wraps every block after
+      // the first paragraph in a <div>, so a div/list/pre/table child signals
+      // block content that `md.includes('\n')` alone would miss (one-item list).
+      const block = md !== '' && ($(node).children('div, ul, ol, pre, table').length > 0 || md.includes('\n'))
+      if (md === '') out.push('<dd></dd>')
+      else if (block) out.push(`<dd>\n\n${md}\n\n</dd>`)
+      else out.push(`<dd>${md}</dd>`)
+    }
+  }
+  out.push('</dl>')
+  return out.join('\n')
 }
 
 // --- admonitions -----------------------------------------------------------
