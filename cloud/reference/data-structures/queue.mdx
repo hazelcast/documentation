@@ -4,7 +4,7 @@ sidebar_position: 3
 slug: /queue
 ---
 
-## Queue Name {/* #queue-name */}
+## Queue Name
 
 You can create custom queue configurations associated with the names of queues. The queues that do not have any configuration defined use the default configuration. If you want to set a configuration that is valid for all queues, you can name your configuration as `default`. A user-defined `default` configuration applies to every queue that does not have a specific custom queue configuration defined with the queue’s name. You can also use wildcards to associate your configuration with multiple queue names. See the [configuration documentation](/hazelcast/5.7/configuration/using-wildcards) for more information about wildcards.
 
@@ -23,18 +23,18 @@ Be aware that the following operations use heap memory: writing, caching, or rep
 
 :::
 
-## Time To Live {/* #time-to-live */}
+## Time To Live
 
 Used to purge unused or empty queues. If you define a value (time in seconds) for this element, then your queue will be destroyed if it stays empty or unused for that time.
 
-## Maximum Size {/* #maximum-size */}
+## Maximum Size
 
 Maximum number of items in the queue. It is used to set an upper bound for the queue. You will not be able to put more items when the queue reaches to this maximum size whether you have a queue store configured or not.
 
-## Backup Count {/* #backup-count */}
+## Backup Count
 
 Number of synchronous backups. Queue is a non-partitioned data structure, so all entries of a queue reside in one partition. When this parameter is `1`, it means there will be one backup of that queue in another member in the cluster. When it is `2`, two members will have the backup.
 
-## Asynchronous Backup Count {/* #asynchronous-backup-count */}
+## Asynchronous Backup Count
 
 Number of asynchronous backups.

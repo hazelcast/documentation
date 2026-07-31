@@ -17,6 +17,7 @@
 // "renders back to the same text + structure + working links".
 
 const cheerio = require('cheerio')
+const GithubSlugger = require('github-slugger')
 const { mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode } = require('./mdx')
 const { resolveHref } = require('./links')
 
@@ -36,7 +37,11 @@ const JSX_KEEP = new Set(['id', 'href', 'src', 'alt', 'title', 'target', 'rel', 
 //   ctx: { pageUrl }
 function convertBody (html, ctx) {
   const $ = cheerio.load(html, null, false)
-  const state = { imports: new Set(), pageUrl: ctx.pageUrl }
+  // A per-page slugger mirrors how Docusaurus derives heading ids, so we can
+  // detect (and drop) the explicit id where it would match the auto-generated
+  // one. It is stateful across the page (duplicate headings get -1, -2 ...), so
+  // it must see EVERY heading in document order -- see heading().
+  const state = { imports: new Set(), pageUrl: ctx.pageUrl, slugger: new GithubSlugger() }
   const body = convertChildren($, $.root()[0], state, 0)
   return { body: body.trim(), imports: state.imports }
 }
@@ -115,11 +120,16 @@ function heading ($, node, st) {
   const level = Number(node.name[1])
   const id = node.attribs && node.attribs.id
   const text = inlineFrom($, node.children, st, { skipAnchors: true }).trim()
-  // Preserve the Asciidoctor heading id EXACTLY (so cross-page #anchors keep
-  // resolving) via Docusaurus's MDX-safe explicit-id syntax: an MDX comment
-  // `{/* #id */}`. The classic `{#id}` form cannot be used -- in .mdx, `{`
-  // opens a JS expression and `#id` is not parseable, breaking the build.
-  const suffix = id ? ` {/* #${id} */}` : ''
+  // Advance the page slugger for EVERY heading (keeps duplicate-suffix state in
+  // sync with Docusaurus) and compute the id Docusaurus would auto-generate.
+  const autoId = st.slugger.slug($(node).text().replace(/\s+/g, ' ').trim())
+  // Only pin the id explicitly when it would otherwise differ (custom ids like
+  // #prereqs, or case like #Troubleshooting). Where Docusaurus already produces
+  // the same id, the explicit form is pure noise, so we drop it. Pinned via
+  // Docusaurus's MDX-safe explicit-id syntax -- an MDX comment `{/* #id */}`
+  // (the classic `{#id}` cannot be used: in .mdx `{` opens a JS expression and
+  // `#id` is not parseable, which breaks the build).
+  const suffix = id && id !== autoId ? ` {/* #${id} */}` : ''
   return '#'.repeat(level) + ' ' + text + suffix
 }
 
@@ -245,9 +255,11 @@ function convertTabs ($, node, st, depth) {
     const labelText = li ? $(li).find('p').text().trim() : `Tab ${i + 1}`
     const id = anchor && anchor.attribs.id
     const value = id ? id.replace(/^tabset\d+_/, '') : slug(labelText)
-    // Pane content lives under .tab-pane > .openblock > .content (or directly).
-    const contentEl = $(pane).find('> .openblock > .content')[0] || pane
-    const paneBody = convertChildren($, contentEl, st, depth).trim()
+    // Convert the whole tab-pane: content is usually wrapped in an .openblock,
+    // but Asciidoctor also emits pane-level siblings (e.g. an admonition after
+    // the block). Recursing the pane picks those up; the .openblock unwraps
+    // itself in convertBlock.
+    const paneBody = convertChildren($, pane, st, depth).trim()
     items.push(
       `<TabItem value=${jsxAttr(value)} label=${jsxAttr(labelText)}>\n\n${paneBody}\n\n</TabItem>`
     )
@@ -328,17 +340,28 @@ function inlineTag ($, node, st, opt) {
   const kids = () => inlineFrom($, node.children, st, opt)
   switch (name) {
     case 'strong': case 'b': return `**${kids()}**`
-    case 'em': case 'i': return `*${kids()}*`
+    case 'em': return `*${kids()}*`
+    case 'i':
+      // Asciidoctor renders emphasis as <em>; <i> is ALWAYS a font icon
+      // (checklist checkbox, external-link marker, ...). Icons carry no text and
+      // must be dropped -- treating them as italic emits an empty `**`/`*`.
+      if (cls.some((c) => c === 'fa' || c.startsWith('fa-') || c.startsWith('icon-'))) return ''
+      return kids().trim() ? `*${kids()}*` : ''
     case 'code': return inlineCode($(node).text())
     case 'br': return '<br/>'
     case 'a': {
-      if (cls.includes('anchor')) return opt.skipAnchors ? '' : '' // heading self-link: no text
+      const id = node.attribs && node.attribs.id
+      // Preserve a bare inline anchor target (`<a id="step-5"></a>`) as an
+      // id-bearing element so `#step-5` links still resolve; without this the
+      // anchor is dropped and Layer 3 reports dead-anchor-self.
+      const anchorEl = id ? `<span id=${jsxAttr(id)}></span>` : ''
+      if (cls.includes('anchor')) return opt.skipAnchors ? '' : anchorEl // heading self-link: no text
       const label = kids().trim()
       const { kind, href } = resolveHref((node.attribs && node.attribs.href) || '', st.pageUrl)
-      if (kind === 'empty' || label === '') return label
+      if (kind === 'empty' || label === '') return anchorEl + label
       const safeLabel = label.replace(/\]/g, '\\]')
       const safeHref = /[()\s]/.test(href) ? `<${href}>` : href
-      return `[${safeLabel}](${safeHref})`
+      return anchorEl + `[${safeLabel}](${safeHref})`
     }
     case 'span': {
       if (cls.includes('image')) {

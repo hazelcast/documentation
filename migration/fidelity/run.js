@@ -28,7 +28,7 @@ const { loadBaseline, novelProblems } = require('./lib/baseline')
 const { checkPage } = require('./lib/layer3')
 const { inventory, ASCIIDOC_PROFILE, DOCUSAURUS_PROFILE } = require('./lib/structure')
 const { compareInventory } = require('./lib/layer2')
-const { canonicalize, diffSegments, GOLDEN_STRIP, DOCUSAURUS_STRIP } = require('./lib/layer1')
+const { canonicalize, diffSegments, GOLDEN_STRIP, DOCUSAURUS_STRIP, GOLDEN_TABLE, DOCUSAURUS_TABLE } = require('./lib/layer1')
 const { extractMain } = require('./lib/extract-main')
 const { lockfileKeyFromFile } = require('./lockfile-key')
 
@@ -104,8 +104,8 @@ function main () {
     const goldenHtml = fs.readFileSync(p.file, 'utf8')
 
     if (opts.layers.has('1')) {
-      const g = canonicalize(goldenHtml, { stripSelectors: GOLDEN_STRIP })
-      const c = canonicalize(fragment, { stripSelectors: DOCUSAURUS_STRIP })
+      const g = canonicalize(goldenHtml, { stripSelectors: GOLDEN_STRIP, tableSelector: GOLDEN_TABLE })
+      const c = canonicalize(fragment, { stripSelectors: DOCUSAURUS_STRIP, tableSelector: DOCUSAURUS_TABLE })
       entry.l1 = diffSegments(g, c)
     }
     if (opts.layers.has('2')) {

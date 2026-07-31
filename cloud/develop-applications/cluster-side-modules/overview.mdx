@@ -17,7 +17,7 @@ Then, you can use any client to interact with the cluster-side modules such as q
 
 ![Workflow for building cluster-side modules](/cloud/_images/cluster-side-modules.svg)
 
-## What are Cluster-Side Modules {/* #what-are-cluster-side-modules */}
+## What are Cluster-Side Modules
 
 Cluster-side modules include any code that must be deployed as Java code to the cluster, including the following:
 
@@ -97,23 +97,23 @@ Cluster-side modules must be serialized because they are sent to other members i
 
 Any Java code in cluster-side modules must meet the following requirements.
 
-### Java Version {/* #java-version */}
+### Java Version
 
 Cloud supports only Java version 17 or later.
 
-### System-Level APIs {/* #system-level-apis */}
+### System-Level APIs
 
 No code in cluster-side modules is allowed to access system-level APIs. Hazelcast throws a Java security exception if any cluster-side modules try to access these APIs.
 
-### Package Names {/* #package-names */}
+### Package Names
 
 Your package names must not start with `com.hazelcast`. Hazelcast ignores these packages.
 
-### Package Size {/* #package-size */}
+### Package Size
 
 Cloud allows you to upload packaged files up to 500 MB. Larger files are rejected.
 
-### Dependency Conflicts {/* #dependency-conflicts */}
+### Dependency Conflicts
 
 The libraries in your project must not conflict with those that are built into Cloud. If your project includes a library that’s already available in Cloud, you may experience conflicts that stop Hazelcast from processing your cluster-side modules. To avoid packaging conflicting libraries in your code, we recommend using one of the following options:
 
@@ -123,7 +123,7 @@ The libraries in your project must not conflict with those that are built into C
   - [Maven](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Dependency_Scope)
   - [Gradle](https://docs.gradle.org/current/userguide/migrating_from_maven.html#migmvn:declaring_deps)
 
-## Best Practices for Testing {/* #best-practices-for-testing */}
+## Best Practices for Testing
 
 Before you go into production with your cluster-side modules, it’s best to test them on a development cluster to make sure that they work as expected. To test cluster-side modules, follow these best practices:
 
@@ -142,8 +142,8 @@ You must provide a [payment card or other payment method](/cloud/payment-methods
 
 :::
 
-## Tutorials {/* #tutorials */}
+## Tutorials
 
 Get hands-on with cluster-side modules by following a tutorial:
 
-- [tutorials:ROOT:write-through-cache-serverless-mapstore.adoc](/tutorials/write-through-cache-serverless-mapstore)
+- [Use Cloud Standard as a Write-Through Cache with MongoDB Atlas](/tutorials/write-through-cache-serverless-mapstore)

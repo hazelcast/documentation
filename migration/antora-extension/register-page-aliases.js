@@ -14,11 +14,18 @@ const { loadAsciiDoc, extractAsciiDocMetadata } = require('@antora/asciidoc-load
 // Only the page header is parsed (headerOnly), so this is cheap relative to a
 // full convert and needs no xref resolution of its own.
 //
-// The same header parse also yields the page's doctitle, which nothing else in
-// our pipeline captures (the golden HTML is a body fragment with no <h1>, and
-// classifyContent does not parse titles). We collect it here -- keyed by the
-// manifest resource id -- so emit-manifest can carry a `title` on each page and
-// the converter has an authoritative source for MDX frontmatter.
+// This one header parse does three jobs:
+//   1. registers page-aliases (so xrefs to renamed pages resolve);
+//   2. collects each page's doctitle (keyed by manifest resource id) so
+//      emit-manifest can carry a `title` and the converter has an authoritative
+//      frontmatter source (the golden HTML is a body fragment with no <h1>);
+//   3. primes `page.asciidoc` (doctitle/xreftext/navtitle) on EVERY page, so
+//      that when another page's `xref:foo.adoc[]` (empty link text) renders, the
+//      xref macro finds the target's xreftext instead of falling back to the raw
+//      "foo.adoc" filename. Antora's site pipeline sets this during conversion;
+//      our snapshot build converts page-by-page, so without this pre-pass a
+//      target rendered later has no asciidoc metadata when an earlier page links
+//      to it, and the golden shows unresolved link text.
 function registerPageAliases (contentCatalog, siteAsciiDocConfig = {}) {
   let registered = 0
   const problems = []
@@ -40,6 +47,9 @@ function registerPageAliases (contentCatalog, siteAsciiDocConfig = {}) {
       continue
     }
     if (meta.doctitle) titles.set(resourceId(page.src), meta.doctitle)
+    // Prime the page's asciidoc metadata so xref link-text resolves to this
+    // page's xreftext when another page links to it (see the note above).
+    if (!page.asciidoc) page.asciidoc = meta
     const value = meta.attributes['page-aliases']
     if (!value) continue
     for (const spec of value.split(',').map((s) => s.trim()).filter(Boolean)) {
