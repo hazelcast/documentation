@@ -20,8 +20,21 @@
 // do not double-escape the escapes we add.
 const MD_PROSE = /[\\`*_{}\[\]<>|#]/g
 
+// Fold the typographic glyphs Asciidoctor substitutes for straight ASCII (curly
+// single/double quotes, non-breaking space) back to ASCII in PROSE only. This
+// is fidelity-safe -- Layer-1 `normalizeProse` already folds the same glyphs,
+// so the rendered text compares equal -- and is never applied to code
+// (inlineCode/fencedCode), where a character could be significant. En/em dashes
+// and ellipsis are intentional typography and deliberately left alone.
+function foldTypographic (s) {
+  return s
+    .replace(/[‘’‚‛]/g, "'")
+    .replace(/[“”„‟]/g, '"')
+    .replace(/ /g, ' ')
+}
+
 function mdEscape (s) {
-  return s.replace(MD_PROSE, (c) => '\\' + c)
+  return foldTypographic(s).replace(MD_PROSE, (c) => '\\' + c)
 }
 
 // Same as mdEscape but also escapes the pipe for GFM table cells (already in the
@@ -30,7 +43,7 @@ const mdEscapeCell = mdEscape
 
 // JSX text: only the four characters that break JSX parsing / are ambiguous.
 function jsxText (s) {
-  return s
+  return foldTypographic(s)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')

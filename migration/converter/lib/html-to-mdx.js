@@ -277,10 +277,17 @@ function convertTable ($, table, st) {
     ...$(table).children('tbody').children('tr').toArray(),
     ...$(table).children('tfoot').children('tr').toArray(),
   ]
-  const cells = $(table).find('th,td').toArray()
+  // Direct cells only (do not descend into an admonition's inner table).
+  const rowCells = (rows) => rows.flatMap((tr) => $(tr).children('th,td').toArray())
+  const cells = [...rowCells(headRows), ...rowCells(bodyRows)]
   const complex = cells.some((c) => isComplexCell($, c))
-  if (!complex && headRows.length === 1) return gfmTable($, headRows[0], bodyRows, st)
-  return serializeJsx($, table, st)
+  const spanned = cells.some((c) => hasSpan(c))
+  // A GFM pipe table can only hold inline cells, no spans, and one header row.
+  if (!complex && !spanned && headRows.length === 1) return gfmTable($, headRows[0], bodyRows, st)
+  // Everything else becomes a clean semantic <table> whose cells are Markdown:
+  // MDX parses block content (lists, admonitions, multiple paragraphs) inside a
+  // <td> when the body is blank-line padded. No presentational classes emitted.
+  return htmlTable($, headRows, bodyRows, st)
 }
 
 function isComplexCell ($, cell) {
@@ -289,7 +296,13 @@ function isComplexCell ($, cell) {
   const $c = $(cell)
   if ($c.find('ul, ol, pre, table, .admonitionblock, .ulist, .olist, .listingblock, .dlist').length) return true
   if ($c.find('.paragraph').length > 1) return true
+  if ($c.children('p').length > 1) return true // multi-paragraph non-AsciiDoc cell
   return false
+}
+
+function hasSpan (cell) {
+  const a = cell.attribs || {}
+  return +a.colspan > 1 || +a.rowspan > 1
 }
 
 function gfmTable ($, headRow, bodyRows, st) {
@@ -306,6 +319,59 @@ function cellInline ($, cell, st) {
   // newlines must not break the row.
   const inner = $(cell).find('p').first()[0] || cell
   return inline($, inner, st, { cell: true }).replace(/\s*\n\s*/g, ' ').trim()
+}
+
+// A clean semantic <table> with Markdown cell bodies. Structural tags sit at
+// column 0 (indenting a closing tag after a list breaks the MDX parser), and a
+// cell whose Markdown spans lines is blank-line padded so MDX reads the body as
+// Markdown (lists, admonitions, paragraphs) rather than raw text.
+function htmlTable ($, headRows, bodyRows, st) {
+  const out = ['<table>']
+  if (headRows.length) {
+    out.push('<thead>')
+    for (const tr of headRows) out.push(rowHtml($, tr, st))
+    out.push('</thead>')
+  }
+  out.push('<tbody>')
+  for (const tr of bodyRows) out.push(rowHtml($, tr, st))
+  out.push('</tbody>', '</table>')
+  return out.join('\n')
+}
+
+function rowHtml ($, tr, st) {
+  const cells = $(tr).children('th,td').toArray().map((c) => cellHtml($, c, st))
+  return '<tr>\n' + cells.join('\n') + '\n</tr>'
+}
+
+function cellHtml ($, cell, st) {
+  const tag = cell.name === 'th' ? 'th' : 'td'
+  const attrs = spanAttrs(cell)
+  const md = cellMarkdown($, cell, st)
+  // Block form (blank-line padded) whenever the cell holds block content, so
+  // MDX parses it as Markdown. `isComplexCell` catches the single-line cases
+  // `md.includes('\n')` misses -- e.g. a one-item list `- foo`.
+  const block = md !== '' && (isComplexCell($, cell) || md.includes('\n'))
+  if (block) return `<${tag}${attrs}>\n\n${md}\n\n</${tag}>`
+  return `<${tag}${attrs}>${md}</${tag}>`
+}
+
+// Convert one cell's inner HTML to Markdown, reusing the block/inline
+// converters. AsciiDoc cells (`a|`) wrap their blocks in a `.content` div;
+// plain cells hold one or more `<p class="tableblock">`.
+function cellMarkdown ($, cell, st) {
+  const content = $(cell).children('.content')[0]
+  if (content) return blockOrInline($, content, st, 0).trim()
+  const ps = $(cell).children('p').toArray()
+  if (ps.length > 1) return ps.map((p) => inline($, p, st).trim()).filter(Boolean).join('\n\n')
+  return inline($, cell, st).trim()
+}
+
+function spanAttrs (cell) {
+  const a = cell.attribs || {}
+  let out = ''
+  if (+a.colspan > 1) out += ` colSpan={${+a.colspan}}`
+  if (+a.rowspan > 1) out += ` rowSpan={${+a.rowspan}}`
+  return out
 }
 
 // ---------------------------------------------------------------------------

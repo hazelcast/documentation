@@ -14,11 +14,46 @@ MapStore builds a cache on top of Hazelcast with defined triggers for operations
 
 The caching patterns are as follows:
 
-| Caching pattern | Supported by | Description |
-| --- | --- | --- |
-| Read-through | MapLoader and MapStore | If the requested entry is not present in memory, MapStore requests it from the data store. |
-| Write-through | MapStore only | Adds entries to the data store synchronously when added to a map. |
-| Write-behind | MapStore only | Adds entries to the data store asynchronously when added to a map. |
+<table>
+<thead>
+<tr>
+<th>Caching pattern</th>
+<th>Supported by</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>Read-through</th>
+<td>MapLoader and MapStore</td>
+<td>
+
+If the requested entry is not present in memory, MapStore requests it from the data store.
+
+If present in the data store, the entry is loaded to the distributed map and remains in memory until removed.
+
+</td>
+</tr>
+<tr>
+<th>Write-through</th>
+<td>MapStore only</td>
+<td>Adds entries to the data store synchronously when added to a map.</td>
+</tr>
+<tr>
+<th>Write-behind</th>
+<td>MapStore only</td>
+<td>
+
+Adds entries to the data store asynchronously when added to a map.
+
+This approach can prevent the thread that is updating the map from becoming blocked, or be used to collect updates into a single batch.
+
+A configured delay limits the time that can be taken between writes to the map and writes to the database.
+
+</td>
+</tr>
+</tbody>
+</table>
 
 To develop a MapStore, you must do the following:
 
@@ -157,7 +192,7 @@ When you save the configuration, the properties are encrypted.
 
 ## Update a MapStore {/* #update */}
 
-To update a MapStore after you’ve deployed it, you must delete it and redeploy another one as follows:
+To update a MapStore after you've deployed it, you must delete it and redeploy another one as follows:
 
 1. Select **Upload Custom Classes** and remove the file that contains your MapStore.
 2. Optionally, [Test your new MapStore](#test-mapstore).
