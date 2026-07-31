@@ -127,6 +127,33 @@ function summarizeErrors (logPath, outDir) {
   return report
 }
 
+// Replicate the ONE UI template injection that adds body CONTENT (not chrome):
+// hazelcast-docs-ui `article.hbs` renders, when a page sets
+// `:page-include-tutorial-list:`, a <ul> of links to every `tutorials`-component
+// page tagged for the product (`get-tutorial-pages` helper: page-layout=tutorial
+// && page-product=<product>). Our snapshot converts AsciiDoc bodies only and
+// never runs the UI templates, so without this the golden -- and therefore the
+// converted MDX -- is missing that list (a faithfulness gap, not a converter
+// bug). article.hbs hardcodes the 'cloud' product, so we do too. Appending the
+// <ul> to the rendered body is enough: the converter turns it into a Markdown
+// list, so golden and converted stay consistent AND the real links are restored.
+function htmlEscape (s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+function tutorialListHtml (contentCatalog, product) {
+  const items = []
+  for (const p of contentCatalog.findBy({ component: 'tutorials', family: 'page' })) {
+    const a = (p.asciidoc && p.asciidoc.attributes) || {}
+    if (a['page-layout'] !== 'tutorial' || a['page-product'] !== product) continue
+    const title = (p.asciidoc && p.asciidoc.doctitle) || a.doctitle || p.pub.url
+    // Asciidoctor ulist shape (<li><p>...</p></li>), so the golden looks like any
+    // other list to both the converter and the fidelity canonicalizer.
+    items.push(`<li>\n<p><a href="${htmlEscape(p.pub.url)}">${htmlEscape(title)}</a></p>\n</li>`)
+  }
+  if (!items.length) return ''
+  return `\n<div class="ulist">\n<ul>\n${items.join('\n')}\n</ul>\n</div>\n`
+}
+
 async function main () {
   const { playbookFile, outDir, lockfileFile, component } = parseArgs(process.argv)
 
@@ -177,6 +204,16 @@ async function main () {
   const pagesDir = path.join(outDir, 'pages')
   fs.rmSync(pagesDir, { recursive: true, force: true })
 
+  // Invalidate the golden-DERIVED caches (anchor index, inventory index, Layer-3
+  // baseline). They are keyed by lockfileKey, but the golden CONTENT can change
+  // with the pin unchanged -- any edit to this builder (e.g. the tutorial-list
+  // injection or an xref-title fix) rewrites pages at the same SHAs. Since we are
+  // regenerating the golden now, drop them so the next fidelity run rebuilds them
+  // from the fresh pages rather than trusting a same-key stale copy.
+  for (const f of ['anchor-index.json', 'inventory-index.json', 'layer3-baseline.json']) {
+    fs.rmSync(path.join(outDir, f), { force: true })
+  }
+
   const pages = contentCatalog
     .getPages((page) => page.out)
     .filter((page) => component
@@ -191,7 +228,12 @@ async function main () {
   for (const page of pages) {
     const cvKey = `${page.src.version}@${page.src.component}`
     try {
-      const html = loadAsciiDoc(page, contentCatalog, configs.get(cvKey) || siteConfig).convert()
+      const doc = loadAsciiDoc(page, contentCatalog, configs.get(cvKey) || siteConfig)
+      let html = doc.convert()
+      // UI-injected tutorial list (see tutorialListHtml).
+      if (doc.getAttributes()['page-include-tutorial-list']) {
+        html += tutorialListHtml(contentCatalog, 'cloud')
+      }
       const dest = path.join(pagesDir, page.out.path)
       fs.mkdirSync(path.dirname(dest), { recursive: true })
       fs.writeFileSync(dest, html.endsWith('\n') ? html : html + '\n')
