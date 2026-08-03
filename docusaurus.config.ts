@@ -1,6 +1,7 @@
 import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import {redirects} from './src/redirects';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
@@ -100,6 +101,16 @@ const config: Config = {
           keywords: ['caution', 'important'],
           extendDefaults: true,
         },
+      },
+    ],
+    // Reproduces Antora's page-aliases as static meta-refresh redirect stubs at
+    // the old URLs, so existing bookmarks/inbound links still land on the moved
+    // page. Pairs are generated from the manifest into src/redirects.ts by the
+    // converter; matches production's default ('static') Antora redirect facility.
+    [
+      '@docusaurus/plugin-client-redirects',
+      {
+        redirects,
       },
     ],
   ],
