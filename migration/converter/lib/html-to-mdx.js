@@ -138,6 +138,7 @@ function convertBlock ($, node, st, depth) {
   if (name === 'ul' || name === 'ol') return convertList($, node, st, depth, name === 'ol')
   if (name === 'pre') return convertPre($, node)
   if (name === 'p') return inline($, node, st)
+  if (name === 'details') return convertDetails($, node, st, depth)
 
   // div-based blocks, dispatched by Asciidoctor class.
   if (cls.includes('sect1') || cls.includes('sect2') || cls.includes('sect3') ||
@@ -281,6 +282,28 @@ function blockOrInline ($, container, st, depth) {
       classes(c).some((k) => /paragraph|ulist|olist|listingblock|literalblock|admonitionblock|imageblock|openblock|exampleblock|dlist/.test(k))))
   if (hasBlocks) return convertChildren($, container, st, depth)
   return inline($, container, st)
+}
+
+// --- collapsible ------------------------------------------------------------
+
+// Asciidoctor's [%collapsible] block renders to
+//   <details><summary class="title">TITLE</summary><div class="content">BODY</div></details>
+// <details> is the idiomatic Docusaurus collapsible (MDX has no Markdown form for
+// one), so it stays -- but we drop Antora's UI scaffolding: the summary's `title`
+// class and the `.content` wrapper div, neither of which Docusaurus's Details
+// theme needs. The body converts to native Markdown (convertChildren also turns a
+// factored-partial region into its <Component/>). `[%collapsible%open]` sets
+// `open` on the <details>; preserve it. Blank lines around the body are required
+// for MDX to parse it as Markdown rather than raw text.
+function convertDetails ($, node, st, depth) {
+  const contentEl = $(node).children('div.content')[0]
+  // Unexpected shape (no .content wrapper): stay faithful via the raw serializer.
+  if (!contentEl) return serializeJsx($, node, st)
+  const summaryEl = $(node).children('summary')[0]
+  const summary = summaryEl ? inline($, summaryEl, st).trim() : ''
+  const body = convertChildren($, contentEl, st, depth).trim()
+  const open = node.attribs && 'open' in node.attribs ? ' open' : ''
+  return `<details${open}>\n<summary>${summary}</summary>\n\n${body}\n\n</details>`
 }
 
 // --- code ------------------------------------------------------------------
