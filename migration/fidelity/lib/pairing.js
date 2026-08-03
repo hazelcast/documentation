@@ -17,6 +17,7 @@
 
 const fs = require('node:fs')
 const path = require('node:path')
+const { stripSentinels } = require('../../antora-extension/mark-partials')
 
 function walkHtml (dir) {
   const out = []
@@ -92,4 +93,13 @@ function resolveConverted (buildDir, url) {
   return null
 }
 
-module.exports = { walkHtml, urlFromGoldenRel, goldenPages, convertedCandidates, resolveConverted }
+// Single ingestion point for golden HTML. Strips partial-boundary sentinels (see
+// antora-extension/mark-partials.js) so the harness compares the de-instrumented
+// render regardless of whether the golden was built with --mark-partials. Every
+// golden read in the fidelity code MUST go through this, so an instrumented
+// golden is indistinguishable from a plain one at compare time.
+function readGolden (file) {
+  return stripSentinels(fs.readFileSync(file, 'utf8'))
+}
+
+module.exports = { walkHtml, urlFromGoldenRel, goldenPages, convertedCandidates, resolveConverted, readGolden }

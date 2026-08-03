@@ -5,22 +5,11 @@ sidebar_position: 3
 slug: /delete-kafka-connection
 ---
 
+import PartialDeletePostgresConnection from '@site/cloud/_partials/delete-postgres-connection.mdx';
+
 You can delete a data connection if you no longer need it, or if you need to recreate the data connection with different details. This functionality is not currently available in the connector wizard but you can use SQL instead.
 
-## Deleting an Existing Data Connection
-
-Before you start, make sure that the data connection is no longer in use.
-
-1. Sign into the [Cloud console](https://cloud.hazelcast.com/).
-2. Select the cluster where you set up the data connection that you need to delete.
-3. In the left navigation, select **SQL** to open the SQL browser.
-4. To find the exact name of the data connection, in the **Data Explorer** click **Connector Wizard** and then select the **Existing Connections** tab.
-5. Click **Cancel** to return to the SQL browser.
-6. Run the following query using your data connection name. If the data connection name includes special characters, put the connection name in quotation marks.
-
-   ```sql
-   DROP DATA CONNECTION IF EXISTS myDataConnection;
-   ```
+<PartialDeletePostgresConnection/>
 
 ## Related Resources
 

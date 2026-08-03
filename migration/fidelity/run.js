@@ -20,7 +20,7 @@
 const fs = require('node:fs')
 const path = require('node:path')
 
-const { goldenPages, resolveConverted } = require('./lib/pairing')
+const { goldenPages, resolveConverted, readGolden } = require('./lib/pairing')
 const { buildIndex } = require('./lib/manifest-index')
 const { loadAnchorIndex } = require('./lib/anchor-index')
 const { loadInventoryIndex } = require('./lib/inventory-index')
@@ -101,7 +101,7 @@ function main () {
       entry.error = 'no main-content container found'
       report.push(entry); regressed++; continue
     }
-    const goldenHtml = fs.readFileSync(p.file, 'utf8')
+    const goldenHtml = readGolden(p.file)
 
     if (opts.layers.has('1')) {
       const g = canonicalize(goldenHtml, { stripSelectors: GOLDEN_STRIP, tableSelector: GOLDEN_TABLE })

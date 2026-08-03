@@ -9,7 +9,7 @@
 const fs = require('node:fs')
 const path = require('node:path')
 
-const { goldenPages } = require('./lib/pairing')
+const { goldenPages, readGolden } = require('./lib/pairing')
 const { buildIndex } = require('./lib/manifest-index')
 const { loadAnchorIndex } = require('./lib/anchor-index')
 const { checkPage } = require('./lib/layer3')
@@ -31,7 +31,7 @@ let pagesWithProblems = 0
 let totalLinks = 0
 const pages = goldenPages(goldenDir)
 for (const p of pages) {
-  const html = fs.readFileSync(p.file, 'utf8')
+  const html = readGolden(p.file)
   const problems = checkPage({ html, pageUrl: p.url, fragment: true }, { manifestIndex, anchorIndex, siteHost })
   totalLinks += (html.match(/<a\s[^>]*href=/gi) || []).length
   if (problems.length) pagesWithProblems++

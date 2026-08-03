@@ -11,12 +11,12 @@ const fs = require('node:fs')
 const path = require('node:path')
 const cheerio = require('cheerio')
 
-const { goldenPages } = require('./pairing')
+const { goldenPages, readGolden } = require('./pairing')
 
 function buildAnchorIndex (goldenDir) {
   const index = new Map()
   for (const p of goldenPages(goldenDir)) {
-    const $ = cheerio.load(fs.readFileSync(p.file, 'utf8'), null, false)
+    const $ = cheerio.load(readGolden(p.file), null, false)
     const ids = new Set()
     $('[id]').each((_, el) => ids.add($(el).attr('id')))
     $('a[name]').each((_, el) => ids.add($(el).attr('name')))

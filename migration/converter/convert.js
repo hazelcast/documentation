@@ -22,6 +22,7 @@ const { execFileSync } = require('node:child_process')
 
 const { goldenPages } = require('../fidelity/lib/pairing')
 const { convertBody } = require('./lib/html-to-mdx')
+const { collectOccurrences, decide } = require('./lib/partials')
 const { parseNav, buildPlan } = require('./lib/nav')
 
 // Where each component's nav.adoc lives in the frozen mirrors. Cloud only for
@@ -108,12 +109,27 @@ function main () {
     ? buildPlan(parseNav(navAdoc), titleByStem)
     : { pages: new Map(), categories: [], duplicates: [] }
 
-  let pages = goldenPages(opts.goldenDir).filter((p) => p.component === opts.component)
+  const allPages = goldenPages(opts.goldenDir).filter((p) => p.component === opts.component)
+  let pages = allPages
   if (opts.id) pages = pages.filter((p) => p.url === opts.id)
   if (pages.length === 0) {
     console.error(`[convert] no golden pages for component=${opts.component}${opts.id ? ' id=' + opts.id : ''}`)
     process.exit(1)
   }
+
+  // Pass 1: read each page's golden ONCE (cached) and collect its partial-
+  // boundary sentinel regions, then make the corpus-wide factoring decision.
+  // Collection always spans the WHOLE component (not the --id subset) so a
+  // single-page run makes the same decisions a full run would. A golden built
+  // without --mark-partials simply yields no sentinels -> no partials, and the
+  // rest of the pipeline is unchanged.
+  const htmlByUrl = new Map()
+  const readGoldenRaw = (p) => {
+    if (!htmlByUrl.has(p.url)) htmlByUrl.set(p.url, fs.readFileSync(p.file, 'utf8'))
+    return htmlByUrl.get(p.url)
+  }
+  const pagesOcc = allPages.map((p) => ({ url: p.url, occ: collectOccurrences(readGoldenRaw(p)) }))
+  const { decisions, report } = decide(pagesOcc)
 
   // Full (non-scoped) run regenerates the whole component tree from scratch, so
   // stale files from a previous layout do not linger.
@@ -128,7 +144,7 @@ function main () {
     if (!entry) orphans.push(p.url)
     const relFile = entry ? entry.relFile : stem + '.mdx'
 
-    const html = fs.readFileSync(p.file, 'utf8')
+    const html = readGoldenRaw(p)
     const rec = byUrl.get(p.url)
     let title = rec && rec.title
     let derived = false
@@ -137,7 +153,7 @@ function main () {
 
     let body, imports
     try {
-      ({ body, imports } = convertBody(html, { pageUrl: p.url }))
+      ({ body, imports } = convertBody(html, { pageUrl: p.url, partials: decisions }))
     } catch (err) {
       problems.push({ url: p.url, error: err.message })
       continue
@@ -163,6 +179,70 @@ function main () {
     written++
   }
 
+  // Factored partials: convert each shared fragment ONCE into _partials/<slug>.mdx
+  // (no frontmatter -- it is an imported fragment, not a route; the leading `_`
+  // keeps Docusaurus from routing it). Its own imports (Tabs, etc.) ride at the
+  // top of the partial file, so the pages that use it need only the one import
+  // the placeholder already added.
+  let partialsWritten = 0
+  const partialProblems = []
+  for (const [id, d] of decisions) {
+    try {
+      const { body, imports } = convertBody(d.representative, { pageUrl: pages[0].url, partials: decisions })
+      const importBlock = imports.size ? [...imports].join('\n') + '\n\n' : ''
+      d.mdx = importBlock + body + '\n'
+    } catch (err) {
+      partialProblems.push({ id, error: err.message })
+      continue
+    }
+    if (!opts.dry) {
+      const f = path.join(opts.outDir, '_partials', d.slug + '.mdx')
+      fs.mkdirSync(path.dirname(f), { recursive: true })
+      fs.writeFileSync(f, d.mdx)
+    }
+    partialsWritten++
+  }
+
+  // Audit trail: what was factored and what was declined (and why).
+  const factored = report.filter((r) => r.decision === 'factored')
+  const declined = report.filter((r) => r.decision === 'declined')
+
+  // 100%-coverage cross-check against the golden's partials registry (every
+  // partial$/page$ include site, marked or not). Any included id that produced
+  // no sentinel -- so it never reached decide() -- is surfaced here as `unmarked`
+  // (left inline; typically not block-liftable, e.g. list-continuation fusion).
+  // This is what caught mfa-enable, which was otherwise silently dropped.
+  const reportIds = new Set(report.map((r) => r.id))
+  const unmarked = []
+  const regPath = path.join(opts.goldenDir, 'partials-registry.json')
+  if (fs.existsSync(regPath)) {
+    const registry = JSON.parse(fs.readFileSync(regPath, 'utf8'))
+    const byId = new Map()
+    for (const row of registry.includes || []) {
+      if (!row.id.startsWith(opts.component + ':')) continue
+      if (!byId.has(row.id)) byId.set(row.id, { id: row.id, family: row.family, pages: [] })
+      byId.get(row.id).pages.push(row.page)
+    }
+    for (const [id, info] of byId) {
+      if (reportIds.has(id)) continue
+      unmarked.push({ id, family: info.family, occurrences: info.pages.length, pages: info.pages.sort(), decision: 'unmarked', reason: 'inlined (no liftable block — e.g. list-continuation fusion or mid-paragraph splice)' })
+    }
+    unmarked.sort((a, b) => a.id.localeCompare(b.id))
+  }
+
+  // The report is an internal audit artifact, not doc content, so it is written
+  // under build/ (gitignored) rather than into the published output tree.
+  if (!opts.dry && (report.length || unmarked.length)) {
+    const reportDir = path.dirname(opts.goldenDir)
+    fs.mkdirSync(reportDir, { recursive: true })
+    fs.writeFileSync(path.join(reportDir, `partials-report-${opts.component}.json`),
+      JSON.stringify({
+        component: opts.component,
+        counts: { total: report.length + unmarked.length, factored: factored.length, declined: declined.length, unmarked: unmarked.length },
+        partials: [...report, ...unmarked],
+      }, null, 2) + '\n')
+  }
+
   // Category descriptor files.
   let cats = 0
   if (!opts.dry && !opts.id) {
@@ -176,6 +256,16 @@ function main () {
 
   console.log(`[convert] component=${opts.component}: ${written} page(s)` +
     (opts.dry ? ' converted (dry-run)' : ` + ${cats} categor${cats === 1 ? 'y' : 'ies'} written to ${path.relative(process.cwd(), opts.outDir)}`))
+  if (report.length || unmarked.length) {
+    console.log(`[convert] partials: ${factored.length} factored -> _partials/ (${partialsWritten} written), ${declined.length} declined, ${unmarked.length} unmarked (inlined)`)
+    for (const r of declined) console.log(`   • declined ${r.id} (${r.reason}, ${r.occurrences}×)`)
+    for (const r of unmarked) console.log(`   • unmarked ${r.id} (${r.reason}, ${r.occurrences}×)`)
+  }
+  if (partialProblems.length) {
+    console.log(`[convert] ${partialProblems.length} partial(s) failed to convert:`)
+    for (const pr of partialProblems) console.log(`   ✗ ${pr.id}: ${pr.error}`)
+    process.exit(1)
+  }
   if (plan.duplicates.length) console.log(`[convert] nav duplicates (kept first): ${[...new Set(plan.duplicates)].join(', ')}`)
   if (orphans.length) console.log(`[convert] ${orphans.length} page(s) NOT in nav (placed flat): ${orphans.map((u) => u.split('/').pop()).join(', ')}`)
   if (problems.length) {

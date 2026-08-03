@@ -32,6 +32,7 @@ const { configureLogger, finalizeLogger } = require('@antora/logger')
 
 const { buildLockfile } = require('../antora-extension/emit-manifest')
 const { registerPageAliases } = require('../antora-extension/register-page-aliases')
+const { createPartialMarker } = require('../antora-extension/mark-partials')
 const { lockfileKey, lockfileKeyFromFile } = require('./lockfile-key')
 
 // Components we actually migrate (convert + emit to the golden tree). Everything
@@ -64,6 +65,13 @@ function parseArgs (argv) {
     // full playbook still aggregates, so the pin check stays valid; only the
     // render/write step is scoped. Handy for a fast smoke test.
     component: valueOf('--component', null),
+    // Instrument the golden with partial-boundary sentinels (see
+    // antora-extension/mark-partials.js) so the converter can factor MDX
+    // partials. ON by default: the sentinels are HTML comments, invisible to
+    // Layer-1 canonicalize and stripped by readGolden() before any golden read,
+    // so the instrumented golden is byte-equivalent to the bare render (proven
+    // in the partials step-2 validation). --no-mark-partials renders bare.
+    markPartials: !args.includes('--no-mark-partials'),
   }
 }
 
@@ -155,8 +163,11 @@ function tutorialListHtml (contentCatalog, product) {
 }
 
 async function main () {
-  const { playbookFile, outDir, lockfileFile, component } = parseArgs(process.argv)
+  const { playbookFile, outDir, lockfileFile, component, markPartials } = parseArgs(process.argv)
 
+  // The canonical golden now carries partial sentinels by default; every golden
+  // read routes through readGolden() (lib/pairing.js), which strips them, so the
+  // baseline/anchor/inventory caches and Layer-1 diffs never see them.
   const playbook = buildPlaybook(['--playbook', playbookFile], {})
   // Send Antora/asciidoctor log messages (xref/include-not-found errors, etc.)
   // to a file instead of flooding the console, so they can be grouped into a
@@ -201,6 +212,12 @@ async function main () {
     (aliases.problems.length ? ` (${aliases.problems.length} skipped)` : ''))
 
   const configs = asciidocConfigsByVersion(contentCatalog, siteConfig)
+  // One stateless marker reused across pages; asciidoc-loader calls its register
+  // per page with that page's file, so there is no cross-page leakage.
+  const partialMarker = markPartials ? createPartialMarker() : null
+  const withMarker = (cfg) => partialMarker
+    ? { ...cfg, sourcemap: true, extensions: [...(cfg.extensions || []), partialMarker] }
+    : cfg
   const pagesDir = path.join(outDir, 'pages')
   fs.rmSync(pagesDir, { recursive: true, force: true })
 
@@ -228,7 +245,7 @@ async function main () {
   for (const page of pages) {
     const cvKey = `${page.src.version}@${page.src.component}`
     try {
-      const doc = loadAsciiDoc(page, contentCatalog, configs.get(cvKey) || siteConfig)
+      const doc = loadAsciiDoc(page, contentCatalog, withMarker(configs.get(cvKey) || siteConfig))
       let html = doc.convert()
       // UI-injected tutorial list (see tutorialListHtml).
       if (doc.getAttributes()['page-include-tutorial-list']) {
@@ -241,6 +258,18 @@ async function main () {
     } catch (err) {
       errors.push({ id: `${cvKey}:${page.src.module}:${page.src.relative}`, message: err.message })
     }
+  }
+
+  // 100%-coverage partials registry (every partial$/page$ include in the
+  // rendered corpus + whether the marker wrapped it). The converter cross-checks
+  // its factored set against this so an include silently left inline (e.g. list
+  // fusion) is still surfaced in partials-report.json. Lockfile-keyed alongside
+  // the golden; regenerated on every snapshot, so no staleness.
+  if (partialMarker) {
+    const includes = partialMarker.getRegistry()
+    fs.writeFileSync(path.join(outDir, 'partials-registry.json'),
+      JSON.stringify({ lockfileKey: renderedKey, includes }, null, 2) + '\n')
+    console.log(`[snapshot] partials registry: ${includes.length} include site(s) -> partials-registry.json`)
   }
 
   const meta = {

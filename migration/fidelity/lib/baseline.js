@@ -11,7 +11,7 @@
 const fs = require('node:fs')
 const path = require('node:path')
 
-const { goldenPages } = require('./pairing')
+const { goldenPages, readGolden } = require('./pairing')
 const { checkPage } = require('./layer3')
 
 // Stable identity of a problem within a page, so a golden problem and the same
@@ -29,7 +29,7 @@ function problemKey (pr) {
 function buildBaseline (goldenDir, deps) {
   const byPage = new Map()
   for (const p of goldenPages(goldenDir)) {
-    const html = fs.readFileSync(p.file, 'utf8')
+    const html = readGolden(p.file)
     const problems = checkPage({ html, pageUrl: p.url, fragment: true }, deps)
     if (problems.length) byPage.set(p.url, new Set(problems.map(problemKey)))
   }

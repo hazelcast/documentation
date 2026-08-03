@@ -34,16 +34,59 @@ const JSX_KEEP = new Set(['id', 'href', 'src', 'alt', 'title', 'target', 'rel', 
 // ---------------------------------------------------------------------------
 
 // convert(html, ctx) -> { body, imports }
-//   ctx: { pageUrl }
+//   ctx: { pageUrl, partials }
+//   partials: Map(id -> { componentName, importStmt, ... }) of FACTORED partials
+//   (see converter/lib/partials.js). A sentinel region whose id is in the map is
+//   replaced by a <Component/> reference + import; any other sentinel region is
+//   inlined (sentinels removed, content converted as normal). Absent/empty map
+//   => every region inlines, i.e. today's behaviour.
 function convertBody (html, ctx) {
   const $ = cheerio.load(html, null, false)
   // A per-page slugger mirrors how Docusaurus derives heading ids, so we can
   // detect (and drop) the explicit id where it would match the auto-generated
   // one. It is stateful across the page (duplicate headings get -1, -2 ...), so
   // it must see EVERY heading in document order -- see heading().
-  const state = { imports: new Set(), pageUrl: ctx.pageUrl, slugger: new GithubSlugger() }
+  const state = { imports: new Set(), pageUrl: ctx.pageUrl, slugger: new GithubSlugger(), partials: ctx.partials || new Map() }
+  collapseSentinels($, $.root()[0], state)
   const body = convertChildren($, $.root()[0], state, 0)
   return { body: body.trim(), imports: state.imports }
+}
+
+// Rewrite partial-boundary sentinels in the parsed DOM before conversion: a
+// factored region collapses to a single <hzpartial data-id> placeholder (its
+// inner blocks dropped -- they live in the partial file now); a non-factored
+// region is unwrapped in place (sentinels removed, inner blocks kept). Regions
+// do not nest, so a linear scan per parent suffices; recurse into what remains.
+function collapseSentinels ($, node, st) {
+  const kids = node.children || []
+  const out = []
+  for (let i = 0; i < kids.length; i++) {
+    const c = kids[i]
+    if (c.type === 'comment') {
+      const m = c.data.trim().match(/^hz-partial:start (.+)$/)
+      if (m) {
+        const id = m[1].trim()
+        const endMark = `hz-partial:end ${id}`
+        const inner = []
+        let j = i + 1
+        while (j < kids.length && !(kids[j].type === 'comment' && kids[j].data.trim() === endMark)) {
+          inner.push(kids[j]); j++
+        }
+        const d = st.partials.get(id)
+        if (d) {
+          out.push({ type: 'tag', name: 'hzpartial', attribs: { 'data-id': id }, children: [], parent: node })
+        } else {
+          for (const n of inner) { n.parent = node; out.push(n) }
+        }
+        i = j // skip the inner nodes; the loop's i++ steps past the end comment
+        continue
+      }
+      continue // stray/other comment: drop (convertChildren ignored these anyway)
+    }
+    out.push(c)
+  }
+  node.children = out
+  for (const c of out) if (c.type === 'tag' && c.name !== 'hzpartial') collapseSentinels($, c, st)
 }
 
 // ---------------------------------------------------------------------------
@@ -76,6 +119,16 @@ const hasClass = (node, c) => classes(node).includes(c)
 function convertBlock ($, node, st, depth) {
   const name = node.name
   const cls = classes(node)
+
+  // Factored-partial placeholder (see collapseSentinels): emit the component
+  // reference and record its import. The fragment's content lives in the
+  // partial file, so nothing else is rendered here.
+  if (name === 'hzpartial') {
+    const d = st.partials.get(node.attribs['data-id'])
+    if (!d) return ''
+    st.imports.add(d.importStmt)
+    return `<${d.componentName}/>`
+  }
 
   // Headings that appear as direct children (section titles live inside
   // .sectN wrappers, handled below, but be robust to bare headings too).
@@ -436,6 +489,14 @@ function inlineTag ($, node, st, opt) {
   const cls = classes(node)
   const kids = () => inlineFrom($, node.children, st, opt)
   switch (name) {
+    case 'hzpartial': {
+      // Insurance: a factored region should always be block-level, but never let
+      // its placeholder silently vanish if it turns up inline.
+      const d = st.partials.get(node.attribs['data-id'])
+      if (!d) return ''
+      st.imports.add(d.importStmt)
+      return `<${d.componentName}/>`
+    }
     case 'strong': case 'b': return `**${kids()}**`
     case 'em': return `*${kids()}*`
     case 'i':
@@ -494,6 +555,16 @@ function serNode ($, node, st) {
   if (node.type !== 'tag') return ''
   const name = node.name
   const cls = classes(node)
+
+  // Factored-partial placeholder inside a raw-HTML/JSX block (e.g. a partial
+  // included within a [%collapsible] <details>). A component reference is valid
+  // JSX, so emit it and record the import here too.
+  if (name === 'hzpartial') {
+    const d = st.partials.get(node.attribs['data-id'])
+    if (!d) return ''
+    st.imports.add(d.importStmt)
+    return `<${d.componentName}/>`
+  }
 
   // Skip empty heading self-anchors and presentational colgroups.
   if (name === 'a' && cls.includes('anchor')) return ''

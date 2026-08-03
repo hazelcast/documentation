@@ -9,13 +9,13 @@
 const fs = require('node:fs')
 const path = require('node:path')
 
-const { goldenPages } = require('./pairing')
+const { goldenPages, readGolden } = require('./pairing')
 const { inventory, ASCIIDOC_PROFILE } = require('./structure')
 
 function buildInventoryIndex (goldenDir) {
   const index = new Map()
   for (const p of goldenPages(goldenDir)) {
-    index.set(p.url, inventory(fs.readFileSync(p.file, 'utf8'), ASCIIDOC_PROFILE))
+    index.set(p.url, inventory(readGolden(p.file), ASCIIDOC_PROFILE))
   }
   return index
 }
