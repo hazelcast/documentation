@@ -46,7 +46,7 @@ function convertBody (html, ctx) {
   // detect (and drop) the explicit id where it would match the auto-generated
   // one. It is stateful across the page (duplicate headings get -1, -2 ...), so
   // it must see EVERY heading in document order -- see heading().
-  const state = { imports: new Set(), pageUrl: ctx.pageUrl, slugger: new GithubSlugger(), partials: ctx.partials || new Map() }
+  const state = { imports: new Set(), pageUrl: ctx.pageUrl, slugger: new GithubSlugger(), partials: ctx.partials || new Map(), linkVars: ctx.linkVars || new Map() }
   collapseSentinels($, $.root()[0], state)
   const body = convertChildren($, $.root()[0], state, 0)
   return { body: body.trim(), imports: state.imports }
@@ -515,8 +515,16 @@ function inlineTag ($, node, st, opt) {
       const anchorEl = id ? `<span id=${jsxAttr(id)}></span>` : ''
       if (cls.includes('anchor')) return opt.skipAnchors ? '' : anchorEl // heading self-link: no text
       const label = kids().trim()
-      const { kind, href } = resolveHref((node.attribs && node.attribs.href) || '', st.pageUrl)
+      const rawHref = (node.attribs && node.attribs.href) || ''
+      const { kind, href } = resolveHref(rawHref, st.pageUrl)
       if (kind === 'empty' || label === '') return anchorEl + label
+      // Single-sourced destination: emit the globally-registered <LinkVariable>
+      // (no import needed) instead of baking the URL in. It always opens in a
+      // new tab (external destinations).
+      const varName = st.linkVars.get(rawHref)
+      if (varName) {
+        return anchorEl + `<LinkVariable name=${jsxAttr(varName)}>${label}</LinkVariable>`
+      }
       const safeLabel = label.replace(/\]/g, '\\]')
       const safeHref = /[()\s]/.test(href) ? `<${href}>` : href
       return anchorEl + `[${safeLabel}](${safeHref})`
