@@ -38,12 +38,24 @@ const BADGE_ATTRIBUTES = {
   'page-experimental-feature': 'experimental',
 }
 
+// Header attributes that feed the published `api/cloud.json` console index (the
+// Hazelcast Cloud console's in-product help nav fetches this file). They are
+// NOT page content and must not become MDX/frontmatter; a downstream generator
+// (converter/convert.js) reads them from the manifest and reproduces cloud.json
+// as a static build artifact, mirroring the production api-json.js extension.
+// Only `cloud-tags` gates a page into the index; the rest refine its entries.
+// Kept as raw strings (a `|` splits one page into multiple entries downstream).
+const CLOUD_ATTRIBUTES = ['cloud-tags', 'cloud-title', 'cloud-order', 'cloud-url-video', 'cloud-anchor']
+
 function registerPageAliases (contentCatalog, siteAsciiDocConfig = {}) {
   let registered = 0
   const problems = []
   const titles = new Map()
   // resource id -> array of badge frontmatter keys set on that page.
   const badges = new Map()
+  // resource id -> raw cloud-* attribute strings, for pages that carry
+  // `cloud-tags` (the api/cloud.json console index). See CLOUD_ATTRIBUTES.
+  const cloudMeta = new Map()
   for (const page of contentCatalog.getPages((p) => p.out)) {
     let meta
     try {
@@ -70,6 +82,16 @@ function registerPageAliases (contentCatalog, siteAsciiDocConfig = {}) {
       if (v != null && v !== 'false') pageBadges.push(key)
     }
     if (pageBadges.length) badges.set(resourceId(page.src), pageBadges)
+    // Capture the cloud-* console-index attributes on any page that opts in via
+    // `cloud-tags` (site-wide: a tutorials page can appear in the index too).
+    if (meta.attributes['cloud-tags'] != null) {
+      const cm = {}
+      for (const attr of CLOUD_ATTRIBUTES) {
+        const v = meta.attributes[attr]
+        if (v != null) cm[attr] = v
+      }
+      cloudMeta.set(resourceId(page.src), cm)
+    }
     // Prime the page's asciidoc metadata so xref link-text resolves to this
     // page's xreftext when another page links to it (see the note above).
     if (!page.asciidoc) page.asciidoc = meta
@@ -86,7 +108,7 @@ function registerPageAliases (contentCatalog, siteAsciiDocConfig = {}) {
       }
     }
   }
-  return { registered, problems, titles, badges }
+  return { registered, problems, titles, badges, cloudMeta }
 }
 
 // The manifest resource id form (kept in sync with emit-manifest's buildManifest):

@@ -116,6 +116,13 @@ function writeRedirectsFile (file, redirects) {
   fs.writeFileSync(file, out)
 }
 
+// NOTE: api/cloud.json is NOT generated here. The cloud-* console-index data is
+// SEEDED into cloud MDX frontmatter (see frontmatter(), cloud_* keys), and the
+// file itself is emitted at Docusaurus build time by the permanent
+// new-docs/plugins/cloud-console-index plugin (the replacement for the Antora
+// api-json.js extension). This keeps the artifact regenerable after the migration
+// tooling is deleted.
+
 function parseArgs (argv) {
   const args = argv.slice(2)
   const val = (flag, fb) => { const i = args.indexOf(flag); return i === -1 ? fb : args[i + 1] }
@@ -163,7 +170,7 @@ function loadNavAdoc (component, sourcesDir) {
   }
 }
 
-function frontmatter (title, { derived, slug, sidebarLabel, sidebarPosition, unlisted, badges } = {}) {
+function frontmatter (title, { derived, slug, sidebarLabel, sidebarPosition, unlisted, badges, cloud } = {}) {
   const lines = ['---', `title: ${yaml(title)}`]
   if (sidebarLabel) lines.push(`sidebar_label: ${yaml(sidebarLabel)}`)
   if (sidebarPosition != null) lines.push(`sidebar_position: ${sidebarPosition}`)
@@ -171,6 +178,13 @@ function frontmatter (title, { derived, slug, sidebarLabel, sidebarPosition, unl
   // Page-level badges (e.g. `dedicated: true`), carried from the page header via
   // the manifest. The front-end BADGES registry keys off these frontmatter keys.
   if (badges) for (const key of badges) lines.push(`${key}: true`)
+  // Console-index metadata (cloud-* page header attributes → cloud_* frontmatter),
+  // carried from the manifest. NOT rendered — consumed at build time by the
+  // cloud-console-index Docusaurus plugin, which emits /api/cloud.json from these
+  // (the permanent replacement for the Antora api-json.js extension). Kept as raw
+  // strings (a `|` splits one page into multiple console entries). This seeds the
+  // data into new-docs so cloud.json survives deletion of the migration tooling.
+  if (cloud) for (const [attr, val] of Object.entries(cloud)) lines.push(`${attr.replace(/-/g, '_')}: ${yaml(val)}`)
   // Orphan pages: present in Antora (served at their URL) but absent from the
   // nav. `unlisted` mirrors that exactly -- the URL still resolves, but the page
   // is kept out of the sidebar, search, and sitemap.
@@ -258,6 +272,7 @@ function main () {
       sidebarPosition: entry ? entry.sidebarPosition : null,
       unlisted: !entry, // orphan (not in nav)
       badges: rec && rec.badges,
+      cloud: rec && rec.cloud,
     })
     const importBlock = imports.size ? [...imports].join('\n') + '\n\n' : ''
     const mdx = fm + '\n\n' + importBlock + body + '\n'

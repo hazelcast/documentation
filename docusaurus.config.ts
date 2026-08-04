@@ -113,6 +113,10 @@ const config: Config = {
         redirects,
       },
     ],
+    // Emits /api/cloud.json at build time from the cloud docs' cloud_* frontmatter
+    // — the console index the Hazelcast Cloud console fetches. Permanent
+    // replacement for the Antora api-json.js extension; see plugins/cloud-console-index.
+    './plugins/cloud-console-index',
   ],
 
   themeConfig: {

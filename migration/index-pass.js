@@ -41,7 +41,7 @@ async function main () {
     (aliases.problems.length ? ` (${aliases.problems.length} skipped)` : '') +
     `, captured ${aliases.titles.size} page titles`)
 
-  const { manifest, lockfile } = emitManifest({ contentCatalog, playbook, outDir, titles: aliases.titles, badges: aliases.badges })
+  const { manifest, lockfile } = emitManifest({ contentCatalog, playbook, outDir, titles: aliases.titles, badges: aliases.badges, cloudMeta: aliases.cloudMeta })
   console.log(
     `[index-pass] wrote ${manifest.counts.resources} resources across ${manifest.counts.components} components, ` +
       `${lockfile.counts.sources} pinned sources -> ${outDir}`
