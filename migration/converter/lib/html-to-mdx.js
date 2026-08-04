@@ -22,6 +22,11 @@ const { mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode } = req
 const { resolveHref } = require('./links')
 
 const ADMONITION_TYPES = ['note', 'tip', 'warning', 'caution', 'important']
+// `<strong class="…">` classes that are inline badges (from Asciidoctor
+// `[.enterprise]*…*` roles) -> the global <Badge type> component, keyed by the
+// front-end BADGES registry. Any other strong class (align=*, navy, blue) is
+// presentational and stays plain bold.
+const BADGE_CLASSES = new Set(['enterprise', 'serverless', 'dedicated', 'beta', 'experimental'])
 const VOID_ELEMENTS = new Set(['img', 'br', 'hr', 'col', 'input', 'source', 'area', 'wbr'])
 // HTML attribute -> JSX prop name for the handful that differ and that we keep.
 const JSX_ATTR_MAP = { class: 'className', colspan: 'colSpan', rowspan: 'rowSpan', for: 'htmlFor', tabindex: 'tabIndex' }
@@ -520,7 +525,14 @@ function inlineTag ($, node, st, opt) {
       st.imports.add(d.importStmt)
       return `<${d.componentName}/>`
     }
-    case 'strong': case 'b': return `**${kids()}**`
+    case 'strong': case 'b': {
+      const badge = cls.find((c) => BADGE_CLASSES.has(c))
+      // <Badge> is globally registered (MDXComponents), so no import is needed.
+      // Self-closing: the label is single-sourced in the front-end registry, so
+      // the authored text (e.g. "Enterprise Edition") is intentionally dropped.
+      if (badge) return `<Badge type=${jsxAttr(badge)}/>`
+      return `**${kids()}**`
+    }
     case 'em': return `*${kids()}*`
     case 'i':
       // Asciidoctor renders emphasis as <em>; <i> is ALWAYS a font icon
@@ -614,6 +626,13 @@ function serNode ($, node, st) {
   if (cls.includes('paragraph')) {
     const p = $(node).children('p')[0]
     return `<p>${p ? serChildren($, p, st) : serChildren($, node, st)}</p>`
+  }
+
+  // Inline badge inside a raw-HTML/JSX block (e.g. a spanned table cell): emit
+  // the global <Badge> rather than a raw <strong className="enterprise">.
+  if (name === 'strong' || name === 'b') {
+    const badge = cls.find((c) => BADGE_CLASSES.has(c))
+    if (badge) return `<Badge type=${jsxAttr(badge)}/>`
   }
 
   const attrs = serAttrs(node, st)

@@ -4,7 +4,7 @@ import {ThemeClassNames} from '@docusaurus/theme-common';
 import {useDoc} from '@docusaurus/plugin-content-docs/client';
 import Heading from '@theme/Heading';
 import MDXContent from '@theme/MDXContent';
-import TitleBadgeRow, {BADGE_KEYS} from '@site/src/components/TitleBadge';
+import {TitleBadgeRow, BADGE_KEYS} from '@site/src/components/Badge';
 
 // Overrides the stock theme component so that page-level badges declared in
 // frontmatter (e.g. `dedicated: true`) render next to the title. Only fires
