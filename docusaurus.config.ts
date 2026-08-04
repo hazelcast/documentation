@@ -35,10 +35,12 @@ const config: Config = {
   markdown: {
     hooks: {
       onBrokenMarkdownLinks: 'warn',
-      // Images are not migrated into static/ yet, so absolute /_images/ paths do
-      // not resolve to local files. Warn instead of failing the build; revisit
-      // when images are copied over.
-      onBrokenMarkdownImages: 'warn',
+      // Images are co-located with the pages that use them and referenced by a
+      // relative path, so webpack resolves and fingerprints each one. A missing
+      // image is a real error (a page migrated without its assets), so fail the
+      // build on it -- that build-time guarantee is why we co-locate rather than
+      // dump into static/. migration/extract-images.js places the images.
+      onBrokenMarkdownImages: 'throw',
     },
   },
 

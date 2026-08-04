@@ -238,8 +238,15 @@ function main () {
   const { decisions, report } = decide(pagesOcc)
 
   // Full (non-scoped) run regenerates the whole component tree from scratch, so
-  // stale files from a previous layout do not linger.
-  if (!opts.dry && !opts.id) fs.rmSync(opts.outDir, { recursive: true, force: true })
+  // stale files from a previous layout do not linger. Preserve co-located assets
+  // (images/): those are placed by extract-images.js, not regenerated here, so
+  // wiping them would leave every image reference dangling until the next extract.
+  if (!opts.dry && !opts.id && fs.existsSync(opts.outDir)) {
+    for (const name of fs.readdirSync(opts.outDir)) {
+      if (name === 'images') continue
+      fs.rmSync(path.join(opts.outDir, name), { recursive: true, force: true })
+    }
+  }
 
   let written = 0
   const orphans = []
@@ -259,7 +266,7 @@ function main () {
 
     let body, imports
     try {
-      ({ body, imports } = convertBody(html, { pageUrl: p.url, partials: decisions, linkVars }))
+      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component: opts.component, partials: decisions, linkVars }))
     } catch (err) {
       problems.push({ url: p.url, error: err.message })
       continue
@@ -296,7 +303,7 @@ function main () {
   const partialProblems = []
   for (const [id, d] of decisions) {
     try {
-      const { body, imports } = convertBody(d.representative, { pageUrl: pages[0].url, partials: decisions, linkVars })
+      const { body, imports } = convertBody(d.representative, { pageUrl: pages[0].url, relFile: path.join('_partials', d.slug + '.mdx'), component: opts.component, partials: decisions, linkVars })
       const importBlock = imports.size ? [...imports].join('\n') + '\n\n' : ''
       d.mdx = importBlock + body + '\n'
     } catch (err) {

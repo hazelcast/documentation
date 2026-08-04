@@ -16,6 +16,7 @@
 // structure / Layer 3 links), not by byte-identical HTML, so we optimise for
 // "renders back to the same text + structure + working links".
 
+const path = require('node:path')
 const cheerio = require('cheerio')
 const GithubSlugger = require('github-slugger')
 const { mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode } = require('./mdx')
@@ -51,7 +52,19 @@ function convertBody (html, ctx) {
   // detect (and drop) the explicit id where it would match the auto-generated
   // one. It is stateful across the page (duplicate headings get -1, -2 ...), so
   // it must see EVERY heading in document order -- see heading().
-  const state = { imports: new Set(), pageUrl: ctx.pageUrl, slugger: new GithubSlugger(), partials: ctx.partials || new Map(), linkVars: ctx.linkVars || new Map() }
+  const state = {
+    imports: new Set(),
+    pageUrl: ctx.pageUrl,
+    // Output file path of the page/partial being converted, RELATIVE to the
+    // component out dir (e.g. "develop-applications/foo/overview.mdx"). Images
+    // are co-located, so their references are computed relative to this — see
+    // imageSrc(). Falls back to the URL layout when absent.
+    relFile: (ctx.relFile || '').replace(/\\/g, '/'),
+    component: ctx.component || (ctx.pageUrl || '').split('/').filter(Boolean)[0] || '',
+    slugger: new GithubSlugger(),
+    partials: ctx.partials || new Map(),
+    linkVars: ctx.linkVars || new Map(),
+  }
   collapseSentinels($, $.root()[0], state)
   const body = convertChildren($, $.root()[0], state, 0)
   return { body: body.trim(), imports: state.imports }
@@ -349,8 +362,33 @@ function convertImageBlock ($, node, st) {
 
 function imageMd ($, img, st) {
   const alt = (img.attribs && img.attribs.alt) || ''
-  const src = resolveHref((img.attribs && img.attribs.src) || '', st.pageUrl).href
+  const src = imageSrc((img.attribs && img.attribs.src) || '', st)
   return `![${alt.replace(/([[\]])/g, '\\$1')}](${src})`
+}
+
+// Images are CO-LOCATED: each component's images live in an `images/` folder in
+// the docs tree (placed by extract-images.js), and pages reference them with a
+// path RELATIVE to their own output file, so webpack resolves and content-hashes
+// them — a missing image then fails the build instead of 404ing silently.
+// resolveHref first canonicalises the golden's page-relative src (e.g.
+// "_images/foo.png") to a site-absolute path ("/cloud/_images/foo.png"); we strip
+// the component prefix, rename Antora's `_images` dir to our `images`, and
+// relativise the rest against the current file's dir. This `_images`->`images`
+// rewrite MUST match the one in extract-images.js (dest path), or references and
+// files disagree. External srcs, and images outside this component (which we
+// cannot co-locate into its tree), keep their resolved absolute form.
+function imageSrc (raw, st) {
+  const resolved = resolveHref(raw, st.pageUrl)
+  if (resolved.kind !== 'internal') return resolved.href
+  const abs = resolved.path
+  const hash = resolved.hash || ''
+  const prefix = st.component ? `/${st.component}/` : ''
+  if (!prefix || !abs.startsWith(prefix)) return abs + hash
+  const within = abs.slice(prefix.length).replace(/(^|\/)_images\//, '$1images/') // "_images/foo.png" -> "images/foo.png"
+  const fromDir = path.posix.dirname(st.relFile || '')
+  let rel = path.posix.relative(fromDir === '.' ? '' : fromDir, within)
+  if (!rel.startsWith('.')) rel = './' + rel
+  return rel + hash
 }
 
 // --- tabs ------------------------------------------------------------------
@@ -682,7 +720,10 @@ function serAttrs (node, st) {
     if (!JSX_KEEP.has(k) && !k.startsWith('aria-')) continue
     let name = JSX_ATTR_MAP[k] || k
     let value = v
-    if (k === 'href' || k === 'src') value = resolveHref(v, st.pageUrl).href
+    // Links keep their site-absolute form (URL fidelity); image srcs become a
+    // co-located relative path (see imageSrc).
+    if (k === 'href') value = resolveHref(v, st.pageUrl).href
+    else if (k === 'src') value = imageSrc(v, st)
     out += ` ${name}=${jsxAttr(value)}`
   }
   return out
