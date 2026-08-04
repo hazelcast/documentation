@@ -163,11 +163,14 @@ function loadNavAdoc (component, sourcesDir) {
   }
 }
 
-function frontmatter (title, { derived, slug, sidebarLabel, sidebarPosition, unlisted } = {}) {
+function frontmatter (title, { derived, slug, sidebarLabel, sidebarPosition, unlisted, badges } = {}) {
   const lines = ['---', `title: ${yaml(title)}`]
   if (sidebarLabel) lines.push(`sidebar_label: ${yaml(sidebarLabel)}`)
   if (sidebarPosition != null) lines.push(`sidebar_position: ${sidebarPosition}`)
   if (slug) lines.push(`slug: ${slug}`)
+  // Page-level badges (e.g. `dedicated: true`), carried from the page header via
+  // the manifest. The front-end BADGES registry keys off these frontmatter keys.
+  if (badges) for (const key of badges) lines.push(`${key}: true`)
   // Orphan pages: present in Antora (served at their URL) but absent from the
   // nav. `unlisted` mirrors that exactly -- the URL still resolves, but the page
   // is kept out of the sidebar, search, and sitemap.
@@ -254,6 +257,7 @@ function main () {
       sidebarLabel: entry ? entry.sidebarLabel : null,
       sidebarPosition: entry ? entry.sidebarPosition : null,
       unlisted: !entry, // orphan (not in nav)
+      badges: rec && rec.badges,
     })
     const importBlock = imports.size ? [...imports].join('\n') + '\n\n' : ''
     const mdx = fm + '\n\n' + importBlock + body + '\n'

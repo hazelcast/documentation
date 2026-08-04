@@ -26,10 +26,24 @@ const { loadAsciiDoc, extractAsciiDocMetadata } = require('@antora/asciidoc-load
 //      our snapshot build converts page-by-page, so without this pre-pass a
 //      target rendered later has no asciidoc metadata when an earlier page links
 //      to it, and the golden shows unresolved link text.
+// Page header attributes that become a page-level badge in the docs. Each maps
+// to a frontmatter key (the `page-` prefix stripped) that the converter emits
+// and the front-end `BADGES` registry keys off. Whitelisted rather than
+// prefix-matched so an unrelated `page-*` attribute never leaks into a badge.
+const BADGE_ATTRIBUTES = {
+  'page-dedicated': 'dedicated',
+  'page-enterprise': 'enterprise',
+  'page-serverless': 'serverless',
+  'page-beta': 'beta',
+  'page-experimental-feature': 'experimental',
+}
+
 function registerPageAliases (contentCatalog, siteAsciiDocConfig = {}) {
   let registered = 0
   const problems = []
   const titles = new Map()
+  // resource id -> array of badge frontmatter keys set on that page.
+  const badges = new Map()
   for (const page of contentCatalog.getPages((p) => p.out)) {
     let meta
     try {
@@ -47,6 +61,15 @@ function registerPageAliases (contentCatalog, siteAsciiDocConfig = {}) {
       continue
     }
     if (meta.doctitle) titles.set(resourceId(page.src), meta.doctitle)
+    // Collect any page-level badge attributes set on this page. Mirrors the old
+    // UI gate (attribute present and not explicitly "false"); the value is
+    // typically "true".
+    const pageBadges = []
+    for (const [attr, key] of Object.entries(BADGE_ATTRIBUTES)) {
+      const v = meta.attributes[attr]
+      if (v != null && v !== 'false') pageBadges.push(key)
+    }
+    if (pageBadges.length) badges.set(resourceId(page.src), pageBadges)
     // Prime the page's asciidoc metadata so xref link-text resolves to this
     // page's xreftext when another page links to it (see the note above).
     if (!page.asciidoc) page.asciidoc = meta
@@ -63,7 +86,7 @@ function registerPageAliases (contentCatalog, siteAsciiDocConfig = {}) {
       }
     }
   }
-  return { registered, problems, titles }
+  return { registered, problems, titles, badges }
 }
 
 // The manifest resource id form (kept in sync with emit-manifest's buildManifest):
