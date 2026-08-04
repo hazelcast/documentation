@@ -19,12 +19,12 @@ export const BADGES: Record<string, BadgeDef> = {
   dedicated: {
     label: 'Cloud Dedicated',
     tooltip: 'This feature requires Cloud Dedicated, a managed Hazelcast Cloud service.',
-    href: '/dedicated-cluster',
+    href: '/cloud/dedicated-cluster',
   },
   serverless: {
     label: 'Cloud Standard',
     tooltip: 'This feature requires Cloud Standard, a managed Hazelcast Cloud service.',
-    href: '/serverless-cluster',
+    href: '/cloud/serverless-cluster',
   },
   enterprise: {
     label: 'Enterprise',
