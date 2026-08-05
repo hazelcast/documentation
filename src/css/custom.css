@@ -34,6 +34,13 @@
    * colour is set to the same token to keep that (no darkening on hover). */
   --ifm-link-color: var(--hive-color-link-v4);
   --ifm-link-hover-color: var(--hive-color-link-v4);
+
+  /* Tabs: HIVE colours the active tab (label + underline) with brand-v4.
+   * Same value as primary-v4 today, but pinned to brand-v4 to match HIVE's
+   * own token and stay correct if the two ever diverge. Hover and the
+   * strip-wide bottom rule need selector rules (no Infima vars) — see below. */
+  --ifm-tabs-color-active: var(--hive-color-brand-v4);
+  --ifm-tabs-color-active-border: var(--hive-color-brand-v4);
 }
 
 /* Dark mode: unchanged stock Docusaurus palette (HIVE has no dark tokens). */
@@ -46,4 +53,16 @@
   --ifm-color-primary-lighter: #32d8b4;
   --ifm-color-primary-lightest: #4fddbf;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+/* Tabs: match HIVE's v4 TabList/Tab treatment that Infima variables can't
+ * express. HIVE runs a border-v4 rule under the whole tab strip and colours
+ * the label teal on hover (no background), whereas Infima gives only the
+ * active item a border and shows a grey hover background. */
+.tabs {
+  border-bottom: var(--hive-border-width) solid var(--hive-color-border-v4);
+}
+.tabs__item:hover {
+  color: var(--hive-color-brand-v4);
+  background-color: transparent;
 }
