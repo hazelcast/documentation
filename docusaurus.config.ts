@@ -121,10 +121,12 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'Hazelcast Documentation',
+      // No title text: the logo wordmark stands alone.
+      title: '',
       logo: {
         alt: 'Hazelcast',
-        src: 'img/logo.svg',
+        src: 'img/hazelcast-logo-original.svg',
+        srcDark: 'img/hazelcast-logo-white.svg',
       },
       items: [
         {
