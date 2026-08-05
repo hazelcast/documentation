@@ -12,17 +12,18 @@
 // container excludes them for free.
 //
 // Things inside it still need dropping to align with the golden fragment:
-//   - the title <header>: for the migration's synthetic-title pages the swizzled
-//     DocItem/Content wraps the page-title <h1> AND the page-level badge row
-//     (TitleBadgeRow, e.g. `dedicated: true`) in a direct-child <header>. The
-//     golden body fragment has no title area at all, so the whole header is
-//     chrome. Title fidelity is checked via frontmatter, not here. (A bare h1
-//     outside a header is dropped as a fallback.)
+//   - the page-title <h1>: the swizzled DocItem/Content renders it (for
+//     synthetic-title pages, wrapped in a <header>). The golden body fragment
+//     has no title area; title fidelity is checked via frontmatter, not here.
 //   - the inline-badge popover: an inline <Badge> renders a `.popover` span
 //     (tooltip text + a "Learn more" link) alongside its visible label. The
 //     label IS body content (the golden has it), but the popover is Docusaurus-
 //     only UI the golden never has -- strip it so only the label is compared.
 //   - handled by the Layer-1 strip list (.hash-link, admonition heading label).
+//
+// The page-level badge row (TitleBadgeRow, e.g. `dedicated: true`) renders
+// OUTSIDE `.theme-doc-markdown` (a sibling before it, like DocVersionBadge), so
+// selecting that container already excludes it -- no explicit drop needed.
 
 const cheerio = require('cheerio')
 
@@ -32,8 +33,7 @@ function extractMain (fullHtml) {
   if (!root.length) root = $('article').first()
   if (!root.length) root = $('main').first()
   if (!root.length) return null // not a recognizable doc page
-  root.children('header').first().remove() // drop the title header (badge row + h1)
-  root.find('h1').first().remove() // fallback: any remaining page-title h1
+  root.find('h1').first().remove() // drop the page-title h1 (title fidelity is via frontmatter)
   // Inline-badge popover (hashed CSS-module class, e.g. `popover_Tx9d`): drop the
   // supplementary tooltip/"Learn more", keeping the badge's visible label.
   root.find('[class*="popover_"]').remove()
