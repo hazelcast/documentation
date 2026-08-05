@@ -138,8 +138,24 @@ const config: Config = {
     },
     footer: {
       style: 'dark',
-      links: [],
-      copyright: `Copyright © ${new Date().getFullYear()} Hazelcast, Inc.`,
+      links: [
+        {
+          items: [
+            {
+              label: 'Terms of Service',
+              href: 'https://hazelcast.com/terms-of-use/?utm_source=docs-website',
+            },
+            {
+              label: 'Privacy',
+              to: '/privacy/',
+            },
+            {
+              label: 'Contact us',
+              href: 'https://hazelcast.com/contact/?utm_source=docs-website',
+            },
+          ],
+        },
+      ],
     },
     prism: {
       theme: prismThemes.github,
