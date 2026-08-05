@@ -66,3 +66,53 @@
   color: var(--hive-color-brand-v4);
   background-color: transparent;
 }
+
+/* Tables: translate HIVE's v4 SimpleTable (@hazelcast/ui SimpleTable.module.css,
+ * the "surface" variant) onto native markdown tables — bordered + rounded, a
+ * tinted header, and row separator lines (SimpleTable uses separators, not
+ * zebra). Cells keep the body font (SimpleTable's data-oriented siblings use
+ * monospace; prose shouldn't). The three themeable colours go through local
+ * custom properties so dark mode is a single override — HIVE has no dark
+ * palette, so dark falls back to Infima emphasis tokens. Scoped to .markdown
+ * so it can't affect other tables. */
+.markdown table {
+  --table-border: var(--hive-color-border-v4);
+  --table-header-bg: var(--hive-color-surface-active-v4);
+  --table-header-fg: var(--hive-color-text-secondary-v4);
+
+  /* SimpleTable uses row separators, not zebra — turn off Infima's default
+   * tr:nth-child(2n) striping (inherited by rows via this custom property). */
+  --ifm-table-stripe-background: transparent;
+
+  display: table;
+  width: 100%;
+  max-width: 100%;
+  /* separate (not SimpleTable's collapse): border-collapse:collapse draws the
+   * border square and ignores border-radius, so the surface variant's rounded
+   * corners never round. separate + border-spacing:0 keeps the seamless look
+   * while letting the radius apply. */
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-bottom: var(--ifm-spacing-vertical);
+  font-size: var(--hive-font-size-body-small);
+  border: var(--hive-border-width) solid var(--table-border);
+  border-radius: var(--hive-border-radius);
+  overflow: hidden; /* clip header/rows to the rounded corners */
+}
+.markdown table th,
+.markdown table td {
+  text-align: left;
+  vertical-align: top;
+  padding: calc(var(--hive-grid) * 2) calc(var(--hive-grid) * 3);
+  border: 0;
+}
+.markdown table thead th {
+  font-weight: var(--hive-font-weight-text-medium);
+  color: var(--table-header-fg);
+  background-color: var(--table-header-bg);
+  border-bottom: var(--hive-border-width) solid var(--table-border);
+}
+.markdown table tbody tr + tr > td,
+.markdown table tbody tr + tr > th {
+  border-top: var(--hive-border-width) solid var(--table-border);
+}
