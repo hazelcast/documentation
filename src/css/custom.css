@@ -116,3 +116,32 @@
 .markdown table tbody tr + tr > th {
   border-top: var(--hive-border-width) solid var(--table-border);
 }
+
+/* Admonitions in HIVE colours (light mode only — HIVE has no dark palette, so
+ * dark keeps Docusaurus's stock admonition colours). Each Infima alert variant
+ * gets a HIVE accent token (--hive-adm), then one shared rule drives the left
+ * border + a light lab() tint of that accent for the background — the same
+ * lab(from …) recipe HIVE's Badge uses. Types map via their variant: note→
+ * secondary, tip→success, info/important→info, warning/caution→warning,
+ * danger→error. */
+:root:not([data-theme='dark']) .theme-admonition.alert--secondary {
+  --hive-adm: var(--hive-color-text-secondary);
+}
+:root:not([data-theme='dark']) .theme-admonition.alert--success {
+  --hive-adm: var(--hive-color-success-darkest);
+}
+:root:not([data-theme='dark']) .theme-admonition.alert--info {
+  --hive-adm: var(--hive-color-info-darkest);
+}
+:root:not([data-theme='dark']) .theme-admonition.alert--warning {
+  --hive-adm: var(--hive-color-warning-darkest);
+}
+:root:not([data-theme='dark']) .theme-admonition.alert--danger {
+  --hive-adm: var(--hive-color-error);
+}
+:root:not([data-theme='dark']) .theme-admonition[class*='alert--'] {
+  --ifm-alert-border-color: var(--hive-adm);
+  /* Pale tint: high lightness + damped chroma (a/b scaled down) so the accent
+   * reads as a soft wash, not a vivid fill. */
+  --ifm-alert-background-color: lab(from var(--hive-adm) 97% calc(a * 0.4) calc(b * 0.4));
+}
