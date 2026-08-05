@@ -12,26 +12,23 @@
   margin-bottom: 0.6rem;
 }
 
-/* Page-level pill (fixed uppercase label). */
-.pill {
-  font-family: inherit;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  line-height: 1.4;
+/* Focusable trigger wrapping the HIVE-styled pill (inline) or the real HIVE
+   <Badge> (page-level). The pill's own look comes from HIVE's Badge classes;
+   this only adds the help cursor and a keyboard focus ring. */
+.trigger {
   cursor: help;
-  padding: 2px 8px;
-  border: 1px solid var(--ifm-color-emphasis-300);
-  border-radius: 4px;
-  background: var(--ifm-color-emphasis-100);
-  color: var(--ifm-color-emphasis-800);
+  border-radius: 8px;
 }
 
-.pill:hover,
-.pill:focus-visible {
-  border-color: var(--ifm-color-primary);
-  color: var(--ifm-color-primary);
+.trigger:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+}
+
+/* Keep the inline icon square — a raw feather svg in the flex pill would
+   otherwise get shrunk horizontally (HIVE's own Icon wraps it in a sized box). */
+.icon {
+  flex: 0 0 auto;
 }
 
 /* Shared hover/focus popover. */
