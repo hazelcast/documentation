@@ -4,20 +4,39 @@
  * work well for content-centric websites.
  */
 
-/* You can override the default Infima variables here. */
+/* Light theme: Infima primary driven by HIVE's v4 token
+ * (--hive-color-primary-v4 from @hazelcast/ui variables.css) — the same teal
+ * the shipped v4 components read, so the Docusaurus chrome matches embedded
+ * HIVE components. The v4 palette defines only a SINGLE primary stop: the
+ * legacy colorPrimaryLight/Dark are shades of the OLD blue primary (a
+ * different hue), so they can't anchor the teal ramp. The six shades are
+ * therefore derived from the single token with color-mix, in oklch (the
+ * token's own space) for perceptually even steps. HIVE ships no dark palette
+ * yet, so dark mode is left stock — see the [data-theme='dark'] block below. */
 :root {
-  --ifm-color-primary: #2e8555;
-  --ifm-color-primary-dark: #29784c;
-  --ifm-color-primary-darker: #277148;
-  --ifm-color-primary-darkest: #205d3b;
-  --ifm-color-primary-light: #33925d;
-  --ifm-color-primary-lighter: #359962;
-  --ifm-color-primary-lightest: #3cad6e;
+  --ifm-color-primary: var(--hive-color-primary-v4);
+  --ifm-color-primary-dark: color-mix(in oklch, var(--hive-color-primary-v4) 90%, black);
+  --ifm-color-primary-darker: color-mix(in oklch, var(--hive-color-primary-v4) 82%, black);
+  --ifm-color-primary-darkest: color-mix(in oklch, var(--hive-color-primary-v4) 68%, black);
+  --ifm-color-primary-light: color-mix(in oklch, var(--hive-color-primary-v4) 90%, white);
+  --ifm-color-primary-lighter: color-mix(in oklch, var(--hive-color-primary-v4) 82%, white);
+  --ifm-color-primary-lightest: color-mix(in oklch, var(--hive-color-primary-v4) 68%, white);
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+
+    /* HIVE typography (fonts loaded via customCss @font-face). */
+  --ifm-font-family-base: var(--hive-font-family-text);
+  --ifm-heading-font-family: var(--hive-font-family-heading);
+
+  /* Links: HIVE's dedicated link colour (a blue, distinct from the teal
+   * primary). HIVE and Infima both leave links undecorated and underline on
+   * hover with no colour change, so only the colour is overridden — hover
+   * colour is set to the same token to keep that (no darkening on hover). */
+  --ifm-link-color: var(--hive-color-link-v4);
+  --ifm-link-hover-color: var(--hive-color-link-v4);
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
+/* Dark mode: unchanged stock Docusaurus palette (HIVE has no dark tokens). */
 [data-theme='dark'] {
   --ifm-color-primary: #25c2a0;
   --ifm-color-primary-dark: #21af90;
