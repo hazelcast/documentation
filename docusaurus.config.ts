@@ -136,6 +136,10 @@ const config: Config = {
           position: 'left',
           label: 'Cloud',
         },
+        // CTA, rendered as a HIVE Button (Try Free on Cloud pages,
+        // Try Hazelcast elsewhere). Registered in
+        // src/theme/NavbarItem/ComponentTypes.tsx.
+        {type: 'custom-cta', position: 'right'},
       ],
     },
     footer: {

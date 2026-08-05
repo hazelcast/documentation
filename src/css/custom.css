@@ -163,3 +163,12 @@
 .footer__item {
   margin: 0;
 }
+
+/* Navbar CTA (HIVE Button): Docusaurus always renders the color-mode toggle
+ * (and search) after the right-aligned navbar items, so the CTA would sit to
+ * the toggle's left. The right item list is a flex row, so an order bump moves
+ * the CTA to the very end — rightmost, past the toggle — matching production. */
+.navbar__items--right .navbar-cta {
+  order: 1;
+  margin-left: var(--ifm-navbar-item-padding-horizontal);
+}
