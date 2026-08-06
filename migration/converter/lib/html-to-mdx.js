@@ -303,17 +303,23 @@ function convertColist ($, node, st, depth) {
   const rows = $(node).find('tr').toArray()
   if (!rows.length) return serializeJsx($, node, st)
   const out = []
+  let n = 0
   for (const tr of rows) {
     const tds = $(tr).children('td').toArray()
     if (tds.length < 2) continue
-    const num = inline($, tds[0], st).replace(/\s+/g, ' ').trim()
     const desc = blockOrInline($, tds[1], st, depth).trim()
-    // Join number + description: `**N** first-line` reads as one paragraph, and
-    // any trailing block content (a nested list — backup-restore) follows on its
-    // own lines, matching how the golden colist renders the row.
-    out.push(desc === '' ? num : `${num} ${desc}`)
+    if (desc === '') continue
+    n++
+    // A plain Markdown numbered list item. Continuation lines of a block
+    // description (e.g. backup-restore's nested list) are indented to stay inside
+    // the item so it parses as one list entry.
+    const body = desc.split('\n').map((l, i) => (i === 0 || l === '' ? l : '   ' + l)).join('\n')
+    out.push(`${n}. ${body}`)
   }
-  return out.join('\n\n')
+  // The <CodeCallouts> component (globally registered) renders this Markdown
+  // numbered list as the circled, indented callout list. Authors write the same
+  // clean list for new pages — no raw HTML, no per-line markup.
+  return `<CodeCallouts>\n\n${out.join('\n')}\n\n</CodeCallouts>`
 }
 
 // --- admonitions -----------------------------------------------------------
@@ -432,37 +438,32 @@ function preToFence ($, pre, title) {
     if (m) lang = m.slice('language-'.length)
   }
   // Asciidoctor callout numbers (conums) render inside the code as
-  // `<i class="conum" data-value="N"></i><b>(N)</b>`. Strip that markup from the
-  // fenced code and carry the positions in a `conums="line:value,…"` metastring;
-  // the swizzled CodeBlock re-emits prod's badge markup per line (see
-  // src/theme/CodeBlock). The `(N)` text stays in the rendered DOM (CSS-hidden,
-  // exactly as prod), so the golden↔converted code text still matches.
-  const { text, conums } = extractConums($, code || pre)
+  // `<i class="conum" data-value="N"></i><b>(N)</b>`. Put the native Asciidoctor
+  // `<N>` marker back INLINE on its own line (so it stays glued to that line when
+  // the code is edited) and flag the fence with a bare `conums`; the swizzled
+  // CodeBlock (src/theme/CodeBlock) strips the `<N>` and re-emits prod's circled
+  // badge per line. The bare flag leaves every other code block untouched.
+  const { text, hasConums } = extractConums($, code || pre)
   let info = lang
   if (title) info += ` title=${jsxAttr(title)}`
-  if (conums.length) info += ` conums="${conums.map(([l, v]) => `${l}:${v}`).join(',')}"`
+  if (hasConums) info += ' conums'
   return fencedCode(text.replace(/\n$/, ''), info)
 }
 
-// Pull conum markers out of a code element: returns the plain code text with the
-// `<i class="conum">…<b>(N)</b>` markup removed, plus [lineIndex, value] pairs
-// (0-based line, matching prism-react-renderer's per-line token array).
+// Replace each conum's `<i class="conum">...<b>(N)</b>` markup with the inline
+// Asciidoctor marker `<N>`, returning the code text and whether any were found.
+// A private-use sentinel is inserted first (cheerio would parse a literal `<N>`
+// string as an HTML tag), then rewritten to `<N>` after text extraction.
 function extractConums ($, codeEl) {
-  const conums = []
-  for (const i of $(codeEl).find('i.conum[data-value]').toArray()) {
-    const val = $(i).attr('data-value')
-    $(i).next('b').remove() // the fallback `(N)` text; re-added by the component
-    $(i).replaceWith(` C${val} `)
+  const els = $(codeEl).find('i.conum[data-value]').toArray()
+  for (const el of els) {
+    const val = $(el).attr('data-value')
+    $(el).next('b').remove() // the fallback `(N)` text; re-added by the component
+    $(el).replaceWith(`\uE000${val}\uE000`)
   }
   let text = $(codeEl).text()
-  const SENT = / C(\d+) /
-  let m
-  while ((m = SENT.exec(text))) {
-    const line = (text.slice(0, m.index).match(/\n/g) || []).length
-    conums.push([line, m[1]])
-    text = text.slice(0, m.index) + text.slice(m.index + m[0].length)
-  }
-  return { text, conums }
+  if (els.length) text = text.replace(/\uE000(\d+)\uE000/g, '<$1>')
+  return { text, hasConums: els.length > 0 }
 }
 
 // --- images ----------------------------------------------------------------

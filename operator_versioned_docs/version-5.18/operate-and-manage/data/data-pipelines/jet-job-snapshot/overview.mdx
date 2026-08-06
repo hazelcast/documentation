@@ -33,20 +33,23 @@ Configuration options for the `JetJobSnapshot` custom resource.
 
 Use the following example configuration to export a snapshot using the `JetJobSnapshot` custom resource.
 
-```yaml title="Example of JetJobSnapshot configuration"
+```yaml title="Example of JetJobSnapshot configuration" conums
 apiVersion: hazelcast.com/v1alpha1
 kind: JetJobSnapshot
 metadata:
   name: jetjobsnapshot-sample
 spec:
-  name: snapshot-example (1)
+  name: snapshot-example <1>
   cancelJob: false
-  jetJobResourceName: jet-job-sample (2)
+  jetJobResourceName: jet-job-sample <2>
 ```
 
-**1** Sets the name the exported snapshot.
+<CodeCallouts>
 
-**2** Specifies the name of the `JetJob` CR object from which the snapshot is exported.
+1. Sets the name the exported snapshot.
+2. Specifies the name of the `JetJob` CR object from which the snapshot is exported.
+
+</CodeCallouts>
 
 :::note
 
@@ -58,7 +61,7 @@ You can only export a snapshot from a Jet job that has a status of `Running`.
 
 Use the following example to start a new Jet Job that is initialized from a snapshot.
 
-```yaml title="Example of JetJob initialization from Snapshot"
+```yaml title="Example of JetJob initialization from Snapshot" conums
 apiVersion: hazelcast.com/v1alpha1
 kind: JetJob
 metadata:
@@ -67,11 +70,15 @@ spec:
   name: my-test-jet-job
   hazelcastResourceName: hazelcast
   state: Running
-  initialSnapshotResourceName: jetjobsnapshot–sample (1)
+  initialSnapshotResourceName: jetjobsnapshot–sample <1>
   jarName: jet-pipeline-1.0.2.jar
   bucketConfig:
     bucketURI: "gs://operator-user-code/jetJobs"
     secretName: br-secret-gcp
 ```
 
-**1** Specifies the name of the `JetJobSnapshot` CR object from which the Jet job is initialized.
+<CodeCallouts>
+
+1. Specifies the name of the `JetJobSnapshot` CR object from which the Jet job is initialized.
+
+</CodeCallouts>

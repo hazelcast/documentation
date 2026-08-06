@@ -32,7 +32,7 @@ For a worked example, see the [Restore a cluster from cloud storage tutorial](/o
 
 Enabling Hazelcast persistence requires the following configuration.
 
-```yaml
+```yaml conums
 apiVersion: hazelcast.com/v1alpha1
 kind: Hazelcast
 metadata:
@@ -42,19 +42,21 @@ spec:
   repository: 'docker.io/hazelcast/hazelcast-enterprise'
   licenseKeySecretName: hazelcast-license-key
   persistence:
-    clusterDataRecoveryPolicy: "FullRecoveryOnly"  (1)
+    clusterDataRecoveryPolicy: "FullRecoveryOnly"  <1>
     pvc:
       accessModes: ["ReadWriteOnce"]
-      requestStorage: 20Gi  (2)
-  agent: (3)
+      requestStorage: 20Gi  <2>
+  agent: <3>
     repository: hazelcast/platform-operator-agent
 ```
 
-**1** [Cluster recovery policy](#recovery-policy).
+<CodeCallouts>
 
-**2** Size of the PersistentVolumeClaim (PVC) where Hazelcast data is persisted.
+1. [Cluster recovery policy](#recovery-policy).
+2. Size of the PersistentVolumeClaim (PVC) where Hazelcast data is persisted.
+3. Agent responsible for moving data from the local storage to external buckets. The agent configuration is optional. If you enable `persistence` and do not pass the agent configuration, Operator uses the latest agent version that is compatible with its version.
 
-**3** Agent responsible for moving data from the local storage to external buckets. The agent configuration is optional. If you enable `persistence` and do not pass the agent configuration, Operator uses the latest agent version that is compatible with its version.
+</CodeCallouts>
 
 If you want to enable persistence for a map or cache you must also enable it in the Map or Cache CRs by setting `persistenceEnabled: true`. For more information, see [Configuring Map](/operator/5.18/map-configuration#configuring-the-map-resource) and [Configuring Cache](/operator/5.18/cache-configuration#configuring-a-cache-resource).
 
@@ -83,15 +85,15 @@ To trigger an external backup, you need to configure a bucket URI and a secret t
 
 External backup in AWS S3:
 
-```yaml
+```yaml conums
 apiVersion: hazelcast.com/v1alpha1
 kind: HotBackup
 metadata:
   name: hot-backup
 spec:
   hazelcastResourceName: hazelcast
-  bucketURI: "s3://bucket-name/path/to/folder" (1)
-  secretName: "secret-aws-s3" (2)
+  bucketURI: "s3://bucket-name/path/to/folder" <1>
+  secretName: "secret-aws-s3" <2>
 ```
 
 :::note
@@ -105,15 +107,15 @@ For further information about accessing resources on different cloud providers, 
 
 External backup in GCP Bucket:
 
-```yaml
+```yaml conums
 apiVersion: hazelcast.com/v1alpha1
 kind: HotBackup
 metadata:
   name: hot-backup
 spec:
   hazelcastResourceName: hazelcast
-  bucketURI: "gs://bucket-name/path/to/folder" (1)
-  secretName: "secret-gcp-bucket" (2)
+  bucketURI: "gs://bucket-name/path/to/folder" <1>
+  secretName: "secret-gcp-bucket" <2>
 ```
 
 :::note
@@ -127,15 +129,15 @@ For further information about accessing resources on different cloud providers, 
 
 External backup in Azure Blob:
 
-```yaml
+```yaml conums
 apiVersion: hazelcast.com/v1alpha1
 kind: HotBackup
 metadata:
   name: hot-backup
 spec:
   hazelcastResourceName: hazelcast
-  bucketURI: "azblob://bucket-name/path/to/folder" (1)
-  secretName: "secret-azure-blob" (2)
+  bucketURI: "azblob://bucket-name/path/to/folder" <1>
+  secretName: "secret-azure-blob" <2>
 ```
 
 :::note
@@ -147,9 +149,12 @@ For further information about accessing resources on different cloud providers, 
 </TabItem>
 </Tabs>
 
-**1** The bucket URI where backup data will be stored.
+<CodeCallouts>
 
-**2** Name of the secret with credentials for accessing the given bucket URI.
+1. The bucket URI where backup data will be stored.
+2. Name of the secret with credentials for accessing the given bucket URI.
+
+</CodeCallouts>
 
 ## Schedule backups
 
@@ -201,11 +206,11 @@ To restore from local backups that you have taken using the `HotBackup` resource
 
 When this restore mechanism is used, the Restore Agent container is deployed with the Hazelcast container in the same Pod. The agent starts as an `initContainer` before the Hazelcast container.
 
-```yaml
+```yaml conums
 apiVersion: hazelcast.com/v1alpha1
 kind: Hazelcast
 metadata:
-  name: hazelcast (1)
+  name: hazelcast <1>
 spec:
   clusterSize: 3
   repository: 'docker.io/hazelcast/hazelcast-enterprise'
@@ -216,16 +221,18 @@ spec:
       accessModes: ["ReadWriteOnce"]
       requestStorage: 20Gi
     restore:
-      hotBackupResourceName: hot-backup (2)
-  agent: (3)
+      hotBackupResourceName: hot-backup <2>
+  agent: <3>
     repository: hazelcast/platform-operator-agent
 ```
 
-**1** Hazelcast custom resource name for both backup and restore CRs must be the same, otherwise the restore fails.
+<CodeCallouts>
 
-**2** `HotBackup` resource name used for the restore. The backup folder name will be the name you provide here.
+1. Hazelcast custom resource name for both backup and restore CRs must be the same, otherwise the restore fails.
+2. `HotBackup` resource name used for the restore. The backup folder name will be the name you provide here.
+3. Agent responsible for restoring data from the local storage. The agent configuration is optional. If you give `restore` under `persistence` and do not pass the agent configuration, Operator uses the latest agent version that is compatible with its version.
 
-**3** Agent responsible for restoring data from the local storage. The agent configuration is optional. If you give `restore` under `persistence` and do not pass the agent configuration, Operator uses the latest agent version that is compatible with its version.
+</CodeCallouts>
 
 :::warning
 
@@ -248,7 +255,7 @@ If you have not created the secret, you must do so in the same way as in [Trigge
 <Tabs>
 <TabItem value="bucket-configuration" label="Bucket configuration">
 
-```yaml
+```yaml conums
 apiVersion: hazelcast.com/v1alpha1
 kind: Hazelcast
 metadata:
@@ -264,26 +271,28 @@ spec:
       requestStorage: 20Gi
     restore:
       bucketConfig:
-        bucketURI: "s3://operator-backup?prefix=hazelcast/2022-06-08-17-01-20/" (1)
-        secretName: br-secret-s3 (2)
-  agent: (3)
+        bucketURI: "s3://operator-backup?prefix=hazelcast/2022-06-08-17-01-20/" <1>
+        secretName: br-secret-s3 <2>
+  agent: <3>
     repository: hazelcast/platform-operator-agent
 ```
 
-**1** Bucket URI where backup data will be restored from.
+<CodeCallouts>
 
-**2** Name of the secret with credentials for accessing the given bucket URI.
+1. Bucket URI where backup data will be restored from.
+2. Name of the secret with credentials for accessing the given bucket URI.
+3. Agent which is responsible for restoring data from the external storage. The agent configuration is optional. If you provide `restore` under `persistence` and do not pass the agent configuration, Operator uses the latest agent version that is compatible with its version.
 
-**3** Agent which is responsible for restoring data from the external storage. The agent configuration is optional. If you provide `restore` under `persistence` and do not pass the agent configuration, Operator uses the latest agent version that is compatible with its version.
+</CodeCallouts>
 
 </TabItem>
 <TabItem value="hotbackup-resource-name" label="HotBackup resource name">
 
-```yaml
+```yaml conums
 apiVersion: hazelcast.com/v1alpha1
 kind: Hazelcast
 metadata:
-  name: hazelcast (1)
+  name: hazelcast <1>
 spec:
   clusterSize: 3
   repository: 'docker.io/hazelcast/hazelcast-enterprise'
@@ -294,14 +303,17 @@ spec:
       accessModes: ["ReadWriteOnce"]
       requestStorage: 20Gi
     restore:
-      hotBackupResourceName: hot-backup (2)
-  agent: (3)
+      hotBackupResourceName: hot-backup <2>
+  agent: <3>
     repository: hazelcast/platform-operator-agent
 ```
 
-**1** `HotBackup` resource name used for the restore. The bucket URI and secret are taken from the `HotBackup` resource.
+<CodeCallouts>
 
-**2** Agent responsible for restoring data from external storage. The agent configuration is optional. If you provide `restore` under `persistence` and do not pass the agent configuration, Operator uses the latest agent version that is compatible with its version.
+1. `HotBackup` resource name used for the restore. The bucket URI and secret are taken from the `HotBackup` resource.
+2. Agent responsible for restoring data from external storage. The agent configuration is optional. If you provide `restore` under `persistence` and do not pass the agent configuration, Operator uses the latest agent version that is compatible with its version.
+
+</CodeCallouts>
 
 </TabItem>
 </Tabs>
@@ -310,42 +322,41 @@ spec:
 
 To restore from local backups that are in an existing [persistent volume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/), configure `localConfig`.
 
-```yaml
+```yaml conums
 apiVersion: hazelcast.com/v1alpha1
 kind: Hazelcast
 metadata:
-  name: hazelcast (1)
+  name: hazelcast <1>
 spec:
   clusterSize: 3
   repository: 'docker.io/hazelcast/hazelcast-enterprise'
   licenseKeySecretName: hazelcast-license-key
-  customConfigCmName: mapCustomConfig (2)
+  customConfigCmName: mapCustomConfig <2>
   persistence:
     pvc:
       accessModes: ["ReadWriteOnce"]
       requestStorage: 20Gi
     restore:
       localConfig:
-        pvcNamePrefix: "hot-restart-persistence" (3)
-        baseDir: "base" (4)
-        backupDir: "backup" (5)
-        backupFolder: "backup-1709045128548" (6)
+        pvcNamePrefix: "hot-restart-persistence" <3>
+        baseDir: "base" <4>
+        backupDir: "backup" <5>
+        backupFolder: "backup-1709045128548" <6>
 ```
 
-**1** To successfully attach existing PVCs to the newly created cluster:
+<CodeCallouts>
 
-- If the older cluster was created by Operator, the name of both the backup and restore Hazelcast custom resources must be the same.
-- If the older cluster was created by the Hazelcast Helm Chart, the name of the new CR must be in the following format: `<name>-hazelcast-persistence`. For example, assuming that the older cluster was installed with `helm install hz hazelcast/hazelcast-enterprise`, the new CR name must be `hz-hazelcast-enterprise`.
+1. To successfully attach existing PVCs to the newly created cluster:
 
-**2** If you configured maps with persistence, you must create them while creating the Hazelcast CR. To create them while creating the Hazelcast CR, you must use [custom configuration](/operator/5.18/custom-config). You cannot apply the Hazelcast CR and then the Map CRs.
+   - If the older cluster was created by Operator, the name of both the backup and restore Hazelcast custom resources must be the same.
+   - If the older cluster was created by the Hazelcast Helm Chart, the name of the new CR must be in the following format: `<name>-hazelcast-persistence`. For example, assuming that the older cluster was installed with `helm install hz hazelcast/hazelcast-enterprise`, the new CR name must be `hz-hazelcast-enterprise`.
+2. If you configured maps with persistence, you must create them while creating the Hazelcast CR. To create them while creating the Hazelcast CR, you must use [custom configuration](/operator/5.18/custom-config). You cannot apply the Hazelcast CR and then the Map CRs.
+3. `pvcNamePrefix` is the prefix of the existing PVCs. It can be set to `persistence` or `hot-restart-persistence` depending on the installation method of the old cluster. Run the `kubect get pvc` command to decide which setting best suits your requirements.
+4. `baseDir` is the root directory for persistence.
+5. `backupDir` is the directory that contains a backupFolder for each available backup.
+6. `backupFolder` is the directory containing the backup for the restore.
 
-**3** `pvcNamePrefix` is the prefix of the existing PVCs. It can be set to `persistence` or `hot-restart-persistence` depending on the installation method of the old cluster. Run the `kubect get pvc` command to decide which setting best suits your requirements.
-
-**4** `baseDir` is the root directory for persistence.
-
-**5** `backupDir` is the directory that contains a backupFolder for each available backup.
-
-**6** `backupFolder` is the directory containing the backup for the restore.
+</CodeCallouts>
 
 :::tip
 
@@ -353,7 +364,7 @@ To find the `backupFolder` value, you can run `kubectl exec -it <hazelcast-custo
 
 :::
 
-```yaml
+```yaml conums
 apiVersion: v1
 kind: Pod
 metadata:
@@ -362,21 +373,23 @@ spec:
   containers:
     - name: list-content-container
       image: busybox
-      command: ["/bin/sh", "-c", "tree /data/persistence"] (1)
+      command: ["/bin/sh", "-c", "tree /data/persistence"] <1>
       volumeMounts:
         - name: pv-storage
-          mountPath: /data/persistence (2)
+          mountPath: /data/persistence <2>
   volumes:
     - name: pv-storage
       persistentVolumeClaim:
-        claimName: hot-restart-persistence-hazelcast-0 (3)
+        claimName: hot-restart-persistence-hazelcast-0 <3>
 ```
 
-**1** Replace `/data/persistence` with the path to your PV that is mounted inside the container.
+<CodeCallouts>
 
-**2** Replace `/data/persistence` with the correct `mountPath` specified in the PV.
+1. Replace `/data/persistence` with the path to your PV that is mounted inside the container.
+2. Replace `/data/persistence` with the correct `mountPath` specified in the PV.
+3. Replace with the name of the one of the PVCs that is mounted to the cluster from which the backup is taken.
 
-**3** Replace with the name of the one of the PVCs that is mounted to the cluster from which the backup is taken.
+</CodeCallouts>
 
 :::note
 

@@ -29,7 +29,7 @@ To create a User Code Namespace, you must create a new `UserCodeNamespace` CR. T
 
 User Code Namespaces in AWS S3:
 
-```yaml
+```yaml conums
 apiVersion: hazelcast.com/v1alpha1
 kind: UserCodeNamespace
 metadata:
@@ -37,8 +37,8 @@ metadata:
 spec:
   hazelcastResourceName: hazelcast
   bucketConfig:
-    secretName: s3-bucket-secret (1)
-    bucketURI: s3://map-store-bucket/path/to/jars (2)
+    secretName: s3-bucket-secret <1>
+    bucketURI: s3://map-store-bucket/path/to/jars <2>
 ```
 
 :::note
@@ -52,7 +52,7 @@ For further information about accessing resources on different cloud providers, 
 
 User Code Namespaces in GCP:
 
-```yaml
+```yaml conums
 apiVersion: hazelcast.com/v1alpha1
 kind: UserCodeNamespace
 metadata:
@@ -60,8 +60,8 @@ metadata:
 spec:
   hazelcastResourceName: hazelcast
   bucketConfig:
-    secretName: cloud-storage-bucket-secret (1)
-    bucketURI: gs://map-store-bucket/path/to/jars (2)
+    secretName: cloud-storage-bucket-secret <1>
+    bucketURI: gs://map-store-bucket/path/to/jars <2>
 ```
 
 :::note
@@ -75,7 +75,7 @@ For further information about accessing resources on different cloud providers, 
 
 User Code Namespaces in Azure Blob:
 
-```yaml
+```yaml conums
 apiVersion: hazelcast.com/v1alpha1
 kind: UserCodeNamespace
 metadata:
@@ -83,8 +83,8 @@ metadata:
 spec:
   hazelcastResourceName: hazelcast
   bucketConfig:
-    secretName: azure-blob-bucket-secret (1)
-    bucketURI: azblob://map-store-bucket/path/to/jars (2)
+    secretName: azure-blob-bucket-secret <1>
+    bucketURI: azblob://map-store-bucket/path/to/jars <2>
 ```
 
 :::note
@@ -96,9 +96,12 @@ For further information about accessing resources on different cloud providers, 
 </TabItem>
 </Tabs>
 
-**1** Name of the secret with credentials for accessing the bucket URI.
+<CodeCallouts>
 
-**2** The bucket URI from which user code JAR files are loaded.
+1. Name of the secret with credentials for accessing the bucket URI.
+2. The bucket URI from which user code JAR files are loaded.
+
+</CodeCallouts>
 
 To allow your data structures to resolve your user code, set `spec.userCodeNamespace` on the data structure CR to the name of the `UserCodeNamespace` CR. You can use the same namespace name on multiple data structures.
 

@@ -92,7 +92,7 @@ Mounted persistent volumes are not supported; only cloud provider external bucke
 
 User Code Deployment in AWS S3:
 
-```yaml
+```yaml conums
 apiVersion: hazelcast.com/v1alpha1
 kind: Hazelcast
 metadata:
@@ -101,8 +101,8 @@ spec:
   userCodeDeployment:
     clientEnabled: true
     bucketConfig:
-      secretName: map-store-bucket-secret (1)
-      bucketURI: s3://map-store-bucket/path/to/jars (2)
+      secretName: map-store-bucket-secret <1>
+      bucketURI: s3://map-store-bucket/path/to/jars <2>
     configMaps:
     - domain-classes-cm
     - entryprocessor-cm
@@ -116,7 +116,7 @@ spec:
 
 User Code Deployment in GCP:
 
-```yaml
+```yaml conums
 apiVersion: hazelcast.com/v1alpha1
 kind: Hazelcast
 metadata:
@@ -125,8 +125,8 @@ spec:
   userCodeDeployment:
     clientEnabled: true
     bucketConfig:
-      secretName: map-store-bucket-secret (1)
-      bucketURI: gs://map-store-bucket/path/to/jars (2)
+      secretName: map-store-bucket-secret <1>
+      bucketURI: gs://map-store-bucket/path/to/jars <2>
     configMaps:
     - domain-classes-cm
     - entryprocessor-cm
@@ -140,7 +140,7 @@ spec:
 
 User Code Deployment in Azure Blob:
 
-```yaml
+```yaml conums
 apiVersion: hazelcast.com/v1alpha1
 kind: Hazelcast
 metadata:
@@ -149,8 +149,8 @@ spec:
   userCodeDeployment:
     clientEnabled: true
     bucketConfig:
-      secretName: map-store-bucket-secret (1)
-      bucketURI: azblob://map-store-bucket/path/to/jars (2)
+      secretName: map-store-bucket-secret <1>
+      bucketURI: azblob://map-store-bucket/path/to/jars <2>
     configMaps:
     - domain-classes-cm
     - entryprocessor-cm
@@ -162,9 +162,12 @@ spec:
 </TabItem>
 </Tabs>
 
-**1** Name of the secret with credentials for accessing the bucket URI.
+<CodeCallouts>
 
-**2** URI of the bucket where backup data will be stored.
+1. Name of the secret with credentials for accessing the bucket URI.
+2. URI of the bucket where backup data will be stored.
+
+</CodeCallouts>
 
 ## Configure an external data store
 
