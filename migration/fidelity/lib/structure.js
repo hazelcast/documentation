@@ -44,6 +44,11 @@ const DOCUSAURUS_PROFILE = {
   admonitionSelector: '.theme-admonition, .admonition',
   admonitionType: ($, el) => {
     const cls = ($(el).attr('class') || '')
+    // Prefer the authoritative `theme-admonition-<type>` class. Docusaurus also
+    // adds a colour-alias class (`:::caution` styles as `alert--warning`), so a
+    // bare `cls.includes(type)` would mis-read a caution as a warning.
+    const m = cls.match(/theme-admonition-([a-z]+)/)
+    if (m && ADMONITION_TYPES.includes(m[1])) return m[1]
     return ADMONITION_TYPES.find((t) => cls.includes(t)) || 'unknown'
   },
   tabSetSelector: '.tabs-container',

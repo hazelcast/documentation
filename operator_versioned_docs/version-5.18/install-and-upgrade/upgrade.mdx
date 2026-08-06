@@ -1,0 +1,61 @@
+---
+title: "Upgrade a Hazelcast deployment"
+sidebar_position: 5
+slug: /upgrade
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_yaml from '!!raw-loader!../examples/hazelcast.yaml';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Before upgrading, you should read the information in the [rolling upgrade documentation](/hazelcast/5.7/maintain-cluster/rolling-upgrades#hazelcast-members-compatibility-guarantees) for Hazelcast Platform.
+
+Each Operator version has been tested with a specific Hazelcast Platform version as listed in the following table. You should use the appropriate version to avoid problems.
+
+| Operator version | Hazelcast Platform version |
+| --- | --- |
+| 5.11 | 5.4.0 |
+| 5.12 | 5.4.0 |
+| 5.13 | 5.5.0 |
+| 5.14 | 5.5.2 |
+| 5.15 | 5.5.4 |
+| 5.16 | 5.6.0 |
+
+## Upgrade the deployment
+
+To upgrade your existing Hazelcast deployment to a newer version, update the `spec.version` field and re-apply.
+
+For example, if the following is the existing configuration:
+
+<CodeBlock language="yaml">{Ex_hazelcast_yaml}</CodeBlock>
+
+Apply the following to upgrade your Hazelcast version to 5.7.0:
+
+<CodeBlock language="yaml">{Ex_hazelcast_yaml}</CodeBlock>
+
+## Check the cluster status
+
+You can check that the upgrade has completed by checking the cluster status:
+
+<Tabs>
+<TabItem value="kubernetes" label="Kubernetes">
+
+```shell
+kubectl get hazelcast
+```
+
+</TabItem>
+<TabItem value="openshift" label="Openshift">
+
+```shell
+oc get hazelcast
+```
+
+</TabItem>
+</Tabs>
+
+```none
+NAME               STATUS    MEMBERS
+hazelcast-sample   Running   3/3
+```

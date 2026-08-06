@@ -38,4 +38,8 @@ export const redirects: {from: string; to: string}[] = [
   { from: "/cloud/support", to: "/cloud/overview" },
   { from: "/cloud/use-cases", to: "/cloud/overview" },
   { from: "/cloud/wan-replication", to: "/cloud/overview" },
+  { from: "/operator/5.18/air-gapped-env", to: "/operator/5.18/image-registry" },
+  { from: "/operator/5.18/scaling-upgrading", to: "/operator/5.18/scale" },
+  { from: "/operator/latest-snapshot/air-gapped-env", to: "/operator/latest-snapshot/image-registry" },
+  { from: "/operator/latest-snapshot/scaling-upgrading", to: "/operator/latest-snapshot/scale" },
 ];

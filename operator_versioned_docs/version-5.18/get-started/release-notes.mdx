@@ -1,0 +1,22 @@
+---
+title: "Release notes"
+sidebar_position: 2
+slug: /release-notes
+---
+
+These release notes list any new features, enhancements, fixes, and breaking changes implemented between version 5.17.0 and version 5.18.0 of Hazelcast Platform Operator.
+
+**Release date**: 2026-05-22
+
+For help installing and running Operator, see [Install Operator and deploy a Hazelcast cluster](/operator/5.18/get-started).
+
+## Enhancements
+
+- **Added support for overriding cluster configuration in Management Center**: The Operator now passes the `--force` flag when applying Management Center configuration, enabling cluster configuration overrides on connected Hazelcast clusters without requiring multiple restarts of Management Center.
+- **Added automatic synchronization of image versions to Operator defaults on upgrade**: When the Operator is upgraded or rolled back, it now automatically updates the default image versions and repositories for Hazelcast Platform, Management Center, Agent, and the init container in custom resources where no explicit version has been specified.
+- **Extended OLM bundle support to OpenShift 4.19–4.21**: The supported OpenShift version range for Operator bundles published to the certified OLM catalog has been extended from 4.18 to 4.21 (full range: 4.12–4.21).
+
+## Fixes
+
+- **Fixed stale external member addresses causing Smart client connection failures**: Resolved an issue where Hazelcast Smart operation mode clients experienced connection timeouts and degraded throughput.
+- **Prevented Hot Backup restore from being initiated against a cluster in a pending or unready state**: Resolved an issue where a `HotBackup` restore could be triggered by referencing a backup resource that was still in a `Pending` status. The fix introduces a validation check that blocks restore operations referencing backups that have not yet successfully completed.

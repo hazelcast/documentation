@@ -1,0 +1,29 @@
+---
+title: "Migrate from Helm to Operator"
+sidebar_position: 6
+slug: /migrating-from-helm
+---
+
+Migrating from Helm requires recreating the Hazelcast cluster. Operator can't take control of custom resources created by a Helm chart.
+
+To migrate, you can either restore from a backup or attach new pods to existing persistent volume claims (PVCs).
+
+## Prerequisites
+
+Both options require [persistence](/operator/5.18/backup-restore) to be enabled. You should also set the `cluster-data-recovery-policy` parameter's value to `PARTIAL_RECOVERY_MOST_COMPLETE` to avoid any issues during the restore process.
+
+Restoring from a backup requires [Management Center](/operator/5.18/deploy-management-center).
+
+## Restore from a backup
+
+To create a new cluster from a backup of your current cluster:
+
+1. [Trigger a backup](https://docs.hazelcast.com/management-center/5.9/clusters/triggering-hot-backup) using the Management Center user interface.
+2. Uninstall the existing Helm-managed cluster.
+3. [Restore from a persistent volume](/operator/5.18/backup-restore#restoring-from-persistent-volumes.adoc).
+
+## Attach new pods to existing PVCs
+
+You can also restore your data to a new cluster created by Operator without creating a backup by using the newly created Hazelcast CR's name.
+
+The name of the new CR must be in the following format: `<name>-hazelcast-persistence`. This means that PVCs created by the Helm Chart will attach to the pods created by Operator correctly.

@@ -1,0 +1,126 @@
+---
+title: "Configure highly available Hazelcast clusters"
+sidebar_position: 1
+slug: /high-availability-mode
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_high_availability_mode_yaml from '!!raw-loader!../../../examples/hazelcast-high-availability-mode.yaml';
+import Ex_hazelcast_high_availability_mode_multi_member_routing_yaml from '!!raw-loader!../../../examples/hazelcast-high-availability-mode-multi-member-routing.yaml';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+High Availability mode avoids data loss when the Kubernetes node or availability zone is down. You can configure partition groups with High Availability mode to add resilience to your clusters.
+
+Partition groups let you choose where Hazelcast members store backups of a data partition. You can configure a partition group to back up data to a member in a different availability zone (ZONE\_AWARE) or on a different Kubernetes node (NODE\_AWARE). See [Partition Group configuration](/hazelcast/5.7/clusters/partition-group-configuration) for details.
+
+When using either type of partition grouping (ZONE\_AWARE or NODE\_AWARE) with a Hazelcast cluster that spans multiple availability zones and nodes, you must have an equal number of members in each zone or node. Otherwise, distribution of partitions between members will be uneven.
+
+The `highAvailabilityMode` parameter allows you to specify partition groups and to automatically distribute members across availability zones and nodes using the Kubernetes policy `topologySpreadConstraints`.
+
+## Configure High Availability mode
+
+High Availability mode supports the following configuration options.
+
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`highAvailabilityMode`</td>
+<td>
+
+<dl>
+<dt>Configuration for partition groups and Kubernetes scheduling policy</dt>
+<dd>
+
+- `NODE`: the partition-group is configured as NODE\_AWARE and `topologySpreadConstraints` is added into the statefulset:
+
+</dd>
+</dl>
+
+```none
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: hazelcast
+            app.kubernetes.io/instance: hazelcast
+            app.kubernetes.io/managed-by: hazelcast-platform-operator
+```
+
+- `ZONE`: the partition-group is configured as ZONE\_AWARE and `topologySpreadConstraints` is added into the statefulset:
+
+```none
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: hazelcast
+            app.kubernetes.io/instance: hazelcast
+            app.kubernetes.io/managed-by: hazelcast-platform-operator
+```
+
+</td>
+</tr>
+</tbody>
+</table>
+
+### Example configuration
+
+The following example configures ZONE\_AWARE high availability.
+
+<CodeBlock language="yaml">{Ex_hazelcast_high_availability_mode_yaml}</CodeBlock>
+
+## High Availability mode and multi-member routing
+
+`MULTI_MEMBER` routing allows a client to connect to a subset of members that is determined by a grouping strategy. To benefit from `MULTI_MEMBER` routing, you must enable High Availability mode, because this parameter is used to determine partition groups. In addition, if the `MULTI_MEMBER` routing mode is used on the client side, `exposeExternally.type` must be set to `smart` in the Hazelcast CR.
+
+Example server and client configuration using `MULTI_MEMBER` routing:
+
+<CodeBlock language="yaml">{Ex_hazelcast_high_availability_mode_multi_member_routing_yaml}</CodeBlock>
+
+<Tabs>
+<TabItem value="java" label="Java">
+
+```java
+ClientConfig clientConfig = new ClientConfig();
+ClientNetworkConfig networkConfig = clientConfig.getNetworkConfig();
+networkConfig.getClusterRoutingConfig().setRoutingMode(RoutingMode.MULTI_MEMBER);
+// PARTITION_GROUPS is the default strategy, so it does not need to be explicitly defined
+networkConfig.getClusterRoutingConfig().setRoutingStrategy(RoutingStrategy.PARTITION_GROUPS);
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml
+...
+    <network>
+        <cluster-routing mode="MULTI_MEMBER">
+          <grouping-strategy>PARTITION_GROUPS</grouping-strategy>
+        </cluster-routing>
+    </network>
+...
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+  network:
+    cluster-routing:
+      mode: MULTI_MEMBER
+      grouping-strategy: PARTITION_GROUPS
+```
+
+</TabItem>
+</Tabs>

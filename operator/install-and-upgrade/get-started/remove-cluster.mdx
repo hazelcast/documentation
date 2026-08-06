@@ -1,0 +1,43 @@
+---
+title: "Remove a cluster and uninstall Operator"
+sidebar_position: 1
+slug: /remove-cluster
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+This topic explains how to remove a Hazelcast cluster and uninstall Operator.
+
+1. Delete the Hazelcast cluster and license key secret:
+
+<Tabs>
+<TabItem value="kubernetes" label="Kubernetes">
+
+```shell
+kubectl delete -f hazelcast-enterprise.yaml
+kubectl delete secret hazelcast-license-key
+```
+
+</TabItem>
+<TabItem value="openshift" label="Openshift">
+
+```shell
+oc delete -f hazelcast-enterprise.yaml
+oc delete secret hazelcast-license-key
+```
+
+</TabItem>
+</Tabs>
+
+1. Uninstall Operator:
+
+```shell
+helm uninstall operator
+```
+
+1. If you installed the CRDs separately from Operator, you must remove them separately:
+
+```shell
+helm uninstall operator-crds
+```

@@ -7,10 +7,14 @@
 //
 // nav.adoc grammar we handle:
 //   .Category Title            -> a top-level sidebar category (folder)
-//   * xref:page.adoc[Label]    -> a nav item at depth 1
+//   * xref:page.adoc[Label]    -> a page nav item at depth 1
 //   ** xref:page.adoc[Label]   -> depth 2 (child of the preceding depth-1 item)
+//   * Grouping Label           -> a bullet item with NO xref: a sub-category
+//                                 (a non-clickable grouping label whose children
+//                                 nest under it) — operator nests this way
+//                                 (`* Data`, `** Data structures`).
 //   *** / ****                 -> deeper
-// A nav item with children is BOTH a page and a parent. We render it as a
+// A page nav item with children is BOTH a page and a parent. We render it as a
 // category folder whose page content becomes `overview.mdx` (sidebar label
 // "Overview"), so the category/content split is explicit. URLs are preserved by
 // a `slug` on every page.
@@ -19,6 +23,9 @@ const path = require('node:path')
 
 const CATEGORY_RE = /^\.(\S.*)$/
 const ITEM_RE = /^(\*+)\s+xref:([^[\]]+?)\[(.*)\]\s*$/
+// A bullet item with no xref -> a grouping (sub-category). Captures the depth and
+// the label text. Tested only after ITEM_RE fails, so it never eats a page item.
+const GROUP_RE = /^(\*+)\s+(\S.*?)\s*$/
 
 // A nav xref target -> the page stem (cloud is single-module + flat, so the
 // stem is the last path/colon segment with .adoc and any #fragment removed).
@@ -45,6 +52,21 @@ function parseNav (adoc) {
       const node = { type: 'page', stem: targetStem(item[2]), label: item[3].trim(), children: [] }
       const parent = stack[depth - 1]
       if (!parent) continue // malformed depth jump; skip defensively
+      parent.children.push(node)
+      stack[depth] = node
+      stack.length = depth + 1
+      continue
+    }
+    const group = line.match(GROUP_RE)
+    if (group) {
+      const depth = group[1].length
+      const node = { type: 'category', label: group[2].trim(), children: [] }
+      const parent = stack[depth - 1]
+      if (!parent) continue // grouping with no parent (depth jump); skip
+      // A grouping nests inside its parent's children — but the plan walker only
+      // recurses into a category's children when the category is a top-level
+      // root or reached via walk(); nested groupings ARE reached via walk()
+      // because the parent page/category holds them as children. See buildPlan.
       parent.children.push(node)
       stack[depth] = node
       stack.length = depth + 1

@@ -1,0 +1,61 @@
+---
+title: "Syncronize WAN replicated data"
+sidebar_label: "Overview"
+sidebar_position: 0
+slug: /wan-sync
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Ex_wan_sync_full_yaml from '!!raw-loader!../../../../examples/wan-sync-full.yaml';
+import Ex_wan_sync_delta_yaml from '!!raw-loader!../../../../examples/wan-sync-delta.yaml';
+
+WAN syncronization allows you to overcome out-of-sync issues with WAN replicated data.
+
+See [Synchronizing WAN clusters](/hazelcast/5.7/wan/advanced-features#synchronizing-wan-clusters.adoc) for more detailed information about the configuration and behavior of WAN syncronization in Hazelcast.
+
+:::tip
+
+For a worked example, see the [Synchronize WAN replicated data tutorial](/operator/latest-snapshot/tutorials/operator-tutorial-wan-sync).
+
+:::
+
+## Prerequisites for WAN syncronization
+
+Before you create and configure a `WanSync` resource, you must create the following:
+
+- At least one `Hazelcast` resource and one `Map` resource for the source Hazelcast cluster.
+- A target Hazelcast cluster that is accessible from the source cluster.
+- A `WanReplication` CR that points to the target cluster.
+
+## Configure the WAN syncronization resource
+
+To configure WAN syncronization, you must create a `WanSync` resource. For more detailed information, see the [API reference](/operator/latest-snapshot/api-ref#wansyncspec).
+
+To create a `WanSync` resource you must use the existing `WanReplication` CR. This means that the `WanSync` resource reuses the existing and running WAN replication process.
+
+<CodeBlock language="yaml" title="Example of WanSync using the existing WanReplication">{Ex_wan_sync_full_yaml}</CodeBlock>
+
+## Configure delta WAN syncronization
+
+To configure [delta WAN syncronization](/hazelcast/5.7/wan/advanced-features#delta-wan-synchronization.adoc) for the Hazelcast cluster, do the following:
+
+- Configure Merkle tree for the `Map` resource.
+- Set `syncConsistencyCheckStrategy` to `MERKLE_TREES` in the `WanReplication` resource.
+- Create the `WanSync` resource. The created `WanSync` automatically uses Delta WAN Synchronization.
+
+<CodeBlock language="yaml" title="Example of delta WAN syncronization">{Ex_wan_sync_delta_yaml}</CodeBlock>
+
+## Checking the status of a WAN syncronization
+
+After creating the `WanSync` resource, run the following command to see the WAN syncronization status:
+
+```shell
+kubectl get wansync wansync-sample
+```
+
+The output is similar to the following:
+
+```
+NAME                     STATUS
+wansync-sample-sample    Completed
+```

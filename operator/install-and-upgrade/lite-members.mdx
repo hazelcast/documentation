@@ -1,0 +1,59 @@
+---
+title: "Deploy Lite members"
+sidebar_position: 2
+slug: /lite-members
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Ex_lite_member_yaml from '!!raw-loader!../examples/lite-member.yaml';
+import Ex_lite_member_jvm_yaml from '!!raw-loader!../examples/lite-member-jvm.yaml';
+import Ex_lite_member_resource_limits_yaml from '!!raw-loader!../examples/lite-member-resource-limits.yaml';
+import Ex_lite_member_scheduling_yaml from '!!raw-loader!../examples/lite-member-scheduling.yaml';
+
+Lite members are Hazelcast cluster members that do not store data or have partitions. They are mainly used to execute tasks and register listeners.
+
+You can use Operator to deploy [Lite members](https://docs.hazelcast.com/hazelcast/latest/maintain-cluster/lite-members). Lite members use the separate `liteMember` section in the [Hazelcast custom resource (CR)](/operator/latest-snapshot/api-ref#litemember).
+
+:::note
+
+Configuring `jvm`, `env`, `resources` or `scheduling` sections in the Hazelcast CR does not affect Lite member configuration. Lite members are configured separately.
+
+:::
+
+## Deploy Lite members
+
+To set the number of Lite members you want to deploy in the Hazelcast CR, use the `count` field in the `liteMember` section of the [Hazelcast CR](/operator/latest-snapshot/api-ref#litemember).
+
+<CodeBlock language="yaml" title="Example Lite member count configuration">{Ex_lite_member_yaml}</CodeBlock>
+
+This example deploys three data members and two Lite members. Note that `clusterSize` represents the number of data members only.
+
+## Configure JVM parameters
+
+To configure JVM Parameters for Lite members, use the `jvm` field in the `liteMember` section of the [Hazelcast CR](/operator/latest-snapshot/api-ref#litemember).
+
+<CodeBlock language="yaml" title="Example Lite member JVM configuration">{Ex_lite_member_jvm_yaml}</CodeBlock>
+
+## Configure resource limits
+
+To configure resource limits for Lite members, use the `resources` field in the `liteMember` section of the [Hazelcast CR](/operator/latest-snapshot/api-ref#litemember).
+
+<CodeBlock language="yaml" title="Example Lite member resource limits configuration">{Ex_lite_member_resource_limits_yaml}</CodeBlock>
+
+## Configure scheduling
+
+To configure scheduling for Lite members, use the `scheduling` field in the `liteMember` section of the [Hazelcast CR](/operator/latest-snapshot/api-ref#litemember).
+
+<CodeBlock language="yaml" title="Example Lite member scheduling configuration">{Ex_lite_member_scheduling_yaml}</CodeBlock>
+
+## Configure environment variables
+
+To configure environment variables for Lite members, use the `env` field in the `liteMember` section of the [Hazelcast CR](/operator/latest-snapshot/api-ref#litemember).
+
+The `env` field uses the [Kubernetes' EnvVar format](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#envvar-v1-core/).
+
+:::note
+
+You cannot use the `env` field to configure Hazelcast environment variables, which are prefixed `HZ_`. To configure the Hazelcast environment variables, use [Custom configuration](/operator/latest-snapshot/custom-config).
+
+:::

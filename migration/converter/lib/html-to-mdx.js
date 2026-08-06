@@ -64,6 +64,11 @@ function convertBody (html, ctx) {
     slugger: new GithubSlugger(),
     partials: ctx.partials || new Map(),
     linkVars: ctx.linkVars || new Map(),
+    // Single-sourced examples: content -> co-located file path (from convert.js
+    // loadExamples). exampleVars/usedVarNames dedupe imports within one page.
+    examples: ctx.examples || new Map(),
+    exampleVars: new Map(),
+    usedVarNames: new Set(),
   }
   collapseSentinels($, $.root()[0], state)
   const body = convertChildren($, $.root()[0], state, 0)
@@ -165,15 +170,18 @@ function convertBlock ($, node, st, depth) {
   }
   if (cls.includes('paragraph')) {
     const p = $(node).children('p').first()
-    return inline($, (p[0] || node), st)
+    return escapeBlockStart(inline($, (p[0] || node), st))
   }
   if (cls.includes('admonitionblock')) return convertAdmonition($, node, st, depth)
-  if (cls.includes('listingblock') || cls.includes('literalblock')) return convertListing($, node, st)
+  // `literalblock` is the standalone literal block; the bare `literal` class is
+  // the form Asciidoctor uses for a literal block nested in a table cell.
+  if (cls.includes('listingblock') || cls.includes('literalblock') || cls.includes('literal')) return convertListing($, node, st)
   if (cls.includes('imageblock')) return convertImageBlock($, node, st)
   if (cls.includes('tabset')) return convertTabs($, node, st, depth)
   if (cls.includes('olist')) return convertList($, $(node).children('ol')[0], st, depth, true)
   if (cls.includes('ulist')) return convertList($, $(node).children('ul')[0], st, depth, false)
   if (cls.includes('dlist')) return convertDlist($, $(node).children('dl')[0], st, depth)
+  if (cls.includes('colist')) return convertColist($, node, st, depth)
   if (cls.includes('quoteblock') || cls.includes('verseblock')) return convertQuote($, node, st, depth)
 
   // Structural wrappers with no output of their own: recurse into their content.
@@ -282,6 +290,32 @@ function convertDlist ($, dl, st, depth) {
   return out.join('\n')
 }
 
+// Asciidoctor callout list (colist): the numbered annotations tied to a code
+// block's conum markers (`<1>`, `<2>` in the source). It renders in the golden
+// as a bare <table> (number cell + description cell) with NO `tableblock` class,
+// so it is NOT a data table -- emitting a Markdown/HTML <table> would both
+// misrepresent it and get row-ified by the fidelity table compare (`│ 1 │ …`).
+// Each row becomes one paragraph `**N** description`: the number stays visible
+// text and the row reads as a single line, matching how Antora's colist renders
+// (number cell + description cell joined). The description uses the same
+// block/inline handling as cells, so a rare multi-block annotation still holds.
+function convertColist ($, node, st, depth) {
+  const rows = $(node).find('tr').toArray()
+  if (!rows.length) return serializeJsx($, node, st)
+  const out = []
+  for (const tr of rows) {
+    const tds = $(tr).children('td').toArray()
+    if (tds.length < 2) continue
+    const num = inline($, tds[0], st).replace(/\s+/g, ' ').trim()
+    const desc = blockOrInline($, tds[1], st, depth).trim()
+    // Join number + description: `**N** first-line` reads as one paragraph, and
+    // any trailing block content (a nested list — backup-restore) follows on its
+    // own lines, matching how the golden colist renders the row.
+    out.push(desc === '' ? num : `${num} ${desc}`)
+  }
+  return out.join('\n\n')
+}
+
 // --- admonitions -----------------------------------------------------------
 
 function convertAdmonition ($, node, st, depth) {
@@ -296,8 +330,8 @@ function convertAdmonition ($, node, st, depth) {
 function blockOrInline ($, container, st, depth) {
   const hasBlocks = (container.children || []).some((c) =>
     c.type === 'tag' && (c.name === 'ul' || c.name === 'ol' || c.name === 'table' || c.name === 'pre' ||
-      /^(paragraph|ulist|olist|listingblock|literalblock|admonitionblock|imageblock|sect\d|olist|dlist|openblock|exampleblock)$/.test(classes(c).join(' ')) ||
-      classes(c).some((k) => /paragraph|ulist|olist|listingblock|literalblock|admonitionblock|imageblock|openblock|exampleblock|dlist/.test(k))))
+      /^(paragraph|ulist|olist|listingblock|literalblock|literal|admonitionblock|imageblock|sect\d|olist|dlist|openblock|exampleblock)$/.test(classes(c).join(' ')) ||
+      classes(c).some((k) => /paragraph|ulist|olist|listingblock|literalblock|literal|admonitionblock|imageblock|openblock|exampleblock|dlist/.test(k))))
   if (hasBlocks) return convertChildren($, container, st, depth)
   return inline($, container, st)
 }
@@ -330,7 +364,57 @@ function convertListing ($, node, st) {
   const pre = $(node).find('pre')[0]
   const title = $(node).children('.title').first().text().trim()
   if (!pre) return ''
+  // Single-sourced example include: when this code block's content matches a
+  // co-located example file, import it (raw-loader) and render via <CodeBlock>
+  // instead of baking the fence -- keeps the example file the single source.
+  if (st.examples && st.examples.size) {
+    const codeEl = $(pre).find('code')[0]
+    const file = st.examples.get(normalizeCode($(codeEl || pre).text()))
+    if (file) return emitExampleCodeBlock($, pre, file, title, st)
+  }
   return preToFence($, pre, title)
+}
+
+// Match key for code content: strip trailing newlines/blank lines (mirrors
+// convert.js normalizeCode and preToFence's trailing-newline trim).
+const normalizeCode = (s) => s.replace(/\n+$/, '')
+
+// A stable, unique JS identifier for a page's import of an example file.
+function exampleVar (file, st) {
+  if (st.exampleVars.has(file)) return st.exampleVars.get(file)
+  let base = 'Ex_' + file.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+  let name = base
+  let n = 2
+  while (st.usedVarNames.has(name)) name = `${base}_${n++}`
+  st.usedVarNames.add(name)
+  st.exampleVars.set(file, name)
+  return name
+}
+
+// Path from the page's output dir to the co-located examples/ dir (at the
+// version-tree root), for the raw-loader import. Webpack needs a `./`-relative
+// specifier.
+function examplesRelPath (relFile) {
+  const dir = path.posix.dirname((relFile || '').split(/[\\/]/).join('/'))
+  const rel = path.posix.relative(dir === '' ? '.' : dir, 'examples')
+  return rel.startsWith('.') ? rel : './' + rel
+}
+
+function emitExampleCodeBlock ($, pre, file, title, st) {
+  const codeEl = $(pre).find('code')[0]
+  let lang = ''
+  const langSrc = codeEl || pre
+  const dataLang = langSrc.attribs && langSrc.attribs['data-lang']
+  if (dataLang) lang = dataLang
+  else {
+    const m = classes(langSrc).find((c) => c.startsWith('language-'))
+    if (m) lang = m.slice('language-'.length)
+  }
+  const varName = exampleVar(file, st)
+  st.imports.add("import CodeBlock from '@theme/CodeBlock';")
+  st.imports.add(`import ${varName} from '!!raw-loader!${examplesRelPath(st.relFile)}/${file}';`)
+  const info = (lang ? ` language=${jsxAttr(lang)}` : '') + (title ? ` title=${jsxAttr(title)}` : '')
+  return `<CodeBlock${info}>{${varName}}</CodeBlock>`
 }
 
 function convertPre ($, node) {
@@ -347,9 +431,38 @@ function preToFence ($, pre, title) {
     const m = classes(langSrc).find((c) => c.startsWith('language-'))
     if (m) lang = m.slice('language-'.length)
   }
-  const text = $(code || pre).text().replace(/\n$/, '')
-  const info = lang + (title ? ` title=${jsxAttr(title)}` : '')
-  return fencedCode(text, info)
+  // Asciidoctor callout numbers (conums) render inside the code as
+  // `<i class="conum" data-value="N"></i><b>(N)</b>`. Strip that markup from the
+  // fenced code and carry the positions in a `conums="line:value,…"` metastring;
+  // the swizzled CodeBlock re-emits prod's badge markup per line (see
+  // src/theme/CodeBlock). The `(N)` text stays in the rendered DOM (CSS-hidden,
+  // exactly as prod), so the golden↔converted code text still matches.
+  const { text, conums } = extractConums($, code || pre)
+  let info = lang
+  if (title) info += ` title=${jsxAttr(title)}`
+  if (conums.length) info += ` conums="${conums.map(([l, v]) => `${l}:${v}`).join(',')}"`
+  return fencedCode(text.replace(/\n$/, ''), info)
+}
+
+// Pull conum markers out of a code element: returns the plain code text with the
+// `<i class="conum">…<b>(N)</b>` markup removed, plus [lineIndex, value] pairs
+// (0-based line, matching prism-react-renderer's per-line token array).
+function extractConums ($, codeEl) {
+  const conums = []
+  for (const i of $(codeEl).find('i.conum[data-value]').toArray()) {
+    const val = $(i).attr('data-value')
+    $(i).next('b').remove() // the fallback `(N)` text; re-added by the component
+    $(i).replaceWith(` C${val} `)
+  }
+  let text = $(codeEl).text()
+  const SENT = / C(\d+) /
+  let m
+  while ((m = SENT.exec(text))) {
+    const line = (text.slice(0, m.index).match(/\n/g) || []).length
+    conums.push([line, m[1]])
+    text = text.slice(0, m.index) + text.slice(m.index + m[0].length)
+  }
+  return { text, conums }
 }
 
 // --- images ----------------------------------------------------------------
@@ -418,6 +531,19 @@ function convertTabs ($, node, st, depth) {
 }
 
 const slug = (s) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
+// Escape a leading Markdown BLOCK marker on paragraph text so prose that happens
+// to begin with `+ `/`- `/`* `/`> `/`# `/`1. ` is not reparsed as a list item,
+// blockquote, or heading. Antora renders such text literally (e.g. scale.adoc's
+// `+\n.For Openshift` malformed continuation -> a literal paragraph); MDX would
+// otherwise eat the marker and synthesize a spurious list item. The trailing
+// whitespace guard keeps `-5`, `*emphasis*`, `#hashtag` untouched.
+function escapeBlockStart (s) {
+  return s
+    .replace(/^(\s*)([-+*>])(\s)/, '$1\\$2$3')
+    .replace(/^(\s*)(#{1,6})(\s)/, '$1\\$2$3')
+    .replace(/^(\s*)(\d+)([.)])(\s)/, '$1$2\\$3$4')
+}
 
 // --- tables ----------------------------------------------------------------
 
@@ -513,7 +639,10 @@ function cellMarkdown ($, cell, st) {
   if (content) return blockOrInline($, content, st, 0).trim()
   const ps = $(cell).children('p').toArray()
   if (ps.length > 1) return ps.map((p) => inline($, p, st).trim()).filter(Boolean).join('\n\n')
-  return inline($, cell, st).trim()
+  // Block/inline decision for the remaining cases: a cell may hold a block with
+  // no `.content` wrapper (e.g. a `<div class="literal">` code block), which must
+  // go through the block converters rather than be flattened to inline text.
+  return blockOrInline($, cell, st, 0).trim()
 }
 
 function spanAttrs (cell) {
@@ -578,7 +707,27 @@ function inlineTag ($, node, st, opt) {
       // must be dropped -- treating them as italic emits an empty `**`/`*`.
       if (cls.some((c) => c === 'fa' || c.startsWith('fa-') || c.startsWith('icon-'))) return ''
       return kids().trim() ? `*${kids()}*` : ''
-    case 'code': return inlineCode($(node).text())
+    case 'code': {
+      // A monospaced cross-reference renders as `<code><a href>Type</a></code>`
+      // (api-ref's field-type columns). Markdown cannot hold a link INSIDE inline
+      // code, but it can hold code inside a link LABEL, which is visually
+      // identical and keeps the link. Only the single-link case (the CRD pattern)
+      // is handled; anything else stays plain inline code.
+      const a = $(node).find('a[href]')[0]
+      if (a && a.attribs && a.attribs.href) {
+        const { kind, href } = resolveHref(a.attribs.href, st.pageUrl)
+        // A bare-URL autolink inside code (`<code><a class="bare" href=…>`) whose
+        // URL carries literal angle brackets is a placeholder shown AS code, not
+        // a real link — and its invalid URL fails Docusaurus compile. Keep it as
+        // inline code with no link. Genuine cross-references (api-ref's `#Type`)
+        // become a link whose label is code (Markdown allows code in a label).
+        if (kind !== 'empty' && kind !== 'malformed' && !/[<>]/.test(href)) {
+          const label = inlineCode($(node).text())
+          return `[${label}](${/[()\s]/.test(href) ? `<${href}>` : href})`
+        }
+      }
+      return inlineCode($(node).text())
+    }
     case 'br': return '<br/>'
     case 'a': {
       const id = node.attribs && node.attribs.id
@@ -598,6 +747,12 @@ function inlineTag ($, node, st, opt) {
       if (varName) {
         return anchorEl + `<LinkVariable name=${jsxAttr(varName)}>${label}</LinkVariable>`
       }
+      // A href with literal angle brackets (a placeholder pseudo-URL like
+      // `http://<mc-ip-address>:8080`) cannot be a link in Docusaurus: it fails
+      // URL validation at compile time in EVERY form (Markdown link and raw
+      // <a> alike). Keep the visible text (jsxText encodes the brackets) and drop
+      // the un-followable link wrapper — the only form that compiles.
+      if (/[<>]/.test(href)) return anchorEl + label
       const safeLabel = label.replace(/\]/g, '\\]')
       const safeHref = /[()\s]/.test(href) ? `<${href}>` : href
       return anchorEl + `[${safeLabel}](${safeHref})`

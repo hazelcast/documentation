@@ -1,0 +1,68 @@
+---
+title: "Configure topics"
+sidebar_position: 3
+slug: /topic-configuration
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Ex_topic_yaml from '!!raw-loader!../../../examples/topic.yaml';
+
+Hazelcast provides a distribution mechanism for publishing messages that are delivered to multiple subscribers. This is known as a publish/subscribe (pub/sub) messaging model. Publishing and subscription operations are cluster wide. When a member subscribes to a topic, it is registered to receive messages published by any member in the cluster, including any new members that joined after you added the listener. You can create and configure topics using the `Topic` custom resource.
+
+## Configure a topic resource
+
+You can use any of the following configuration options in the `Topic` resource. For more information, see the [API reference](/operator/latest-snapshot/api-ref#topicspec).
+
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`name`</td>
+<td>Name of the topic that you're creating. If empty, the custom resource (CR) name is used.</td>
+</tr>
+<tr>
+<td>`hazelcastResourceName`</td>
+<td>The name of the Hazelcast resource.</td>
+</tr>
+<tr>
+<td>`globalOrderingEnabled`</td>
+<td>When true, all nodes listening to the same topic get their messages in the same order.</td>
+</tr>
+<tr>
+<td>`multiThreadingEnabled`</td>
+<td>
+
+When true, enables multi-threaded processing of incoming messages. Otherwise, a single thread handles all topic messages.
+
+:::note
+
+You cannot enable multi-threading when global ordering is in use.
+
+:::
+
+</td>
+</tr>
+</tbody>
+</table>
+
+## Example configuration
+
+The following `Topic` custom resource creates a topic configuration for the `Hazelcast` custom resource that is defined in the `hazelcastResourceName` field.
+
+<CodeBlock language="yaml" title="Example configuration">{Ex_topic_yaml}</CodeBlock>
+
+After creating the `Topic` resource, you can check its status:
+
+```shell
+kubectl get topic topic-sample -o wide
+```
+
+```none
+NAME           STATUS    HAZELCAST-RESOURCE   MESSAGE
+topic-sample   Success   hazelcast-sample
+```

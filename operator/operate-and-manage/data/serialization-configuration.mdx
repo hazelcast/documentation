@@ -1,0 +1,34 @@
+---
+title: "Configure serialization"
+sidebar_position: 4
+slug: /serialization-configuration
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Ex_serialization_compact_yaml from '!!raw-loader!../../examples/serialization-compact.yaml';
+import Ex_serialization_custom_yaml from '!!raw-loader!../../examples/serialization-custom.yaml';
+import Ex_serialization_filter_yaml from '!!raw-loader!../../examples/serialization-filter.yaml';
+
+For data to be sent over a network between cluster members and/or clients, it needs to be serialized into raw bytes. Hazelcast has many serialization options to choose from, depending on what you plan on doing with your data.
+
+With Operator you can configure serialization using the Hazelcast Custom Resource (CR). To understand serialization, see the [Serializing objects and clases](/hazelcast/5.7/serialization/serialization).
+
+You can find more detailed information in the [API reference](/operator/latest-snapshot/api-ref#serializationconfig).
+
+## Configure compact serialization
+
+To configure compact serialization, define the `compactSerialization` section. The following configuration will register an explicit serializer `com.example.FooSerializer` along with a zero config serializer for the `com.example.Bar` class.
+
+<CodeBlock language="yaml" title="Compact serialization example configuration">{Ex_serialization_compact_yaml}</CodeBlock>
+
+## Configure custom serialization
+
+To register custom serializers, define the list of serializers and types in the `serializers` section. The following configuration will register two custom serializers.
+
+<CodeBlock language="yaml" title="Custom serializers example configuration">{Ex_serialization_custom_yaml}</CodeBlock>
+
+## Disallow deserialization of untrusted Java classes
+
+To stop Hazelcast from deserializing arbitrary classes, you can allow or disallow deserialization of Java classes by class name or package name using the `javaSerializationFilter` option.
+
+<CodeBlock language="yaml" title="Java serialization filter example configuration">{Ex_serialization_filter_yaml}</CodeBlock>

@@ -1,0 +1,172 @@
+---
+title: "Configure an LDAP security provider"
+sidebar_position: 5
+slug: /management-center-ldap
+---
+
+Hazelcast supports authentication and authorization against Lightweight Directory Access Protocol (LDAP) servers. You can use Operator to configure Management Center to use an LDAP server.
+
+For more information about using LDAP in the Management Center, see the [Management Center documentation](https://docs.hazelcast.com/management-center/latest/deploy-manage/ldap).
+
+## Set up the LDAP security provider
+
+You can configure either LDAP or LDAP over TLS (or LDAPS).
+
+For LDAP, configure the `securityProvider.ldap` section in the Management Center CR.
+
+For LDAP over TLS:
+
+- Create a secret that contains the certificate and key. Operator will set up a TrustStore and KeyStore automatically.
+- Configure the `securityProvider.ldap.tls` section in the Management Center CR.
+
+Use the following fields to configure the LDAP security provider:
+
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`url`</td>
+<td>URL of your LDAP server, including schema (ldap://) and port.</td>
+</tr>
+<tr>
+<td>`tls`</td>
+<td>
+
+Configuration for TLS:
+
+- `secretName`: Name of the secret that contains the certificate and key for LDAP over TLS.
+- `startTLS`: Initiate a secure TLS connection over an initially unencrypted channel.
+
+</td>
+</tr>
+<tr>
+<td>`credentialsSecretName`</td>
+<td>Name of the secret that contains `username` and `password` keys of a user that has administrator privileges on the LDAP server. The `username` must be the distinguished name (DN) of the user. It is used to connect to the server when authenticating users.</td>
+</tr>
+<tr>
+<td>`userDN`</td>
+<td>DN to be used for searching users.</td>
+</tr>
+<tr>
+<td>`groupDN`</td>
+<td>DN to be used for searching groups.</td>
+</tr>
+<tr>
+<td>`adminGroups`</td>
+<td>Members of these groups and nested groups have administrator privileges on Management Center.</td>
+</tr>
+<tr>
+<td>`userGroups`</td>
+<td>Members of these groups and nested groups have read and write privileges on Management Center.</td>
+</tr>
+<tr>
+<td>`readonlyUserGroups`</td>
+<td>Members of these groups and nested groups have read only access to Management Center.</td>
+</tr>
+<tr>
+<td>`metricsOnlyGroups`</td>
+<td>Members of these groups and nested groups have access to view metrics only on Management Center.</td>
+</tr>
+<tr>
+<td>`userSearchFilter`</td>
+<td>LDAP search filter expression for users.</td>
+</tr>
+<tr>
+<td>`groupSearchFilter`</td>
+<td>LDAP search filter expression for groups.</td>
+</tr>
+</tbody>
+</table>
+
+### Example Management Center LDAP configuration
+
+The following example shows how to create a `Secret` for the LDAP credentials:
+
+```shell
+kubectl create secret generic ldap-credentials --from-literal=username="cn=admin,dc=example,dc=org" --from-literal=password="adminpassword"
+kubectl get secret ldap-credentials -o=yaml
+apiVersion: v1
+data:
+  password: YWRtaW5wYXNzd29yZA==
+  username: Y249YWRtaW4sZGM9ZXhhbXBsZSxkYz1vcmc=
+kind: Secret
+metadata:
+  creationTimestamp: "2023-10-11T10:51:37Z"
+  name: ldap-credentials
+  namespace: default
+  resourceVersion: "59391"
+  uid: 299e5d42-4c72-4877-9a99-c6ffa3c68d07
+type: Opaque
+```
+
+The following example shows how to create a secret for LDAP over TLS:
+
+```shell
+kubectl create secret tls mc-ldap-secret --cert=ca.crt --key=ca.keykgp
+```
+
+The following is an example configuration for the LDAP security provider:
+
+```yaml
+apiVersion: hazelcast.com/v1alpha1
+kind: ManagementCenter
+metadata:
+  name: managementcenter
+spec:
+  repository: "hazelcast/management-center"
+  licenseKeySecretName: hazelcast-license-key
+  securityProvider:
+    ldap:
+      credentialsSecretName: ldap-credentials
+      groupDN: ou=groups,dc=example,dc=org
+      groupSearchFilter: member={0}
+      nestedGroupSearch: false
+      url: ldap://ldap-server-url:1389
+      userDN: ou=groups,dc=example,dc=org
+      userGroups:
+      - users
+      metricsOnlyGroups:
+      - metrics
+      adminGroups:
+      - admins
+      readonlyUserGroups:
+      - readers
+      userSearchFilter: cn={0}
+```
+
+The following is an example configuration for the LDAP over TLS security provider:
+
+```yaml
+apiVersion: hazelcast.com/v1alpha1
+kind: ManagementCenter
+metadata:
+  name: managementcenter
+spec:
+  repository: 'hazelcast/management-center'
+  licenseKeySecretName: hazelcast-license-key
+  securityProvider:
+    ldap:
+      tls:
+        secretName: mc-ldap-secret
+        startTLS: true
+      credentialsSecretName: ldap-credentials
+      groupDN: ou=users,dc=example,dc=org
+      groupSearchFilter: member={0}
+      nestedGroupSearch: false
+      url: ldap://198.51.100.200:1389
+      userDN: ou=users,dc=example,dc=org
+      userGroups:
+        - readers
+      metricsOnlyGroups:
+        - readers
+      adminGroups:
+        - readers
+      readonlyUserGroups:
+        - readers
+      userSearchFilter: cn={0}
+```
