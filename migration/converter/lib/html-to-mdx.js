@@ -69,6 +69,11 @@ function convertBody (html, ctx) {
     examples: ctx.examples || new Map(),
     exampleVars: new Map(),
     usedVarNames: new Set(),
+    // Single-sourced doc variables to put BACK (value -> name), scoped to the
+    // attributes this page's SOURCE references (from convert.js) so a matching
+    // string elsewhere is never touched. Prose -> <Variable>; code -> `{name}`
+    // placeholder + a `vars` fence flag the swizzled CodeBlock resolves.
+    pageVars: ctx.pageVars || new Map(),
   }
   collapseSentinels($, $.root()[0], state)
   const body = convertChildren($, $.root()[0], state, 0)
@@ -159,7 +164,7 @@ function convertBlock ($, node, st, depth) {
 
   if (name === 'table' && cls.includes('tableblock')) return convertTable($, node, st)
   if (name === 'ul' || name === 'ol') return convertList($, node, st, depth, name === 'ol')
-  if (name === 'pre') return convertPre($, node)
+  if (name === 'pre') return convertPre($, node, st)
   if (name === 'p') return inline($, node, st)
   if (name === 'details') return convertDetails($, node, st, depth)
 
@@ -375,10 +380,10 @@ function convertListing ($, node, st) {
   // instead of baking the fence -- keeps the example file the single source.
   if (st.examples && st.examples.size) {
     const codeEl = $(pre).find('code')[0]
-    const file = st.examples.get(normalizeCode($(codeEl || pre).text()))
-    if (file) return emitExampleCodeBlock($, pre, file, title, st)
+    const hit = st.examples.get(normalizeCode($(codeEl || pre).text()))
+    if (hit) return emitExampleCodeBlock($, pre, hit.file, title, st, hit.conums)
   }
-  return preToFence($, pre, title)
+  return preToFence($, pre, title, st)
 }
 
 // Match key for code content: strip trailing newlines/blank lines (mirrors
@@ -406,7 +411,7 @@ function examplesRelPath (relFile) {
   return rel.startsWith('.') ? rel : './' + rel
 }
 
-function emitExampleCodeBlock ($, pre, file, title, st) {
+function emitExampleCodeBlock ($, pre, file, title, st, conums) {
   const codeEl = $(pre).find('code')[0]
   let lang = ''
   const langSrc = codeEl || pre
@@ -418,16 +423,55 @@ function emitExampleCodeBlock ($, pre, file, title, st) {
   }
   const varName = exampleVar(file, st)
   st.imports.add("import CodeBlock from '@theme/CodeBlock';")
-  st.imports.add(`import ${varName} from '!!raw-loader!${examplesRelPath(st.relFile)}/${file}';`)
-  const info = (lang ? ` language=${jsxAttr(lang)}` : '') + (title ? ` title=${jsxAttr(title)}` : '')
+  // Plain import: a scoped webpack rule (example-attributes-plugin) runs the
+  // example-attributes loader + raw-loader on files under examples/, so any
+  // Antora {attribute} placeholders in the byte-faithful file are substituted
+  // per version at build (no-op for files without placeholders).
+  st.imports.add(`import ${varName} from '${examplesRelPath(st.relFile)}/${file}';`)
+  // Files carrying native `<N>` conum markers get the `conums` metastring so the
+  // swizzled CodeBlock strips the markers and renders callout badges.
+  const info = (lang ? ` language=${jsxAttr(lang)}` : '') + (title ? ` title=${jsxAttr(title)}` : '') +
+    (conums ? ' metastring="conums"' : '')
   return `<CodeBlock${info}>{${varName}}</CodeBlock>`
 }
 
-function convertPre ($, node) {
-  return preToFence($, node, '')
+function convertPre ($, node, st) {
+  return preToFence($, node, '', st)
 }
 
-function preToFence ($, pre, title) {
+// --- single-sourced variable reverse-mapping -------------------------------
+// Antora resolved {attribute} refs in the golden; per the no-baking rule we put
+// version-number values BACK to references. `pageVars` (value -> name) is scoped
+// (in convert.js) to the attributes the page's SOURCE references, so an
+// unrelated occurrence of the same string is never touched. Values match as
+// whole tokens, longest first (so a value containing another wins).
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const varTokenRe = (value) => new RegExp(`(?<![\\w.-])${escapeRe(value)}(?![\\w.-])`, 'g')
+const pageVarsSorted = (pageVars) => [...pageVars].sort((a, b) => b[0].length - a[0].length)
+
+// Prose: replace a resolved value with a <Variable> (globally registered in
+// MDXComponents, so no import). Applied to already-escaped inline text.
+function reverseProseVars (text, pageVars) {
+  if (!pageVars || !pageVars.size) return text
+  let out = text
+  for (const [value, name] of pageVarsSorted(pageVars)) out = out.replace(varTokenRe(value), `<Variable name="${name}"/>`)
+  return out
+}
+
+// Code: replace a resolved value with the `{name}` placeholder; the swizzled
+// CodeBlock resolves it per version when the fence carries the `vars` flag.
+function reverseCodeVars (code, pageVars) {
+  if (!pageVars || !pageVars.size) return { code, replaced: false }
+  let out = code
+  let replaced = false
+  for (const [value, name] of pageVarsSorted(pageVars)) {
+    const next = out.replace(varTokenRe(value), `{${name}}`)
+    if (next !== out) { out = next; replaced = true }
+  }
+  return { code: out, replaced }
+}
+
+function preToFence ($, pre, title, st) {
   const code = $(pre).find('code')[0]
   let lang = ''
   const langSrc = code || pre
@@ -444,10 +488,12 @@ function preToFence ($, pre, title) {
   // CodeBlock (src/theme/CodeBlock) strips the `<N>` and re-emits prod's circled
   // badge per line. The bare flag leaves every other code block untouched.
   const { text, hasConums } = extractConums($, code || pre)
+  const { code: varsText, replaced } = reverseCodeVars(text, st && st.pageVars)
   let info = lang
   if (title) info += ` title=${jsxAttr(title)}`
   if (hasConums) info += ' conums'
-  return fencedCode(text.replace(/\n$/, ''), info)
+  if (replaced) info += ' vars'
+  return fencedCode(varsText.replace(/\n$/, ''), info)
 }
 
 // Replace each conum's `<i class="conum">...<b>(N)</b>` markup with the inline
@@ -666,7 +712,7 @@ function inlineFrom ($, nodes, st, opt = {}) {
   let out = ''
   for (const n of nodes || []) {
     if (n.type === 'text') {
-      out += escapeInlineText(n.data, opt)
+      out += escapeInlineText(n.data, opt, st)
     } else if (n.type === 'tag') {
       out += inlineTag($, n, st, opt)
     }
@@ -674,10 +720,10 @@ function inlineFrom ($, nodes, st, opt = {}) {
   return out
 }
 
-function escapeInlineText (data, opt) {
+function escapeInlineText (data, opt, st) {
   const collapsed = data.replace(/\s+/g, ' ')
   const esc = opt.cell ? mdEscapeCell(collapsed) : mdEscape(collapsed)
-  return esc
+  return st && st.pageVars ? reverseProseVars(esc, st.pageVars) : esc
 }
 
 function inlineTag ($, node, st, opt) {
@@ -741,12 +787,24 @@ function inlineTag ($, node, st, opt) {
       const rawHref = (node.attribs && node.attribs.href) || ''
       const { kind, href } = resolveHref(rawHref, st.pageUrl)
       if (kind === 'empty' || label === '') return anchorEl + label
-      // Single-sourced destination: emit the globally-registered <LinkVariable>
-      // (no import needed) instead of baking the URL in. It always opens in a
-      // new tab (external destinations).
+      // Single-sourced destination: emit the globally-registered <Variable> in
+      // link mode (no import needed) instead of baking the URL in. The href is
+      // the attribute reference; the visible text goes in `text` (not children,
+      // so a `{name}` in it stays literal for the component to resolve). Opens in
+      // a new tab (external destinations).
       const varName = st.linkVars.get(rawHref)
       if (varName) {
-        return anchorEl + `<LinkVariable name=${jsxAttr(varName)}>${label}</LinkVariable>`
+        return anchorEl + `<Variable href=${jsxAttr(`{${varName}}`)} text=${jsxAttr($(node).text().trim())}/>`
+      }
+      // Templated single-sourcing: a version value can be a SUBSTRING of the
+      // href and/or label (e.g. the release-notes link `.../{page-cloud-platform-
+      // version}/...` with a `{full-version}` label). Reverse-map the page's
+      // referenced values (source-scoped, st.pageVars) in the plain href + text;
+      // any hit -> emit <Variable> in link mode with the placeholders kept.
+      if (st.pageVars && st.pageVars.size && !/[<>]/.test(href)) {
+        const { code: hrefTpl, replaced: hrefRep } = reverseCodeVars(href, st.pageVars)
+        const { code: textTpl, replaced: textRep } = reverseCodeVars($(node).text().trim(), st.pageVars)
+        if (hrefRep || textRep) return anchorEl + `<Variable href=${jsxAttr(hrefTpl)} text=${jsxAttr(textTpl)}/>`
       }
       // A href with literal angle brackets (a placeholder pseudo-URL like
       // `http://<mc-ip-address>:8080`) cannot be a link in Docusaurus: it fails

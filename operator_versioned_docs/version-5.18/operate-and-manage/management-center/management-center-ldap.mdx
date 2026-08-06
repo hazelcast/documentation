@@ -4,6 +4,10 @@ sidebar_position: 5
 slug: /management-center-ldap
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_management_center_ldap_yaml from '../../examples/management-center-ldap.yaml';
+import Ex_management_center_ldap_tls_yaml from '../../examples/management-center-ldap-tls.yaml';
+
 Hazelcast supports authentication and authorization against Lightweight Directory Access Protocol (LDAP) servers. You can use Operator to configure Management Center to use an LDAP server.
 
 For more information about using LDAP in the Management Center, see the [Management Center documentation](https://docs.hazelcast.com/management-center/latest/deploy-manage/ldap).
@@ -112,61 +116,8 @@ kubectl create secret tls mc-ldap-secret --cert=ca.crt --key=ca.keykgp
 
 The following is an example configuration for the LDAP security provider:
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: ManagementCenter
-metadata:
-  name: managementcenter
-spec:
-  repository: "hazelcast/management-center"
-  licenseKeySecretName: hazelcast-license-key
-  securityProvider:
-    ldap:
-      credentialsSecretName: ldap-credentials
-      groupDN: ou=groups,dc=example,dc=org
-      groupSearchFilter: member={0}
-      nestedGroupSearch: false
-      url: ldap://ldap-server-url:1389
-      userDN: ou=groups,dc=example,dc=org
-      userGroups:
-      - users
-      metricsOnlyGroups:
-      - metrics
-      adminGroups:
-      - admins
-      readonlyUserGroups:
-      - readers
-      userSearchFilter: cn={0}
-```
+<CodeBlock language="yaml">{Ex_management_center_ldap_yaml}</CodeBlock>
 
 The following is an example configuration for the LDAP over TLS security provider:
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: ManagementCenter
-metadata:
-  name: managementcenter
-spec:
-  repository: 'hazelcast/management-center'
-  licenseKeySecretName: hazelcast-license-key
-  securityProvider:
-    ldap:
-      tls:
-        secretName: mc-ldap-secret
-        startTLS: true
-      credentialsSecretName: ldap-credentials
-      groupDN: ou=users,dc=example,dc=org
-      groupSearchFilter: member={0}
-      nestedGroupSearch: false
-      url: ldap://198.51.100.200:1389
-      userDN: ou=users,dc=example,dc=org
-      userGroups:
-        - readers
-      metricsOnlyGroups:
-        - readers
-      adminGroups:
-        - readers
-      readonlyUserGroups:
-        - readers
-      userSearchFilter: cn={0}
-```
+<CodeBlock language="yaml">{Ex_management_center_ldap_tls_yaml}</CodeBlock>

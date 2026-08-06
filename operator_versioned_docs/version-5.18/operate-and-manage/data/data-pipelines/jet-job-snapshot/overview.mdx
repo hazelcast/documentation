@@ -5,6 +5,10 @@ sidebar_position: 0
 slug: /jet-job-snapshot
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_jetjobsnapshot_example_yaml from '../../../../examples/jetjobsnapshot-example.yaml';
+import Ex_jetjob_initial_snapshot_example_yaml from '../../../../examples/jetjob-initial-snapshot-example.yaml';
+
 During the processing of data pipelines, the state of the computation process is saved and used by the pipelines. This state is crucial for ensuring the accuracy and integrity of the data processing operations. Jet's snapshot allows you to save and restore this state.
 
 A snapshot captures the state of a running Jet job at a particular point in time. It allows you to take a consistent record of the in-flight computations and processed data. You can use this for various purposes, such as fault tolerance, job migration, or analysis.
@@ -33,16 +37,7 @@ Configuration options for the `JetJobSnapshot` custom resource.
 
 Use the following example configuration to export a snapshot using the `JetJobSnapshot` custom resource.
 
-```yaml title="Example of JetJobSnapshot configuration" conums
-apiVersion: hazelcast.com/v1alpha1
-kind: JetJobSnapshot
-metadata:
-  name: jetjobsnapshot-sample
-spec:
-  name: snapshot-example <1>
-  cancelJob: false
-  jetJobResourceName: jet-job-sample <2>
-```
+<CodeBlock language="yaml" title="Example of JetJobSnapshot configuration" metastring="conums">{Ex_jetjobsnapshot_example_yaml}</CodeBlock>
 
 <CodeCallouts>
 
@@ -61,21 +56,7 @@ You can only export a snapshot from a Jet job that has a status of `Running`.
 
 Use the following example to start a new Jet Job that is initialized from a snapshot.
 
-```yaml title="Example of JetJob initialization from Snapshot" conums
-apiVersion: hazelcast.com/v1alpha1
-kind: JetJob
-metadata:
-  name: jet-job-sample
-spec:
-  name: my-test-jet-job
-  hazelcastResourceName: hazelcast
-  state: Running
-  initialSnapshotResourceName: jetjobsnapshot–sample <1>
-  jarName: jet-pipeline-1.0.2.jar
-  bucketConfig:
-    bucketURI: "gs://operator-user-code/jetJobs"
-    secretName: br-secret-gcp
-```
+<CodeBlock language="yaml" title="Example of JetJob initialization from Snapshot" metastring="conums">{Ex_jetjob_initial_snapshot_example_yaml}</CodeBlock>
 
 <CodeCallouts>
 

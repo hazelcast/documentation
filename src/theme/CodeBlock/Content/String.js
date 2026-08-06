@@ -13,10 +13,27 @@ import {
   createCodeBlockMetadata,
   useCodeWordWrap,
 } from '@docusaurus/theme-common/internal';
+import {useActivePluginAndVersion} from '@docusaurus/plugin-content-docs/client';
 import CodeBlockLayout from '@theme/CodeBlock/Layout';
+import {variables, versionedVariables} from '@site/src/variables';
+import substitute from '@site/plugins/lib/substitute-attributes';
 
-const hasConumsFlag = (metastring) =>
-  !!metastring && metastring.split(/\s+/).includes('conums');
+const hasFlag = (metastring, flag) =>
+  !!metastring && metastring.split(/\s+/).includes(flag);
+
+const hasConumsFlag = (metastring) => hasFlag(metastring, 'conums');
+
+// Doc-variable lookup for the active docs component + version, so a `vars` code
+// block resolves its {attribute} placeholders (kept, not baked) at render — the
+// in-code analogue of <Variable>. Per-version values win over global ones.
+function useVariableLookup() {
+  const active = useActivePluginAndVersion();
+  const pluginId = active?.activePlugin?.pluginId;
+  const versionName = active?.activeVersion?.name;
+  const perVersion =
+    (pluginId && versionName && versionedVariables[pluginId]?.[versionName]) || {};
+  return {...variables, ...perVersion};
+}
 
 // Strip a trailing `<N>` conum marker from each line. Returns the cleaned code
 // and a { lineIndex: value } map. The whitespace BEFORE the marker is preserved
@@ -34,8 +51,13 @@ function stripConums(code) {
 
 function useCodeBlockMetadata(props) {
   const {prism} = useThemeConfig();
+  const variableLookup = useVariableLookup();
   let code = props.children;
   let conums;
+  // `vars`: resolve {attribute} placeholders kept in the code (never baked).
+  if (hasFlag(props.metastring, 'vars')) {
+    code = substitute(code, variableLookup);
+  }
   if (hasConumsFlag(props.metastring)) {
     const stripped = stripConums(code);
     code = stripped.code;

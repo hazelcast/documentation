@@ -8,7 +8,7 @@ slug: /get-started
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import CodeBlock from '@theme/CodeBlock';
-import Ex_hazelcast_enterprise_yaml from '!!raw-loader!../../examples/hazelcast-enterprise.yaml';
+import Ex_hazelcast_enterprise_yaml from '../../examples/hazelcast-enterprise.yaml';
 
 This topic explains how to deploy a Hazelcast cluster using Operator for Kubernetes.
 
@@ -76,8 +76,8 @@ Hazelcast images are hosted at `docker.io/hazelcast` and `registry.connect.redha
 
    Run the following command to **deploy Operator and the CRDs together**. By default, Operator watches all namespaces. Use the `watchedNamespaces` variable to change this configuration if needed.
 
-   ```shell
-   helm install operator hazelcast/hazelcast-platform-operator --version=5.18.0 \
+   ```shell vars
+   helm install operator hazelcast/hazelcast-platform-operator --version={operator-chart-version} \
        --set=installCRDs=true
    ```
 
@@ -86,14 +86,14 @@ Hazelcast images are hosted at `docker.io/hazelcast` and `registry.connect.redha
 
    Run the following commands to **deploy Operator and the CRDs separately**.
 
-   ```shell
-   helm install operator-crds hazelcast/hazelcast-platform-operator-crds --version=5.18.0
+   ```shell vars
+   helm install operator-crds hazelcast/hazelcast-platform-operator-crds --version={operator-chart-version}
    ```
 
    After installing CRDs, install Operator by running the following command. This operation requires only namespace-scoped permissions for `hz-system`, `ns-1` and `ns-2` namespaces, which should already exist.
 
-   ```shell conums
-   helm install operator hazelcast/hazelcast-platform-operator --version=5.18.0 -n hz-system \
+   ```shell conums vars
+   helm install operator hazelcast/hazelcast-platform-operator --version={operator-chart-version} -n hz-system \
        --set=createClusterScopedResources=false \<1>
        --set=webhook.enabled=false \<2>
        --set=enableHazelcastNodeDiscovery=false \<3>

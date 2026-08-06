@@ -2,6 +2,10 @@ import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 import {redirects} from './src/redirects';
+// The single source of doc variables, also handed to the example-attributes
+// build loader so co-located example files resolve their {attribute}
+// placeholders per version at build (one file, no generated twin).
+import {variables, versionedVariables} from './src/variables';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
@@ -80,6 +84,11 @@ const config: Config = {
     // Compiles HIVE's shipped .module.scss (Button.module.scss, constants,
     // helpers) so swizzled components can import them.
     'docusaurus-plugin-sass',
+
+    // Registers the example-attributes loader so co-located example files keep
+    // their Antora {attribute} placeholders (byte-faithful, single-sourced) and
+    // have them substituted per-version at build. Fed from src/variables.ts.
+    ['./plugins/example-attributes-plugin.js', {variables, versionedVariables}],
 
     // Cloud docs — migration target #1. Unversioned (latest served at the base
     // path, no version segment), routeBasePath === Antora component name so URLs

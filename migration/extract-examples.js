@@ -80,27 +80,15 @@ function referencedExampleFiles (repoDir, ref, pagesGlob) {
   return [...rels]
 }
 
-// Resolve Antora attributes the way `subs="attributes+"` does: replace `{name}`
-// with the manifest's resolved value for that version. Unknown names are left
-// literal (Antora leaves undefined attributes untouched too).
-function resolveAttributes (content, attrs) {
-  return content.replace(/\{([a-z][a-z0-9-]*)\}/g, (whole, name) =>
-    Object.prototype.hasOwnProperty.call(attrs, name) ? String(attrs[name]) : whole)
-}
-
 function main () {
   const opts = parseArgs(process.argv)
   const cfg = REPOS[opts.component]
   if (!cfg) { console.error(`[extract-examples] no example config for component=${opts.component}`); process.exit(1) }
   const repoDir = path.join(opts.sourcesDir, cfg.repo)
-  const manifest = JSON.parse(fs.readFileSync(path.join(opts.manifestDir, 'manifest.json'), 'utf8'))
-  const comp = (manifest.components || []).find((c) => c.name === opts.component)
 
   let total = 0
   for (const seg of opts.versions) {
     const ref = branchFor(seg)
-    const verMeta = comp && (comp.versions || []).find((v) => v.version === seg)
-    const attrs = (verMeta && verMeta.attributes) || {}
     const rels = referencedExampleFiles(repoDir, ref, cfg.pagesGlob)
     const dir = outExamplesDir(opts.outRoot, opts.component, seg)
 
@@ -109,11 +97,15 @@ function main () {
     for (const rel of rels) {
       const raw = gitShow(repoDir, ref, `${cfg.examplesDir}/${rel}`)
       if (raw == null) { missing.push(rel); continue }
-      const resolved = resolveAttributes(raw, attrs)
+      // Write the file BYTE-FAITHFUL — keep Antora {attribute} placeholders
+      // intact so the co-located copy stays a true single source of the
+      // engineers' file. The placeholders are resolved per version at BUILD by
+      // the example-attributes webpack loader (no baking here). See the
+      // docusaurus-attributes-no-baking decision.
       if (!opts.dry) {
         const f = path.join(dir, rel)
         fs.mkdirSync(path.dirname(f), { recursive: true })
-        fs.writeFileSync(f, resolved)
+        fs.writeFileSync(f, raw)
       }
       written++
     }

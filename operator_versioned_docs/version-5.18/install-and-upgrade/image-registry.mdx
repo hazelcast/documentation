@@ -107,11 +107,11 @@ Hazelcast does not publish Red Hat images for `snapshot` versions.
 
 Specify the image details when running `helm install`:
 
-```shell
-helm install operator hazelcast/hazelcast-platform-operator --version=5.18.0 \
+```shell vars
+helm install operator hazelcast/hazelcast-platform-operator --version={operator-chart-version} \
     --set=installCRDs=true \
     --set=image.repository=<REGISTRY_URL> \
-    --set=image.tag=5.18.0 \
+    --set=image.tag={operator-chart-version} \
     --set=image.pullSecrets={<REGISTRY-SECRET>}
 ```
 
@@ -119,14 +119,14 @@ helm install operator hazelcast/hazelcast-platform-operator --version=5.18.0 \
 
 Add the image details to the Hazelcast CR configuration:
 
-```none
+```none vars
 apiVersion: hazelcast.com/v1alpha1
 kind: Hazelcast
 metadata:
   name: hazelcast
 spec:
   repository: <REGISTRY_URL>
-  version: 5.7.0
+  version: {page-latest-supported-hazelcast}
   imagePullSecrets:
     - name: <REGISTRY_SECRET>
 ```
@@ -135,7 +135,7 @@ spec:
 
 Add the image details to the Hazelcast CR configuration:
 
-```none
+```none vars
 apiVersion: hazelcast.com/v1alpha1
 kind: Hazelcast
 metadata:
@@ -145,21 +145,21 @@ spec:
     - name: <REGISTRY_SECRET>
   agent:
     repository: <REGISTRY_URL>
-    version: 5.18.0
+    version: {operator-chart-version}
 ```
 
 ### Management Center
 
 Add the image details to the Hazelcast CR configuration:
 
-```none
+```none vars
 apiVersion: hazelcast.com/v1alpha1
 kind: ManagementCenter
 metadata:
   name: managementcenter
 spec:
   repository: <REGISTRY_URL>
-  version: 5.11.0
+  version: {page-latest-supported-mc}
   imagePullSecrets:
     - name: <REGISTRY_SECRET>
 ```
