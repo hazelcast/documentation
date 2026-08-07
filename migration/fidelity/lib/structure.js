@@ -79,7 +79,15 @@ function inventory (html, profile = ASCIIDOC_PROFILE, { fragment = true } = {}) 
     admonitionsTotal: Object.values(admonitions).reduce((a, b) => a + b, 0),
     tables: $(profile.contentTableSelector).length,
     images: $('img').length,
-    links: $('a[href]').length,
+    // Navigable links only. Asciidoctor auto-links a bare `http://…` URL even
+    // inside backticks, so a monospaced PLACEHOLDER pseudo-URL like
+    // `http://<mc-ip-address>:8080` renders as `<code><a class="bare">…</a></code>`
+    // in the golden. That href has literal angle brackets, so it can never be a
+    // valid navigable link — Docusaurus rejects it at compile time and the
+    // converter (correctly) drops the anchor, keeping the code. Excluding these
+    // `<>`-href anchors from the count on BOTH sides removes a false positive
+    // without weakening the check for real links.
+    links: $('a[href]').filter((_, el) => !/[<>]/.test($(el).attr('href') || '')).length,
     listItems: $(profile.listItemSelector).length,
     tabSets: $(profile.tabSetSelector).length,
     tabItems: $(profile.tabItemSelector).length,
