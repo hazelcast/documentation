@@ -9,6 +9,7 @@
 // current docs version, else the release, e.g. '5.18').
 export const variables: Record<string, string> = {
   "full-version": "5.6.0",
+  "hazelcast-cloud": "Cloud",
   "page-cloud-console": "https://cloud.hazelcast.com/",
   "page-cloud-platform-version": "5.6",
   "page-cloud-signup": "https://cloud.hazelcast.com/sign-up"

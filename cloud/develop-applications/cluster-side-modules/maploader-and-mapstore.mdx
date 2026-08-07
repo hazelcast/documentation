@@ -66,7 +66,7 @@ To [update a MapStore](#update), you must delete the existing MapStore and deplo
 
 ## Implement a MapStore {/* #implement */}
 
-When implementing a MapStore for Cloud, you must manage the lifecycle to ensure that connections to the external data store are not left open. Closing the connections prevents them from consuming unneccessary resources. You can use the [`MapLoaderLifeCycleSupport`](https://docs.hazelcast.org/docs/latest/javadoc/com/hazelcast/map/MapLoaderLifecycleSupport.html) interface to clean up the resources on graceful shutdown, including closing the connections.
+When implementing a MapStore for <Variable name="hazelcast-cloud"/>, you must manage the lifecycle to ensure that connections to the external data store are not left open. Closing the connections prevents them from consuming unneccessary resources. You can use the [`MapLoaderLifeCycleSupport`](https://docs.hazelcast.org/docs/latest/javadoc/com/hazelcast/map/MapLoaderLifecycleSupport.html) interface to clean up the resources on graceful shutdown, including closing the connections.
 
 With this in mind, you can follow the [Hazelcast Platform documentation](/hazelcast/5.7/mapstore/working-with-external-data) to implement a MapStore.
 
@@ -78,9 +78,9 @@ When you have finished, return to this page to continue with the testing of your
 
 ## Test a MapStore {/* #test */}
 
-Before you deploy the MapStore to Cloud, ensure that:
+Before you deploy the MapStore to <Variable name="hazelcast-cloud"/>, ensure that:
 
-- The MapStore connects to the data store without errors. Your data source accepts incoming connections from your Cloud cluster.
+- The MapStore connects to the data store without errors. Your data source accepts incoming connections from your <Variable name="hazelcast-cloud"/> cluster.
 - Operations on the map trigger your MapStore implementations. For a list of operations that trigger the MapStore, see the [Hazelcast Platform documentation](/hazelcast/5.7/mapstore/working-with-external-data#map-mapstore). You can [use one of the available clients](/cloud/connect-to-cluster) to invoke map operations.
 
 For general guidance on testing cluster-side modules, see the [Working with Cluster-Side Modules in Cloud](/cloud/cluster-side-modules) topic.
@@ -93,11 +93,11 @@ For further information on deploying your MapStore, see the [Deploying Cluster-S
 
 ## Configure a MapStore {/* #configure */}
 
-To use a MapStore, it must be configured for a specific map in Cloud. When a map is configured with a MapStore, Hazelcast plugs the MapStore implementation into the lifecycle of the map to trigger the MapStore when certain map operations are invoked.
+To use a MapStore, it must be configured for a specific map in <Variable name="hazelcast-cloud"/>. When a map is configured with a MapStore, Hazelcast plugs the MapStore implementation into the lifecycle of the map to trigger the MapStore when certain map operations are invoked.
 
 To configure a MapStore, complete the following steps:
 
-1. Sign into the <Variable href="{page-cloud-console}" text="Cloud console"/> and select your cluster.
+1. Sign into the <Variable href="{page-cloud-console}" text="{hazelcast-cloud} console"/> and select your cluster.
 2. Select **Manage** \> **Data Structures** from the navigation bar options, located on the left.
 3. Select the **Add New Configuration** button, located at the top right.
 4. Complete the fields to configure the map.
@@ -229,6 +229,6 @@ To update a MapStore after you've deployed it, you must delete it and redeploy a
 
 ## Next Steps
 
-Build and run sample projects that use a MapStore in Cloud. You can find the sample projects in the [Hazelcast Cloud Code Samples GitHub repository](https://github.com/hazelcast/hazelcast-cloud-code-samples/tree/master/mapstore).
+Build and run sample projects that use a MapStore in <Variable name="hazelcast-cloud"/>. You can find the sample projects in the [Hazelcast Cloud Code Samples GitHub repository](https://github.com/hazelcast/hazelcast-cloud-code-samples/tree/master/mapstore).
 
 Work through the [tutorial](/tutorials/write-through-cache-serverless-mapstore) to build an application that writes changes to a map back to MongoDB Atlas.

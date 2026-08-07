@@ -58,6 +58,30 @@ The published content must not change during the migration, so automated fidelit
 2. **Structural inventory** — per-page counts (headings, code blocks, admonitions, tables, images, links). Catches what normalization hides.
 3. **Link/anchor integrity** — every internal link resolves against the manifest. Cheapest; needs no snapshot.
 
+The fidelity harness compares **rendered golden vs rendered Docusaurus**, so it cannot see a *baked-in reference* — an attribute, partial, or include resolved to a literal instead of kept as a reference renders identically to the golden. That is a separate, SOURCE-side gate:
+
+### Attribute marking (`antora-extension/mark-attributes.js`)
+
+Some attributes cannot be recovered from the rendered golden by value: `hazelcast-cloud` resolves to `"Cloud"`, indistinguishable from a page's literal "Confluent Cloud". So the golden is instrumented, inline, the way `mark-partials` instruments blocks: before render, each `{name}` reference (for the attributes in `MARKED_ATTRS`, `lib/layout.js`) is wrapped so its exact position is marked, and after render each mark becomes `<span class="hz-attr-name">value</span>`. The converter turns those spans into `<Variable name="name"/>` (prose / table cell / heading), a `{name}` token in a link-mode `<Variable>`'s `text`, or a raw `<a>` when the reference sits in a markdown-link label.
+
+Two wrap forms, by context:
+
+- **Flow text and `:description:`** use plain-text sentinel characters, post-processed into spans (`spanify`). Plain sentinels — not AsciiDoc role markup or raw HTML — because a reference often reaches the body indirectly (`:description:` carries `{hazelcast-cloud}` and is rendered by `{description}`), and Asciidoctor expands that nested attribute after the formatting passes, escaping anything but inert text.
+- **Section headings** (`== …` and deeper) use an AsciiDoc **role span**: Asciidoctor derives a heading's anchor id from its text with inline roles stripped, so the golden id stays clean (a sentinel's characters would leak into the slug). The converter emits the `<Variable>` in the heading and **force-pins** the golden id (`{/* #id */}`), because Docusaurus derives the slug from the heading text and cannot read it through the component. Verified in a real build: `## <Variable name="hazelcast-cloud"/> Standard` keeps `id="cloud-standard"`.
+
+Left baked (correctly): the document **title** (`= …` → frontmatter `title:`), image `alt`, and an unused `:description:`. `readGolden` strips the spans so the fidelity baseline is byte-identical (verified: strip(marked) === clean across the cloud corpus). On by default in the snapshot builder; `--no-mark-attributes` renders bare.
+
+## Reference checker (the no-baking gate)
+
+`npm run check:refs [-- --component cloud|operator] [-- --id /url]` — for every migrated page it reads the AsciiDoc source *through its includes* (from the frozen mirror) and asserts the converted MDX still carries a reference for everything the source referenced. Non-zero exit on any finding; report at `build/refcheck-report.json`. `npm run check:refs:selftest` unit-tests the matchers.
+
+- **Attributes** — every `{name}` the source resolves in a **preservable context** must survive as a reference in the output: a `<Variable name="…"/>` (prose), a `{name}` token (link href/text or a `vars` code fence), or a `{name}` in an imported byte-faithful example file. A miss is a baked attribute. **All** referenced attributes are checked (not a hand-list); pure Asciidoctor/Antora machinery is filtered by `refcheck/lib/bake-safe.js`, and a name is only checked on a page whose **source** references it, so a coincidental literal is never flagged. "Preservable context" is single-sourced with the marker pass (`mark-attributes.wrappableRefs`), so the checker expects a reference exactly where marking provides one — references correctly baked in a heading / image alt / unused `:description:` are not required.
+- **Examples** — a page that pulls `example$` includes must import at least one example file, not bake them all as literal fences. (Matching is by presence, not name: the converter dedupes identical-content examples to one import, so name-matching would false-positive.)
+
+Source-anchoring is what makes "all referenced attributes" tractable: a value like `hazelcast-cloud` → `"Cloud"` is only sought on pages whose source says `{hazelcast-cloud}`, so the common word "Cloud" elsewhere is never a false positive. It is strictly more precise than the converter's own `auditStillBaked` warning (which string-matches a value anywhere and so false-positives on e.g. a literal `5.7.0` in the api-ref CRD table).
+
+Shares `lib/layout.js` (source repo/branch + version/path config) with the converter so the two resolve sources and output paths identically.
+
 ## Gotchas worth remembering
 
 - The pin is enforced by the mirrors **not moving**, not by the lockfile: Antora builds branch *tips*, so `lockfile.json` only *records* the SHAs — freezing them means never updating the mirror. `runtime.fetch: false` guarantees a build never moves a ref.

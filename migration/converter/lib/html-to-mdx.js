@@ -144,6 +144,33 @@ function classes (node) {
 }
 const hasClass = (node, c) => classes(node).includes(c)
 
+// Attribute-reference marker span (antora-extension/mark-attributes.js): a
+// `<span class="hz-attr-NAME">value</span>` marks exactly where source had
+// `{NAME}`. The converter turns it back into a <Variable> reference (globally
+// registered, so no import) instead of baking `value`. markerName returns NAME
+// or null.
+const HZ_ATTR_PREFIX = 'hz-attr-'
+const markerName = (node) => {
+  const c = classes(node).find((x) => x.startsWith(HZ_ATTR_PREFIX))
+  return c ? c.slice(HZ_ATTR_PREFIX.length) : null
+}
+
+// A node's visible text with each marker span rendered as its `{NAME}` token
+// (the rest literal). Used for the `text` of a link-mode <Variable>, which the
+// component resolves per version -- so a marked reference inside a link label
+// stays a reference instead of being baked.
+function markerText ($, node) {
+  let out = ''
+  for (const n of node.children || []) {
+    if (n.type === 'text') out += n.data
+    else if (n.type === 'tag') {
+      const nm = markerName(n)
+      out += nm ? `{${nm}}` : markerText($, n)
+    }
+  }
+  return out.replace(/\s+/g, ' ').trim()
+}
+
 function convertBlock ($, node, st, depth) {
   const name = node.name
   const cls = classes(node)
@@ -208,13 +235,17 @@ function heading ($, node, st) {
   // Advance the page slugger for EVERY heading (keeps duplicate-suffix state in
   // sync with Docusaurus) and compute the id Docusaurus would auto-generate.
   const autoId = st.slugger.slug($(node).text().replace(/\s+/g, ' ').trim())
-  // Only pin the id explicitly when it would otherwise differ (custom ids like
-  // #prereqs, or case like #Troubleshooting). Where Docusaurus already produces
-  // the same id, the explicit form is pure noise, so we drop it. Pinned via
-  // Docusaurus's MDX-safe explicit-id syntax -- an MDX comment `{/* #id */}`
-  // (the classic `{#id}` cannot be used: in .mdx `{` opens a JS expression and
-  // `#id` is not parseable, which breaks the build).
-  const suffix = id && id !== autoId ? ` {/* #${id} */}` : ''
+  // Pin the id explicitly when it would otherwise differ (custom ids like
+  // #prereqs, or case like #Troubleshooting), OR when the heading carries a
+  // <Variable> (a marked attribute reference): Docusaurus derives the slug from
+  // the heading TEXT, which it cannot read through the component, so the id must
+  // be pinned even though it matches the golden text's slug. Where neither holds,
+  // the explicit form is pure noise, so we drop it. Pinned via Docusaurus's
+  // MDX-safe explicit-id syntax -- an MDX comment `{/* #id */}` (the classic
+  // `{#id}` cannot be used: in .mdx `{` opens a JS expression and `#id` is not
+  // parseable, which breaks the build).
+  const hasVariable = text.includes('<Variable')
+  const suffix = id && (id !== autoId || hasVariable) ? ` {/* #${id} */}` : ''
   return '#'.repeat(level) + ' ' + text + suffix
 }
 
@@ -792,9 +823,14 @@ function inlineTag ($, node, st, opt) {
       // the attribute reference; the visible text goes in `text` (not children,
       // so a `{name}` in it stays literal for the component to resolve). Opens in
       // a new tab (external destinations).
+      // Link text with marker tokens: a marked {attr} reference inside the label
+      // (e.g. `link:{page-cloud-console}[{hazelcast-cloud} console]`) becomes a
+      // `{attr}` token in the visible text, resolved per version by <Variable> /
+      // by the raw <a> fallback — never baked.
+      const tokenText = markerText($, node)
       const varName = st.linkVars.get(rawHref)
       if (varName) {
-        return anchorEl + `<Variable href=${jsxAttr(`{${varName}}`)} text=${jsxAttr($(node).text().trim())}/>`
+        return anchorEl + `<Variable href=${jsxAttr(`{${varName}}`)} text=${jsxAttr(tokenText)}/>`
       }
       // Templated single-sourcing: a version value can be a SUBSTRING of the
       // href and/or label (e.g. the release-notes link `.../{page-cloud-platform-
@@ -803,7 +839,7 @@ function inlineTag ($, node, st, opt) {
       // any hit -> emit <Variable> in link mode with the placeholders kept.
       if (st.pageVars && st.pageVars.size && !/[<>]/.test(href)) {
         const { code: hrefTpl, replaced: hrefRep } = reverseCodeVars(href, st.pageVars)
-        const { code: textTpl, replaced: textRep } = reverseCodeVars($(node).text().trim(), st.pageVars)
+        const { code: textTpl, replaced: textRep } = reverseCodeVars(tokenText, st.pageVars)
         if (hrefRep || textRep) return anchorEl + `<Variable href=${jsxAttr(hrefTpl)} text=${jsxAttr(textTpl)}/>`
       }
       // A href with literal angle brackets (a placeholder pseudo-URL like
@@ -812,11 +848,20 @@ function inlineTag ($, node, st, opt) {
       // <a> alike). Keep the visible text (jsxText encodes the brackets) and drop
       // the un-followable link wrapper — the only form that compiles.
       if (/[<>]/.test(href)) return anchorEl + label
+      // A marked {attr} reference in the label became a <Variable/> in `label`
+      // (via the span case). MDX cannot parse a component inside a `[…]` link
+      // label, so emit a raw <a> (Docusaurus routes it through its Link element)
+      // with the component in the children.
+      if (label.includes('<Variable')) {
+        return anchorEl + `<a href=${jsxAttr(href)}>${label}</a>`
+      }
       const safeLabel = label.replace(/\]/g, '\\]')
       const safeHref = /[()\s]/.test(href) ? `<${href}>` : href
       return anchorEl + `[${safeLabel}](${safeHref})`
     }
     case 'span': {
+      const attr = markerName(node)
+      if (attr) return `<Variable name=${jsxAttr(attr)}/>` // marked {attr} reference -> <Variable>
       if (cls.includes('image')) {
         const img = $(node).find('img')[0]
         return img ? imageMd($, img, st) : ''
@@ -859,6 +904,13 @@ function serNode ($, node, st) {
     if (!d) return ''
     st.imports.add(d.importStmt)
     return `<${d.componentName}/>`
+  }
+
+  // Marked {attr} reference inside a raw-HTML/JSX block (e.g. a spanned table
+  // cell): emit the global <Variable> rather than baking the resolved value.
+  if (name === 'span') {
+    const attr = markerName(node)
+    if (attr) return `<Variable name=${jsxAttr(attr)}/>`
   }
 
   // Skip empty heading self-anchors and presentational colgroups.

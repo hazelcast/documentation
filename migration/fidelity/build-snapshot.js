@@ -33,6 +33,8 @@ const { configureLogger, finalizeLogger } = require('@antora/logger')
 const { buildLockfile } = require('../antora-extension/emit-manifest')
 const { registerPageAliases } = require('../antora-extension/register-page-aliases')
 const { createPartialMarker } = require('../antora-extension/mark-partials')
+const { wrapRefs, spanify, hasSentinelResidue } = require('../antora-extension/mark-attributes')
+const { markedAttrsFor } = require('../lib/layout')
 const { lockfileKey, lockfileKeyFromFile } = require('./lockfile-key')
 
 // Components we actually migrate (convert + emit to the golden tree). Everything
@@ -72,6 +74,12 @@ function parseArgs (argv) {
     // so the instrumented golden is byte-equivalent to the bare render (proven
     // in the partials step-2 validation). --no-mark-partials renders bare.
     markPartials: !args.includes('--no-mark-partials'),
+    // Instrument the golden with attribute-reference marker spans (see
+    // antora-extension/mark-attributes.js) so the converter can turn a marked
+    // attribute back into a <Variable> instead of baking its value. ON by
+    // default; the spans strip byte-for-byte in readGolden(), so the golden is
+    // byte-equivalent to the bare render. --no-mark-attributes renders bare.
+    markAttributes: !args.includes('--no-mark-attributes'),
   }
 }
 
@@ -163,7 +171,7 @@ function tutorialListHtml (contentCatalog, product) {
 }
 
 async function main () {
-  const { playbookFile, outDir, lockfileFile, component, markPartials } = parseArgs(process.argv)
+  const { playbookFile, outDir, lockfileFile, component, markPartials, markAttributes } = parseArgs(process.argv)
 
   // The canonical golden now carries partial sentinels by default; every golden
   // read routes through readGolden() (lib/pairing.js), which strips them, so the
@@ -218,6 +226,25 @@ async function main () {
   const withMarker = (cfg) => partialMarker
     ? { ...cfg, sourcemap: true, extensions: [...(cfg.extensions || []), partialMarker] }
     : cfg
+  // Attribute-reference marking: rewrite `{name}` -> `[.hz-attr-name]#{name}#`
+  // in the source of every page/partial whose component has marked attributes,
+  // BEFORE render, so the golden carries a marker span at each reference (see
+  // mark-attributes.js). Operates on the in-memory catalog for this throwaway
+  // render only; partials are transformed too, so a reference inside an included
+  // partial is marked in the page that pulls it in.
+  if (markAttributes) {
+    let marked = 0
+    for (const file of contentCatalog.getFiles()) {
+      const fam = file.src && file.src.family
+      if (fam !== 'page' && fam !== 'partial') continue
+      const names = markedAttrsFor(file.src.component)
+      if (!names.length || !file.contents) continue
+      const wrapped = wrapRefs(file.contents.toString(), names)
+      if (wrapped !== file.contents.toString()) { file.contents = Buffer.from(wrapped); marked++ }
+    }
+    if (marked) console.log(`[snapshot] attribute marking: instrumented ${marked} source file(s)`)
+  }
+
   const pagesDir = path.join(outDir, 'pages')
   fs.rmSync(pagesDir, { recursive: true, force: true })
 
@@ -241,6 +268,7 @@ async function main () {
   )
 
   const errors = []
+  const attrLeaks = []
   let written = 0
   for (const page of pages) {
     const cvKey = `${page.src.version}@${page.src.component}`
@@ -251,6 +279,17 @@ async function main () {
       if (doc.getAttributes()['page-include-tutorial-list']) {
         html += tutorialListHtml(contentCatalog, 'cloud')
       }
+      // Turn attribute-reference sentinels into marker spans (mark-attributes.js).
+      // Byte-faithfulness guard: a residual sentinel character means a marker
+      // landed where spanify could not form a well-formed span (a broken run) --
+      // the strip would then not reproduce the un-instrumented golden, the
+      // invariant the whole approach rests on. Surface it loudly.
+      if (markAttributes) {
+        html = spanify(html)
+        if (hasSentinelResidue(html)) {
+          attrLeaks.push(`${page.src.version}@${page.src.component}:${page.src.module}:${page.src.relative}`)
+        }
+      }
       const dest = path.join(pagesDir, page.out.path)
       fs.mkdirSync(path.dirname(dest), { recursive: true })
       fs.writeFileSync(dest, html.endsWith('\n') ? html : html + '\n')
@@ -258,6 +297,11 @@ async function main () {
     } catch (err) {
       errors.push({ id: `${cvKey}:${page.src.module}:${page.src.relative}`, message: err.message })
     }
+  }
+  if (attrLeaks.length) {
+    console.error(`[snapshot] WARNING: attribute-marker leak on ${attrLeaks.length} page(s) -- strip is NOT byte-faithful there:`)
+    for (const id of attrLeaks.slice(0, 20)) console.error(`             ${id}`)
+    console.error('             Fix: add the leaking context to mark-attributes.js wrapRefs skips.')
   }
 
   // 100%-coverage partials registry (every partial$/page$ include in the
