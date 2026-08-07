@@ -74,6 +74,9 @@ function convertBody (html, ctx) {
     // string elsewhere is never touched. Prose -> <Variable>; code -> `{name}`
     // placeholder + a `vars` fence flag the swizzled CodeBlock resolves.
     pageVars: ctx.pageVars || new Map(),
+    // component -> current stable latest version, for floating versionless
+    // cross-component xrefs to `/<comp>/latest/` (see floatCrossComponentLatest).
+    latestVersions: ctx.latestVersions || {},
   }
   collapseSentinels($, $.root()[0], state)
   const body = convertChildren($, $.root()[0], state, 0)
@@ -557,6 +560,27 @@ function imageMd ($, img, st) {
   return `![${alt.replace(/([[\]])/g, '\\$1')}](${src})`
 }
 
+// Antora resolves a versionless cross-component xref (e.g.
+// `xref:hazelcast:getting-started:support.adoc[]`) to the target component's
+// LATEST version and bakes the number into the golden: `/hazelcast/5.7/...`.
+// Baking the number means the link silently rots the moment that component
+// ships a new release. Rewrite it to the production `/<comp>/latest/` redirect
+// alias (which the site 307s to the current version) so it always follows the
+// latest. Two guards keep this safe:
+//   - CROSS-component only: a page's own version tree must keep its exact
+//     version (a 5.18 page must go on linking within 5.18, not jump to latest).
+//   - version === the component's CURRENT latest: an explicit pin to an older
+//     version (`/hazelcast/5.5/`) is a deliberate author choice — leave it.
+// `href` is `pathname + hash`, so any `#anchor` rides along in `rest`.
+function floatCrossComponentLatest (href, st) {
+  const m = href.match(/^\/([^/]+)\/([^/]+)(\/.*)?$/)
+  if (!m) return href
+  const [, comp, ver, rest] = m
+  if (comp === st.component) return href
+  if (!st.latestVersions || st.latestVersions[comp] !== ver) return href
+  return `/${comp}/latest${rest || '/'}`
+}
+
 // Images are CO-LOCATED: each component's images live in an `images/` folder in
 // the docs tree (placed by extract-images.js), and pages reference them with a
 // path RELATIVE to their own output file, so webpack resolves and content-hashes
@@ -644,10 +668,29 @@ function convertTable ($, table, st) {
   return htmlTable($, headRows, bodyRows, st)
 }
 
+// A `[cols="l"]` (literal) column renders each cell as a single
+// `<div class="literal"><pre>…</pre></div>`. When that <pre> is a single line,
+// the cell is really inline monospace, so a GFM pipe table with `code` cells
+// reads far cleaner than an HTML table whose every cell is a fenced block.
+// Returns the line's text, or null when the cell is anything else (including a
+// multi-line literal, which stays a real block).
+function literalInlineCell ($, cell) {
+  const $c = $(cell)
+  if ($c.children().length !== 1) return null
+  const lit = $c.children('.literal')
+  if (lit.length !== 1) return null
+  const pre = lit.children('pre')
+  if (pre.length !== 1) return null
+  const text = $(pre[0]).text()
+  return text.includes('\n') ? null : text
+}
+
 function isComplexCell ($, cell) {
   // A cell is "complex" if it holds anything Markdown table cells cannot: a
   // list, code, admonition, multiple paragraphs, or a nested table.
   const $c = $(cell)
+  // ...except a single-line literal cell, which is inline monospace (`code`).
+  if (literalInlineCell($, cell) != null) return false
   if ($c.find('ul, ol, pre, table, .admonitionblock, .ulist, .olist, .listingblock, .dlist').length) return true
   if ($c.find('.paragraph').length > 1) return true
   if ($c.children('p').length > 1) return true // multi-paragraph non-AsciiDoc cell
@@ -669,6 +712,9 @@ function gfmTable ($, headRow, bodyRows, st) {
 }
 
 function cellInline ($, cell, st) {
+  // A single-line literal (`[cols="l"]`) cell is inline monospace.
+  const lit = literalInlineCell($, cell)
+  if (lit != null) return inlineCode(lit)
   // Simple cell: unwrap the .content/.paragraph/<p> and render inline; pipes and
   // newlines must not break the row.
   const inner = $(cell).find('p').first()[0] || cell
@@ -816,7 +862,8 @@ function inlineTag ($, node, st, opt) {
       if (cls.includes('anchor')) return opt.skipAnchors ? '' : anchorEl // heading self-link: no text
       const label = kids().trim()
       const rawHref = (node.attribs && node.attribs.href) || ''
-      const { kind, href } = resolveHref(rawHref, st.pageUrl)
+      const { kind, href: resolvedHref } = resolveHref(rawHref, st.pageUrl)
+      const href = kind === 'internal' ? floatCrossComponentLatest(resolvedHref, st) : resolvedHref
       if (kind === 'empty' || label === '') return anchorEl + label
       // Single-sourced destination: emit the globally-registered <Variable> in
       // link mode (no import needed) instead of baking the URL in. The href is

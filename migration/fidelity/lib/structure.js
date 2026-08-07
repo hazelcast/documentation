@@ -70,7 +70,11 @@ function inventory (html, profile = ASCIIDOC_PROFILE, { fragment = true } = {}) 
   return {
     headings,
     headingsTotal: Object.values(headings).reduce((a, b) => a + b, 0),
-    codeBlocks: $('pre').length,
+    // Standalone code blocks only: a `<pre>` inside a table cell (golden's
+    // `[cols="l"]` literal cell) is cell content compared via the table-row
+    // mechanism in Layer 1, not a block. Excluding it keeps the count invariant
+    // whether such a cell renders as a block <pre> or as inline `code`.
+    codeBlocks: $('pre').filter((_, el) => $(el).closest('td, th').length === 0).length,
     admonitions,
     admonitionsTotal: Object.values(admonitions).reduce((a, b) => a + b, 0),
     tables: $(profile.contentTableSelector).length,

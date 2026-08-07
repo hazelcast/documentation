@@ -556,7 +556,7 @@ function convertVersion (ver, ctx) {
 
     let body, imports
     try {
-      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, partials: decisions, linkVars: ctx.linkVars, examples, pageVars }))
+      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, latestVersions: ctx.latestVersions }))
     } catch (err) {
       problems.push({ url: p.url, error: err.message })
       continue
@@ -597,7 +597,7 @@ function convertVersion (ver, ctx) {
   const partialProblems = []
   for (const [id, d] of decisions) {
     try {
-      const { body, imports } = convertBody(d.representative, { pageUrl: pages[0].url, relFile: path.join('_partials', d.slug + '.mdx'), component, partials: decisions, linkVars: ctx.linkVars, examples })
+      const { body, imports } = convertBody(d.representative, { pageUrl: pages[0].url, relFile: path.join('_partials', d.slug + '.mdx'), component, partials: decisions, linkVars: ctx.linkVars, examples, latestVersions: ctx.latestVersions })
       const importBlock = imports.size ? [...imports].join('\n') + '\n\n' : ''
       d.mdx = importBlock + body + '\n'
     } catch (err) {
@@ -698,7 +698,11 @@ function main () {
   }
 
   const versions = versionsToProcess(opts.component, opts.releases)
-  const ctx = { component: opts.component, manifest, allGoldenForComponent, linkVars, flat, versioned, opts }
+  // component -> its current (stable) latest version, for floating versionless
+  // cross-component xrefs to `/<comp>/latest/` instead of a baked number.
+  const latestVersions = {}
+  for (const c of manifest.components || []) if (c.latestVersion) latestVersions[c.name] = c.latestVersion
+  const ctx = { component: opts.component, manifest, allGoldenForComponent, linkVars, flat, versioned, opts, latestVersions }
 
   const results = []
   for (const ver of versions) {
