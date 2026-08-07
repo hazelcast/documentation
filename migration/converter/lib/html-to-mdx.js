@@ -115,6 +115,27 @@ function collapseSentinels ($, node, st) {
         i = j // skip the inner nodes; the loop's i++ steps past the end comment
         continue
       }
+      // Snapshot-conditional region (mark-conditionals.js): wrap it in an
+      // <IfSnapshot> placeholder in EVERY version. The content stays present in
+      // all versions' MDX; the component includes it in the built HTML only on
+      // the snapshot version (banner 'unreleased') and hides it on releases.
+      // That is the whole point of the source `ifdef::snapshot[]`. (A released
+      // version whose golden still carries this content — because its branch is
+      // wrongly marked `snapshot: true` — will then diverge from its golden and
+      // fail Layer 2: a TRUE POSITIVE flagging that source bug, cleared by the
+      // source fix.)
+      if (c.data.trim() === 'hz-if:snapshot:start') {
+        const inner = []
+        let j = i + 1
+        while (j < kids.length && !(kids[j].type === 'comment' && kids[j].data.trim() === 'hz-if:snapshot:end')) {
+          inner.push(kids[j]); j++
+        }
+        const wrapper = { type: 'tag', name: 'hzifsnapshot', attribs: {}, children: inner, parent: node }
+        for (const n of inner) n.parent = wrapper
+        out.push(wrapper)
+        i = j
+        continue
+      }
       continue // stray/other comment: drop (convertChildren ignored these anyway)
     }
     out.push(c)
@@ -189,6 +210,14 @@ function convertBlock ($, node, st, depth) {
     if (!d) return ''
     st.imports.add(d.importStmt)
     return `<${d.componentName}/>`
+  }
+
+  // Snapshot-conditional region (see collapseSentinels): render its block
+  // content inside <IfSnapshot> (globally registered, no import). Blank-line
+  // padded so MDX parses the children as Markdown.
+  if (name === 'hzifsnapshot') {
+    const inner = convertChildren($, node, st, depth).trim()
+    return inner ? `<IfSnapshot>\n\n${inner}\n\n</IfSnapshot>` : ''
   }
 
   // Headings that appear as direct children (section titles live inside

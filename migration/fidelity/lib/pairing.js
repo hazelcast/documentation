@@ -19,6 +19,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 const { stripSentinels } = require('../../antora-extension/mark-partials')
 const { stripAttrSpans } = require('../../antora-extension/mark-attributes')
+const { stripConditionalSentinels } = require('../../antora-extension/mark-conditionals')
 
 function walkHtml (dir) {
   const out = []
@@ -102,7 +103,7 @@ function resolveConverted (buildDir, url) {
 // is indistinguishable from a plain one at compare time. Every golden read in
 // the fidelity code MUST go through this.
 function readGolden (file) {
-  return stripAttrSpans(stripSentinels(fs.readFileSync(file, 'utf8')))
+  return stripConditionalSentinels(stripAttrSpans(stripSentinels(fs.readFileSync(file, 'utf8'))))
 }
 
 module.exports = { walkHtml, urlFromGoldenRel, goldenPages, convertedCandidates, resolveConverted, readGolden }

@@ -34,6 +34,7 @@ const { buildLockfile } = require('../antora-extension/emit-manifest')
 const { registerPageAliases } = require('../antora-extension/register-page-aliases')
 const { createPartialMarker } = require('../antora-extension/mark-partials')
 const { wrapRefs, spanify, hasSentinelResidue } = require('../antora-extension/mark-attributes')
+const { wrapConditionals } = require('../antora-extension/mark-conditionals')
 const { markedAttrsFor } = require('../lib/layout')
 const { lockfileKey, lockfileKeyFromFile } = require('./lockfile-key')
 
@@ -80,6 +81,13 @@ function parseArgs (argv) {
     // default; the spans strip byte-for-byte in readGolden(), so the golden is
     // byte-equivalent to the bare render. --no-mark-attributes renders bare.
     markAttributes: !args.includes('--no-mark-attributes'),
+    // Instrument `ifdef::snapshot[]` blocks with passthrough comment sentinels
+    // (see antora-extension/mark-conditionals.js) so the converter can wrap
+    // snapshot-only content in <IfSnapshot> (current tree only) instead of
+    // baking it per-version. ON by default; the sentinels sit inside the
+    // conditional (so they gate with it) and strip byte-for-byte in readGolden().
+    // --no-mark-conditionals renders bare.
+    markConditionals: !args.includes('--no-mark-conditionals'),
   }
 }
 
@@ -171,7 +179,7 @@ function tutorialListHtml (contentCatalog, product) {
 }
 
 async function main () {
-  const { playbookFile, outDir, lockfileFile, component, markPartials, markAttributes } = parseArgs(process.argv)
+  const { playbookFile, outDir, lockfileFile, component, markPartials, markAttributes, markConditionals } = parseArgs(process.argv)
 
   // The canonical golden now carries partial sentinels by default; every golden
   // read routes through readGolden() (lib/pairing.js), which strips them, so the
@@ -243,6 +251,21 @@ async function main () {
       if (wrapped !== file.contents.toString()) { file.contents = Buffer.from(wrapped); marked++ }
     }
     if (marked) console.log(`[snapshot] attribute marking: instrumented ${marked} source file(s)`)
+  }
+
+  // Conditional marking: inject sentinels inside `ifdef::snapshot[]` blocks so
+  // the converter can wrap snapshot-only content in <IfSnapshot> (see
+  // mark-conditionals.js). Same in-memory-catalog rewrite as attribute marking;
+  // sentinels gate with the conditional and strip byte-for-byte in readGolden().
+  if (markConditionals) {
+    let marked = 0
+    for (const file of contentCatalog.getFiles()) {
+      const fam = file.src && file.src.family
+      if ((fam !== 'page' && fam !== 'partial') || !file.contents) continue
+      const wrapped = wrapConditionals(file.contents.toString())
+      if (wrapped !== file.contents.toString()) { file.contents = Buffer.from(wrapped); marked++ }
+    }
+    if (marked) console.log(`[snapshot] conditional marking: instrumented ${marked} source file(s)`)
   }
 
   const pagesDir = path.join(outDir, 'pages')
