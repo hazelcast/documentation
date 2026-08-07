@@ -32,7 +32,7 @@ Backups can be either of the following:
 
 :::tip
 
-For a worked example, see the [Restore a cluster from cloud storage tutorial](/operator/5.18/tutorials/operator-tutorial-external-backup-restore).
+For a worked example, see the [Restore a cluster from cloud storage tutorial](./operator-tutorial-external-backup-restore.mdx).
 
 :::
 
@@ -50,7 +50,7 @@ Enabling Hazelcast persistence requires the following configuration.
 
 </CodeCallouts>
 
-If you want to enable persistence for a map or cache you must also enable it in the Map or Cache CRs by setting `persistenceEnabled: true`. For more information, see [Configuring Map](/operator/5.18/map-configuration#configuring-the-map-resource) and [Configuring Cache](/operator/5.18/cache-configuration#configuring-a-cache-resource).
+If you want to enable persistence for a map or cache you must also enable it in the Map or Cache CRs by setting `persistenceEnabled: true`. For more information, see [Configuring Map](../../data/data-structures/map-configuration.mdx#configuring-the-map-resource) and [Configuring Cache](../../data/data-structures/cache-configuration.mdx#configuring-a-cache-resource).
 
 :::note
 
@@ -81,7 +81,7 @@ External backup in AWS S3:
 
 :::note
 
-For further information about accessing resources on different cloud providers, see [Authorization methods to access cloud provider resources](/operator/5.18/authorization).
+For further information about accessing resources on different cloud providers, see [Authorization methods to access cloud provider resources](../../security/authorization.mdx).
 
 :::
 
@@ -94,7 +94,7 @@ External backup in GCP Bucket:
 
 :::note
 
-For further information about accessing resources on different cloud providers, see [Authorization methods to access cloud provider resources](/operator/5.18/authorization).
+For further information about accessing resources on different cloud providers, see [Authorization methods to access cloud provider resources](../../security/authorization.mdx).
 
 :::
 
@@ -107,7 +107,7 @@ External backup in Azure Blob:
 
 :::note
 
-For further information about accessing resources on different cloud providers, see [Authorization methods to access cloud provider resources](/operator/5.18/authorization).
+For further information about accessing resources on different cloud providers, see [Authorization methods to access cloud provider resources](../../security/authorization.mdx).
 
 :::
 
@@ -123,7 +123,7 @@ For further information about accessing resources on different cloud providers, 
 
 ## Schedule backups
 
-You can schedule backups using the `schedule` and `hotBackupTemplate` fields of the `CronHotBackup` resource. For more information about the `CronHotBackup` resource, see the [API reference](/operator/5.18/api-ref#cronhotbackupspec).
+You can schedule backups using the `schedule` and `hotBackupTemplate` fields of the `CronHotBackup` resource. For more information about the `CronHotBackup` resource, see the [API reference](../../../reference/api-ref.mdx#cronhotbackupspec).
 
 <CodeBlock language="yaml">{Ex_cron_hot_backup_yaml}</CodeBlock>
 
@@ -239,7 +239,7 @@ To restore from local backups that are in an existing [persistent volume](https:
 
    - If the older cluster was created by Operator, the name of both the backup and restore Hazelcast custom resources must be the same.
    - If the older cluster was created by the Hazelcast Helm Chart, the name of the new CR must be in the following format: `<name>-hazelcast-persistence`. For example, assuming that the older cluster was installed with `helm install hz hazelcast/hazelcast-enterprise`, the new CR name must be `hz-hazelcast-enterprise`.
-2. If you configured maps with persistence, you must create them while creating the Hazelcast CR. To create them while creating the Hazelcast CR, you must use [custom configuration](/operator/5.18/custom-config). You cannot apply the Hazelcast CR and then the Map CRs.
+2. If you configured maps with persistence, you must create them while creating the Hazelcast CR. To create them while creating the Hazelcast CR, you must use [custom configuration](../../configuration-properties/custom-config.mdx). You cannot apply the Hazelcast CR and then the Map CRs.
 3. `pvcNamePrefix` is the prefix of the existing PVCs. It can be set to `persistence` or `hot-restart-persistence` depending on the installation method of the old cluster. Run the `kubect get pvc` command to decide which setting best suits your requirements.
 4. `baseDir` is the root directory for persistence.
 5. `backupDir` is the directory that contains a backupFolder for each available backup.

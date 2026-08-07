@@ -465,6 +465,18 @@ function deriveTitle (html) {
 // Convert ONE (component, version) into its own docs tree. Returns a small
 // summary for logging. All version scoping lives here; main() orchestrates the
 // version loop and the site-wide (variables/redirects/versions) files.
+// The output file (relative to the component out dir) a golden page converts to,
+// derived from its nav entry — the SINGLE derivation used both to emit the page
+// and to build the URL->file map, so the map can't drift from what is written.
+function relFileForPage (p, byUrl, plan) {
+  const rec = byUrl.get(p.url)
+  const stem = rec && rec.relative
+    ? path.basename(rec.relative).replace(/\.adoc$/, '')
+    : (p.url.replace(/\/$/, '').split('/').pop() || 'index')
+  const entry = plan.pages.get(stem)
+  return { stem, rec, entry, relFile: entry ? entry.relFile : (stem || 'index') + '.mdx' }
+}
+
 function convertVersion (ver, ctx) {
   const { component, manifest, allGoldenForComponent, opts } = ctx
   const { seg, kind } = ver
@@ -490,6 +502,26 @@ function convertVersion (ver, ctx) {
   let pages = allPages
   if (opts.id) pages = pages.filter((p) => p.url === opts.id)
   if (pages.length === 0) return null // nothing for this version (e.g. --id in another version)
+
+  // URL -> output file for EVERY page in this version. A same-component
+  // same-version link is then emitted as a relative path to the target .mdx
+  // FILE rather than an absolute /<comp>/<version>/ route: relative file links
+  // survive `docusaurus docs:version` (which COPIES the current docs' files into
+  // the new version folder — an absolute link would stay frozen on the old
+  // version). Spans allPages (not the --id subset) so links resolve in a
+  // single-page run too. Trailing-slash variants keyed for robust lookup.
+  // Versioned instances only (seg != null): an unversioned component (cloud)
+  // has no version-cut lifecycle, so leave its absolute links unchanged. An
+  // empty map => every lookup misses => absolute links, as before.
+  const urlToRelFile = new Map()
+  if (seg != null) {
+    for (const p of allPages) {
+      const { relFile } = relFileForPage(p, byUrl, plan)
+      urlToRelFile.set(p.url, relFile)
+      urlToRelFile.set(p.url.replace(/\/$/, ''), relFile)
+      urlToRelFile.set(p.url.replace(/\/?$/, '/'), relFile)
+    }
+  }
 
   // Pass 1: read each page's golden ONCE (cached) and collect its partial-
   // boundary sentinel regions, then make the version-wide factoring decision.
@@ -534,17 +566,10 @@ function convertVersion (ver, ctx) {
   const problems = []
   const stillBaked = []
   for (const p of pages) {
-    const rec = byUrl.get(p.url)
-    // Stem = the source file's basename (index.adoc -> "index"), which is what
-    // nav targetStem reduces an xref to — so a directory/version-root URL
-    // (`/operator/5.18/` == index.adoc) still joins to its nav entry. Fall back
-    // to the URL's last segment only when the page is absent from the manifest.
-    const stem = rec && rec.relative
-      ? path.basename(rec.relative).replace(/\.adoc$/, '')
-      : (p.url.replace(/\/$/, '').split('/').pop() || 'index')
-    const entry = plan.pages.get(stem)
+    // Stem/entry/relFile via the shared derivation (see relFileForPage), so the
+    // emitted file matches the URL->file map used for relative-link resolution.
+    const { stem, rec, entry, relFile } = relFileForPage(p, byUrl, plan)
     if (!entry) orphans.push(p.url)
-    const relFile = entry ? entry.relFile : (stem || 'index') + '.mdx'
 
     const html = readGoldenRaw(p)
     let title = rec && rec.title
@@ -556,7 +581,7 @@ function convertVersion (ver, ctx) {
 
     let body, imports
     try {
-      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, latestVersions: ctx.latestVersions }))
+      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, latestVersions: ctx.latestVersions, urlToRelFile }))
     } catch (err) {
       problems.push({ url: p.url, error: err.message })
       continue
@@ -597,7 +622,7 @@ function convertVersion (ver, ctx) {
   const partialProblems = []
   for (const [id, d] of decisions) {
     try {
-      const { body, imports } = convertBody(d.representative, { pageUrl: pages[0].url, relFile: path.join('_partials', d.slug + '.mdx'), component, partials: decisions, linkVars: ctx.linkVars, examples, latestVersions: ctx.latestVersions })
+      const { body, imports } = convertBody(d.representative, { pageUrl: pages[0].url, relFile: path.join('_partials', d.slug + '.mdx'), component, partials: decisions, linkVars: ctx.linkVars, examples, latestVersions: ctx.latestVersions, urlToRelFile })
       const importBlock = imports.size ? [...imports].join('\n') + '\n\n' : ''
       d.mdx = importBlock + body + '\n'
     } catch (err) {

@@ -77,6 +77,9 @@ function convertBody (html, ctx) {
     // component -> current stable latest version, for floating versionless
     // cross-component xrefs to `/<comp>/latest/` (see floatCrossComponentLatest).
     latestVersions: ctx.latestVersions || {},
+    // URL -> output .mdx file (this component+version), for emitting
+    // same-version internal links as relative file links (see relativeDocLink).
+    urlToRelFile: ctx.urlToRelFile || null,
   }
   collapseSentinels($, $.root()[0], state)
   const body = convertChildren($, $.root()[0], state, 0)
@@ -581,6 +584,27 @@ function floatCrossComponentLatest (href, st) {
   return `/${comp}/latest${rest || '/'}`
 }
 
+// A link to another page of THIS component+version -> a relative path to the
+// target .mdx FILE (e.g. `../get-started/overview.mdx`). Docusaurus resolves
+// doc-to-doc file links version-aware, and — unlike an absolute
+// `/<comp>/<version>/` route — they survive `docusaurus docs:version`, which
+// COPIES the current docs' files into the new version folder (an absolute link
+// would stay frozen pointing at the old version). Membership in urlToRelFile IS
+// the same-component/same-version test (the map holds only this version's
+// pages); a miss means cross-component or explicit cross-version -> caller keeps
+// the absolute/floated form. `path` (the resolved pathname, no hash) is looked
+// up; the hash rides along on the returned link.
+function relativeDocLink (linkPath, hash, st) {
+  if (!st.urlToRelFile || !st.relFile || !linkPath) return null
+  const target = st.urlToRelFile.get(linkPath) ||
+    st.urlToRelFile.get(linkPath.replace(/\/$/, '')) ||
+    st.urlToRelFile.get(linkPath + '/')
+  if (!target) return null
+  let rel = path.posix.relative(path.posix.dirname(st.relFile), target)
+  if (!rel.startsWith('.')) rel = './' + rel
+  return rel + (hash || '')
+}
+
 // Images are CO-LOCATED: each component's images live in an `images/` folder in
 // the docs tree (placed by extract-images.js), and pages reference them with a
 // path RELATIVE to their own output file, so webpack resolves and content-hashes
@@ -862,8 +886,14 @@ function inlineTag ($, node, st, opt) {
       if (cls.includes('anchor')) return opt.skipAnchors ? '' : anchorEl // heading self-link: no text
       const label = kids().trim()
       const rawHref = (node.attribs && node.attribs.href) || ''
-      const { kind, href: resolvedHref } = resolveHref(rawHref, st.pageUrl)
-      const href = kind === 'internal' ? floatCrossComponentLatest(resolvedHref, st) : resolvedHref
+      const resolved = resolveHref(rawHref, st.pageUrl)
+      const kind = resolved.kind
+      // Internal link: prefer a relative link to the target .mdx of THIS
+      // component+version (survives version cuts); otherwise keep the absolute
+      // path, floating a versionless cross-component xref to `/<comp>/latest/`.
+      const href = kind === 'internal'
+        ? (relativeDocLink(resolved.path, resolved.hash, st) || floatCrossComponentLatest(resolved.href, st))
+        : resolved.href
       if (kind === 'empty' || label === '') return anchorEl + label
       // Single-sourced destination: emit the globally-registered <Variable> in
       // link mode (no import needed) instead of baking the URL in. The href is
