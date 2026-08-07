@@ -1,0 +1,129 @@
+---
+title: "Submit Jet jobs"
+sidebar_label: "Overview"
+sidebar_position: 0
+slug: /jet-job-configuration
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Ex_jet_job_example_yaml from '../../../../examples/jet-job-example.yaml';
+
+To execute a data pipeline it needs to be submitted to the cluster as a job. Once the job is submitted, it's distributed automatically and executed on all members.
+
+With Operator, you can run pipelines from existing JAR files for processing data. Pipelines, depending on the data source, can be used for stream or batch processing.
+
+To create a pipeline using the `JetJob` CR, you must enable the Jet engine in the `Hazelcast` CR with `resourceUploadEnabled` set to `true`. See [Create data pipelines with the Jet engine](../jet-engine-configuration.mdx).
+
+:::tip
+
+For a worked example, see the [Run a data pipeline using Jet tutorial](#).
+
+:::
+
+## Configure the JetJob resource
+
+You can use any of the following configuration options in the `JetJob` resource. You can find more detailed information in [API reference](../../../../reference/api-ref.mdx#jetjobspec) page.
+
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`name`</td>
+<td>Name of the Jet job to be created. If empty, the CR name will be used. It cannot be changed later.</td>
+</tr>
+<tr>
+<td>`hazelcastResourceName`</td>
+<td>Name of the Hazelcast resource.</td>
+</tr>
+<tr>
+<td>`state`</td>
+<td>Used to manage the job state. The default value is `Running` and its value must be `Running` when the JetJob object is created for the first time.</td>
+</tr>
+<tr>
+<td>`jarName`</td>
+<td>Name of a JAR file to run. Must be accessible to the member.</td>
+</tr>
+<tr>
+<td>`mainClass`</td>
+<td>Name of the main class that will be run on the job.</td>
+</tr>
+<tr>
+<td>`bucketConfig`</td>
+<td>
+
+JAR file specified in the `jarName` field, accessible from an external bucket.
+
+- `secretName`: Name of the Secret object that holds the credentials for your cloud provider.
+- `bucketURI`: Full path for the external bucket. For example: `gs://your-bucket/path/to/jars`.
+
+</td>
+</tr>
+<tr>
+<td>`remoteURL`</td>
+<td>URL from where the file will be downloaded.</td>
+</tr>
+</tbody>
+</table>
+
+### URL parameters
+
+The `bucketURI` parameter can be used for additional configuration. For example, to specify an AWS S3 URL to send requests to, you can use the `endpoint` parameter: `s3://my-bucket?endpoint=my.endpoint.url&disableSSL=true&s3ForcePathStyle=true`.
+
+The following options are supported.
+
+| Field | Description |
+| --- | --- |
+| `region` | The AWS region for requests. |
+| `endpoint` | The endpoint URL (hostname only or fully qualified URI). |
+| `disable_ssl, disableSSL` | A value of `true` disables SSL when sending requests. |
+| `s3_force_path_style, s3ForcePathStyle` | A value of `true` forces the request to use path-style addressing. |
+| `dualstack` | A value of `true` enables dual stack (IPv4 and IPv6) endpoints. |
+| `fips` | A value of `true` enables the use of FIPS endpoints. |
+
+## Provide a JAR file for the pipeline
+
+To run the pipeline, you need to provide a JAR file that contains the pipeline. The JAR file can be downloaded before the cluster starts by configuring `jet.bucketConfig`, `jet.remoteURLs`, or `jet.configMaps` in the `Hazelcast` CR. This way, all the files in the bucket will be accessible to the member when the cluster starts.
+
+Another option is to configure `bucketConfig` or `remoteURL` in the `JetJob` CR. This way, only the JAR file specified in the `jarName` parameter will be downloaded in the runtime before starting the pipeline.
+
+## Job state management
+
+Once a job is created, you can use `state` field to manage its lifecycle. The following `state` values are available:
+
+- `Running`. All the jobs must be created with the `Running` state. Runs a newly created job or starts a `Suspended` job.
+- `Suspended`. Gracefully suspends a `Running` job.
+- `Canceled`. Gracefully stops a job.
+- `Restarted`. Suspends and resumes the job in one step.
+
+Deleting the `JetJob` resource will forcefully cancel the job.
+
+## Jet Job logs
+
+When running Jet jobs on Kubernetes with Operator, the sidecar agent is responsible for performing CRD operations. During submission, the sidecar agent downloads the required Jet job JARs, places them in the appropriate directories inside the pod, and coordinates the submission of jobs to the Hazelcast cluster. As a result, additional information related to job operation — such as resource availability, authentication issues, or client failures — is recorded in the sidecar agent logs.
+
+For troubleshooting or verifying job deployments, you should review the sidecar agent logs in addition to the main Hazelcast member logs.
+
+The sidecar agent container logs can be viewed with `kubectl`:
+
+```bash
+kubectl logs <hazelcast-platform-pod> -c <sidecar-container-name>
+```
+
+For production deployments, you should ensure that sidecar logs are collected by the cluster logging system (for example, Fluent Bit or Logstash).
+
+## Example configuration
+
+The following `JetJob` resource runs the Data Pipeline for the `Hazelcast` resources on the source Hazelcast cluster from `my-data-pipeline.jar`.
+
+<CodeBlock language="yaml" title="Example configuration">{Ex_jet_job_example_yaml}</CodeBlock>
+
+:::note
+
+For more information about accessing resources on different cloud providers, see [Authorization methods to access cloud storage](../../../security/authorization.mdx).
+
+:::

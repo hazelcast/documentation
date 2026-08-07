@@ -17,10 +17,10 @@
 // nothing links to their images. Idempotent: identical files are left untouched,
 // so a re-run produces zero git churn unless an image actually changed upstream.
 //
-// NOTE: unversioned components only for now (cloud lives at new-docs/cloud/). A
-// versioned component's co-located home is versioned_docs/version-<v>/images/,
-// not /<component>/<v>/images/ -- wire that up when the first versioned
-// component migrates.
+// Versioned components (operator) are supported: each version's images are
+// co-located in its own tree -- latest-snapshot (main) at /<component>/images/
+// and a release <v> at <component>_versioned_docs/version-<v>/images/ -- via
+// destRel() below, keyed off the version segment in each image's pub.url.
 
 const fs = require('node:fs')
 const path = require('node:path')
@@ -35,6 +35,35 @@ const { buildLockfile } = require('./antora-extension/emit-manifest')
 const { lockfileKey, lockfileKeyFromFile } = require('./fidelity/lockfile-key')
 const { goldenPages } = require('./fidelity/lib/pairing')
 const { resolveHref } = require('./converter/lib/links')
+const { isVersioned, CURRENT_SEG, VERSIONS } = require('./lib/layout')
+
+// A versioned component's LIVE set: current (main) + the releases this build
+// emits. The golden spans every version (incl. frozen ones outside the live
+// set), so image placement must be gated to the live set or we write orphan
+// images for versions Docusaurus never builds. Unversioned components: no gate.
+function inLiveSet (component, url) {
+  if (!isVersioned(component)) return true
+  const releases = (VERSIONS[component] && VERSIONS[component].releases) || []
+  const seg = url.replace(/^\/+/, '').split('/')[1] // /<component>/<seg>/…
+  return new Set([CURRENT_SEG, ...releases]).has(seg)
+}
+
+// Site-absolute pub.url -> repo-relative co-located destination (leading slash
+// stripped, Antora's `_images` dir renamed to `images`). For a VERSIONED
+// component the URL's version segment selects the tree: `latest-snapshot` (main)
+// lands in the plugin's current tree `<component>/images/`, and a release `<seg>`
+// in `<component>_versioned_docs/version-<seg>/images/`. This per-version mapping
+// MUST mirror the prefix imageSrc() strips in converter/lib/html-to-mdx.js, or
+// the emitted references and the placed files disagree and the build breaks.
+function destRel (url) {
+  const stripped = url.replace(/^\/+/, '').replace(/(^|\/)_images\//, '$1images/')
+  const [component, seg, ...rest] = stripped.split('/')
+  if (!isVersioned(component)) return stripped
+  const tail = rest.join('/') // "images/foo.png"
+  return seg === CURRENT_SEG
+    ? path.posix.join(component, tail)
+    : path.posix.join(`${component}_versioned_docs`, `version-${seg}`, tail)
+}
 
 // Keep in step with fidelity/build-snapshot.js: the components whose pages are
 // emitted. Only their images are needed.
@@ -130,6 +159,7 @@ async function main () {
 
   const images = contentCatalog.findBy({ family: 'image' })
     .filter((file) => file.pub && file.pub.url && inScope(file.src.component))
+    .filter((file) => inLiveSet(file.src.component, file.pub.url))
     .filter((file) => all || referenced.has(file.pub.url))
 
   const perComponent = {}
@@ -140,12 +170,12 @@ async function main () {
     const url = file.pub.url
     const contents = file.contents
     if (!contents || !contents.length) { skipped++; continue }
-    // pub.url is a site-absolute path (/cloud/_images/foo.png); strip the leading
-    // slash so it joins under the project root rather than the filesystem root,
-    // and rename Antora's `_images` dir to our `images`. This `_images`->`images`
-    // rewrite MUST match the one in converter/lib/html-to-mdx.js (imageSrc), or
-    // references and files disagree.
-    const rel = url.replace(/^\/+/, '').replace(/(^|\/)_images\//, '$1images/')
+    // pub.url is a site-absolute path (/cloud/_images/foo.png, or the versioned
+    // /operator/5.16/_images/foo.png); destRel co-locates it in the docs tree,
+    // renaming `_images`->`images` and, for versioned components, routing the
+    // version segment to the right (current vs versioned_docs) tree. This layout
+    // MUST match imageSrc() in converter/lib/html-to-mdx.js.
+    const rel = destRel(url)
     const dest = path.join(rootDir, rel)
 
     let changed = true

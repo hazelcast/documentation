@@ -1,0 +1,69 @@
+---
+title: "Configuring Topics"
+sidebar_label: "Topic"
+sidebar_position: 3
+slug: /topic-configuration
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Ex_topic_yaml from '../../../examples/topic.yaml';
+
+Hazelcast provides a distribution mechanism for publishing messages that are delivered to multiple subscribers. This is known as a publish/subscribe (pub/sub) messaging model. Publishing and subscription operations are cluster wide. When a member subscribes to a topic, it is registered to receive messages published by any member in the cluster, including any new members that joined after you added the listener. You can create and configure topics using the `Topic` custom resource.
+
+## Configuring a Topic Resource
+
+You can use any of the following configuration options in the `Topic` resource. For more information, see the [API Reference](../../../reference/api-ref.mdx#topicspec).
+
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`name`</td>
+<td>Name of the topic configuration that you're creating. If empty, the custom resource (CR) name is used.</td>
+</tr>
+<tr>
+<td>`hazelcastResourceName`</td>
+<td>Defines the name of the Hazelcast resource for which the topic configuration is created.</td>
+</tr>
+<tr>
+<td>`globalOrderingEnabled`</td>
+<td>When true, all nodes listening to the same topic get their messages in the same order.</td>
+</tr>
+<tr>
+<td>`multiThreadingEnabled`</td>
+<td>
+
+When true, enables multi-threaded processing of incoming messages. Otherwise, a single thread handles all topic messages.
+
+:::note
+
+You cannot enable multi-threading when global ordering is in use.
+
+:::
+
+</td>
+</tr>
+</tbody>
+</table>
+
+## Example Configuration
+
+The following `Topic` custom resource creates a topic configuration for the `Hazelcast` custom resource that is defined in the `hazelcastResourceName` field.
+
+<CodeBlock language="yaml" title="Example configuration">{Ex_topic_yaml}</CodeBlock>
+
+After creating the `Topic` resource, use the following command to check its status:
+
+```shell
+kubectl get topic topic-sample -o wide
+```
+
+```none
+NAME           STATUS    HAZELCAST-RESOURCE   MESSAGE
+topic-sample   Success   hazelcast-sample
+```

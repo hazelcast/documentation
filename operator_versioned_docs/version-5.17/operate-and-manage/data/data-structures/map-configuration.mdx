@@ -1,0 +1,143 @@
+---
+title: "Configure maps"
+sidebar_position: 1
+slug: /map-configuration
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Ex_map_yaml from '../../../examples/map.yaml';
+
+Hazelcast maps are used to distribute data across a cluster and make it easy to scale your applications while protecting data against member failures. You can create and configure maps using the `Map` resource.
+
+## Configure the `Map` Resource
+
+You can use any of the following configuration options in the `Map` resource. For more information, see the [API reference](../../../reference/api-ref.mdx#multimapspec).
+
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`name`</td>
+<td>Name of the map to be created. If empty, the CR name will be used. It cannot be updated after the map is created successfully.</td>
+</tr>
+<tr>
+<td>`hazelcastResourceName`</td>
+<td>Name of the Hazelcast resource.</td>
+</tr>
+<tr>
+<td>`backupCount`</td>
+<td>Count of synchronous backups.</td>
+</tr>
+<tr>
+<td>`timeToLiveSeconds`</td>
+<td>Maximum time in seconds for each entry to stay in the map.</td>
+</tr>
+<tr>
+<td>`maxIdleSeconds`</td>
+<td>Maximum time in seconds for each entry to stay idle in the map.</td>
+</tr>
+<tr>
+<td>`eviction`</td>
+<td>
+
+Configuration for removing data from the map when it reaches its maximum size.
+
+- evictionPolicy: Eviction policy to be applied when the map reaches its maximum size according to the maximum size policy.
+- maxSize: Maximum size of the map.
+- maxSizePolicy: Policy for deciding if the maxSize is reached.
+
+</td>
+</tr>
+<tr>
+<td>`indexes`</td>
+<td>Indexes to be created for the map data.</td>
+</tr>
+<tr>
+<td>`attributes`</td>
+<td>Custom attributes for field queries when using the Predicates API.</td>
+</tr>
+<tr>
+<td>`persistenceEnabled`</td>
+<td>
+
+Whether to persist map data.
+
+:::note
+
+Persistence should be enabled for Hazelcast before enabling it for the map. You can learn about enabling persistence for Hazelcast in [backup-restore.adoc\#enabling-persistence](../../resilience/backup-restore/overview.mdx#enabling-persistence).
+
+:::
+
+</td>
+</tr>
+<tr>
+<td>`mapStore`</td>
+<td>
+
+Configuration options for loading or storing map entries using a persistent data store such as a relational database. You can learn more at [Working with external data](https://docs.hazelcast.com/hazelcast/latest/data-structures/working-with-external-data).
+
+- className: Name of your class implementing the MapLoader and/or MapStore interface.
+- initialMode: The initial entry loading mode.
+- writeDelaySeconds: Policy for deciding if the maxSize is reached.
+- writeBatchSize: Enables using batches when writing to MapStore.
+- writeCoealescing: When set to true, only the latest store operation on a key during the write-delay-seconds will be reflected to MapStore when using write behind.
+- propertiesSecretName: Name of the secret holding the properties for the MapStore classes implementing the `MapLoaderLifecycleSupport` interface.
+
+</td>
+</tr>
+<tr>
+<td>`entryListeners`</td>
+<td>
+
+Configuration options for listening for map-level or entry-based events using the listeners provided by the Hazelcast's eventing framework. You can learn more at [Distributed object events](https://docs.hazelcast.com/hazelcast/latest/events/object-events).
+
+- className: Name of your class implementing a `MapListener` sub-interface.
+- includeValues: An optional attribute that indicates whether the map event should contains the map value.
+- local: An optional attribute that indicates whether you can listen to the map on the local member.
+
+</td>
+</tr>
+<tr>
+<td>`nearCache`</td>
+<td>
+
+Configuration options for server side near cache. You can learn more at [Near cache](https://docs.hazelcast.com/hazelcast/latest/cluster-performance/best-practices#near-cache).
+
+- name: Name of the near cache.
+- inMemoryFormat: The format data will be stored in your near cache.
+- invalidateOnChange: Whether the cached entries are evicted when the entries are updated or removed.
+- timeToLiveSeconds: Maximum number of seconds for each entry to stay in the near cache.
+- maxIdleSeconds: Maximum number of seconds each entry can stay in the near cache as untouched (not read).
+- cacheLocalEntries: Whether local entries are cached.
+- eviction: The eviction behavior to use in near cache.
+
+  - evictionPolicy: The policy to be applied when near cache reaches its maximum size according to the maximum size policy.
+  - maxSizePolicy: Type of the policy for deciding if the maximum size is reached.
+  - size: The maximum size of the near cache used for maxSizePolicy.
+
+</td>
+</tr>
+</tbody>
+</table>
+
+## Example configuration
+
+The following `Map` resource creates a map configuration for the `Hazelcast` custom resource that is defined in the `hazelcastResourceName` field.
+
+<CodeBlock language="yaml" title="Example configuration">{Ex_map_yaml}</CodeBlock>
+
+After creating the `Map` resource, you can check its status:
+
+```shell
+kubectl get map map-sample -o wide
+```
+
+```none
+NAME         STATUS    HAZELCAST-RESOURCE   MESSAGE
+map-sample   Success   hazelcast-sample
+```

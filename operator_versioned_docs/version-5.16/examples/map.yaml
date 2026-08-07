@@ -1,0 +1,44 @@
+apiVersion: hazelcast.com/v1alpha1
+kind: Map
+metadata:
+  name: map-sample
+spec:
+  hazelcastResourceName: hazelcast-sample
+  backupCount: 1
+  timeToLiveSeconds: 0
+  maxIdleSeconds: 0
+  eviction:
+    evictionPolicy: NONE
+    maxSize: 0
+    maxSizePolicy: PER_NODE
+  indexes:
+    - type: HASH
+      name: index1
+      attributes:
+        - "name"
+        - "age"
+    - type: BITMAP
+      attributes:
+        - "name"
+      bitMapIndexOptions:
+        uniqueKey: id
+        uniqueKeyTransition: RAW
+  attributes:
+    - name: attribute1
+      extractorClassName: class1
+  persistenceEnabled: true
+  entryListeners:
+    - className: com.example.MyListener
+      includeValues: true
+      local: false
+  nearCache:
+    name: mostly-read-map
+    inMemoryFormat: OBJECT
+    invalidateOnChange: true
+    timeToLiveSeconds: 300
+    maxIdleSeconds: 300
+    eviction:
+      evictionPolicy: NONE
+      maxSizePolicy: ENTRY_COUNT
+      size: 5000
+    cacheLocalEntries: true

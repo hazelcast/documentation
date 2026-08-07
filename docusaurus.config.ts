@@ -127,10 +127,12 @@ const config: Config = {
         routeBasePath: 'operator',
         sidebarPath: './sidebarsOperator.ts',
         lastVersion: '5.18',
-        onlyIncludeVersions: ['current', '5.18'],
+        onlyIncludeVersions: ['current', '5.18', '5.17', '5.16'],
         versions: {
           current: {label: 'latest-snapshot', path: 'latest-snapshot'}, // main
           '5.18': {path: '5.18'},
+          '5.17': {path: '5.17'},
+          '5.16': {path: '5.16'},
         },
         admonitions: {
           keywords: ['caution', 'important'],

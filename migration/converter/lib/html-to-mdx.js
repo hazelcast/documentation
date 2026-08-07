@@ -61,6 +61,12 @@ function convertBody (html, ctx) {
     // imageSrc(). Falls back to the URL layout when absent.
     relFile: (ctx.relFile || '').replace(/\\/g, '/'),
     component: ctx.component || (ctx.pageUrl || '').split('/').filter(Boolean)[0] || '',
+    // Version segment this page is emitted under for a VERSIONED component
+    // (e.g. "5.16", or "latest-snapshot" for main); null for unversioned
+    // components (cloud). Antora publishes versioned pages under
+    // `/<component>/<seg>/…` and co-locates their images at the version-tree
+    // root, so imageSrc() must strip this segment too — see imageSrc().
+    seg: ctx.seg || null,
     slugger: new GithubSlugger(),
     partials: ctx.partials || new Map(),
     linkVars: ctx.linkVars || new Map(),
@@ -645,12 +651,18 @@ function relativeDocLink (linkPath, hash, st) {
 // rewrite MUST match the one in extract-images.js (dest path), or references and
 // files disagree. External srcs, and images outside this component (which we
 // cannot co-locate into its tree), keep their resolved absolute form.
+//
+// Versioned components (st.seg set): Antora publishes each version under
+// `/<component>/<seg>/…` and images live at the version tree's root
+// (`<component>_versioned_docs/version-<seg>/images/`), so the prefix stripped
+// here includes the version segment — mirroring extract-images.js's per-version
+// destination. Unversioned components (cloud) strip only the component prefix.
 function imageSrc (raw, st) {
   const resolved = resolveHref(raw, st.pageUrl)
   if (resolved.kind !== 'internal') return resolved.href
   const abs = resolved.path
   const hash = resolved.hash || ''
-  const prefix = st.component ? `/${st.component}/` : ''
+  const prefix = st.component ? `/${st.component}/${st.seg ? st.seg + '/' : ''}` : ''
   if (!prefix || !abs.startsWith(prefix)) return abs + hash
   const within = abs.slice(prefix.length).replace(/(^|\/)_images\//, '$1images/') // "_images/foo.png" -> "images/foo.png"
   const fromDir = path.posix.dirname(st.relFile || '')

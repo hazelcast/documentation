@@ -32,7 +32,7 @@ const NAV_SOURCES = {
 // releases are frozen as static HTML outside this build (freeze plan), so they
 // are deliberately absent here.
 const VERSIONS = {
-  operator: { releases: ['5.18'] },
+  operator: { releases: ['5.18', '5.17', '5.16'] },
 }
 
 // Attributes whose references are MARKED in the golden (antora-extension/

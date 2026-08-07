@@ -581,7 +581,7 @@ function convertVersion (ver, ctx) {
 
     let body, imports
     try {
-      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, latestVersions: ctx.latestVersions, urlToRelFile }))
+      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, latestVersions: ctx.latestVersions, urlToRelFile }))
     } catch (err) {
       problems.push({ url: p.url, error: err.message })
       continue
@@ -622,7 +622,7 @@ function convertVersion (ver, ctx) {
   const partialProblems = []
   for (const [id, d] of decisions) {
     try {
-      const { body, imports } = convertBody(d.representative, { pageUrl: pages[0].url, relFile: path.join('_partials', d.slug + '.mdx'), component, partials: decisions, linkVars: ctx.linkVars, examples, latestVersions: ctx.latestVersions, urlToRelFile })
+      const { body, imports } = convertBody(d.representative, { pageUrl: pages[0].url, relFile: path.join('_partials', d.slug + '.mdx'), component, seg, partials: decisions, linkVars: ctx.linkVars, examples, latestVersions: ctx.latestVersions, urlToRelFile })
       const importBlock = imports.size ? [...imports].join('\n') + '\n\n' : ''
       d.mdx = importBlock + body + '\n'
     } catch (err) {

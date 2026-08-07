@@ -1,0 +1,109 @@
+---
+title: "Configure TLS"
+sidebar_label: "Overview"
+sidebar_position: 0
+slug: /tls
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_tls_yaml from '../../../examples/hazelcast-tls.yaml';
+import Ex_management_center_tls_yaml from '../../../examples/management-center-tls.yaml';
+
+Hazelcast TLS is a security feature that provides encryption and authentication of data transmitted between Hazelcast nodes, preventing unauthorized access and eavesdropping.
+
+Hazelcast TLS uses standard SSL/TLS certificates, which can be obtained from trusted Certificate Authorities (CAs) or self-signed. The certificates are used to establish trust between the communicating parties and ensure the authenticity of the communication channel.
+
+See [TLS/SSL basics](/hazelcast/latest/security/tls-ssl) for more detailed information about the configuration and behavior of TLS in Hazelcast.
+
+:::tip
+
+For a worked example, see the [Secure a cluster with TLS tutorial](./operator-tutorial-tls.mdx).
+
+:::
+
+## Prerequisites
+
+Before you configure TLS, you need to create a Kubernetes secret. Operator uses the secret to create a truststore and keystore, and it modifies the Hazelcast configuration accordingly.
+
+:::warning
+
+The provided `tls.key` must be unencrypted.
+
+:::
+
+Example:
+
+```shell
+kubectl create secret generic example \
+  --from-file=tls.crt=example.crt \
+  --from-file=tls.key=example.key
+```
+
+If you provide a CA certificate, Operator creates a separate truststore for it in [PKCS12](https://en.wikipedia.org/wiki/PKCS_12) format. Otherwise, the truststore and keystore will be the same. To create a truststore with `ca.crt`:
+
+```shell
+kubectl create secret generic example \
+  --from-file=tls.crt=example.crt \
+  --from-file=tls.key=example.key \
+  --from-file=ca.crt=ca.crt
+```
+
+## Configure Hazelcast TLS
+
+Operator provides the following options for configuring TLS.
+
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`secretName`</td>
+<td>Name of the Kubernetes TLS secret.</td>
+</tr>
+<tr>
+<td>`clientAuthentication`</td>
+<td>
+
+Mutual authentication configuration for client to member communication:
+
+- `None` (default): The client side of the connection is not authenticated.
+- `Required`: Server forces usage of a trusted client certificate.
+- `Optional`: Server asks for a client certificate, but doesn't require it.
+
+</td>
+</tr>
+<tr>
+<td>`memberAuthentication`</td>
+<td>
+
+Mutual authentication configuration for member to member communication:
+
+- `None`: The client side of the connection is not authenticated.
+- `Required`(default): Server forces usage of a trusted client certificate.
+- `Optional`: Server asks for a client certificate, but it doesn't require it.
+
+</td>
+</tr>
+</tbody>
+</table>
+
+### Example configuration
+
+The following example configuration does the following:
+
+- Enables member to member and member to client Hazelcast TLS connections.
+- Enforces mutual TLS authentication for cluster members.
+
+<CodeBlock language="yaml" title="Example Hazelcast configuration">{Ex_hazelcast_tls_yaml}</CodeBlock>
+
+<CodeBlock language="yaml" title="Example Management Center configuration">{Ex_management_center_tls_yaml}</CodeBlock>
+
+:::note
+
+To update TLS certificates, you need to delete and recreate the appropriate custom resource.
+
+:::

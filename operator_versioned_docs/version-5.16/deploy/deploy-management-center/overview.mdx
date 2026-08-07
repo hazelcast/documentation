@@ -1,0 +1,106 @@
+---
+title: "Deploy Management Center with the Hazelcast Platform Operator for Kubernetes"
+sidebar_label: "Overview"
+sidebar_position: 0
+slug: /deploy-management-center
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Ex_management_center_with_license_key_yaml from '../../examples/management-center-with-license-key.yaml';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+In this tutorial, you'll deploy an instance of Management Center using Hazelcast Platform Operator for Kubernetes.
+
+## Before you Begin
+
+You need a Kubernetes or Openshift cluster, and the `kubectl` or `oc` command-line tool must be configured to communicate with your cluster.
+
+Please make sure [Hazelcast Platform Operator for Kubernetes](../get-started/overview.mdx) is up and running.
+
+## Deploy Management Center
+
+You can monitor the Hazelcast cluster by starting Management Center.
+
+To enable some features or dashboard at Management Center, you need a license key. If you don't have a license key, you can request one from the [Hazelcast website](http://trialrequest.hazelcast.com/).
+
+1. Create a Kubernetes secret to hold your license key.
+
+   ```shell title="For Kubernetes"
+   kubectl create secret generic hazelcast-license-key --from-literal=license-key=<YOUR LICENSE KEY>
+   ```
+
+   ```shell title="For Openshift"
+   oc create secret generic hazelcast-license-key --from-literal=license-key=<YOUR LICENSE KEY>
+   ```
+2. Create the `ManagementCenter` custom resource file and name it `management-center.yaml`.
+
+   <CodeBlock language="yaml">{Ex_management_center_with_license_key_yaml}</CodeBlock>
+3. Apply it with the following command to start Management Center.
+
+   ```shell title="For Kubernetes"
+   kubectl apply -f management-center.yaml
+   ```
+
+   ```shell title="For Openshift"
+   oc apply -f management-center.yaml
+   ```
+4. After a moment, you can verify that Management Center is up and running by checking the Management Center logs.
+
+   ```shell title="For Kubernetes"
+   kubectl logs pod/managementcenter-sample-0
+   ```
+
+   ```shell title="For Openshift"
+   oc logs pod/managementcenter-sample-0
+   ```
+
+```none
+2021-08-26 15:21:04,842 [ INFO] [MC-Client-dev.lifecycle-1] [c.h.w.s.MCClientManager]: MC Client connected to cluster dev.
+2021-08-26 15:21:05,241 [ INFO] [MC-Client-dev.event-1] [c.h.w.s.MCClientManager]: Started communication with member: Member [10.36.8.3]:5701 - ccf31703-de3b-4094-9faf-7b5d0dc145b2
+2021-08-26 15:21:05,245 [ INFO] [MC-Client-dev.event-1] [c.h.w.s.MCClientManager]: Started communication with member: Member [10.36.7.2]:5701 - e75bd6e2-de4b-4360-8113-040773d858b7
+2021-08-26 15:21:05,251 [ INFO] [MC-Client-dev.event-1] [c.h.w.s.MCClientManager]: Started communication with member: Member [10.36.6.2]:5701 - c3d105d2-0bca-4a66-8519-1cacffc05c98
+2021-08-26 15:21:07,234 [ INFO] [main] [c.h.w.Launcher]: Hazelcast Management Center successfully started at http://localhost:8080/
+```
+
+To access the Management Center dashboard, open the browser at address [`http://$MANCENTER_IP:8080`](http://$MANCENTER_IP:8080).
+
+<Tabs>
+<TabItem value="kubernetes" label="Kubernetes">
+
+```shell
+MANCENTER_IP=$( kubectl get service managementcenter-sample -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+```
+
+</TabItem>
+<TabItem value="openshift" label="Openshift">
+
+```shell
+MANCENTER_IP=$( oc get service managementcenter-sample -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+```
+
+</TabItem>
+</Tabs>
+
+If EXTERNAL-IP of the service is hostname, not IP, you can run command below:
+
+<Tabs>
+<TabItem value="kubernetes" label="Kubernetes">
+
+```shell
+MANCENTER_IP=$( kubectl get service managementcenter-sample -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+```
+
+</TabItem>
+<TabItem value="openshift" label="Openshift">
+
+```shell
+MANCENTER_IP=$( oc get service managementcenter-sample -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+```
+
+</TabItem>
+</Tabs>
+
+## Next Steps
+
+Learn how to [expose Hazelcast clusters outside Kubernetes](../../configure/connect-outside-kubernetes.mdx) so you can connect external clients to them.
