@@ -4,16 +4,32 @@
 // migration; MAINTAIN HERE going forward — update the version values on each
 // product release (via CI or by hand).
 //
-// `variables`: global/unversioned values. `versionedVariables[component]
-// [versionName]`: per-version values (versionName is 'current' for the
-// current docs version, else the release, e.g. '5.18').
-export const variables: Record<string, string> = {
-  "full-version": "5.6.0",
-  "hazelcast-cloud": "Cloud",
-  "page-cloud-console": "https://cloud.hazelcast.com/",
-  "page-cloud-platform-version": "5.6",
-  "page-cloud-signup": "https://cloud.hazelcast.com/sign-up"
+// `variablesBySource`: global/unversioned values grouped by ORIGIN — each
+// docs repo's own antora.yml, or the shared Antora playbook. Grouping is for
+// context/provenance; `variables` is the flat lookup the app consumes.
+// `versionedVariables[component][versionName]`: per-version values
+// (versionName is 'current' for the current docs version, else the release).
+export const variablesBySource: Record<string, Record<string, string>> = {
+  // Global Antora playbook (shared across all docs repos; the rest arrive later)
+  "playbook": {
+    "hazelcast-cloud": "Cloud"
+  },
+  // hazelcast/cloud-docs — docs/antora.yml
+  "cloud": {
+    "full-version": "5.6.0",
+    "page-cloud-console": "https://cloud.hazelcast.com/",
+    "page-cloud-platform-version": "5.6",
+    "page-cloud-signup": "https://cloud.hazelcast.com/sign-up"
+  },
 };
+
+// Flattened lookup consumed by <Variable> (src/components/Variable.tsx) and
+// the example-attributes loader. Merged in group order, so a docs-repo value
+// overrides a playbook value on the same name.
+export const variables: Record<string, string> = Object.assign(
+  {},
+  ...Object.values(variablesBySource),
+);
 
 export const versionedVariables: Record<string, Record<string, Record<string, string>>> = {
   "operator": {

@@ -39,8 +39,9 @@ const substitute = require('../../plugins/lib/substitute-attributes')
 // emitted (VERSIONS / CURRENT_SEG), and the version/path helpers.
 const {
   NAV_SOURCES, CURRENT_SEG, VERSIONS, markedAttrsFor,
-  isVersioned, versionsToProcess, outDirFor, urlToSlug,
+  isVersioned, refFor, versionsToProcess, outDirFor, urlToSlug,
 } = require('../lib/layout')
+const yaml2 = require('js-yaml')
 
 // Antora attributes whose resolved value we single-source as a doc variable
 // instead of baking it into every page (the firm no-baking principle: an
@@ -83,6 +84,7 @@ const sidebarId = (component) => `${component}Sidebar`
 //                     <Variable> can look it up via useActivePluginAndVersion.
 function collectVariables (manifest) {
   const flat = new Map()
+  const flatComponents = new Map() // name -> the unversioned component that contributed it
   const linkValueToName = new Map()
   const versioned = new Map()
   for (const comp of manifest.components || []) {
@@ -112,15 +114,69 @@ function collectVariables (manifest) {
         const value = attrs[name]
         if (value == null) continue
         flat.set(name, String(value))
+        flatComponents.set(name, comp.name)
         if (single.includes(name)) valueToName.set(String(value), name) // link reverse-map: SINGLE_SOURCE only
       }
       linkValueToName.set(comp.name, valueToName)
     }
   }
-  return { flat, linkValueToName, versioned }
+  return { flat, flatComponents, linkValueToName, versioned }
 }
 
 const mapToObj = (m) => Object.fromEntries([...m].sort(([a], [b]) => a.localeCompare(b)))
+
+// The attribute names declared under `asciidoc.attributes` of a parsed YAML doc.
+const asciidocAttrKeys = (parsed) => new Set(Object.keys((parsed && parsed.asciidoc && parsed.asciidoc.attributes) || {}))
+
+// A component's OWN attribute names, from its docs repo's antora.yml (the
+// component descriptor at `<component-root>/antora.yml`, e.g. docs/antora.yml).
+// These are the repo-specific attributes, as opposed to the global playbook set.
+function componentAttrKeys (component, sourcesDir) {
+  const src = NAV_SOURCES[component]
+  if (!src) return new Set()
+  const root = path.posix.dirname(path.posix.dirname(path.posix.dirname(src.file))) // docs/modules/ROOT/nav.adoc -> docs
+  const repoDir = path.join(sourcesDir, src.repo)
+  try {
+    const out = execFileSync('git', ['-C', repoDir, 'show', `${refFor(component, null) || 'main'}:${path.posix.join(root, 'antora.yml')}`], { encoding: 'utf8' })
+    return asciidocAttrKeys(yaml2.load(out))
+  } catch { return new Set() }
+}
+
+// The global playbook's attribute names (shared across every docs repo).
+function playbookAttrKeys (playbookFile) {
+  try { return asciidocAttrKeys(yaml2.load(fs.readFileSync(playbookFile, 'utf8'))) } catch { return new Set() }
+}
+
+// Group the flat (unversioned) variables by their SOURCE, so variables.ts records
+// where each came from. A name defined in its component's own antora.yml is
+// repo-specific (grouped under the component); otherwise, if it comes from the
+// shared playbook, it is grouped under 'playbook'. Returns ordered groups
+// (playbook first so a repo value overrides a playbook value in the flattened
+// lookup) as [{ source, label, vars: Map(name->value) }].
+function groupVariablesBySource (flat, flatComponents, opts) {
+  const playbook = playbookAttrKeys(opts.playbookFile)
+  const compKeys = new Map() // component -> Set of its own attr names (cached)
+  const bySource = new Map() // source -> Map(name->value)
+  const labelFor = new Map()
+  const repoLabel = (comp) => {
+    const repo = (NAV_SOURCES[comp] && NAV_SOURCES[comp].repo || '').replace(/\.git$/, '')
+    return `hazelcast/${repo} — docs/antora.yml`
+  }
+  for (const [name, value] of flat) {
+    const comp = flatComponents.get(name)
+    if (comp && !compKeys.has(comp)) compKeys.set(comp, componentAttrKeys(comp, opts.sourcesDir))
+    const inRepo = comp && compKeys.get(comp).has(name)
+    const source = inRepo ? comp : (playbook.has(name) ? 'playbook' : comp || 'unknown')
+    if (!bySource.has(source)) bySource.set(source, new Map())
+    bySource.get(source).set(name, value)
+    labelFor.set(source, source === 'playbook'
+      ? 'Global Antora playbook (shared across all docs repos; the rest arrive later)'
+      : repoLabel(source))
+  }
+  // playbook first, then components alphabetically.
+  const order = [...bySource.keys()].sort((a, b) => (a === 'playbook' ? -1 : b === 'playbook' ? 1 : a.localeCompare(b)))
+  return order.map((source) => ({ source, label: labelFor.get(source), vars: bySource.get(source) }))
+}
 
 // Write the SINGLE source of truth for doc variables: src/variables.ts.
 // Consumed by React (<Variable>) via import, and by the build-
@@ -129,8 +185,11 @@ const mapToObj = (m) => Object.fromEntries([...m].sort(([a], [b]) => a.localeCom
 // twin. The header is deliberately NOT "do not edit": during the migration this
 // is bootstrapped from the Antora manifest, but it is a MAINTAINED file — after
 // cutover its version values are updated on each product release (CI or by hand).
-function writeVariablesFile (tsFile, flat, versioned) {
-  const variablesObj = mapToObj(flat)
+function writeVariablesFile (tsFile, groups, versioned) {
+  const indent = (obj) => JSON.stringify(obj, null, 2).replace(/\n/g, '\n  ')
+  const bySourceBody = groups
+    .map(({ source, label, vars }) => `  // ${label}\n  ${JSON.stringify(source)}: ${indent(mapToObj(vars))},`)
+    .join('\n')
   const versionedObj = {}
   for (const [comp, perVer] of [...versioned].sort(([a], [b]) => a.localeCompare(b))) {
     versionedObj[comp] = {}
@@ -142,10 +201,20 @@ function writeVariablesFile (tsFile, flat, versioned) {
     '// migration; MAINTAIN HERE going forward — update the version values on each\n' +
     '// product release (via CI or by hand).\n' +
     '//\n' +
-    '// `variables`: global/unversioned values. `versionedVariables[component]\n' +
-    '// [versionName]`: per-version values (versionName is \'current\' for the\n' +
-    '// current docs version, else the release, e.g. \'5.18\').\n' +
-    'export const variables: Record<string, string> = ' + JSON.stringify(variablesObj, null, 2) + ';\n\n' +
+    '// `variablesBySource`: global/unversioned values grouped by ORIGIN — each\n' +
+    '// docs repo\'s own antora.yml, or the shared Antora playbook. Grouping is for\n' +
+    '// context/provenance; `variables` is the flat lookup the app consumes.\n' +
+    '// `versionedVariables[component][versionName]`: per-version values\n' +
+    '// (versionName is \'current\' for the current docs version, else the release).\n' +
+    'export const variablesBySource: Record<string, Record<string, string>> = {\n' +
+      bySourceBody + '\n};\n\n' +
+    '// Flattened lookup consumed by <Variable> (src/components/Variable.tsx) and\n' +
+    '// the example-attributes loader. Merged in group order, so a docs-repo value\n' +
+    '// overrides a playbook value on the same name.\n' +
+    'export const variables: Record<string, string> = Object.assign(\n' +
+    '  {},\n' +
+    '  ...Object.values(variablesBySource),\n' +
+    ');\n\n' +
     'export const versionedVariables: Record<string, Record<string, Record<string, string>>> = ' +
       JSON.stringify(versionedObj, null, 2) + ';\n'
   fs.mkdirSync(path.dirname(tsFile), { recursive: true })
@@ -220,6 +289,7 @@ function parseArgs (argv) {
     goldenDir: path.resolve(val('--golden', 'build/golden')),
     manifestDir: path.resolve(val('--manifest', 'build/manifest')),
     sourcesDir: path.resolve(val('--sources', '.sources')),
+    playbookFile: path.resolve(val('--playbook', path.join('antora', 'index-playbook.yml'))),
     outRoot: path.resolve(val('--out-root', '..')),
     variablesFile: path.resolve(val('--variables', path.join('..', 'src', 'variables.ts'))),
     redirectsFile: path.resolve(val('--redirects', path.join('..', 'src', 'redirects.ts'))),
@@ -618,7 +688,7 @@ function writeVersionedFiles (opts, component, releases) {
 function main () {
   const opts = parseArgs(process.argv)
   const manifest = JSON.parse(fs.readFileSync(path.join(opts.manifestDir, 'manifest.json'), 'utf8'))
-  const { flat, linkValueToName, versioned } = collectVariables(manifest)
+  const { flat, flatComponents, linkValueToName, versioned } = collectVariables(manifest)
   const linkVars = linkValueToName.get(opts.component) || new Map()
 
   const allGoldenForComponent = goldenPages(opts.goldenDir).filter((p) => p.component === opts.component)
@@ -647,7 +717,9 @@ function main () {
 
   // Site-wide generated files, written once with full manifest context so a
   // per-component run keeps the other components' entries intact.
-  if (!opts.dry && (flat.size || versioned.size)) writeVariablesFile(opts.variablesFile, flat, versioned)
+  if (!opts.dry && (flat.size || versioned.size)) {
+    writeVariablesFile(opts.variablesFile, groupVariablesBySource(flat, flatComponents, opts), versioned)
+  }
   const liveSegsByComponent = new Map()
   for (const comp of Object.keys(NAV_SOURCES)) {
     liveSegsByComponent.set(comp, null) // default: unversioned (no gate)
