@@ -13,8 +13,12 @@
     "check:refs": "node refcheck/run.js",
     "check:constructs": "node constructcheck/run.js",
 
-    "selftest": "npm run check:refs:selftest",
+    "selftest": "npm run selftest:layout && npm run selftest:converter && npm run check:fidelity:selftest && npm run check:refs:selftest && npm run check:constructs:selftest",
+    "selftest:layout": "node lib/selftest.js",
+    "selftest:converter": "node converter/selftest.js",
+    "check:fidelity:selftest": "node fidelity/selftest.js",
     "check:refs:selftest": "node refcheck/selftest.js",
+    "check:constructs:selftest": "node constructcheck/selftest.js",
 
     "diagnose:layer3": "node fidelity/layer3-report.js"
   },

@@ -73,7 +73,7 @@ Each takes `--component X` (and fidelity/refs take `--id /url`) to scope to a sm
 
 Supporting scripts, **not** part of `check`:
 
-- `npm run selftest` — unit tests for the checkers' own matcher logic (needs no golden/build; pure functions). Run after editing a matcher.
+- `npm run selftest` — unit tests for the pure logic the gates and converter depend on (needs no golden/build): the shared layout config (`lib/layout.js`); the converter's MDX escapers, link classifiers, partial-factoring, and nav→sidebar plan; the fidelity harness's Layer 1/2/3, golden de-instrumentation, manifest URL resolver, snapshot-pin key, and page pairing; the reference-checker matchers; and the construct detectors. Run after editing any of them. Individually: `selftest:layout`, `selftest:converter`, `check:fidelity:selftest`, `check:refs:selftest`, `check:constructs:selftest`.
 - `npm run diagnose:layer3` — a human-facing calibration report (no pass/fail): histograms Layer 3's unresolved links over the golden so you can tell resolver bugs from fidelity-neutral pre-existing broken links. Needs the golden snapshot.
 
 There is no CI or git hook yet — running the gates is manual and on-demand (per the direct-to-main strategy). Wiring `npm run check` into CI is the intended durable backstop, still to be built.
