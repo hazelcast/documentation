@@ -1,17 +1,23 @@
 'use strict'
 
-// Unit self-test for the converter's pure text primitives:
-//   1. mdx.js  -- the MDX-safety escapers. A bug here silently CORRUPTS output
-//      (a stray `*` becomes emphasis, a `<` opens a tag) on rare characters the
-//      fidelity harness may not exercise, so the edge cases are pinned here.
-//   2. the link classifiers -- converter/lib/links.js (emits the href) and
+// Unit self-test for the converter's pure text primitives. Tests state the
+// REQUIREMENT, checked against an independent oracle, not the current output:
+//   1. mdx.js escapers -- the requirement is "escaping never changes what the
+//      reader sees, it only stops MDX reinterpreting punctuation." So we render
+//      the escaped output through a real CommonMark parser (micromark) and assert
+//      the rendered text/code equals the input verbatim. A bug that mis-escapes
+//      shows up as a rendering that differs from the input -- caught regardless
+//      of how the escaper is written.
+//   2. link classifiers -- converter/lib/links.js (emits the href) and
 //      fidelity/lib/links.js (checks it) MUST agree on external/anchor/internal
-//      and on the resolved path, or a link the converter emits fails its own
-//      Layer-3 check. The comment in links.js promises this; this test enforces it.
+//      and the resolved path, or a link the converter emits fails its own Layer-3
+//      check. A differential test: two independent implementations must agree.
 //
 // All pure. Run: node converter/selftest.js
 
 const assert = require('node:assert')
+const { micromark } = require('micromark')
+const cheerio = require('cheerio')
 
 const { mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode } = require('./lib/mdx')
 const { resolveHref } = require('./lib/links')
@@ -22,43 +28,88 @@ const { parseNav, buildPlan, targetStem, folderName } = require('./lib/nav')
 let n = 0
 const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
 
-// --- mdEscape: liberal, fidelity-safe backslash escaping ---------------------
-{
-  assert.strictEqual(mdEscape('a*b_c'), 'a\\*b\\_c', 'emphasis chars escaped')
-  assert.strictEqual(mdEscape('x[y]z'), 'x\\[y\\]z', 'link brackets escaped')
-  assert.strictEqual(mdEscape('a<b>c'), 'a\\<b\\>c', 'angle brackets escaped in prose')
-  assert.strictEqual(mdEscape('use {x} and #h'), 'use \\{x\\} and \\#h', 'braces and hash escaped')
-  assert.strictEqual(mdEscape('a\\b'), 'a\\\\b', 'a literal backslash is escaped (once, not doubled)')
-  // Typographic folding still happens, and folded quotes are NOT escaped.
-  assert.strictEqual(mdEscape('“q” a b'), '"q" a b', 'curly quotes folded, nbsp folded, quote not escaped')
-  ok('mdEscape: escapes MD-active punctuation, folds typography, no double-escape')
+// Oracles. renderedText: the visible text after a real CommonMark render.
+// decodeEntities: the text an HTML/JSX entity string decodes to. renderedCode:
+// the code element(s) a Markdown render produces and their verbatim content.
+const renderedText = (md) => cheerio.load(micromark(md)).root().text().replace(/\n+$/, '')
+const decodeEntities = (html) => cheerio.load(`<x>${html}</x>`)('x').text()
+const renderedCode = (md) => {
+  const $ = cheerio.load(micromark(md))
+  return { count: $('code').length, text: $('code').first().text().replace(/\n$/, '') }
+}
 
-  assert.strictEqual(mdEscapeCell, mdEscape, 'mdEscapeCell is mdEscape (pipe already in the set)')
-  assert.strictEqual(mdEscapeCell('a|b'), 'a\\|b', 'pipe escaped for GFM cells')
-  ok('mdEscapeCell: escapes the table pipe')
+// --- mdEscape: rendering the escaped prose reproduces the input --------------
+// The requirement (mdx.js header): escaping is fidelity-safe -- the rendered
+// text is identical to the input, it only stops MDX reinterpreting punctuation.
+// Verified against a real CommonMark parser over adversarial inputs, so ANY
+// mis-escape (a `*` still read as emphasis, a `[` still opening a link) surfaces
+// as a render that diverges from the input.
+{
+  const adversarial = [
+    'a*b_c', 'x[y](z)', 'a`b`c', '# not a heading', 'p|q', 'a<b>c',
+    'use {x} and #h', 'back\\slash', 'a * b _ c', 'all: *_[]`#|<>{}\\',
+  ]
+  for (const s of adversarial) {
+    assert.strictEqual(renderedText(mdEscape(s)), s, `mdEscape keeps rendered text == input for ${JSON.stringify(s)}`)
+  }
+  ok('mdEscape: escaped prose renders back to the input verbatim (CommonMark oracle)')
+
+  // Typographic folding is itself a fidelity requirement (Layer-1 folds the same
+  // glyphs, so the compare stays equal): curly quotes / nbsp -> ASCII.
+  assert.strictEqual(renderedText(mdEscape('“x” a b')), '"x" a b', 'curly quotes + nbsp folded to ASCII')
+  ok('mdEscape: folds the typographic glyphs Asciidoctor introduces')
+
+  // mdEscapeCell must additionally survive a GFM table cell -- the requirement is
+  // that a literal pipe cannot split the cell, i.e. it is escaped.
+  assert.strictEqual(mdEscapeCell, mdEscape, 'mdEscapeCell is mdEscape (pipe is in the prose set)')
+  assert.strictEqual(renderedText(mdEscapeCell('a|b')), 'a|b', 'a literal pipe renders as text, not a column break')
+  ok('mdEscapeCell: a literal pipe is preserved for GFM cells')
 }
 
 // --- jsxText / jsxAttr: entity-encode the JSX-hostile characters -------------
+// Requirement: the characters that break JSX (< > { } &) must not appear RAW,
+// and decoding the entities must reproduce the input unchanged.
 {
-  assert.strictEqual(jsxText('a<b>{c}&d'), 'a&lt;b&gt;&#123;c&#125;&amp;d', 'all five JSX-hostile chars entified')
-  assert.strictEqual(jsxText('A & B'), 'A &amp; B', 'ampersand encoded first (not double-encoded)')
-  ok('jsxText: <, >, {, }, & become entities')
+  for (const s of ['a<b>{c}&d', 'A & B', 'plain text', '{expr} <Tag/>']) {
+    const out = jsxText(s)
+    assert(!/[<>{}]/.test(out) && !/&(?!(amp|lt|gt|#\d+);)/.test(out), `no raw JSX-hostile char in ${JSON.stringify(s)}`)
+    assert.strictEqual(decodeEntities(out), s, `jsxText decodes back to input for ${JSON.stringify(s)}`)
+  }
+  ok('jsxText: entifies < > { } & and nothing else (decodes to the input)')
 
-  assert.strictEqual(jsxAttr('plain'), '"plain"', 'wraps in double quotes')
-  assert.strictEqual(jsxAttr('say "hi" & bye'), '"say &quot;hi&quot; &amp; bye"', 'quotes and & escaped inside')
-  ok('jsxAttr: double-quoted literal with escaped " and &')
+  // In a double-quoted JSX attribute only " (the delimiter) and & (entity start)
+  // are hostile; <, >, { } are literal, so the oracle decodes ONLY those two.
+  const decodeAttr = (s) => s.replace(/&quot;/g, '"').replace(/&amp;/g, '&')
+  for (const s of ['plain', 'say "hi" & bye', 'a<b>{x}', 'tag </close>']) {
+    const out = jsxAttr(s)
+    assert(out.startsWith('"') && out.endsWith('"'), 'wrapped in double quotes')
+    const inner = out.slice(1, -1)
+    assert(!inner.includes('"'), 'no raw double-quote closes the attribute early')
+    assert(!/&(?!(amp|quot|#\d+);)/.test(inner), 'every & is an entity, not a bare ampersand')
+    assert.strictEqual(decodeAttr(inner), s, `jsxAttr decodes back to input for ${JSON.stringify(s)}`)
+  }
+  ok('jsxAttr: double-quoted, escapes " and & (only), decodes to the input')
 }
 
-// --- inlineCode / fencedCode: fence longer than any inner run ----------------
+// --- inlineCode / fencedCode: content preserved, fence never split -----------
+// Requirement: the content is verbatim and the backtick fence is never
+// terminated early. Verified by rendering and asserting exactly one code element
+// whose text equals the content -- including when the content itself holds
+// backtick runs that a too-short fence would break on.
 {
-  assert.strictEqual(inlineCode('a'), '`a`', 'simple inline code')
-  assert.strictEqual(inlineCode('a`b'), '``a`b``', 'fence grows past an inner backtick')
-  assert.strictEqual(inlineCode('`x`'), '`` `x` ``', 'pads when content starts/ends with a backtick')
-  ok('inlineCode: chooses a non-splitting backtick fence')
+  for (const s of ['a', 'a`b', '`x`', 'plain code', 'tick ``` inside']) {
+    const r = renderedCode(inlineCode(s))
+    assert.strictEqual(r.count, 1, `inlineCode yields one code span for ${JSON.stringify(s)}`)
+    assert.strictEqual(r.text, s, `inlineCode preserves content verbatim for ${JSON.stringify(s)}`)
+  }
+  ok('inlineCode: one code span, content verbatim, fence not split (CommonMark oracle)')
 
-  assert.strictEqual(fencedCode('code', 'js'), '```js\ncode\n```', 'default triple fence with language')
-  assert.strictEqual(fencedCode('```\nx', ''), '````\n```\nx\n````', 'fence grows past an embedded ``` run')
-  ok('fencedCode: fence never terminated early by embedded backticks')
+  for (const code of ['code', 'line1\nline2', '```\nembedded fence\n```', '````\ndeeper\n````']) {
+    const r = renderedCode(fencedCode(code, 'js'))
+    assert.strictEqual(r.count, 1, `fencedCode yields one code block for ${JSON.stringify(code)}`)
+    assert.strictEqual(r.text, code, `fencedCode preserves content verbatim for ${JSON.stringify(code)}`)
+  }
+  ok('fencedCode: one code block, content verbatim, fence outgrows embedded backticks')
 }
 
 // --- link classifiers agree (converter emits <-> fidelity checks) ------------
@@ -103,11 +154,22 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
     { component: 'operator', module: 'mymod', family: 'page', relative: 'dir/sub.adoc' }, 'parses a module + nested id')
   ok('parseId: splits component:module:family$relative')
 
-  assert.strictEqual(slugFor('cloud:ROOT:partial$create-api-key.adoc'), 'create-api-key', 'ROOT module -> no prefix')
-  assert.strictEqual(slugFor('operator:mymod:partial$deep/path/note.adoc'), 'mymod-deep-path-note',
-    'non-ROOT module prefixed, path separators flattened')
-  assert.strictEqual(componentNameFor('create-api-key'), 'PartialCreateApiKey', 'PascalCase component name')
-  ok('slugFor / componentNameFor: stable slug + component identifier')
+  // Correctness properties (these MUST hold, whatever the scheme):
+  //  - two partials with the same relative path in DIFFERENT modules must not
+  //    collide, so the module has to survive into the slug;
+  //  - the name is emitted as a JSX component + import binding, so it must be a
+  //    valid capitalised JS identifier (JSX treats lowercase as an HTML tag).
+  assert.notStrictEqual(slugFor('c:modA:partial$note.adoc'), slugFor('c:modB:partial$note.adoc'),
+    'same-named partials in different modules get different slugs (no collision)')
+  for (const slug of ['create-api-key', 'mymod-deep-path-note', 'a1-b2'])
+    assert(/^[A-Z][A-Za-z0-9]*$/.test(componentNameFor(slug)), `componentNameFor(${slug}) is a valid JSX identifier`)
+  ok('slugFor / componentNameFor: module-safe slug + valid JSX component identifier')
+
+  // Tripwire (no external spec for the exact scheme): pins today's output so an
+  // unintended change is noticed. NOT a correctness check.
+  assert.strictEqual(slugFor('cloud:ROOT:partial$create-api-key.adoc'), 'create-api-key', 'current slug scheme')
+  assert.strictEqual(componentNameFor('create-api-key'), 'PartialCreateApiKey', 'current naming scheme')
+  ok('slugFor / componentNameFor: current output pinned (change-detector)')
 }
 
 // --- partials: occurrence collection -----------------------------------------
@@ -184,32 +246,40 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
 {
   const path = require('node:path')
 
-  const leaf = buildPlan(parseNav('.Guide\n* xref:install.adoc[Install]'))
-  assert.deepStrictEqual(leaf.pages.get('install'), {
-    relFile: path.join('guide', 'install.mdx'), slug: '/install', sidebarLabel: 'Install', sidebarPosition: 1,
-  }, 'leaf page: slug preserves the flat URL, nav label kept')
-  assert.deepStrictEqual(leaf.categories[0], {
-    relFile: path.join('guide', '_category_.json'), content: { label: 'Guide', position: 1, link: null },
-  }, 'category folder gets a non-clickable _category_.json')
-  ok('buildPlan: leaf page + category file')
+  // Correctness property (URL preservation, the migration's actual requirement):
+  // whatever the folder layout, EVERY page's slug must reproduce its flat Antora
+  // URL, i.e. '/' + stem. The file/category layout below it is a free choice.
+  const plan = buildPlan(parseNav([
+    '.Guide',
+    '* xref:intro.adoc[Intro]',
+    '* xref:section.adoc[Section]', // parent page -> Overview
+    '** xref:child.adoc[Child]',
+  ].join('\n')))
+  for (const [stem, page] of plan.pages) assert.strictEqual(page.slug, '/' + stem, `slug preserves the URL for ${stem}`)
+  ok('buildPlan: every page slug reproduces its flat Antora URL (URL preservation)')
 
-  // sidebar_label is suppressed when the nav label equals the page's doctitle.
-  const noLabel = buildPlan(parseNav('.Guide\n* xref:install.adoc[Install]'), new Map([['install', 'Install']]))
-  assert.strictEqual(noLabel.pages.get('install').sidebarLabel, null, 'redundant sidebar_label dropped')
-  ok('buildPlan: drops sidebar_label that duplicates the title')
+  // Correctness: a nav label equal to the doctitle is redundant -> no sidebar_label;
+  // a distinct nav label is kept.
+  const withTitle = buildPlan(parseNav('.Guide\n* xref:install.adoc[Install]'), new Map([['install', 'Install']]))
+  assert.strictEqual(withTitle.pages.get('install').sidebarLabel, null, 'redundant sidebar_label dropped')
+  const noTitle = buildPlan(parseNav('.Guide\n* xref:install.adoc[Install]'))
+  assert.strictEqual(noTitle.pages.get('install').sidebarLabel, 'Install', 'a distinct nav label is kept')
+  ok('buildPlan: sidebar_label kept only when it differs from the title')
 
-  // A parent page (has children) becomes a category folder + an Overview page.
-  const parent = buildPlan(parseNav('.Guide\n* xref:intro.adoc[Intro]\n* xref:section.adoc[Section]\n** xref:child.adoc[Child]'))
-  assert.deepStrictEqual(parent.pages.get('section'), {
-    relFile: path.join('guide', 'section', 'overview.mdx'), slug: '/section', sidebarLabel: 'Overview', sidebarPosition: 0,
-  }, 'parent page content moves to overview.mdx under its own folder')
-  assert(parent.categories.some((c) => c.relFile === path.join('guide', 'section', '_category_.json')),
-    'the parent page gets a category folder')
-  ok('buildPlan: a parent page splits into a category + Overview')
-
-  const dup = buildPlan(parseNav('.Guide\n* xref:x.adoc[X]\n* xref:x.adoc[Y]'))
-  assert.deepStrictEqual(dup.duplicates, ['x'], 'a stem appearing twice is reported as a duplicate')
+  // Correctness: two pages with the same stem would fight for one URL -> reported.
+  assert.deepStrictEqual(buildPlan(parseNav('.Guide\n* xref:x.adoc[X]\n* xref:x.adoc[Y]')).duplicates, ['x'],
+    'a stem appearing twice is reported as a duplicate (URL conflict)')
   ok('buildPlan: reports duplicate stems')
+
+  // Tripwire (internal design, no external spec): folder layout, the Overview
+  // split, and the non-clickable category file. Pins current output; not a
+  // correctness check.
+  assert.strictEqual(noTitle.pages.get('install').relFile, path.join('guide', 'install.mdx'), 'leaf file layout')
+  assert.strictEqual(plan.pages.get('section').relFile, path.join('guide', 'section', 'overview.mdx'),
+    'parent-page content lands in overview.mdx under its own folder')
+  assert.deepStrictEqual(noTitle.categories[0].content, { label: 'Guide', position: 1, link: null },
+    'category is a non-clickable grouping (link:null)')
+  ok('buildPlan: file layout / Overview split / category files pinned (change-detector)')
 }
 
 console.log(`\n[converter selftest] ${n} groups passed.`)

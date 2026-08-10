@@ -30,10 +30,12 @@ const { extractMain } = require('./lib/extract-main')
 const { checkPage } = require('./lib/layer3')
 const { problemKey, novelProblems } = require('./lib/baseline')
 const { urlFromGoldenRel, convertedCandidates } = require('./lib/pairing')
+const adoc = require('@asciidoctor/core')()
 
 let n = 0
 const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
 const texts = (segs) => segs.map((s) => s.text)
+const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real renderer, used as an oracle
 
 // --- normalizeProse: fidelity-safe folds only --------------------------------
 {
@@ -197,31 +199,52 @@ const texts = (segs) => segs.map((s) => s.text)
   ok('buildIndex: resolves direct / .html / trailing-slash / version-alias, classifies family')
 }
 
-// --- structure.inventory: semantic counts -----------------------------------
+// --- structure.inventory: profile matches the real Asciidoctor output --------
+// The "should" for WHICH markup counts as an admonition / content table / code
+// block is: whatever Asciidoctor actually emits. So render real AsciiDoc through
+// the renderer and assert the inventory counts it -- a profile typo or a change
+// in the renderer's classes surfaces here, not in a hand-copied HTML fixture.
 {
-  const html = [
-    '<h2>A</h2><h2>B</h2><h3>C</h3>',
-    '<pre>block code</pre>',
-    '<div class="admonitionblock note"><table><tr><td>NOTE body</td></tr></table></div>',
-    '<table class="tableblock"><tbody><tr><td><pre>cell code</pre></td><td>b</td></tr></tbody></table>',
-    '<img src="x.png">',
-    '<a href="/real">real</a>',
-    '<a href="http://<mc-ip>:8080">placeholder</a>',
-    '<ul><li>one</li><li>two</li></ul>',
-    '<div class="tabset"><div class="tab-pane">t1</div><div class="tab-pane">t2</div></div>',
-  ].join('')
-  const inv = inventory(html, ASCIIDOC_PROFILE)
-  assert.strictEqual(inv.headings.h2, 2, 'h2 count')
-  assert.strictEqual(inv.headingsTotal, 3, 'total headings')
-  assert.strictEqual(inv.codeBlocks, 1, 'a <pre> inside a table cell is NOT a standalone code block')
-  assert.strictEqual(inv.admonitions.note, 1, 'note admonition by type')
-  assert.strictEqual(inv.tables, 1, 'only .tableblock counts; the admonition layout <table> does not')
-  assert.strictEqual(inv.images, 1, 'images')
-  assert.strictEqual(inv.links, 1, 'the <>-bearing placeholder pseudo-URL is excluded from links')
-  assert.strictEqual(inv.listItems, 2, 'list items')
-  assert.strictEqual(inv.tabSets, 1, 'tab sets')
-  assert.strictEqual(inv.tabItems, 2, 'tab panes')
-  ok('inventory: counts semantics, excludes cell code / layout tables / placeholder links')
+  const src = [
+    '== Heading', '',
+    '[source,java]', '----', 'int x = 1;', '----', '',
+    '|===', '| a | b', '| c | d', '|===', '',
+    '* one', '* two', '',
+    '[NOTE]', '====', 'A note.', '====', '',
+    'TIP: an inline tip',
+  ].join('\n')
+  const inv = inventory(renderAdoc(src), ASCIIDOC_PROFILE)
+  assert.strictEqual(inv.headings.h2, 1, 'section heading')
+  assert.strictEqual(inv.codeBlocks, 1, 'source block')
+  assert.strictEqual(inv.tables, 1, 'the |=== content table')
+  assert.strictEqual(inv.listItems, 2, 'bullet items')
+  assert.strictEqual(inv.admonitions.note, 1, 'block admonition [NOTE]')
+  assert.strictEqual(inv.admonitions.tip, 1, 'inline admonition TIP:')
+  ok('inventory: counts match the real Asciidoctor render of each construct')
+
+  // An admonition renders as a layout <table>; it must NOT count as content.
+  const admOnly = inventory(renderAdoc('[NOTE]\n====\nJust a note.\n===='), ASCIIDOC_PROFILE)
+  assert.strictEqual(admOnly.tables, 0, "an admonition's layout table is not a content table")
+  ok('inventory: excludes the admonition layout table from content tables')
+}
+
+// --- structure.inventory: navigable-link + cell-code exclusion rules ---------
+// Two fidelity requirements, stated directly: an href with literal angle
+// brackets is not a navigable link (Docusaurus rejects it, the converter drops
+// the anchor), and a <pre> inside a table cell is cell content compared via the
+// table-row mechanism, not a standalone code block.
+{
+  const links = inventory(
+    '<a href="/real">real</a> <code><a class="bare" href="http://<mc-ip>:8080">ph</a></code>',
+    ASCIIDOC_PROFILE)
+  assert.strictEqual(links.links, 1, 'a href containing literal <> is not a navigable link')
+
+  const cell = inventory(
+    '<table class="tableblock"><tbody><tr><td><pre>in-cell</pre></td></tr></tbody></table>',
+    ASCIIDOC_PROFILE)
+  assert.strictEqual(cell.codeBlocks, 0, 'a <pre> inside a table cell is not a standalone code block')
+  assert.strictEqual(cell.tables, 1, 'the content table itself is counted')
+  ok('inventory: excludes <>-href links and in-cell code blocks')
 }
 
 // --- layer2.compareInventory -------------------------------------------------

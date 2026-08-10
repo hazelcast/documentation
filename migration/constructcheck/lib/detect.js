@@ -57,7 +57,13 @@ const RE_SUBS = /^\[.*\bsubs=/
 // `query:` in `xref:query:foo[]` is not.
 const RE_INLINEMAC = /(?<![A-Za-z0-9:])([a-z][a-z0-9_-]*):(?!:)([^\s[]*)\[/g
 const RE_PASS = /pass:\w*\[/
-const RE_FENCE = /^(?:([-=*_.+/|!])\1{1,}|--)\s*$/
+// A block delimiter line. Two forms: a run of the same delimiter char (`----`,
+// `====`, `****`, `____`, `....`, `++++`, `////`) or the open block `--`; PLUS a
+// table delimiter (`|===`, `!===`), which is a pipe/bang followed by `===` and
+// so does NOT fit the same-char-run alternative. Without the `[|!]={3,}` branch
+// a table line matches nothing and the FENCE `table`/`nested-table` entries are
+// unreachable (lexical table detection silently no-ops).
+const RE_FENCE = /^(?:([-=*_.+/|!])\1{1,}|--|[|!]={3,})\s*$/
 const IGNORE_INLINE = new Set(['http', 'https', 'ftp', 'irc', 'mailto'])
 const FENCE = {
   '----': 'listing', '====': 'example', '****': 'sidebar', '____': 'quote',
