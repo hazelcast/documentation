@@ -13,9 +13,7 @@ export default function Home(): ReactNode {
       <main style={{padding: '4rem 1rem', textAlign: 'center'}}>
         <h1>{siteConfig.title}</h1>
         <p>{siteConfig.tagline}</p>
-        <Link className="button button--primary button--lg" to="/cloud">
-          Hazelcast Cloud docs
-        </Link>
+        Placeholder
       </main>
     </Layout>
   );

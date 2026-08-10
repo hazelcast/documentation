@@ -50,6 +50,34 @@ Out of scope, staying on Antora for now: the external `hazelcast-code-samples` r
 
 **golden snapshot** — rendered HTML at the pinned baseline. Keyed to the lockfile: a fidelity run hard-stops if the pin it was built from no longer matches. Regenerate deliberately, never per-check.
 
+## Running the gates
+
+Three gates must all pass before a converted page is trusted. They're described in detail below (fidelity harness, reference checker, construct-coverage gate); this is the operational summary.
+
+**All three read the converted output from the root Docusaurus build**, so build the site first, then run the gates from `migration/`:
+
+```
+(cd .. && npm run build)   # produces the converted "after" the gates read
+npm run check              # runs all three gates, fails fast on the first
+```
+
+`npm run check` is the one command to remember. Individually:
+
+| Script | Gate | Also needs |
+|---|---|---|
+| `npm run check:fidelity` | rendered golden vs rendered Docusaurus (3 layers) | the golden snapshot (`npm run fidelity:snapshot`) |
+| `npm run check:refs` | no-baking: every source `{attr}`/`example$` survives as a reference | `.sources` mirrors + manifest |
+| `npm run check:constructs` | construct-coverage allowlist (deny-by-default) | `.sources` mirrors + manifest |
+
+Each takes `--component X` (and fidelity/refs take `--id /url`) to scope to a smoke subset, `--json` for machine output, and writes a full report under `build/`. All exit non-zero on findings.
+
+Supporting scripts, **not** part of `check`:
+
+- `npm run selftest` — unit tests for the checkers' own matcher logic (needs no golden/build; pure functions). Run after editing a matcher.
+- `npm run diagnose:layer3` — a human-facing calibration report (no pass/fail): histograms Layer 3's unresolved links over the golden so you can tell resolver bugs from fidelity-neutral pre-existing broken links. Needs the golden snapshot.
+
+There is no CI or git hook yet — running the gates is manual and on-demand (per the direct-to-main strategy). Wiring `npm run check` into CI is the intended durable backstop, still to be built.
+
 ## Fidelity harness (the correctness guarantee)
 
 The published content must not change during the migration, so automated fidelity checking is the correctness guarantee. Three layers, run locally on demand and diffed against the golden snapshot, keyed to the lockfile so upstream drift ≠ conversion error:
@@ -93,4 +121,4 @@ Shares `lib/layout.js` (source repo/branch + version/path config) with the conve
 
 ## Status
 
-Built: index pass, golden-snapshot builder (with `--component` scoping for smoke tests). Not yet built: the fidelity runner (layers above), the converter, the include graph, Swagger handling.
+Built: index pass, golden-snapshot builder (with `--component` scoping for smoke tests), all three gates (fidelity harness, reference checker, construct-coverage gate) and the converter. Not yet built: CI wiring for `npm run check`, the include graph, Swagger handling.

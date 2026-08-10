@@ -1,10 +1,13 @@
 'use strict'
 
-// Self-validation of Layer 3 against the golden snapshot alone (no converted
-// output needed). Every internal link in the golden pages should resolve to a
-// known site URL, and every "#frag" to a real anchor. Surviving misses are
-// either resolver bugs (to fix here) or genuine pre-existing broken links that
-// production also serves (fidelity-neutral). Run: node fidelity/selftest-layer3.js
+// Layer 3 calibration report (NOT a pass/fail test -- no assertions, always
+// exits 0). Runs Layer 3 link/anchor resolution over the golden snapshot alone
+// (no converted output needed) and prints a histogram of unresolved links by
+// type, with samples. A human reads it to tune the resolver: every internal link
+// in the golden should resolve to a known site URL and every "#frag" to a real
+// anchor, so a surviving miss is either a resolver bug (fix it here) or a
+// genuine pre-existing broken link production also serves (fidelity-neutral,
+// belongs in the Layer 3 baseline). Run: node fidelity/layer3-report.js
 
 const fs = require('node:fs')
 const path = require('node:path')
