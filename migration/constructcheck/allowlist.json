@@ -64,7 +64,19 @@
     "include:partial",
     "include:relative",
     "passthrough:pass:[…]",
-    "inline-macro:pass:"
+    "inline-macro:pass:",
+    "ast-context:colist",
+    "ast-style:colist:arabic",
+    "ast-context:open",
+    "ast-style:admonition:CAUTION",
+    "bracket-style:CAUTION",
+    "bracket-style:TIP",
+    "conditional:ifdef::snapshot",
+    "conditional:endif::",
+    "delimited-block:---",
+    "delimited-block:...",
+    "delimited-block:literal",
+    "include:example [x-comp]"
   ],
   "notes": {
     "ast-context:paragraph": "-> <p>. Layer-1 normalized text matches golden on all 314 migrated pages (cloud+operator).",
@@ -130,6 +142,18 @@
     "include:partial": "cloud-only. partial$ include -> factored to cloud/_partials/<name>.mdx, imported and rendered as a <PartialName/> component (10 partials). Verified render: stop-and-resume -> <PartialClusterData/>. See docusaurus-partials-preservation.",
     "include:relative": "cloud-only. include of another page's tagged region (add-kafka-mapping <- add-postgres-mapping[tag=new-mapping-start]) -> tag-sliced content inlined (single-sourcing). fidelity-backed.",
     "passthrough:pass:[…]": "cloud-only (delete-account :description: pass:q[..]). The pass:q content renders as the first body paragraph via {description}; inline markup inside (an xref) is processed -> [pausing](/cloud/stop-and-resume). No baking.",
-    "inline-macro:pass:": "same construct as passthrough:pass:[…] (delete-account). pass:q[..] detected also as an inline macro; identical handling."
+    "inline-macro:pass:": "same construct as passthrough:pass:[…] (delete-account). pass:q[..] detected also as an inline macro; identical handling.",
+    "ast-context:colist": "operator-only. Callout list under a code block -> <CodeCallouts> component; the code fence gets metastring=\"conums\" so the swizzled CodeBlock draws circled badges. Verified render (backup-restore 5.16): 78 badges, 7 callout lists, internal xref in a callout resolves. See docusaurus-conum-rendering.",
+    "ast-style:colist:arabic": "operator-only. arabic-numbered callout list, same <CodeCallouts> handling as ast-context:colist.",
+    "ast-context:open": "-- open block (AST view). operator uses it for list-item grouping + tab content; same construct as the already-verified delimited-block:open. blockOrInline handles nested blocks (backup-restore).",
+    "ast-style:admonition:CAUTION": "operator-only. -> :::caution. 'caution' registered as a custom admonition keyword in docusaurus.config (extendDefaults), so the type name survives 1:1 (user-code-namespaces:93).",
+    "bracket-style:CAUTION": "block-form [CAUTION] admonition -> :::caution (user-code-namespaces).",
+    "bracket-style:TIP": "block-form [TIP] admonition -> :::tip (operator-tutorial-wan-sync).",
+    "conditional:ifdef::snapshot": "operator-only. ifdef::snapshot[]..endif -> <IfSnapshot> component (src/components/IfSnapshot.tsx), which renders children only when useDocsVersion().banner==='unreleased' (latest-snapshot). Version-cut-safe, no per-version baking. ACCEPTED DIVERGENCE (user decision 2026-08-11): released branches v/5.17 + v/5.18 carry a STRAY `snapshot: true` in antora.yml (release-cut left it behind; 5.16 & older are clean), so production/golden SHOW the snapshot note on 5.17/5.18 while the migrated site hides it. The migrated behaviour is more correct (the note 'no Red Hat images for snapshot versions' is wrong on a release). This is the sole cause of the 2 image-registry fidelity failures; accepted + documented, NOT baked to match the buggy source. See docusaurus-conditionals-project.",
+    "conditional:endif::": "closes an ifdef/ifndef/ifeval; here the </IfSnapshot> boundary. Same handling as conditional:ifdef::snapshot.",
+    "delimited-block:---": "BENIGN detector artifact: `---` is a YAML document separator INSIDE an example$ .yaml file (jet-job-example.yaml), imported verbatim as code content. Not an AsciiDoc block; no conversion applies.",
+    "delimited-block:...": "BENIGN detector artifact: `...` is an omitted-content ellipsis INSIDE a [source,xml] listing (high-availability-mode); code content, not a block delimiter (lexical scan doesn't track block context). Rendered verbatim in the fence.",
+    "delimited-block:literal": "`....` literal block -> code block. Standard handling; fidelity-backed (operator-tutorial-expose-externally, green).",
+    "include:example [x-comp]": "operator-only (180 source occ / 152 output pages). Cross-component example$ include -> import Ex_.. from '../examples/file' rendered via <CodeBlock>; example-attributes-loader substitutes {attr} at build (version-aware) before raw-loader. On-disk example keeps {attr} (no baking). Verified end-to-end: advanced-networking yaml renders version 5.7.0-slim, no placeholder leak. Uniform import path across all pages. See docusaurus-example-includes-decision."
   }
 }
