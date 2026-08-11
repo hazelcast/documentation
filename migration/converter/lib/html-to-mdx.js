@@ -404,8 +404,18 @@ function convertColist ($, node, st, depth) {
 function convertAdmonition ($, node, st, depth) {
   const type = ADMONITION_TYPES.find((t) => hasClass(node, t)) || 'note'
   const content = $(node).find('td.content').first()[0]
+  // A block title (`.Heap memory limits`) renders as `<div class="title">` at the
+  // head of td.content. Map it to Docusaurus's admonition title `:::type[title]`
+  // rather than letting it fall through blockOrInline as a plain first paragraph.
+  let title = ''
+  if (content) {
+    const titleEl = $(content).children('.title').first()
+    title = titleEl.text().trim()
+    titleEl.remove()
+  }
   const body = content ? blockOrInline($, content, st, depth) : ''
-  return `:::${type}\n\n${body.trim()}\n\n:::`
+  const head = title ? `:::${type}[${title}]` : `:::${type}`
+  return `${head}\n\n${body.trim()}\n\n:::`
 }
 
 // A container whose content may be block-level (wrapped in .paragraph/.ulist/...)
