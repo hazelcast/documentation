@@ -58,10 +58,10 @@ Three gates must all pass before a converted page is trusted. They're described 
 
 ```
 (cd .. && npm run build)   # produces the converted "after" the gates read
-npm run check              # runs all three gates, fails fast on the first
+npm run check              # runs all three gates, then a pass/fail summary
 ```
 
-`npm run check` is the one command to remember. Individually:
+`npm run check` is the one command to remember. It runs **all three** gates regardless of individual outcome (no fail-fast — a failure in one no longer hides the others), prints a one-line summary, and exits non-zero if any gate failed. Scope the whole set the same way the gates scope individually — `npm run check -- --component cloud` forwards the flag to all three (the `--` separator is required, else npm swallows it). Individually:
 
 | Script | Gate | Also needs |
 |---|---|---|
