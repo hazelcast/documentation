@@ -52,8 +52,14 @@ function componentNameFor (slug) {
     .map((s) => s[0].toUpperCase() + s.slice(1)).join('')
 }
 
-function importStmtFor (id, slug, componentName) {
-  return `import ${componentName} from '@site/${parseId(id).component}/_partials/${slug}.mdx';`
+// baseDir is the importing version's site-relative docs root (e.g. `clc` for the
+// current version, `clc_versioned_docs/version-5.5.0` for a release). It MUST be
+// the version's own tree: a factored partial is written into that version's
+// `_partials/` (convert.js), and a versioned copy whose partial content differs
+// from current must import ITS OWN copy — pointing every version at the current
+// `@site/<component>/_partials/` bleeds current's content into older releases.
+function importStmtFor (slug, componentName, baseDir) {
+  return `import ${componentName} from '@site/${baseDir}/_partials/${slug}.mdx';`
 }
 
 // Every sentinel region in one page's golden HTML -> { id, inner, blockLevel }.
@@ -96,7 +102,7 @@ function collectOccurrences (html) {
 // decisions holds ONLY factored ids (id -> { slug, componentName, importStmt,
 // representative }); html-to-mdx inlines everything not present. report is the
 // full audit (one row per id) for partials-report.json.
-function decide (pagesOcc) {
+function decide (pagesOcc, baseDir) {
   const byId = new Map()
   for (const p of pagesOcc) {
     for (const o of p.occ) {
@@ -127,7 +133,7 @@ function decide (pagesOcc) {
       decisions.set(id, {
         slug,
         componentName,
-        importStmt: importStmtFor(id, slug, componentName),
+        importStmt: importStmtFor(slug, componentName, baseDir),
         representative: occ[0].inner,
       })
     }

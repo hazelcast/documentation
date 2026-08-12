@@ -1,0 +1,139 @@
+---
+title: "Installing the Hazelcast CLC"
+sidebar_label: "Install"
+sidebar_position: 1
+slug: /install-clc
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+The Hazelcast Command-Line Client (CLC) is available to install in macOS, Linux, and Windows environments. You can install the Hazelcast CLC, using one of the following:
+
+- Using an install script on Linux or macOS
+- Windows installer
+- Downloading a pre-built binary
+
+## Installing on macOS
+
+The Hazelcast CLC is supported on macOS 15 or newer versions. You can install CLC using either of the following methods:
+
+- An installation script
+- Manually downloading the binary for your platform
+
+### Using the Install Script
+
+Run the following command to install CLC using the provided install script:
+
+```shell
+curl https://hazelcast.com/clc/install.sh | bash
+```
+
+### Manual Installation
+
+You can download a CLC package manually from our [Releases](https://github.com/hazelcast/hazelcast-commandline-client/releases/latest) page. MacOS compatible packages use the `hazelcast-clc-VERSION_darwin_ARCHITECTURE` naming format. Ensure that you download the file that matches the architecture of your computer.
+
+You must extract the package once the download is complete. Extracting the package creates a folder. In the following information, we call this folder `CLC_FOLDER`.
+
+By default macOS only allows installation of binaries from AppStore without further changes to your preferences. The install script automatically handles the required updates. However, if you downloaded a release package, you can do it manually as follows:
+
+```bash
+$ xattr -d com.apple.quarantine CLC_FOLDER/clc
+```
+
+In the above command, replace `CLC_FOLDER` with the path of your package folder.
+
+If you prefer, you can copy `clc` to a directory in your `$PATH`.
+
+```bash
+$ sudo cp CLC_FOLDER/clc /usr/local/bin
+```
+
+## Installing on Linux
+
+The Hazelcast CLC runs on any recent Linux distribution. You can install CLC using either of the following methods
+
+- An installation script
+- Manually downloading the binary for your platform
+
+### Using the Install Script {/* #using-the-install-script-2 */}
+
+1. Run the following command to install CLC using the install script we provide:
+
+   ```shell
+   curl https://hazelcast.com/clc/install.sh | bash
+   ```
+
+### Manual Installation {/* #manual-installation-2 */}
+
+You can download a CLC package manually from our [Releases](https://github.com/hazelcast/hazelcast-commandline-client/releases/latest) page. Linux compatible packages use the `hazelcast-clc-VERSION_linux_ARCHITECTURE` naming format. Ensure that you download the file that matches the architecture of your computer.
+
+You must extract the package once the download is complete. Extracting the package creates a folder. In the following information, we call this folder `CLC_FOLDER`.
+
+If you prefer, you can copy `clc` to a directory in your `$PATH`. Using the `/usr/local/bin` directory is a safe choice:
+
+```bash
+$ sudo cp CLC_FOLDER/clc /usr/local/bin
+```
+
+## Installing on Windows
+
+The Hazelcast CLC is supported on Windows 10 or newer versions. We provide pre-built binaries only for 64bit Intel/AMD architecture.
+
+### Manual Installation {/* #manual-installation-3 */}
+
+You can download a CLC package manually from our [Releases](https://github.com/hazelcast/hazelcast-commandline-client/releases/latest) page. Windows compatible packages use the `hazelcast-clc-VERSION_windows_ARCHITECTURE` naming format. Ensure that you download the file that matches the architecture of your computer.
+
+You must extract the package once the download is complete. Extracting the package creates a folder. In the following information, we call this folder `CLC_FOLDER`.
+
+If you prefer, you can copy `CLC_FOLDER/clc` to a folder specified in the `%PATH%` environment variable. Otherwise, add `CLC_FOLDER/clc` to your `%PATH`. The following link shows how to do that: [Adding a Path Variable](https://answers.microsoft.com/en-us/windows/forum/all/adding-path-variable/97300613-20cb-4d85-8d0e-cc9d3549ba23).
+
+### Using the Installer
+
+1. Go to the [releases page](https://github.com/hazelcast/hazelcast-commandline-client/releases), and locate the Windows installer file (`hazelcast-clc-setup-v5.5.0.exe`).
+2. Download and the run the installer on your system to start the installation wizard.
+3. Follow the steps on the wizard; when you see the "Completing the Hazelcast CLC Setup Wizard" dialog, press <kbd>Finish</kbd> to complete the installation.
+4. `clc.exe` is automatically added to the `PATH` environment variable, so it can be started in the terminal without its full path.
+5. Start the Hazelcast CLC from the start menu or by running the following command.
+
+   ```shell
+   clc.exe
+   ```
+
+## Verifying the Hazelcast CLC Installation
+
+To check whether the Hazelcast CLC is installed properly, run the following command on a terminal.
+
+```shell
+clc version
+```
+
+If installed, the Hazelcast CLC version information displays.
+
+## Uninstalling the Hazelcast CLC
+
+Choose the option that corresponds to your installation method.
+
+<Tabs>
+<TabItem value="windows" label="Windows">
+
+1. Go to **Apps & Features** setting (**Start menu** → **Windows Settings** → **Apps**).
+2. Locate **Hazelcast CLC version 5.5.0** under **Apps & Features** list.
+3. Right-click on it and select **Uninstall**.
+4. Press <kbd>Yes</kbd> on the uninstallation dialog.
+
+</TabItem>
+<TabItem value="install-script-linux-macos" label="Install Script (Linux/macOS)">
+
+Delete the `$HOME/.hazelcast` directory.
+
+</TabItem>
+</Tabs>
+
+## Next Steps
+
+In this section you've learnt how to install the Hazelcast CLC on the supported operating systems. To start using the Hazelcast CLC, check the following resources:
+
+- See [Get Started](../get-started/get-started.mdx) for a complete introduction to the Hazelcast CLC.
+- See [Configuration](./configuration/overview.mdx) to configure the details of the connection between the Hazelcast CLC and a Hazelcast Platform cluster.
+- See [Command Reference](../reference/clc-commands/overview.mdx) for a complete list and descriptions of commands you can use with the Hazelcast CLC.

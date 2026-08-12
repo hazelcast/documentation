@@ -1,0 +1,205 @@
+---
+title: "Get Started with the Hazelcast CLC"
+sidebar_label: "Get Started"
+sidebar_position: 2
+slug: /get-started
+---
+
+In this tutorial, you'll learn how to use Hazelcast CLC commands to authenticate with Hazelcast Cloud and create two production clusters. You'll connect to and switch between the clusters from the command line. Finally, you'll perform some basic operations on a cluster from both the command line and by running a script to automate the same actions.
+
+## Before You Begin
+
+You need the following:
+
+- [Hazelcast CLC](../manage/install-clc.mdx) installed on your local machine.
+- [Cloud account](/cloud/create-account)
+- [Cloud API key and secret](/cloud/developer)
+
+## Step 1. Authenticating with Cloud
+
+To allow the Hazelcast CLC to to interact with Cloud clusters, you must generate a Cloud token.
+
+1. Execute the following command to retrieve the token.
+
+   ```shell
+   clc cloud login
+   ```
+2. When prompted, enter your API key and secret. If both are correct, the token is retrieved and saved. You don't have to run this command again unless you change your API key.
+
+## Step 2. Create Two Clusters on Cloud
+
+In this step, you'll create two production clusters called Test1 and Test2 from the command line, and run some commands to check their status.
+
+1. Execute the following command to create your first production cluster.
+
+   ```shell
+   clc cloud create-cluster --name Test1
+   ```
+
+   Wait while the cluster is created and the cluster configuration is imported into the Hazelcast CLC.
+2. Create your second production cluster in the same way.
+
+   ```shell
+   clc cloud create-cluster --name Test2
+   ```
+3. Try running the following command to check your clusters have been created:
+
+   ```shell
+   clc cloud list-clusters
+   ```
+
+   The details of all clusters linked to your Cloud account are returned, including the Cluster ID, Cluster Name, Cluster State, Hazelcast Version.
+
+## Step 3. Add Configuration to Connect to Cloud {/* #step-2-prod-configure */}
+
+To connect to each production cluster, you need to import additional cluster configuration from Cloud.
+
+1. Run the `clc config import` to update the cluster configuration on your local machine.
+
+   ```shell
+   clc cloud import-config Test1
+   ```
+2. Run the following command to connect to your cluster using the Hazelcast CLC.
+
+   ```shell
+   clc -c Test1
+   ```
+3. The Hazelcast CLC only connects to the cluster when necessary. Run a command that requires a connection to the cluster, such as `object list`:
+
+   ```shell
+   > \object list
+       OK No objects found.
+   ```
+
+   As this is a new cluster, no objects are returned.
+4. Press <kbd>Ctrl</kbd>+<kbd>D</kbd> or type `\exit` to shut down the Hazelcast CLC while you complete the configuration of your second production cluster.
+5. Repeat steps 1 to 4 for Test2.
+
+## Step 4. Switch Between Clusters {/* #step-3-cluster-switch */}
+
+Having separate local configurations for your two production clusters allows you to switch between them without leaving the command line. Make sure both clusters are running before you start.
+
+1. Execute the following command to connect to your Test1 cluster.
+
+   ```shell
+   clc -c Test1
+   ```
+
+   As before, the Hazelcast CLC connects to your Test1 cluster.
+2. Type `\exit` to return to the command line.
+3. Execute the same command to connect to Test2.
+
+   ```shell
+   clc -c Test2
+   ```
+4. Again, type `\exit` to return to the command line.
+
+## Step 5. Write Data to a Map {/* #step-4-write-data */}
+
+Now that you've connected to both your clusters, try using the Hazelcast CLC to create a map on Test1, write some data to it, and query the data. You can use SQL to do this.
+
+1. Start by creating a mapping to a new `currency` map.
+
+   ```shell
+   clc sql -c Test1 "CREATE OR REPLACE MAPPING currency (__key INT, Code VARCHAR, Currency VARCHAR) TYPE IMap OPTIONS('keyFormat'='int', 'valueFormat'='json-flat');"
+   ```
+
+   The SQL mapping statement does a number of things:
+
+   - Adds column headings for currencies and codes
+   - Creates a SQL connection to the map
+   - Tells Hazelcast how to serialize and deserialize the keys and values.
+2. Add some data to the map.
+
+   ```shell
+   clc sql -c Test1 "INSERT INTO currency VALUES (1, 'CAD','Canadian Dollar'),(2, 'INR','Indian Rupee'),(3, 'MXN', 'Mexican Peso'),(4, 'GBP', 'Pounds Sterling'),(5, 'TRY', 'Turkish Lira'),(6, 'USD', 'United States Dollar');"
+   ```
+3. Try running some simple queries against the `currency` map. For example, this query returns all data in the map and orders it by the currency code.
+
+   ```shell
+   clc sql -c Test1 "SELECT * FROM currency ORDER BY Code" -f table
+   ```
+
+   The results look like this:
+
+   ```sql
+   --------------------------------------------------------------------------------
+         __key | Code                            | Currency
+   --------------------------------------------------------------------------------
+             1 | CAD                             | Canadian Dollar
+             4 | GBP                             | Pounds Sterling
+             2 | INR                             | Indian Rupee
+             3 | MXN                             | Mexican Peso
+             5 | TRY                             | Turkish Lira
+             6 | USD                             | United States Dollar
+   --------------------------------------------------------------------------------
+   ```
+
+## Step 6. Automate Actions {/* #step-6-automate */}
+
+When you're ready, combine the commands that you've learned about so far into a script and run them from the command line.
+
+The script writes the currency data to a new map called `currencydata` on a cluster and queries it.
+
+1. Copy the following commands into a script.
+
+   ```sql title="myscript.sql"
+   CREATE OR REPLACE MAPPING currencydata (
+     __key INT,
+     Code VARCHAR,
+     Currency VARCHAR
+   ) TYPE IMap OPTIONS(
+       'keyFormat'='int',
+       'valueFormat'='json-flat'
+   );
+
+   INSERT INTO currencydata VALUES
+           (1, 'CAD', 'Canadian Dollar'),
+           (2, 'INR', 'Indian Rupee'),
+           (3, 'MXN', 'Mexican Peso'),
+           (4, 'GBP', 'Pounds Sterling'),
+           (5, 'TRY', 'Turkish Lira'),
+           (6, 'USD', 'United States Dollar');
+
+   SELECT * FROM currencydata ORDER BY Code;
+   ```
+2. Save your script as `myscript.sql`. +. To run the script on your Test1 cluster, execute the following command.
+
+   ```shell
+   clc -c Test1 script run myscript.sql
+   ```
+3. Then, to run the script on your Test2 cluster, execute the same command replacing the cluster name.
+
+   ```shell
+   clc -c Test2 script run myscript.sql
+   ```
+
+## Step 7. Clean Up
+
+To delete both test clusters from your account.
+
+```shell
+clc cloud delete-cluster Test1
+clc cloud delete-cluster Test2
+```
+
+## Summary
+
+In this tutorial, you learned how to do the following:
+
+- Authenticate with Cloud.
+- Create a cluster and check its status.
+- Connect to a Cloud production cluster.
+- Switch between clusters from the command line.
+- Write data to a map and query the data using SQL.
+- Automate commands by running a sequence of actions from a shell script.
+
+## Learn More
+
+Use these resources to continue learning:
+
+- [Configuration for Hazelcast CLC](../manage/configuration/overview.mdx).
+- [clc](../reference/clc-commands/overview.mdx).
+- [clc sql](../reference/clc-commands/clc-sql.mdx).
+- [Managing Clusters on Hazelcast Cloud Using the Hazelcast CLC](./tutorials/managing-cloud-clusters.mdx)
+- [Get Started With Hazelcast Jet Job Management](./tutorials/jet-job-management.mdx)

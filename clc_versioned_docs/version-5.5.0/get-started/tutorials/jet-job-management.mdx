@@ -1,0 +1,133 @@
+---
+title: "Get Started With Hazelcast Jet Job Management"
+sidebar_label: "Manage Jet Jobs"
+sidebar_position: 2
+slug: /jet-job-management
+---
+
+In this tutorial, you'll learn the basics of how to manage stream processing pipelines using the Hazelcast CLC with Hazelcast Cloud. You'll see how to connect to a cluster on Cloud, and submit a sample Jet job that generates a stream of numbers. You'll also learn how to use simple commands to monitor and cancel jobs.
+
+## Before You Begin
+
+You need the following:
+
+- [Hazelcast CLC](../../manage/install-clc.mdx) installed on your local machine
+- One running Cloud cluster. You can create a [development cluster](./managing-cloud-clusters.mdx#creating-a-cluster-on-cloud) using the Hazelcast CLC.
+- [Cloud API key and secret](/cloud/developer)
+- JRE 11 or above.
+- Gradle 8 or above.
+
+## Step 1. Authenticating with Cloud
+
+To allow the Hazelcast CLC to perform cluster operations, including submitting Jet jobs, you must generate a Cloud token.
+
+1. Execute the following command to retrieve the token.
+
+   ```shell
+   clc cloud login
+   ```
+2. When prompted, enter your API key and secret. If both are correct, the token is retrieved and saved.
+
+## Step 2. List Cluster Details
+
+Next, check that the Hazelcast CLC can access your cluster by running the following command:
+
+```shell
+clc cloud list-clusters
+```
+
+The details of all clusters linked to your Cloud account are returned, including the Cluster ID, Cluster Name, Current Status, Hazelcast Version.
+
+## Step 3. Connect to Your Cluster {/* #step-3-dev-configure */}
+
+For Hazelcast CLC to connect to your development cluster, you need to import the cluster's configuration, including its connection details.
+
+Run the following command to save the cluster configuration with the name `dev`. Replace the `$CLUSTER_NAME` placeholder with the name of your cluster, shown in the top-left corner of the dashboard.
+
+```shell
+clc cloud import-config $CLUSTER_NAME --name dev
+```
+
+## Step 4. Build the Jet Job {/* #step-4-build-jet-job */}
+
+Now you're ready to build the sample Jet job.
+
+1. Clone the GitHub repository.
+
+   ```shell
+   git clone https://github.com/hazelcast/hazelcast-commandline-client
+   ```
+2. Switch to the project directory.
+
+```
+cd hazelcast-commandline-client/examples/platform/simple-streaming-pipeline
+```
+
+1. Build the project with the following command:
+
+   ```shell
+   gradle shadowJar
+   ```
+
+## Step 5. Submit and Monitor the Jet Job {/* #step-5-submit-jet-job */}
+
+Submitting the sample Jet job generates a stream of numbers and creates a [hashid](https://hashids.org/) for each number. The number and hashid pair are then saved to a Map called `my-map`, with the number as the key and hashid as the value.
+
+1. Execute the following command to submit the Jet job:
+
+   ```shell
+   clc -c dev job submit build/libs/simple-streaming-pipeline-1.0-SNAPSHOT-all.jar --name simple-pipeline --wait
+   ```
+
+   The Hazelcast CLC waits until the job starts to run.
+2. Now, list the jobs in the cluster. You should see `simple-pipeline` in a `RUNNING` state.
+
+   ```shell
+   clc -c dev job list
+   ```
+3. Create a new advanced script in your favorite text editor. For example:
+
+   ```shell
+   nano monitor.star
+   ```
+4. Add the following:
+
+   ```python
+   def main():
+       for i in range(1000):
+           size = map_size(name="my-map")
+           print(size)
+           sleep(3 * SECOND)
+   ```
+5. Run your script.
+
+   ```shell
+   clc -c dev script run monitor.star
+   ```
+6. See how the size of `my-map` increases as entries are written to it.
+7. Press <kbd>Ctrl</kbd>+<kbd>C</kbd> when you're ready to stop the script.
+
+## Step 6. Cancel the Jet job {/* #step-6-cancel-jet-job */}
+
+1. Now, cancel the Jet job.
+
+   ```shell
+   clc -c dev job cancel simple-pipeline
+   ```
+2. Run your script (from step 5) to see the size of `my-map` now.
+
+## Summary
+
+In this tutorial, you learned how to do the following:
+
+- Connect to a cluster on Cloud.
+- Build and submit a Hazelcast Jet job to create a data pipeline.
+- Manage the lifecycle of a Jet job using list and cancel commands.
+
+## Learn More
+
+Use these resources to continue learning:
+
+- [Configuration for Hazelcast CLC](../../manage/configuration/overview.mdx).
+- [clc](../../reference/clc-commands/overview.mdx).
+- [clc job](../../reference/clc-commands/clc-job.mdx).

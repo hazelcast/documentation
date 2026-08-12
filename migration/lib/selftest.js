@@ -11,7 +11,7 @@ const assert = require('node:assert')
 const path = require('node:path')
 
 const {
-  CURRENT_SEG, markedAttrsFor, isVersioned, refFor, versionsToProcess, outDirFor, urlToSlug,
+  CURRENT_SEG, currentSegFor, markedAttrsFor, isVersioned, refFor, versionsToProcess, outDirFor, urlToSlug,
 } = require('./layout')
 
 let n = 0
@@ -20,9 +20,26 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
 // --- versioned vs unversioned ---------------------------------------------
 {
   assert.strictEqual(isVersioned('operator'), true, 'operator is versioned (in VERSIONS)')
+  assert.strictEqual(isVersioned('clc'), true, 'clc is versioned (in VERSIONS)')
   assert.strictEqual(isVersioned('cloud'), false, 'cloud is unversioned')
   assert.strictEqual(isVersioned('nope'), false, 'unknown component is not versioned')
   ok('isVersioned: reflects VERSIONS membership')
+}
+
+// --- current-seg is per component -----------------------------------------
+// A component whose main IS a distinct `-snapshot` line uses the default seg;
+// one whose main declares a numbered release (clc: 5.5.1) overrides it. This is
+// the pivot the whole clc mapping turns on, so it gets its own group.
+{
+  assert.strictEqual(currentSegFor('operator'), CURRENT_SEG,
+    'operator has a real -snapshot main -> default current seg (latest-snapshot)')
+  assert.strictEqual(currentSegFor('cloud'), CURRENT_SEG,
+    'unversioned component falls back to the default current seg')
+  assert.strictEqual(currentSegFor('clc'), '5.5.1',
+    'clc has no -snapshot line: its current seg is the released 5.5.1')
+  assert.notStrictEqual(currentSegFor('clc'), CURRENT_SEG,
+    'clc must NOT reuse the default latest-snapshot seg (it has no such render)')
+  ok('currentSegFor: default for -snapshot mains, per-component override for clc')
 }
 
 // --- branch selection per segment -----------------------------------------
@@ -31,7 +48,11 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
   assert.strictEqual(refFor('operator', CURRENT_SEG), 'main', 'current segment -> main branch')
   assert.strictEqual(refFor('operator', '5.18'), 'v/5.18', 'a release segment -> its v/ branch')
   assert.strictEqual(refFor('nope', '5.18'), null, 'unknown component -> null')
-  ok('refFor: current->main, release->v/<seg>, unknown->null')
+  // clc reads a v/ tag for EVERY seg, current included -- it has no main source.
+  assert.strictEqual(refFor('clc', currentSegFor('clc')), 'v/5.5.1',
+    'clc current seg reads its v/5.5.1 tag, NOT main')
+  assert.strictEqual(refFor('clc', '5.5.0'), 'v/5.5.0', 'clc release -> its v/ branch')
+  ok('refFor: current->main, release->v/<seg>, unknown->null; clc current->v/ tag')
 }
 
 // --- versions to process (use override so it does not track live config) --
@@ -52,6 +73,13 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
   assert.deepStrictEqual(live[0], { seg: CURRENT_SEG, kind: 'current' }, 'live config still leads with current')
   assert(live.slice(1).every((v) => v.kind === 'release'), 'every later entry is a release')
   ok('versionsToProcess: live config leads with current, rest are releases')
+
+  // clc's live plan: current is 5.5.1 (not latest-snapshot), then the 5.5.0 copy
+  assert.deepStrictEqual(versionsToProcess('clc'), [
+    { seg: '5.5.1', kind: 'current' },
+    { seg: '5.5.0', kind: 'release' },
+  ], 'clc: current 5.5.1 first, then the 5.5.0 versioned copy')
+  ok('versionsToProcess: clc leads with 5.5.1 as current')
 }
 
 // --- output directory -----------------------------------------------------
@@ -62,6 +90,10 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
     path.join('..', 'operator'), 'current -> plugin path (not a versioned copy)')
   assert.strictEqual(outDirFor('..', 'operator', { seg: '5.18', kind: 'release' }),
     path.join('..', 'operator_versioned_docs', 'version-5.18'), 'release -> versioned_docs/version-<seg>')
+  assert.strictEqual(outDirFor('..', 'clc', { seg: '5.5.1', kind: 'current' }),
+    path.join('..', 'clc'), 'clc current (5.5.1) -> plugin path, not a versioned copy')
+  assert.strictEqual(outDirFor('..', 'clc', { seg: '5.5.0', kind: 'release' }),
+    path.join('..', 'clc_versioned_docs', 'version-5.5.0'), 'clc release -> versioned_docs/version-5.5.0')
   ok('outDirFor: current/unversioned to plugin path, release to versioned_docs')
 }
 
@@ -77,6 +109,12 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
     'a version root maps to /')
   assert.strictEqual(urlToSlug('/cloud', 'cloud', null), '/',
     'the component root maps to /')
+  // clc's current version is served under its numeric seg (5.5.1), so its slugs
+  // strip /clc/5.5.1 just like any other versioned prefix.
+  assert.strictEqual(urlToSlug('/clc/5.5.1/get-started', 'clc', '5.5.1'), '/get-started',
+    'clc current: strips the /clc/5.5.1 prefix')
+  assert.strictEqual(urlToSlug('/clc/5.5.1/', 'clc', '5.5.1'), '/',
+    'clc current root maps to /')
   ok('urlToSlug: strips prefix, keeps module path, normalises roots and trailing slash')
 }
 

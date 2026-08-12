@@ -1,0 +1,106 @@
+---
+title: "\\alias"
+sidebar_position: 24
+slug: /alias
+---
+
+Alias commands enable you to add and list user defined shortcuts.
+
+In order to persist the aliases you need to add `\alias add` statements in the `$CLC_HOME/shell.clc` script. `shell.clc` script is sourced when CLC starts in the interactive mode.
+
+:::note
+
+Alias commands can only be used in the interactive and scripting modes.
+
+:::
+
+Aliases can be used with the `@` prefix. For example, an alias named `my-alias` can be used as `@my-alias`.
+
+Usage:
+
+```bash
+\alias [command]
+```
+
+## Commands
+
+- [\\alias add](#alias-add)
+- [\\alias remove](#alias-remove)
+- [\\alias list](#alias-list)
+
+## \\alias add
+
+Add an alias with the given name and command.
+
+Usage:
+
+```bash
+-- for command
+\alias add {ALIAS-NAME} -- {\\COMMAND}
+
+-- for SQL
+\alias add {ALIAS-NAME} -- {SQL}
+```
+
+Parameters:
+
+| Parameter | Required | Description | Default |
+| --- | --- | --- | --- |
+| `name` | Required | Name of the alias. |  |
+| `command` | Required |  |  |
+
+Examples:
+
+- Adds an alias to list maps in the cluster:
+
+```
+\alias add list-maps -- \\object list map
+```
+
+- Adds an alias to query SQL:
+
+```
+\alias add first-five-desserts -- select name from desserts order by name limit 5;
+```
+
+## \\alias remove
+
+Remove an alias with the given name.
+
+Usage:
+
+```bash
+\alias remove [name]
+```
+
+Parameters:
+
+| Parameter | Required | Description | Default |
+| --- | --- | --- | --- |
+| `name` | Required | Name of the alias. |  |
+
+Example:
+
+```bash
+\alias remove my-alias
+```
+
+## \\alias list
+
+List existing aliases.
+
+Usage:
+
+```bash
+\alias list
+```
+
+Example:
+
+```bash
+\alias list
+```
+
+### Alias Usage
+
+Aliases can be used in interactive and scripting modes with `@` prefix. Let's assume an alias named `my-alias` already created. it can be used as `@my-alias`.

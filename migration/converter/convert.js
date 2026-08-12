@@ -36,9 +36,9 @@ const substitute = require('../../plugins/lib/substitute-attributes')
 // Layout/source config shared with the reference checker (refcheck/run.js) so
 // the two resolve source branches and output paths identically (no drift):
 // which mirror + branch each component reads (NAV_SOURCES), which versions are
-// emitted (VERSIONS / CURRENT_SEG), and the version/path helpers.
+// emitted (VERSIONS / currentSegFor), and the version/path helpers.
 const {
-  NAV_SOURCES, CURRENT_SEG, VERSIONS, markedAttrsFor,
+  NAV_SOURCES, currentSegFor, VERSIONS, markedAttrsFor,
   isVersioned, refFor, versionsToProcess, outDirFor, urlToSlug,
 } = require('../lib/layout')
 const yaml2 = require('js-yaml')
@@ -101,7 +101,7 @@ function collectVariables (manifest) {
       const perVer = new Map()
       for (const v of comp.versions || []) {
         const attrs = v.attributes || {}
-        const versionName = v.version === CURRENT_SEG ? 'current' : v.version
+        const versionName = v.version === currentSegFor(comp.name) ? 'current' : v.version
         const nv = new Map()
         for (const name of names) if (attrs[name] != null) nv.set(name, String(attrs[name]))
         if (nv.size) perVer.set(versionName, nv)
@@ -483,9 +483,11 @@ function convertVersion (ver, ctx) {
 
   // This version's single-sourced attribute values, for resolving {attribute}
   // placeholders in co-located example files when computing the match key. Keyed
-  // by the Docusaurus version NAME ('current' for main/-snapshot, else the seg),
-  // matching versionedVariables; global (unversioned) values fill in behind.
-  const versionName = seg == null ? null : (seg === CURRENT_SEG ? 'current' : seg)
+  // by the Docusaurus version NAME ('current' for the current branch, else the
+  // seg), matching versionedVariables; global (unversioned) values fill in
+  // behind. `kind` already distinguishes current from a release, so we key off it
+  // rather than re-deriving the current seg here.
+  const versionName = seg == null ? null : (kind === 'current' ? 'current' : seg)
   const perVer = (versionName && ctx.versioned.get(component) && ctx.versioned.get(component).get(versionName)) || new Map()
   const exampleLookup = { ...Object.fromEntries(ctx.flat), ...Object.fromEntries(perVer) }
   const outDir = outDirFor(opts.outRoot, component, ver)
@@ -533,7 +535,11 @@ function convertVersion (ver, ctx) {
     return htmlByUrl.get(p.url)
   }
   const pagesOcc = allPages.map((p) => ({ url: p.url, occ: collectOccurrences(readGoldenRaw(p)) }))
-  const { decisions, report } = decide(pagesOcc)
+  // Factored partials import from THIS version's own _partials/ (the site-relative
+  // outDir), so a versioned copy never pulls current's content. Forward slashes:
+  // the string is an `@site/...` import path, not a filesystem path.
+  const baseDir = path.relative(opts.outRoot, outDir).split(path.sep).join('/')
+  const { decisions, report } = decide(pagesOcc, baseDir)
 
   // Full (non-scoped) run regenerates the whole version tree from scratch, so
   // stale files from a previous layout do not linger. Preserve co-located assets
@@ -775,7 +781,7 @@ function main () {
   for (const comp of Object.keys(VERSIONS)) {
     // A versioned component's live routes = current + its canonical releases
     // (all live versions), independent of which subset this run regenerated.
-    liveSegsByComponent.set(comp, new Set([CURRENT_SEG, ...(VERSIONS[comp].releases || [])]))
+    liveSegsByComponent.set(comp, new Set([currentSegFor(comp), ...(VERSIONS[comp].releases || [])]))
   }
   const redirects = collectRedirects(manifest, liveSegsByComponent)
   if (!opts.dry) writeRedirectsFile(opts.redirectsFile, redirects)

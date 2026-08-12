@@ -2,6 +2,10 @@
 // page-aliases → client redirects (old Antora URL → current page), consumed
 // by @docusaurus/plugin-client-redirects in docusaurus.config.ts.
 export const redirects: {from: string; to: string}[] = [
+  { from: "/clc/5.5.0", to: "/clc/5.5.0/overview" },
+  { from: "/clc/5.5.0/clc-viridian", to: "/clc/5.5.0/clc-cloud" },
+  { from: "/clc/5.5.1", to: "/clc/5.5.1/overview" },
+  { from: "/clc/5.5.1/clc-viridian", to: "/clc/5.5.1/clc-cloud" },
   { from: "/cloud", to: "/cloud/overview" },
   { from: "/cloud/account-security", to: "/cloud/multi-factor-authentication" },
   { from: "/cloud/architecture", to: "/cloud/serverless-cluster" },

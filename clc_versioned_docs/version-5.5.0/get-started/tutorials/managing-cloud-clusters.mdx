@@ -1,0 +1,169 @@
+---
+title: "Managing Clusters on Hazelcast Cloud Using the Hazelcast CLC"
+sidebar_label: "Manage {hazelcast-cloud} Clusters"
+sidebar_position: 1
+slug: /managing-cloud-clusters
+---
+
+In this tutorial, you'll learn the basics of managing clusters on Hazelcast Cloud using the Hazelcast CLC. You'll see how to create, list, and delete clusters, and how to download their logs. You'll also learn how to perform pause/resume operations on the clusters using the Hazelcast CLC.
+
+## Before You Begin
+
+You need the following:
+
+- [Hazelcast CLC](../../manage/install-clc.mdx) installed on your local machine
+- [Cloud account](/cloud/create-account)
+- [Cloud API key and secret](/cloud/developer)
+
+## Step 1. Authenticating with Cloud
+
+To allow the Hazelcast CLC to perform cluster operations, you must generate a Cloud token.
+
+1. Execute the following command to retrieve the token.
+
+   ```bash
+   clc cloud login
+   ```
+2. When prompted, enter your API key and secret. If both are correct, the output looks like this.
+
+   ```bash
+       OK [1/2] Retrieved the access token.
+       OK [2/2] Saved the access token.
+   ```
+
+   If an error is displayed, make sure that your API key and secret are correct and try again.
+
+## Step 2. Create a Cluster
+
+Next, execute the following command to create a development cluster called `my-cluster`.
+
+```bash
+clc cloud create-cluster --development --name my-cluster
+```
+
+You should see the following output.
+
+```bash
+    OK [1/3] Initiated cluster creation.
+    OK [2/3] Cluster is ready.
+    OK [3/3] Imported the configuration.
+    OK Created the cluster and imported configuration 'my-cluster'.
+```
+
+## Step 3. List Your Cluster Details {/* #step-3-list-cluster */}
+
+To check that the `my-cluster` is up and running, use the following command.
+
+```bash
+clc cloud list-clusters
+```
+
+The details of all clusters linked to your Cloud account are returned, including the Cluster ID, Cluster Name, Current Status, Hazelcast Version.
+
+```bash
+-----------------------------------------------------
+ ID       | Name       | State   | Hazelcast Version
+-----------------------------------------------------
+ nxdzeerp | my-cluster | RUNNING | 5.3.6
+-----------------------------------------------------
+```
+
+## Step 4. Create Some Data on Your Cluster
+
+Next, write some data to a map on `my-cluster`.
+
+Creating your cluster using the Hazelcast CLC means that the connection details for the cluster, also called `my-cluster`, are made available to the CLC. If you created the cluster in the console, you would need to import the [cluster's configuration to connect to it](../../manage/configuration/overview.mdx).
+
+1. Let's add an entry to a map called `my-map` using a key of `my-key` and a value of `my-value`.
+
+   ```bash
+   clc -c my-cluster map set -n my-map my-key my-value
+   ```
+2. Now, let's retrieve the value of the key that you just set.
+
+   ```bash
+   clc -c my-cluster map get -n my-map my-key
+   ```
+
+   You should see the following output.
+
+   ```bash
+   ----------
+    this
+   ----------
+    my-value
+   ----------
+   ```
+
+## Step 5. Downloading the Cluster Logs
+
+You can download logs from your cluster to your local machine. Hazelcast CLC gives the cluster logs a standard name, which means that they are overwritten every time you download them to the same location.
+
+1. Run the following command to download the logs of `my-cluster` to your working directory.
+
+   ```bash
+   clc cloud download-logs my-cluster
+   ```
+
+   In this command `my-cluster` is the cluster name rather than the configuration name.
+2. Now, try downloading the logs to a directory of your choice by adding the `--output-dir` flag. Replace the placeholder `$DIRECTORY_PATH` with the absolute or relative path to your chosen directory.
+
+   ```bash
+   clc cloud download-logs my-cluster --output-dir $DIRECTORY_PATH
+   ```
+
+## Step 6. Stop/Resume Your Cluster
+
+To avoid charges accumulating in your account, you can [stop a running cluster](/cloud/stop-and-resume).
+
+1. Try pausing your cluster. You can use either the cluster name or ID.
+
+   ```bash
+   clc cloud stop-cluster my-cluster
+   ```
+2. When you're ready to resume the cluster, run the following command.
+
+   ```bash
+   clc cloud resume-cluster my-cluster
+   ```
+3. If you get the `Cannot resume cluster because state 'STOP_IN_PROGRESS' cannot be transitioned into 'RESUME_IN_PROGRESS'` error, wait a couple of minutes and try again.
+
+## Step 7. Delete Your Cluster
+
+You can also [delete an existing cluster](/cloud/deleting-a-cluster) on Cloud using its name or ID.
+
+1. Run the following command to delete `my-cluster`
+
+   ```bash
+   clc cloud delete-cluster my-cluster
+   ```
+
+   A confirmation message is displayed.
+
+   ```bash
+   Cluster will be deleted irreversibly, proceed? (y/n)
+   ```
+2. Type `y` to proceed with the deletion.
+
+   To avoid receiving a confirmation message on cluster deletion, add `--yes` to your command. This may be useful if you are scripting the deletion of multiple clusters.
+
+   ```bash
+   clc cloud delete-cluster my-cluster --yes
+   ```
+
+## Summary
+
+In this tutorial, you learned how to do the following:
+
+- Authenticate with Cloud.
+- Create a cluster and check that it is running.
+- Write and retrieve some data from a map.
+- Download cluster logs for analysis.
+- Pause, resume and delete a cluster.
+
+## Learn More
+
+Use these resources to continue learning:
+
+- [clc cloud](../../reference/clc-commands/clc-cloud.mdx).
+- [Configuration for Hazelcast CLC](../../manage/configuration/overview.mdx).

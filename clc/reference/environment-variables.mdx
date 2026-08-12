@@ -1,0 +1,29 @@
+---
+title: "Environment Variables"
+sidebar_position: 3
+slug: /environment-variables
+---
+
+The Hazelcast CLC recognizes the following environment variables.
+
+| Environment Variable | Description | Default |
+| --- | --- | --- |
+| CLC\_CLIENT\_LABELS | Sets the client labels. The labels must be separated by commas. This value is used in Cloud and Management Center. See [Management Center documentation](/management-center/5.8/clusters/clients) for more information. | `CLC,USER@HOST-TIMESTAMP` |
+| CLC\_CLIENT\_NAME | Set a custom client name. The client name appears in the Cloud dashboard and in the cluster metrics of Management Center. | `USER@HOST-TIMESTAMP` |
+| CLC\_HOME | Overrides the CLC home directory. You can find out the current CLC home directory using [clc home](./clc-commands/clc-home.mdx) command. | `%HOMEDRIVE%:%HOMEPATH%\AppData\Roaming\Hazelcast` on Windows, `$HOME/.hazelcast` on other platforms. |
+| CLC\_MAX\_COLS | Sets the maximum width of a column in a table output. This is useful when the width cannot be determined. | Terminal width. |
+| CLC\_SKIP\_SERVER\_VERSION\_CHECK | Some Hazelcast CLC features require the cluster to be of a certain version. If set to `1`, this variable disables the version check performed by the CLC. | `0` (false) |
+| CLC\_CLOUD\_API\_KEY | Sets the Cloud API key. |  |
+| CLC\_CLOUD\_API\_SECRET | Sets the Cloud API secret. |  |
+| CLC\_CONFIG | Sets the configuration CLC will use if `--config` flag is not specified. |  |
+| HZ\_PHONE\_HOME\_ENABLED | Enables phone home collection for CLC usage statistics. Set 'false' to disable phone homes. | true |
+
+The following environment variables are experimental and may be removed in a future version.
+
+| Environment Variable | Description | Default |
+| --- | --- | --- |
+| CLC\_EXPERIMENTAL\_FORMATTER | Sets a formatter for the highlighting of SQL syntax, either: `terminal`, `terminal8`, `terminal16`, `terminal256`, or `terminal16m`. Only with the `gohxs` readline implementation. |  |
+| CLC\_EXPERIMENTAL\_READLINE | Sets the readline implementation, either `gohxs` or `ny`. | `ny` for Windows, `gohxs` for other platforms. |
+| CLC\_EXPERIMENTAL\_STYLER | Sets a color theme for the highlighting of SQL syntax. See [Chroma styles](https://github.com/alecthomas/chroma/tree/master/styles) for the options. Only with the `gohxs` readline implementation. | `clc-default` |
+| NO\_COLOR | Disables color output if set to `1`. | `0` (false) |
+| CLC\_SKIP\_UPDATE\_CHECK | Disables checking new version of CLC. | `0` (false) |

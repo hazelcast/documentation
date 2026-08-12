@@ -191,30 +191,42 @@ const renderedCode = (md) => {
   const shared = decide([
     { url: '/a', occ: [occ('c:ROOT:partial$p.adoc', '<p>same</p>')] },
     { url: '/b', occ: [occ('c:ROOT:partial$p.adoc', '<p>same</p>')] },
-  ])
+  ], 'c')
   assert(shared.decisions.has('c:ROOT:partial$p.adoc'), 'identical block-level occurrences on 2 pages -> factored')
   assert.strictEqual(shared.decisions.get('c:ROOT:partial$p.adoc').importStmt,
-    "import PartialP from '@site/c/_partials/p.mdx';", 'factored id carries its import statement')
+    "import PartialP from '@site/c/_partials/p.mdx';", 'factored id imports from the current version base')
 
   const varies = decide([
     { url: '/a', occ: [occ('c:ROOT:partial$p.adoc', '<p>one</p>')] },
     { url: '/b', occ: [occ('c:ROOT:partial$p.adoc', '<p>two</p>')] },
-  ])
+  ], 'c')
   assert(!varies.decisions.has('c:ROOT:partial$p.adoc'), 'differing inner HTML -> declined')
   assert.strictEqual(varies.report[0].reason, 'content-varies', 'decline reason recorded')
 
-  const notBlock = decide([{ url: '/a', occ: [occ('c:ROOT:partial$p.adoc', '<span>x</span>', false)] }])
+  const notBlock = decide([{ url: '/a', occ: [occ('c:ROOT:partial$p.adoc', '<span>x</span>', false)] }], 'c')
   assert.strictEqual(notBlock.report[0].reason, 'non-block-level', 'non-block occurrence -> declined')
 
   // Two distinct ids that slugify identically (a-b.adoc and a/b.adoc): first wins.
   const collide = decide([
     { url: '/a', occ: [occ('c:ROOT:partial$a-b.adoc', '<p>x</p>')] },
     { url: '/b', occ: [occ('c:ROOT:partial$a/b.adoc', '<p>y</p>')] },
-  ])
+  ], 'c')
   assert(collide.decisions.has('c:ROOT:partial$a-b.adoc'), 'first id claims the slug')
   const collided = collide.report.find((r) => r.id === 'c:ROOT:partial$a/b.adoc')
   assert.strictEqual(collided.reason, 'slug-collision', 'second id with the same slug is declined')
   ok('decide: factors identical block-level partials, declines varies/non-block/slug-collision')
+
+  // A versioned copy's partials import from ITS OWN tree, not current's -- the
+  // regression guard for the version-bleed that clc 5.5.0 exposed (a factored
+  // partial whose text changed in 5.5.1 must not leak back into 5.5.0).
+  const versioned = decide([
+    { url: '/clc/5.5.0/x', occ: [occ('clc:ROOT:partial$global-parameters.adoc', '<p>same</p>')] },
+    { url: '/clc/5.5.0/y', occ: [occ('clc:ROOT:partial$global-parameters.adoc', '<p>same</p>')] },
+  ], 'clc_versioned_docs/version-5.5.0')
+  assert.strictEqual(versioned.decisions.get('clc:ROOT:partial$global-parameters.adoc').importStmt,
+    "import PartialGlobalParameters from '@site/clc_versioned_docs/version-5.5.0/_partials/global-parameters.mdx';",
+    'a release imports its partial from its own versioned_docs tree, not @site/<component>')
+  ok('decide: version-scoped import base (no cross-version partial bleed)')
 }
 
 // --- nav: target stem + folder name ------------------------------------------
