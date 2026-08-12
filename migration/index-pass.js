@@ -9,12 +9,7 @@
 
 const path = require('node:path')
 
-const buildPlaybook = require('@antora/playbook-builder')
-const aggregateContent = require('@antora/content-aggregator')
-const classifyContent = require('@antora/content-classifier')
-const { resolveAsciiDocConfig } = require('@antora/asciidoc-loader')
-const { configureLogger } = require('@antora/logger')
-
+const { buildContentCatalog } = require('./lib/catalog')
 const { emitManifest } = require('./antora-extension/emit-manifest')
 const { registerPageAliases } = require('./antora-extension/register-page-aliases')
 
@@ -25,14 +20,9 @@ async function main () {
   const playbookArg = args.find((a) => !a.startsWith('--') && a !== args[outIdx + 1]) || 'antora/index-playbook.yml'
   const playbookFile = path.resolve(playbookArg)
 
-  const playbook = buildPlaybook(['--playbook', playbookFile], {})
-  configureLogger(playbook.runtime.log)
-
-  const siteAsciiDocConfig = resolveAsciiDocConfig(playbook)
-  console.log(`[index-pass] aggregating content from ${playbookFile} ...`)
-  const aggregate = await aggregateContent(playbook)
-  console.log(`[index-pass] classifying ${aggregate.length} component-version bundles ...`)
-  const contentCatalog = classifyContent(playbook, aggregate, siteAsciiDocConfig)
+  console.log(`[index-pass] aggregating + classifying content from ${playbookFile} ...`)
+  const { playbook, asciidocConfig: siteAsciiDocConfig, aggregate, contentCatalog } = await buildContentCatalog(playbookFile)
+  console.log(`[index-pass] classified ${aggregate.length} component-version bundles`)
 
   // Register page aliases so the manifest includes alias URLs and links to
   // renamed pages resolve (classify alone does not do this).

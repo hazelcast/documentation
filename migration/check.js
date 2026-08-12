@@ -22,6 +22,7 @@ const GATES = [
   { name: 'fidelity', script: 'fidelity/run.js' },
   { name: 'refs', script: 'refcheck/run.js' },
   { name: 'constructs', script: 'constructcheck/run.js' },
+  { name: 'orphans', script: 'orphancheck/run.js' },
 ]
 
 process.exit(runScripts('check', GATES, process.argv.slice(2), __dirname) ? 1 : 0)

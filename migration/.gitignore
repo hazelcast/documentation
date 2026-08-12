@@ -5,6 +5,11 @@ node_modules/
 .sources/
 # manifest.json + lockfile.json under build/ are committed on purpose (evidence chain);
 # everything else generated stays out.
+# Top-level generated reports + logs (timestamped/regenerable: constructcheck-report,
+# refcheck-report, index-pass.log). The committed manifest/lockfile live one level
+# down (build/manifest/, build/smoke/) so this root-only glob leaves them tracked.
+build/*.json
+build/*.log
 build/golden/
 build/golden-smoke/
 build/diff/
