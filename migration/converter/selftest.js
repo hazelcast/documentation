@@ -280,6 +280,28 @@ const renderedCode = (md) => {
   assert.deepStrictEqual(noTitle.categories[0].content, { label: 'Guide', position: 1, link: null },
     'category is a non-clickable grouping (link:null)')
   ok('buildPlan: file layout / Overview split / category files pinned (change-detector)')
+
+  // Correctness: a page listed in a SECOND nav location (here a dedicated
+  // `.Release Notes` section repeating a page already placed under `.Guide`)
+  // must not spawn an empty category. The requirement, stated independently of
+  // the walk: the page keeps its FIRST location, the duplicate is reported, and
+  // NO _category_.json is emitted for a folder that would hold nothing. Mirrors
+  // the versioned operator navs (release-notes.adoc under Get started + a
+  // Release Notes section).
+  const dupSection = buildPlan(parseNav([
+    '.Guide',
+    '* xref:release-notes.adoc[]',
+    '.Release Notes',
+    '* xref:release-notes.adoc[5.18.0]',
+  ].join('\n')))
+  assert.strictEqual(dupSection.pages.get('release-notes').relFile, path.join('guide', 'release-notes.mdx'),
+    'the page stays at its first nav location')
+  assert.deepStrictEqual(dupSection.duplicates, ['release-notes'], 'the second occurrence is reported as a duplicate')
+  assert.ok(!dupSection.categories.some((c) => c.relFile.split(path.sep).includes('release-notes')),
+    'no empty _category_.json is emitted for the collapsed Release Notes section')
+  assert.ok(dupSection.categories.some((c) => c.content.label === 'Guide'),
+    'a section that DID place a page still emits its category')
+  ok('buildPlan: a page repeated in a second nav section drops that empty category')
 }
 
 // --- fixSwallowedBlockTitles: recover a mis-rendered block title ------------

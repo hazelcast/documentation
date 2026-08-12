@@ -98,6 +98,14 @@ function buildPlan (roots, titles = new Map()) {
     categories.push({ relFile: path.join(relDir, '_category_.json'), content: { label, position, link: null } })
   }
 
+  // Returns true if this node produced any output (a placed page or an emitted
+  // category), false if it collapsed to nothing. A category that adds no new
+  // page — because every descendant page is a duplicate already placed at an
+  // earlier nav location — must NOT emit an empty _category_.json (an empty,
+  // unclickable sidebar group). This happens when a page is listed in a second
+  // nav spot (e.g. the versioned operator navs repeat release-notes.adoc under a
+  // dedicated `.Release Notes` section); the first placement wins, the second
+  // collapses away. The duplicate is still recorded for the caller's report.
   function walk (node, parentDir, position) {
     if (node.type === 'category') {
       const dir = path.join(parentDir, folderName(node.label))
@@ -116,15 +124,20 @@ function buildPlan (roots, titles = new Map()) {
         } else duplicates.push(only.stem)
         let i = 1
         for (const grandchild of only.children) walk(grandchild, dir, i++)
-        return
+        return true
       }
-      categoryFile(dir, node.label, position)
+      // Emit the category only if at least one child produces output. Walk the
+      // children first (into the shared maps), then decide — _category_.json
+      // files are keyed by path, so emitting after the children is harmless.
       let i = 1
-      for (const child of node.children) walk(child, dir, i++)
-      return
+      let produced = 0
+      for (const child of node.children) if (walk(child, dir, i++)) produced++
+      if (produced === 0) return false
+      categoryFile(dir, node.label, position)
+      return true
     }
     // page
-    if (pages.has(node.stem)) { duplicates.push(node.stem); return }
+    if (pages.has(node.stem)) { duplicates.push(node.stem); return false }
     if (node.children.length) {
       // Parent page -> category folder + an Overview page holding its content.
       const dir = path.join(parentDir, node.stem)
@@ -138,17 +151,18 @@ function buildPlan (roots, titles = new Map()) {
       })
       let i = 1
       for (const child of node.children) walk(child, dir, i++)
-    } else {
-      // Leaf page.
-      const title = titles.get(node.stem)
-      const sidebarLabel = node.label && node.label !== title ? node.label : null
-      pages.set(node.stem, {
-        relFile: path.join(parentDir, node.stem + '.mdx'),
-        slug: '/' + node.stem,
-        sidebarLabel,
-        sidebarPosition: position,
-      })
+      return true
     }
+    // Leaf page.
+    const title = titles.get(node.stem)
+    const sidebarLabel = node.label && node.label !== title ? node.label : null
+    pages.set(node.stem, {
+      relFile: path.join(parentDir, node.stem + '.mdx'),
+      slug: '/' + node.stem,
+      sidebarLabel,
+      sidebarPosition: position,
+    })
+    return true
   }
 
   let i = 1
