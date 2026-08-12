@@ -282,4 +282,48 @@ const renderedCode = (md) => {
   ok('buildPlan: file layout / Overview split / category files pinned (change-detector)')
 }
 
+// --- fixSwallowedBlockTitles: recover a mis-rendered block title ------------
+// The requirement: when a spurious `+` swallows a following `.Block Title` and
+// Asciidoctor bakes both into one literal paragraph (`<p>+\n.Title</p>`) ahead
+// of an untitled code block, the converter must restore the title onto that
+// block and drop the stray paragraph -- and must NOT touch anything that is not
+// exactly that shape. Oracle is the spec stated three ways, not the code.
+{
+  const { convertBody } = require('./lib/html-to-mdx')
+  const listing = (title, code) =>
+    '<div class="listingblock">' +
+    (title ? `<div class="title">${title}</div>` : '') +
+    `<div class="content"><pre class="highlight"><code class="language-shell" data-lang="shell">${code}</code></pre></div>` +
+    '</div>'
+  const para = (t) => `<div class="paragraph"><p>${t}</p></div>`
+
+  // The real shape from operator scale.adoc: a correctly titled block, then the
+  // swallowed-title paragraph, then the untitled block that lost its title.
+  const buggy = listing('For Kubernetes', 'kubectl apply -f x.yaml') +
+    para('+\n.For Openshift') +
+    listing(null, 'oc apply -f x.yaml')
+  const { body } = convertBody(buggy, {})
+  assert.ok(/title="For Openshift"/.test(body), 'swallowed title is re-attached to the code block')
+  assert.ok(!/\+\s*\.?For Openshift/.test(body) && !/^\s*\\?\+/m.test(body), 'the stray `+ .Title` paragraph is gone')
+  assert.ok(/oc apply -f x\.yaml/.test(body), 'the code that lost its title is preserved')
+  assert.ok(/title="For Kubernetes"/.test(body), 'an already-correct title is left intact')
+  ok('fixSwallowedBlockTitles: recovers `+ .Title` before an untitled code block')
+
+  // Negatives: the repair is keyed to the precise signature, so none of these
+  // move. (a) title-line present but next block already titled; (b) `+ .Title`
+  // not followed by a listing block; (c) an ordinary paragraph starting with a
+  // literal `+`.
+  const alreadyTitled = para('+\n.For Openshift') + listing('Real Title', 'oc apply')
+  assert.ok(/title="Real Title"/.test(convertBody(alreadyTitled, {}).body) &&
+    !/title="For Openshift"/.test(convertBody(alreadyTitled, {}).body),
+    'a block that already has a title is never overwritten')
+  const noBlock = para('+\n.For Openshift') + para('just prose')
+  assert.ok(!/title="For Openshift"/.test(convertBody(noBlock, {}).body),
+    'no title is invented when no code block follows')
+  const plainPlus = para('1 + 1 = 2') + listing(null, 'code')
+  assert.ok(!/title=/.test(convertBody(plainPlus, {}).body),
+    'an ordinary paragraph is not consumed as a swallowed title')
+  ok('fixSwallowedBlockTitles: leaves non-matching shapes untouched')
+}
+
 console.log(`\n[converter selftest] ${n} groups passed.`)

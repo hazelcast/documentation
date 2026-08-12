@@ -722,6 +722,21 @@ function main () {
     process.exit(1)
   }
 
+  // Guard the `--releases` subset selector against the canonical set so a typo
+  // ('5.6' for '5.16') can't quietly produce an off-target run, and so it is
+  // explicit that skipped versions are preserved, not de-listed (see below).
+  if (opts.releases && isVersioned(opts.component)) {
+    const canonical = VERSIONS[opts.component].releases
+    const unknown = opts.releases.filter((r) => !canonical.includes(r))
+    if (unknown.length) {
+      console.error(`[convert] --releases has version(s) not in lib/layout.js VERSIONS.${opts.component}: ${unknown.join(', ')}`)
+      console.error(`[convert] known releases: ${canonical.join(', ')}. To add a version, edit VERSIONS first.`)
+      process.exit(1)
+    }
+    const skipped = canonical.filter((r) => !opts.releases.includes(r))
+    if (skipped.length) console.warn(`[convert] --releases subset: regenerating ${opts.releases.join(', ')}; preserving (not regenerating) ${skipped.join(', ')}`)
+  }
+
   const versions = versionsToProcess(opts.component, opts.releases)
   // component -> its current (stable) latest version, for floating versionless
   // cross-component xrefs to `/<comp>/latest/` instead of a baked number.
@@ -739,10 +754,14 @@ function main () {
     process.exit(1)
   }
 
-  // Versioned-instance files (versions.json + versioned_sidebars stubs) for the
-  // releases actually emitted this run.
-  const releasesEmitted = results.filter((r) => r.kind === 'release').map((r) => r.seg)
-  if (releasesEmitted.length) writeVersionedFiles(opts, opts.component, releasesEmitted)
+  // Versioned-instance files (versions.json + versioned_sidebars stubs) and the
+  // component's live routes must reflect the component's CANONICAL release set
+  // (lib/layout.js VERSIONS), NOT just what this run emitted. `--releases` is a
+  // "regenerate only these versions this run" selector for speed; it must never
+  // shrink versions.json / redirects to that subset and silently de-list the
+  // versions it skipped (their docs trees are still on disk and still live).
+  const canonicalReleases = (VERSIONS[opts.component] && VERSIONS[opts.component].releases) || []
+  if (isVersioned(opts.component)) writeVersionedFiles(opts, opts.component, canonicalReleases)
 
   // Site-wide generated files, written once with full manifest context so a
   // per-component run keeps the other components' entries intact.
@@ -754,11 +773,9 @@ function main () {
     liveSegsByComponent.set(comp, null) // default: unversioned (no gate)
   }
   for (const comp of Object.keys(VERSIONS)) {
-    // A versioned component's live routes = current + the releases it emits.
-    const segs = comp === opts.component
-      ? new Set([CURRENT_SEG, ...releasesEmitted])
-      : new Set([CURRENT_SEG, ...(VERSIONS[comp].releases || [])])
-    liveSegsByComponent.set(comp, segs)
+    // A versioned component's live routes = current + its canonical releases
+    // (all live versions), independent of which subset this run regenerated.
+    liveSegsByComponent.set(comp, new Set([CURRENT_SEG, ...(VERSIONS[comp].releases || [])]))
   }
   const redirects = collectRedirects(manifest, liveSegsByComponent)
   if (!opts.dry) writeRedirectsFile(opts.redirectsFile, redirects)

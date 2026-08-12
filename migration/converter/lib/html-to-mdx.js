@@ -88,6 +88,7 @@ function convertBody (html, ctx) {
     urlToRelFile: ctx.urlToRelFile || null,
   }
   collapseSentinels($, $.root()[0], state)
+  fixSwallowedBlockTitles($)
   const body = convertChildren($, $.root()[0], state, 0)
   return { body: body.trim(), imports: state.imports }
 }
@@ -148,6 +149,35 @@ function collapseSentinels ($, node, st) {
   }
   node.children = out
   for (const c of out) if (c.type === 'tag' && c.name !== 'hzpartial') collapseSentinels($, c, st)
+}
+
+// Repair a source-AsciiDoc mis-render that Asciidoctor bakes into the golden
+// HTML: a spurious `+` list-continuation immediately before a `.Block Title`
+// where no list is open. Asciidoctor cannot attach the title to anything, so it
+// emits the two lines as one literal paragraph (`<p>+\n.Title</p>`) and the
+// following code block loses its title. We detect exactly that shape -- a
+// paragraph whose text is `+` then a `.Title` line, immediately followed by an
+// untitled listing/literal block -- drop the stray paragraph, and re-attach the
+// title to the block as Asciidoctor would have with the `+` removed. The block
+// then converts through the normal titled-listing path (`title="…"`). Anything
+// that does not match this precise signature is left untouched, so a legitimate
+// paragraph is never disturbed. See operator scale.adoc (.For Openshift) and
+// hazelcast install-hazelcast.adoc (.RPM); a matching source fix is the real
+// cure, but frozen versions cannot be re-sourced.
+function fixSwallowedBlockTitles ($) {
+  $('div.paragraph > p').each((_, p) => {
+    const $p = $(p)
+    // `+` (its own line) then a block-title line `.` + non-space, nothing else.
+    const m = $p.text().trim().match(/^\+\s*\n\s*\.(\S.*)$/)
+    if (!m) return
+    const $para = $p.parent()
+    const $block = $para.next() // next ELEMENT sibling (cheerio skips text nodes)
+    if (!$block.is('.listingblock, .literalblock')) return
+    if ($block.children('.title').length) return // already titled: not this bug
+    const title = m[1].trim().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    $block.prepend(`<div class="title">${title}</div>`)
+    $para.remove()
+  })
 }
 
 // ---------------------------------------------------------------------------
