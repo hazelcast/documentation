@@ -32,6 +32,52 @@ export const variables: Record<string, string> = Object.assign(
 );
 
 export const versionedVariables: Record<string, Record<string, Record<string, string>>> = {
+  "clc": {
+    "current": {
+      "full-version": "5.5.1",
+      "hazelcast-cloud": "Cloud",
+      "page-latest-supported-mc": "5.8"
+    },
+    "5.5.0": {
+      "full-version": "5.5.0",
+      "hazelcast-cloud": "Cloud",
+      "page-latest-supported-mc": "5.6"
+    },
+    "5.4.1": {
+      "full-version": "5.4.1",
+      "hazelcast-cloud": "Cloud",
+      "page-latest-supported-mc": "5.5"
+    },
+    "5.4.0": {
+      "full-version": "5.4.0",
+      "hazelcast-cloud": "Cloud",
+      "page-latest-supported-mc": "5.4"
+    },
+    "5.3.7": {
+      "full-version": "5.3.7",
+      "hazelcast-cloud": "Cloud",
+      "page-latest-supported-mc": "5.5"
+    },
+    "5.3.6": {
+      "full-version": "5.3.6",
+      "hazelcast-cloud": "Cloud",
+      "page-latest-supported-mc": "5.5"
+    },
+    "5.3.5": {
+      "full-version": "5.3.5",
+      "hazelcast-cloud": "Cloud",
+      "page-latest-supported-mc": "5.5"
+    },
+    "5.3.4": {
+      "full-version": "5.3.4",
+      "hazelcast-cloud": "Cloud",
+      "page-latest-supported-mc": "5.5"
+    },
+    "5.2.1": {
+      "full-version": "5.2.1",
+      "hazelcast-cloud": "Cloud"
+    }
+  },
   "operator": {
     "current": {
       "operator-chart-version": "5.19.0-snapshot",

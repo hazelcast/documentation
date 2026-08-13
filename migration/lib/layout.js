@@ -63,6 +63,10 @@ const VERSIONS = {
 // variables.ts exactly like the SINGLE_SOURCE set.
 const MARKED_ATTRS = {
   cloud: ['hazelcast-cloud'],
+  // clc references {hazelcast-cloud} heavily; its value "Cloud" is the same
+  // ambiguous prose word as in cloud (a page also says "Confluent Cloud"), so it
+  // must be MARKED, not value-reverse-mapped.
+  clc: ['hazelcast-cloud'],
 }
 
 // The marked-attribute names for a component (empty array if none).
