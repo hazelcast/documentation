@@ -29,7 +29,8 @@ const { execFileSync } = require('node:child_process')
 const { goldenPages } = require('../fidelity/lib/pairing')
 const { convertBody } = require('./lib/html-to-mdx')
 const { collectOccurrences, decide } = require('./lib/partials')
-const { parseNav, buildPlan } = require('./lib/nav')
+const { parseNav, buildPlan, injectNavEntries } = require('./lib/nav')
+const { loadDispositions, isDropped, navInjectionsFor } = require('../lib/dispositions')
 // Shared with the build-time example-attributes loader so the match key the
 // converter computes reproduces exactly what the loader renders (no drift).
 const substitute = require('../../plugins/lib/substitute-attributes')
@@ -499,9 +500,15 @@ function convertVersion (ver, ctx) {
   const { byUrl, titleByStem } = indexManifest(manifest, component, seg)
 
   // Nav-driven plan (file layout, slugs, sidebar metadata, categories).
+  // `keep-in-nav` orphans are injected first, so a page merely forgotten upstream
+  // is planned exactly like any nav page. Only inject where the page actually
+  // exists in THIS version (titleByStem is this version's manifest): an older
+  // branch may predate the page, and a nav entry pointing at nothing would be a
+  // broken link rather than a fix.
   const navAdoc = loadNavAdoc(component, seg, opts.sourcesDir)
+  const injections = navInjectionsFor(ctx.dispositions, component).filter((i) => titleByStem.has(i.stem))
   const plan = navAdoc
-    ? buildPlan(parseNav(navAdoc), titleByStem)
+    ? buildPlan(parseNav(injectNavEntries(navAdoc, injections)), titleByStem)
     : { pages: new Map(), categories: [], duplicates: [] }
 
   const allPages = allGoldenForComponent.filter((p) => (seg ? p.versionSeg === seg : true))
@@ -572,6 +579,7 @@ function convertVersion (ver, ctx) {
     .map((x) => ({ name: x.name, value: String(x.value) }))
 
   let written = 0
+  let dropped = 0
   const orphans = []
   const problems = []
   const stillBaked = []
@@ -579,6 +587,12 @@ function convertVersion (ver, ctx) {
     // Stem/entry/relFile via the shared derivation (see relFileForPage), so the
     // emitted file matches the URL->file map used for relative-link resolution.
     const { stem, rec, entry, relFile } = relFileForPage(p, byUrl, plan)
+
+    // A `drop-404` orphan is a page a human decided not to carry over (dead or
+    // empty, nothing links to it, its URL may 404). Emit nothing at all: the
+    // decision only takes effect if the file never reaches the site.
+    if (rec && isDropped(ctx.dispositions, rec)) { dropped++; continue }
+
     if (!entry) orphans.push(p.url)
 
     const html = readGoldenRaw(p)
@@ -662,7 +676,7 @@ function convertVersion (ver, ctx) {
   // same component do not overwrite each other.
   writePartialsReport(opts, component, seg, report, decisions)
 
-  return { seg, kind, outDir, written, cats, partialsWritten, orphans, problems, partialProblems, duplicates: plan.duplicates, stillBaked }
+  return { seg, kind, outDir, written, dropped, cats, partialsWritten, orphans, problems, partialProblems, duplicates: plan.duplicates, stillBaked }
 }
 
 // Per-version partials audit: what was factored, declined, or left inline
@@ -752,7 +766,11 @@ function main () {
   // cross-component xrefs to `/<comp>/latest/` instead of a baked number.
   const latestVersions = {}
   for (const c of manifest.components || []) if (c.latestVersion) latestVersions[c.name] = c.latestVersion
-  const ctx = { component: opts.component, manifest, allGoldenForComponent, linkVars, flat, versioned, opts, latestVersions }
+  // Orphan triage decisions (orphancheck/allowlist.json) drive two conversion
+  // behaviours: drop-404 pages are not emitted, keep-in-nav pages are injected
+  // into the nav. Loaded once per run and passed through ctx.
+  const dispositions = loadDispositions()
+  const ctx = { component: opts.component, manifest, allGoldenForComponent, linkVars, flat, versioned, opts, latestVersions, dispositions }
 
   const results = []
   for (const ver of versions) {

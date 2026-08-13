@@ -1,4 +1,16 @@
 {
   "description": "Orphan allowlist for orphancheck/run.js. DENY BY DEFAULT: a key in `allow` means a human has triaged that orphan page (a published page in no navigation tree) and recorded what to do with it. Keys are the LOGICAL page key exactly as the gate reports it — `{component}[:{module}]/{relative-without-.adoc}`, e.g. \"cloud:teams-and-users\" or \"hazelcast:clients/rest\" — and one key covers that page across EVERY branch it is orphaned in. Each entry is an object with a required `disposition` and an optional one-line `note` (the audit trail): 'keep-in-nav' (will be added to the nav during migration, so it stops being an orphan), 'keep-referenced' (intentionally not in nav, reachable only via inline xref), 'redirect' (drop the page and 301 its old URL to `to`, a required sibling URL), or 'drop-404' (drop the page, a 404 is acceptable — nothing external should rely on it). Ships EMPTY: until an orphan's key is added here, the gate flags it.",
-  "allow": {}
+  "allow": {
+    "clc:clc-cpmap": {
+      "disposition": "keep-in-nav",
+      "note": "Real, substantial command-reference page (clc cpmap: get/set/put/remove/delete/destroy/compare-and-set), structurally identical to its clc-* siblings; it is simply MISSING from nav.adoc upstream -- a source omission, not a migration artifact, so it is invisible on the current Antora site too. Fixed AS PART OF THE MIGRATION: `nav.after` injects the entry into the parsed nav at conversion time (converter/lib/nav injectNavEntries), so buildPlan places it at clc/reference/clc-commands/clc-cpmap.mdx with a sidebar_position and no unlisted:true -- reproducible on every run, no hand-edit to be clobbered. Slug (/clc-cpmap) is URL-derived, so its URL is unchanged. Injected only where the page exists in that version (5.4.0+).",
+      "nav": {
+        "after": "clc-config"
+      }
+    },
+    "clc:clc-platform": {
+      "disposition": "drop-404",
+      "note": "Empty page: clc-platform.adoc is a 0-byte file in ALL nine branches (5.2.1-5.5.1) and has never been in nav. Nothing to preserve, no inbound links. User decision 2026-08-13: delete it, a 404 is fine. ACTED ON: the converter skips drop-404 pages, so no .mdx is emitted and the URL 404s; the gates drop it from scope rather than counting it as not-yet-converted."
+    }
+  }
 }

@@ -111,6 +111,17 @@ function validateAllowlist (allow) {
     if (entry.disposition !== 'redirect' && entry.to != null) {
       errors.push(`${key}: "to" is only meaningful for disposition "redirect"`)
     }
+    // `nav` is the placement the converter injects for a keep-in-nav page (see
+    // lib/dispositions + converter/lib/nav injectNavEntries). It must name the
+    // sibling it follows, or the injection has nowhere to go; on any other
+    // disposition it would be a silently ignored instruction.
+    if (entry.nav != null) {
+      if (entry.disposition !== 'keep-in-nav') {
+        errors.push(`${key}: "nav" is only meaningful for disposition "keep-in-nav"`)
+      } else if (typeof entry.nav !== 'object' || !(typeof entry.nav.after === 'string' && entry.nav.after)) {
+        errors.push(`${key}: "nav" requires a non-empty "after" (the nav stem this entry follows)`)
+      }
+    }
   }
   return errors
 }

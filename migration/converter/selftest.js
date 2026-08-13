@@ -24,7 +24,7 @@ const { resolveHref } = require('./lib/links')
 const { convertBody } = require('./lib/html-to-mdx')
 const { classifyHref } = require('../fidelity/lib/links')
 const { collectOccurrences, decide, slugFor, componentNameFor, parseId } = require('./lib/partials')
-const { parseNav, buildPlan, targetStem, folderName } = require('./lib/nav')
+const { parseNav, buildPlan, injectNavEntries, targetStem, folderName } = require('./lib/nav')
 
 let n = 0
 const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
@@ -328,6 +328,43 @@ const renderedCode = (md) => {
   ].join('\n')))
   for (const [stem, page] of plan.pages) assert.strictEqual(page.slug, '/' + stem, `slug preserves the URL for ${stem}`)
   ok('buildPlan: every page slug reproduces its flat Antora URL (URL preservation)')
+
+  // --- SPEC: migration-injected nav entries ----------------------------------
+  // A page missing from nav.adoc gets no plan entry, so it would be emitted at
+  // the component root as `unlisted`. Injecting the entry must make it
+  // indistinguishable from a page that was in the nav all along: same folder,
+  // same depth, a sidebar_position in the right order, and the URL untouched.
+  // Oracle = an equivalent nav that CONTAINS the entry, so the test states the
+  // required equivalence rather than mirroring the insertion code.
+  {
+    const source = ['.Reference', '* xref:commands.adoc[Command Reference]',
+      '** xref:cfg.adoc[]', '** xref:demo.adoc[]'].join('\n')
+    const asIfPresent = ['.Reference', '* xref:commands.adoc[Command Reference]',
+      '** xref:cfg.adoc[]', '** xref:cpmap.adoc[]', '** xref:demo.adoc[]'].join('\n')
+
+    const injected = buildPlan(parseNav(injectNavEntries(source, [{ stem: 'cpmap', after: 'cfg' }])))
+    const expected = buildPlan(parseNav(asIfPresent))
+
+    assert.deepStrictEqual(injected.pages.get('cpmap'), expected.pages.get('cpmap'),
+      'an injected page is planned exactly as if nav.adoc had listed it')
+    assert.strictEqual(injected.pages.get('cpmap').slug, '/cpmap', 'injection preserves the flat URL')
+    // Placement: it lands between its anchor and the next sibling, and pushes
+    // that sibling down — i.e. it is really IN the order, not appended.
+    const pos = (p, s) => p.pages.get(s).sidebarPosition
+    assert(pos(injected, 'cfg') < pos(injected, 'cpmap') && pos(injected, 'cpmap') < pos(injected, 'demo'),
+      'injected entry sits between its anchor and the following sibling')
+    assert.strictEqual(pos(injected, 'demo'), pos(expected, 'demo'),
+      'the displaced sibling gets the same position it would have had')
+    // Injection is by ANCHOR, not by line number: same anchor, different nav shape.
+    const deeper = injectNavEntries('.R\n* xref:top.adoc[T]\n** xref:cfg.adoc[]', [{ stem: 'cpmap', after: 'cfg' }])
+    assert(/^\*\* xref:cpmap\.adoc\[\]$/m.test(deeper), 'injected entry copies its anchor\'s depth')
+    // A missing anchor must be loud: silently skipping would leave the page an
+    // orphan at the component root, the exact state injection exists to fix.
+    assert.throws(() => injectNavEntries(source, [{ stem: 'cpmap', after: 'nope' }]), /anchor/i,
+      'a missing anchor throws rather than silently doing nothing')
+    assert.strictEqual(injectNavEntries(source, []), source, 'no injections leaves the nav byte-identical')
+    ok('injectNavEntries: injected page is planned as if the nav had listed it')
+  }
 
   // Correctness: a nav label equal to the doctitle is redundant -> no sidebar_label;
   // a distinct nav label is kept.

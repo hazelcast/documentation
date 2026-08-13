@@ -30,6 +30,7 @@ const { NAV_SOURCES, versionsToProcess, outDirFor, CURRENT_SEG } = require('../l
 const { collectPageRefs, locate } = require('./lib/source-refs')
 const { indexOutput, reachableText, hasRef, exampleImports, urlToSlug } = require('./lib/mdx-refs')
 const { isBakeSafe } = require('./lib/bake-safe')
+const { loadDispositions, isDropped } = require('../lib/dispositions')
 
 function parseArgs (argv) {
   const args = argv.slice(2)
@@ -55,10 +56,13 @@ function attrTable (manifest, component, seg) {
 }
 
 // The migrated page resources for (component, seg).
-function pagesFor (manifest, component, seg) {
+// Pages dropped by an orphan triage decision (drop-404) are excluded: nothing is
+// emitted for them, so they are out of scope rather than "not yet converted".
+function pagesFor (manifest, component, seg, dispositions) {
   const key = seg == null ? '' : seg
   return (manifest.resources || []).filter((r) =>
-    r.family === 'page' && r.component === component && (r.version || '') === key && r.url)
+    r.family === 'page' && r.component === component && (r.version || '') === key && r.url &&
+    !(dispositions && isDropped(dispositions, r)))
 }
 
 function main () {
@@ -69,6 +73,7 @@ function main () {
   const findings = []      // baked attributes
   const exampleFindings = [] // baked example includes
   const counts = { pages: 0, checked: 0, pending: 0 }
+  const dispositions = loadDispositions()
 
   for (const component of components) {
     if (!NAV_SOURCES[component]) { console.error(`[refcheck] unknown component: ${component}`); process.exit(2) }
@@ -78,7 +83,7 @@ function main () {
       const bySlug = indexOutput(outDir)
       const attrs = attrTable(manifest, component, seg)
 
-      for (const resource of pagesFor(manifest, component, seg)) {
+      for (const resource of pagesFor(manifest, component, seg, dispositions)) {
         if (opts.id && resource.url !== opts.id) continue
         counts.pages++
         const slug = urlToSlug(resource.url, component, seg)

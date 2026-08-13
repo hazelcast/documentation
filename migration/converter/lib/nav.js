@@ -75,6 +75,31 @@ function parseNav (adoc) {
   return roots
 }
 
+// Insert nav entries the MIGRATION adds, before the nav is parsed. A page absent
+// from nav.adoc gets no plan entry, so the converter drops it at the component
+// root as `unlisted: true` — correct for a genuine orphan, wrong for a page that
+// was simply forgotten upstream. Injecting here (rather than hand-editing the
+// emitted .mdx) means the whole downstream derivation — folder, sidebar_position,
+// category, the un-setting of `unlisted` — falls out of buildPlan exactly as it
+// does for a page that was in the nav all along, and the fix survives re-runs.
+//
+// `injections` is [{ stem, after }]: place `xref:<stem>.adoc[]` immediately after
+// the existing item for `after`, copying that item's depth so it lands as its
+// sibling. A missing anchor THROWS rather than skipping: silently doing nothing
+// would leave the page an orphan at the component root, which is precisely the
+// state the injection exists to fix, and the caller has already established that
+// the page exists in this version.
+function injectNavEntries (adoc, injections) {
+  if (!injections || !injections.length) return adoc
+  const lines = adoc.split('\n')
+  for (const { stem, after } of injections) {
+    const at = lines.findIndex((l) => { const m = l.match(ITEM_RE); return m && targetStem(m[2]) === after })
+    if (at === -1) throw new Error(`nav injection for "${stem}": anchor item "${after}" not found in nav.adoc`)
+    lines.splice(at + 1, 0, `${lines[at].match(ITEM_RE)[1]} xref:${stem}.adoc[]`)
+  }
+  return lines.join('\n')
+}
+
 const folderName = (label) => label.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 const humanize = (stem) => stem.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 
@@ -170,4 +195,4 @@ function buildPlan (roots, titles = new Map()) {
   return { pages, categories, duplicates }
 }
 
-module.exports = { parseNav, buildPlan, targetStem, folderName }
+module.exports = { parseNav, buildPlan, injectNavEntries, targetStem, folderName }

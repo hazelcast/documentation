@@ -25,6 +25,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 
 const { NAV_SOURCES, versionsToProcess, outDirFor } = require('../lib/layout')
+const { loadDispositions, isDropped } = require('../lib/dispositions')
 const { indexOutput, urlToSlug } = require('../refcheck/lib/mdx-refs')
 const { locate, includesIn, resolveTarget, sliceByTags, stripComments } = require('../refcheck/lib/source-refs')
 const { detectLexical, detectAst, gitShow } = require('./lib/detect')
@@ -43,10 +44,13 @@ function parseArgs (argv) {
   }
 }
 
-function pagesFor (manifest, component, seg) {
+// Pages dropped by an orphan triage decision (drop-404) are excluded: nothing is
+// emitted for them, so they are out of scope rather than "not yet converted".
+function pagesFor (manifest, component, seg, dispositions) {
   const key = seg == null ? '' : seg
   return (manifest.resources || []).filter((r) =>
-    r.family === 'page' && r.component === component && (r.version || '') === key && r.url)
+    r.family === 'page' && r.component === component && (r.version || '') === key && r.url &&
+    !(dispositions && isDropped(dispositions, r)))
 }
 
 function loadAllowlist () {
@@ -95,6 +99,7 @@ function main () {
   const opts = parseArgs(process.argv)
   const manifest = JSON.parse(fs.readFileSync(path.join(opts.manifestDir, 'manifest.json'), 'utf8'))
   const allow = loadAllowlist()
+  const dispositions = loadDispositions()
   const components = opts.component ? [opts.component] : Object.keys(NAV_SOURCES)
 
   const seen = new Map() // category:token -> {url, where, raw}
@@ -105,7 +110,7 @@ function main () {
     for (const ver of versionsToProcess(component)) {
       const seg = ver.seg
       const bySlug = indexOutput(outDirFor(opts.outRoot, component, ver))
-      for (const resource of pagesFor(manifest, component, seg)) {
+      for (const resource of pagesFor(manifest, component, seg, dispositions)) {
         counts.pages++
         const slug = urlToSlug(resource.url, component, seg)
         if (!bySlug.has(slug)) { counts.pending++; continue } // not converted yet -- out of scope
