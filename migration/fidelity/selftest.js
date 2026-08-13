@@ -22,6 +22,7 @@ const {
 } = require('./lib/layer1')
 const { stripSentinels } = require('../antora-extension/mark-partials')
 const { wrapConditionals, stripConditionalSentinels, START, END } = require('../antora-extension/mark-conditionals')
+const { literalizeMonospace } = require('../antora-extension/normalize-monospace')
 const { lockfileKey } = require('./lockfile-key')
 const { buildIndex, variants } = require('./lib/manifest-index')
 const { inventory, ASCIIDOC_PROFILE } = require('./lib/structure')
@@ -153,6 +154,57 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
   assert(iIf < iStart && iStart < iBody && iBody < iEnd && iEnd < iEndif,
     'sentinels sit INSIDE the conditional, around the body')
   ok('wrapConditionals: injects sentinels inside the block, leaves non-snapshot text alone')
+}
+
+// --- normalize-monospace: recover literal `__x` / `_` from Antora's mangling --
+// Asciidoctor itself is the oracle. The bug is a CROSS-SPAN bleed: an `_`/`*` in a
+// monospace span opens an emphasis that pairs with a DISTANT delimiter, so both
+// spans corrupt. We prove the bug live on full lines, then that the rewrite fixes
+// it AND frees the far span, and that non-firing spans are byte-identical.
+{
+  // Bug 1, proven live: `__trace` pairs its `__` with a later `__bold__`, so the
+  // code mangles AND the bold is destroyed.
+  const trace = 'use the `__trace` fn then __bold__'
+  assert(/<code><em>/.test(renderAdoc(trace)),
+    'precondition: `__trace` mis-renders as <code><em> (the Antora bleed)')
+  const traceFixed = renderAdoc(literalizeMonospace(trace))
+  assert(/<code>__trace<\/code>/.test(traceFixed) && /<em>bold<\/em>/.test(traceFixed),
+    '`__trace` renders literally AND the far `__bold__` is freed to render as emphasis')
+
+  // Bug 2, the real project-creator line: `` `_` `` steals the delimiter of the
+  // following `_.keep_`, emptying the code and eating ".keep".
+  const pc = 'underscore (`_`) ignored, unless _.keep_ ext'
+  assert(/<code><em><\/code>/.test(renderAdoc(pc)),
+    'precondition: `` `_` `` mis-renders as empty <code><em></code>')
+  const pcFixed = renderAdoc(literalizeMonospace(pc))
+  assert(/<code>_<\/code>/.test(pcFixed) && /<em>\.keep<\/em>/.test(pcFixed),
+    '`` `_` `` renders as <code>_</code> AND the freed `_.keep_` renders as intended italic')
+
+  // Output-neutral where emphasis was NOT firing: wrapping a mid-word underscore
+  // is byte-identical (this is why cloud/operator stay unchanged), and special-
+  // character escaping is preserved by the single-plus passthrough.
+  for (const src of ['the `map_entry_set` method', 'see `a<b && c>d` here']) {
+    assert.strictEqual(renderAdoc(literalizeMonospace(src)), renderAdoc(src),
+      `non-firing / special-char monospace renders identically: ${src}`)
+  }
+
+  // Conservative skips: the source rewrite leaves these byte-identical.
+  assert.strictEqual(literalizeMonospace('a `{attr_name}` ref'), 'a `{attr_name}` ref',
+    'skips a span with an attribute reference (passthrough would stop {} expanding)')
+  assert.strictEqual(literalizeMonospace('a `c+_d` span'), 'a `c+_d` span',
+    'skips a span already containing + (would break the passthrough)')
+  const block = '----\ncode with `__literal` backtick\n----\n'
+  assert.strictEqual(literalizeMonospace(block), block,
+    'never touches backticks inside a verbatim (----) block')
+  // A lone `+` is a list-continuation, NOT a passthrough delimiter: a span AFTER
+  // it must still be normalized (regression: advanced-scripting slipped through).
+  assert(literalizeMonospace('* item\n+\nthen `__trace` here').includes('`+__trace+`'),
+    'a lone + (list continuation) does not open a verbatim block')
+  assert.strictEqual(literalizeMonospace('++++\npass `__x` through\n++++\n'),
+    '++++\npass `__x` through\n++++\n', 'a real ++++ passthrough block is still skipped')
+  assert.strictEqual(literalizeMonospace('plain `code` here'), 'plain `code` here',
+    'leaves monospace with no emphasis chars untouched')
+  ok('normalize-monospace: fixes the cross-span bleed, output-neutral + safe skips')
 }
 
 // --- lockfile-key: the snapshot pin ------------------------------------------

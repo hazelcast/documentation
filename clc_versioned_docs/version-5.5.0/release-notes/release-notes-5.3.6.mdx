@@ -37,18 +37,18 @@ Added the `viridian_api` type. Create an instance using `Viridian(API_KEY)`.
 
 The type has the following methods:
 
-- `create_cluster(name:string, development=False, prerelease=False, wait=False) → Cluster`
-- `list_clusters() → list(Cluster)`
+- `create_cluster(name:string, development=False, prerelease=False, wait=False) -> Cluster`
+- `list_clusters() -> list(Cluster)`
 - `delete_cluster(cluster:id | name | Cluster)`
-- `get_cluster(cluster:id | name | Cluster) → Cluster`
-- `import_config(cluster:id | name | Cluster, name='') → path`
+- `get_cluster(cluster:id | name | Cluster) -> Cluster`
+- `import_config(cluster:id | name | Cluster, name='') -> path`
 - `stop_cluster(cluster:id | name | Cluster, wait=False)`
 - `resume_cluster(cluster:id | name | Cluster, wait=False)`
-- `list_custom_classes(cluster:id | name | Cluster) → list(Class)`
+- `list_custom_classes(cluster:id | name | Cluster) -> list(Class)`
 - `upload_custom_class(cluster:id | name | Cluster, path:string, wait=False)`
-- `download_custom_class(cluster:id | name | Cluster, artifact:any, output_path:string) → path`
+- `download_custom_class(cluster:id | name | Cluster, artifact:any, output_path:string) -> path`
 - `delete_custom_class(cluster:id | name | Cluster, artifact_id:any, wait=False)`
-- `download_logs(cluster:id | name | Cluster, dir:string) → list(path)`
+- `download_logs(cluster:id | name | Cluster, dir:string) -> list(path)`
 
 Added the `viridian_cluster` type with the following attributes:
 
@@ -75,7 +75,7 @@ Add `viridian_custom_class` type with the following attributes:
 ### Job Advanced Script Functions
 
 - `job_submit(path:string, params:string*, name='', snapshot='', class_name='')`
-- `job_list(include_sql=False, include_user_cancelled=False) → list(dict)`
+- `job_list(include_sql=False, include_user_cancelled=False) -> list(dict)`
 - `job_cancel(job_name_or_id:string, force=False)`
 - `job_restart(job_name_or_id:string, force=False)`
 - `job_suspend(job_name_or_id:string, force=False)`
@@ -84,13 +84,13 @@ Add `viridian_custom_class` type with the following attributes:
 
 ### Snapshot Advanced Script Functions
 
-- `snapshot_list() → list(dict)`
+- `snapshot_list() -> list(dict)`
 - `snapshot_delete(name:string)`
 
 ### Configuration Advanced Script Functions
 
-- `config_add(config_name_or_path:string, config:dict) → path`
-- `config_list() → list(config_name)`
+- `config_add(config_name_or_path:string, config:dict) -> path`
+- `config_list() -> list(config_name)`
 
 ### List Advanced Script Functions
 
@@ -133,7 +133,7 @@ Add `viridian_custom_class` type with the following attributes:
 
 ### Other Advanvced Script Functions
 
-- `object_list(dds:string?, show_hidden=False) → list(object_name) | list(service_name, object_name)`
+- `object_list(dds:string?, show_hidden=False) -> list(object_name) | list(service_name, object_name)`
 - `exit(code:int)`
 - `home() → path`
 - `version() → string`

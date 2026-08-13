@@ -35,6 +35,7 @@ const { registerPageAliases } = require('../antora-extension/register-page-alias
 const { createPartialMarker } = require('../antora-extension/mark-partials')
 const { wrapRefs, spanify, hasSentinelResidue } = require('../antora-extension/mark-attributes')
 const { wrapConditionals } = require('../antora-extension/mark-conditionals')
+const { literalizeMonospace } = require('../antora-extension/normalize-monospace')
 const { markedAttrsFor } = require('../lib/layout')
 const { lockfileKey, lockfileKeyFromFile } = require('./lockfile-key')
 
@@ -88,6 +89,14 @@ function parseArgs (argv) {
     // conditional (so they gate with it) and strip byte-for-byte in readGolden().
     // --no-mark-conditionals renders bare.
     markConditionals: !args.includes('--no-mark-conditionals'),
+    // Backslash-escape emphasis chars inside inline monospace so Asciidoctor
+    // renders `__trace` / `_` literally instead of mis-parsing the underscores as
+    // emphasis (see antora-extension/normalize-monospace.js). Unlike the mark-*
+    // passes this CHANGES the golden (deliberately: it fixes Antora's mangled
+    // render); it is output-neutral where the emphasis was not firing, so a
+    // component with no mis-parsed monospace stays byte-identical. ON by default;
+    // --no-normalize-monospace renders bare.
+    normalizeMonospace: !args.includes('--no-normalize-monospace'),
   }
 }
 
@@ -179,7 +188,7 @@ function tutorialListHtml (contentCatalog, product) {
 }
 
 async function main () {
-  const { playbookFile, outDir, lockfileFile, component, markPartials, markAttributes, markConditionals } = parseArgs(process.argv)
+  const { playbookFile, outDir, lockfileFile, component, markPartials, markAttributes, markConditionals, normalizeMonospace } = parseArgs(process.argv)
 
   // The canonical golden now carries partial sentinels by default; every golden
   // read routes through readGolden() (lib/pairing.js), which strips them, so the
@@ -234,6 +243,22 @@ async function main () {
   const withMarker = (cfg) => partialMarker
     ? { ...cfg, sourcemap: true, extensions: [...(cfg.extensions || []), partialMarker] }
     : cfg
+  // Monospace normalization: backslash-escape `_`/`*` inside inline monospace so
+  // Asciidoctor renders it literally (see normalize-monospace.js). Runs FIRST, on
+  // clean source, before the marking passes. Unlike them it changes the render,
+  // but is output-neutral wherever the emphasis was not firing -- so cloud/operator
+  // stay byte-identical (their fidelity is the guardrail against over-reach).
+  if (normalizeMonospace) {
+    let fixed = 0
+    for (const file of contentCatalog.getFiles()) {
+      const fam = file.src && file.src.family
+      if ((fam !== 'page' && fam !== 'partial') || !file.contents) continue
+      const out = literalizeMonospace(file.contents.toString())
+      if (out !== file.contents.toString()) { file.contents = Buffer.from(out); fixed++ }
+    }
+    if (fixed) console.log(`[snapshot] monospace normalization: rewrote ${fixed} source file(s)`)
+  }
+
   // Attribute-reference marking: rewrite `{name}` -> `[.hz-attr-name]#{name}#`
   // in the source of every page/partial whose component has marked attributes,
   // BEFORE render, so the golden carries a marker span at each reference (see
