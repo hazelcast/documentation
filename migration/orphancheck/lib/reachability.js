@@ -57,6 +57,24 @@ function logicalKey ({ component, module, relative }) {
   return `${component}:${mod}${rel}`
 }
 
+// Restrict the corpus to what the migration actually publishes: a component the
+// migration builds, at a version in its live set. Orphan-ness is a property of a
+// SITE, so a page can only be an orphan of the site that serves it. A page
+// orphaned only in a frozen branch (clc 5.3.5, say) is served as static HTML by
+// the frozen origin at its existing URL — this build has no page, no nav and no
+// redirect to decide about, so demanding a disposition for it would mean triaging
+// a URL the new site does not own. Components not yet migrated have no live
+// versions and so fall out entirely, re-appearing as they migrate (the same
+// coverage-gated scoping constructcheck uses).
+//   pages            — [{ component, version, … }]; version '' = unversioned
+//   migratedVersions — Map<component, Set<version>>
+function scopeToMigrated (pages, migratedVersions) {
+  return pages.filter((p) => {
+    const versions = migratedVersions.get(p.component)
+    return versions ? versions.has(p.version || '') : false
+  })
+}
+
 // Classify every page into reachable / orphan given the resolved reachability
 // sets. Inputs are plain:
 //   pages    — [{ id, url, component, version, module, relative }]
@@ -124,6 +142,7 @@ module.exports = {
   xrefTargets,
   includeTargets,
   logicalKey,
+  scopeToMigrated,
   classifyOrphans,
   validateAllowlist,
   applyAllowlist,

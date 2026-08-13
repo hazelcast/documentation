@@ -11,7 +11,7 @@
 const assert = require('node:assert')
 
 const {
-  DISPOSITIONS, xrefTargets, includeTargets, logicalKey,
+  DISPOSITIONS, xrefTargets, includeTargets, logicalKey, scopeToMigrated,
   classifyOrphans, validateAllowlist, applyAllowlist,
 } = require('./lib/reachability')
 
@@ -63,6 +63,41 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
   const b = logicalKey({ component: 'clc', module: 'ROOT', relative: 'clc-cpmap.adoc', version: '5.4' })
   assert.strictEqual(a, b, 'version is not part of the logical key')
   ok('logical key is version-independent and module-aware')
+}
+
+// --- SPEC: migrated-version scoping -------------------------------------------
+// Only pages this site publishes may be judged: a migrated component at a live
+// version. Oracle is the rule itself, stated over a corpus mixing live versions,
+// frozen versions and an unmigrated component — the real clc shape, where a page
+// orphaned only in a frozen branch keeps being served by the frozen origin.
+{
+  const pages = [
+    { id: 'live-cur', component: 'clc', version: '5.5.1', relative: 'a.adoc' },
+    { id: 'live-rel', component: 'clc', version: '5.5.0', relative: 'a.adoc' },
+    { id: 'frozen', component: 'clc', version: '5.3.5', relative: 'a.adoc' },
+    { id: 'frozen-old', component: 'clc', version: '5.2.1', relative: 'a.adoc' },
+    { id: 'unversioned', component: 'cloud', version: '', relative: 'b.adoc' },
+    { id: 'unmigrated', component: 'hazelcast', version: '5.7', relative: 'c.adoc' },
+  ]
+  const migrated = new Map([
+    ['clc', new Set(['5.5.1', '5.5.0'])],
+    ['cloud', new Set([''])],
+  ])
+  const kept = scopeToMigrated(pages, migrated).map((p) => p.id)
+
+  assert.deepStrictEqual(kept, ['live-cur', 'live-rel', 'unversioned'],
+    'only migrated components at live versions are judged')
+  assert(!kept.includes('frozen') && !kept.includes('frozen-old'),
+    'a page in a frozen branch is served by the frozen origin, not triaged here')
+  assert(!kept.includes('unmigrated'),
+    'a component with no live versions falls out entirely until it migrates')
+  // The unversioned entry is version '' — it must not be confused with "no live set".
+  assert.deepStrictEqual(scopeToMigrated([{ id: 'u', component: 'cloud', version: '' }],
+    new Map([['cloud', new Set([''])]])).map((p) => p.id), ['u'],
+  'empty-string version is a real version, not a missing one')
+  assert.deepStrictEqual(scopeToMigrated(pages, new Map()), [],
+    'no migrated components => nothing to judge')
+  ok('scope = migrated components x live versions; frozen + unmigrated excluded')
 }
 
 // --- SPEC: orphan classification ---------------------------------------------

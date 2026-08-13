@@ -3,14 +3,19 @@
 // The orphan gate. An orphan is a PUBLISHED page that no site-navigation tree
 // links to. The fidelity, refs and construct gates all reason about a page the
 // migration already knows about; none of them can tell you a page exists that
-// nothing points at. This gate closes that hole from the nav side: it aggregates
-// the whole source corpus (every component, EVERY branch — orphan-ness is a
-// source-side structural fact, independent of what has been converted yet),
-// walks every navigation tree and every page's xrefs (through includes), and
-// reports each page reachable from neither.
+// nothing points at. This gate closes that hole from the nav side: it walks every
+// navigation tree and every page's xrefs (through includes) and reports each page
+// reachable from neither.
 //
-//   node orphancheck/run.js [--component cloud|hazelcast|…] [--playbook FILE]
-//                           [--include-resolution-only] [--json]
+// Reachability is resolved over the WHOLE source corpus (every branch, so a nav
+// or xref is never missed), but only pages the migration actually publishes are
+// JUDGED — the migrated components at their live versions (lib/layout's
+// NAV_SOURCES x versionsToProcess). Older branches are frozen as static HTML at
+// their existing URLs outside this build, so an orphan that exists only there is
+// not this site's page to triage; see scopeToMigrated in lib/reachability.js.
+//
+//   node orphancheck/run.js [--component cloud|operator|clc] [--playbook FILE]
+//                           [--json]
 //
 // The allowlist (orphancheck/allowlist.json) is DENY-BY-DEFAULT, like
 // constructcheck: an entry means a human has triaged that orphan and recorded
@@ -23,14 +28,10 @@ const path = require('node:path')
 
 const { buildContentCatalog } = require('../lib/catalog')
 const { registerPageAliases } = require('../antora-extension/register-page-aliases')
+const { NAV_SOURCES, versionsToProcess } = require('../lib/layout')
 const {
-  xrefTargets, includeTargets, classifyOrphans, validateAllowlist, applyAllowlist,
+  xrefTargets, includeTargets, scopeToMigrated, classifyOrphans, validateAllowlist, applyAllowlist,
 } = require('./lib/reachability')
-
-// Components built only so cross-component xrefs into them resolve to the right
-// URLs (see the migration README). They are not emitted as pages, so their
-// orphans are moot; excluded unless --include-resolution-only is passed.
-const RESOLUTION_ONLY = new Set(['imdg', 'tutorials'])
 
 function parseArgs (argv) {
   const args = argv.slice(2)
@@ -39,9 +40,25 @@ function parseArgs (argv) {
   return {
     component: val('--component', null),
     playbook: val('--playbook', 'antora/index-playbook.yml'),
-    includeResolutionOnly: has('--include-resolution-only'),
     json: has('--json'),
   }
+}
+
+// The live version set the gate judges, per migrated component. Single-sourced
+// from lib/layout so the gate's scope tracks the migration itself: a component
+// gains versions here the moment it is wired into NAV_SOURCES/VERSIONS. An
+// unversioned component carries the one empty-string version Antora gives it.
+function migratedVersionMap (component) {
+  const components = component ? [component] : Object.keys(NAV_SOURCES)
+  const map = new Map()
+  for (const c of components) {
+    if (!NAV_SOURCES[c]) {
+      console.error(`[orphancheck] unknown component: ${c} (migrated: ${Object.keys(NAV_SOURCES).join(', ')})`)
+      process.exit(2)
+    }
+    map.set(c, new Set(versionsToProcess(c).map((v) => (v.seg === null ? '' : v.seg))))
+  }
+  return map
 }
 
 const idOf = (file) => {
@@ -58,6 +75,7 @@ async function main () {
   const opts = parseArgs(process.argv)
   const allow = loadAllowlist()
   const allowErrors = validateAllowlist(allow)
+  const migratedVersions = migratedVersionMap(opts.component)
 
   const { contentCatalog: cat, asciidocConfig } = await buildContentCatalog(opts.playbook, { silent: true })
   // Register aliases so an xref to a renamed page's OLD id resolves to its
@@ -121,19 +139,20 @@ async function main () {
   }
 
   // --- scope + classify (pure) ----------------------------------------------
-  const inScope = pages
-    .filter((p) => (opts.component ? p.src.component === opts.component
-      : opts.includeResolutionOnly || !RESOLUTION_ONLY.has(p.src.component)))
-    .map((p) => ({
-      id: idOf(p), url: p.pub.url, component: p.src.component,
-      version: p.src.version || '', module: p.src.module || 'ROOT', relative: p.src.relative,
-    }))
+  // Reachability above was resolved over every branch; only the published set is
+  // judged. (Resolution-only components — imdg, tutorials — are excluded for
+  // free: they are not in NAV_SOURCES, so they have no live versions.)
+  const rows = pages.map((p) => ({
+    id: idOf(p), url: p.pub.url, component: p.src.component,
+    version: p.src.version || '', module: p.src.module || 'ROOT', relative: p.src.relative,
+  }))
+  const inScope = scopeToMigrated(rows, migratedVersions)
 
   const linkedByIds = new Map([...linkedBy].map(([id, set]) => [id, [...set]]))
   const orphans = classifyOrphans({ pages: inScope, navIds, startIds, linkedBy: linkedByIds })
   const { flagged, allowed, staleKeys } = applyAllowlist(orphans, allow)
 
-  report(opts, { scanned: inScope.length, orphans: orphans.length }, flagged, allowed, staleKeys, allowErrors)
+  report(opts, migratedVersions, { scanned: inScope.length, orphans: orphans.length }, flagged, allowed, staleKeys, allowErrors)
   process.exit(flagged.length > 0 || allowErrors.length > 0 ? 1 : 0)
 }
 
@@ -161,14 +180,17 @@ const fmtVersions = (versions) => {
   return real.length ? real.join(', ') : 'unversioned'
 }
 
-function report (opts, counts, flagged, allowed, staleKeys, allowErrors) {
+function report (opts, migratedVersions, counts, flagged, allowed, staleKeys, allowErrors) {
   const outFile = path.resolve('build/orphancheck-report.json')
   const flaggedPages = byLogicalPage(flagged)
   const allowedPages = byLogicalPage(allowed)
   fs.mkdirSync(path.dirname(outFile), { recursive: true })
   fs.writeFileSync(outFile, JSON.stringify({
     generatedAt: new Date().toISOString(),
-    scope: { component: opts.component, includeResolutionOnly: opts.includeResolutionOnly },
+    scope: {
+      component: opts.component,
+      versions: Object.fromEntries([...migratedVersions].map(([c, v]) => [c, [...v]])),
+    },
     counts: {
       ...counts,
       flaggedPages: flaggedPages.length,
@@ -184,9 +206,13 @@ function report (opts, counts, flagged, allowed, staleKeys, allowErrors) {
 
   if (opts.json) { console.log(JSON.stringify({ counts, flagged: flaggedPages, allowlistErrors: allowErrors, staleAllowlistKeys: staleKeys })); return }
 
-  const scope = opts.component ? `component=${opts.component}`
-    : `all migrated components${opts.includeResolutionOnly ? ' + resolution-only' : ''}`
+  const scope = opts.component ? `component=${opts.component}` : 'all migrated components'
+  // Name the judged versions outright: the gate is silent about frozen branches
+  // by design, and that is only trustworthy if the scope is visible.
+  const vers = [...migratedVersions]
+    .map(([c, v]) => `${c}=${[...v].join(',') || 'unversioned'}`).join(' | ')
   console.log(`\n[orphancheck] ${scope}`)
+  console.log(`[orphancheck] migrated versions judged: ${vers}`)
   console.log(`[orphancheck] pages scanned: ${counts.scanned} | orphan pages: ${flaggedPages.length + allowedPages.length} | triaged (allowlisted): ${allowedPages.length} | flagged: ${flaggedPages.length}`)
 
   if (allowErrors.length) {
