@@ -21,6 +21,7 @@ const cheerio = require('cheerio')
 
 const { mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode } = require('./lib/mdx')
 const { resolveHref } = require('./lib/links')
+const { convertBody } = require('./lib/html-to-mdx')
 const { classifyHref } = require('../fidelity/lib/links')
 const { collectOccurrences, decide, slugFor, componentNameFor, parseId } = require('./lib/partials')
 const { parseNav, buildPlan, targetStem, folderName } = require('./lib/nav')
@@ -144,6 +145,64 @@ const renderedCode = (md) => {
   assert.strictEqual(conv.path, '/cloud/install', 'converter resolves against a directory URL')
   assert.strictEqual(fid.path, '/cloud/install', 'fidelity resolves against a directory URL identically')
   ok('link classifiers: agree on directory-relative resolution')
+}
+
+// --- internal link with a <Variable> in the label -> raw <a>, site-absolute --
+// A marked {attr} in a link label becomes a <Variable/>, which cannot sit inside
+// Markdown `[…]`, so the link must emit as a raw <a>. A raw <a> is NOT rewritten
+// by Docusaurus's Markdown link resolver, so its href MUST be the site-absolute
+// route, not the file-relative `.mdx` the Markdown path uses (that would 404).
+// Requirement stated against both branches: same target, two href forms by shape.
+{
+  // clc's real shape: source and target are flat-slug siblings (/clc/5.5.1/*) but
+  // nested at different depths in the file tree, so a file-relative link is `../..`.
+  const ctx = {
+    pageUrl: '/clc/5.5.1/connect-to-cloud',
+    component: 'clc',
+    relFile: 'manage/configuration/connect-to-cloud.mdx',
+    urlToRelFile: new Map([['/clc/5.5.1/clc-cloud', 'reference/clc-commands/clc-cloud.mdx']]),
+  }
+  const marked = '<span class="hz-attr-hazelcast-cloud">Cloud</span>'
+
+  // Variable in the label -> raw <a> carrying the SITE-ABSOLUTE, extensionless URL.
+  const varLabel = convertBody(`<p>manage <a href="clc-cloud">${marked} clusters</a>.</p>`, ctx).body
+  assert(varLabel.includes('<a href="/clc/5.5.1/clc-cloud">'),
+    'Variable-labelled internal link emits a raw <a> with the site-absolute route')
+  assert(varLabel.includes('<Variable name="hazelcast-cloud"/>'),
+    'the marked attr stays a <Variable> in the label (not baked)')
+  assert(!/\.mdx/.test(varLabel), 'a raw <a> never carries a .mdx href (Docusaurus would not resolve it)')
+
+  // Contrast: a PLAIN label still takes the Markdown path with a file-relative .mdx
+  // link (unchanged behaviour — that form IS resolved by Docusaurus).
+  const plainLabel = convertBody('<p>manage <a href="clc-cloud">Cloud clusters</a>.</p>', ctx).body
+  assert(plainLabel.includes('[Cloud clusters](../../reference/clc-commands/clc-cloud.mdx)'),
+    'a plain-label link keeps the Markdown + file-relative .mdx form')
+  ok('link with a <Variable> label: raw <a> + site-absolute href; plain label: markdown + relative .mdx')
+}
+
+// --- heal a `link:`-macro doc ref (foo.adoc/.html -> the real page) -----------
+// Antora leaves an unresolved `link:clc-script.adoc[…]` as a literal `.adoc`
+// href (dead in prod). When the extensionless target is a real page, the
+// converter must resolve it to a normal relative .mdx link; when it is NOT a
+// real page, it must be left untouched so a genuine dead link still fails L3.
+{
+  const ctx = {
+    pageUrl: '/clc/5.5.1/advanced-scripting',
+    component: 'clc',
+    relFile: 'guides/advanced-scripting.mdx',
+    urlToRelFile: new Map([['/clc/5.5.1/clc-script', 'reference/clc-commands/clc-script.mdx']]),
+  }
+  // Target exists -> healed to a relative .mdx link, no .adoc.
+  const healed = convertBody('<p>See the <a href="clc-script.adoc">script</a> command.</p>', ctx).body
+  assert(healed.includes('[script](../reference/clc-commands/clc-script.mdx)'),
+    'link:foo.adoc to a real page heals to a relative .mdx link')
+  assert(!/\.adoc/.test(healed), 'the .adoc extension is gone once healed')
+
+  // Target does NOT exist -> left as-is (still a dead link, not silently faked).
+  const dead = convertBody('<p>See <a href="ghost.adoc">ghost</a>.</p>', ctx).body
+  assert(/ghost\.adoc/.test(dead),
+    'link:foo.adoc with no matching page is left untouched (stays a real dead link)')
+  ok('healDocRef: heals link:*.adoc/.html to a real page, leaves genuine dead links alone')
 }
 
 // --- partials: id parsing, slug + component naming ---------------------------

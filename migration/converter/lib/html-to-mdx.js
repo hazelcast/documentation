@@ -680,6 +680,23 @@ function relativeDocLink (linkPath, hash, st) {
   return rel + (hash || '')
 }
 
+// Heal a `link:`-macro doc reference. Antora only resolves `xref:` to a page URL;
+// `link:clc-script.adoc[…]` is treated as a literal link, so the golden carries a
+// raw `foo.adoc` (or `.html`) href that 404s in prod AND here. If dropping the
+// extension yields a real page in THIS component (present in urlToRelFile), heal
+// the resolved ref to that page so it converts to a normal relative .mdx link.
+// If it does NOT resolve to a page, leave it untouched — a genuine dead link must
+// still fail Layer 3 rather than be silently normalised into a plausible URL.
+function healDocRef (resolved, st) {
+  if (resolved.kind !== 'internal' || !st.urlToRelFile) return resolved
+  const stripped = resolved.path.replace(/\.(adoc|html)$/, '')
+  if (stripped === resolved.path) return resolved
+  if (st.urlToRelFile.has(stripped) || st.urlToRelFile.has(stripped + '/')) {
+    return { ...resolved, path: stripped, href: stripped + (resolved.hash || '') }
+  }
+  return resolved
+}
+
 // Images are CO-LOCATED: each component's images live in an `images/` folder in
 // the docs tree (placed by extract-images.js), and pages reference them with a
 // path RELATIVE to their own output file, so webpack resolves and content-hashes
@@ -967,7 +984,7 @@ function inlineTag ($, node, st, opt) {
       if (cls.includes('anchor')) return opt.skipAnchors ? '' : anchorEl // heading self-link: no text
       const label = kids().trim()
       const rawHref = (node.attribs && node.attribs.href) || ''
-      const resolved = resolveHref(rawHref, st.pageUrl)
+      const resolved = healDocRef(resolveHref(rawHref, st.pageUrl), st)
       const kind = resolved.kind
       // Internal link: prefer a relative link to the target .mdx of THIS
       // component+version (survives version cuts); otherwise keep the absolute
@@ -1008,10 +1025,14 @@ function inlineTag ($, node, st, opt) {
       if (/[<>]/.test(href)) return anchorEl + label
       // A marked {attr} reference in the label became a <Variable/> in `label`
       // (via the span case). MDX cannot parse a component inside a `[…]` link
-      // label, so emit a raw <a> (Docusaurus routes it through its Link element)
-      // with the component in the children.
+      // label, so emit a raw <a> with the component in the children. A raw <a> is
+      // NOT run through Docusaurus's Markdown link resolver, so the relative .mdx
+      // `href` (which only resolves in `[](…)` syntax) would be left verbatim and
+      // 404. Use the site-absolute resolved URL instead — extensionless, routes
+      // correctly under baseUrl '/', and is the exact URL Layer 3 checks.
       if (label.includes('<Variable')) {
-        return anchorEl + `<a href=${jsxAttr(href)}>${label}</a>`
+        const absHref = kind === 'internal' ? floatCrossComponentLatest(resolved.href, st) : resolved.href
+        return anchorEl + `<a href=${jsxAttr(absHref)}>${label}</a>`
       }
       const safeLabel = label.replace(/\]/g, '\\]')
       const safeHref = /[()\s]/.test(href) ? `<${href}>` : href
