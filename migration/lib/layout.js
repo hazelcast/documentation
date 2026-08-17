@@ -66,8 +66,21 @@ const MARKED_ATTRS = {
   // clc references {hazelcast-cloud} heavily; its value "Cloud" is the same
   // ambiguous prose word as in cloud (a page also says "Confluent Cloud"), so it
   // must be MARKED, not value-reverse-mapped.
-  clc: ['hazelcast-cloud'],
+  clc: ['hazelcast-cloud', 'full-version'],
 }
+
+// NOTE on `clc: full-version` — it is in BOTH this list and
+// SINGLE_SOURCE_ATTRS, deliberately, because the two mechanisms cover different
+// contexts. It is referenced inside INLINE code (`hazelcast-clc-setup-v{full-
+// version}.exe`), where the value reverse-map structurally cannot reach it: the
+// whole-token boundary `(?<![\w.-])…(?![\w.-])` refuses a version glued into a
+// longer token, and that guard has to stay (it is what stops `5.6.0` matching
+// inside `0.3.5.6.0`). Marking gives the position instead, so no boundary
+// matching is needed. It stays in SINGLE_SOURCE because marking skips verbatim
+// blocks, so its 20 occurrences inside CODE FENCES still depend on the
+// reverse-map + `vars` flag. Keeping both is not double-substitution: a marked
+// occurrence becomes a <Variable> from its span, leaving no literal for the
+// reverse-map to find.
 
 // The marked-attribute names for a component (empty array if none).
 const markedAttrsFor = (component) => MARKED_ATTRS[component] || []

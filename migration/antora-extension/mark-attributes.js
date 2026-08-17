@@ -49,6 +49,9 @@ const ETX = String.fromCharCode(3) // ends the marker
 //     converter then force-pins that id when the heading carries a <Variable>.
 //   - block images (`image::…[…]`): NOT marked -- the reference is in the alt /
 //     attribute list, plain text where a span cannot live. Baked.
+//   - INLINE code (`` `…{name}…` ``): marked with the plain sentinels (context
+//     'code'), except inside a heading. Single-backtick monospace takes normal
+//     substitutions, so the sentinel survives into `<code>` and spanifies there.
 //   - `:description:` entries: marked ONLY when the body renders them via
 //     `{description}` (see descriptionRendered); other attribute entries baked.
 const TITLE = /^\s*=\s/
@@ -98,9 +101,17 @@ function transform (text, names, onRef) {
     lines[i] = line.replace(RE, (whole, esc, name, offset, str) => {
       if (esc) return whole
       const backticksBefore = (str.slice(0, offset).match(/`/g) || []).length
-      if (backticksBefore % 2 === 1) return whole // inside inline code
+      const inCode = backticksBefore % 2 === 1 // inside INLINE code (`…`)
+      // Inline code IS markable: single-backtick monospace takes normal
+      // substitutions, so a plain sentinel survives into `<code>` and spanifies
+      // there. It is the only context the value reverse-map cannot reach (a
+      // version glued into a filename fails its whole-token boundary), so
+      // marking is the only way to keep those references. NOT in a heading
+      // though: a sentinel would leak into the derived anchor id, and the role
+      // span used for headings would render literally inside code.
+      if (inCode && context === 'heading') return whole
       if (imgRanges.some(([a, b]) => offset >= a && offset < b)) return whole // inside image alt
-      return onRef(name, whole, context)
+      return onRef(name, whole, inCode ? 'code' : context)
     })
   }
   return lines.join('\n')
@@ -108,6 +119,8 @@ function transform (text, names, onRef) {
 
 // Rewrite marked references on ONE source file's text: `{name}` -> the sentinel
 // run `name{name}` (the `{name}` still resolves at render).
+// Only a heading uses the id-safe role span; flow text and inline code both take
+// the plain sentinels.
 function wrapRefs (text, names) {
   return transform(text, names, (name, whole, context) =>
     context === 'heading'

@@ -25,6 +25,7 @@ const { convertBody } = require('./lib/html-to-mdx')
 const { classifyHref } = require('../fidelity/lib/links')
 const { collectOccurrences, decide, slugFor, componentNameFor, parseId } = require('./lib/partials')
 const { parseNav, buildPlan, injectNavEntries, targetStem, folderName } = require('./lib/nav')
+const { wrapRefs } = require('../antora-extension/mark-attributes')
 
 let n = 0
 const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
@@ -454,6 +455,40 @@ const renderedCode = (md) => {
   assert.ok(!/title=/.test(convertBody(plainPlus, {}).body),
     'an ordinary paragraph is not consumed as a swallowed title')
   ok('fixSwallowedBlockTitles: leaves non-matching shapes untouched')
+}
+
+// --- marked attribute inside INLINE code -> JSX <code> ----------------------
+// The one context neither of the other two mechanisms reaches: a code span is
+// literal, so a `{name}` token in backticks stays literal, and the `vars` flag is
+// a FENCE info-string flag with nowhere to live on a span. JSX <code> can hold the
+// reference, and each literal run must be a JS STRING EXPRESSION -- MDX parses the
+// children of a JSX element as markdown, so a bare literal would let `_`/`*` in a
+// filename turn into emphasis.
+{
+  const marked = '<div class="paragraph"><p>Get <code>clc-setup-v<span class="hz-attr-full-version">5.5.1</span>.exe</code> now.</p></div>'
+  const out = convertBody(marked, { pageUrl: '/clc/5.5.1/install-clc', component: 'clc', seg: '5.5.1' }).body
+  assert.match(out, /<code>\{"clc-setup-v"\}<Variable name="full-version"\/>\{"\.exe"\}<\/code>/,
+    'the reference survives inside inline code, with the literal runs inert')
+  assert.ok(!out.includes('5.5.1'), 'the resolved value is not baked anywhere in the output')
+
+  const plain = '<div class="paragraph"><p>Run <code>my_cmd --x</code>.</p></div>'
+  assert.match(convertBody(plain, {}).body, /`my_cmd --x`/,
+    'inline code with no marker stays ordinary Markdown backticks')
+  ok('inline code: a marked reference becomes JSX <code> + <Variable>; unmarked code is untouched')
+}
+
+// --- mark-attributes context rules (the other half of that mechanism) --------
+{
+  const names = ['full-version']
+  const wrapped = wrapRefs('Get `clc-setup-v{full-version}.exe` now.', names)
+  assert.ok(wrapped.includes('{full-version}') && wrapped !== 'Get `clc-setup-v{full-version}.exe` now.',
+    'a reference inside inline code IS marked (sentinels survive single-backtick monospace)')
+  assert.ok(!wrapped.includes('[.hz-attr-'), 'inline code takes plain sentinels, not the heading role span')
+
+  const heading = '== Install `clc-v{full-version}.exe`'
+  assert.strictEqual(wrapRefs(heading, names), heading,
+    'inline code in a HEADING is left alone: a sentinel would leak into the derived anchor id')
+  ok('mark-attributes: inline code marked in flow text, skipped in headings')
 }
 
 console.log(`\n[converter selftest] ${n} groups passed.`)

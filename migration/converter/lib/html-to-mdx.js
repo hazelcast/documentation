@@ -234,6 +234,29 @@ function markerText ($, node) {
   return out.replace(/\s+/g, ' ').trim()
 }
 
+// Inline code containing a marker span, as JSX: `<code>` with each literal run
+// emitted as a JS STRING EXPRESSION and each marker as a <Variable/>. The string
+// form matters -- MDX parses the children of a JSX element as markdown, so a bare
+// literal would let `_`/`*`/`[` in a filename or command turn into emphasis or a
+// link. `{'…'}` is inert.
+function jsxCode ($, node) {
+  const parts = []
+  const walk = (n) => {
+    for (const c of n.children || []) {
+      if (c.type === 'text') { if (c.data) parts.push({ text: c.data }); continue }
+      if (c.type !== 'tag') continue
+      const nm = markerName(c)
+      if (nm) { parts.push({ name: nm }); continue }
+      walk(c)
+    }
+  }
+  walk(node)
+  const body = parts.map((p) => (p.name
+    ? `<Variable name=${jsxAttr(p.name)}/>`
+    : `{${JSON.stringify(p.text)}}`)).join('')
+  return `<code>${body}</code>`
+}
+
 function convertBlock ($, node, st, depth) {
   const name = node.name
   const cls = classes(node)
@@ -972,6 +995,12 @@ function inlineTag ($, node, st, opt) {
           return `[${label}](${/[()\s]/.test(href) ? `<${href}>` : href})`
         }
       }
+      // A marked {attr} reference inside inline code. Markdown backticks cannot
+      // hold it: a code span is literal, so neither a component nor a `{name}`
+      // token survives there (and the `vars` flag is a FENCE info-string flag,
+      // which a code span has no room for). JSX <code> can, so emit that
+      // instead -- visually identical, and the reference stays single-sourced.
+      if ($(node).find('span[class^="hz-attr-"]').length) return jsxCode($, node)
       return inlineCode($(node).text())
     }
     case 'br': return '<br/>'
