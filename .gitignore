@@ -9,9 +9,10 @@
 .cache-loader
 
 # Per-release sidebar stubs: identical, information-free boilerplate that
-# src/docsPlugins.ts regenerates from <id>_versions.json at config-eval time.
-# To keep a hand-tuned sidebar for one release, un-ignore that file and commit
-# it — the generator never overwrites an existing stub.
+# src/docsPlugins.ts writes from <id>_versions.json when the config is evaluated
+# and deletes again when the process exits, so it exists only while a build or
+# dev server needs it. To keep a hand-tuned sidebar for one release, un-ignore
+# that file and commit it — anything that isn't our stub is left untouched.
 /*_versioned_sidebars/
 
 # Misc
