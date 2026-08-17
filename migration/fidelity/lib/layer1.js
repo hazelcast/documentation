@@ -34,9 +34,20 @@ const TABLE_PLACEHOLDER = /^␟(\d+)␟$/
 
 const GOLDEN_STRIP = ['a.anchor'] // the ¶ self-link Asciidoctor prepends to headings
 // Docusaurus chrome that leaks text a golden fragment does not have: the
-// heading hash-link (zero-width text), and the admonition heading LABEL
-// ("tip"/"danger" -- golden renders the admonition label as an icon, no text).
-const DOCUSAURUS_STRIP = ['.hash-link', '[class*="admonitionHeading"]']
+// heading hash-link (zero-width text) and the admonition ICON.
+const DOCUSAURUS_STRIP = ['.hash-link', '[class*="admonitionIcon"]']
+
+// An admonition's heading text is chrome ONLY when it is the bare type word --
+// Docusaurus renders `:::note` as the heading "note" while Asciidoctor renders
+// that label as an icon with no text. A heading carrying anything else is a
+// CUSTOM TITLE (`:::warning[Heap memory limits]`), which the golden also renders
+// (as `<div class="title">`), so it is content and must be compared. Stripping
+// the whole heading unconditionally -- as this did until 2026-08-17 -- reported
+// every custom-titled admonition as missing text on the converted side.
+const ADMONITION_LABELS = new Set(['note', 'tip', 'info', 'warning', 'danger', 'caution', 'important', 'secondary'])
+const DOCUSAURUS_STRIP_IF = [
+  { selector: '[class*="admonitionHeading"]', drop: (text) => ADMONITION_LABELS.has(text.trim().toLowerCase()) },
+]
 
 // Content tables are compared row-by-row (see canonicalize). The two renderers
 // mark up content tables differently: Asciidoctor tags them `.tableblock`;
@@ -87,9 +98,14 @@ function blockText ($, el) {
 }
 
 // -> [{ kind: 'text'|'code', text }]
-function canonicalize (html, { stripSelectors = GOLDEN_STRIP, tableSelector = null } = {}, { fragment = true } = {}) {
+function canonicalize (html, { stripSelectors = GOLDEN_STRIP, stripIf = [], tableSelector = null } = {}, { fragment = true } = {}) {
   const $ = cheerio.load(html, null, !fragment)
   for (const sel of stripSelectors) $(sel).remove()
+  // Text-dependent strips: chrome that is only chrome for certain content (see
+  // DOCUSAURUS_STRIP_IF).
+  for (const { selector, drop } of stripIf) {
+    $(selector).each((_, el) => { if (drop($(el).text())) $(el).remove() })
+  }
 
   // Pull code out first, leaving an isolated placeholder line in the text flow.
   // Docusaurus (Prism) renders each code line as a `.token-line` span with NO
@@ -223,5 +239,6 @@ function diffSegments (golden, converted) {
 
 module.exports = {
   canonicalize, diffSegments, normalizeProse, normalizeCode, segKey,
-  GOLDEN_STRIP, DOCUSAURUS_STRIP, GOLDEN_TABLE, DOCUSAURUS_TABLE,
+  GOLDEN_STRIP, DOCUSAURUS_STRIP, DOCUSAURUS_STRIP_IF, ADMONITION_LABELS,
+  GOLDEN_TABLE, DOCUSAURUS_TABLE,
 }

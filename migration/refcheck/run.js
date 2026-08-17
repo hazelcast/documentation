@@ -42,6 +42,7 @@ const { collectPageExamples } = require('./lib/source-refs')
 const { indexOutput, refCounts, exampleImports, frontmatterTokens, urlToSlug } = require('./lib/mdx-refs')
 const { scanCensusPage, unmaskGuard } = require('./lib/census-ledger')
 const { loadDispositions, isDropped } = require('../lib/dispositions')
+const { loadAccepted, applyAccepted } = require('../lib/accepted')
 const { goldenPages } = require('../fidelity/lib/pairing')
 const { lockfileKeyFromFile } = require('../fidelity/lockfile-key')
 
@@ -73,6 +74,16 @@ function pagesFor (manifest, component, seg, dispositions) {
 
 // url -> HTML file, for a census or golden pages tree.
 const byUrl = (dir) => new Map(goldenPages(dir).map((p) => [p.url, p.file]))
+
+// The accept-list key for a finding: OCCURRENCE-EXACT, so it pins the counts and
+// not just the page. Accepting "expected 12, found 11" does not accept "found 10"
+// — a second baked occurrence on the same page changes the key and fails.
+function acceptKey (f) {
+  const where = `refs:${f.cls}:${f.component}@${f.seg || ''} ${f.url} `
+  if (f.cls === 'examples') return `${where}${f.count} example include(s)`
+  if (f.cls === 'inert') return `${where}{${f.name}} ×${f.count}`
+  return `${where}{${f.name}} ${f.expected}->${f.actual}`
+}
 
 function main () {
   const opts = parseArgs(process.argv)
@@ -115,6 +126,7 @@ function main () {
   const dispositionTally = new Map()
   const counts = { pages: 0, checked: 0, pending: 0, noCensus: 0, anchorDerived: 0 }
   const dispositions = loadDispositions()
+  const { accept, errors: acceptErrors } = loadAccepted(path.join(__dirname, 'accepted.json'))
 
   for (const component of components) {
     if (!NAV_SOURCES[component]) { console.error(`[refcheck] unknown component: ${component}`); process.exit(2) }
@@ -186,11 +198,35 @@ function main () {
     }
   }
 
-  const findings = { baked, extra, inert, unknownCtx, guardFails, examples: exampleFindings }
+  // Accepted findings (refcheck/accepted.json): understood, still reported, not
+  // blocking. Only the classes that represent a KNOWN CONVERSION GAP are
+  // acceptable. `unknownCtx` and `guardFails` deliberately are not: the first
+  // means a rendering position has no policy yet, the second that the census the
+  // expectations were read from cannot be trusted — in both cases the gate cannot
+  // judge the page at all, so accepting one would silence everything behind it.
+  const acceptable = [
+    ...baked.map((f) => ({ ...f, cls: 'baked' })),
+    ...extra.map((f) => ({ ...f, cls: 'extra' })),
+    ...inert.map((f) => ({ ...f, cls: 'inert' })),
+    ...exampleFindings.map((f) => ({ ...f, cls: 'examples' })),
+  ]
+  const { blocking, accepted, stale } = applyAccepted(acceptable, accept, acceptKey, (key) =>
+    (!opts.component || key.includes(`:${opts.component}@`)) && (!opts.id || key.includes(` ${opts.id} `)))
+
+  const findings = {
+    baked: blocking.filter((f) => f.cls === 'baked'),
+    extra: blocking.filter((f) => f.cls === 'extra'),
+    inert: blocking.filter((f) => f.cls === 'inert'),
+    examples: blocking.filter((f) => f.cls === 'examples'),
+    unknownCtx,
+    guardFails,
+    accepted,
+    stale,
+    acceptErrors,
+  }
   report(opts, counts, findings, dispositionTally)
-  const total = baked.length + extra.length + inert.length + unknownCtx.length +
-    guardFails.length + exampleFindings.length
-  process.exit(total > 0 ? 1 : 0)
+  process.exit(blocking.length + unknownCtx.length + guardFails.length +
+    stale.length + acceptErrors.length > 0 ? 1 : 0)
 }
 
 function report (opts, counts, f, dispositionTally) {
@@ -207,6 +243,11 @@ function report (opts, counts, f, dispositionTally) {
     guardFailures: f.guardFails,
     examples: f.examples,
     dispositions: [...dispositionTally].map(([k, n]) => ({ disposition: k, count: n })),
+    // Accepted findings are IN the report as well as on the console: the record of
+    // what is known-broken has to be readable without re-running the gate.
+    accepted: f.accepted.map((a) => ({ key: a.key, ...a.entry, finding: a.finding })),
+    staleAcceptedKeys: f.stale,
+    acceptErrors: f.acceptErrors,
   }, null, 2) + '\n')
 
   if (opts.json) {
@@ -231,11 +272,34 @@ function report (opts, counts, f, dispositionTally) {
     console.log(`[refcheck] census guard: ${counts.anchorDerived} page(s) differ from golden only in derived anchor ids (expected)`)
   }
 
+  // Accepted: reported EVERY run, deliberately above the pass/fail line. The
+  // point of the accept-list is to stop these blocking the gate, not to hide them.
+  if (f.accepted.length) {
+    console.log(`\n[refcheck] ${f.accepted.length} accepted finding(s) — understood, not blocking (refcheck/accepted.json):`)
+    for (const a of f.accepted.sort((x, y) => x.key.localeCompare(y.key))) {
+      console.log(`      [${a.entry.disposition}] ${a.key}`)
+      console.log(`          ${a.entry.note}`)
+    }
+  }
+
   const clean = !f.baked.length && !f.extra.length && !f.inert.length &&
-    !f.unknownCtx.length && !f.guardFails.length && !f.examples.length
+    !f.unknownCtx.length && !f.guardFails.length && !f.examples.length &&
+    !f.stale.length && !f.acceptErrors.length
   if (clean) {
-    console.log('[refcheck] every attribute occurrence the census recorded is still a reference. ✓')
+    console.log('[refcheck] every attribute occurrence the census recorded is still a reference' +
+      (f.accepted.length ? ', apart from the accepted findings above' : '') + '. ✓')
     return
+  }
+
+  if (f.acceptErrors.length) {
+    console.log(`\n[refcheck] ✗ refcheck/accepted.json is malformed (${f.acceptErrors.length}):`)
+    for (const e of f.acceptErrors) console.log(`      ${e}`)
+  }
+
+  if (f.stale.length) {
+    console.log(`\n[refcheck] ✗ ${f.stale.length} STALE accepted entr${f.stale.length === 1 ? 'y' : 'ies'}` +
+      ' — the finding no longer occurs, so the file now claims a defect that is fixed. Prune it:')
+    for (const k of f.stale) console.log(`      ${k}`)
   }
 
   const byPage = (list) => {

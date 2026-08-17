@@ -23,13 +23,14 @@ const path = require('node:path')
 const { goldenPages, resolveConverted, readGolden } = require('./lib/pairing')
 const { buildIndex } = require('./lib/manifest-index')
 const { loadDispositions, droppedUrls } = require('../lib/dispositions')
+const { loadAccepted } = require('../lib/accepted')
 const { loadAnchorIndex } = require('./lib/anchor-index')
 const { loadInventoryIndex } = require('./lib/inventory-index')
 const { loadBaseline, novelProblems } = require('./lib/baseline')
 const { checkPage } = require('./lib/layer3')
 const { inventory, ASCIIDOC_PROFILE, DOCUSAURUS_PROFILE } = require('./lib/structure')
 const { compareInventory } = require('./lib/layer2')
-const { canonicalize, diffSegments, GOLDEN_STRIP, DOCUSAURUS_STRIP, GOLDEN_TABLE, DOCUSAURUS_TABLE } = require('./lib/layer1')
+const { canonicalize, diffSegments, GOLDEN_STRIP, DOCUSAURUS_STRIP, DOCUSAURUS_STRIP_IF, GOLDEN_TABLE, DOCUSAURUS_TABLE } = require('./lib/layer1')
 const { extractMain } = require('./lib/extract-main')
 const { lockfileKeyFromFile } = require('./lockfile-key')
 
@@ -92,6 +93,10 @@ function main () {
   if (opts.id) pages = pages.filter((p) => p.url === opts.id)
 
   // --- per-page comparison -------------------------------------------------
+  const { accept, errors: acceptErrors } = loadAccepted(path.join(__dirname, 'accepted.json'))
+  const acceptedDiffs = []
+  const matchedKeys = new Set()
+
   const report = []
   let converted = 0
   let pending = 0
@@ -111,7 +116,7 @@ function main () {
 
     if (opts.layers.has('1')) {
       const g = canonicalize(goldenHtml, { stripSelectors: GOLDEN_STRIP, tableSelector: GOLDEN_TABLE })
-      const c = canonicalize(fragment, { stripSelectors: DOCUSAURUS_STRIP, tableSelector: DOCUSAURUS_TABLE })
+      const c = canonicalize(fragment, { stripSelectors: DOCUSAURUS_STRIP, stripIf: DOCUSAURUS_STRIP_IF, tableSelector: DOCUSAURUS_TABLE })
       entry.l1 = diffSegments(g, c)
     }
     if (opts.layers.has('2')) {
@@ -123,20 +128,67 @@ function main () {
       const problems = checkPage({ html: fragment, pageUrl: p.url, fragment: true }, l3deps)
       entry.l3 = novelProblems(p.url, problems, baseline)
     }
+    // Accepted diffs (fidelity/accepted.json): understood, still reported, not
+    // blocking. Applied per DIFF, not per page, so a page with one accepted diff
+    // still fails on a new one. A page-level `error` is never acceptable -- there
+    // is no diff to judge, so accepting it would mute the page entirely.
+    for (const d of diffsOf(entry)) {
+      const key = acceptKey(p.url, d)
+      const e = Object.prototype.hasOwnProperty.call(accept, key) ? accept[key] : null
+      if (e) { matchedKeys.add(key); acceptedDiffs.push({ key, entry: e, url: p.url }); d.accepted = true }
+    }
+    entry.l1 = entry.l1.filter((d) => !d.accepted)
+    entry.l2 = entry.l2.filter((d) => !d.accepted)
+    entry.l3 = entry.l3.filter((d) => !d.accepted)
+
     if (entry.l1.length || entry.l2.length || entry.l3.length) { regressed++; report.push(entry) }
   }
 
-  writeReport(opts, meta, { total: pages.length, converted, pending, regressed }, report)
-  process.exit(regressed > 0 ? 1 : 0)
+  // Only judge staleness for entries this run could have matched.
+  const stale = Object.keys(accept)
+    .filter((k) => !matchedKeys.has(k) &&
+      (!opts.component || k.includes(` /${opts.component}/`)) &&
+      (!opts.id || k.includes(` ${opts.id} `)))
+    .sort()
+
+  writeReport(opts, meta, { total: pages.length, converted, pending, regressed },
+    report, { accepted: acceptedDiffs, stale, acceptErrors })
+  process.exit(regressed > 0 || stale.length > 0 || acceptErrors.length > 0 ? 1 : 0)
 }
 
-function writeReport (opts, meta, counts, report) {
+// One flat list of a page's diffs, tagged by layer, for accept-list matching.
+// Tags in place (no copy) so marking a diff accepted is visible in entry.l1/l2/l3.
+const diffsOf = (entry) => [
+  ...entry.l1.map((d) => { d.layer = 'L1'; return d }),
+  ...entry.l2.map((d) => { d.layer = 'L2'; return d }),
+  ...entry.l3.map((d) => { d.layer = 'L3'; return d }),
+]
+
+// The accept-list key for ONE diff: exact, so accepting a missing line does not
+// accept a different missing line on the same page. Printed by the gate so an
+// entry can be copied straight from its output.
+function acceptKey (url, d) {
+  if (d.layer === 'L2') return `fidelity:L2: ${url} ${d.field} golden=${d.golden} converted=${d.converted}`
+  if (d.layer === 'L3') return `fidelity:L3: ${url} ${d.type} ${d.path || ''}${d.anchor ? '#' + d.anchor : ''}`
+  return `fidelity:L1: ${url} ${d.op} ${JSON.stringify(d.text)}`
+}
+
+function writeReport (opts, meta, counts, report, acceptance) {
   const outDir = path.resolve('build/diff')
   fs.mkdirSync(outDir, { recursive: true })
   fs.writeFileSync(path.join(outDir, 'fidelity-report.json'),
-    JSON.stringify({ generatedAt: new Date().toISOString(), scope: { component: opts.component, id: opts.id, layers: [...opts.layers] }, counts, report }, null, 2) + '\n')
+    JSON.stringify({
+      generatedAt: new Date().toISOString(),
+      scope: { component: opts.component, id: opts.id, layers: [...opts.layers] },
+      counts,
+      report,
+      // The record of what is known-different has to be readable without re-running.
+      accepted: acceptance.accepted.map((a) => ({ key: a.key, url: a.url, ...a.entry })),
+      staleAcceptedKeys: acceptance.stale,
+      acceptErrors: acceptance.acceptErrors,
+    }, null, 2) + '\n')
 
-  if (opts.json) { console.log(JSON.stringify({ counts, report })); return }
+  if (opts.json) { console.log(JSON.stringify({ counts, report, ...acceptance })); return }
 
   const scope = opts.id ? `id=${opts.id}` : opts.component ? `component=${opts.component}` : 'all components'
   console.log(`\n[fidelity] ${scope}  layers=${[...opts.layers].join(',')}  pin ${meta.lockfileKey.slice(0, 12)} OK`)
@@ -153,7 +205,36 @@ function writeReport (opts, meta, counts, report) {
     for (const d of e.l2) console.log(`      L2 ${d.field}: golden=${d.golden} converted=${d.converted}`)
     for (const pr of e.l3) console.log(`      L3 ${pr.type} ${pr.path || ''}${pr.anchor ? '#' + pr.anchor : ''}`)
   }
-  console.log(`\n[fidelity] ${counts.regressed} page(s) with regressions; ${counts.converted - counts.regressed} clean.`)
+  // Accepted diffs: printed EVERY run, deliberately. The accept-list stops them
+  // blocking; it is not there to make them invisible.
+  if (acceptance.accepted.length) {
+    const byUrl = new Map()
+    for (const a of acceptance.accepted) {
+      if (!byUrl.has(a.url)) byUrl.set(a.url, [])
+      byUrl.get(a.url).push(a)
+    }
+    console.log(`\n[fidelity] ${acceptance.accepted.length} accepted difference(s) on ${byUrl.size} page(s)` +
+      ' — understood, not blocking (fidelity/accepted.json):')
+    for (const [url, rows] of [...byUrl].sort()) {
+      console.log(`\n  ~ ${url}`)
+      for (const a of rows) {
+        console.log(`      [${a.entry.disposition}] ${a.key.replace(`fidelity:`, '').replace(` ${url} `, ' ')}`)
+        console.log(`          ${a.entry.note}`)
+      }
+    }
+  }
+  if (acceptance.acceptErrors.length) {
+    console.log(`\n[fidelity] ✗ fidelity/accepted.json is malformed (${acceptance.acceptErrors.length}):`)
+    for (const e of acceptance.acceptErrors) console.log(`      ${e}`)
+  }
+  if (acceptance.stale.length) {
+    console.log(`\n[fidelity] ✗ ${acceptance.stale.length} STALE accepted entr${acceptance.stale.length === 1 ? 'y' : 'ies'}` +
+      ' — the difference no longer occurs, so the file now claims a discrepancy that is fixed. Prune it:')
+    for (const k of acceptance.stale) console.log(`      ${k}`)
+  }
+
+  console.log(`\n[fidelity] ${counts.regressed} page(s) with regressions; ${counts.converted - counts.regressed} clean` +
+    (acceptance.accepted.length ? `; ${acceptance.accepted.length} accepted difference(s)` : '') + '.')
 }
 
 main()

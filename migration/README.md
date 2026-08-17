@@ -75,6 +75,21 @@ Like the golden snapshot, the census render is a **build input**, not part of `c
 
 Each takes `--component X` to scope to a subset (fidelity/refs also take `--id /url`; orphans also takes `--include-resolution-only`), `--json` for machine output, and writes a full report under `build/`. All exit non-zero on findings.
 
+### Accepted findings
+
+Some discrepancies are real, understood, and not going to change. `refcheck/accepted.json` and `fidelity/accepted.json` (mechanism in `lib/accepted.js`) let you record one so its gate goes green **while it is still printed on every run** and written to the gate's JSON report. The point is to stop it blocking, not to hide it — a permanent failure teaches the reader to skim past the failure section, which is how a genuine new finding gets missed.
+
+Four properties keep an accept-list from becoming a way to make a gate lie:
+
+- **Occurrence-exact keys.** A key pins the finding's numbers, not just its page: accepting `{hazelcast-cloud} 12->11` does not accept `12->10`. A second defect on an already-accepted page changes the key and fails. Keys are printed by the gates, so an entry can be copied from their output.
+- **Deny by default.** Only an exact key match clears. No patterns, prefixes or wildcards.
+- **A reason is required.** Each entry needs a `disposition` — `wont-fix`, `upstream`, `harness-limit`, `deferred` — and a non-empty `note`. A malformed entry fails the gate.
+- **Stale entries fail.** If an accepted finding stops occurring, the file now claims a defect that is fixed; pruning it is a one-line edit and failing is what makes sure that happens. Scope-aware, so `--component cloud` does not call operator's entries stale. (Deliberately stricter than orphancheck's allowlist, which only warns.)
+
+Not everything is acceptable. refcheck's `unknownContexts` and `guardFailures`, and fidelity's page-level `error`, can never be accepted: each means the gate could not judge the page at all, so silencing one would silence everything behind it.
+
+Reach for `harness-limit` only after checking the **rendered** output — a comparator blind spot is a harness bug, not a discrepancy. The admonition-title strip fixed on 2026-08-17 was one: Layer 1 dropped the whole `admonitionHeading` element on the Docusaurus side, so every `:::warning[Custom title]` reported its title as missing text even though the built page rendered it correctly.
+
 Supporting scripts, **not** part of `check`:
 
 - `npm run selftest` — unit tests for the pure logic the gates and converter depend on (needs no golden/build): the shared layout config (`lib/layout.js`); the converter's MDX escapers, link classifiers, partial-factoring, and nav→sidebar plan; the fidelity harness's Layer 1/2/3, golden de-instrumentation, manifest URL resolver, snapshot-pin key, and page pairing; the reference-checker matchers; the construct detectors; and the orphan gate's reachability logic (xref/include extraction, logical-page key, orphan classification, allowlist schema + deny-by-default). Like `check`, it runs **all** suites regardless of individual outcome and exits non-zero if any failed. Run after editing any of them. Individually: `selftest:layout`, `selftest:converter`, `check:fidelity:selftest`, `check:refs:selftest`, `check:constructs:selftest`, `check:orphans:selftest`.
