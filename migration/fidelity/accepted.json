@@ -1,4 +1,45 @@
 {
-  "description": "Accepted differences for fidelity/run.js (see lib/accepted.js). DENY BY DEFAULT: a difference fails the gate unless its exact key appears here. Keys are PER DIFF, not per page, and are printed by the gate so an entry can be copied straight from its output — `fidelity:L1: {url} {-|+} \"{text}\"`, `fidelity:L2: {url} {field} golden={n} converted={n}`, `fidelity:L3: {url} {type} {path}#{anchor}`. Accepting one difference on a page leaves every other difference on it blocking. Each entry needs a `disposition` (wont-fix | upstream | harness-limit | deferred) and a non-empty `note`; a malformed entry fails the gate. Accepted differences are still PRINTED on every run and written to build/diff/fidelity-report.json. A STALE entry (its difference no longer occurs) FAILS the gate, so this cannot become a record of what used to be broken. A page-level `error` (no main-content container) is deliberately NOT acceptable: there is no diff to judge, so accepting it would mute the whole page. Ships EMPTY — prefer fixing a difference, and reach for `harness-limit` only after checking the RENDERED output, since a comparator blind spot is a harness bug (the admonition-title strip fixed on 2026-08-17 was one).",
-  "accept": {}
+  "description": "Accepted differences for fidelity/run.js (see lib/accepted.js). DENY BY DEFAULT: a difference fails the gate unless its exact key appears here. Keys are PER DIFF, not per page, and are printed by the gate so an entry can be copied straight from its output — `fidelity:L1: {url} {-|+} \"{text}\"`, `fidelity:L2: {url} {field} golden={n} converted={n}`, `fidelity:L3: {url} {type} {path}#{anchor}`. Accepting one difference on a page leaves every other difference on it blocking. Each entry needs a `disposition` (wont-fix | upstream | harness-limit | deferred) and a non-empty `note`; a malformed entry fails the gate. Accepted differences are still PRINTED on every run and written to build/diff/fidelity-report.json. A STALE entry (its difference no longer occurs) FAILS the gate, so this cannot become a record of what used to be broken. A page-level `error` (no main-content container) is deliberately NOT acceptable: there is no diff to judge, so accepting it would mute the whole page. Prefer fixing a difference over accepting it, and reach for `harness-limit` only after checking the RENDERED output, since a comparator blind spot is a harness bug rather than a discrepancy (the admonition-title strip fixed on 2026-08-17 was one).",
+  "accept": {
+    "fidelity:L1: /operator/latest-snapshot/scale - \"+ .For Openshift\"": {
+      "disposition": "upstream",
+      "note": "UPSTREAM SOURCE BUG in hazelcast-platform-operator-docs `docs/modules/ROOT/pages/scale.adoc`: a list continuation `+` is left dangling after a closed listing block, immediately before the block title `.For Openshift`. Asciidoctor therefore never reads that line as the next block's title and renders both lines as a literal paragraph — the LIVE docs site shows \"+ .For Openshift\" as stray text above the `oc apply` block today. Present on main, v/5.17 and v/5.18 (introduced after 5.16, which does not have the block). Our converter repairs it (fixSwallowedBlockTitles), so this diff is the golden's broken text that we deliberately do NOT reproduce. Fix = delete the stray `+` in the source; the entry then goes stale and the gate will say so."
+    },
+    "fidelity:L1: /operator/latest-snapshot/scale + \"For Openshift\"": {
+      "disposition": "upstream",
+      "note": "The other half of the scale.adoc diff above: the block title `For Openshift` that our output HAS and the golden does not, because the golden left it as literal paragraph text. Not new content — the same words, correctly attached to the code block that follows."
+    },
+    "fidelity:L1: /operator/5.18/image-registry - \"Hazelcast does not publish Red Hat images for snapshot versions.\"": {
+      "disposition": "upstream",
+      "note": "UPSTREAM SOURCE BUG in hazelcast-platform-operator-docs `docs/antora.yml` on the RELEASE branches: v/5.17 and v/5.18 both declare `snapshot: true`, which belongs only on main and was copied over when those branches were cut (v/5.16 is clean, which is exactly why 5.16 does not show this diff). image-registry.adoc wraps this note in `ifdef::snapshot[]`, so Antora renders it on those released versions — the LIVE 5.18 and 5.17 pages currently tell readers there are no Red Hat images for \"snapshot versions\". Our <IfSnapshot> evaluates false for a released version and suppresses it (verified in the built output: present only on latest-snapshot). Fix = delete `snapshot: true` from v/5.17 and v/5.18 antora.yml; the entry then goes stale and the gate will say so."
+    },
+    "fidelity:L2: /operator/5.18/image-registry admonitions.note golden=2 converted=1": {
+      "disposition": "upstream",
+      "note": "The Layer-2 counterpart of the image-registry diff above: the golden has two notes on the page because the release branch wrongly defines `snapshot`, ours has one because <IfSnapshot> correctly suppresses the snapshot-only note for a released version. Same single root cause — `snapshot: true` in v/5.17 and v/5.18 antora.yml."
+    },
+    "fidelity:L1: /operator/5.18/scale - \"+ .For Openshift\"": {
+      "disposition": "upstream",
+      "note": "UPSTREAM SOURCE BUG in hazelcast-platform-operator-docs `docs/modules/ROOT/pages/scale.adoc`: a list continuation `+` is left dangling after a closed listing block, immediately before the block title `.For Openshift`. Asciidoctor therefore never reads that line as the next block's title and renders both lines as a literal paragraph — the LIVE docs site shows \"+ .For Openshift\" as stray text above the `oc apply` block today. Present on main, v/5.17 and v/5.18 (introduced after 5.16, which does not have the block). Our converter repairs it (fixSwallowedBlockTitles), so this diff is the golden's broken text that we deliberately do NOT reproduce. Fix = delete the stray `+` in the source; the entry then goes stale and the gate will say so."
+    },
+    "fidelity:L1: /operator/5.18/scale + \"For Openshift\"": {
+      "disposition": "upstream",
+      "note": "The other half of the scale.adoc diff above: the block title `For Openshift` that our output HAS and the golden does not, because the golden left it as literal paragraph text. Not new content — the same words, correctly attached to the code block that follows."
+    },
+    "fidelity:L1: /operator/5.17/image-registry - \"Hazelcast does not publish Red Hat images for snapshot versions.\"": {
+      "disposition": "upstream",
+      "note": "UPSTREAM SOURCE BUG in hazelcast-platform-operator-docs `docs/antora.yml` on the RELEASE branches: v/5.17 and v/5.18 both declare `snapshot: true`, which belongs only on main and was copied over when those branches were cut (v/5.16 is clean, which is exactly why 5.16 does not show this diff). image-registry.adoc wraps this note in `ifdef::snapshot[]`, so Antora renders it on those released versions — the LIVE 5.18 and 5.17 pages currently tell readers there are no Red Hat images for \"snapshot versions\". Our <IfSnapshot> evaluates false for a released version and suppresses it (verified in the built output: present only on latest-snapshot). Fix = delete `snapshot: true` from v/5.17 and v/5.18 antora.yml; the entry then goes stale and the gate will say so."
+    },
+    "fidelity:L2: /operator/5.17/image-registry admonitions.note golden=2 converted=1": {
+      "disposition": "upstream",
+      "note": "The Layer-2 counterpart of the image-registry diff above: the golden has two notes on the page because the release branch wrongly defines `snapshot`, ours has one because <IfSnapshot> correctly suppresses the snapshot-only note for a released version. Same single root cause — `snapshot: true` in v/5.17 and v/5.18 antora.yml."
+    },
+    "fidelity:L1: /operator/5.17/scale - \"+ .For Openshift\"": {
+      "disposition": "upstream",
+      "note": "UPSTREAM SOURCE BUG in hazelcast-platform-operator-docs `docs/modules/ROOT/pages/scale.adoc`: a list continuation `+` is left dangling after a closed listing block, immediately before the block title `.For Openshift`. Asciidoctor therefore never reads that line as the next block's title and renders both lines as a literal paragraph — the LIVE docs site shows \"+ .For Openshift\" as stray text above the `oc apply` block today. Present on main, v/5.17 and v/5.18 (introduced after 5.16, which does not have the block). Our converter repairs it (fixSwallowedBlockTitles), so this diff is the golden's broken text that we deliberately do NOT reproduce. Fix = delete the stray `+` in the source; the entry then goes stale and the gate will say so."
+    },
+    "fidelity:L1: /operator/5.17/scale + \"For Openshift\"": {
+      "disposition": "upstream",
+      "note": "The other half of the scale.adoc diff above: the block title `For Openshift` that our output HAS and the golden does not, because the golden left it as literal paragraph text. Not new content — the same words, correctly attached to the code block that follows."
+    }
+  }
 }
