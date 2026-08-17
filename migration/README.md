@@ -125,6 +125,8 @@ Two properties make it trustworthy:
   - more than expected ⇒ **over-variableised**: the converter turned a coincidental literal into a `<Variable>`, which will follow the wrong value when the attribute changes. Nothing else catches this, and after cutover there is no golden left to notice it.
 - **Examples** — a page that pulls `example$` includes must import at least one example file rather than baking them all as literal fences. Still a floor, not an accounting: the converter matches examples by content and dedupes identical ones, so per-include matching would false-positive on every dedup. Extending the partial-boundary marker to the `example` family is what would make this exact.
 
+- **Frontmatter** — a `{name}` token in a page's YAML frontmatter is reported as **inert**: nothing interpolates frontmatter, so it reaches the reader as literal braces (in a sidebar label, say). Attributes in nav labels are therefore **baked** at conversion, as Antora bakes them when it renders the nav — so this finding means the baking was missed, not that a reference was lost.
+
 Nothing is ever matched on an attribute's real **value**, so a page that merely contains the literal `5.7.0` (operator's CRD default-values table does) cannot register as a reference. That is what let the converter's old `auditStillBaked` warning be deleted: it string-matched values, warned on that table on every run, and so trained the reader to ignore the category.
 
 ### Findings mean defects

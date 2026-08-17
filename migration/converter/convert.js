@@ -307,6 +307,20 @@ function parseArgs (argv) {
 // to ONE (component, version). Bare stems like "overview" recur across
 // components AND versions (often literally titled "Overview"), so an unscoped
 // map would clobber the titles the nav labels are drawn from.
+// A component-version's FULL resolved attribute table from the manifest (not just
+// the single-sourced subset): what Antora would resolve on that branch.
+function attrTableFor (manifest, component, seg) {
+  const comp = (manifest.components || []).find((c) => c.name === component)
+  if (!comp) return {}
+  const v = (comp.versions || []).find((x) => (x.version || '') === (seg == null ? '' : seg))
+  return (v && v.attributes) || {}
+}
+
+// Resolve {attribute} references in a chunk of AsciiDoc, via the substituter
+// shared with the example loader and the swizzled CodeBlock so the three cannot
+// drift. Null-safe: nav.adoc may be missing on a branch.
+const withAttrs = (text, lookup) => (text == null ? text : substitute(text, lookup))
+
 function indexManifest (manifest, component, seg) {
   const byUrl = new Map()
   const titleByStem = new Map()
@@ -499,7 +513,18 @@ function convertVersion (ver, ctx) {
   // exists in THIS version (titleByStem is this version's manifest): an older
   // branch may predate the page, and a nav entry pointing at nothing would be a
   // broken link rather than a fix.
-  const navAdoc = loadNavAdoc(component, seg, opts.sourcesDir)
+  // Nav labels are the one place attributes are deliberately BAKED. Everything
+  // the nav produces lands in YAML — a page's frontmatter `sidebar_label:` and a
+  // category's `_category_.json` label — and YAML is not interpolated by anything,
+  // so a surviving `{name}` reaches the reader as literal braces. Antora resolves
+  // these when it renders the nav; the converter reads nav.adoc raw, so it has to
+  // do the same. Resolving the whole nav source (not just the labels) matches what
+  // Antora does and covers xref targets too. Unknown names are left literal by
+  // `substitute`, exactly as Antora leaves an undefined attribute.
+  // refcheck's `inert` finding is the gate on this: a token in frontmatter is a
+  // failure to bake, not a reference.
+  const navAttrs = attrTableFor(manifest, component, seg)
+  const navAdoc = withAttrs(loadNavAdoc(component, seg, opts.sourcesDir), navAttrs)
   const injections = navInjectionsFor(ctx.dispositions, component).filter((i) => titleByStem.has(i.stem))
   const plan = navAdoc
     ? buildPlan(parseNav(injectNavEntries(navAdoc, injections)), titleByStem)

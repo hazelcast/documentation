@@ -26,6 +26,7 @@ const { classifyHref } = require('../fidelity/lib/links')
 const { collectOccurrences, decide, slugFor, componentNameFor, parseId } = require('./lib/partials')
 const { parseNav, buildPlan, injectNavEntries, targetStem, folderName } = require('./lib/nav')
 const { wrapRefs } = require('../antora-extension/mark-attributes')
+const substitute = require('../../plugins/lib/substitute-attributes')
 
 let n = 0
 const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
@@ -489,6 +490,27 @@ const renderedCode = (md) => {
   assert.strictEqual(wrapRefs(heading, names), heading,
     'inline code in a HEADING is left alone: a sentinel would leak into the derived anchor id')
   ok('mark-attributes: inline code marked in flow text, skipped in headings')
+}
+
+// --- nav labels: attributes are BAKED, deliberately --------------------------
+// Everything the nav produces lands in YAML — a page's frontmatter
+// `sidebar_label:` and a category's `_category_.json` label — and nothing
+// interpolates YAML, so a surviving `{name}` reaches the reader as literal
+// braces. Antora resolves these when it renders the nav; the converter reads
+// nav.adoc raw and so must resolve them itself.
+{
+  const nav = '.Manage {hazelcast-cloud}\n* xref:connect.adoc[Connect to {hazelcast-cloud}]\n'
+  const lookup = { 'hazelcast-cloud': 'Cloud' }
+  const roots = parseNav(substitute(nav, lookup))
+  assert.strictEqual(roots[0].label, 'Manage Cloud', 'a category label is resolved')
+  assert.strictEqual(roots[0].children[0].label, 'Connect to Cloud', 'a page label is resolved')
+
+  const raw = parseNav(nav)
+  assert.ok(raw[0].children[0].label.includes('{hazelcast-cloud}'),
+    'without the substitution the token would survive into frontmatter (the defect refcheck reports as `inert`)')
+  assert.strictEqual(substitute('Keep {not-an-attribute}', lookup), 'Keep {not-an-attribute}',
+    'an unknown name is left literal, as Antora leaves an undefined attribute')
+  ok('nav labels: attribute references are resolved before they become YAML')
 }
 
 console.log(`\n[converter selftest] ${n} groups passed.`)
