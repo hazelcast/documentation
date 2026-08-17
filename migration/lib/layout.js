@@ -40,7 +40,8 @@ const NAV_SOURCES = {
 // Live version set per versioned component: the current (main) branch plus the
 // released versions cut into `<component>_versioned_docs`. Newest release first.
 // Phase 1 warms up on operator with just the newest release; scale by extending
-// `releases` (and docusaurus.config.ts onlyIncludeVersions) together. Older
+// `releases` — the site takes the live set from the `<component>_versions.json`
+// written from here, so nothing in docusaurus.config.ts has to follow. Older
 // releases are frozen as static HTML outside this build (freeze plan), so they
 // are deliberately absent here.
 // `current` (optional) overrides the current-version golden/manifest seg when a
