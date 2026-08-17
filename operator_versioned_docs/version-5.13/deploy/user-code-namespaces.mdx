@@ -1,0 +1,81 @@
+---
+title: "User Code Namespaces"
+sidebar_position: 21
+slug: /user-code-namespaces
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_ucn_yaml from '../examples/hazelcast-ucn.yaml';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import Ex_user_code_namespace_aws_yaml from '../examples/user-code-namespace-aws.yaml';
+import Ex_user_code_namespace_gcp_yaml from '../examples/user-code-namespace-gcp.yaml';
+import Ex_user_code_namespace_azure_yaml from '../examples/user-code-namespace-azure.yaml';
+import Ex_map_ucn_yaml from '../examples/map-ucn.yaml';
+
+User Code Namespaces provide a container for Java classpath resources, such as user code and accompanying artifacts like property files. This provides namespace isolation to ensure that access to resources in different namespaces can be managed through configuration. From Hazelcast Platform Operator, you can deploy your application code from external buckets using UserCodeNamespace CRs.
+
+See [User Code Namespaces](/hazelcast/latest/clusters/user-code-namespaces) for more detailed information about the configuration and behavior of User Code Namespaces in Hazelcast.
+
+## Enabling User Code Namespaces
+
+To enable User Code Namespaces you must configure the `userCodeNamespaces` section in the Hazelcast custom resource.
+
+<CodeBlock language="yaml" title="Example of Hazelcast with User Code Namespaces enabled">{Ex_hazelcast_ucn_yaml}</CodeBlock>
+
+## Creating a User Code Namespace
+
+To create a User Code Namespace, you must create a new `UserCodeNamespace` CR. The name of the CR is used as the name of the created User Code Namespace. The JAR files stored in the configured bucket are uploaded to the Hazelcast cluster under the newly created namespace.
+
+<Tabs>
+<TabItem value="aws" label="AWS">
+
+User Code Namespaces in AWS S3:
+
+<CodeBlock language="yaml" metastring="conums">{Ex_user_code_namespace_aws_yaml}</CodeBlock>
+
+:::note
+
+For further information about accessing resources on different cloud providers, see [Authorization Methods to Access Cloud Provider Resources](./authorization.mdx).
+
+:::
+
+</TabItem>
+<TabItem value="gcp" label="GCP">
+
+User Code Namespaces in GCP:
+
+<CodeBlock language="yaml" metastring="conums">{Ex_user_code_namespace_gcp_yaml}</CodeBlock>
+
+:::note
+
+For further information about accessing resources on different cloud providers, see [Authorization Methods to Access Cloud Provider Resources](./authorization.mdx).
+
+:::
+
+</TabItem>
+<TabItem value="azure" label="Azure">
+
+User Code Namespaces in Azure Blob:
+
+<CodeBlock language="yaml" metastring="conums">{Ex_user_code_namespace_azure_yaml}</CodeBlock>
+
+:::note
+
+For further information about accessing resources on different cloud providers, see [Authorization Methods to Access Cloud Provider Resources](./authorization.mdx).
+
+:::
+
+</TabItem>
+</Tabs>
+
+<CodeCallouts>
+
+1. The bucket URI in which to store backup data
+2. Name of the secret with credentials for accessing the Bucket URI.
+
+</CodeCallouts>
+
+To allow your data structures to resolve your user code, you must reference the required namespace in the data structure configuration. You can configure the same namespace for multiple data structures.
+
+<CodeBlock language="yaml" title="Example of Map with User Code Namespace">{Ex_map_ucn_yaml}</CodeBlock>

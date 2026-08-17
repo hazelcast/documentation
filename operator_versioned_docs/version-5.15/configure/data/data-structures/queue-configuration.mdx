@@ -1,0 +1,42 @@
+---
+title: "Configuring Queues"
+sidebar_label: "Queue"
+sidebar_position: 4
+slug: /queue-configuration
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Ex_queue_yaml from '../../../examples/queue.yaml';
+
+Hazelcast distributed queue is an implementation of java.util.concurrent.BlockingQueue. Being distributed, Hazelcast distributed queue enables all cluster members to interact with it. Using Hazelcast distributed queue, you can add an item in one cluster member and remove it from another one. You can create and configure queue using the `Queue` custom resource.
+
+## Configuring a Queue Resource
+
+You can use any of the following configuration options in the `Queue` resource. For more information, see the [API Reference](../../../reference/api-ref.mdx#queuespec).
+
+| Field | Description |
+| --- | --- |
+| `name` | Name of the queue configuration that you're creating. If empty, the custom resource (CR) name is used. |
+| `hazelcastResourceName` | Defines the name of the Hazelcast resource for which the queue configuration is created. |
+| `backupCount` | Count of synchronous backups. |
+| `asyncBackupCount` | Count of asynchronous backups. |
+| `maxSize` | Max size of the queue. |
+| `emptyQueueTTLSeconds` | Time in seconds after which the Queue will be destroyed if it stays empty or unused. If the values is not provided the Queue will never be destroyed. |
+| `priorityComparatorClassName` | The name of the comparator class. If the class name is provided, the Queue becomes Priority Queue. |
+
+## Example Configuration
+
+The following `Queue` custom resource creates a queue configuration for the `Hazelcast` custom resource that is defined in the `hazelcastResourceName` field.
+
+<CodeBlock language="yaml" title="Example configuration">{Ex_queue_yaml}</CodeBlock>
+
+After creating the `Queue` resource, use the following command to check its status:
+
+```shell
+kubectl get queue queue-sample -o wide
+```
+
+```none
+NAME           STATUS    HAZELCAST-RESOURCE   MESSAGE
+queue-sample   Success   hazelcast
+```

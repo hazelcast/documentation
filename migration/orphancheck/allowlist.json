@@ -19,6 +19,13 @@
       "disposition": "drop-404",
       "note": "\"Teams and User Roles\" (75 lines) is SUPERSEDED by the Organizations and Accounts section, which covers accounts, users, roles and invitations. Never in nav and nothing links to it (the gate classifies it UNREACHABLE), so it is already invisible on the current site. User decision 2026-08-17: drop it, a 404 is acceptable. ACTED ON: the converter skips drop-404 pages, so no .mdx is emitted and the URL 404s; the gates drop it from scope rather than counting it as not-yet-converted."
     },
+    "operator:whats-new": {
+      "disposition": "keep-in-nav",
+      "note": "Real \"What's new in Hazelcast Platform Operator\" page, version-specific and substantial (Community Edition changes, WAN Replication enhancements, multi-member routing at 5.13; lite members, vector collections at 5.14). Exists ONLY on v/5.13 and v/5.14 -- absent from 5.12 and dropped again from 5.15 onwards -- and is missing from nav.adoc in both branches, so it is invisible on the current Antora site too: a source omission, not a migration artifact. User decision 2026-08-17: keep it in nav, directly under Release notes. Fixed AS PART OF THE MIGRATION via `nav.after`, which injects the entry into the parsed nav at conversion time (converter/lib/nav injectNavEntries) at the same bullet depth as its anchor, so it lands as the second item of Get Started. The anchor `release-notes` occurs twice in these navs (Get Started, then the dedicated Release Notes section); injectNavEntries takes the FIRST match, which is the Get Started one we want. Injected only where the page exists in that version (5.13, 5.14), so the other six live versions are untouched. The injected entry carries an empty label, so the sidebar label comes from the page's doctitle. Slug (/whats-new) is URL-derived, so its URL is unchanged.",
+      "nav": {
+        "after": "release-notes"
+      }
+    },
     "clc:clc-platform": {
       "disposition": "drop-404",
       "note": "Empty page: clc-platform.adoc is a 0-byte file in ALL nine branches (5.2.1-5.5.1) and has never been in nav. Nothing to preserve, no inbound links. User decision 2026-08-13: delete it, a 404 is fine. ACTED ON: the converter skips drop-404 pages, so no .mdx is emitted and the URL 404s; the gates drop it from scope rather than counting it as not-yet-converted."

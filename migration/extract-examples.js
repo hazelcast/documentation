@@ -29,7 +29,7 @@ const REPOS = {
   operator: { repo: 'hazelcast-platform-operator-docs.git', examplesDir: 'docs/modules/ROOT/examples', pagesGlob: 'docs/modules/ROOT/pages' },
 }
 const CURRENT_SEG = 'latest-snapshot'
-const DEFAULT_VERSIONS = { operator: [CURRENT_SEG, '5.18', '5.17', '5.16'] }
+const DEFAULT_VERSIONS = { operator: [CURRENT_SEG, '5.18', '5.17', '5.16', '5.15', '5.14', '5.13', '5.12'] }
 
 function parseArgs (argv) {
   const args = argv.slice(2)

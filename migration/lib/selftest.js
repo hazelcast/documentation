@@ -120,11 +120,22 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
 
 // --- marked attributes ----------------------------------------------------
 {
-  assert(Array.isArray(markedAttrsFor('operator')) && markedAttrsFor('operator').length === 0,
+  assert(Array.isArray(markedAttrsFor('nope')) && markedAttrsFor('nope').length === 0,
     'a component with no marked attrs -> empty array')
   assert(markedAttrsFor('cloud').includes('hazelcast-cloud'),
     'cloud marks hazelcast-cloud (ambiguous "Cloud" value)')
-  ok('markedAttrsFor: empty by default, cloud marks hazelcast-cloud')
+  // CHANGE DETECTOR (asserts the constant, not a property): the requirement it
+  // stands in for is "an attribute must be MARKED whenever its resolved value
+  // also appears as literal data on a page that references it", which no unit
+  // test can evaluate — it is a fact about the corpus. `npm run check:refs` is
+  // the real oracle: it counts occurrences against the poisoned census render and
+  // fails with `extra` (over-variableised) exactly when this list is missing an
+  // attribute that needs marking. operator's page-latest-supported-hazelcast is
+  // here because scaling-upgrading's compatibility matrix repeats the version as
+  // table data. This line only catches an accidental deletion.
+  assert(markedAttrsFor('operator').includes('page-latest-supported-hazelcast'),
+    'operator marks page-latest-supported-hazelcast (value collides with compatibility-table data)')
+  ok('markedAttrsFor: empty by default; marks the values that collide with page data')
 }
 
 console.log(`\n[layout selftest] ${n} groups passed.`)

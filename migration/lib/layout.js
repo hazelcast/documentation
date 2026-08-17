@@ -49,7 +49,7 @@ const NAV_SOURCES = {
 // current seg is `5.5.1` and only the older 5.5.0 is cut as a versioned copy —
 // matching the two versions clc serves in production.
 const VERSIONS = {
-  operator: { releases: ['5.18', '5.17', '5.16'] },
+  operator: { releases: ['5.18', '5.17', '5.16', '5.15', '5.14', '5.13', '5.12'] },
   clc: { current: '5.5.1', releases: ['5.5.0'] },
 }
 
@@ -63,6 +63,21 @@ const VERSIONS = {
 // variables.ts exactly like the SINGLE_SOURCE set.
 const MARKED_ATTRS = {
   cloud: ['hazelcast-cloud'],
+  // operator's page-latest-supported-hazelcast is a version number that COLLIDES
+  // with literal data on the very page that references it: scaling-upgrading
+  // carries an Operator->Hazelcast compatibility matrix of historical versions,
+  // and at 5.12 its value (5.4.0) is also the Hazelcast cell of rows 5.11 and
+  // 5.12, at 5.14 (5.5.2) the cell of row 5.14, and at 5.13 the value is the
+  // bare `5.5`, which is the OPERATOR column's cell for row 5.5. Page-scoping
+  // the reverse-map cannot help — the collision is on a page that genuinely
+  // references the attribute — so those cells were variableised and would have
+  // followed the attribute on a version bump, silently rewriting historical
+  // facts. Marking gives the exact reference positions instead. It stays in
+  // SINGLE_SOURCE too (see convert.js): image-registry references it inside a
+  // `[source,yaml]` fence, which marking structurally cannot reach, so the CODE
+  // reverse-map is still what preserves that one. Marked attrs are excluded from
+  // the PROSE reverse-map only (see proseVarsFor in convert.js).
+  operator: ['page-latest-supported-hazelcast'],
   // clc references {hazelcast-cloud} heavily; its value "Cloud" is the same
   // ambiguous prose word as in cloud (a page also says "Confluent Cloud"), so it
   // must be MARKED, not value-reverse-mapped.

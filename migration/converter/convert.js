@@ -434,6 +434,23 @@ function buildPageVars (names, lookup) {
   return m
 }
 
+// The subset of `pageVars` that may be reverse-mapped in PROSE: everything a
+// MARKED attribute contributes is dropped.
+//
+// Marking (antora-extension/mark-attributes.js) records a reference's exact
+// POSITION, and it covers every non-verbatim context — flow text, table cells,
+// inline code, headings. So for a marked attribute the prose reverse-map is
+// redundant by construction: a genuine reference already arrives as a marker
+// span, and anything the value match finds on top of that is a coincidental
+// literal (operator's compatibility matrix; see MARKED_ATTRS in lib/layout.js),
+// which must stay literal. What marking CANNOT reach is a verbatim block, so the
+// CODE reverse-map keeps the full map and image-registry's `[source,yaml]` fence
+// still becomes a `vars` template.
+function proseVarsFor (pageVars, marked) {
+  if (!marked.length) return pageVars
+  return new Map([...pageVars].filter(([, name]) => !marked.includes(name)))
+}
+
 // There is no still-baked audit here any more. It searched each page body for an
 // attribute's resolved VALUE and warned wherever it found one, which made it
 // permanently, unfixably noisy: operator's CRD default-values table genuinely
@@ -616,10 +633,11 @@ function convertVersion (ver, ctx) {
     if (!title) { title = (stem || 'index').replace(/-/g, ' '); derived = true }
 
     const pageVars = buildPageVars(attrsByStem.get(stem), exampleLookup)
+    const proseVars = proseVarsFor(pageVars, markedAttrsFor(component))
 
     let body, imports
     try {
-      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, latestVersions: ctx.latestVersions, urlToRelFile }))
+      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, latestVersions: ctx.latestVersions, urlToRelFile }))
     } catch (err) {
       problems.push({ url: p.url, error: err.message })
       continue

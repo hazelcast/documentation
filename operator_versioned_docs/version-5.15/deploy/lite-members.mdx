@@ -1,0 +1,58 @@
+---
+title: "Deploying Lite Members"
+sidebar_label: "Deploy lite members"
+sidebar_position: 2
+slug: /lite-members
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Ex_lite_member_yaml from '../examples/lite-member.yaml';
+import Ex_lite_member_jvm_yaml from '../examples/lite-member-jvm.yaml';
+import Ex_lite_member_resource_limits_yaml from '../examples/lite-member-resource-limits.yaml';
+import Ex_lite_member_scheduling_yaml from '../examples/lite-member-scheduling.yaml';
+
+Use the Hazelcast Platform Operator to deploy [Lite Members](https://docs.hazelcast.com/hazelcast/latest/maintain-cluster/lite-members). You can use the separate `liteMember` section in the [Hazelcast CR](../reference/api-ref.mdx#litemember).
+
+:::warning
+
+When `jvm`, `env`, `resources`, `scheduling` sections are configured in the Hazelcast CR, it will not affect the lite member configuration. Lite members must be configured as explained in the following sections.
+
+:::
+
+## Configuring the Number of Lite Members
+
+To configure the number of lite members you want to deploy in the Hazelcast CR, use the `count` field in the `liteMember` section of the [Hazelcast CR](../reference/api-ref.mdx#litemember).
+
+<CodeBlock language="yaml" title="Example Lite Member Count Configuration">{Ex_lite_member_yaml}</CodeBlock>
+
+When you apply the given example, 3 data members and 2 lite members are deployed.
+
+:::note
+
+As seen in the example, `clusterSize` represents the number of data members to be created.
+
+:::
+
+## Configuring JVM Parameters
+
+To configure JVM Parameters specifically for lite members, you can use the `jvm` field in the `liteMember` section of the [Hazelcast CR](../reference/api-ref.mdx#litemember).
+
+<CodeBlock language="yaml" title="Example Lite Member JVM Configuration">{Ex_lite_member_jvm_yaml}</CodeBlock>
+
+## Configuring Environment Variables
+
+To configure environment variables specifically for lite members, you can use the `env` field in the `liteMember` section of the [Hazelcast CR](../reference/api-ref.mdx#litemember).
+
+Same rules and logic is applicable as in the [Environment variables](../configure/configuration-properties/env-vars.mdx).
+
+## Configuring Resource Limits
+
+To configure resource limits specifically for lite members, you can use the `resources` field in the `liteMember` section of the [Hazelcast CR](../reference/api-ref.mdx#litemember).
+
+<CodeBlock language="yaml" title="Example Lite Member Resource Limits Configuration">{Ex_lite_member_resource_limits_yaml}</CodeBlock>
+
+## Configuring Scheduling
+
+To configure scheduling specifically for lite members, you can use the `scheduling` field in the `liteMember` section of the [Hazelcast CR](../reference/api-ref.mdx#litemember).
+
+<CodeBlock language="yaml" title="Example Lite Member Scheduling Configuration">{Ex_lite_member_scheduling_yaml}</CodeBlock>

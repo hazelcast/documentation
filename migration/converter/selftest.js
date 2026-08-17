@@ -492,6 +492,52 @@ const renderedCode = (md) => {
   ok('mark-attributes: inline code marked in flow text, skipped in headings')
 }
 
+// --- marked attrs: value reverse-map applies to CODE only, never PROSE -------
+// The requirement: for a MARKED attribute, a reference must be preserved exactly
+// where the source put one and NOWHERE ELSE. Marking supplies the positions for
+// every non-verbatim context, so prose needs no value matching — and value
+// matching in prose is actively wrong, because the same value can occur as
+// literal data on the very page that references it (operator's scaling-upgrading
+// compatibility matrix: at 5.12 `5.4.0` is both the attribute's value and the
+// Hazelcast cell of rows 5.11/5.12). Verbatim blocks are the exception marking
+// cannot reach, so code KEEPS the value map.
+//
+// The oracle is the source's own reference count: one marked reference in the
+// prose and none in the table means exactly one <Variable> in the prose, and the
+// table's literals must survive verbatim.
+{
+  const value = '5.4.0'
+  const pageVars = new Map([[value, 'page-latest-supported-hazelcast']])
+  const proseVars = new Map() // what proseVarsFor yields once the attr is marked
+  const marker = `<span class="hz-attr-page-latest-supported-hazelcast">${value}</span>`
+  // One genuine (marked) reference in flow text, plus the compatibility matrix
+  // repeating the same version as DATA in two rows.
+  const html =
+    `<div class="paragraph"><p>Upgrade to ${marker}, then apply:</p></div>` +
+    '<table class="tableblock"><tbody>' +
+    `<tr><td class="tableblock"><p>5.11</p></td><td class="tableblock"><p>${value}</p></td></tr>` +
+    `<tr><td class="tableblock"><p>5.12</p></td><td class="tableblock"><p>${value}</p></td></tr>` +
+    '</tbody></table>'
+  const ctx = { pageUrl: '/operator/5.12/scaling-upgrading', component: 'operator', seg: '5.12', pageVars, proseVars }
+  const out = convertBody(html, ctx).body
+  const refs = (out.match(/<Variable name="page-latest-supported-hazelcast"\/>/g) || []).length
+  assert.strictEqual(refs, 1,
+    'exactly the ONE reference the source marked becomes a <Variable> — the table data does not')
+  assert.strictEqual((out.match(/5\.4\.0/g) || []).length, 2,
+    'both compatibility-table cells keep the literal version they state as historical fact')
+
+  // Contrast, same page: inside a fence marking cannot reach, so the value map
+  // still applies and the fence becomes a `vars` template with no baked value.
+  const fence = '<div class="listingblock"><div class="content">' +
+    `<pre class="highlight"><code class="language-yaml">spec:\n  version: ${value}\n</code></pre></div></div>`
+  const fenced = convertBody(fence, ctx).body
+  assert.ok(/```yaml vars/.test(fenced),
+    'a fence containing the value is reverse-mapped and flagged `vars`')
+  assert.ok(fenced.includes('{page-latest-supported-hazelcast}') && !fenced.includes(value),
+    'the fence carries the placeholder, not the resolved value')
+  ok('marked attrs: prose preserves only marked references (table data stays literal); fences keep the value map')
+}
+
 // --- nav labels: attributes are BAKED, deliberately --------------------------
 // Everything the nav produces lands in YAML — a page's frontmatter
 // `sidebar_label:` and a category's `_category_.json` label — and nothing

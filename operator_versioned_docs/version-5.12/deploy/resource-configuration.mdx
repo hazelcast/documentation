@@ -1,0 +1,33 @@
+---
+title: "Configuring Container Resources"
+sidebar_label: "Configuring Resource Limits"
+sidebar_position: 16
+slug: /resource-configuration
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_resources_yaml from '../examples/hazelcast-resources.yaml';
+import Ex_sidecar_resources_yaml from '../examples/sidecar-resources.yaml';
+import Ex_management_center_resources_yaml from '../examples/management-center-resources.yaml';
+
+You can configure resources for Hazelcast, sidecar agent, and Management Center containers.
+
+You can find detailed information about resources in the [Resource Management for Pods and Containers](https://kubernetes.io/docs/tasks/configure-pod-container/assign-cpu-resource/) Kubernetes documentation.
+
+## Configuring Resources for Hazelcast
+
+You can configure resources for Hazelcast containers using the `resources` field of the CRD `spec`.
+
+<CodeBlock language="yaml" title="Example configuration">{Ex_hazelcast_resources_yaml}</CodeBlock>
+
+## Configuring Resources for Sidecar
+
+You can configure resources for sidecar containers using the `agent.resources` field of the CRD `spec`.
+
+<CodeBlock language="yaml" title="Example configuration">{Ex_sidecar_resources_yaml}</CodeBlock>
+
+## Configuring Resources for Management Center
+
+You can configure resources for Management Center containers using the `resources` field of the CRD `spec`.
+
+<CodeBlock language="yaml" title="Example configuration">{Ex_management_center_resources_yaml}</CodeBlock>

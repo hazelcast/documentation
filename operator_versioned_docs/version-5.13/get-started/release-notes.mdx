@@ -1,0 +1,36 @@
+---
+title: "Release Notes"
+sidebar_label: "Release notes"
+sidebar_position: 2
+slug: /release-notes
+---
+
+These release notes list any new features, enhancements, fixes and breaking changes that were made between version 5.12.0 and version 5.13.0 of Hazelcast Operator.
+
+## New Features
+
+- Custom WAN ports are now exposed on member services with the `WithExposeExternally` value of `serviceType`
+- Added support for Secrets in Custom Config
+- Added parameters to JetJob CR
+- Added custom environment variable support
+- Added support for IAM roles for service accounts in AWS
+
+## Changes
+
+- Open Source cluster creation logic removed; it is now required to provide the `licenseKeySecretName` for Hazelcast and Management Center custom resources.
+- Changed the default persistence value `clusterDataRecoveryPolicy` to `PartialRecoveryMostComplete` and `autoRemoveStaleData` to `true`
+- Added client authentication capability when security is configured in Custom Config
+- Updated members' connection status in WAN replication
+- Deprecated `portCount` in Advanced Network WAN
+- Reduced the number of init containers to one
+
+## Fixed Issues
+
+- Fixed the `persistence.storageClass` validation issue
+- Removed leftover WAN services after a WAN config was deleted from advanced network
+- Added validation for the maximum WAN port value in Hazelcast CR
+- Added the default WAN port and name in Advanced Network for Hazelcast CR
+- Made WAN names DNS compatible
+- Fixed error with MTLS client registry after operator restart
+- Fixed map status when MapConfig creation failed
+- Fixed panic error in the `ValidateNotUpdatableMcPersistenceFields` function

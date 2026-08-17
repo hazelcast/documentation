@@ -1,0 +1,90 @@
+---
+title: "Running Data Pipelines"
+sidebar_label: "Run data pipelines"
+sidebar_position: 2
+slug: /jet-job-configuration
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Ex_jet_job_example_yaml from '../../../examples/jet-job-example.yaml';
+
+Data Pipelines allow you to process data stored in one location and send the result to another, such as from a data lake to an analytics database or into a payment processing system. You can also use the same source and sink so the pipeline only processes data.
+
+With the Hazelcast Platform Operator, you can run Data Pipelines from existing JAR files for processing data. Data Pipelines, depending on the data source, can be used for stream or batch processing. To create a Data Pipeline using `JetJob` CR, the Jet Engine in the `Hazelcast` CR must be configured. It is required to set `enable` and `resourceUploadEnabled` to `true`. To understand the Data Pipelines and the Jet Engine, refer to [Platform documentation](/hazelcast/latest/pipelines/overview).
+
+## Configuring the JetJob Resource
+
+Below are the configuration options for the `JetJob` resource. You can find more detailed information in [API Reference](../../../reference/api-ref.mdx#jetjobspec) page.
+
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`name`</td>
+<td>Name of the Jet Job to be created. If empty, the CR name will be used. It cannot be updated after the Jet Job is created successfully.</td>
+</tr>
+<tr>
+<td>`hazelcastResourceName`</td>
+<td>HazelcastResourceName defines the name of the Hazelcast resource.</td>
+</tr>
+<tr>
+<td>`state`</td>
+<td>State is used to manage the job state. The default value is 'Running' and its value must be `Running` when the JetJob object is created for the first time.</td>
+</tr>
+<tr>
+<td>`jarName`</td>
+<td>JarName specify the name of the Jar to run that is present on the member</td>
+</tr>
+<tr>
+<td>`mainClass`</td>
+<td>MainClass is the name of the main class that will be run on the submitted job</td>
+</tr>
+<tr>
+<td>`bucketConfig`</td>
+<td>
+
+JAR file that is specified in the `jarName` from an external bucket are placed accessible for the member when the following parameter values are supplied:
+
+- `secretName`: Name of the Secret object which holds the credentials for your cloud provider.
+- `bucketURI`: Full path for the external bucket. For example: `gs://your-bucket/path/to/jars`.
+
+</td>
+</tr>
+<tr>
+<td>`remoteURL`</td>
+<td>URL from where the file will be downloaded.</td>
+</tr>
+</tbody>
+</table>
+
+## Providing the JAR file for Data Pipeline
+
+To run the Data Pipeline, you need to provide a JAR file that contains the Pipeline. The JAR file can be pre-downloaded before the cluster starts by configuring the `jet.bucketConfig`, `jet.remoteURLs`, or `jet.configMaps` in the `Hazelcast` CR. This way, all the files in the bucket will be accessible to the member when the cluster starts. Another option is to configure `bucketConfig` or `remoteURL` in the `JetJob` CR. This way, only the JAR file specified in the `jarName` parameter will be downloaded in the runtime before starting the Data Pipeline.
+
+## JetJob state management
+
+Once the job is created, you can use `state` field to manage its lifecycle. The following `state` values are available:
+
+- `Running`. All the jobs must be created with the `Running` state. It will run the newly created job or will start the `Suspended` job.
+- `Suspended`. Gracefully suspends the `Running` job.
+- `Canceled`. Gracefully stops the job.
+- `Restarted`. Suspends and resumes the job in one step.
+
+Deleting the `JetJob` resource will forcefully cancel the job.
+
+## Example Configuration
+
+The following `JetJob` resource runs the Data Pipeline for the `Hazelcast` resources on the source Hazelcast cluster from `my-data-pipeline.jar`.
+
+<CodeBlock language="yaml" title="Example configuration">{Ex_jet_job_example_yaml}</CodeBlock>
+
+:::note
+
+For further information about accessing resources on different cloud providers, see [Authorization Methods to Access Cloud Provider Resources](../../security/authorization.mdx).
+
+:::

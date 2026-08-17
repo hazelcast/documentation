@@ -1,0 +1,44 @@
+---
+title: "Management Center Persistence"
+sidebar_label: "Persistence"
+sidebar_position: 3
+slug: /management-center-persistence
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Ex_management_center_persistence_yaml from '../../examples/management-center-persistence.yaml';
+
+Management Center collect and report metrics data for the connected Hazelcast Clusters. Metrics data includes various number of time series, such as CPU load, memory consumption, and operation counters. See the [Metrics section](/hazelcast/latest/list-of-metrics) for details about configuring metrics collection.
+
+By default, Management Center persists the collected metrics to a persistent volume. You can turn it off by disabling persistence.
+
+## Configuring Management Center Persistence
+
+Configuration for Management Center persistence.
+
+| Field | Description |
+| --- | --- |
+| `persistence.enabled` | When true, Management Center will use a PersistentVolumeClaim to store data. |
+| `persistence.size` | Size of the created PersistentVolumeClaim. |
+| `persistence.existingVolumeClaimName` | Name of the PersistentVolumeClaim MC will use for persistence. If not empty, MC will use the existing claim instead of creating a new one. |
+| `persistence.storageClass` | StorageClass from which PersistentVolumeClaim will be created. |
+
+:::warning
+
+StatefulSet does not support updates to `volumeClaimTemplates` field, so `persistence` field should be set only at the creation of the custom resource. Any update to the `persistence` field will not affect the Management Center.
+
+:::
+
+:::note
+
+By default, [Management Center data](/management-center/latest/deploy-manage/configuring#where-management-center-saves-data) is persisted to the `/data` directory. If you want to use an existing `PersistentVolumeClaim`, set its name in the `.spec.persistence.existingVolumeClaimName` field in the Management Center custom resource.
+
+:::
+
+### Example Configuration
+
+The example configuration does the following:
+
+- Assigns Kubernetes Persistent Volume with size of 10Gi
+
+<CodeBlock language="yaml" title="Example Management Center with Persistence Configuration">{Ex_management_center_persistence_yaml}</CodeBlock>

@@ -80,6 +80,12 @@ function convertBody (html, ctx) {
     // string elsewhere is never touched. Prose -> <Variable>; code -> `{name}`
     // placeholder + a `vars` fence flag the swizzled CodeBlock resolves.
     pageVars: ctx.pageVars || new Map(),
+    // The prose-only subset of pageVars: a MARKED attribute's value is dropped,
+    // because marking already supplies its non-verbatim references positionally
+    // and a value match on top of that can only be a coincidental literal (see
+    // proseVarsFor in convert.js). Code keeps the full pageVars — marking cannot
+    // reach inside a verbatim block.
+    proseVars: ctx.proseVars || ctx.pageVars || new Map(),
     // component -> current stable latest version, for floating versionless
     // cross-component xrefs to `/<comp>/latest/` (see floatCrossComponentLatest).
     latestVersions: ctx.latestVersions || {},
@@ -945,7 +951,7 @@ function inlineFrom ($, nodes, st, opt = {}) {
 function escapeInlineText (data, opt, st) {
   const collapsed = data.replace(/\s+/g, ' ')
   const esc = opt.cell ? mdEscapeCell(collapsed) : mdEscape(collapsed)
-  return st && st.pageVars ? reverseProseVars(esc, st.pageVars) : esc
+  return st && st.proseVars ? reverseProseVars(esc, st.proseVars) : esc
 }
 
 function inlineTag ($, node, st, opt) {
