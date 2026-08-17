@@ -72,11 +72,18 @@ const MARKED_ATTRS = {
   // the reverse-map cannot help — the collision is on a page that genuinely
   // references the attribute — so those cells were variableised and would have
   // followed the attribute on a version bump, silently rewriting historical
-  // facts. Marking gives the exact reference positions instead. It stays in
-  // SINGLE_SOURCE too (see convert.js): image-registry references it inside a
-  // `[source,yaml]` fence, which marking structurally cannot reach, so the CODE
-  // reverse-map is still what preserves that one. Marked attrs are excluded from
-  // the PROSE reverse-map only (see proseVarsFor in convert.js).
+  // facts. Marking gives the exact reference positions instead. Marked attrs are
+  // excluded from the PROSE reverse-map only (see proseVarsFor in convert.js).
+  //
+  // It stays in SINGLE_SOURCE as well, because marking alone does NOT carry its
+  // reference inside image-registry's yaml block. Note the reason is not that
+  // marking skips the block -- that file uses BACKTICK fences, which are absent
+  // from mark-attributes' DELIMITERS set, so the pass does mark inside it and the
+  // golden really does contain `version: <span class="hz-attr-…">5.7.0</span>`
+  // within <code>. But a marker span does not survive the converter's fence path
+  // as a reference (a fence's content becomes text), so the CODE value map is what
+  // restores it. Verified by experiment: dropping the attr from SINGLE_SOURCE
+  // bakes it on 4 image-registry pages (refcheck `expected 1, found 0`).
   operator: ['page-latest-supported-hazelcast'],
   // clc references {hazelcast-cloud} heavily; its value "Cloud" is the same
   // ambiguous prose word as in cloud (a page also says "Confluent Cloud"), so it

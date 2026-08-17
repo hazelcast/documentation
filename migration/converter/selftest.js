@@ -25,7 +25,7 @@ const { convertBody } = require('./lib/html-to-mdx')
 const { classifyHref } = require('../fidelity/lib/links')
 const { collectOccurrences, decide, slugFor, componentNameFor, parseId } = require('./lib/partials')
 const { parseNav, buildPlan, injectNavEntries, targetStem, folderName } = require('./lib/nav')
-const { wrapRefs } = require('../antora-extension/mark-attributes')
+const { wrapRefs, wrappableRefs } = require('../antora-extension/mark-attributes')
 const substitute = require('../../plugins/lib/substitute-attributes')
 
 let n = 0
@@ -490,6 +490,45 @@ const renderedCode = (md) => {
   assert.strictEqual(wrapRefs(heading, names), heading,
     'inline code in a HEADING is left alone: a sentinel would leak into the derived anchor id')
   ok('mark-attributes: inline code marked in flow text, skipped in headings')
+}
+
+// --- prose-eligibility: wrappableRefs gates the PROSE reverse-map -------------
+// convert.js scanPageAttrs asks this predicate "does the page reference the attr
+// in a context that renders into flow text?", and only then may the attribute's
+// VALUE be matched in prose. The requirement: an attribute referenced solely
+// inside verbatim blocks must be prose-ineligible, because there is no flow-text
+// reference to restore, so any prose match on its value is a false positive
+// waiting to happen (operator's operator-chart-version is `----`-fenced-only on
+// get-started, and its value is a version number that could equal a literal
+// anywhere on that page). Note "verbatim" here means the delimiters the marking
+// pass recognises: a BACKTICK fence is read as flow text by both, so a reference
+// there stays prose-eligible — deliberately, so the two never disagree.
+//
+// The oracle is the marking pass itself: prose-eligible must mean exactly
+// "wrapRefs would have marked it", so a marker and a prose match can never
+// disagree about what a flow-text context is.
+{
+  const fenceOnly = ['Install it:', '', '[source,bash]', '----',
+    'helm install operator --version={operator-chart-version}', '----', '', 'Done.'].join('\n')
+  const names = ['operator-chart-version']
+  assert.ok(!wrappableRefs(fenceOnly, names).has('operator-chart-version'),
+    'an attribute referenced only inside a verbatim block is NOT prose-eligible')
+  assert.strictEqual(wrapRefs(fenceOnly, names), fenceOnly,
+    'and marking agrees: it leaves a fence-only reference completely untouched')
+
+  // Add one flow-text reference to the same page and it becomes eligible — the
+  // predicate is about the page, not the attribute.
+  const alsoProse = fenceOnly.replace('Done.', 'Chart {operator-chart-version} is current.')
+  assert.ok(wrappableRefs(alsoProse, names).has('operator-chart-version'),
+    'the same attribute IS prose-eligible once the page references it in flow text')
+
+  // A macro target sits on a flow line, so it stays eligible: cloud's
+  // page-cloud-platform-version is referenced only inside a `link:` URL, and
+  // treating it as prose is what preserves the existing link-mode behaviour.
+  const macro = 'link:https://docs.hazelcast.com/hazelcast/{page-cloud-platform-version}/x[Platform] in use.'
+  assert.ok(wrappableRefs(macro, ['page-cloud-platform-version']).has('page-cloud-platform-version'),
+    'a reference inside a link macro target counts as prose-eligible (conservative: keeps link behaviour)')
+  ok('prose-eligibility: verbatim-only references are excluded, flow text and macro targets are not')
 }
 
 // --- marked attrs: value reverse-map applies to CODE only, never PROSE -------

@@ -31,6 +31,9 @@ const { convertBody } = require('./lib/html-to-mdx')
 const { collectOccurrences, decide } = require('./lib/partials')
 const { parseNav, buildPlan, injectNavEntries } = require('./lib/nav')
 const { loadDispositions, isDropped, navInjectionsFor } = require('../lib/dispositions')
+// Single-sources "which contexts render into flow text" with the marking pass, so
+// prose reverse-mapping and marking can never disagree — see scanPageAttrs.
+const { wrappableRefs } = require('../antora-extension/mark-attributes')
 // Shared with the build-time example-attributes loader so the match key the
 // converter computes reproduces exactly what the loader renders (no drift).
 const substitute = require('../../plugins/lib/substitute-attributes')
@@ -393,10 +396,36 @@ function loadNavAdoc (component, seg, sourcesDir) {
   }
 }
 
-// Which SINGLE_SOURCE attributes each page's SOURCE references ({name}) —
-// Map(stem -> Set(name)). The converter only reverse-maps a value on pages that
-// genuinely use that attribute, so a coincidental match elsewhere is never
-// touched. One `git grep -l` per attribute against the version's branch.
+// Which SINGLE_SOURCE attributes each page's SOURCE references ({name}), split by
+// WHERE it references them — Map(stem -> { all: Set(name), prose: Set(name) }).
+// The converter only reverse-maps a value on pages that genuinely use that
+// attribute, so a coincidental match on an unrelated page is never touched. One
+// `git grep -l` per attribute against the version's branch to find the files,
+// then each file's text is classified.
+//
+// `prose` is the narrower set: the attributes this page references in a context
+// that RENDERS INTO FLOW TEXT. It gates the prose value reverse-map, and the
+// distinction matters because prose matching is the one mechanism that can fire
+// where no reference exists. Where a page references an attribute ONLY inside
+// verbatim blocks it needs NO prose matching at all, so leaving the value in the
+// prose map is pure false-positive surface: any literal on that page equal to the
+// version would be variableised. Excluding it removes that exposure and can lose
+// nothing, because there is no flow-text reference to put back. The blocks are
+// served by the CODE map, which keeps every name.
+//
+// This fires on real pages: `operator-chart-version` is `----`-fenced-only on
+// operator's get-started (all 8 live versions) and air-gapped-env (5.14, 5.15).
+// It does NOT fire on image-registry, whose blocks are BACKTICK fences that the
+// classifier — like the marking pass, by design — reads as flow text, so that
+// page keeps prose matching exactly as before.
+//
+// The classifier is `wrappableRefs` from the marking pass, deliberately: "which
+// contexts render into flow text" then has ONE definition shared by marking and
+// by prose matching, and the two cannot drift apart. It is conservative in the
+// right direction — a reference inside a `link:`/`xref:` macro target sits on a
+// flow line and so counts as prose, which keeps today's behaviour for cloud's
+// `page-cloud-platform-version` and clc's `page-latest-supported-mc` rather than
+// silently changing how their links resolve.
 function scanPageAttrs (component, seg, sourcesDir) {
   const names = SINGLE_SOURCE_ATTRS[component] || []
   const src = NAV_SOURCES[component]
@@ -405,6 +434,15 @@ function scanPageAttrs (component, seg, sourcesDir) {
   const ref = src.refFor ? src.refFor(seg) : src.ref
   const repoDir = path.join(sourcesDir, src.repo)
   const pagesGlob = path.posix.join(path.posix.dirname(src.file), 'pages')
+  const textCache = new Map()
+  const textOf = (file) => {
+    if (!textCache.has(file)) {
+      let text = ''
+      try { text = execFileSync('git', ['-C', repoDir, 'show', `${ref}:${file}`], { encoding: 'utf8' }) } catch {}
+      textCache.set(file, text)
+    }
+    return textCache.get(file)
+  }
   for (const name of names) {
     let out
     try {
@@ -415,8 +453,10 @@ function scanPageAttrs (component, seg, sourcesDir) {
       const idx = line.indexOf(':') // `ref:path`
       const file = idx === -1 ? line : line.slice(idx + 1)
       const stem = path.basename(file).replace(/\.adoc$/, '')
-      if (!byStem.has(stem)) byStem.set(stem, new Set())
-      byStem.get(stem).add(name)
+      if (!byStem.has(stem)) byStem.set(stem, { all: new Set(), prose: new Set() })
+      const rec = byStem.get(stem)
+      rec.all.add(name)
+      if (wrappableRefs(textOf(file), [name]).has(name)) rec.prose.add(name)
     }
   }
   return byStem
@@ -434,21 +474,28 @@ function buildPageVars (names, lookup) {
   return m
 }
 
-// The subset of `pageVars` that may be reverse-mapped in PROSE: everything a
-// MARKED attribute contributes is dropped.
+// The subset of `pageVars` that may be reverse-mapped in PROSE. Two exclusions,
+// both saying "this attribute's prose references do not come from value matching":
 //
-// Marking (antora-extension/mark-attributes.js) records a reference's exact
-// POSITION, and it covers every non-verbatim context — flow text, table cells,
-// inline code, headings. So for a marked attribute the prose reverse-map is
-// redundant by construction: a genuine reference already arrives as a marker
-// span, and anything the value match finds on top of that is a coincidental
-// literal (operator's compatibility matrix; see MARKED_ATTRS in lib/layout.js),
-// which must stay literal. What marking CANNOT reach is a verbatim block, so the
-// CODE reverse-map keeps the full map and image-registry's `[source,yaml]` fence
-// still becomes a `vars` template.
-function proseVarsFor (pageVars, marked) {
-  if (!marked.length) return pageVars
-  return new Map([...pageVars].filter(([, name]) => !marked.includes(name)))
+//   1. MARKED attributes. Marking (antora-extension/mark-attributes.js) records a
+//      reference's exact POSITION and covers every flow-text context — prose,
+//      table cells, inline code, headings. So the value match is redundant by
+//      construction, and anything it finds on top of the markers is a coincidental
+//      literal (operator's compatibility matrix; see MARKED_ATTRS in
+//      lib/layout.js) that must stay literal.
+//   2. Attributes this page references ONLY in verbatim blocks (`prose` from
+//      scanPageAttrs). There is no flow-text reference to restore, so a prose
+//      match here can only ever be a false positive.
+//
+// What neither exclusion touches is the CODE map: `pageVars` stays whole, so
+// image-registry's yaml block still becomes a `vars` template. A marker cannot
+// substitute for it there — either because the pass skips the block (`----` and
+// friends) or because, in a BACKTICK fence, which the pass does enter, the span
+// does not survive the fence path as a reference. Dropping a marked attr from
+// SINGLE_SOURCE therefore bakes it; see the note in lib/layout.js MARKED_ATTRS.
+function proseVarsFor (pageVars, proseNames, marked) {
+  return new Map([...pageVars].filter(([, name]) =>
+    proseNames.has(name) && !marked.includes(name)))
 }
 
 // There is no still-baked audit here any more. It searched each page body for an
@@ -632,8 +679,9 @@ function convertVersion (ver, ctx) {
     if (!title) { title = deriveTitle(html); derived = true }
     if (!title) { title = (stem || 'index').replace(/-/g, ' '); derived = true }
 
-    const pageVars = buildPageVars(attrsByStem.get(stem), exampleLookup)
-    const proseVars = proseVarsFor(pageVars, markedAttrsFor(component))
+    const attrsHere = attrsByStem.get(stem)
+    const pageVars = buildPageVars(attrsHere && attrsHere.all, exampleLookup)
+    const proseVars = proseVarsFor(pageVars, (attrsHere && attrsHere.prose) || new Set(), markedAttrsFor(component))
 
     let body, imports
     try {

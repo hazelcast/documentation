@@ -130,10 +130,15 @@ function wrapRefs (text, names) {
 
 // The set of attribute names (from `names`) that `text` references in a markable
 // context -- i.e. the references that CAN and therefore MUST survive as a
-// <Variable>. References only in non-markable contexts (headings, unused
-// :description:, image alt, code) are correctly baked and are NOT included. The
-// reference checker uses this so it expects preservation exactly where the
-// marker pass provides it.
+// <Variable>. References only in non-markable contexts (the doctitle, unused
+// :description:, image alt, verbatim blocks) are correctly baked and are NOT
+// included.
+//
+// Consumed by convert.js scanPageAttrs to decide whether an attribute's value may
+// be reverse-mapped in PROSE on a given page: sharing this predicate is the point,
+// so "what counts as a flow-text context" has one definition and marking cannot
+// drift from prose matching. (It does NOT drive refcheck's expectations -- those
+// come from the independent poisoned census render, which never consults marking.)
 function wrappableRefs (text, names) {
   const found = new Set()
   transform(text, names, (name, whole) => { found.add(name); return whole })
