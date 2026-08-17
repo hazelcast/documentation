@@ -1,36 +1,49 @@
 'use strict'
 
 // The reference checker: the no-baking gate. The fidelity harness compares
-// RENDERED golden vs RENDERED Docusaurus, so a baked-in value (an attribute,
-// partial, or include resolved to a literal instead of kept as a reference)
-// renders identically to the golden and is invisible to it BY CONSTRUCTION.
-// This checker closes that hole from the SOURCE side: for every migrated page it
-// reads the AsciiDoc source through its includes, and asserts the converted MDX
-// still carries a reference for everything the source referenced.
+// RENDERED golden vs RENDERED Docusaurus, so a baked-in value (an attribute or
+// include resolved to a literal instead of kept as a reference) renders
+// identically to the golden and is invisible to it BY CONSTRUCTION. This checker
+// closes that hole -- and it does so by ACCOUNTING, not by sampling:
+//
+//   expected  the census render (attributes replaced by unique tokens, see
+//             antora-extension/poison-attributes.js) says exactly how many times
+//             each attribute flowed onto each page, and into what position
+//   actual    the converted MDX closure (page + partials + example files, each
+//             counted once per USE) says how many references it still carries
+//
+// and the two must be EQUAL. Consequences of counting rather than asking
+// "is this name mentioned somewhere on the page?", which is what this replaced:
+//   - partial baking is caught (5 occurrences, 4 baked, 1 left -> 5 != 1);
+//   - OVER-variableising is caught too (actual > expected), i.e. the converter
+//     turning a coincidental literal into a <Variable> -- previously invisible,
+//     and after cutover there is no golden left to notice it;
+//   - nothing is ever matched on an attribute's real VALUE, so a page containing
+//     the literal "5.7.0" (operator's CRD default table does) cannot be mistaken
+//     for a reference to a 5.7.0-valued attribute.
+//
+// Findings mean defects. Positions where preservation is structurally impossible
+// (an anchor id, image alt text, an xref label copied from a page title) are
+// recorded as dispositions by refcheck/lib/bake-contexts.js and reported as a
+// tally, never as failures -- so a clean conversion produces an empty gate.
 //
 //   node refcheck/run.js [--component cloud|operator] [--id /url]
+//                        [--census build/census] [--golden build/golden]
 //                        [--manifest build/manifest] [--out-root ..]
 //                        [--sources .sources] [--json]
-//
-// Two checks, both source-anchored (a value is only expected where the source
-// actually references it, so a coincidental literal is never flagged):
-//   1. attributes -- every {name} the source resolves must survive as a
-//      reference (<Variable>, a {name} link/code token, or a {name} in an
-//      imported example file). A miss = a baked attribute. All referenced
-//      attributes are checked; pure Antora machinery is filtered (bake-safe.js).
-//   2. examples   -- every example$ include must survive as an import, not a
-//      baked fence.
 //
 // Exit non-zero on any finding: this is a gate, not a report.
 
 const fs = require('node:fs')
 const path = require('node:path')
 
-const { NAV_SOURCES, versionsToProcess, outDirFor, CURRENT_SEG } = require('../lib/layout')
-const { collectPageRefs, locate } = require('./lib/source-refs')
-const { indexOutput, reachableText, hasRef, exampleImports, urlToSlug } = require('./lib/mdx-refs')
-const { isBakeSafe } = require('./lib/bake-safe')
+const { NAV_SOURCES, versionsToProcess, outDirFor } = require('../lib/layout')
+const { collectPageExamples } = require('./lib/source-refs')
+const { indexOutput, refCounts, exampleImports, frontmatterTokens, urlToSlug } = require('./lib/mdx-refs')
+const { scanCensusPage, unmaskGuard } = require('./lib/census-ledger')
 const { loadDispositions, isDropped } = require('../lib/dispositions')
+const { goldenPages } = require('../fidelity/lib/pairing')
+const { lockfileKeyFromFile } = require('../fidelity/lockfile-key')
 
 function parseArgs (argv) {
   const args = argv.slice(2)
@@ -40,19 +53,12 @@ function parseArgs (argv) {
     component: val('--component', null), // null => every migrated component
     id: val('--id', null),
     manifestDir: path.resolve(val('--manifest', 'build/manifest')),
+    censusDir: path.resolve(val('--census', 'build/census')),
+    goldenDir: path.resolve(val('--golden', 'build/golden')),
     outRoot: path.resolve(val('--out-root', '..')),
     sourcesDir: path.resolve(val('--sources', '.sources')),
     json: has('--json'),
   }
-}
-
-// Manifest attribute table for (component, seg): name -> resolved value.
-function attrTable (manifest, component, seg) {
-  const comp = (manifest.components || []).find((c) => c.name === component)
-  if (!comp) return {}
-  const key = seg == null ? '' : seg
-  const v = (comp.versions || []).find((x) => (x.version || '') === key)
-  return (v && v.attributes) || {}
 }
 
 // The migrated page resources for (component, seg).
@@ -65,14 +71,49 @@ function pagesFor (manifest, component, seg, dispositions) {
     !(dispositions && isDropped(dispositions, r)))
 }
 
+// url -> HTML file, for a census or golden pages tree.
+const byUrl = (dir) => new Map(goldenPages(dir).map((p) => [p.url, p.file]))
+
 function main () {
   const opts = parseArgs(process.argv)
   const manifest = JSON.parse(fs.readFileSync(path.join(opts.manifestDir, 'manifest.json'), 'utf8'))
+
+  const censusMetaFile = path.join(opts.censusDir, 'census-meta.json')
+  if (!fs.existsSync(censusMetaFile)) {
+    console.error(`[refcheck] ABORT: no census render at ${path.relative(process.cwd(), opts.censusDir)}.\n` +
+      '           Build it first:  npm run census' +
+      (opts.component ? ` -- --component ${opts.component}` : ''))
+    process.exit(2)
+  }
+  const census = JSON.parse(fs.readFileSync(censusMetaFile, 'utf8'))
+  // The census is only valid at the pin it was rendered at: its tokens are keyed
+  // to that pin's component-version attribute tables, and the manifest pages it
+  // is joined to come from the same pin. A stale census would compare a page
+  // against another revision's expectations.
+  const pin = lockfileKeyFromFile(path.join(opts.manifestDir, 'lockfile.json'))
+  if (census.lockfileKey !== pin) {
+    console.error(`[refcheck] ABORT: the census render is stale (built at ${String(census.lockfileKey).slice(0, 12)},` +
+      ` the committed pin is ${String(pin).slice(0, 12)}).\n           Rebuild it:  npm run census` +
+      (opts.component ? ` -- --component ${opts.component}` : ''))
+    process.exit(2)
+  }
+  const censusByUrl = byUrl(opts.censusDir)
+  const goldenByUrl = byUrl(opts.goldenDir)
+
   const components = opts.component ? [opts.component] : Object.keys(NAV_SOURCES)
 
-  const findings = []      // baked attributes
-  const exampleFindings = [] // baked example includes
-  const counts = { pages: 0, checked: 0, pending: 0 }
+  // Every attribute name the census knows about, for the frontmatter scan (a
+  // token there is inert wherever it appears, not only on pages that reference it).
+  const CENSUS_NAMES = [...new Set(census.tokens.map((t) => t.name))]
+
+  const baked = []          // expected > actual: a reference was resolved to a literal
+  const extra = []          // actual > expected: a literal was turned into a reference
+  const inert = []          // a {name} token somewhere Docusaurus never interpolates
+  const unknownCtx = []     // a token in a position with no disposition -> fail closed
+  const guardFails = []     // unmasking the census did not reproduce the golden
+  const exampleFindings = []
+  const dispositionTally = new Map()
+  const counts = { pages: 0, checked: 0, pending: 0, noCensus: 0, anchorDerived: 0 }
   const dispositions = loadDispositions()
 
   for (const component of components) {
@@ -81,7 +122,6 @@ function main () {
       const seg = ver.seg // null (unversioned), CURRENT_SEG, or a release
       const outDir = outDirFor(opts.outRoot, component, ver)
       const bySlug = indexOutput(outDir)
-      const attrs = attrTable(manifest, component, seg)
 
       for (const resource of pagesFor(manifest, component, seg, dispositions)) {
         if (opts.id && resource.url !== opts.id) continue
@@ -89,90 +129,175 @@ function main () {
         const slug = urlToSlug(resource.url, component, seg)
         const pageFile = bySlug.get(slug)
         if (!pageFile) { counts.pending++; continue } // not converted yet -- not a regression
+        const censusFile = censusByUrl.get(resource.url)
+        if (!censusFile) { counts.noCensus++; continue } // census not rendered for this scope
         counts.checked++
 
-        const { names, examples } = collectPageRefs(resource, seg, opts.sourcesDir)
-        const text = reachableText(pageFile, opts.outRoot)
+        const scope = { component, seg, url: resource.url }
 
-        // (1) attributes
-        for (const name of names) {
-          if (isBakeSafe(name)) continue
-          const value = attrs[name]
-          if (value == null || String(value) === '') continue // not a component content attr / empty
-          if (!hasRef(text, name)) {
-            findings.push({ component, seg, url: resource.url, name, value: String(value) })
+        // --- (1) attributes: exact per-page accounting -----------------------
+        const { preserve, bakes, unknown } = scanCensusPage(
+          fs.readFileSync(censusFile, 'utf8'), { tokens: census.tokens })
+        for (const u of unknown) unknownCtx.push({ ...scope, ...u })
+        for (const b of bakes) {
+          const key = `${b.name}  ${b.disposition}`
+          dispositionTally.set(key, (dispositionTally.get(key) || 0) + 1)
+        }
+        if (preserve.size) {
+          const names = [...preserve.keys()]
+          const actual = refCounts(pageFile, opts.outRoot, names)
+          for (const [name, expected] of preserve) {
+            const got = actual.get(name) || 0
+            if (got < expected) baked.push({ ...scope, name, expected, actual: got })
+            else if (got > expected) extra.push({ ...scope, name, expected, actual: got })
           }
         }
+        // A token in the YAML frontmatter is inert -- nothing interpolates it, so
+        // it reaches the reader as literal braces. Its own class of finding: it is
+        // neither a baked value nor a surplus reference.
+        for (const [name, n] of frontmatterTokens(fs.readFileSync(pageFile, 'utf8'), CENSUS_NAMES)) {
+          inert.push({ ...scope, name, count: n })
+        }
 
-        // (2) examples: a page that pulls example$ includes must single-source
-        // them as imports, not bake them as literal fences. The converter matches
-        // examples by CONTENT, so an imported file may be named differently from
-        // the include target (identical-content files are deduped to one import)
-        // -- matching by name would false-positive on every dedup. So the gate is
-        // the false-positive-free form: a page with example$ includes that
-        // imports NO example file at all has baked them wholesale. (Partial
-        // baking on a page that still imports >=1 example is not caught here; the
-        // fidelity harness covers content, this covers single-sourcing.)
+        // --- (2) the census guard -------------------------------------------
+        // Poisoning must have changed only the substituted text. If putting the
+        // real values back does not reproduce the golden (beyond derived anchor
+        // ids), the ledger above was read off an untrustworthy render.
+        const goldenFile = goldenByUrl.get(resource.url)
+        if (goldenFile) {
+          const { verdict, residual } = unmaskGuard(censusFile, goldenFile, census.tokens)
+          if (verdict === 'anchor-derived') counts.anchorDerived++
+          if (verdict === 'differs') guardFails.push({ ...scope, reason: 'unmasked census != golden' })
+          if (residual.length) guardFails.push({ ...scope, reason: `unrecoverable token(s): ${residual.join(', ')}` })
+        }
+
+        // --- (3) examples ----------------------------------------------------
+        // A page that pulls example$ includes must single-source them as imports,
+        // not bake them as literal fences. Still a FLOOR, not an accounting: the
+        // converter matches examples by CONTENT and dedupes identical ones, so
+        // per-include matching would false-positive on every dedup. Extending the
+        // partial-boundary marker to the example family is what would make this
+        // exact; until then a page importing >= 1 example passes.
+        const examples = collectPageExamples(resource, seg, opts.sourcesDir)
         if (examples.length && exampleImports(pageFile, opts.outRoot).size === 0) {
-          exampleFindings.push({ component, seg, url: resource.url, count: examples.length })
+          exampleFindings.push({ ...scope, count: examples.length })
         }
       }
     }
   }
 
-  report(opts, counts, findings, exampleFindings)
-  process.exit(findings.length + exampleFindings.length > 0 ? 1 : 0)
+  const findings = { baked, extra, inert, unknownCtx, guardFails, examples: exampleFindings }
+  report(opts, counts, findings, dispositionTally)
+  const total = baked.length + extra.length + inert.length + unknownCtx.length +
+    guardFails.length + exampleFindings.length
+  process.exit(total > 0 ? 1 : 0)
 }
 
-function report (opts, counts, findings, exampleFindings) {
+function report (opts, counts, f, dispositionTally) {
   const outFile = path.resolve('build/refcheck-report.json')
   fs.mkdirSync(path.dirname(outFile), { recursive: true })
   fs.writeFileSync(outFile, JSON.stringify({
     generatedAt: new Date().toISOString(),
     scope: { component: opts.component, id: opts.id },
-    counts, attributes: findings, examples: exampleFindings,
+    counts,
+    baked: f.baked,
+    extra: f.extra,
+    inert: f.inert,
+    unknownContexts: f.unknownCtx,
+    guardFailures: f.guardFails,
+    examples: f.examples,
+    dispositions: [...dispositionTally].map(([k, n]) => ({ disposition: k, count: n })),
   }, null, 2) + '\n')
 
-  if (opts.json) { console.log(JSON.stringify({ counts, attributes: findings, examples: exampleFindings })); return }
-
-  const scope = opts.id ? `id=${opts.id}` : opts.component ? `component=${opts.component}` : 'all migrated components'
-  console.log(`\n[refcheck] ${scope}`)
-  console.log(`[refcheck] pages in scope: ${counts.pages} | converted & checked: ${counts.checked} | not yet converted: ${counts.pending}`)
-
-  if (!findings.length && !exampleFindings.length) {
-    console.log('[refcheck] no baked references — every source {attribute}/example$ is preserved. ✓')
+  if (opts.json) {
+    console.log(JSON.stringify({ counts, ...f }))
     return
   }
 
-  if (findings.length) {
-    // Group by (component, seg) then page for a readable gate output.
-    const byPage = new Map()
-    for (const f of findings) {
-      const k = `${f.component}${f.seg ? '@' + f.seg : ''}  ${f.url}`
-      if (!byPage.has(k)) byPage.set(k, [])
-      byPage.get(k).push(f)
+  const scope = opts.id ? `id=${opts.id}` : opts.component ? `component=${opts.component}` : 'all migrated components'
+  console.log(`\n[refcheck] ${scope}`)
+  console.log(`[refcheck] pages in scope: ${counts.pages} | converted & checked: ${counts.checked}` +
+    ` | not yet converted: ${counts.pending}` +
+    (counts.noCensus ? ` | no census page: ${counts.noCensus}` : ''))
+
+  // Recorded dispositions: positions where a reference CANNOT be preserved. Not
+  // findings -- printed so the cost of those decisions stays visible.
+  if (dispositionTally.size) {
+    const total = [...dispositionTally.values()].reduce((a, b) => a + b, 0)
+    console.log(`[refcheck] ${total} occurrence(s) correctly baked (structurally unpreservable):`)
+    for (const [key, n] of [...dispositionTally].sort((a, b) => b[1] - a[1])) console.log(`      ${key} × ${n}`)
+  }
+  if (counts.anchorDerived) {
+    console.log(`[refcheck] census guard: ${counts.anchorDerived} page(s) differ from golden only in derived anchor ids (expected)`)
+  }
+
+  const clean = !f.baked.length && !f.extra.length && !f.inert.length &&
+    !f.unknownCtx.length && !f.guardFails.length && !f.examples.length
+  if (clean) {
+    console.log('[refcheck] every attribute occurrence the census recorded is still a reference. ✓')
+    return
+  }
+
+  const byPage = (list) => {
+    const m = new Map()
+    for (const x of list) {
+      const k = `${x.component}${x.seg ? '@' + x.seg : ''}  ${x.url}`
+      if (!m.has(k)) m.set(k, [])
+      m.get(k).push(x)
     }
-    console.log(`\n[refcheck] ✗ ${findings.length} baked attribute reference(s) on ${byPage.size} page(s):`)
-    for (const [k, fs_] of [...byPage].sort()) {
+    return [...m].sort()
+  }
+
+  if (f.baked.length) {
+    console.log(`\n[refcheck] ✗ ${f.baked.length} baked reference(s) on ${byPage(f.baked).length} page(s) — fewer references than the source resolved:`)
+    for (const [k, rows] of byPage(f.baked)) {
       console.log(`\n  ${k}`)
-      for (const f of fs_) console.log(`      {${f.name}}  (resolved "${truncate(f.value)}")`)
+      for (const r of rows) console.log(`      {${r.name}}  expected ${r.expected}, found ${r.actual}`)
     }
-    // A by-attribute tally makes the triage decision (variableise vs bake-safe) obvious.
     const byName = new Map()
-    for (const f of findings) byName.set(f.name, (byName.get(f.name) || 0) + 1)
-    console.log('\n[refcheck] baked attributes by name (triage: variableise, or add to bake-safe.js):')
+    for (const r of f.baked) byName.set(r.name, (byName.get(r.name) || 0) + (r.expected - r.actual))
+    console.log('\n[refcheck] baked occurrences by attribute:')
     for (const [name, n] of [...byName].sort((a, b) => b[1] - a[1])) console.log(`      {${name}} × ${n}`)
   }
 
-  if (exampleFindings.length) {
-    console.log(`\n[refcheck] ✗ ${exampleFindings.length} page(s) bake ALL their example$ includes (no import at all):`)
-    for (const e of exampleFindings.sort((a, b) => a.url.localeCompare(b.url))) {
+  if (f.extra.length) {
+    console.log(`\n[refcheck] ✗ ${f.extra.length} OVER-variableised reference(s) — more references than the source resolved` +
+      ' (a coincidental literal turned into a <Variable>; it will follow the wrong value when the attribute changes):')
+    for (const [k, rows] of byPage(f.extra)) {
+      console.log(`\n  ${k}`)
+      for (const r of rows) console.log(`      {${r.name}}  expected ${r.expected}, found ${r.actual}`)
+    }
+  }
+
+  if (f.inert.length) {
+    console.log(`\n[refcheck] ✗ ${f.inert.length} INERT token(s) in YAML frontmatter — nothing interpolates frontmatter,` +
+      ' so this reaches the reader as literal braces:')
+    for (const r of f.inert) {
+      console.log(`      ${r.component}${r.seg ? '@' + r.seg : ''}  ${r.url}  {${r.name}}${r.count > 1 ? ' × ' + r.count : ''}`)
+    }
+  }
+
+  if (f.unknownCtx.length) {
+    console.log(`\n[refcheck] ✗ ${f.unknownCtx.length} attribute occurrence(s) in a position with NO disposition` +
+      ' — classify it in refcheck/lib/bake-contexts.js (preserve, or bake with a reason):')
+    for (const r of f.unknownCtx.slice(0, 30)) {
+      console.log(`      ${r.url}  {${r.name}}  <${r.tag}${r.attr ? ' ' + r.attr + '=' : ''}>`)
+    }
+  }
+
+  if (f.guardFails.length) {
+    console.log(`\n[refcheck] ✗ census guard FAILED on ${f.guardFails.length} page(s) — poisoning changed the render itself,` +
+      ' so the expectations read off it cannot be trusted:')
+    for (const r of f.guardFails.slice(0, 30)) console.log(`      ${r.url}  ${r.reason}`)
+  }
+
+  if (f.examples.length) {
+    console.log(`\n[refcheck] ✗ ${f.examples.length} page(s) bake ALL their example$ includes (no import at all):`)
+    for (const e of f.examples.sort((a, b) => a.url.localeCompare(b.url))) {
       console.log(`      ${e.component}${e.seg ? '@' + e.seg : ''}  ${e.url}  (${e.count} example include(s))`)
     }
   }
   console.log(`\n[refcheck] report -> ${path.relative(process.cwd(), outFile)}`)
 }
-
-const truncate = (s) => (s.length > 60 ? s.slice(0, 57) + '…' : s)
 
 main()

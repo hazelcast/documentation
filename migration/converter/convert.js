@@ -420,20 +420,14 @@ function buildPageVars (names, lookup) {
   return m
 }
 
-const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
-// Audit: SINGLE_SOURCE version-number values left RAW (whole-token) in a page
-// body (import lines excluded) — i.e. NOT turned into <Variable>/`{name}`. Flags
-// misses the source-scope did not cover (e.g. a value coming from a partial).
-function auditStillBaked (body, attrValues) {
-  const text = body.split('\n').filter((l) => !/^\s*import\s/.test(l)).join('\n')
-  const hits = []
-  for (const { value, name } of attrValues) {
-    const n = (text.match(new RegExp(`(?<![\\w.-])${escRe(value)}(?![\\w.-])`, 'g')) || []).length
-    if (n) hits.push({ value, name, count: n })
-  }
-  return hits
-}
+// There is no still-baked audit here any more. It searched each page body for an
+// attribute's resolved VALUE and warned wherever it found one, which made it
+// permanently, unfixably noisy: operator's CRD default-values table genuinely
+// contains the literal `5.7.0`, so every run warned about a page that had nothing
+// wrong with it, and the reader learned to ignore the whole category. The gate
+// (`npm run check:refs`) supersedes it and cannot make that mistake: expectations
+// come from the census render's tokens, so nothing is ever matched on a real
+// value, and it counts occurrences rather than warning on presence.
 
 function frontmatter (title, { derived, slug, sidebarLabel, sidebarPosition, unlisted, badges, cloud } = {}) {
   const lines = ['---', `title: ${yaml(title)}`]
@@ -571,18 +565,13 @@ function convertVersion (ver, ctx) {
   const examples = loadExamples(path.join(outDir, 'examples'), exampleLookup)
 
   // Reverse-map single-sourced attributes (no-baking): which attrs each page's
-  // source references, and this version's values (for the still-baked audit).
+  // source references, so a value is only ever matched on a page that uses it.
   const attrsByStem = scanPageAttrs(component, seg, opts.sourcesDir)
-  const attrValues = (SINGLE_SOURCE_ATTRS[component] || [])
-    .map((name) => ({ name, value: exampleLookup[name] }))
-    .filter((x) => x.value != null && x.value !== '')
-    .map((x) => ({ name: x.name, value: String(x.value) }))
 
   let written = 0
   let dropped = 0
   const orphans = []
   const problems = []
-  const stillBaked = []
   for (const p of pages) {
     // Stem/entry/relFile via the shared derivation (see relFileForPage), so the
     // emitted file matches the URL->file map used for relative-link resolution.
@@ -610,10 +599,6 @@ function convertVersion (ver, ctx) {
       problems.push({ url: p.url, error: err.message })
       continue
     }
-
-    // No-baking audit: any version-number value left raw in the body is a miss.
-    const baked = auditStillBaked(body, attrValues)
-    if (baked.length) stillBaked.push({ url: p.url, baked })
 
     const fm = frontmatter(title, {
       derived,
@@ -676,7 +661,7 @@ function convertVersion (ver, ctx) {
   // same component do not overwrite each other.
   writePartialsReport(opts, component, seg, report, decisions)
 
-  return { seg, kind, outDir, written, dropped, cats, partialsWritten, orphans, problems, partialProblems, duplicates: plan.duplicates, stillBaked }
+  return { seg, kind, outDir, written, dropped, cats, partialsWritten, orphans, problems, partialProblems, duplicates: plan.duplicates }
 }
 
 // Per-version partials audit: what was factored, declined, or left inline
@@ -816,11 +801,6 @@ function main () {
     console.log(`[convert] ${tag}: ${r.written} page(s)` +
       (opts.dry ? ' converted (dry-run)' : ` + ${r.cats} categor${r.cats === 1 ? 'y' : 'ies'} + ${r.partialsWritten} partial(s) -> ${where}`))
     if (r.duplicates.length) console.log(`   nav duplicates (kept first): ${[...new Set(r.duplicates)].join(', ')}`)
-    if (r.stillBaked && r.stillBaked.length) {
-      const total = r.stillBaked.reduce((n, s) => n + s.baked.reduce((m, b) => m + b.count, 0), 0)
-      console.log(`   ⚠ still-baked version values (not variableised) on ${r.stillBaked.length} page(s), ${total} occurrence(s):`)
-      for (const s of r.stillBaked) console.log(`      ${s.url}: ${s.baked.map((b) => `${b.name}=${b.value}×${b.count}`).join(', ')}`)
-    }
     if (r.orphans.length) console.log(`   ${r.orphans.length} page(s) NOT in nav (placed flat): ${r.orphans.map((u) => u.replace(/\/$/, '').split('/').pop()).join(', ')}`)
     if (r.partialProblems.length) {
       hardFail = true

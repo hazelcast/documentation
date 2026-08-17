@@ -1,24 +1,24 @@
 'use strict'
 
-// SOURCE side of the no-baking check: given a page's manifest resource, walk its
-// AsciiDoc source (from the frozen mirror) THROUGH its includes and report which
-// attribute references ({name}) its rendered form would resolve -- plus the
-// example$ includes it pulls in. This is the ground truth the converted MDX is
-// checked against: every {name} the source references must survive as a
-// reference in the output, never as a baked literal.
+// SOURCE-side include walker, used ONLY to find the `example$` includes a page
+// pulls in (for the example-preservation check).
+//
+// It used to collect attribute references too, and that was the checker's weak
+// point: reading AsciiDoc with regexes means approximating tag-slice wildcards,
+// ifdefs and nested attribute expansion, and an approximate scan can only support
+// a per-page yes/no question, never a count. Attribute expectations now come from
+// the CENSUS render instead (refcheck/lib/census-ledger.js), where Asciidoctor
+// has already done all of that resolution exactly. What remains here is the
+// narrower job the census does not cover: which example files a page includes.
 //
 // Include expansion mirrors how Antora assembles a page: partial$/page$ includes
-// are read and scanned recursively (honouring tag slicing), so an attribute
-// referenced inside an included partial counts against the including page.
-// example$ includes are recorded (for the example-preservation check) and their
-// bodies scanned too -- their {name} placeholders stay in the byte-faithful
-// example file the converter imports, so they are references, not bakes.
+// are read and walked recursively (honouring tag slicing), so an example pulled
+// in through a partial still counts against the including page.
 
 const { execFileSync } = require('node:child_process')
 const path = require('node:path')
 
 const { NAV_SOURCES, refFor } = require('../../lib/layout')
-const { wrappableRefs } = require('../../antora-extension/mark-attributes')
 
 const FAMILY_DIR = { page: 'pages', partial: 'partials', example: 'examples' }
 
@@ -46,20 +46,6 @@ function stripComments (text) {
     out.push(line)
   }
   return out.join('\n')
-}
-
-// Every UNESCAPED {name} reference in a chunk of AsciiDoc. `\{name}` is an
-// escaped literal (Asciidoctor drops the backslash, no substitution) so it is
-// not a reference. Mirrors plugins/lib/substitute-attributes' matcher.
-const REF_RE = /(\\?)\{([A-Za-z0-9_][A-Za-z0-9_-]*)\}/g
-function refsIn (text) {
-  const names = new Set()
-  let m
-  while ((m = REF_RE.exec(text)) !== null) {
-    if (m[1]) continue // escaped -> literal, not a reference
-    names.add(m[2])
-  }
-  return names
 }
 
 // Slice a file to the regions selected by an include's tag spec (tag=NAME or
@@ -141,14 +127,11 @@ function locate (coord, seg, sourcesDir) {
   return { repoDir: path.join(sourcesDir, src.repo), ref: refFor(coord.component, seg), repoPath }
 }
 
-// Collect the attribute references a page resolves, expanding includes.
-// Returns { names:Set, examples:[coord…] } where `examples` are the example$
-// includes reached (for the example-preservation check). `component`/`seg` scope
-// which branch source is read from; `resource` is the manifest page resource
-// (component, module, relative).
-function collectPageRefs (resource, seg, sourcesDir) {
+// Collect the `example$` includes a page reaches, expanding partial$/page$
+// includes on the way. `seg` scopes which branch source is read from; `resource`
+// is the manifest page resource (component, module, relative).
+function collectPageExamples (resource, seg, sourcesDir) {
   const start = { component: resource.component, module: resource.module || 'ROOT', family: 'page', relative: resource.relative }
-  const names = new Set()
   const examples = []
   const visited = new Set()
 
@@ -161,13 +144,6 @@ function collectPageRefs (resource, seg, sourcesDir) {
     let text = gitShow(loc.repoDir, loc.ref, loc.repoPath)
     if (text == null) return
     text = stripComments(sliceByTags(text, tag))
-    // Only references in a WRAPPABLE context must be preserved: a reference in a
-    // heading (-> frontmatter title / anchor), a :description: entry, image alt,
-    // or code is correctly baked, so it is not required to survive. Shared with
-    // mark-attributes so the checker expects preservation exactly where the
-    // marker pass provides it.
-    const all = refsIn(text)
-    if (all.size) for (const n of wrappableRefs(text, [...all])) names.add(n)
     for (const inc of includesIn(text)) {
       const child = resolveTarget(inc.target, coord)
       if (!child) continue
@@ -177,7 +153,7 @@ function collectPageRefs (resource, seg, sourcesDir) {
   }
 
   walk(start, null)
-  return { names, examples }
+  return examples
 }
 
-module.exports = { collectPageRefs, refsIn, includesIn, resolveTarget, locate, sliceByTags, stripComments }
+module.exports = { collectPageExamples, includesIn, resolveTarget, locate, sliceByTags, stripComments }

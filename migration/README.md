@@ -58,15 +58,18 @@ The fidelity, refs and constructs gates **read the converted output from the roo
 
 ```
 (cd .. && npm run build)   # produces the converted "after" the first three gates read
+npm run census             # poisoned render the refs gate reads its expectations from (~1 min)
 npm run check              # runs all four gates, then a pass/fail summary
 ```
+
+Like the golden snapshot, the census render is a **build input**, not part of `check`: rebuild it when the pin changes (the refs gate hard-stops on a stale one, so it cannot silently compare against another revision's expectations).
 
 `npm run check` is the one command to remember. It runs **all four** gates regardless of individual outcome (no fail-fast — a failure in one no longer hides the others), prints a one-line summary, and exits non-zero if any gate failed. Scope the whole set the same way the gates scope individually — `npm run check -- --component cloud` forwards the flag to all four (the `--` separator is required, else npm swallows it). Individually:
 
 | Script | Gate | Also needs |
 |---|---|---|
 | `npm run check:fidelity` | rendered golden vs rendered Docusaurus (3 layers) | the golden snapshot (`npm run fidelity:snapshot`) |
-| `npm run check:refs` | no-baking: every source `{attr}`/`example$` survives as a reference | `.sources` mirrors + manifest |
+| `npm run check:refs` | no-baking: every attribute occurrence the source resolved is still a reference | the census render (`npm run census`) + golden + manifest |
 | `npm run check:constructs` | construct-coverage allowlist (deny-by-default) | `.sources` mirrors + manifest |
 | `npm run check:orphans` | published pages in no navigation tree (deny-by-default) | `.sources` mirrors |
 
@@ -102,12 +105,35 @@ Left baked (correctly): the document **title** (`= …` → frontmatter `title:`
 
 ## Reference checker (the no-baking gate)
 
-`npm run check:refs [-- --component cloud|operator] [-- --id /url]` — for every migrated page it reads the AsciiDoc source *through its includes* (from the frozen mirror) and asserts the converted MDX still carries a reference for everything the source referenced. Non-zero exit on any finding; report at `build/refcheck-report.json`. `npm run check:refs:selftest` unit-tests the matchers.
+`npm run check:refs [-- --component cloud|operator|clc] [-- --id /url]` — asserts that every attribute occurrence the source resolved is still a **reference** in the converted MDX, not a baked literal. Needs a census render (`npm run census`) as well as the golden. Non-zero exit on any finding; report at `build/refcheck-report.json`. `npm run check:refs:selftest` unit-tests the pure logic.
 
-- **Attributes** — every `{name}` the source resolves in a **preservable context** must survive as a reference in the output: a `<Variable name="…"/>` (prose), a `{name}` token (link href/text or a `vars` code fence), or a `{name}` in an imported byte-faithful example file. A miss is a baked attribute. **All** referenced attributes are checked (not a hand-list); pure Asciidoctor/Antora machinery is filtered by `refcheck/lib/bake-safe.js`, and a name is only checked on a page whose **source** references it, so a coincidental literal is never flagged. "Preservable context" is single-sourced with the marker pass (`mark-attributes.wrappableRefs`), so the checker expects a reference exactly where marking provides one — references correctly baked in a heading / image alt / unused `:description:` are not required.
-- **Examples** — a page that pulls `example$` includes must import at least one example file, not bake them all as literal fences. (Matching is by presence, not name: the converter dedupes identical-content examples to one import, so name-matching would false-positive.)
+The gate exists because fidelity is blind here by construction: it compares rendered golden to rendered Docusaurus, and a baked value renders identically to the reference it replaced.
 
-Source-anchoring is what makes "all referenced attributes" tractable: a value like `hazelcast-cloud` → `"Cloud"` is only sought on pages whose source says `{hazelcast-cloud}`, so the common word "Cloud" elsewhere is never a false positive. It is strictly more precise than the converter's own `auditStillBaked` warning (which string-matches a value anywhere and so false-positives on e.g. a literal `5.7.0` in the api-ref CRD table).
+### How the expectation is derived: the census render
+
+`npm run census` renders the whole corpus a second time with every **content** attribute's value replaced by a unique inert token (`HZREF0042X`), into `build/census/` — a throwaway tree, never a golden. Scanning that HTML answers, per page and **per occurrence**, which attributes flowed where and into what position: Asciidoctor already expanded the includes, sliced the tags, evaluated the `ifdef`s and substituted the nested `{description}`, so there is no source parsing to approximate any of it.
+
+Two properties make it trustworthy:
+
+- **Shape-preserving poisoning** (`antora-extension/poison-attributes.js`). Attribute substitution runs *before* the macro pass, so a value that is a whole URL is the only reason `{page-cloud-console}[text]` becomes a link. A URL value therefore poisons to a URL (`https://HZREF0042X.invalid/`), a `www.` value to a `www.` host. Reserved names (`lib/reserved-attrs.js` — Asciidoctor/Antora machinery: `idprefix`, `env`, `page-excluded-versions`, …), flags and empty values are left real. Membership in that list is decided by the Asciidoctor/Antora registries, not by what breaks; **anything not listed is poisoned**, so a new content attribute is checked by default.
+- **The unmask guard.** Putting the real values back must reproduce the golden byte-for-byte. The only permitted difference is a *derived anchor id* (a token in a heading is slugged into the id, which a case-sensitive unmask cannot restore); a page differing anywhere else fails the gate, because poisoning changed the render itself and the expectations read off it can't be believed.
+
+### What is checked
+
+- **Attributes** — for each page, the census's preserved-occurrence count per attribute must **equal** the reference count in the converted MDX closure: the page body, plus each imported partial and example file counted **once per use** (a partial used twice contributes twice, matching Antora inlining it twice). A reference is `<Variable name="…"/>`, a `{name}` token in a link-mode `<Variable>` or a `vars` fence, or a `{name}` in an imported example file (substituted at build by `plugins/example-attributes-loader.js`). A `{name}` in a fence *without* `vars` is a literal and does not count.
+  - fewer than expected ⇒ a **baked** reference, including partial baking (5 occurrences, 4 baked, 1 left);
+  - more than expected ⇒ **over-variableised**: the converter turned a coincidental literal into a `<Variable>`, which will follow the wrong value when the attribute changes. Nothing else catches this, and after cutover there is no golden left to notice it.
+- **Examples** — a page that pulls `example$` includes must import at least one example file rather than baking them all as literal fences. Still a floor, not an accounting: the converter matches examples by content and dedupes identical ones, so per-include matching would false-positive on every dedup. Extending the partial-boundary marker to the `example` family is what would make this exact.
+
+Nothing is ever matched on an attribute's real **value**, so a page that merely contains the literal `5.7.0` (operator's CRD default-values table does) cannot register as a reference. That is what let the converter's old `auditStillBaked` warning be deleted: it string-matched values, warned on that table on every run, and so trained the reader to ignore the category.
+
+### Findings mean defects
+
+Positions where a reference *cannot* be preserved are classified by `refcheck/lib/bake-contexts.js` — a closed table keyed by **position**, not by name, so exempting a heading's anchor id does not blind the gate to a baked occurrence of the same attribute in prose on the same page. They are reported as a tally ("N occurrences correctly baked"), never as failures. An **unrecognised** position has no disposition and fails the gate: classify it (preserve, or bake with a reason) rather than let a new rendering context become an unchecked hole.
+
+So a clean conversion produces an empty gate, and every line of output is something to fix.
+
+Known false negatives, both narrow and deliberate: a bare `xref:target.adoc[]` renders the target's **title** as its link text, and Antora resolves page titles during classification — before poisoning — so a reference reaching a page only through a derived link label carries the real value and is not counted (consistent with titles baking into frontmatter). And cross-component `templates:` example includes still resolve outside the checked components.
 
 Shares `lib/layout.js` (source repo/branch + version/path config) with the converter so the two resolve sources and output paths identically.
 

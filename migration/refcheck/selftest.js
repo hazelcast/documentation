@@ -1,76 +1,221 @@
 'use strict'
 
-// Unit self-test for the reference checker's pure logic -- the parts that decide
-// what counts as a source reference and as a preserved reference. Guards against
-// regressions in the matchers without needing a golden/output tree. Run:
+// Unit self-test for the reference checker's pure logic: the poison instrumen-
+// tation, the census scanner that reads expectations off the poisoned render, the
+// disposition table, and the MDX-side reference counter. Each group asserts the
+// SPEC (what the gate promises) against hand-written inputs, not the shape of the
+// implementation. Run:
 //   node refcheck/selftest.js
 
 const assert = require('node:assert')
+const fs = require('node:fs')
+const os = require('node:os')
+const path = require('node:path')
 
-const { refsIn, includesIn, resolveTarget, sliceByTags, stripComments } = require('./lib/source-refs')
-const { hasRef, importsOf, slugOf } = require('./lib/mdx-refs')
-const { isBakeSafe } = require('./lib/bake-safe')
-const { wrapRefs, wrappableRefs, spanify, stripAttrSpans, hasSentinelResidue } = require('../antora-extension/mark-attributes')
+const {
+  poisonAttributes, poisonedValueFor, unmask, residualTokens, tokenFor,
+} = require('../antora-extension/poison-attributes')
+const { isReserved } = require('../lib/reserved-attrs')
+const { scanCensusPage, maskDerivedIds } = require('./lib/census-ledger')
+const { dispositionForText, dispositionForAttr, isPreserve } = require('./lib/bake-contexts')
+const {
+  refCounts, countMdxRefs, countExampleRefs, usageCount, dropLiteralFences, importsOf, slugOf,
+  stripFrontmatter, frontmatterTokens,
+} = require('./lib/mdx-refs')
+const { includesIn, resolveTarget, sliceByTags, stripComments } = require('./lib/source-refs')
 
 let n = 0
 const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
 
-// --- source: attribute references ----------------------------------------
+// --- poisoning: what gets a token, and what must not --------------------------
 {
-  const names = refsIn('use {hazelcast-cloud} and {page-latest-supported-mc}, but not \\{escaped} nor {0-ok}')
-  assert(names.has('hazelcast-cloud') && names.has('page-latest-supported-mc'), 'counts real refs')
-  assert(!names.has('escaped'), 'escaped \\{ref} is a literal, not a reference')
-  assert(names.has('0-ok'), 'digit-leading names still match (filtered later by the manifest table)')
-  ok('refsIn: counts unescaped refs, ignores \\{escaped}')
+  const attrs = {
+    'hazelcast-cloud': 'Cloud',
+    'page-cloud-console': 'https://cloud.hazelcast.com/',
+    'full-version': '5.6.0',
+    'source-highlighter': 'highlight.js', // reserved: machinery
+    'page-some-switch': true,             // flag, not text
+    'page-some-empty': '',                // renders nothing
+  }
+  let seq = 0
+  const { entries, skipped } = poisonAttributes(attrs, () => ++seq)
+  const names = entries.map((e) => e.name).sort()
+  assert.deepStrictEqual(names, ['full-version', 'hazelcast-cloud', 'page-cloud-console'],
+    'only content attributes are poisoned')
+  assert.deepStrictEqual(skipped.map((s) => `${s.name}:${s.reason}`).sort(),
+    ['page-some-empty:empty', 'page-some-switch:flag', 'source-highlighter:reserved'],
+    'machinery, flags and empty values are left at their real values, with the reason recorded')
+  assert.strictEqual(attrs['source-highlighter'], 'highlight.js', 'a reserved value is untouched IN PLACE')
+  assert.notStrictEqual(attrs['hazelcast-cloud'], 'Cloud', 'a content value is replaced IN PLACE')
+  assert.strictEqual(new Set(entries.map((e) => e.token)).size, entries.length, 'tokens are unique')
+  ok('poisonAttributes: poisons content only; records why each skip was skipped')
 }
 
-// --- source: comments are not references ---------------------------------
+// --- poisoning: shape preservation -------------------------------------------
+// Attribute substitution runs BEFORE the macro pass, so `{url}[text]` only becomes
+// a link because the value looks like a URL. A bare token there would change the
+// rendered structure and move the very content the census is trying to locate.
 {
-  const stripped = stripComments('a {keep}\n// a {dropped-line}\n////\n{dropped-block}\n////\nb {keep2}')
-  const names = refsIn(stripped)
-  assert(names.has('keep') && names.has('keep2'), 'keeps content refs')
-  assert(!names.has('dropped-line') && !names.has('dropped-block'), 'drops comment refs')
-  ok('stripComments: line and block comments removed before scanning')
+  const t = tokenFor(7)
+  assert.match(poisonedValueFor('https://cloud.hazelcast.com/', t), /^https:\/\/.*\/$/,
+    'a URL value poisons to a URL, keeping its trailing slash')
+  assert.match(poisonedValueFor('http://x.example/a/b', t), /^http:\/\//,
+    'the scheme is preserved so autolinking still fires')
+  assert.strictEqual(poisonedValueFor('https://x.example/a/b', t).endsWith('/'), false,
+    'no trailing slash is invented where the real value had none')
+  assert.match(poisonedValueFor('www.example.com', t), /^www\./, 'a www. value stays autolinkable')
+  assert.strictEqual(poisonedValueFor('5.6.0', t), t, 'a plain value poisons to the bare token')
+  assert.strictEqual(poisonedValueFor('true@', t), t + '@', 'an Antora soft-set marker survives')
+  ok('poisonedValueFor: same lexical shape, unique content')
 }
 
-// --- source: include parsing + resolution --------------------------------
+// --- poisoning: reversibility (what makes the census believable) --------------
 {
-  const incs = includesIn('include::partial$note.adoc[]\ninclude::example$/x.yaml[tag=demo]\nnot an include')
-  assert(incs.length === 2, 'finds both includes')
-  assert(incs[1].tag === 'demo', 'captures tag=')
-  ok('includesIn: finds include:: directives and tag=')
-
-  const from = { component: 'operator', module: 'ROOT', family: 'page', relative: 'upgrade.adoc' }
-  assert.strictEqual(resolveTarget('partial$note.adoc', from).family, 'partial', 'partial$ family')
-  assert.strictEqual(resolveTarget('example$/x.yaml', from).family, 'example', 'example$ family')
-  const bare = resolveTarget('sibling.adoc', from)
-  assert(bare && bare.family === 'page' && bare.relative === 'sibling.adoc', 'bare relative -> page, same dir')
-  assert.strictEqual(resolveTarget('imdg:ROOT:partial$x.adoc', from), null, 'no-mirror component -> null')
-  assert.strictEqual(resolveTarget('image$logo.png', from), null, 'non-content family -> null')
-  ok('resolveTarget: family + component defaulting + resolution-only skip')
+  const entries = [
+    { name: 'a', token: tokenFor(1), value: 'Cloud', rendered: tokenFor(1), unmaskSafe: true },
+    { name: 'b', token: tokenFor(2), value: 'https://real/', rendered: `https://${tokenFor(2)}.invalid/`, unmaskSafe: true },
+  ]
+  const rendered = `<p>${tokenFor(1)} at <a href="https://${tokenFor(2)}.invalid/x">${tokenFor(1)}</a></p>`
+  const back = unmask(rendered, entries)
+  assert.strictEqual(back, '<p>Cloud at <a href="https://real/x">Cloud</a></p>',
+    'every occurrence is restored, including a value with a path appended to it')
+  assert.deepStrictEqual(residualTokens(back), [], 'no token survives a complete unmask')
+  assert.deepStrictEqual(residualTokens(`stray ${tokenFor(9)}`), [tokenFor(9)],
+    'a token that could not be restored is reported, never ignored')
+  ok('unmask: restores real values exactly; residual tokens are surfaced')
 }
 
-// --- source: tag slicing --------------------------------------------------
+// --- the census guard's one permitted difference ------------------------------
+// A token in a heading also changes the slugged anchor id, which a case-sensitive
+// unmask cannot restore. That -- and nothing else -- is masked before comparing.
 {
-  const doc = 'pre {ignore}\n// tag::demo[]\nkeep {inside}\n// end::demo[]\npost {ignore2}'
-  const sliced = sliceByTags(doc, 'demo')
-  const names = refsIn(sliced)
-  assert(names.has('inside') && !names.has('ignore') && !names.has('ignore2'), 'keeps only tagged region')
-  assert(refsIn(sliceByTags(doc, null)).has('ignore'), 'no tag -> whole file')
-  ok('sliceByTags: honours tag= selection')
+  const a = '<h2 id="logs-for-hzref0008x"><a class="anchor" href="#logs-for-hzref0008x"></a>Logs for Cloud</h2>'
+  const b = '<h2 id="logs-for-cloud"><a class="anchor" href="#logs-for-cloud"></a>Logs for Cloud</h2>'
+  assert.strictEqual(maskDerivedIds(a), maskDerivedIds(b), 'derived ids and their fragments are masked')
+  assert.notStrictEqual(maskDerivedIds('<p>Cloud</p>'), maskDerivedIds('<p>Confluent Cloud</p>'),
+    'a difference in CONTENT still fails the guard')
+  ok('maskDerivedIds: forgives derived anchor ids only, never content')
 }
 
-// --- output: preserved-reference detection -------------------------------
+// --- the disposition table is closed and deny-by-default ---------------------
 {
-  assert(hasRef('x <Variable name="page-latest-supported-mc"/> y', 'page-latest-supported-mc'), 'prose Variable')
-  assert(hasRef('<Variable href="{page-cloud-console}" text="Cloud console"/>', 'page-cloud-console'), 'link token')
-  assert(hasRef('```shell vars\nhelm install {operator-chart-version}\n```', 'operator-chart-version'), 'code token')
-  assert(!hasRef('the word Cloud appears but no ref', 'hazelcast-cloud'), 'baked literal is NOT a reference')
-  assert(!hasRef('escaped \\{version\\} stays literal', 'version'), 'escaped token is NOT a reference')
-  ok('hasRef: matches every preserved form, rejects baked/escaped literals')
+  assert(isPreserve(dispositionForText('text')), 'prose must keep its reference')
+  assert(isPreserve(dispositionForText('heading')), 'a heading can hold a <Variable>')
+  assert(isPreserve(dispositionForText('code')), 'a `vars` fence resolves its tokens')
+  assert(isPreserve(dispositionForAttr('href')), 'a link destination can be a link-mode <Variable>')
+  assert(!isPreserve(dispositionForAttr('alt')), 'Markdown image alt text cannot hold a component')
+  assert(!isPreserve(dispositionForAttr('id')), 'an anchor id must stay a literal to preserve the URL fragment')
+  assert.strictEqual(dispositionForAttr('data-whatever'), null,
+    'an unrecognised position has NO disposition, so the gate fails rather than guessing')
+  assert.strictEqual(dispositionForText('nowhere'), null, 'same for an unrecognised text context')
+  ok('bake-contexts: preserve/bake per POSITION; unknown positions fail closed')
 }
 
-// --- output: import parsing ----------------------------------------------
+// --- the census scanner ------------------------------------------------------
+{
+  const tokens = [
+    { name: 'hazelcast-cloud', token: tokenFor(1), value: 'Cloud', rendered: tokenFor(1), unmaskSafe: true },
+    { name: 'page-cloud-console', token: tokenFor(2), value: 'https://real/', rendered: `https://${tokenFor(2)}.invalid/`, unmaskSafe: true },
+  ]
+  const html = [
+    `<p>${tokenFor(1)} is one, ${tokenFor(1)} is two.</p>`,
+    `<h2 id="a-${tokenFor(1)}-h"><a class="anchor" href="#a-${tokenFor(1)}-h"></a>${tokenFor(1)} heading</h2>`,
+    `<a href="https://${tokenFor(2)}.invalid/">console</a>`,
+    `<div class="imageblock"><img src="x.png" alt="${tokenFor(1)} diagram"></div>`,
+    `<pre class="highlight"><code>helm install ${tokenFor(1)}</code></pre>`,
+  ].join('\n')
+  const { preserve, bakes, unknown } = scanCensusPage(html, { tokens })
+
+  assert.deepStrictEqual(unknown, [], 'every position in ordinary Antora output is classified')
+  // 2 prose + 1 heading text + 1 code = 4 preserved; the id (x2: id + fragment)
+  // and the alt text are recorded bakes.
+  assert.strictEqual(preserve.get('hazelcast-cloud'), 4,
+    'counts EVERY preserved occurrence, not just whether the name appears')
+  assert.strictEqual(preserve.get('page-cloud-console'), 1, 'an href occurrence is preserved')
+  const reasons = bakes.filter((b) => b.name === 'hazelcast-cloud').map((b) => b.disposition).sort()
+  assert.deepStrictEqual(reasons, ['bake:anchor-id', 'bake:anchor-id', 'bake:image-alt'],
+    'the id, its fragment and the alt text are recorded as bakes, not counted as expectations')
+  ok('scanCensusPage: per-occurrence expectations, with unpreservable positions recorded separately')
+
+  // The property the whole approach buys: a literal that merely EQUALS a real
+  // value carries no token, so it cannot become an expectation.
+  const literal = scanCensusPage('<p>Cloud is a word. 5.7.0 is a version.</p>', { tokens })
+  assert.strictEqual(literal.preserve.size, 0, 'a coincidental literal is never expected to be a reference')
+  ok('scanCensusPage: coincidental literals cannot produce expectations')
+}
+
+// --- MDX side: every preserved form counts, once each ------------------------
+{
+  assert.strictEqual(countMdxRefs('a <Variable name="ucn"/> b <Variable name="ucn"/>', 'ucn'), 2,
+    'each prose <Variable> counts')
+  assert.strictEqual(countMdxRefs('<Variable href="{page-cloud-console}" text="{ucn} console"/>', 'ucn'), 1,
+    'a {name} token in a link-mode <Variable> counts once')
+  assert.strictEqual(countMdxRefs('the word Cloud, baked', 'hazelcast-cloud'), 0,
+    'a baked literal is not a reference')
+  assert.strictEqual(countMdxRefs('escaped \\{ucn} stays literal', 'ucn'), 0, 'an escaped token is not a reference')
+  assert.strictEqual(countExampleRefs('image: hazelcast:{full-version}\n', 'full-version'), 1,
+    'a placeholder in an example file is a reference (the loader substitutes it at build)')
+  ok('countMdxRefs/countExampleRefs: count every preserved form, reject baked and escaped literals')
+}
+
+// --- MDX side: a plain fence is literal, a `vars` fence is not ---------------
+{
+  const mdx = ['```yaml', 'name: {ucn}', '```', '', '```shell vars', 'install {ucn}', '```'].join('\n')
+  const body = dropLiteralFences(mdx)
+  assert.strictEqual(countMdxRefs(body, 'ucn'), 1,
+    'only the `vars` fence contributes: Docusaurus renders a plain fence literally')
+  ok('dropLiteralFences: {name} in a non-vars fence is a literal, not a reference')
+}
+
+// --- MDX side: frontmatter is inert, not a reference -------------------------
+// Docusaurus does not interpolate YAML frontmatter, so a token there reaches the
+// reader as literal braces. Counting it as a reference would BOTH hide that bug
+// and mask a genuine bake elsewhere on the page.
+{
+  const mdx = '---\ntitle: "X"\nsidebar_label: "Connect to {hazelcast-cloud}"\n---\n\nProse <Variable name="hazelcast-cloud"/>.\n'
+  assert.strictEqual(countMdxRefs(stripFrontmatter(mdx), 'hazelcast-cloud'), 1,
+    'only the body reference counts')
+  assert.strictEqual(frontmatterTokens(mdx, ['hazelcast-cloud']).get('hazelcast-cloud'), 1,
+    'the frontmatter token is reported separately')
+  assert.strictEqual(frontmatterTokens('no frontmatter {hazelcast-cloud}', ['hazelcast-cloud']).size, 0,
+    'a body token is not mistaken for frontmatter')
+  ok('stripFrontmatter/frontmatterTokens: frontmatter tokens are a finding, never a reference')
+}
+
+// --- MDX side: multiplicity -------------------------------------------------
+// The golden inlines a partial at every include site, so the converted page must
+// be credited once per USE of the imported component -- otherwise a partial used
+// twice looks like a baked reference.
+{
+  assert.strictEqual(usageCount('<PartialA/>\ntext\n<PartialA />', 'PartialA', 'partial'), 2, 'counts component uses')
+  assert.strictEqual(usageCount('<PartialAB/>', 'PartialA', 'partial'), 0, 'does not match a longer component name')
+  assert.strictEqual(usageCount('<CodeBlock>{Ex_x}</CodeBlock>', 'Ex_x', 'example'), 1, 'counts example expression uses')
+
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'refcheck-selftest-'))
+  const site = path.join(dir, 'site')
+  fs.mkdirSync(path.join(site, 'cloud', '_partials'), { recursive: true })
+  fs.mkdirSync(path.join(site, 'cloud', 'examples'), { recursive: true })
+  fs.writeFileSync(path.join(site, 'cloud', '_partials', 'p.mdx'), 'Shared <Variable name="ucn"/>.\n')
+  fs.writeFileSync(path.join(site, 'cloud', 'examples', 'e.yaml'), 'v: {full-version}\n')
+  const page = path.join(site, 'cloud', 'page.mdx')
+  fs.writeFileSync(page, [
+    "import PartialP from '@site/cloud/_partials/p.mdx';",
+    "import Ex_e from './examples/e.yaml';",
+    '',
+    'Own <Variable name="ucn"/>.',
+    '<PartialP/>',
+    '<PartialP/>',
+    '<CodeBlock>{Ex_e}</CodeBlock>',
+  ].join('\n'))
+
+  const counts = refCounts(page, site, ['ucn', 'full-version'])
+  assert.strictEqual(counts.get('ucn'), 3, 'own reference + the partial counted once per use (1 + 2)')
+  assert.strictEqual(counts.get('full-version'), 1, 'an imported example contributes its placeholders')
+  fs.rmSync(dir, { recursive: true, force: true })
+  ok('refCounts: page + partials (per use) + examples, so multiplicity cannot look like baking')
+}
+
+// --- MDX side: import + slug parsing ----------------------------------------
 {
   const mdx = [
     "import PartialClusterData from '@site/cloud/_partials/cluster-data.mdx'",
@@ -78,47 +223,37 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
     "import CodeBlock from '@theme/CodeBlock';",
   ].join('\n')
   const { partials, examples } = importsOf(mdx, '/root/cloud/manage/x.mdx', '/root')
-  assert(partials.length === 1 && partials[0] === '/root/cloud/_partials/cluster-data.mdx', 'resolves @site partial')
-  assert(examples.length === 1 && examples[0] === '/root/cloud/examples/hazelcast.yaml', 'resolves relative example')
-  ok('importsOf: resolves partial (@site) and example (relative) imports; ignores theme imports')
-
-  assert.strictEqual(slugOf('---\ntitle: "X"\nslug: /cloud/foo\n---\nbody'), '/cloud/foo', 'reads frontmatter slug')
-  ok('slugOf: reads the URL-preserving slug')
+  assert.deepStrictEqual(partials, [{ id: 'PartialClusterData', file: '/root/cloud/_partials/cluster-data.mdx' }],
+    'resolves an @site partial import and keeps its identifier')
+  assert.deepStrictEqual(examples, [{ id: 'Ex_hazelcast_yaml', file: '/root/cloud/examples/hazelcast.yaml' }],
+    'resolves a relative example import and keeps its identifier')
+  assert.strictEqual(slugOf('---\ntitle: "X"\nslug: /cloud/foo\n---\nbody'), '/cloud/foo', 'reads the URL-preserving slug')
+  ok('importsOf/slugOf: identifiers and paths for the closure; the slug joins page to manifest')
 }
 
-// --- bake-safe allowlist --------------------------------------------------
+// --- reserved attributes ----------------------------------------------------
 {
-  assert(isBakeSafe('source-highlighter') && !isBakeSafe('hazelcast-cloud'), 'machinery safe, content not')
-  ok('bake-safe: allowlists machinery, not content attributes')
+  assert(isReserved('source-highlighter') && isReserved('idprefix'), 'rendering machinery is reserved')
+  assert(!isReserved('hazelcast-cloud') && !isReserved('full-version'), 'content attributes are not')
+  ok('reserved-attrs: machinery only, so content is always poisoned and therefore always checked')
 }
 
-// --- mark-attributes: round trip + context skips ------------------------
+// --- source-side include walker (examples only) -----------------------------
 {
-  const names = ['hazelcast-cloud']
-  // Direct prose: wrap -> (render resolves {name}) -> spanify -> strip == clean.
-  const src = 'Use {hazelcast-cloud} here.'
-  const rendered = wrapRefs(src, names).replace(/\{hazelcast-cloud\}/g, 'Cloud')
-  const spanned = spanify(rendered)
-  assert.strictEqual(spanned, 'Use <span class="hz-attr-hazelcast-cloud">Cloud</span> here.', 'sentinel -> span')
-  assert(!hasSentinelResidue(spanned), 'no sentinel residue after spanify')
-  assert.strictEqual(stripAttrSpans(spanned), 'Use Cloud here.', 'strip reproduces clean text')
-  ok('mark-attributes: wrap -> spanify -> strip round trip is byte-faithful')
+  const incs = includesIn('include::partial$note.adoc[]\ninclude::example$/x.yaml[tag=demo]\nnot an include')
+  assert.strictEqual(incs.length, 2, 'finds both includes')
+  assert.strictEqual(incs[1].tag, 'demo', 'captures tag=')
 
-  // Context skips: heading and image alt NOT marked; :description: marked ONLY
-  // when the body renders it via {description}.
-  assert(wrappableRefs('== {hazelcast-cloud} Standard', names).has('hazelcast-cloud'), 'section heading markable (role span, id-safe)')
-  assert.strictEqual(wrappableRefs('= {hazelcast-cloud} Title', names).size, 0, 'doc title (level 0) not markable -> frontmatter')
-  assert.strictEqual(wrappableRefs('image::x.svg[a {hazelcast-cloud} thing]', names).size, 0, 'block image alt not markable')
-  assert(wrappableRefs('Prose {hazelcast-cloud} ok.', names).has('hazelcast-cloud'), 'prose markable')
-  assert.strictEqual(wrappableRefs(':description: From {hazelcast-cloud}.\n\n== T', names).size, 0, ':description: unused -> not markable')
-  assert(wrappableRefs(':description: From {hazelcast-cloud}.\n\n{description}', names).has('hazelcast-cloud'), ':description: rendered via {description} -> markable')
-  ok('mark-attributes: section-heading + prose + rendered :description: markable; title/image-alt/unused-:description: not')
+  const from = { component: 'operator', module: 'ROOT', family: 'page', relative: 'upgrade.adoc' }
+  assert.strictEqual(resolveTarget('example$/x.yaml', from).family, 'example', 'example$ family')
+  assert.strictEqual(resolveTarget('partial$note.adoc', from).family, 'partial', 'partial$ is walked through')
+  assert.strictEqual(resolveTarget('imdg:ROOT:partial$x.adoc', from), null, 'no-mirror component -> null')
 
-  // A section-heading reference wraps as a ROLE SPAN (keeps the anchor id clean);
-  // flow text wraps as sentinels.
-  assert(wrapRefs('== {hazelcast-cloud} X', names).includes('[.hz-attr-hazelcast-cloud]#{hazelcast-cloud}#'), 'heading -> role span')
-  assert(!wrapRefs('Prose {hazelcast-cloud}.', names).includes('[.hz-attr-'), 'flow -> sentinel, not role span')
-  ok('mark-attributes: heading uses id-safe role span, flow uses sentinels')
+  const doc = 'pre\n// tag::demo[]\ninclude::example$in.yaml[]\n// end::demo[]\ninclude::example$out.yaml[]'
+  assert(sliceByTags(doc, 'demo').includes('in.yaml'), 'tag slicing keeps the selected region')
+  assert(!sliceByTags(doc, 'demo').includes('out.yaml'), 'and drops the rest')
+  assert(!stripComments('// include::example$x.yaml[]').includes('include'), 'a commented include is not one')
+  ok('source-refs: finds the example$ includes a page reaches, through partials and tag slices')
 }
 
 console.log(`\n[refcheck selftest] ${n} groups passed.`)

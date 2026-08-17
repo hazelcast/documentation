@@ -36,6 +36,7 @@ const { createPartialMarker } = require('../antora-extension/mark-partials')
 const { wrapRefs, spanify, hasSentinelResidue } = require('../antora-extension/mark-attributes')
 const { wrapConditionals } = require('../antora-extension/mark-conditionals')
 const { literalizeMonospace } = require('../antora-extension/normalize-monospace')
+const { poisonAttributes, preResolveTargets } = require('../antora-extension/poison-attributes')
 const { markedAttrsFor } = require('../lib/layout')
 const { lockfileKey, lockfileKeyFromFile } = require('./lockfile-key')
 
@@ -61,9 +62,18 @@ function parseArgs (argv) {
     const i = args.indexOf(flag)
     return i === -1 ? fallback : args[i + 1]
   }
+  // CENSUS mode: render the same corpus with every CONTENT attribute replaced by
+  // a unique inert token (antora-extension/poison-attributes.js), so the output
+  // records exactly where each attribute flowed. Feeds the no-baking gate
+  // (refcheck), never fidelity: it is a throwaway render written to its own tree,
+  // with all three mark-* instrumentations off so it is directly comparable to
+  // readGolden()'s de-instrumented golden. Monospace normalization stays ON --
+  // it CHANGES the render, so the census must carry it to match.
+  const census = args.includes('--census')
   return {
+    census,
     playbookFile: path.resolve(positional[0] || 'antora/index-playbook.yml'),
-    outDir: path.resolve(valueOf('--out', 'build/golden')),
+    outDir: path.resolve(valueOf('--out', census ? 'build/census' : 'build/golden')),
     lockfileFile: path.resolve(valueOf('--lockfile', 'build/manifest/lockfile.json')),
     // Optional: render only this one component (e.g. --component cloud). The
     // full playbook still aggregates, so the pin check stays valid; only the
@@ -75,20 +85,20 @@ function parseArgs (argv) {
     // Layer-1 canonicalize and stripped by readGolden() before any golden read,
     // so the instrumented golden is byte-equivalent to the bare render (proven
     // in the partials step-2 validation). --no-mark-partials renders bare.
-    markPartials: !args.includes('--no-mark-partials'),
+    markPartials: !census && !args.includes('--no-mark-partials'),
     // Instrument the golden with attribute-reference marker spans (see
     // antora-extension/mark-attributes.js) so the converter can turn a marked
     // attribute back into a <Variable> instead of baking its value. ON by
     // default; the spans strip byte-for-byte in readGolden(), so the golden is
     // byte-equivalent to the bare render. --no-mark-attributes renders bare.
-    markAttributes: !args.includes('--no-mark-attributes'),
+    markAttributes: !census && !args.includes('--no-mark-attributes'),
     // Instrument `ifdef::snapshot[]` blocks with passthrough comment sentinels
     // (see antora-extension/mark-conditionals.js) so the converter can wrap
     // snapshot-only content in <IfSnapshot> (current tree only) instead of
     // baking it per-version. ON by default; the sentinels sit inside the
     // conditional (so they gate with it) and strip byte-for-byte in readGolden().
     // --no-mark-conditionals renders bare.
-    markConditionals: !args.includes('--no-mark-conditionals'),
+    markConditionals: !census && !args.includes('--no-mark-conditionals'),
     // Backslash-escape emphasis chars inside inline monospace so Asciidoctor
     // renders `__trace` / `_` literally instead of mis-parsing the underscores as
     // emphasis (see antora-extension/normalize-monospace.js). Unlike the mark-*
@@ -188,7 +198,12 @@ function tutorialListHtml (contentCatalog, product) {
 }
 
 async function main () {
-  const { playbookFile, outDir, lockfileFile, component, markPartials, markAttributes, markConditionals, normalizeMonospace } = parseArgs(process.argv)
+  const { census, playbookFile, outDir, lockfileFile, component, markPartials, markAttributes, markConditionals, normalizeMonospace } = parseArgs(process.argv)
+  // Which components this run renders. Shared by the census poisoning pass and
+  // the page filter so they cannot disagree: poisoning a component we do not
+  // render would leak a foreign token into an in-scope page through a
+  // cross-component xref label (whose text comes from the TARGET's title).
+  const inScope = (name) => (component ? name === component : MIGRATED.has(name))
 
   // The canonical golden now carries partial sentinels by default; every golden
   // read routes through readGolden() (lib/pairing.js), which strips them, so the
@@ -235,6 +250,45 @@ async function main () {
   const aliases = registerPageAliases(contentCatalog, siteConfig)
   console.log(`[snapshot] registered ${aliases.registered} page aliases` +
     (aliases.problems.length ? ` (${aliases.problems.length} skipped)` : ''))
+
+  // Census poisoning: swap every content attribute's value for a unique token
+  // BEFORE the per-version configs are read, so each page renders with the
+  // poisoned table its own component-version owns. Reserved (machinery) names,
+  // flags and empty values are left alone -- see poison-attributes.js.
+  const censusEntries = []
+  const censusSkipped = []
+  if (census) {
+    // FIRST, with the real values still in place: resolve attribute references out
+    // of xref/include TARGETS, which must name real component versions to resolve
+    // at all (see preResolveTargets).
+    let coords = 0
+    const attrsOf = new Map()
+    for (const comp of contentCatalog.getComponents()) {
+      for (const v of comp.versions) attrsOf.set(`${v.version}@${comp.name}`, (v.asciidoc && v.asciidoc.attributes) || {})
+    }
+    for (const file of contentCatalog.getFiles()) {
+      const src = file.src || {}
+      if ((src.family !== 'page' && src.family !== 'partial') || !file.contents || !inScope(src.component)) continue
+      const { text, resolved } = preResolveTargets(file.contents.toString(), attrsOf.get(`${src.version}@${src.component}`) || {})
+      if (resolved) { file.contents = Buffer.from(text); coords += resolved }
+    }
+    if (coords) console.log(`[census] pre-resolved ${coords} attribute reference(s) in xref/include targets`)
+
+    let seq = 0
+    for (const comp of contentCatalog.getComponents()) {
+      if (!inScope(comp.name)) continue
+      for (const v of comp.versions) {
+        const attrs = v.asciidoc && v.asciidoc.attributes
+        if (!attrs) continue
+        const { entries, skipped } = poisonAttributes(attrs, () => ++seq)
+        for (const e of entries) censusEntries.push({ component: comp.name, version: v.version, ...e })
+        for (const s of skipped) censusSkipped.push({ component: comp.name, version: v.version, ...s })
+      }
+    }
+    console.log(`[census] poisoned ${censusEntries.length} attribute value(s) across ` +
+      `${new Set(censusEntries.map((e) => `${e.component}@${e.version}`)).size} component-version(s); ` +
+      `${censusSkipped.length} left real (reserved/flag/empty)`)
+  }
 
   const configs = asciidocConfigsByVersion(contentCatalog, siteConfig)
   // One stateless marker reused across pages; asciidoc-loader calls its register
@@ -308,9 +362,7 @@ async function main () {
 
   const pages = contentCatalog
     .getPages((page) => page.out)
-    .filter((page) => component
-      ? page.src.component === component
-      : MIGRATED.has(page.src.component))
+    .filter((page) => inScope(page.src.component))
   console.log(
     `[snapshot] rendering ${pages.length} pages` + (component ? ` (component=${component})` : '') + ' ...'
   )
@@ -375,15 +427,26 @@ async function main () {
     versions: { antora: require('@antora/content-classifier/package.json').version },
   }
   fs.mkdirSync(outDir, { recursive: true })
-  fs.writeFileSync(path.join(outDir, 'snapshot-meta.json'), JSON.stringify(meta, null, 2) + '\n')
+  // A census tree is NOT a golden and must never be mistaken for one (its values
+  // are poison tokens), so it gets its own meta file and no snapshot-meta.json.
+  // The token table IS the census key: refcheck reads it to know what to look for
+  // and what each token stood in for.
+  if (census) {
+    fs.writeFileSync(path.join(outDir, 'census-meta.json'), JSON.stringify({
+      ...meta, kind: 'census', tokens: censusEntries, skipped: censusSkipped,
+    }, null, 2) + '\n')
+  } else {
+    fs.writeFileSync(path.join(outDir, 'snapshot-meta.json'), JSON.stringify(meta, null, 2) + '\n')
+  }
   if (errors.length) {
     fs.writeFileSync(path.join(outDir, 'snapshot-errors.json'), JSON.stringify(errors, null, 2) + '\n')
   }
 
+  const metaFile = path.join(outDir, census ? 'census-meta.json' : 'snapshot-meta.json')
   console.log(
-    `[snapshot] wrote ${written}/${pages.length} pages to ${pagesDir}` +
+    `[${census ? 'census' : 'snapshot'}] wrote ${written}/${pages.length} pages to ${pagesDir}` +
       (errors.length ? ` (${errors.length} failed -> snapshot-errors.json)` : '') +
-      `\n[snapshot] key ${renderedKey.slice(0, 12)} -> ${path.join(outDir, 'snapshot-meta.json')}`
+      `\n[${census ? 'census' : 'snapshot'}] key ${renderedKey.slice(0, 12)} -> ${metaFile}`
   )
 
   // Flush the log, then group the render errors into a ranked inventory.
