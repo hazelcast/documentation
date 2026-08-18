@@ -16,12 +16,15 @@ const {
   poisonAttributes, poisonedValueFor, unmask, residualTokens, tokenFor,
 } = require('../antora-extension/poison-attributes')
 const { isReserved } = require('../lib/reserved-attrs')
-const { scanCensusPage, maskDerivedIds } = require('./lib/census-ledger')
+const { scanCensusPage, maskDerivedIds, unmaskGuard, hiddenBranchComponents } = require('./lib/census-ledger')
 const { dispositionForText, dispositionForAttr, isPreserve } = require('./lib/bake-contexts')
 const {
-  refCounts, countMdxRefs, countExampleRefs, usageCount, dropLiteralFences, importsOf, slugOf,
-  stripFrontmatter, frontmatterTokens,
+  refCounts, countMdxRefs, countExampleRefs, usageCount, dropLiteralFences, dropHiddenBranches,
+  importsOf, slugOf, stripFrontmatter, frontmatterTokens,
 } = require('./lib/mdx-refs')
+const {
+  START, END, NOT_START, NOT_END,
+} = require('../antora-extension/mark-conditionals')
 const { includesIn, resolveTarget, sliceByTags, stripComments } = require('./lib/source-refs')
 
 let n = 0
@@ -95,6 +98,96 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
   assert.notStrictEqual(maskDerivedIds('<p>Cloud</p>'), maskDerivedIds('<p>Confluent Cloud</p>'),
     'a difference in CONTENT still fails the guard')
   ok('maskDerivedIds: forgives derived anchor ids only, never content')
+}
+
+// --- the census guard is read DE-INSTRUMENTED ---------------------------------
+// The census render carries mark-conditionals' sentinels (it has to: that pass can
+// promote a swallowed block title, so an unmarked census cannot reproduce the
+// golden). They must therefore be invisible to the guard -- while a real
+// difference in the same page still fails it.
+{
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'refcheck-guard-'))
+  const tokens = [{ name: 'ucn', token: tokenFor(3), value: 'Cloud', rendered: tokenFor(3), unmaskSafe: true }]
+  const page = (body) => `<div class="paragraph">\n${body}\n</div>\n`
+  const censusFile = path.join(dir, 'census.html')
+  const goldenFile = path.join(dir, 'golden.html')
+  // Both renders are instrumented identically; only the substituted value differs.
+  fs.writeFileSync(censusFile, page(`${START}\n<p>${tokenFor(3)} only</p>\n${END}`))
+  fs.writeFileSync(goldenFile, page(`${START}\n<p>Cloud only</p>\n${END}`))
+  assert.strictEqual(unmaskGuard(censusFile, goldenFile, tokens).verdict, 'identical',
+    'sentinels on both sides are stripped, so they cannot make the guard fail')
+
+  fs.writeFileSync(goldenFile, page(`${START}\n<p>Cloud only, and more</p>\n${END}`))
+  assert.strictEqual(unmaskGuard(censusFile, goldenFile, tokens).verdict, 'differs',
+    'a real content difference inside a marked region still fails the guard')
+  fs.rmSync(dir, { recursive: true, force: true })
+  ok('unmaskGuard: conditional sentinels are invisible; content differences are not')
+}
+
+// --- which conditional branch did this version render? ------------------------
+// mark-conditionals puts its sentinels INSIDE each branch, so they are present in
+// a render exactly when that branch is. That is the gate's only per-page evidence
+// of which half of an ifdef/ifndef pair this version resolved.
+{
+  const marked = (open, close) => `<div>\n${open}\n<p>half</p>\n${close}\n</div>\n`
+  assert.deepStrictEqual(hiddenBranchComponents(marked(START, END)), ['IfNotSnapshot'],
+    'a snapshot render kept the then-branch, so the else-branch is the hidden one')
+  assert.deepStrictEqual(hiddenBranchComponents(marked(NOT_START, NOT_END)), ['IfSnapshot'],
+    'a release render kept the else-branch, so the then-branch is hidden')
+  assert.deepStrictEqual(hiddenBranchComponents('<p>no conditional here</p>'),
+    ['IfSnapshot', 'IfNotSnapshot'],
+    'a page with no marked conditional hides both -- a no-op where there is no wrapper')
+  ok('hiddenBranchComponents: the census render names the half it kept')
+}
+
+// --- MDX side: only the branch this version renders is counted ----------------
+// The converter puts BOTH halves in every version's MDX so a `docs:version` cut
+// carries both. Counting the hidden half would be a surplus the census can never
+// account for -- which is exactly how management-center's install.adoc read as
+// OVER-variableised (expected 4, found 6) when both halves reference {full-version}.
+{
+  const body = [
+    'Outside: {full-version} and {full-version}.',
+    '',
+    '   <IfSnapshot>',
+    '   Snapshot half, no reference.',
+    '   </IfSnapshot>',
+    '',
+    '   <IfNotSnapshot>',
+    '   Release half: {full-version}.',
+    '   </IfNotSnapshot>',
+  ].join('\n')
+  assert.strictEqual(countMdxRefs(dropHiddenBranches(body, ['IfNotSnapshot']), 'full-version'), 2,
+    'a snapshot version counts its own half only')
+  assert.strictEqual(countMdxRefs(dropHiddenBranches(body, ['IfSnapshot']), 'full-version'), 3,
+    'a release version counts the else-branch it renders')
+  assert.strictEqual(countMdxRefs(dropHiddenBranches(body, []), 'full-version'), 3,
+    'no hidden branch named: nothing is dropped')
+  assert.strictEqual(dropHiddenBranches('   <IfSnapshot>\ntail {full-version}', ['IfSnapshot']),
+    '   <IfSnapshot>\ntail {full-version}',
+    'an unterminated wrapper is left alone rather than swallowing the rest of the page')
+
+  // Through the whole closure, on the file layout the converter emits: an indented
+  // wrapper inside a <TabItem>, plus a partial carrying the same shape.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'refcheck-branches-'))
+  const site = path.join(dir, 'site')
+  fs.mkdirSync(path.join(site, 'mc', '_partials'), { recursive: true })
+  fs.writeFileSync(path.join(site, 'mc', '_partials', 'p.mdx'),
+    ['<IfSnapshot>', '<Variable name="full-version"/>', '</IfSnapshot>', '<IfNotSnapshot>',
+      '<Variable name="full-version"/>', '</IfNotSnapshot>'].join('\n') + '\n')
+  const pageFile = path.join(site, 'mc', 'install.mdx')
+  fs.writeFileSync(pageFile, [
+    "import PartialP from '@site/mc/_partials/p.mdx';",
+    '',
+    body,
+    '<PartialP/>',
+  ].join('\n'))
+  assert.strictEqual(refCounts(pageFile, site, ['full-version'], { hiddenBranches: ['IfNotSnapshot'] })
+    .get('full-version'), 3, 'the hidden half is dropped in the page AND in its partials (2 + 1)')
+  assert.strictEqual(refCounts(pageFile, site, ['full-version']).get('full-version'), 5,
+    'with no hidden branch named, both halves count -- the surplus the census cannot explain')
+  fs.rmSync(dir, { recursive: true, force: true })
+  ok('refCounts: a spliced page is counted in the half this version renders, not both')
 }
 
 // --- the disposition table is closed and deny-by-default ---------------------

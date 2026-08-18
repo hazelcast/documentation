@@ -65,10 +65,25 @@ function parseArgs (argv) {
   // CENSUS mode: render the same corpus with every CONTENT attribute replaced by
   // a unique inert token (antora-extension/poison-attributes.js), so the output
   // records exactly where each attribute flowed. Feeds the no-baking gate
-  // (refcheck), never fidelity: it is a throwaway render written to its own tree,
-  // with all three mark-* instrumentations off so it is directly comparable to
-  // readGolden()'s de-instrumented golden. Monospace normalization stays ON --
-  // it CHANGES the render, so the census must carry it to match.
+  // (refcheck), never fidelity: it is a throwaway render written to its own tree.
+  //
+  // The rule for the census is "carry every pass that CHANGES the render, drop
+  // every pass that only adds strippable instrumentation", because refcheck's
+  // guard has to be able to unmask the census back into the golden:
+  //   - mark-partials / mark-attributes: OFF. They only add sentinels/spans, which
+  //     readGolden() strips off the golden side, so a bare census matches.
+  //   - normalize-monospace: ON. It changes the render (it fixes Antora's mangled
+  //     inline monospace), so the census must carry it to match.
+  //   - mark-conditionals: ON. Mostly instrumentation, but NOT always: a unit whose
+  //     markability is 'promotes-title' deliberately changes the render (a block
+  //     title the preceding paragraph had swallowed becomes a real title), so an
+  //     unmarked census cannot reproduce the golden there — which is exactly how
+  //     it failed on management-center's install.adoc. Its sentinels ARE strippable
+  //     and refcheck reads the census through stripConditionalSentinels, so turning
+  //     it on costs nothing and buys back the guard. It also buys refcheck the only
+  //     per-page evidence of WHICH conditional branch this version resolved, which
+  //     is how a spliced page (both branches in the MDX) gets counted correctly —
+  //     see refcheck/lib/census-ledger.js hiddenBranchComponents.
   const census = args.includes('--census')
   return {
     census,
@@ -92,13 +107,14 @@ function parseArgs (argv) {
     // default; the spans strip byte-for-byte in readGolden(), so the golden is
     // byte-equivalent to the bare render. --no-mark-attributes renders bare.
     markAttributes: !census && !args.includes('--no-mark-attributes'),
-    // Instrument `ifdef::snapshot[]` blocks with passthrough comment sentinels
-    // (see antora-extension/mark-conditionals.js) so the converter can wrap
-    // snapshot-only content in <IfSnapshot> (current tree only) instead of
-    // baking it per-version. ON by default; the sentinels sit inside the
-    // conditional (so they gate with it) and strip byte-for-byte in readGolden().
-    // --no-mark-conditionals renders bare.
-    markConditionals: !census && !args.includes('--no-mark-conditionals'),
+    // Instrument `ifdef::snapshot[]` / `ifndef::snapshot[]` branches with
+    // passthrough comment sentinels (see antora-extension/mark-conditionals.js) so
+    // the converter can wrap the region in <IfSnapshot>/<IfNotSnapshot> instead of
+    // baking it per-version. ON by default; the sentinels sit inside the branch (so
+    // they gate with it) and strip byte-for-byte in readGolden().
+    // --no-mark-conditionals renders bare. Unlike the other two mark-* passes this
+    // one runs for the CENSUS too -- see the census comment above for why.
+    markConditionals: !args.includes('--no-mark-conditionals'),
     // Backslash-escape emphasis chars inside inline monospace so Asciidoctor
     // renders `__trace` / `_` literally instead of mis-parsing the underscores as
     // emphasis (see antora-extension/normalize-monospace.js). Unlike the mark-*
@@ -336,7 +352,10 @@ async function main () {
   // the converter can wrap snapshot-only content in <IfSnapshot> (see
   // mark-conditionals.js). Same in-memory-catalog rewrite as attribute marking;
   // sentinels gate with the conditional and strip byte-for-byte in readGolden().
+  // Runs for the census render as well, so the two stay comparable and the census
+  // records which branch each version resolved -- see parseArgs.
   if (markConditionals) {
+    const tag = census ? '[census]' : '[snapshot]'
     let marked = 0
     // Blocks left unmarked because injecting a sentinel there would change the
     // parse (mark-conditionals canMark). Reported rather than silent: each one is
@@ -349,7 +368,7 @@ async function main () {
       const wrapped = wrapConditionals(file.contents.toString(), stats)
       if (wrapped !== file.contents.toString()) { file.contents = Buffer.from(wrapped); marked++ }
     }
-    if (marked) console.log(`[snapshot] conditional marking: instrumented ${marked} source file(s)`)
+    if (marked) console.log(`${tag} conditional marking: instrumented ${marked} source file(s)`)
     // Units marked even though the injection CHANGES the render, in the one way
     // that is an improvement: a block title the preceding paragraph had swallowed
     // is promoted to a real title (mark-conditionals markability 'promotes-title').
@@ -357,11 +376,11 @@ async function main () {
     // promotion, so the converted output matches it and no gate can see that we
     // deliberately diverge from what Antora renders on the live site.
     if (stats.markedPromotingTitle) {
-      console.log(`[snapshot] conditional marking: ${stats.markedPromotingTitle} unit(s) marked WITH a promoted block title ` +
+      console.log(`${tag} conditional marking: ${stats.markedPromotingTitle} unit(s) marked WITH a promoted block title ` +
         '(the golden deliberately differs from Antora there: a swallowed `.Title` becomes a real one)')
     }
     if (stats.skipped) {
-      console.log(`[snapshot] conditional marking: skipped ${stats.skipped} block(s) with no blank line ` +
+      console.log(`${tag} conditional marking: skipped ${stats.skipped} block(s) with no blank line ` +
         'around the directive (marking there would change the parse; they bake instead)')
     }
   }

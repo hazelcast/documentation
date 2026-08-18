@@ -125,6 +125,42 @@ function dropLiteralFences (text) {
 
 const countMatches = (text, re) => (text.match(re) || []).length
 
+// Drop the content of a conditional branch this version does not render.
+//
+// The converter emits BOTH halves of a `snapshot` conditional into every version's
+// MDX -- the half this version resolved, and the other spliced in from a version
+// that did (converter/convert.js withBothConditionalBranches) -- so a
+// `docusaurus docs:version` cut carries both and <IfSnapshot>/<IfNotSnapshot>
+// choose at build time. Only one half reaches the reader, and the census (one
+// version's render) only accounts for that half, so the hidden one must not be
+// counted here. Which half is hidden comes from the census render itself -- see
+// census-ledger.js hiddenBranchComponents.
+//
+// Line-based on the components' own lines, which is how the converter writes them
+// (padded, and indented to their surroundings when spliced into a list item or a
+// <TabItem>). Nothing else in the corpus nests these, so a flat scan is enough;
+// an unclosed opener would swallow the rest of the file, so the closer is required
+// and the region is kept if it never arrives.
+function dropHiddenBranches (text, tags) {
+  if (!tags || !tags.length || !tags.some((t) => text.includes(`<${t}>`))) return text
+  const opener = new RegExp(`^\\s*<(${tags.map(escRe).join('|')})>\\s*$`)
+  const out = []
+  let dropping = null // { closer, buffered }
+  for (const line of text.split('\n')) {
+    if (dropping) {
+      dropping.buffered.push(line)
+      if (dropping.closer.test(line)) dropping = null
+      continue
+    }
+    const m = line.match(opener)
+    if (m) { dropping = { closer: new RegExp(`^\\s*</${escRe(m[1])}>\\s*$`), buffered: [line] }; continue }
+    out.push(line)
+  }
+  // Unterminated: put it back rather than silently losing the tail of the page.
+  if (dropping) out.push(...dropping.buffered)
+  return out.join('\n')
+}
+
 // A reference the CENSUS CANNOT SEE, so this side must not count it either: an
 // attribute used as an xref's VERSION COORDINATE
 // (`xref:{page-latest-supported-hazelcast}@hazelcast:sql:create-index.adoc[…]`).
@@ -176,8 +212,10 @@ function usageCount (body, id, kind) {
 
 // Total references to each of `names` that a converted page renders: its own body
 // plus every imported partial and example file, each counted once per use.
+// `hiddenBranches` names the conditional-branch components this version does not
+// render, whose content is present in the MDX but shown to nobody here.
 // Returns Map(name -> count).
-function refCounts (pageFile, siteRoot, names) {
+function refCounts (pageFile, siteRoot, names, { hiddenBranches = [] } = {}) {
   const counts = new Map(names.map((n) => [n, 0]))
   const bump = (name, n) => counts.set(name, (counts.get(name) || 0) + n)
 
@@ -191,7 +229,7 @@ function refCounts (pageFile, siteRoot, names) {
       }
       return // raw file: no imports to follow
     }
-    const body = dropLiteralFences(stripImports(stripFrontmatter(text)))
+    const body = dropHiddenBranches(dropLiteralFences(stripImports(stripFrontmatter(text))), hiddenBranches)
     for (const name of names) {
       const c = countMdxRefs(body, name)
       if (c) bump(name, c * multiplier)
@@ -224,6 +262,6 @@ function exampleImports (pageFile, siteRoot) {
 
 module.exports = {
   indexOutput, refCounts, exampleImports, importsOf, slugOf, urlToSlug,
-  countMdxRefs, countExampleRefs, usageCount, dropLiteralFences, stripImports,
-  stripFrontmatter, frontmatterTokens,
+  countMdxRefs, countExampleRefs, usageCount, dropLiteralFences, dropHiddenBranches,
+  stripImports, stripFrontmatter, frontmatterTokens,
 }

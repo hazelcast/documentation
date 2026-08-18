@@ -40,7 +40,7 @@ const path = require('node:path')
 const { NAV_SOURCES, versionsToProcess, outDirFor } = require('../lib/layout')
 const { collectPageExamples } = require('./lib/source-refs')
 const { indexOutput, refCounts, exampleImports, frontmatterTokens, urlToSlug } = require('./lib/mdx-refs')
-const { scanCensusPage, unmaskGuard } = require('./lib/census-ledger')
+const { scanCensusPage, unmaskGuard, hiddenBranchComponents } = require('./lib/census-ledger')
 const { loadDispositions, isDropped } = require('../lib/dispositions')
 const { loadAccepted, applyAccepted } = require('../lib/accepted')
 const { goldenPages } = require('../fidelity/lib/pairing')
@@ -146,10 +146,14 @@ function main () {
         counts.checked++
 
         const scope = { component, seg, url: resource.url }
+        const censusHtml = fs.readFileSync(censusFile, 'utf8')
+        // A spliced page carries BOTH halves of a `snapshot` conditional; this
+        // version renders one. The census says which, so the MDX side can ignore
+        // the other instead of reporting it as a surplus reference.
+        const hiddenBranches = hiddenBranchComponents(censusHtml)
 
         // --- (1) attributes: exact per-page accounting -----------------------
-        const { preserve, bakes, unknown } = scanCensusPage(
-          fs.readFileSync(censusFile, 'utf8'), { tokens: census.tokens })
+        const { preserve, bakes, unknown } = scanCensusPage(censusHtml, { tokens: census.tokens })
         for (const u of unknown) unknownCtx.push({ ...scope, ...u })
         for (const b of bakes) {
           const key = `${b.name}  ${b.disposition}`
@@ -157,7 +161,7 @@ function main () {
         }
         if (preserve.size) {
           const names = [...preserve.keys()]
-          const actual = refCounts(pageFile, opts.outRoot, names)
+          const actual = refCounts(pageFile, opts.outRoot, names, { hiddenBranches })
           for (const [name, expected] of preserve) {
             const got = actual.get(name) || 0
             if (got < expected) baked.push({ ...scope, name, expected, actual: got })

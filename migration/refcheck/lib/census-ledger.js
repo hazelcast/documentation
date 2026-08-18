@@ -16,12 +16,17 @@
 //                       plus the recorded bakes (dispositions).
 //   unmaskGuard()     -- proof that poisoning changed only the substituted text:
 //                       putting the real values back must reproduce the golden.
+//   hiddenBranchComponents()
+//                    -- which `snapshot` conditional branch this version's render
+//                       did NOT keep, so the MDX side can ignore the copy of it
+//                       that splicing put in every version.
 
 const fs = require('node:fs')
 
 const cheerio = require('cheerio')
 
 const { unmask, residualTokens, TOKEN_RE } = require('../../antora-extension/poison-attributes')
+const { stripConditionalSentinels } = require('../../antora-extension/mark-conditionals')
 const { readGolden } = require('../../fidelity/lib/pairing')
 const { dispositionForText, dispositionForAttr, isPreserve } = require('./bake-contexts')
 
@@ -115,7 +120,12 @@ const maskDerivedIds = (html) => html
 //                    an attribute in a heading)
 //   'differs'        a real structural difference -- a hard error
 function unmaskGuard (censusFile, goldenFile, tokens) {
-  const unmasked = unmask(fs.readFileSync(censusFile, 'utf8'), tokens)
+  // Both sides are read DE-INSTRUMENTED. The census carries conditional sentinels
+  // (build-snapshot runs mark-conditionals for the census too, because that pass
+  // can change the render and an unmarked census then cannot reproduce the golden)
+  // and the golden carries all three instrumentations; readGolden strips its lot,
+  // so the census needs the one stripper that applies to it.
+  const unmasked = unmask(stripConditionalSentinels(fs.readFileSync(censusFile, 'utf8')), tokens)
   const golden = readGolden(goldenFile)
   if (unmasked === golden) return { verdict: 'identical', residual: residualTokens(unmasked) }
   // Residuals are counted on the MASKED form: a token inside a derived anchor id
@@ -127,4 +137,43 @@ function unmaskGuard (censusFile, goldenFile, tokens) {
   return { verdict: 'differs', residual }
 }
 
-module.exports = { scanCensusPage, unmaskGuard, maskDerivedIds, tokensIn }
+// --- which conditional branch did THIS version render? ------------------------
+// The converter puts BOTH halves of a `snapshot` conditional in every version's
+// MDX -- the half this version's source resolved, plus the other half spliced in
+// from a version that resolved it (converter/convert.js
+// withBothConditionalBranches) -- so that a `docusaurus docs:version` cut carries
+// both and <IfSnapshot>/<IfNotSnapshot> pick one at build time.
+//
+// The census is ONE version's render, so it can only ever account for the half
+// that version resolved. Counting the hidden half on the MDX side is therefore a
+// surplus the census can never explain: it reported install.adoc as
+// OVER-variableised (expected 4, found 6) purely because both halves reference
+// {full-version}. The fix is not to relax the accounting but to compare like with
+// like -- drop the branch this version does not render before counting.
+//
+// The evidence is the census render itself: mark-conditionals' sentinels sit
+// INSIDE each branch, so they are present exactly when that branch is. Reading it
+// off the page rather than off a per-version `snapshot` flag keeps the gate honest
+// about pages whose conditional was left unmarked (it bakes, no sentinels, no
+// wrapper in the MDX either -- nothing to drop, and a bake there is still caught).
+const BRANCH_COMPONENT = { if: 'IfSnapshot', ifnot: 'IfNotSnapshot' }
+const BRANCH_START_RE = /<!--hz-(if|ifnot):snapshot:start-->/g
+
+// The branch kinds the render kept, e.g. Set { 'if' }.
+function renderedBranches (html) {
+  const kinds = new Set()
+  for (const m of html.matchAll(BRANCH_START_RE)) kinds.add(m[1])
+  return kinds
+}
+
+// The MDX components whose content this version does NOT render, so the reference
+// counter must skip them. A page with no marked conditional yields both names,
+// which is a no-op on a page that has no such wrapper.
+function hiddenBranchComponents (censusHtml) {
+  const kept = renderedBranches(censusHtml)
+  return Object.entries(BRANCH_COMPONENT).filter(([kind]) => !kept.has(kind)).map(([, tag]) => tag)
+}
+
+module.exports = {
+  scanCensusPage, unmaskGuard, maskDerivedIds, tokensIn, renderedBranches, hiddenBranchComponents,
+}
