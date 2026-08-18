@@ -135,6 +135,11 @@ function decide (pagesOcc, baseDir) {
         componentName,
         importStmt: importStmtFor(slug, componentName, baseDir),
         representative: occ[0].inner,
+        // The pages that include this fragment. Carried on the decision (not just
+        // the report) because the converter needs them: an attribute reference
+        // inside an included file resolves against the INCLUDING document, so a
+        // factored partial's reverse-map is derived from its consumers.
+        pages,
       })
     }
     report.push({
@@ -146,4 +151,30 @@ function decide (pagesOcc, baseDir) {
   return { decisions, report }
 }
 
-module.exports = { collectOccurrences, decide, slugFor, componentNameFor, parseId }
+// Which attributes a FACTORED partial may reverse-map: the union, over the pages
+// that include it, of what each of those pages is itself permitted to map (the
+// `{all, prose}` sets scanPageAttrs computes per page).
+//
+// The union is the correct scope because an attribute reference inside an included
+// file is resolved against the INCLUDING document's attribute table — the same
+// fragment included from two components resolves to each one's own values. So a
+// consumer's permitted set is precisely what may appear resolved in the fragment,
+// and unioning consumers keeps the source-scoping guard instead of widening to
+// every attribute the component declares.
+//
+// `keyForUrl` maps a consumer URL to its plan key (null if unknown); a consumer
+// with no scanned attributes contributes nothing.
+function consumerAttrs (pages, keyForUrl, attrsByKey) {
+  const all = new Set()
+  const prose = new Set()
+  for (const url of pages || []) {
+    const key = keyForUrl(url)
+    const a = key == null ? null : attrsByKey.get(key)
+    if (!a) continue
+    for (const n of a.all || []) all.add(n)
+    for (const n of a.prose || []) prose.add(n)
+  }
+  return { all, prose }
+}
+
+module.exports = { collectOccurrences, decide, slugFor, componentNameFor, parseId, consumerAttrs }

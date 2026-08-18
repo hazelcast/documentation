@@ -25,7 +25,7 @@ const { mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode } = req
 const { resolveHref } = require('./lib/links')
 const { convertBody } = require('./lib/html-to-mdx')
 const { classifyHref } = require('../fidelity/lib/links')
-const { collectOccurrences, decide, slugFor, componentNameFor, parseId } = require('./lib/partials')
+const { collectOccurrences, decide, slugFor, componentNameFor, parseId, consumerAttrs } = require('./lib/partials')
 const { parseNav, buildPlan, injectNavEntries, parseTarget, pageKey, folderName } = require('./lib/nav')
 const { wrapRefs, wrappableRefs } = require('../antora-extension/mark-attributes')
 const substitute = require('../../plugins/lib/substitute-attributes')
@@ -777,6 +777,54 @@ const renderedCode = (md) => {
   assert.ok(prose.includes(`hazelcast-management-center-${value}.jar`) && !prose.includes('<Variable'),
     'prose keeps the whole-token boundary — the looser rule is verbatim-only')
   ok('verbatim boundary: a glued version is a reference; a digit-extended one is not; prose unaffected')
+}
+
+// --- a factored partial's attribute scope comes from its consumers -----------
+// A factored fragment is converted once, with no page of its own, so it needs a
+// reverse-map scope. An attribute reference inside an included file resolves
+// against the INCLUDING document, so the scope is the union over the pages that
+// include it of what each of them may map.
+//
+// The oracle is set arithmetic on scanPageAttrs' own per-page sets, stated
+// independently of how the union is built: a name is in scope iff SOME consumer
+// has it, and in the prose scope iff some consumer has it IN PROSE.
+{
+  const attrsByKey = new Map([
+    ['getting-started:overview', { all: new Set(['full-version', 'mc-repo-swagger-branch']), prose: new Set(['full-version']) }],
+    ['integrate:jmx', { all: new Set(['full-version']), prose: new Set() }],
+    ['clusters:licence', { all: new Set(['enterprise-product-name']), prose: new Set(['enterprise-product-name']) }],
+  ])
+  const keyForUrl = (url) => ({
+    '/mc/overview': 'getting-started:overview',
+    '/mc/jmx': 'integrate:jmx',
+    '/mc/licence': 'clusters:licence',
+  })[url] || null
+
+  const two = consumerAttrs(['/mc/overview', '/mc/licence'], keyForUrl, attrsByKey)
+  assert.deepStrictEqual([...two.all].sort(), ['enterprise-product-name', 'full-version', 'mc-repo-swagger-branch'],
+    'a name is in scope if ANY including page may map it')
+  assert.deepStrictEqual([...two.prose].sort(), ['enterprise-product-name', 'full-version'],
+    'the prose scope unions only the prose sets — a verbatim-only name stays out of prose')
+
+  // jmx references full-version ONLY inside fences, so a fragment shared with it
+  // alone may template a fence but must not prose-match.
+  const fenceOnly = consumerAttrs(['/mc/jmx'], keyForUrl, attrsByKey)
+  assert.deepStrictEqual([...fenceOnly.all], ['full-version'], 'the value map still carries it (fences need it)')
+  assert.strictEqual(fenceOnly.prose.size, 0, 'but prose matching is not permitted on a verbatim-only reference')
+
+  // A consumer we know nothing about widens nothing — the guard fails CLOSED, so
+  // an unscanned page cannot cause a literal to be variableised.
+  const unknown = consumerAttrs(['/mc/not-scanned', '/mc/jmx'], keyForUrl, attrsByKey)
+  assert.deepStrictEqual([...unknown.all], ['full-version'], 'an unknown consumer contributes nothing')
+  assert.strictEqual(consumerAttrs(undefined, keyForUrl, attrsByKey).all.size, 0, 'no consumers -> empty scope')
+
+  // And the decision record must actually carry the consumers, or convert.js has
+  // nothing to derive the scope from.
+  const one = { id: 'c:ROOT:partial$p.adoc', inner: '<p>same</p>', blockLevel: true }
+  const { decisions } = decide([{ url: '/a', occ: [one] }, { url: '/b', occ: [one] }], 'c')
+  assert.deepStrictEqual(decisions.get('c:ROOT:partial$p.adoc').pages, ['/a', '/b'],
+    'a factored decision carries the pages that include it')
+  ok('factored partials: attribute scope is the union of the including pages\' own scopes')
 }
 
 // --- nav labels: attributes are BAKED, deliberately --------------------------

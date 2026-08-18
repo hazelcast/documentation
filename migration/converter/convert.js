@@ -30,7 +30,7 @@ const { execFileSync } = require('node:child_process')
 
 const { goldenPages } = require('../fidelity/lib/pairing')
 const { convertBody } = require('./lib/html-to-mdx')
-const { collectOccurrences, decide } = require('./lib/partials')
+const { collectOccurrences, decide, consumerAttrs } = require('./lib/partials')
 const { parseNav, buildPlan, injectNavEntries, pageKey } = require('./lib/nav')
 const { loadDispositions, isDropped, navInjectionsFor } = require('../lib/dispositions')
 // Single-sources "which contexts render into flow text" with the marking pass, so
@@ -774,9 +774,26 @@ function convertVersion (ver, ctx) {
   // keeps Docusaurus from routing it).
   let partialsWritten = 0
   const partialProblems = []
+  // A factored partial is converted ONCE, so it needs its own reverse-map — and
+  // the right one is the UNION over the pages that include it. An attribute
+  // reference inside an included file is resolved against the INCLUDING document's
+  // attribute table (which is why MC's overview renders the shared JDK table as
+  // "Platform 5.11.0" — MC's version, not Platform's), so a consumer page's
+  // permitted set is exactly the right scope, and taking the union of consumers
+  // keeps the source-scoping guard rather than widening to every attribute.
+  // Without this the fragment got no vars at all and any reference inside it
+  // baked: scanPageAttrs cannot see it either, since that records PAGE files in
+  // the component's OWN repo and this one is a tagged include of an hz-docs page.
+  const keyForUrl = (url) => { const rec = byUrl.get(url); return rec ? keyOf(rec) : null }
+  const partialVarsFor = (d) => {
+    const { all, prose } = consumerAttrs(d.pages, keyForUrl, attrsByKey)
+    const pageVars = buildPageVars(all, exampleLookup)
+    return { pageVars, proseVars: proseVarsFor(pageVars, prose, markedAttrsFor(component)) }
+  }
   for (const [id, d] of decisions) {
     try {
-      const { body, imports } = convertBody(d.representative, { pageUrl: pages[0].url, relFile: path.join('_partials', d.slug + '.mdx'), component, seg, partials: decisions, linkVars: ctx.linkVars, examples, latestVersions: ctx.latestVersions, urlToRelFile })
+      const { pageVars, proseVars } = partialVarsFor(d)
+      const { body, imports } = convertBody(d.representative, { pageUrl: pages[0].url, relFile: path.join('_partials', d.slug + '.mdx'), component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, latestVersions: ctx.latestVersions, urlToRelFile })
       const importBlock = imports.size ? [...imports].join('\n') + '\n\n' : ''
       d.mdx = importBlock + body + '\n'
     } catch (err) {
