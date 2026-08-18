@@ -723,6 +723,62 @@ const renderedCode = (md) => {
   ok('marked attrs: prose preserves only marked references (table data stays literal); fences keep the value map')
 }
 
+// --- the verbatim-block boundary: a version token, not a whole word ----------
+// Inside a fence a version is normally glued into an identifier
+// (`hazelcast-management-center-5.11.0.jar`), so the whole-token rule that prose
+// uses refuses it and the reference bakes. The verbatim rule is numeric instead:
+// what may not be adjacent is another DIGIT, or a `.`/`-` that itself sits
+// against a digit.
+//
+// The oracle is arithmetic, not the implementation: a version number's extent is
+// its digits and dots, so `.jar` ends the number and `.0` continues it. Each case
+// below is one side of that arithmetic, stated as an input a real page contains.
+{
+  const value = '5.11.0'
+  const pageVars = new Map([[value, 'full-version']])
+  const ctx = { pageUrl: '/management-center/5.11/x', component: 'management-center', seg: '5.11', pageVars, proseVars: pageVars }
+  const fenced = (code) => convertBody(
+    '<div class="listingblock"><div class="content">' +
+    `<pre class="highlight"><code class="language-bash">${code}</code></pre></div></div>`, ctx).body
+
+  // Glued into a filename: separated from the identifier by `-`, from the
+  // extension by `.` — neither of which extends the number.
+  const jar = fenced('-jar hazelcast-management-center-5.11.0.jar')
+  assert.ok(jar.includes('{full-version}') && !jar.includes(value),
+    'a version glued into a filename is a reference, not a literal')
+  assert.ok(/```bash vars/.test(jar), 'and its fence is flagged `vars` so the placeholder resolves')
+
+  // Same value at end of line, and after the separators that already worked —
+  // the looser rule must not lose what the whole-token rule matched.
+  for (const code of ['sudo yum install hazelcast-management-center-5.11.0',
+    'docker pull hazelcast/management-center:5.11.0',
+    'brew install hazelcast/hz/hazelcast-management-center@5.11.0']) {
+    assert.ok(fenced(code).includes('{full-version}'), `still matched: ${code}`)
+  }
+
+  // A digit-extended neighbour is a DIFFERENT number and must stay literal. Both
+  // are real: the first is the guard that keeps a version out of a longer one,
+  // the second is MC's update-config link, where `.0` is authored after the
+  // reference (`v{page-latest-supported-hazelcast}.0`).
+  const longer = fenced('checksum 0.3.5.11.0f')
+  assert.ok(longer.includes('0.3.5.11.0f') && !longer.includes('{full-version}'),
+    'a version that is a substring of a longer number is not a reference')
+
+  const short = new Map([['5.7', 'page-latest-supported-hazelcast']])
+  const tag = convertBody('<div class="listingblock"><div class="content">' +
+    '<pre class="highlight"><code class="language-bash">git checkout v5.7.0</code></pre></div></div>',
+    { ...ctx, pageVars: short, proseVars: short }).body
+  assert.ok(tag.includes('v5.7.0') && !tag.includes('{page-latest-supported-hazelcast}'),
+    'a value continued by `.0` is not the whole version and stays literal')
+
+  // The looser rule is scoped to verbatim blocks: in flow text the same glued
+  // filename keeps the whole-token rule, so it is left alone.
+  const prose = convertBody(`<div class="paragraph"><p>Run hazelcast-management-center-${value}.jar now.</p></div>`, ctx).body
+  assert.ok(prose.includes(`hazelcast-management-center-${value}.jar`) && !prose.includes('<Variable'),
+    'prose keeps the whole-token boundary — the looser rule is verbatim-only')
+  ok('verbatim boundary: a glued version is a reference; a digit-extended one is not; prose unaffected')
+}
+
 // --- nav labels: attributes are BAKED, deliberately --------------------------
 // Everything the nav produces lands in YAML — a page's frontmatter
 // `sidebar_label:` and a category's `_category_.json` label — and nothing

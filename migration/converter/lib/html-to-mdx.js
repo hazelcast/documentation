@@ -612,6 +612,25 @@ function convertPre ($, node, st) {
 // whole tokens, longest first (so a value containing another wins).
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const varTokenRe = (value) => new RegExp(`(?<![\\w.-])${escapeRe(value)}(?![\\w.-])`, 'g')
+
+// The VERBATIM-block boundary, deliberately looser than varTokenRe: the value
+// must not be part of a longer NUMBER, but may be glued into a longer
+// IDENTIFIER. Verbatim content names things — `hazelcast-management-center-
+// 5.11.0.jar`, `…-center:5.11.0` — and the whole-token rule refuses the first of
+// those (preceded by `-`, followed by `.`), which is how a fenced reference came
+// to bake on 18 MC pages while the `:`/`@`/`=` forms on the same pages survived.
+//
+// What it must keep refusing is a value that is a SUBSTRING of a longer version:
+// `5.6.0` inside `0.3.5.6.0`, or `5.7` inside `v5.7.0` (MC's update-config link,
+// where `.0` is authored after the reference and the two really are different
+// numbers). So the guard is numeric on both sides — reject a digit neighbour, and
+// reject a `.`/`-` that itself sits against a digit — which passes a filename
+// suffix (`.jar`) and rejects a version continuation (`.0`) on the same rule.
+//
+// Not used for hrefs/labels: in a URL the glued form is exactly the ambiguous
+// case (see `v5.7.0` above), so the link path stays on varTokenRe.
+const varCodeTokenRe = (value) => new RegExp(`(?<!\\d)(?<![\\d][.-])${escapeRe(value)}(?!\\d)(?![.-]\\d)`, 'g')
+
 const pageVarsSorted = (pageVars) => [...pageVars].sort((a, b) => b[0].length - a[0].length)
 
 // Prose: replace a resolved value with a <Variable> (globally registered in
@@ -625,12 +644,14 @@ function reverseProseVars (text, pageVars) {
 
 // Code: replace a resolved value with the `{name}` placeholder; the swizzled
 // CodeBlock resolves it per version when the fence carries the `vars` flag.
-function reverseCodeVars (code, pageVars) {
+// `boundary` selects which of the two matchers applies — verbatim blocks pass
+// varCodeTokenRe, the link path leaves it defaulted to the whole-token rule.
+function reverseCodeVars (code, pageVars, boundary = varTokenRe) {
   if (!pageVars || !pageVars.size) return { code, replaced: false }
   let out = code
   let replaced = false
   for (const [value, name] of pageVarsSorted(pageVars)) {
-    const next = out.replace(varTokenRe(value), `{${name}}`)
+    const next = out.replace(boundary(value), `{${name}}`)
     if (next !== out) { out = next; replaced = true }
   }
   return { code: out, replaced }
@@ -653,7 +674,7 @@ function preToFence ($, pre, title, st) {
   // CodeBlock (src/theme/CodeBlock) strips the `<N>` and re-emits prod's circled
   // badge per line. The bare flag leaves every other code block untouched.
   const { text, hasConums } = extractConums($, code || pre)
-  const { code: varsText, replaced } = reverseCodeVars(text, st && st.pageVars)
+  const { code: varsText, replaced } = reverseCodeVars(text, st && st.pageVars, varCodeTokenRe)
   let info = lang
   if (title) info += ` title=${jsxAttr(title)}`
   if (hasConums) info += ' conums'

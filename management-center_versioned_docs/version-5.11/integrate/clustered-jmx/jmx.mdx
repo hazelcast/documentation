@@ -156,10 +156,10 @@ For monitoring on AppDynamics, see [Using AppDynamics for JMX Monitoring](http:/
 
 After installing the AppDynamics agent, you can start Management Center:
 
-```bash
+```bash vars
 java -javaagent:/path/to/javaagent.jar \
      -Dhazelcast.mc.jmx.enabled=true \
-     -jar hazelcast-management-center-5.11.0.jar
+     -jar hazelcast-management-center-{full-version}.jar
 ```
 
 When the Management Center starts, you should see the logs below:
@@ -197,9 +197,9 @@ Put the YAML file in the `extensions` directory in your New Relic installation. 
 
 After you set your extension, attach the New Relic Java agent and start the Management Center as shown below.
 
-```bash
+```bash vars
 java -javaagent:/path/to/newrelic.jar -Dhazelcast.mc.jmx.enabled=true\
-    -Dhazelcast.mc.jmx.port=9999 -jar hazelcast-management-center-5.11.0.jar
+    -Dhazelcast.mc.jmx.port=9999 -jar hazelcast-management-center-{full-version}.jar
 ```
 
 If your logging level is set to `FINER`, you should see the log listing in the file `newrelic_agent.log`, which is located in the `logs` directory in your New Relic installation. The following is an example log listing:
