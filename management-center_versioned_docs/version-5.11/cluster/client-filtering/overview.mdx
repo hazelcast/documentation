@@ -1,0 +1,125 @@
+---
+title: "Manage client connections"
+sidebar_label: "Overview"
+sidebar_position: 0
+slug: /clusters/client-filtering
+enterprise: true
+---
+
+If you configure clients with one or more [failover clusters](/hazelcast/latest/getting-started/deploy-blue-green-tutorial), you can use Management Center to force selected clients to disconnect from one cluster and connect to another without any downtime. For example, you may connect clients to another cluster to do the following:
+
+- Prepare for planned maintenance on the primary cluster.
+- Balance the load across multiple clusters.
+- Shift the client's connection back from a failover cluster to its primary cluster.
+
+:::note
+
+Moving clients from one cluster to another is most useful when your clusters replicate data across each other. See [WAN replication](../wan-replication.mdx).
+
+:::
+
+## Filter lists
+
+Clusters allow or disallow client connections using rules that are defined in a filter list. You can deploy filter lists to your connected clusters, using the UI or the REST API in Management Center.
+
+When a cluster receives a filter list, it applies the rules to any new or existing client connections.
+
+Management Center supports the following types of filter list:
+
+- **Allow list**: Clients that **are allowed** to connect to the cluster.
+- **Deny list**: Clients that **are not allowed** to connect to the cluster.
+
+To adjust the modes, see [system-properties](../../deploy-and-manage/configuration/system-properties.mdx#hazelcast-mc-client-client-filtering-modes).
+
+![Client Filtering View](../../images/ClientFilteringView.png)
+
+## Client address types
+
+You can filter clients, using the following types:
+
+| Address type | Description | Example |
+| --- | --- | --- |
+| **Label** (recommended) | A string that matches the client label in the client's configuration. This string can include wildcard characters (`\*`). See [Defining Client Labels](/hazelcast/latest/clients/java#defining-client-labels) in the Platform documentation. | `green*` refers to any label values that start with the `green` string. |
+| **Instance Name** | A string that matches the client's name in the client's configuration. This string can include wildcard characters (`\*`). | `*-client` refers to any instance name that ends with the `-client` string. |
+| **IP Address** | IP address of a client (IPv4 or IPv6) with optional range characters (`\*` and `-`) instead of any byte group. | `10.3.10.*` refers to IPs between `10.3.10.0` and `10.3.10.255`. The `10.3.10.4-18` refers to IPs between `10.3.10.4` and `10.3.10.18` (4 and 18 included). |
+
+:::tip
+
+It's useful to assign roles to your clients by configuring them with labels. These labels are displayed in Management Center. You can filter clients that have certain labels.
+
+:::
+
+When a cluster member receives the deployed filter list, it immediately applies the list to all currently connected clients and then uses it for newly connecting clients. Clients on the deny-list connect to another cluster only if they are configured with a failover cluster; otherwise, clients on the deny-list shut down.
+
+:::note
+
+If some cluster members are not reachable from Management Center, those members keep using the last filter list that they received.
+
+:::
+
+## Client filtering preview
+
+Shows the result of applying filter lists on currently connected clients in real time. Can be hidden by a toggle control (**visible by default**).
+
+![Client Filtering Preview](../../images/ClientFilteringPreview.png)
+
+**Allowed clients** - clients that remain connected.
+
+**Denied clients** - clients that disconnect.
+
+| Column name | Description |
+| --- | --- |
+| **Name** | Client name. |
+| **UUID** | Client unique identifier. |
+| **IP Address** | Client IP address without hostname. |
+| **Labels** | List of client labels. |
+
+| Column name | Description |
+| --- | --- |
+| **Address** | Client address. |
+| **Host Name** | Canonical client hostname. |
+| **Client Type** | Type of client. This field typically denotes the client's programming language and indicates whether it is an Enterprise Java client. Although non-Java clients can also connect to Enterprise clusters, the Java client includes Enterprise features that non-Java clients do not. |
+| **Client Version** | Version of the client codebase. |
+
+## Deploy confirmation {/* #cleint-filtering-deploy-confirmation */}
+
+![Client Filtering Deploy Comfirmation](../../images/ClientFilteringDeployConfirmation.png)
+
+The deployment of filter lists must be confirmed by clicking the **Confirm Deploy** button. A summary of client connectivity is shown after the current filter lists have been applied. [Preview](#client-filtering-preview) can be enabled by clicking a toggle control.
+
+:::important
+
+If the current filter lists disconnect all clients, the warning **All clients will be blocked if you apply current client filtering configuration** is displayed.
+
+:::
+
+## Synchronization of filter lists across multiple instances of Management Center {/* #client-filtering-synchronization */}
+
+If you have more than one instance of Management Center connected to the same cluster, the cluster synchronizes changes to its filter lists among all Management Center instances. When you create, update, or delete an active filter list, the cluster receives the filter list and sends it to the other connected instances of Management Center. Any existing filter lists on those instances of Management Center are overwritten.
+
+When another Management Center instance deploys a new filter list, the following message is displayed in the app and the **Client Filtering Settings** and **Filter Lists** data is automatically refreshed:
+
+> Client filtering configuration was updated by another Management Center instance
+
+![Client Filtering Updated](../../images/ClientFilteringUpdated.png)
+
+## Reconnect clients to the primary cluster
+
+If your clients are configured to automatically failover to a secondary cluster, disconnecting a client from its primary cluster using a filter list will make the client connect to the secondary cluster. When the filter list is deactivated, the client won't automatically reconnect to the primary cluster because it now has an active connection to the secondary cluster.
+
+To restore the client's connection to the primary cluster, you must deploy a new filter list to the secondary cluster. This action will disconnect the client from the secondary cluster, allowing it to cycle through the defined clusters in its configuration and reconnect to the primary cluster.
+
+## Configure client filtering modes
+
+By default, the available modes for Client Filtering are `ALLOWLIST` and `DENYLIST`. However, the default modes can be customized using the `hazelcast.mc.clientFiltering.modes` system property.
+
+For instance, if you prefer not to enable the use of the `DENYLIST` mode to block clients from accessing the cluster, you can override the default setting. This customization allows you to tailor client filtering options according to your specific requirements. See [System Properties](../../deploy-and-manage/configuration/system-properties.mdx) for more details.
+
+## Related resources
+
+See [Blue-Green Deployment and Disaster Recovery](/hazelcast/latest/clients/java#blue-green-deployment-and-disaster-recovery) in the Platform documentation.
+
+## Next steps {/* #changing-cluster-client-filtering-example */}
+
+- [Deploy a client filter list from the UI](./create-filter-lists-ui.mdx).
+- [Deploy a client filter list with the REST API](./create-filter-lists-rest.mdx).

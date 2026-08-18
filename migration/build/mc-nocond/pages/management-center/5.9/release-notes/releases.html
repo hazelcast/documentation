@@ -1,0 +1,117 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>These release notes list any new features, enhancements, fixes, security issues and breaking changes that were made for Hazelcast Management Center.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="5-9-0"><a class="anchor" href="#5-9-0"></a>5.9.0</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For help downloading Hazelcast Management Center, see <a href="../getting-started/install" class="xref page">Install and start Management Center</a>.</p>
+</div>
+<div class="paragraph">
+<p><strong>Release date</strong>: 2025-10-15</p>
+</div>
+<div class="sect2">
+<h3 id="new-features"><a class="anchor" href="#new-features"></a>New features</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Dynamic diagnostic logging (Beta)</strong>: Diagnostic logging can now be controlled dynamically (i.e. at runtime) through Management Center without requiring a cluster restart. An optional auto-off timer can also be configured.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For more information, see <a href="../clusters/diagnostic-logging" class="xref page">Diagnostic logging</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="enhancements"><a class="anchor" href="#enhancements"></a>Enhancements</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>TCP write queue metrics exposed</strong>: <code>tcp_connection_out_writeQueuePendingBytes</code> and  <code>priorityWriteQueuePendingBytes</code> metrics are now available by default, improving visibility into network performance without requiring diagnostic logging.  This information is available via JMX endpoint on the members and via Management Center&#8217;s Prometheus Exporter.</p>
+</li>
+<li>
+<p><strong>Prometheus metrics format updated</strong>: As part of the continued implementation of the improved Prometheus Exporter format, this update improves metrics formats for Events, Listeners, Operation, Threads, Memory, OS, GC, Capacity, Runtime, Operations and Threads. To prevent breaking changes in existing implementations, both the new and old Prometheus metrics formats are available. See <a href="https://docs.hazelcast.com/management-center/5.10-snapshot/integrate/prometheus-metrics">Prometheus metrics</a>.</p>
+</li>
+<li>
+<p><strong>hz-mc command now displays the existing security configuration</strong>: When running the <code>hz-mc conf security get</code> command, the current security provider is included in the output. This makes it easy to validate the Management Center security provider settings (all passwords are automatically masked).</p>
+</li>
+<li>
+<p><strong>Search field added to MC CP Sessions Metrics table</strong>: You can now search for the session ID within the CP Session table to find a specific entry quickly.</p>
+</li>
+<li>
+<p><strong>Maps listing shows which maps have indexes</strong>: This enhancement adds a column to the map listing to show whether the map has indexes enabled.</p>
+</li>
+<li>
+<p><strong>Time travel enhancement</strong>: Selecting the time to jump back to has been made easier as you can now set the amount and jump back in minutes or hours.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="fixes"><a class="anchor" href="#fixes"></a>Fixes</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Selected page persistence within tables</strong>: Resolves an issue where selecting a page within a paginated table view would revert to first page instead of staying on the selected page.</p>
+</li>
+<li>
+<p><strong>JAVA_HOME variable in the hz-mc script</strong>: Previously, the hz-mc script did not reference the <code>$JAVA</code> variable at runtime, where it was not used when loading Management Center. This fix ensures that the script consistently references <code>$JAVA</code>, preventing unexpected behavior.</p>
+</li>
+<li>
+<p><strong>The "Create new WAN Replication” button is missing role protection</strong>: Previously, the <strong>Create new WAN Replication</strong> button was shown to roles that did not have permission to execute that action. The fix now makes the button invisible for roles that do not have permission (Read-only and Metrics-only MC roles).</p>
+</li>
+<li>
+<p><strong>Improved contrast ratio in the original console</strong>: The contrast of the text against the background was poor in Management Center&#8217;s original console and has now been improved to ensure better readability.</p>
+</li>
+<li>
+<p><strong>CLC client config now relies on the list of active members rather than on the initial cluster setup</strong>: Every time Management Center initializes CLC, it recreates the config with an up-to-date list of data-member nodes in the cluster based on the current connection. This fixes an issue where, previously, CLC would try to connect to a member that was no longer in the cluster.</p>
+</li>
+<li>
+<p><strong>Unable to update expired license using the hz-mc tool when MC is not running</strong>: Resolves an issue in which an expired license could not be replaced using the hz-mc tool when Management Center was shut down.</p>
+</li>
+<li>
+<p><strong>When browsing a map entry, MC can now read the properties of undefined map entries</strong>: Resolves an issue where Management Center would display an error when trying to initialize an undefined property.</p>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="security"><a class="anchor" href="#security"></a>Security</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>CVE-2025-48924</strong>: Resolved <a href="https://nvd.nist.gov/vuln/detail/CVE-2025-48924" class="bare">https://nvd.nist.gov/vuln/detail/CVE-2025-48924</a> to fix a vulnerability in Apache Commons Lang that prevents uncontrolled recursions, which could lead to denial of service conditions.</p>
+</li>
+<li>
+<p><strong>CVE-2024-47554</strong>: Resolved <a href="https://nvd.nist.gov/vuln/detail/CVE-2024-47554" class="bare">https://nvd.nist.gov/vuln/detail/CVE-2024-47554</a> to fix a vulnerability in Apache Commons IO that could excessively consume CPU resources when processing maliciously crafted input, leading to potential denial of service attacks.</p>
+</li>
+<li>
+<p><strong>CVE-2025-22871 - (Go net/http Request Smuggling) in Management Center 5.8.0</strong>: Resolved <a href="https://nvd.nist.gov/vuln/detail/CVE-2025-22871" class="bare">https://nvd.nist.gov/vuln/detail/CVE-2025-22871</a> to fix a flaw in Go&#8217;s standard library net/http package. As CLC does not operate as a server, it was not affected by this vulnerability.</p>
+</li>
+<li>
+<p><strong>CVE-2025-21613 - (go-git Argument Injection)</strong>: Resolved <a href="https://nvd.nist.gov/vuln/detail/CVE-2025-21613" class="bare">https://nvd.nist.gov/vuln/detail/CVE-2025-21613</a> to fix an argument injection vulnerability in go-git dependency. As CLC does not operate as a server, it was not affected by this vulnerability.</p>
+</li>
+<li>
+<p><strong>CVE-2024-45337 - (golang.org/x/crypto SSH Authorization Bypass)</strong>: Resolved <a href="https://nvd.nist.gov/vuln/detail/CVE-2024-45337" class="bare">https://nvd.nist.gov/vuln/detail/CVE-2024-45337</a> to fix an authorization bypass. As CLC does not operate as a server, it was not affected by this vulnerability.</p>
+</li>
+<li>
+<p><strong>Users can now see own role</strong>: When signed into Management Center, users are unable to see the role they were assigned when using an external security provider. Their role in Management Center is now visible in the pull-down menu in the upper right corner after the username.</p>
+</li>
+<li>
+<p><strong>License key masked in the logs</strong>: The license key is now masked in the log files. Only a few characters at the start and end of the key will be shown in the logs. For example: <code>hazelcast.licensekey=eyJhb*********dDw==</code>.</p>
+</li>
+<li>
+<p><strong>Masking sensitive data passed via JAVA_OPTS, such as SSL Store passwords</strong>: Sensitive data, including SSL passwords, was being printed within the Management Center logs when passed via <code>JAVA_OPTS</code>. A new option <code>maskOpts</code> has been introduced, that allows you to specify which options should be masked in the logs.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>

@@ -1,0 +1,322 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can use the <strong>CP Subsystem</strong> menu item to manage and monitor the <a href="../../../hazelcast/5.1/cp-subsystem/cp-subsystem" class="xref page">CP subsystem</a> in a cluster.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/CPSubsystemDashboard.png" alt="Status"></span></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="data-and-metrics"><a class="anchor" href="#data-and-metrics"></a>Data and Metrics</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The CP subsystem dashboard displays the following tables:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. CP subsystem</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 80%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>CP Members</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>The number of accessible CP members and the CP member count that&#8217;s configured on the cluster.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><a href="#promote">Promote Member to CP</a></strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>This button is available only to admin users.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><a href="#remove">Remove CP Member</a></strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>This button is available only to admin users.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><a href="#restart">Restart CP Subsystem</a></strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>This button is available only to admin users.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 2. CP subsystem stats</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 80%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Member</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Address of the CP member.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Nodes</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Number of Raft nodes that the member is running.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Destroyed Groups</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Total number of Raft groups that have been destroyed.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Active Members</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Total number of active CP members.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Missing Members</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Total number of missing CP members.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 3. CP group metrics</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 80%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Group Name</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Name of the Raft group.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Group Id</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Group identifier.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Member Count</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Total number of members in the group.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>To see more details about a particular group, click on the down arrow next to the group name.</p>
+</div>
+<table id="session" class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 4. CP session metrics</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 80%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Member</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Address of the CP member</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Id</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><a href="../../../hazelcast/5.1/cp-subsystem/cp-subsystem" class="xref page">Session</a> ID.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Version</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>The number of session heartbeats that the member has received.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Creation Time</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Time at which the session was created.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Expiration Time</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Time at which the session will expire.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="status-banner"><a class="anchor" href="#status-banner"></a>Status Banner</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A banner is always displayed at the top of the page with a message about the current CP subsystem status.</p>
+</div>
+<div class="paragraph">
+<p>This banner may display one of
+the following messages:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>CP Subsystem is not enabled</strong>: The cluster is not configured with a CP member count of at least 3.</p>
+</li>
+<li>
+<p><strong>All CP members are accessible</strong>: Number of accessible CP members is at least the same as the configured CP member count.</p>
+</li>
+<li>
+<p><strong>One CP member is not accessible</strong>: One
+CP member is missing and the minority count in the CP subsystem is greater than 1. For example, this value is shown
+when 6 accessible CP members are available and the configured count is 7. In this example, the minority
+count is 3 members and the majority count is 4 members.</p>
+</li>
+<li>
+<p><strong>Multiple CP members are not accessible:</strong> Multiple
+CP members are missing, but their count is less than the minority.</p>
+</li>
+<li>
+<p><strong>Minority of the CP members are not accessible:</strong> The minority of CP
+members are missing.</p>
+</li>
+<li>
+<p><strong>Majority of the CP members are not accessible:</strong> The majority of CP
+members are missing.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="promote"><a class="anchor" href="#promote"></a>Promoting Members to CP Members</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can promote any existing member that is not part of the CP subsystem to a CP member.</p>
+</div>
+<div class="paragraph">
+<p>This action is available only to admin users.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Go to <strong>CP Subsystem</strong> &gt; <strong>Dashboard</strong>, and click <strong>Promote</strong>.</p>
+</li>
+<li>
+<p>Select an AP member (one of the members that do not participate in the CP subsystem) from the dropdown.</p>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Lite members are not displayed in the dropdown list because they do not store data and cannot be promoted to CP members.
+</td>
+</tr>
+</table>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>If everything goes well, a success message is displayed.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/CPPromoteDialog.png" alt="Promote Member to CP Confirmation"></span></p>
+</div>
+<div class="paragraph">
+<p>If an exception occurs, an error notification is displayed.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="remove"><a class="anchor" href="#remove"></a>Removing CP Members</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can manually remove a disconnected CP member from the CP subsystem, using Management Center.</p>
+</div>
+<div class="paragraph">
+<p>If a CP member loses connection with the rest of the cluster, the CP subsystem will wait for 4 hours by default before connecting to a new CP member. You can configure this time in the <code>missing-cp-member-auto-removal-seconds</code> option. See <a href="../../../hazelcast/5.1/cp-subsystem/configuration" class="xref page">Configuring CP Subsystem</a> in the Platform documentation.</p>
+</div>
+<div class="paragraph">
+<p>This action is available only to admin users.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Go to <strong>CP Subsystem</strong> &gt; <strong>Dashboard</strong>, and click <strong>Remove</strong>.</p>
+</li>
+<li>
+<p>Select a CP member from the dropdown.</p>
+<div class="paragraph">
+<p>Although this member is not connected to the Management Center, it is known by
+the cluster&#8217;s CP subsystem.</p>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>If everything goes well, a success message is displayed.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/CPRemoveDialog.png" alt="Remove CP Member Confirmation"></span></p>
+</div>
+<div class="paragraph">
+<p>If an exception occurs, an error notification is displayed.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="restart"><a class="anchor" href="#restart"></a>Restarting CP Subsystem</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If the majority of CP members crash, you can restart the CP subsystem to delete all CP data and trigger a new round of the discovery process.</p>
+</div>
+<div class="paragraph">
+<p>This action is available only to admin users.</p>
+</div>
+<div class="paragraph">
+<p>Go to <strong>CP Subsystem</strong> &gt; <strong>Dashboard</strong>, and click <strong>Restart</strong>.</p>
+</div>
+<div class="paragraph">
+<p>If everything goes well, a success message is displayed.</p>
+</div>
+<div class="paragraph">
+<p>If an exception occurs, an error notification is displayed.</p>
+</div>
+</div>
+</div>

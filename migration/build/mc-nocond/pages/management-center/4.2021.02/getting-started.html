@@ -1,0 +1,200 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>To start using the Management Center:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>download the Hazelcast Management Center package</p>
+</li>
+<li>
+<p>start the Management Center service</p>
+</li>
+<li>
+<p>launch the Management Center user interface.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="downloading-management-center"><a class="anchor" href="#downloading-management-center"></a>Downloading Management Center</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hazelcast Management Center is included in the Hazelcast IMDG download package.
+You can download it from the <a href="https://hazelcast.org/download/#imdg">download page</a>
+of Hazelcast&#8217;s website.</p>
+</div>
+<div class="paragraph">
+<p>When a new Hazelcast IMDG version is released, it comes with a Management Center
+that is compatible with IMDG.
+There may be times when a new Management Center version is released before a new
+version of Hazelcast IMDG. In that case, you may download the new Management Center
+from its <a href="https://hazelcast.org/download/#management-center">download page</a> as a
+separate package.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="starting-the-management-center-service"><a class="anchor" href="#starting-the-management-center-service"></a>Starting the Management Center Service</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You have the following options to start the Management Center service:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Start Hazelcast Management Center from the command line.</p>
+</li>
+<li>
+<p>Use the scripts that come with the download package.</p>
+</li>
+<li>
+<p>Deploy the file <code>hazelcast-management-center-4.2021.02.war</code> on your Java application server/servlet container.</p>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="starting-with-jar-file"><a class="anchor" href="#starting-with-jar-file"></a>Using the Command Line</h3>
+<div class="paragraph">
+<p>After you downloaded, extract the Hazelcast IMDG or Management Center package.
+The extracted directory, i.e., <code>hazelcast-management-center-4.2021.02</code>,
+contains the <code>hazelcast-management-center-4.2021.02.jar</code> file.</p>
+</div>
+<div class="paragraph">
+<p>You can start this file directly from the command line using the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">java -jar hazelcast-management-center-4.2021.02.jar</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above command starts the  Hazelcast Management Center service on
+the port <code>8080</code> with the root context path (<code>http://localhost:8080</code>).</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+In Management Center 4.0, the default context path changed from
+<code>hazelcast-mancenter</code> to the root context path.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>You can use <code>-Dhazelcast.mc.http.port</code> and <code>-Dhazelcast.mc.contextPath</code>
+command line options to start Management Center on a different port and
+context path:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">java -Dhazelcast.mc.http.port=8083 -Dhazelcast.mc.contextPath='hazelcast-mc' -jar hazelcast-management-center-4.2021.02.jar</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above command starts Management Center on port <code>8083</code> and context path <code>hazelcast-mc</code>.
+You can access it by opening <code>http://localhost:8083/hazelcast-mc</code> in your browser.</p>
+</div>
+<div class="paragraph">
+<p>Then, you need to let Management Center know the Hazelcast IMDG member addresses
+as explained in the <a href="connecting-members" class="xref page">Connecting to the Clusters chapter</a>.</p>
+</div>
+<div class="paragraph">
+<p>For the options you can provide when starting with the
+command line, see the <a href="configuring" class="xref page">Configuring Management Center chapter</a>.
+In that chapter, you can learn about topics including how to start with a
+license or extra classpath, how to configure the security,
+disk usage, update interval or logging.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="deploying-to-application-server"><a class="anchor" href="#deploying-to-application-server"></a>Deploying to Application Server</h3>
+<div class="paragraph">
+<p>Instead of starting at the command line, you can
+deploy the Management Center to your application server (Tomcat, Jetty, etc.).</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="starting-with-scripts"><a class="anchor" href="#starting-with-scripts"></a>Using Scripts in the Package</h3>
+<div class="paragraph">
+<p>As another option, you can use the <code>start.bat</code> or <code>start.sh</code> scripts,
+which come with the download package in <code>bin/</code> folder, to start the Management Center.
+You can find these scripts under the extracted directory.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="quick-launch"><a class="anchor" href="#quick-launch"></a>Quick Launch</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>After the above steps are completed, let&#8217;s quickly open the
+Management Center user interface with the default settings.</p>
+</div>
+<div class="paragraph">
+<p>Assuming that you have started your Hazelcast IMDG and Jet clusters
+each including a single
+member on your local machine (<code>localhost</code>) and started the Management Center service on <code>http://localhost:8080</code>,
+follow the below instructions:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Go to <code>http://localhost:8080</code> using your preferred browser.</p>
+</li>
+<li>
+<p>Select <code>Dev Mode</code> as the security provider, and click <code>Save</code> (note: this configuration is not recommended for production
+environments).</p>
+</li>
+<li>
+<p>Login with your newly created credentials, and "Manage Clusters" page appears.</p>
+</li>
+<li>
+<p>Click on the "Add Cluster Config" button to connect Management Center to your IMDG cluster:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Click on the <code>Save</code> button after
+providing your IMDG cluster&#8217;s name and member address (<code>localhost</code>).</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Again, click on the "Add Cluster Config" button to connect Management Center to your Jet cluster:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Click on the <code>Save</code> button after
+providing your Jet cluster&#8217;s name (use the default <code>jet</code>) and member address (<code>localhost</code>).</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>On the "Manage Cluster" page, click on the <code>Select</code> button for a desired cluster to monitor it; the dashboard of your cluster appears as shown below:</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="_images/DashboardPage.png" alt="Dashboard"></span></p>
+</div>
+<div class="paragraph">
+<p>See the <a href="launching/launching" class="xref page">Launching the Management Center User Interface chapter</a> for more details.</p>
+</div>
+<div class="paragraph">
+<p>Also see <a href="../../imdg/4.2/starting-members-clients" class="xref page">here</a> and <a href="https://jet-start.sh/docs/get-started/installation" target="_blank" rel="noopener">here</a> for information on starting the IMDG and Jet clusters, respectively.</p>
+</div>
+<div class="paragraph">
+<p>You also have the <strong>Dev Mode</strong> option for development or evaluation purposes that provides
+quick access to Management Center without requiring any security credentials. See
+the <a href="launching/dev-mode" class="xref page">Dev Mode section</a> for details.</p>
+</div>
+</div>
+</div>

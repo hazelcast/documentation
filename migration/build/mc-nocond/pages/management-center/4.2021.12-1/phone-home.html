@@ -1,0 +1,123 @@
+<div class="paragraph">
+<p>Hazelcast uses phone home data to learn about usage of Hazelcast Management Center.</p>
+</div>
+<div class="paragraph">
+<p>Hazelcast Management Center instances initially call our phone home server 30 minutes
+after they are started and once every 24 hours thereafter.</p>
+</div>
+<div class="paragraph">
+<p><strong>What is sent in?</strong></p>
+</div>
+<div class="paragraph">
+<p>The following information is sent in a phone home:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Hazelcast Management Center version</p>
+</li>
+<li>
+<p>Authentication provider used (Local, LDAP, ActiveDirectory, JAAS)</p>
+</li>
+<li>
+<p>Whether clustered REST is enabled or not</p>
+</li>
+<li>
+<p>Whether clustered JMX is enabled or not</p>
+</li>
+<li>
+<p>Whether TLS is enabled or not</p>
+<div class="ulist">
+<ul>
+<li>
+<p>If TLS is enabled, whether mutual authentication is enabled or not</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Whether Management Center is deployed on an application server or used in standalone mode</p>
+<div class="ulist">
+<ul>
+<li>
+<p>If not in standalone mode, type of the application server</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Number of users (if the Local security provider is used)</p>
+</li>
+<li>
+<p>Number of clusters</p>
+</li>
+<li>
+<p>Management Center uptime</p>
+</li>
+<li>
+<p>Minimum and maximum cluster sizes</p>
+</li>
+<li>
+<p>Minimum and maximum cluster versions</p>
+</li>
+<li>
+<p>Total number of members</p>
+</li>
+<li>
+<p>Size of the Hazelcast Management Center home directory</p>
+</li>
+<li>
+<p>Hash value of Hazelcast Management Center license key</p>
+</li>
+<li>
+<p>Environment Information:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Name of operating system</p>
+</li>
+<li>
+<p>Version of installed Java</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For each user login, we store the following information and send it in a phone home:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Browser (Chrome, Firefox, IE etc.)</p>
+</li>
+<li>
+<p>Browser major version</p>
+</li>
+<li>
+<p>Operating system</p>
+</li>
+<li>
+<p>Operating system version</p>
+</li>
+<li>
+<p>Screen height and width</p>
+</li>
+<li>
+<p>Window height and width</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Disabling Phone Homes:</strong></p>
+</div>
+<div class="paragraph">
+<p>Set the <code>hazelcast.mc.phone.home.enabled</code> system property to false on the Java command line.</p>
+</div>
+<div class="paragraph">
+<p><strong>Phone Home URL:</strong></p>
+</div>
+<div class="paragraph">
+<p>http://phonehome.hazelcast.com/pingMc</p>
+</div>

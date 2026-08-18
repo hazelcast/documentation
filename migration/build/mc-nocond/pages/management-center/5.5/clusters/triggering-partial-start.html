@@ -1,0 +1,62 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can trigger a partial-start to allow a cluster with persistence enabled to restart even if some members are missing after a cluster-wide restart.</p>
+</div>
+<div class="paragraph">
+<p>Partial-Start is a procedure where a cluster starts without all members.
+Data belonging to those missing members is assumed lost and Hazelcast tries
+to recover missing data, using the restored backups. For example, if you have a minimum of two backups configured for all maps, then having at most two missing members will be safe against data loss. If more
+than two members are missing or maps have fewer than two backups,
+then data loss is expected.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="before-you-begin"><a class="anchor" href="#before-you-begin"></a>Before you Begin</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To trigger a partial start, your cluster must be configured with one of the following data recovery policies:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>PARTIAL_RECOVERY_MOST_RECENT</code></p>
+</li>
+<li>
+<p><code>PARTIAL_RECOVERY_MOST_COMPLETE</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Go to <strong>Administration</strong> &gt; <strong>Persistence</strong> and check the <strong>Cluster Status</strong> field. Only trigger a partial-start if the cluster status is <strong>In_Progress</strong>, which means your cluster is missing a member.</p>
+</div>
+<div class="paragraph">
+<p>To learn more about persistence in Hazelcast and what happens after a cluster-wide restart, see <a href="../../../hazelcast/5.5/storage/configuring-persistence#what-happens-when-the-whole-cluster-restarts" class="xref page">What Happens When the Whole Cluster Restarts</a> in the Platform documentation.</p>
+</div>
+<div class="paragraph">
+<p>This page is available only to admin users.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="trigger-a-partial-start"><a class="anchor" href="#trigger-a-partial-start"></a>Trigger a Partial-Start</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Go to <strong>Administration</strong> &gt; <strong>Persistence</strong>, and click <strong>Partial-Start</strong>.</p>
+</li>
+<li>
+<p>Confirm that you want to continue by clicking <strong>Confirm</strong> in the dialog.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>If everything goes well, a success message is displayed.</p>
+</div>
+<div class="paragraph">
+<p>If an exception occurs, an error notification is displayed.</p>
+</div>
+</div>
+</div>

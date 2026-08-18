@@ -1,0 +1,332 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Hazelcast Management Center 5.4 requires Java 17 or later to run.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+This only applies if you are upgrading your MC: MC 5.4.0 uses H2 2.x as its internal database instead of H2 1.x used by the previous MC releases.
+H2 1.x and 2.x are not compatible so a data migration step is required.
+If you use the provided <code>hz-mc</code> or <code>mc-start</code> scripts to start MC, no further actions are needed as they handle the migration seamlessly. If you use
+a custom run script, refer to the documentation for comprehensive instructions on migrating MC data. If the internal database is not upgraded, then MC will start with a new configuration.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="new-features"><a class="anchor" href="#new-features"></a>New Features</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><strong>HealthCheck</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Introduced semantic identifiers for the checks. [MC-2402]</p>
+</li>
+<li>
+<p>Added an ability to see all the suppressed checks. [MC-1750]</p>
+</li>
+<li>
+<p>Added an ability to unsuppress checks. [MC-1749]</p>
+</li>
+<li>
+<p>Added an ability to search and filter HealthCheck results. [MC-2445]</p>
+</li>
+<li>
+<p>Added HealthCheck status info to Dashboard. [MC-2437]</p>
+</li>
+<li>
+<p>Added an ability to disable a check for specific data structures. [MC-2424]</p>
+</li>
+<li>
+<p>Added a check for <code>eviction-policy</code> and <code>eviction-size</code> consistency. [MC-2426]</p>
+</li>
+<li>
+<p>Added a check for CP Subsystem running in Unsafe mode. [MC-2364]</p>
+</li>
+<li>
+<p>Added a check for a map backup count set to 0. [MC-2350]</p>
+</li>
+<li>
+<p>Added a check for an even cluster size. [MC-2322]</p>
+</li>
+<li>
+<p>Added a check for CP Subsystem configuration. [MC-2519]</p>
+</li>
+<li>
+<p>Added a check for CPMap configuration. [MC-2519]</p>
+</li>
+<li>
+<p>Added a check for a soft limit of CPMap instances. [MC-2505]</p>
+</li>
+<li>
+<p>Added a check for members TPC configuration. [MC-2204]</p>
+</li>
+<li>
+<p>Added checks for Tiered Storage configuration. [MC-2550]</p>
+</li>
+<li>
+<p>Added a check for used native memory. [MC-2642]</p>
+</li>
+<li>
+<p>Added HealthCheck counters to Prometheus Exporter. [MC-2439]</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Added an ability to terminate CP sessions. [MC-1719]</p>
+</li>
+<li>
+<p>Added support for CPMap data structure. [MC-2462]</p>
+</li>
+<li>
+<p>Added support for WAN replication reference update to the Map Config tool. [MC-2460]</p>
+</li>
+<li>
+<p>Added an ability to pause and resume streaming output in SQL Browser. [MC-2236]</p>
+</li>
+<li>
+<p>Added Favourites menu to the left panel. [MC-973]</p>
+</li>
+<li>
+<p>Added a promo page for all licensed features. [MC-1038]</p>
+</li>
+<li>
+<p>Added SQL Tasks page with a list of actively running SQL queries. [MC-962]</p>
+</li>
+<li>
+<p>Added configuration parameters for CORS. [MC-2583]</p>
+</li>
+<li>
+<p>Added cluster versions to the connected clusters dropdown. [MC-2674]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="enhancements"><a class="anchor" href="#enhancements"></a>Enhancements</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Console access</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>The Hazelcast Command-Line Client (CLC) has replaced the MC Console. CLC uses the same member config option to enable or disable the capability. [MC-2189]</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>SQL Browser</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Added an automatic SQL formatter to SQL Browser. [MC-2351]</p>
+</li>
+<li>
+<p>Added a proper error message to SQL Browser when Jet is disabled. [MC-2410]</p>
+</li>
+<li>
+<p>Added a proper error message to SQL Browser when  a mapping cannot be generated for an empty map. [MC-2270]</p>
+</li>
+<li>
+<p>All maps are now shown in Connector Wizard instead of just the unmapped ones. [MC-2247]</p>
+</li>
+<li>
+<p>Made View icon blue instead of red to avoid confusion. [MC-2201]</p>
+</li>
+<li>
+<p>Added an option to load the query from the query history into SQL Editor tab without executing it. [MC-2179]</p>
+</li>
+<li>
+<p>Only expression at the cursor is executed. [MC-1957]</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>CP Subsystem</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Added support for CP Subsystem in Unsafe mode. [MC-2121]</p>
+</li>
+<li>
+<p>CP members priority is now displayed. [MC-1662]</p>
+</li>
+<li>
+<p>CP member status is now dynamically updated. [MC-2478]</p>
+</li>
+<li>
+<p>Only CP members are now shown on CP Dashboards. [MC-2517]</p>
+</li>
+<li>
+<p>MC is now resilient to CP member deletion. [MC-1499]</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Added caching of static resources. [MC-2571]</p>
+</li>
+<li>
+<p>Added negative values support to Map Browser. [MC-2555]</p>
+</li>
+<li>
+<p>Added Tiered Storage parameters to Map Config screen. [MC-1829]</p>
+</li>
+<li>
+<p>Improved Tiered Storage charts. [MC-2549]</p>
+</li>
+<li>
+<p>Native memory size format in HealthCheck is now reported in human-readable format instead of bytes. [MC-2569]</p>
+</li>
+<li>
+<p>Added protection to <code>buildInfo</code> endpoint. [MC-2461]</p>
+</li>
+<li>
+<p>Added logging of user IP address to Audit logs. [MC-2365]</p>
+</li>
+<li>
+<p>Rebranded MC to a new Hazelcast company style. [MC-2170]</p>
+</li>
+<li>
+<p>Added persistence information to Caches and Maps tables. [MC-2243]</p>
+</li>
+<li>
+<p>Added useful links to the left panel. [MC-2274]</p>
+</li>
+<li>
+<p>Added a banner to notify about a repartitioning in progress. [MC-2132]</p>
+</li>
+<li>
+<p>Added a warning member addresses contain <code>localhost</code> in MC running in Docker. [MC-2018]</p>
+</li>
+<li>
+<p>Added a marking for members with TPC enabled in Members table. [MC-2171]</p>
+</li>
+<li>
+<p>Added member&#8217;s Startup Time to Members table. [MC-1138]</p>
+</li>
+<li>
+<p>Added a licensed native memory size to License page. [MC-2632]</p>
+</li>
+<li>
+<p>Added links from License page to the corresponding Promo pages. [MC-2512]</p>
+</li>
+<li>
+<p>Improved <code>Node limit exceeded</code> banner. [MC-2481]</p>
+</li>
+<li>
+<p>Improved MC resiliency in case of a cluster producing huge amount of metrics. [MC-2376]</p>
+</li>
+<li>
+<p>Upgraded H2 1.x to H2 2.x. [MC-2283]</p>
+</li>
+<li>
+<p>Made timestamps optional in Prometheus Exporter. [MC-2127]</p>
+</li>
+<li>
+<p>Made various improvements to TopBar and SideBar. [MC-2673]</p>
+</li>
+<li>
+<p>Improved displaying of small values to <code>&lt; 0.01</code> instead of <code>0</code>. [MC-2448]</p>
+</li>
+<li>
+<p>Renamed <code>Disabled</code> toggle to <code>Status</code> on Client Filtering page. [MC-2683]</p>
+</li>
+<li>
+<p>Renamed <code>Enterprise</code> features to <code>Licensed</code> features. [MC-2634]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="fixes"><a class="anchor" href="#fixes"></a>Fixes</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>MC no longer displays warning about missing packages on startup. [MC-2558]</p>
+</li>
+<li>
+<p>MC no longer throws an exception when Jet is disabled. [MC-2289]</p>
+</li>
+<li>
+<p>MC no longer throws an exception when on Streaming page and 4.x cluster. [MC-2531]</p>
+</li>
+<li>
+<p>MC no longer throws an exception when on a context path contains slashes. [MC-2637]</p>
+</li>
+<li>
+<p>MC no longer logs exceptions on a cluster delete operation. [MC-1177]</p>
+</li>
+<li>
+<p>MC no longer show JMX cluster beans for 2 minutes after cluster disconnection. [MC-2602]</p>
+</li>
+<li>
+<p>MC no longer tries to connect to websocket while the app is not initialized. [MC-2560]</p>
+</li>
+<li>
+<p>MC no longer allows to press <code>Promote</code> button when member is being promoted. [MC-2490]</p>
+</li>
+<li>
+<p>MC no longer allows to press <code>Upgrade</code> button after a successful rolling upgrade. [MC-2423]</p>
+</li>
+<li>
+<p>MC no longer sporadically goes a listing page instead of particular data structure. [MC-1971]</p>
+</li>
+<li>
+<p>MC no longer throws <code>Multiple metrics found for metric</code> exception. [MC-1968]</p>
+</li>
+<li>
+<p>MC no longer shows incorrect Jet job metrics for the first minute after connection. [MC-1968]</p>
+</li>
+<li>
+<p>MC no longer loses table columns width on a page refresh. [MC-2117]</p>
+</li>
+<li>
+<p>Fixed an error on startup on Windows with Turkish locale. [MC-2554]</p>
+</li>
+<li>
+<p>Fixed an error on Persistence page when node limit is exceeded. [MC-2514]</p>
+</li>
+<li>
+<p>Fixed Map Journal enablement representation. [MC-2420]</p>
+</li>
+<li>
+<p>Fixed incorrect docs link in <code>hz-mc --help</code>. [MC-2401]</p>
+</li>
+<li>
+<p>Fixed Map Sink vertex stats on Job page. [MC-2319]</p>
+</li>
+<li>
+<p>MC no longer needs a master member state for operations. [MC-2467]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>

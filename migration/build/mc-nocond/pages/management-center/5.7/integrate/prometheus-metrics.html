@@ -1,0 +1,458 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Management Center automatically reformats all Hazelcast cluster metrics for compatibility with Prometheus. In addition, Management Center updates a subset of metrics to align with Prometheus best practice recommendations. This makes it easier to construct complex queries, build dashboards, and work alongside metrics from other applications.</p>
+</div>
+<div class="paragraph">
+<p>By default, Management Center exposes two versions of metrics based on <a href="../../../hazelcast/5.7/list-of-metrics" class="xref page">Hazelcast&#8217;s JMX metrics system</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Version 1 (V1) metrics</strong> apply a basic transformation for compatibility with Prometheus:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Convert <code>.</code> to <code>_</code></p>
+</li>
+<li>
+<p>Add <code>hz_</code> prefix</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Version 2 (V2) metrics (currently in BETA)</strong> apply an advanced transformation for conformity with <a href="https://prometheus.io/docs/practices/naming/">Prometheus naming conventions</a>:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Use <code>snake_case</code></p>
+</li>
+<li>
+<p>Add <code>hazelcast_</code> prefix</p>
+</li>
+<li>
+<p>Update metric names where appropriate</p>
+</li>
+<li>
+<p>Combine related metrics and add labels</p>
+</li>
+<li>
+<p>Convert to recommended base units:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Time in seconds</p>
+</li>
+<li>
+<p>Memory in bytes</p>
+</li>
+<li>
+<p>Percentages as ratios (for example, 50% converts to 0.5)</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Append units to metric names</p>
+</li>
+<li>
+<p>Remove unit labels</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>You can optionally <a href="#config">change which set of metrics is exposed</a>.</p>
+</div>
+<div class="paragraph">
+<p>The following examples illustrate the differences between the V1 and V2 metrics.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Rename and remove <code>unit</code> label:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs"># V1
+hz_map_queryCount{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="COUNT",} 0.0 1737715903399
+# V2
+hazelcast_map_queries{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",} 0.0 1737715903399</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Rename and append unit, remove <code>unit</code> label, convert value (1.7x10<sup>12</sup> milliseconds to 1.7x10<sup>9</sup> seconds):</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs"># V1
+hz_map_creationTime{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="MS",} 1.737715861118E12 1737715903399
+# V2
+hazelcast_map_creation_timestamp_seconds{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",} 1.737715861118E9 1737715903399</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Rename and append unit, remove <code>unit</code> label, add <code>remove</code> label:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs"># V1
+hz_map_totalMaxRemoveLatency{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="MS",} 0.0 1737715903399
+# V2
+hazelcast_map_latency_max_seconds{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",operation="remove",} 0.0 1737715903399</code></pre>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="config"><a class="anchor" href="#config"></a>Change the metrics version</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To change which set of metrics is exposed to Prometheus, update the <code>hazelcast.mc.prometheusExporter.printers</code> system property:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>V1: <code>hazelcast.mc.prometheusExporter.printers=V1</code></p>
+</li>
+<li>
+<p>V2: <code>hazelcast.mc.prometheusExporter.printers=V2</code></p>
+</li>
+<li>
+<p>V1 and V2 (default): <code>hazelcast.mc.prometheusExporter.printers=V1,V2</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>See <a href="../deploy-manage/system-properties" class="xref page">System Properties and Environment Variables</a>.</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+If you set the property to <code>V2</code>, Management Center will only expose the subset of metrics that have updated versions available.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="metrics-list"><a class="anchor" href="#metrics-list"></a>Metrics list</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Management Center converts all metrics for the <code>map</code>, <code>set</code> and <code>list</code> data structures. The full <a href="../../../hazelcast/5.7/list-of-metrics" class="xref page">list of Hazelcast metrics</a> is provided in the Hazelcast Platform documentation.</p>
+</div>
+<div class="paragraph">
+<p>In some cases, several V1 metrics are combined into a single V2 metric differentiated by labels. For example, <code>hazelcast_map_operations_total</code> replaces <code>hz_map_getCount</code> and <code>hz_map_setCount</code> by adding <code>operation="get"</code> and <code>operation="set"</code> labels.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">V1 metric <code>hz_</code></th>
+<th class="tableblock halign-left valign-top">V2 metric <code>hazelcast_</code></th>
+<th class="tableblock halign-left valign-top">Additional labels</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_backupCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_backups</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of backups per entry</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_backupEntryCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_entries_backup</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of backup entries held by the member</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_backupEntryMemoryCost</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_entries_backup_memory_cost</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Memory cost of backup entries in this member</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_creationTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_creation_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Creation time of the map on the member</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_dirtyEntryCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_entries_dirty</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of updated but not yet persisted entries (dirty entries) that the member owns</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_evictionCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_evictions</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of evictions on locally owned entries, excluding backups</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_expirationCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_expirations</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of expirations on locally owned entries, excluding backups</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_getCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_operations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">get</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of local get operations on the map; incremented for every get operation even if the entries do not exist</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_heapCost</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_heap_cost_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Total heap cost for the map on this member</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_indexedQueryCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_queries_indexed</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Total number of indexed local queries performed on the map</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_lastAccessTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_last_access_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Last access (read) time of the locally owned entries</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_lastUpdateTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_last_update_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Last update time of the locally owned entries</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_lockedEntryCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_entries_locked</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of locked entries that the member owns</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_merkleTreesCost</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_merkle_trees_cost_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Total heap cost of the Merkle trees used</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_numberOfEvents</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_events</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of local events received on the map</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_numberOfOtherOperations</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_operations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">other</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Total number of other operations performed on this member</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_ownedEntryCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_entries_owned</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of map entries owned by the member</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_ownedEntryMemoryCost</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_entries_owned_memory_cost</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Memory cost of owned map entries on this member</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_putCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_operations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">put</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of local put operations on the map</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_queryCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_queries</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of queries executed on the map (it may be imprecise for queries involving partition predicates (PartitionPredicate) on the off-heap storage)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_removeCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_operations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">remove</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of local remove operations on the map</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_setCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_operations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of local set operations on the map</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_hits</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_hits</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of reads of the locally owned entries; incremented for every read by any type of operation (get, set, put), so the entries should exist</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_totalGetLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_latency_total_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">get</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Total latency of local get operations on the map</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_totalMaxGetLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_latency_max_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">get</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Maximum latency of local get operations on the map</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_totalPutLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_latency_total_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">put</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Total latency of local put operations on the map</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_totalMaxPutLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_latency_max_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">put</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Maximum latency of local put operations on the map</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_totalRemoveLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_latency_total_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">remove</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Total latency of local remove operations on the map</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_totalMaxRemoveLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_latency_max_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">remove</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Maximum latency of local remove operations on the map</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_totalSetLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_latency_total_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Total latency of local set operations on the map</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_totalMaxSetLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_latency_max_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Maximum latency of local set operations on the map</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_creationTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_creation_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Creation time of the index on this member</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_hitCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_hits</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Total number of index hits (the value of this metric may be greater than the <code>map_index_queryCount</code> because a single query may hit the same index more than once)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_insertCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_inserts</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of insert operations performed on the index</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_memoryCost</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_memory_cost</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Local memory cost of the index (for on-heap indexes in OBJECT or BINARY formats the returned value is a best-effort approximation and doesn&#8217;t indicate a precise on-heap memory usage of the index)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_queryCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_queries</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Total number of queries served by the index</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_removeCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_removes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of remove operations performed on the index</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_totalInsertLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_latency_total_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">insert</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Total latency of insert operations performed on the index</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_totalRemoveLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_latency_total_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">remove</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Total latency of remove operations performed on the index</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_totalUpdateLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_latency_total_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">update</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Total latency of update operations performed on the index</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_updateCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_updates</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of update operations performed on the index</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set_creationTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set_creation_timestamp</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Creation time of the set on the member</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set_lastAccessTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set_last_access_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Last access (read) time of the locally owned items</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set_lastUpdateTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set_last_update_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Last update time of the locally owned items</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">list_creationTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">list_creation_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Creation time of this list on the member</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">list_lastAccessTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">list_last_access_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Last access (read) time of the locally owned items</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">list_lastUpdateTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">list_last_update_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Last update time of the locally owned items</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>

@@ -1,0 +1,60 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can trigger a hot backup to save a snapshot of the persistence store. Hot backups are useful when you wish to bring up a new cluster with the same data or parts of the data. The new cluster can then be used to share load with the original cluster, perform testing, or reproduce an issue, using production data.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="before-you-begin"><a class="anchor" href="#before-you-begin"></a>Before you Begin</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Clusters must have a directory set in the <code>backup-dir</code> configuration option. See <a href="../../../hazelcast/5.1/storage/backing-up-persistence" class="xref page">Backing Up the Persistence Store</a> in the Platform documentation.</p>
+</div>
+<div class="paragraph">
+<p>This page is available only to admin users.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="trigger-a-hot-backup"><a class="anchor" href="#trigger-a-hot-backup"></a>Trigger a Hot Backup</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Go to <strong>Administration</strong> &gt; <strong>Cluster State</strong> and select <code>PASSIVE</code> from the dropdown menu.</p>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/ChangeClusterState.png" alt="Changing Cluster state"></span></p>
+</div>
+<div class="paragraph">
+<p>Backups may be
+initiated during membership changes, partition table changes, or during normal data updates. As a result, some members may have outdated versions of the persistence store before they start the backup process. By putting your cluster in a <code>PASSIVE</code> state, you can stop the cluster from making changes to the persistence store.</p>
+</div>
+</li>
+<li>
+<p>Go to the <strong>Persistence</strong> tab and click <strong>Hot Backup</strong>.</p>
+<div class="paragraph">
+<p>The backup process will start asynchronously in the background.</p>
+</div>
+</li>
+<li>
+<p>Go to the <strong>Cluster State</strong> tab select <code>ACTIVE</code> from the dropdown menu.</p>
+</li>
+<li>
+<p>Monitor the backup process in the the <strong>Last Hot Backup Task Status</strong> field.</p>
+<div class="paragraph">
+<p>When the <strong>Status</strong> field of each member is <strong>Success</strong>, the backup process completed successfully.</p>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="next-steps"><a class="anchor" href="#next-steps"></a>Next Steps</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To learn more about changing cluster states, see <a href="changing-cluster-state" class="xref page">Changing the Cluster State</a>.</p>
+</div>
+</div>
+</div>

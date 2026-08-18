@@ -1,0 +1,140 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>To secure users' sessions, you can configure session timeouts and multiple user login attempts.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configuring-session-timeout"><a class="anchor" href="#configuring-session-timeout"></a>Configuring Session Timeout</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you have deployed Management Center on an application
+server/container, you can configure the default session timeout
+period of the application server/container to change the session
+timeout period for the Management Center. If your server/container
+allows application specific configuration, you can use it to configure
+the session timeout period for the Management Center.</p>
+</div>
+<div class="paragraph">
+<p>If you started Management Center from the command line, by default, the sessions that are inactive for
+30 minutes are invalidated. To change this, you can use the
+<a href="system-properties#hazelcast-mc-session-timeout-seconds" class="xref page"><code>hazelcast.mc.session.timeout.seconds</code> property</a>. For example, the following command starts Management Center with
+a session timeout period of 1 minute:</p>
+</div>
+<div class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li>
+<p><a id="tabset1_linux-and-mac"></a>Linux and Mac</p>
+</li>
+<li>
+<p><a id="tabset1_windows"></a>Windows</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="tabset1_linux-and-mac">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">hz-mc start -Dhazelcast.mc.session.timeout.seconds=60</code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset1_windows">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">mc-start.cmd -Dhazelcast.mc.session.timeout.seconds=60</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The timeout duration specified with the above property is effective only after the browser tab is closed or after the browser suspends the background activity of the webpage.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="disabling-multiple-simultaneous-login-attempts"><a class="anchor" href="#disabling-multiple-simultaneous-login-attempts"></a>Disabling Multiple Simultaneous Login Attempts</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>By default, a user can log into an account in Management Center on multiple devices in different locations at the same time. To allow only one user to log into an account, start Management Center with
+the <code>hazelcast.mc.allowMultipleLogin=false</code> property.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="disable-login-configuration"><a class="anchor" href="#disable-login-configuration"></a>Temporarily Disabling Logins</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To prevent password guessing attacks, logging in is disabled for 5 seconds after 3 consecutive failed login attempts. If the failed
+attempts continue, the timeout is multiplied by 10 after each round of 3 consecutive failed login attempts. For example:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>You try to log in with your credentials consecutively 3 times but failed.</p>
+</li>
+<li>
+<p>Logging in is disabled and you have to wait for 5 seconds.</p>
+</li>
+<li>
+<p>After 5 seconds have passed, logging in is enabled.</p>
+</li>
+<li>
+<p>You try to log in with your credentials consecutively 3 times but again
+failed.</p>
+</li>
+<li>
+<p>Logging in is disabled again and this time you have to wait for 50
+seconds until your next login attempt.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>You can configure this behavior, using the following properties:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>hazelcast.mc.failedAttemptsBeforeDisableLogin</code>: Number of failed
+login attempts that cause the logging in to be temporarily disabled.</p>
+</li>
+<li>
+<p><code>hazelcast.mc.initialDisableLoginPeriod</code>: Initial duration for the disabled login period in seconds.</p>
+</li>
+<li>
+<p><code>hazelcast.mc.disableLoginPeriodMultiplier</code>: Multiplier used for extending
+the disabled login period in case the failed login attempts continue.</p>
+</li>
+<li>
+<p><code>hazelcast.mc.maxDisableLoginPeriod</code>: Maximum amount of time for the disabled login period.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="forcing-logout-on-multiple-simultaneous-login-attempts"><a class="anchor" href="#forcing-logout-on-multiple-simultaneous-login-attempts"></a>Forcing Logout on Multiple Simultaneous Login Attempts</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you <a href="#disabling-multiple-simultaneous-login-attempts">disabled multiple simultaneous login attempts</a>,
+the first user to log in with a username stays
+logged in until that user explicitly logs out or the session expires.
+In the meantime, other users cannot log in with the same
+username. If you want to force user to log out and let the
+new users log in, start Management
+Center with the <code>hazelcast.mc.forceLogoutOnMultipleLogin=true</code> property.</p>
+</div>
+</div>
+</div>

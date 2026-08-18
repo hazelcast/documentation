@@ -1,0 +1,198 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>"Manage Clusters" is the first page that
+appears after you login to Management Center for the first time.
+It is used to add, remove or edit cluster configurations,
+and looks like the following:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="_images/StartingPage.png" alt="Starting Page"></span></p>
+</div>
+<div class="paragraph">
+<p>If you are using Management Center for the first time,
+you need to add your cluster&#8217;s configuration using this page
+You can always go to this page during your Management Center usage
+by clicking on the "Manage Clusters"
+menu item under the "Management Center" parent
+menu heading.</p>
+</div>
+<div class="paragraph">
+<p>To start monitoring your cluster you have already created
+(on your local machine, another development environment,
+etc.) you need to first define a cluster
+configuration to connect Management Center to your cluster.
+After you click on the "Add Cluster Config" button
+shown in the above screenshot,
+you can do this by either of the following options:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Using a form by providing the cluster name and member addresses</p>
+</li>
+<li>
+<p>Uploading a configuration file</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="creating-a-cluster-configuration-using-form"><a class="anchor" href="#creating-a-cluster-configuration-using-form"></a>Creating a Cluster Configuration Using Form</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Click on the "Add Cluster Config" button as seen in
+the above screenshot. The following page appears:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="_images/AddClusterConfig.png" alt="Add New Cluster Configuration"></span></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>Cluster Name</code>: Enter the name of your cluster, which was defined when the cluster was created.
+(The default cluster name is <code>dev</code> for IMDG clusters and <code>jet</code> for Jet Clusters)</p>
+</li>
+<li>
+<p><code>Cluster Config State</code>: Select "Enabled" to activate the cluster configuration.
+You can also select "Disabled" which will
+create the cluster configuration in a deactivated state for use
+at a later time. Disabled cluster configurations are ignored until enabled.</p>
+</li>
+<li>
+<p><code>Member Addresses</code>: Give the cluster members' addresses (one or preferably more)
+in the form of <code>hostname</code>, <code>hostname:port</code>, <code>IP address</code> or <code>IP address:port</code>.
+If no port is provided, the system tries the ports through 5701 and 5703 in a random order.
+Type the member address and press enter (or return) to make it visible in the "Member Addresses" field.</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+As soon as Management Center connects to one of the members,
+it will auto-discover the other members of the cluster.
+It is recommended to enter more than one member address in case that member
+in the configuration is no longer available in the future.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Click on the <code>Save</code> button and the "Manage Clusters" page loads
+with the new cluster configuration added, as shown below:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="_images/ClusterConfAdded.png" alt="Cluster Configuration Added"></span></p>
+</div>
+<div class="paragraph">
+<p>Here, you can see the state of the cluster and member count. Also,
+at the top left of the cluster box, you see the green colored dot,
+meaning that Management Center is connected to your cluster.</p>
+</div>
+<div class="paragraph">
+<p>You can add multiple cluster configurations using the same mechanism
+as explained above.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+When connecting to multiple clusters from the same Management Center,
+please ensure that the cluster names are unique.  Management Center does not
+support simultaneous connections to more than one cluster with the same cluster name.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The following page shows an example where Management Center
+is and is not able to connect one of clusters:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="_images/ManageClusters.png" alt="Manage Clusters"></span></p>
+</div>
+<div class="paragraph">
+<p>You can edit or delete a cluster configuration using
+the icons on any cluster&#8217;s box area in this page.</p>
+</div>
+<div class="paragraph">
+<p>To see the status of a cluster, click on its
+<code>Select</code> button. Management Center internally decides
+whether the selected one is an IMDG cluster or a Jet one, and
+shows the related "Dashboard" page of that cluster.</p>
+</div>
+<div class="paragraph">
+<p>The "Dashboard" page of the
+related cluster will load; see the <a href="monitor-imdg/dashboard" class="xref page">Dashboard Page chapter</a>
+for the details. Clicking on the <code>Select</code> button and
+selecting a cluster in the cluster selector (located at the toolbar)
+have the same functionality.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="creating-a-cluster-configuration-by-uploading-file"><a class="anchor" href="#creating-a-cluster-configuration-by-uploading-file"></a>Creating a Cluster Configuration by Uploading File</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Alternatively, you can upload a configuration file for the
+Management Center client created for your IMDG cluster. For this,
+click on the <code>Upload Config File</code> button which is seen after
+you click on the "Add Cluster Config" button.</p>
+</div>
+<div class="paragraph">
+<p>This is the recommended method for more complex configurations.</p>
+</div>
+<div class="paragraph">
+<p>The following page appears:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="_images/UploadConfigFile.png" alt="Upload Config File"></span></p>
+</div>
+<div class="paragraph">
+<p>The name of your cluster will be automatically generated
+as specified in the configuration file you upload. As mentioned
+before in the <a href="connecting-members" class="xref page">Connecting Members chapter</a>,
+you can think of Management Center as a client that connects to your IMDG cluster you create. Therefore,
+this configuration file is a well-known <code>hazelcast.client</code> in XML or YAML language.</p>
+</div>
+<div class="paragraph">
+<p>Here is an example configuration file:</p>
+</div>
+<div class="listingblock">
+<div class="title">Example hazelcast-client.xml file</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;hazelcast-client&gt;
+    &lt;cluster-name&gt;dev&lt;/cluster-name&gt;
+    &lt;network&gt;
+        &lt;cluster-members&gt;
+            &lt;address&gt;127.0.0.1&lt;/address&gt;
+            &lt;address&gt;127.0.0.2&lt;/address&gt;
+        &lt;/cluster-members&gt;
+    &lt;/network&gt;
+&lt;/hazelcast-client&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can simply drag this file onto the <code>Cluster Config File</code> box in this page,
+or find it using the <code>browse</code> link in the same box.</p>
+</div>
+<div class="paragraph">
+<p>Select "Enabled" in the <code>Cluster Config State</code> combobox to activate the configuration.
+You can also select "Disabled" just to create the configuration and use it
+at a later time. In this case, the configuration is ignored until enabled.</p>
+</div>
+<div class="paragraph">
+<p>You can always go back to the form page (explained in the previous section)
+by clicking on the <code>Add via Form</code> on this page.</p>
+</div>
+</div>
+</div>

@@ -1,0 +1,148 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can use SAML single sign-on with Management Center.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="set-up-the-saml-security-provider"><a class="anchor" href="#set-up-the-saml-security-provider"></a>Set up the SAML security provider</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To set up SAML, you need to configure settings either in the UI or the <code>hz-mc conf</code> tool.</p>
+</div>
+<div class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li>
+<p><a id="tabset1_ui"></a>UI</p>
+</li>
+<li>
+<p><a id="tabset1_mc-conf"></a>mc-conf</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="tabset1_ui">
+<div class="paragraph">
+<p>Go to <strong>Settings</strong> &gt; <strong>Security Providers</strong> &gt; <strong>SAML</strong>.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/ConfigureSAML.png" alt="SAML Configuration"></span></p>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset1_mc-conf">
+<div class="paragraph">
+<p>Use the <code>saml configure</code> task. For help, use the <code>-h</code> flag or see <a href="mc-conf" class="xref page">Management Center Configuration Tool</a>.</p>
+</div>
+<div class="listingblock">
+<div class="title">Linux and Mac</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">hz-mc conf saml configure</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Windows</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">mc-conf.bat saml configure</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Relying Party Identifier:</strong> The application-defined unique identifier that is
+the intended audience of the SAML assertion. This is most often the Service Provider
+Entity ID of your application.</p>
+</li>
+<li>
+<p><strong>Post Back URL:</strong> URL of the Management Center SAML assertion consumer, including schema
+(<code>http://</code> or <code>https://</code>) and port. Assertion consumer is located under the path <code>/saml/sso</code>
+so you should append <code>/saml/sso</code> to the Management Center URL. Your Identity Provider should
+have access to this URL as it will post back SAML responses to it. For example, if Management
+Center and the Identity Provider are on the same machine, you would enter
+<code>http://127.0.0.1:8080/saml/sso`</code>.</p>
+</li>
+<li>
+<p><strong>Group Attribute:</strong> Name of the attribute that contains group of the user.</p>
+</li>
+<li>
+<p><strong>Identity Provider Metadata:</strong> Your Identity Provider&#8217;s metadata in XML format.</p>
+</li>
+<li>
+<p><strong>Group Name Separator:</strong> Separator for the group names in case the group
+attribute value contains more than one group.</p>
+</li>
+<li>
+<p><strong>Admin Groups:</strong> Members of this group have admin privileges on the Management Center. To use more
+than one group, separate them with the group name separator you have configured.</p>
+</li>
+<li>
+<p><strong>User Groups:</strong> Members of this group have read and write privileges on the Management Center.
+To use more than one group, separate them with the group name separator you have configured.</p>
+</li>
+<li>
+<p><strong>Read-only User Groups:</strong> Members of this group have only read privilege on the Management
+Center. To use more than one group, separate them with the group name separator you have configured.</p>
+</li>
+<li>
+<p><strong>Metrics-only Groups:</strong> Members of this group have the privilege to see only the metrics
+on the Management Center. To use more than one group, separate them with the group name separator
+you have configured.</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If the user has more than one authority, Management Center uses the highest one.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Once you configure SAML, a button for single sign-on will be shown in the login page. Clicking it will
+start the SAML single sign-on process. If you don&#8217;t have an existing session with your identity provider,
+you will be taken to the login page of your identity provider. Once you log into your identity provider,
+you will be redirected back to Management Center as a logged in user.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If your identity provider needs service provider metadata XML, you can use the <code>saml/metadata</code> endpoint
+to view/download it once you configure SAML. For example, <code>http://localhost:8080/saml/metadata</code>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="create-and-manage-users"><a class="anchor" href="#create-and-manage-users"></a>Create and manage users</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To create and manage additional users, you must register them with your identity provider.</p>
+</div>
+<div class="paragraph">
+<p>When creating users, be sure to give them a valid role. See <a href="user-management" class="xref page">User management</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="next-steps"><a class="anchor" href="#next-steps"></a>Next steps</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For details about the <code>hz-mc conf</code> tool, see <a href="mc-conf" class="xref page">Management Center Configuration Tool</a>.</p>
+</div>
+</div>
+</div>

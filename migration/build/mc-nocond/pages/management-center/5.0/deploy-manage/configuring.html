@@ -1,0 +1,186 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can use various options to configure the Management Center instance as well as the client that Management Center uses to connect to and interact with Hazelcast clusters.</p>
+</div>
+<div class="paragraph">
+<p>For example, you may want to configure the client to connect to certain Hazelcast members. You may also want to configure the home directory of the Management Center instance to customize where metrics and other configuration data is saved.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="where-management-center-saves-data"><a class="anchor" href="#where-management-center-saves-data"></a>Where Management Center Saves Data</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>By default, Management Center saves the following data in the <code>hazlecast-mc</code> directory of the user&#8217;s home directory:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Configuration settings</p>
+</li>
+<li>
+<p>Metrics</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>You can configure Management Center to save this data in a different location, using the <a href="system-properties#hazelcast-mc-home" class="xref page"><code>hazelcast.mc.home</code> property</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="ways-to-configure-management-center"><a class="anchor" href="#ways-to-configure-management-center"></a>Ways to Configure Management Center</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can either configure Management Center in the UI while it&#8217;s running or preconfigure it in the terminal so that it starts with the settings you need.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Configuration methods for Managment Center</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 80%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Configuration method</th>
+<th class="tableblock halign-left valign-top">Use case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>UI</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Configure a running instance of Management Center. Use this method for the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Managing connections to clusters</p>
+</li>
+<li>
+<p>Setting a security provider</p>
+</li>
+<li>
+<p>Setting and updating license keys</p>
+</li>
+<li>
+<p>Managing users in the local security provider</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><a href="system-properties" class="xref page">System properties and environment variables</a></p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Configure any aspect of Management Center on start from the command line, including client configuration, feature flags, JMX, and home directory.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><a href="mc-conf" class="xref page"><code>mc-conf</code> tool</a></p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Preconfigure Management Center before starting it. Use this method for the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Managing connections to clusters</p>
+</li>
+<li>
+<p>Setting and updating security providers</p>
+</li>
+<li>
+<p>Managing users</p>
+</li>
+<li>
+<p>Setting system properties</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<div class="sect2">
+<h3 id="configuring-the-client"><a class="anchor" href="#configuring-the-client"></a>Configuring the Client</h3>
+<div class="paragraph">
+<p>Because Management Center connects to Hazelcast clusters as a client, you can configure it, using the following methods:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A client configuration file (XML or YAML):</p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="connecting-to-clusters-ui#using-a-client-configuration-file" class="xref page">UI</a></p>
+</li>
+<li>
+<p><a href="connecting-to-clusters-mc-conf#using-a-client-configuration-file" class="xref page"><code>mc-conf</code> tool</a></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><a href="system-properties#client-config" class="xref page">System properties</a> (only the client connection strategy)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>However, Management Center does not allow you to override the following settings:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>instance-name</code>: Set to the name of the cluster.</p>
+</li>
+<li>
+<p><code>connection-strategy.async-start</code>: Set to <code>true</code> so that Management Center starts without waiting to get a cluster connection.</p>
+</li>
+<li>
+<p><code>connection-strategy.cluster-connect-timeout-millis</code>: Set to infinity so that Management Center
+never gives up trying to connect to the cluster.</p>
+</li>
+<li>
+<p><code>network.smart-routing</code>: Set to <code>true</code> so that Management Center will open connections to all
+members.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="member-side-configuration"><a class="anchor" href="#member-side-configuration"></a>Member-Side Configuration</h3>
+<div class="paragraph">
+<p>On a Hazelcast member, you can also use the <code>management-center</code> setting to enable or disable both scripting and the console as well as setting up trusted interfaces. See <a href="../../../hazelcast/5.0/maintain-cluster/monitoring#management-center" class="xref page">Management Center</a> in the Platform documentation.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="starting-with-an-extra-classpath"><a class="anchor" href="#starting-with-an-extra-classpath"></a>Providing an Extra Classpath</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To start Management Center with an extra classpath
+entry, use the
+following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">java -cp "hazelcast-management-center-5.0.4.jar:/path/to/an/extra.jar" com.hazelcast.webmonitor.Launcher</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>On Windows, use a semicolon instead of colon:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">java -cp "hazelcast-management-center-5.0.4.jar;/path/to/an/extra.jar" com.hazelcast.webmonitor.Launcher</code></pre>
+</div>
+</div>
+</div>
+</div>

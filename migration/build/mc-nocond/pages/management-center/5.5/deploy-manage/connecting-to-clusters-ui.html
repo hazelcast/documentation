@@ -1,0 +1,351 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Management Center starts a Hazelcast client for each cluster that it is connected to. You can configure the Hazelcast client for Management Center, using the UI.</p>
+</div>
+<div class="paragraph">
+<p>To connect Management Center to a Hazelcast cluster from the UI, you have two options:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Use the form fields.</p>
+</li>
+<li>
+<p>Upload a client configuration file in XML or YAML format. (Recommended for more complex configurations.)</p>
+<div class="paragraph">
+<p>If you enabled TLS/SSL on a Hazelcast cluster, you must use this option to configure the client TLS settings. For more information about client TLS configuration, see <a href="../../../hazelcast/5.5/security/tls-ssl" class="xref page">TLS</a> in the Platform documentation.</p>
+</div>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+When connecting to multiple clusters from the same instance of Management Center, make sure that the cluster names are unique. Management Center does not support simultaneous connections to more than one cluster with the same cluster name.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="using-the-form-fields"><a class="anchor" href="#using-the-form-fields"></a>Using the Form Fields</h2>
+<div class="sectionbody">
+<div id="creating-a-cluster-configuration-using-form" class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Click to <strong>Cluster Connections</strong> in the Top Bar.</p>
+</li>
+<li>
+<p>Click <strong>Add</strong> to start configuring a new connection.</p>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/AddClusterConfig.png" alt="Add New Cluster Configuration"></span></p>
+</div>
+</li>
+<li>
+<p>Enter the name of the cluster that you want to connect to.</p>
+</li>
+<li>
+<p>Enter the hostnames or IP addresses of cluster members that you want to connect to. Press <strong>Enter</strong> after each address to add it to the list.</p>
+<div class="paragraph">
+<p>As soon as Management Center connects to one member, it will auto-discover the other members of the cluster. But, for fault-tolerance, it&#8217;s best to add more than one member&#8217;s address to the list.</p>
+</div>
+</li>
+<li>
+<p>Make sure that <strong>Enabled</strong> is <strong>On</strong>.</p>
+<div class="paragraph">
+<p>If this field is <strong>Off</strong>, Management Center will save the configuration but will not try to connect to the cluster.</p>
+</div>
+</li>
+<li>
+<p>Click <strong>Connect</strong>.</p>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/ConnectionEstablishedDev.png" alt="Cluster Configuration Added"></span></p>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>You will see the following:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 80%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>State</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Current state of the cluster.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Safe Members</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Total number of members in the cluster.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Clients</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Total number of clients currently connected to the cluster, not including the Management Center client. See <a href="../clusters/clients" class="xref page">Clients</a></p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>If your cluster has the Jet engine enabled, you will also see that the cluster support streaming and SQL.</p>
+</div>
+<div class="paragraph">
+<p>To connect to another cluster, you can repeat these steps.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="using-a-client-configuration-file"><a class="anchor" href="#using-a-client-configuration-file"></a>Using a Client Configuration File</h2>
+<div class="sectionbody">
+<div id="creating-a-cluster-configuration-by-uploading-file" class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Create a client configuration file.</p>
+<div class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li>
+<p><a id="tabset1_xml"></a>XML</p>
+</li>
+<li>
+<p><a id="tabset1_yaml"></a>YAML</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="tabset1_xml">
+<div class="paragraph">
+<p>For help creating a client configuration file, see the <a href="https://github.com/hazelcast/hazelcast/blob/master/hazelcast/src/main/resources/hazelcast-client-full-example.xml">full example reference on GitHub</a>.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example XML file</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;hazelcast-client xmlns="http://www.hazelcast.com/schema/client-config"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://www.hazelcast.com/schema/client-config
+                  http://www.hazelcast.com/schema/client-config/hazelcast-client-config-5.0.xsd"&gt;
+  &lt;cluster-name&gt;dev&lt;/cluster-name&gt;
+  &lt;network&gt;
+    &lt;cluster-members&gt;
+      &lt;address&gt;127.0.0.1:5701&lt;/address&gt;
+      &lt;address&gt;127.0.0.2:5702&lt;/address&gt;
+    &lt;/cluster-members&gt;
+  &lt;/network&gt;
+&lt;/hazelcast-client&gt;</code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset1_yaml">
+<div class="paragraph">
+<p>For help creating a client configuration file, see the <a href="https://github.com/hazelcast/hazelcast/blob/master/hazelcast/src/main/resources/hazelcast-client-full-example.yaml">full example reference on GitHub</a>.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example YAML file</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">hazelcast-client:
+  cluster-name: dev
+  network:
+    cluster-members:
+      - 127.0.0.1:5701
+      - 127.0.0.2:5702</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>As soon as Management Center connects to one member, it will auto-discover the other members of the cluster. But, for fault-tolerance, it&#8217;s best to add more than one member&#8217;s address to the <code>cluster-members</code> configuration.</p>
+</div>
+</li>
+<li>
+<p>Click to <strong>Cluster Connections</strong> in the Top Bar.</p>
+</li>
+<li>
+<p>Click <strong>Add</strong> to start configuring a new connection.</p>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/AddClusterConfig.png" alt="Add New Cluster Configuration"></span></p>
+</div>
+</li>
+<li>
+<p>Go to the <strong>Upload Client Config</strong> tab.</p>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/UploadConfigFile.png" alt="Upload Config File"></span></p>
+</div>
+</li>
+<li>
+<p>Either drag and drop your configuration file into the box or click to browse your file system.</p>
+</li>
+<li>
+<p>Make sure that <strong>Enabled</strong> is <strong>On</strong>.</p>
+<div class="paragraph">
+<p>If this field is <strong>Off</strong>, Management Center will save the configuration but will not try to connect to the cluster.</p>
+</div>
+</li>
+<li>
+<p>Click <strong>Save Configuration</strong>.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>You will see the following:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 80%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>State</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Current state of the cluster.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Safe Members</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Total number of members in the cluster.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Clients</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Total number of clients currently connected to the cluster, not including the Management Center client. See <a href="../clusters/clients" class="xref page">Clients</a></p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>If your cluster has the Jet engine enabled, you will also see that the cluster support streaming and SQL.</p>
+</div>
+<div class="paragraph">
+<p>To connect to another cluster, you can repeat these steps with a different configuration file.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Management Center requires a connection to every member in order to collect its state, events and metrics so unisocket connections are not supported.  An error message will be shown if the configuration uses a unisocket connection.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="cluster-connection-diagnosis"><a class="anchor" href="#cluster-connection-diagnosis"></a>Cluster Connection Diagnosis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In case Management Center could not connect to a cluster, you can run the cluster connection diagnostics by clicking on the
+<strong>DIAGNOSE</strong> button.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/DiagnoseButton.png" alt="Diagnose button"></span></p>
+</div>
+<div class="paragraph">
+<p>Management Center runs a bunch of connectivity checks including:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>whether the hostname can be resolved</p>
+</li>
+<li>
+<p>whether the connection ports are open</p>
+</li>
+<li>
+<p>whether the configured cluster name matches the one configured on a member</p>
+</li>
+<li>
+<p>whether Management Center can be authenticated by the members</p>
+</li>
+<li>
+<p>whether Management Center has permissions to manage the cluster.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/ConnectionDiagnosis.png" alt="Cluster connection diagnosis result"></span></p>
+</div>
+<div class="paragraph">
+<p>Connection diagnostics process may take up to 30 seconds, please wait until you receive a <code>FAIL</code> check with an
+explanation or cancel the diagnostics.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="removing-a-cluster-connection"><a class="anchor" href="#removing-a-cluster-connection"></a>Removing a Cluster Connection</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To remove an existing connection to a cluster, go to <strong>Cluster Connections</strong> in the Top Bar and click the <strong>trash icon</strong> above the name of the cluster that you want to disconnect from Management Center.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/RemoveConnection.png" alt="Trash icon above the name of a cluster called dev"></span></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="editing-a-cluster-connection"><a class="anchor" href="#editing-a-cluster-connection"></a>Editing a Cluster Connection</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To edit an existing connection, go to <strong>Cluster Connections</strong> in the Top Bar and click the <strong>configure icon</strong> (next to the <strong>trash icon</strong>) above the name of the cluster.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/EditConnection.png" alt="Configure icon above the name of a cluster called dev"></span></p>
+</div>
+<div class="paragraph">
+<p>If you connected to the cluster from the form fields, you can edit the form.</p>
+</div>
+<div class="paragraph">
+<p>If you connected to the cluster, using a client configuration file, you can upload a new configuration file.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+To see the existing configuration file, click the <strong>eye icon</strong> above the box.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="next-steps"><a class="anchor" href="#next-steps"></a>Next Steps</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Explore the <a href="../clusters/dashboard" class="xref page">Clusters dashboard</a>.</p>
+</div>
+</div>
+</div>

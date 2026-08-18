@@ -1,0 +1,117 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>These release notes list any new features, enhancements, fixes, security issues and breaking changes that were made for Hazelcast Management Center.</p>
+</div>
+<div class="paragraph">
+<p>For help installing Hazelcast Management Center, see <a href="../getting-started/install" class="xref page">Install and start Management Center</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="5-10-0"><a class="anchor" href="#5-10-0"></a>5.10.0</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>Release date</strong>: 2026-02-24</p>
+</div>
+<div class="sect2">
+<h3 id="security"><a class="anchor" href="#security"></a>Security</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Resolved <a href="https://nvd.nist.gov/vuln/detail/CVE-2025-41254">CVE-2025-41254</a>, which addresses a vulnerability in STOMP over WebSocket applications that could allow attackers to send unauthorized messages</strong>. This has been resolved by upgrading the <code>spring-boot-dependencies</code> and <code>spring-framework-core</code>.</p>
+</li>
+<li>
+<p><strong>Resolved <a href="https://nvd.nist.gov/vuln/detail/CVE-2024-56518">CVE-2024-56518</a>, which risks remote code execution via a <code>JndiLoginModule</code> <code>user.provider.url</code> in a hazelcast-client XML document</strong> (a client configuration file). The <code>com.sun.jndi.ldap.object.trustSerialData</code> system property is set to <code>false</code>.</p>
+</li>
+<li>
+<p><strong>Prevented Cross-Site-Scripting (XSS)</strong>: Pen testing highlighted improvements to the admin web forms in Management Center to prevent Cross-Site-Scripting (XSS), which have been implemented.</p>
+</li>
+<li>
+<p><strong>Pen testing highlighted that Management Center was responding with HTTP code 400 for the HTTP TRACE verb</strong>. This has been resolved and Management Center now properly handles HTTP TRACE verb requests with 405 status codes.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="enhancements"><a class="anchor" href="#enhancements"></a>Enhancements</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Extended the REST API Endpoint so that Map configuration details can be retrieved</strong>: It is now possible to access Map configuration over the Management Center REST API, including TTL, Max-Idle, Eviction and Backup settings for automated auditing purposes.</p>
+</li>
+<li>
+<p><strong>Updated Prometheus metrics</strong>: The V2 format support for the Prometheus Exporter in Management Center has been extended to include the following metrics. See <a href="../integrate/prometheus-metrics" class="xref page">Prometheus metrics</a>.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Topic, Reliable Topic, Queue, Cache, Replicated Map, MultiMap, Vector Collection.</p>
+</li>
+<li>
+<p>CP Subsystem, Raft Algorithm, Flake ID Generator, PN Counter, Proxies, Transactions.</p>
+</li>
+<li>
+<p>Clients, Client Invocations, Near Cache.</p>
+</li>
+<li>
+<p>Cluster, Partitions, WAN Replication, High-Density (HD) Memory Store, Management Center Config HealthcheckUser Code Deployment, User Code Namespaces.</p>
+</li>
+<li>
+<p>Persistence, Executor Service, Streaming Engine Cluster-Wide Metrics, Streaming Engine Job-specific Metrics.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Added an option to copy the Config Healthcheck report</strong> to make it easier to share.</p>
+</li>
+<li>
+<p><strong>Added a settable hostname</strong>: By default it shows the hostname that Management Center is running on but this can be set to any value via the <code>hazelcast.mc.info.instanceName</code> system property (or to blank to hide it).</p>
+</li>
+<li>
+<p><strong>Improved UI on the meaning of max native size</strong>: The UI has been updated to clarify that the max native memory size is per node.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="fixes"><a class="anchor" href="#fixes"></a>Fixes</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Resolved an issue where stale CP members could be incorrectly displayed in Management Center</strong>: The fix automatically removes these stale entries with outdated "last seen" timestamps from the CP membership screens.</p>
+</li>
+<li>
+<p><strong>Resolved an issue where CLC would fail to connect to clusters that require a username and password</strong>: The embedded Command Line Client (CLC) in Management Center would fail to connect to clusters requiring username and password authentication. This fix addresses this previously documented known issue.</p>
+</li>
+<li>
+<p><strong>Updated Management Center rolling upgrade functionality to align with Hazelcast Platform upgrade capabilities</strong>: Previously, Management Center was limited to single minor version upgrades. It now supports multi-version upgrades based on Platform version compatibility.</p>
+</li>
+<li>
+<p><strong>Management Center now shows a clear warning if connecting to a platform version that is newer than itself</strong>: A banner is show in Management Center if the Platform version is newer than the Management Center version. When upgrading, you should always upgrade Management Center first.</p>
+</li>
+<li>
+<p><strong>Resolved an issue with testing the Security Providers</strong>: The fix ensures the SAML and Active Directory Security Provider tests pass prior to saving the configuration. This prevents from saving configuration that will not connect to the security provider.</p>
+</li>
+<li>
+<p><strong>Resolved an issue in Management Center&#8217;s Config Healthcheck</strong>: Fixed Management Center connection diagnostic failures related to missing <code>service-dns</code> configuration in Kubernetes environments.</p>
+</li>
+<li>
+<p><strong>Resolved an issue relating to upgrading Management Center from earlier versions</strong>: Under certain circumstances, the issue prevented the H2 database upgrade from running, which resulted in the existing cluster connection configuration being lost.   Additional fixes were applied when running on Microsoft Windows.</p>
+</li>
+<li>
+<p><strong>Resolved a Dynamic Diagnostic Config error message</strong>: A fix has been applied to stop error messages from being shown when accessing these screens for a cluster that has just been stopped.</p>
+</li>
+<li>
+<p><strong>Resolved a licensing warning message</strong>: Management Center shows clearer messages when connecting to a Community Edition cluster.</p>
+</li>
+<li>
+<p><strong>Resolved an issue with the alert levels in Config Health Check</strong>: In non-development mode, the alert level for the minimum number of nodes in a cluster has been reduced from a FAIL to WARNING. It remains INFO in developer mode.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>

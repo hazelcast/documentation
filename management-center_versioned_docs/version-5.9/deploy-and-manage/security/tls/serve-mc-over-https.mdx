@@ -1,0 +1,232 @@
+---
+title: "Serve Management Center over HTTPS"
+sidebar_label: "Tutorial"
+sidebar_position: 3
+slug: /deploy-manage/serve-mc-over-https
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+In this tutorial, you'll serve Management Center over HTTPS, using a self-signed certificate.
+
+## Overview
+
+You will learn how to do the following:
+
+- Generate a self-signed certificate for Management Center.
+- Use a variable replacer to encrypt the keystore password.
+- Serve Management Center over HTTPS on localhost.
+
+## Prerequisites
+
+To complete this tutorial, you need the following:
+
+<table>
+<thead>
+<tr>
+<th>Requirements</th>
+<th>Useful resources</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Java KeyTool</td>
+<td>
+
+To check if you have the Java KeyTool, run this command:
+
+```bash
+keytool --help
+```
+
+If you don't see a list of commands, install Java.
+
+</td>
+</tr>
+<tr>
+<td>Firefox browser</td>
+<td>
+
+[Download Firefox](https://www.mozilla.org/en-US/firefox/download)
+
+You can use any browser, but this tutorial uses Firefox because it's simple to configure Firefox to trust self-signed certificates.
+
+</td>
+</tr>
+</tbody>
+</table>
+
+## Create a key pair
+
+To be able to use HTTPS, you need to generate a public/private key pair that Management Center can use to encrypt the HTTP traffic.
+
+1. Use the following command to generate a key pair.
+
+   ```bash conums
+   keytool \
+   -genkey \ <1>
+   -alias mc \ <2>
+   -keyalg RSA \ <3>
+   -validity 365 \ <4>
+   -keystore mc.keystore \ <5>
+   -storetype PKCS12 <6>
+   ```
+
+   <CodeCallouts>
+
+   1. Generate a key pair.
+   2. Give this key pair an alias of `mc` to make it easy to manage it.
+   3. Use the RSA algorithm to generate the key pair.
+   4. Make the key pair valid for one year.
+   5. Store the private key and certificate chain in the `mc.keystore` keystore.
+   6. Use the PKCS12 format to store the key.
+
+   </CodeCallouts>
+2. Enter the following password.
+
+   ```none
+   mc-test123
+   ```
+
+   :::warning
+
+   This password is used only to make later steps easy to follow by copying and pasting commands. In a production environment, you should choose a secure password and store it in a safe place.
+
+   :::
+3. Complete the questions in the prompt.
+
+   ```none
+   Answer the following questions when prompted:
+   What is your first and last name?
+   [Unknown]:  <user's name>
+   What is the name of your organizational unit?
+   [Unknown]:  <department name>
+   What is the name of your organization?
+   [Unknown]:  <company name>
+   What is the name of your City or Locality?
+   [Unknown]:  <city name>
+   What is the name of your State or Province?
+   [Unknown]:  <state name>
+   What is the two-letter country code for this unit?
+   [Unknown]:  <country name>
+   Enter yes to confirm the provided information is correct:
+   Is CN=<user's name>, OU=<department name>, O="<company name>",
+   L=<city name>, ST=<state name>, C=<country name>  correct?
+   [no]:  yes
+   Enter your desired keystore password:
+   Enter key password for <server>
+   (Return if same as keystore password)
+   ```
+
+You should see the following:
+
+```none
+Generating 2,048 bit RSA key pair and self-signed certificate (SHA256withRSA) with a validity of 365 days
+```
+
+The key and certificate are stored in the `mc.keystore` file in your current directory.
+
+## Extract a self-signed certificate from the keystore
+
+To allow Management Center to prove its identity, it needs a certificate that is signed with its private key.
+
+Use the following command to extract a self-signed certificate from the keystore.
+
+```bash
+keytool -export -alias mc -keystore mc.keystore -file mc-public.cert
+```
+
+You should see the following:
+
+```none
+Certificate stored in file <mc-public.cert>
+```
+
+The signed certificate is stored in the `mc-public.cert` file in your current directory.
+
+## Encrypt the keystore password
+
+For improved security, you can mask your keystore password by encrypting it with the built-in encryption replacer.
+
+1. Create a file called `password`. You will use this file to store the master password that Management Center will need to encrypt and decrypt the keystore password.
+2. Inside the `password` file, add the following password: `/Za-uG3dDfpd,5.-`.
+3. Execute the encryption replacer to output the encrypted keystore password.
+
+   ```bash conums
+   java -cp hazelcast-management-center-5.9.0.jar \ <1>
+        -Dhazelcast.mc.configReplacer.prop.passwordFile=/path/to/password \ <2>
+        -Dhazelcast.mc.configReplacer.prop.passwordUserProperties=false \ <3>
+        com.hazelcast.webmonitor.configreplacer.EncryptionReplacer \
+        "mc-test123" <4>
+   ```
+
+   <CodeCallouts>
+
+   1. Add the Management Center Java file to the classpath. This file contains the `EncryptionReplacer` class.
+   2. Configure the replacer with the path to your password file.
+   3. Tell the replacer not to use the current user properties to encrypt the variable. This way, you can execute this command from any user and the result will be the same.
+   4. Pass the replacer the keystore password that you want to encrypt.
+
+   </CodeCallouts>
+4. Copy your encrypted keystore password from the output.
+
+   ```none
+   $ENC{h7kmetFZwh8=:531:dOsG5ezhSZiyBXY5JNx8gg==}
+   ```
+
+## Start Management Center
+
+1. Start Management Center and pass it the information it needs to use the keystore.
+
+   <Tabs>
+   <TabItem value="linux-and-mac" label="Linux and Mac">
+
+   ```bash conums
+   hz-mc start -Dhazelcast.mc.tls.enabled=true \
+   -Dhazelcast.mc.https.port=443 \ <1>
+   -Dhazelcast.mc.tls.enableHttpPort=true \ <2>
+   -Dhazelcast.mc.configReplacer.class=com.hazelcast.webmonitor.configreplacer.EncryptionReplacer \ <3>
+   -Dhazelcast.mc.configReplacer.prop.passwordFile=path/to/password \
+   -Dhazelcast.mc.configReplacer.prop.passwordUserProperties=false \
+   -Dhazelcast.mc.tls.keyStore=mc.keystore \
+   -Dhazelcast.mc.tls.keyStorePassword='$ENC{h7kmetFZwh8=:531:dOsG5ezhSZiyBXY5JNx8gg==}' <4>
+   ```
+
+   </TabItem>
+   <TabItem value="windows" label="Windows">
+
+   ```bash conums
+   mc-start.cmd -Dhazelcast.mc.tls.enabled=true ^
+   -Dhazelcast.mc.https.port=443 ^ <1>
+   -Dhazelcast.mc.tls.enableHttpPort=true ^ <2>
+   -Dhazelcast.mc.configReplacer.class=com.hazelcast.webmonitor.configreplacer.EncryptionReplacer ^ <3>
+   -Dhazelcast.mc.configReplacer.prop.passwordFile=path/to/password ^
+   -Dhazelcast.mc.configReplacer.prop.passwordUserProperties=false ^
+   -Dhazelcast.mc.tls.keyStore=mc.keystore ^
+   -Dhazelcast.mc.tls.keyStorePassword='$ENC{h7kmetFZwh8=:531:dOsG5ezhSZiyBXY5JNx8gg==}' <4>
+   ```
+
+   </TabItem>
+   </Tabs>
+
+   <CodeCallouts>
+
+   1. Override the default port of 8443 so that Management Center is available on the standard port 443.
+   2. Redirect HTTP traffic to HTTPS.
+   3. Tell Management Center to use the encryption replacer to decrypt variables that are prefixed with `$ENC`.
+   4. Use the encrypted form of the keystore password from the last step.
+
+   </CodeCallouts>
+2. Open Management Center in Firefox at https://localhost:443.
+3. Click **Advanced** and **Accept the Risk and Continue**.
+
+You should see that Management Center is being served over HTTPS.
+
+## Next steps
+
+[Explore TLS security topics](./tls-security.mdx) for Management Center.
+
+To allow all browsers to trust your certificate, have it signed by a trusted certificate authority.
+
+To learn more about variable replacers such as the encryption replacer and how you can implement your own, see [Variable replacers](../../configuration/variable-replacers.mdx).

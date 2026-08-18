@@ -1,0 +1,92 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Before going into production, you should review the following list of recommendations:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Set up a high availability deployment.</p>
+</li>
+<li>
+<p>Secure Management Center.</p>
+</li>
+<li>
+<p>For Docker deployments, persist the <code>hazelcast-mc</code> directory.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="set-up-high-availability-deployments"><a class="anchor" href="#set-up-high-availability-deployments"></a>Set up high availability deployments</h2>
+<div class="sectionbody">
+<div id="high-availability" class="paragraph">
+<p>When you have only a single instance of Management Center connected to your cluster, that instance is a single point of failure. If Management Center goes offline for any reason, you will not be able to use it to manage your cluster. To make your deployment more robust, you can connect multiple instances of Management Center to a cluster. This way, if one instance goes down, you will still have the others.</p>
+</div>
+<div class="paragraph">
+<p>Multiple Management Center instances are independent of each other and don&#8217;t form a cluster of Management Center
+instances. This has the following implications:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>It&#8217;s up to you to maintain consistent configurations on all Management Center instances. Only Client Filtering
+configuration is synchronized among Management Center instances.</p>
+</li>
+<li>
+<p>Inconsistencies in the reported metrics may occur if one of the instances goes down for some time.</p>
+</li>
+<li>
+<p>HTTP sessions are not shared between Management Center instances. Load balancing options are limited to sticky sessions or round-robin connections with basic authentication.</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you are relying on the <code>JSESSIONID</code> cookie for sticky session routing, consider setting the <code>JETTY_WORKER_INSTANCE</code> environment variable distinctly for each Management Center instance to provide a consistent value for configuring your routes.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Client filtering rules are synchronized among instances of Management Center that are connected to the same cluster. See <a href="../clusters/client-filtering#client-filtering-synchronization" class="xref page">Client Filtering Synchronization</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="secure-management-center"><a class="anchor" href="#secure-management-center"></a>Secure Management Center</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Review the security documentation to make sure that Management Center is secure before going into production. See <a href="security" class="xref page">Secure Management Center</a>.</p>
+</div>
+<div class="sect2">
+<h3 id="disable-scripting-and-console"><a class="anchor" href="#disable-scripting-and-console"></a>Disable scripting and console</h3>
+<div class="paragraph">
+<p>Scripting engines give code access to the underlying system on the members (files and other resources) and run with the same permissions as the current user. And, the console allows users to interact with the cluster.</p>
+</div>
+<div class="paragraph">
+<p>For security, scripting and the console are disabled in the member configuration by default.</p>
+</div>
+<div class="paragraph">
+<p>If you enabled scripting or the console, be sure to disable it before going into production. See <a href="../../../hazelcast/5.6/maintain-cluster/monitoring#management-center" class="xref page">Management Center</a> in the Platform documentation.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="persist-management-center-data-in-docker"><a class="anchor" href="#persist-management-center-data-in-docker"></a>Persist Management Center data in Docker</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When you upgrade Management Center with Docker, you will lose all configuration and metrics data unless you persist the <code>hazelcast-mc</code> directory before upgrading.</p>
+</div>
+<div class="paragraph">
+<p>See <a href="https://github.com/hazelcast/management-center-docker#mounting-management-center-home-directory">Mounting Management Center Home Directory</a> in the GitHub repository for the Management Center Docker image.</p>
+</div>
+</div>
+</div>

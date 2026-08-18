@@ -1,0 +1,450 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hazelcast Management Center provides a powerful and intuitive interface for managing and monitoring your Hazelcast Platform clusters.</p>
+</div>
+<div class="paragraph">
+<p>You can use Management Center to monitor performance, view metrics, and perform administrative tasks such as license management and client filtering. This enables you manage your deployment effectively and respond quickly to any issues that arise, which helps maximize the value of your Hazelcast deployment.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+For information about what is new and improved across Hazelcast products and tools, see <a href="../../../hazelcast/5.8-snapshot/whats-new" class="xref page">What&#8217;s new</a>. For detailed information about Management Center changes, see the <a href="../release-notes/release-notes" class="xref page">release notes</a>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="enterprise-edition-versus-community-edition"><a class="anchor" href="#enterprise-edition-versus-community-edition"></a>Enterprise Edition versus Community Edition</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you have Hazelcast Platform Enterprise Edition then you have access to all Management Centre features, including advanced security, monitoring, and management features. You can either reuse your Hazelcast Platform license key or use a dedicated Enterprise license for Management Center. Otherwise, Community Edition offers basic functionality for small deployments (up to 3 cluster members).</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Get a 30-day free Enterprise trial with no obligation from our <a href="https://hazelcast.com/get-started/">Try Hazelcast</a> page.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The following table explains which features are available in Management Center based on your license:</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="key-features-and-benefits"><a class="anchor" href="#key-features-and-benefits"></a>Key features and benefits</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 30%;">
+<col style="width: 15%;">
+<col style="width: 15%;">
+<col style="width: 40%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"><strong class="align=left">Real-time monitoring and performance tracking</strong></th>
+<th class="tableblock halign-center valign-top"><strong class="align=center">Enterprise Edition</strong></th>
+<th class="tableblock halign-center valign-top"><strong class="align=center">Community Edition</strong></th>
+<th class="tableblock halign-left valign-top"><strong class="align=left">Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Comprehensive dashboards for monitoring</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Detailed statistics about members, clients and the data structures in real-time are provided to help you identify performance bottlenecks and optimize your applications. In Enterprise Edition there are no limits; in Community Edition, you&#8217;re limited to monitoring clusters up to 3 members</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Multi-channel monitoring</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon error"><i class="fa fa-times fa-lg"></i></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Delivered through secure Clustered REST and JMX capabilities, and secure Prometheus Exporter functionality with authentication support, providing integration into enterprise-grade monitoring solutions</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Prometheus Exporter and Healthcheck</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon error"><i class="fa fa-times fa-lg"></i></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Prometheus Exporter provides all the metrics from the cluster in a Prometheus format. Config allows for the metrics to be filtered. Also included are Config Healthcheck counters</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Powerful administrative tools</strong></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>Enterprise Edition</strong></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>Community Edition</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Client Filtering</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon error"><i class="fa fa-times fa-lg"></i></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allows you to control which clients can connect to a cluster; essential for Blue/Green or Red/Black deployments</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Config Healthcheck</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon error"><i class="fa fa-times fa-lg"></i></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Lets you identify and diagnose issues in clusters. Config Healthcheck runs automatically when cluster topology or member configuration changes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WAN Replication</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon error"><i class="fa fa-times fa-lg"></i></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Provides detailed metrics and management of WAN Replication and Sync, including Merkle Tree support for consistency checks and an option to force sync any deltas. In Enterprise Edition, requires cluster with WAN Replication license</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Integrated tooling</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Integrated tooling from Console, Command Line Client and scripting</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Diagnostics</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allows you to check performance and memory usage. Admin users can take thread dumps</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Enterprise-grade security and integration</strong></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>Enterprise Edition</strong></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>Community Edition</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Local User Security</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">User management with Role-Based Access Control (RBAC) provides several user roles (Admin, User, Read-Only, and Metrics-Only) with varying permissions for different operations</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Third-party authentication</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon error"><i class="fa fa-times fa-lg"></i></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends the RBAC integration with support for third-party authentication services, including JAAS, LDAP, Active Directory, SAML and OpenID</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Audit logs</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon error"><i class="fa fa-times fa-lg"></i></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Track administrative actions for compliance</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>SQL queries</strong></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>Enterprise Edition</strong></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>Community Edition</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SQL Browser to execute queries</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enables you to execute SQL queries (such as CREATE MAPPING, INSERT INTO, and SINK INTO) on your clusters. Management Center shows queryable objects with a schema and index explorer, and can handle streaming SQL queries, displaying the last 1,000 entries as they arrive. In Enterprise Edition, includes ability to use SQL DML statements in SQL Browser; in Community Edition, included for cluster of up to 3 members</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High availability deployments</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon error"><i class="fa fa-times fa-lg"></i></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Support for high availability deployments where multiple Management Center instances can connect to the same cluster, eliminating a single point of failure for management and monitoring purposes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Easy deployment with Docker</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Get started quickly with Management Center using Docker Compose. For example, create a docker-compose.yml file to run both Hazelcast and Management Center containers, with Management Center automatically connecting to the Hazelcast cluster</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>REST API</strong></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>Enterprise Edition</strong></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>Community Edition</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Client Filtering API</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon error"><i class="fa fa-times fa-lg"></i></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Access to the Client Filtering settings via secure API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cluster Metrics API</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon error"><i class="fa fa-times fa-lg"></i></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Access to metrics of all clusters connected to Management Center</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">WAN Replication API</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon error"><i class="fa fa-times fa-lg"></i></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Access to WAN Replication metrics and management via API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cluster Connections API</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon success"><i class="fa fa-check-circle fa-lg"></i></span></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><span class="icon error"><i class="fa fa-times fa-lg"></i></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Manage cluster connections to Management Center via API</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+To access Enterprise features, a license must be installed on Management Center — see <a href="../deploy-manage/license-management" class="xref page">Enterprise licenses</a>.
+The specific features enabled in Management Center depend on the license key. To verify which features are enabled, view the <a href="../deploy-manage/updating-mc-license-ui" class="xref page">License screen</a>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="os-requirements"><a class="anchor" href="#os-requirements"></a>Requirements</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You must meet the following requirements to be able to run Management Center.</p>
+</div>
+<div class="sect2">
+<h3 id="supported-java-virtual-machines"><a class="anchor" href="#supported-java-virtual-machines"></a>Supported Java Virtual Machines</h3>
+<div class="paragraph">
+<p>Hazelcast supports the latest and long-term support (LTS) versions of the Java Development Kit (JDK). However, the JVM in some JDKs may not be compatible with Hazelcast.</p>
+</div>
+<div class="paragraph">
+<p>Management Center 5.12.0-SNAPSHOT has been tested against the following JDKs.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+If you install Hazelcast with Docker or a package manager, it comes with a supported JDK.
+</td>
+</tr>
+</table>
+</div>
+<!--hz-partial:start hazelcast:deploy:page$versioning-compatibility.adoc-->
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">JDK</th>
+<th class="tableblock halign-left valign-top">Platform 5.12.0-SNAPSHOT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Amazon Corretto 17, 21 and 25</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Azul Core 17, 21 and 25</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Eclipse Temurin build of OpenJDK 17, 21 and 25</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">IBM Semeru Runtime 17, 21 and 25</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Microsoft build of OpenJDK 17, 21 and 25</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Oracle JDK 17, 21 and 25</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Red Hat build of OpenJDK 17, 21 and 25</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✓</p></td>
+</tr>
+</tbody>
+</table>
+<!--hz-partial:end hazelcast:deploy:page$versioning-compatibility.adoc-->
+</div>
+<div class="sect2">
+<h3 id="mac-and-windows-system-requirements"><a class="anchor" href="#mac-and-windows-system-requirements"></a>Mac and Windows system requirements</h3>
+<div class="paragraph">
+<p>Management Center uses the RocksDB library to persist metrics
+to disk. Because of this dependency, Mac and Windows users must do one of the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Use the official Management Center docker image.</p>
+</li>
+<li>
+<p><a href="../deploy-manage/historical-metrics#disabling-metrics-persistence" class="xref page">Disable metrics persistence</a>.</p>
+</li>
+<li>
+<p>Meet the following requirements:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Mac: use at least version 10.15 version of Catalina.</p>
+</li>
+<li>
+<p>Windows: install the Microsoft Visual C++ 2015 redistributable.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="linux-system-requirements"><a class="anchor" href="#linux-system-requirements"></a>Linux system requirements</h3>
+<div class="paragraph">
+<p>Most Linux distributions are supported, assuming that <code>glibc</code> 2.12 or newer is installed.</p>
+</div>
+<div class="paragraph">
+<p>Experimental support for AIX with Metrics Persistence disabled is provided.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="hazelcast-cluster-compatibility"><a class="anchor" href="#hazelcast-cluster-compatibility"></a>Hazelcast cluster compatibility</h3>
+<div class="paragraph">
+<p>Management Center supports the following versions of Hazelcast:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Product</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Supported versions</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Hazelcast Platform</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>5.6.x</p>
+</div>
+<div class="paragraph">
+<p>5.5.x</p>
+</div>
+<div class="paragraph">
+<p>5.4.x</p>
+</div>
+<div class="paragraph">
+<p>5.3.x</p>
+</div>
+<div class="paragraph">
+<p>5.2.x</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="browser-compatibility"><a class="anchor" href="#browser-compatibility"></a>Browser compatibility</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Management Center supports the following browsers:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Last two versions of Chrome at the time of release</p>
+</li>
+<li>
+<p>Last two versions of Firefox at the time of release</p>
+</li>
+<li>
+<p>Latest Safari</p>
+</li>
+<li>
+<p>Latest Microsoft Edge</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Internet Explorer 11 is no longer supported.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="licensing"><a class="anchor" href="#licensing"></a>Licensing</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A valid Enterprise license for Management Center is required for some features.
+For a list of Enterprise features, see <a href="../deploy-manage/license-management" class="xref page">Licensed Features</a>.</p>
+</div>
+<div class="paragraph">
+<p>A valid Enterprise license for Hazelcast members is required for the following features:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>WAN replication</p>
+</li>
+<li>
+<p>Persistence (Hot Restart)</p>
+</li>
+<li>
+<p>Rolling upgrade</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>If you do not have a license, you can use non-licensed features to monitor clusters of up to a maximum of three members.</p>
+</div>
+<div class="paragraph">
+<p>If a feature in the documentation requires an Enterprise license, it is labelled <strong class="enterprise">Enterprise</strong>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="support"><a class="anchor" href="#support"></a>Get support</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For information about the types of support Hazelcast offers, see <a href="get-support" class="xref page">Get support</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="next-steps"><a class="anchor" href="#next-steps"></a>Next steps</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For guidance on how to get up and running quickly with Management Center, see <a href="get-started" class="xref page">Get Started with Management Center Using Docker Compose</a>.</p>
+</div>
+</div>
+</div>

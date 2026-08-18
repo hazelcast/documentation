@@ -1,0 +1,82 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>These release notes list any new features, enhancements, and fixes that were made between version 5.5.2 and 5.6.0 of Hazelcast Management Center (MC).</p>
+</div>
+<div class="admonitionblock caution">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-caution" title="Caution"></i>
+</td>
+<td class="content">
+If you are upgrading Management Center from a version earlier than 5.4.0, a data migration step is required as Management Center 5.6.0 uses H2 2.x as its internal database instead of H2 1.x (as used in previous releases). If you use the provided <code>hz-mc</code> or <code>mc-start</code> scripts to start Management Center, this data migration is handled automatically by the script. If you use a custom run script, refer to the documentation for comprehensive instructions on migrating Management Center data. If the internal database is not upgraded, then Management Center will start with a new configuration.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="new-features"><a class="anchor" href="#new-features"></a>New Features</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Added support for Java Client (Standalone). [MC-2993]</p>
+</li>
+<li>
+<p>Added a HealthCheck for duplications in <code>hazelcast.xml</code>. [MC-2995]</p>
+</li>
+<li>
+<p>Added <code>hz-mc stop</code> command. [MC-2872]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="enhancements"><a class="anchor" href="#enhancements"></a>Enhancements</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Added a default Acknowledgement type for WAN Configs created in MC. [MC-3029]</p>
+</li>
+<li>
+<p>Added a confirmation dialog on changing cluster state. [MC-2953]</p>
+</li>
+<li>
+<p>Added details on slow operations to Prometheus Exporter. [MC-2906]</p>
+</li>
+<li>
+<p>Added license expiration details to Prometheus Exporter. [MC-2905]</p>
+</li>
+<li>
+<p>Redesigned top and left panels. [MC-2942]</p>
+</li>
+<li>
+<p>Made CLC enablement suggestion more visible. [MC-2901]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="fixes"><a class="anchor" href="#fixes"></a>Fixes</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>MC no longer fails when connected to a cluster with a large number of reconnecting clients. [MC-3012]</p>
+</li>
+<li>
+<p>Fixed splitting words by line wraps in tooltips. [MC-2955]</p>
+</li>
+<li>
+<p>Fixed CLC prompt blinking after every char input. [MC-2581]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>

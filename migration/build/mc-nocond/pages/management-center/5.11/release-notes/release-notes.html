@@ -1,0 +1,78 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>These release notes list any new features, enhancements, fixes, security issues and breaking changes that were made for Hazelcast Management Center.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="5-11-0"><a class="anchor" href="#5-11-0"></a>5.11.0</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For help installing Hazelcast Management Center, see <a href="../getting-started/install" class="xref page">Install and start Management Center</a>.</p>
+</div>
+<div class="paragraph">
+<p><strong>Release date</strong>: 2026-05-13</p>
+</div>
+<div class="sect2">
+<h3 id="security"><a class="anchor" href="#security"></a>Security</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Resolved authorization bypass</strong>: Fixed missing function-level access control checks. All affected endpoints now enforce appropriate authorization.</p>
+</li>
+<li>
+<p><strong>Disabled server version disclosure in HTTP responses</strong>: Management Center no longer includes its server version in HTTP response headers, reducing information disclosure to potential attackers.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="enhancements"><a class="anchor" href="#enhancements"></a>Enhancements</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Added CP Leader Auto Step-Down configuration display</strong>: Management Center now shows the CP Leader Auto Step-Down configuration for clusters that have this feature enabled, supporting the new capability introduced in Hazelcast Platform 5.7.</p>
+</li>
+<li>
+<p><strong>Added Java view to the Members screen</strong>: The Members screen now includes a tabular Java view showing JVM details for each cluster member.</p>
+</li>
+<li>
+<p><strong>Improved handling of license key expiration</strong>: Management Center now provides clearer messaging when a license key expires, helping operators identify and resolve license issues quickly.</p>
+</li>
+<li>
+<p><strong>Added new Prometheus metric V2 mappings</strong>: Extended Prometheus Exporter coverage with previously missing metric V2 mappings for improved cluster observability.</p>
+</li>
+<li>
+<p><strong>Improved validation for Prometheus Exporter allow/deny list configuration</strong>: The allow-list and deny-list properties for the Prometheus Exporter are now mutually exclusive. Configuring both simultaneously is rejected, preventing ambiguous filtering behavior.</p>
+</li>
+<li>
+<p><strong>Renamed <code>Up Time</code> metric to <code>Uptime</code></strong>: The <code>Up Time</code> metric has been renamed to <code>Uptime</code> for consistency with standard naming conventions.</p>
+</li>
+<li>
+<p><strong>Made <code>hz-mc</code> security commands declarative</strong>: The <code>hz-mc</code> security commands now support a declarative configuration mode, simplifying deployments where idempotent and repeatable configuration is required.</p>
+</li>
+<li>
+<p><strong>Added idempotent options for <code>mc-conf cluster</code> commands</strong>: New idempotent options have been added to <code>mc-conf cluster</code> commands, allowing safe re-execution in automated deployment pipelines.</p>
+</li>
+<li>
+<p><strong>Updated Windows stop script to no longer use WMIC</strong>: The Windows stop script has been updated to use modern PowerShell commands instead of the deprecated WMIC tool, ensuring compatibility with newer Windows versions where WMIC is removed.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="fixes"><a class="anchor" href="#fixes"></a>Fixes</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Fixed cluster connections stuck in a "limbo" state</strong>: Resolved an issue where a running cluster could be incorrectly shown as offline in Management Center. This now happens far less often, and where it does, the Connection Diagnostics button forces a reconnect that clears the state — removing the previous need to re-add the cluster or restart Management Center.</p>
+</li>
+<li>
+<p><strong>Fixed stale Member Configuration on the Member Details screen</strong>: Resolved an issue where the Member Configuration shown on the Member Details screen was only refreshed when the cluster or Management Center was restarted, or when a member joined or left. The view now stays in sync with configuration changes as they happen, with at most a small delay.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>

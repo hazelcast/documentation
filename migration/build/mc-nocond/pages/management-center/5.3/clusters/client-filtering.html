@@ -1,0 +1,211 @@
+<div id="preamble">
+<div class="sectionbody">
+<div id="changing-cluster-client-filtering" class="paragraph">
+<p>If you configure clients with one or more <a href="../../../hazelcast/5.3/getting-started/blue-green" class="xref page">failover clusters</a>, you can use Management Center to force selected clients to disconnect from one cluster and connect to another without any downtime. For example, you may connect clients to another cluster to do the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Prepare for planned maintenance on the primary cluster.</p>
+</li>
+<li>
+<p>Balance the load across multiple clusters.</p>
+</li>
+<li>
+<p>Shift the clients’ connection back from a failover cluster to its primary cluster.</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Moving clients from one cluster to another is most useful when your clusters replicate data across each other. See <a href="wan-replication" class="xref page">WAN Replication</a>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="filter-lists"><a class="anchor" href="#filter-lists"></a>Filter Lists</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Clusters allow or disallow client connections, using rules that are defined in a filter list. You can deploy filter lists to your connected clusters, using the UI or the REST API in Management Center.</p>
+</div>
+<div class="paragraph">
+<p>When a cluster receives a filter list, it applies the rules to any new or existing client connections.</p>
+</div>
+<div class="paragraph">
+<p>Management Center supports the following types of filter list:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Allow list</strong>: Clients that <strong>are allowed</strong> to connect to the cluster.</p>
+</li>
+<li>
+<p><strong>Deny list</strong>: Clients that <strong>are not allowed</strong> to connect to the cluster.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/ClientFilteringView.png" alt="Client Filtering View"></span></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="client-address-types"><a class="anchor" href="#client-address-types"></a>Client Address Types</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can filter clients, using the following types:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Address types</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 60%;">
+<col style="width: 20%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Address type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><strong>Label</strong> (recommended)</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>A string that matches the client label in the client&#8217;s configuration. This string can include
+wildcard characters (<code>\*</code>). See <a href="../../../hazelcast/5.3/clients/java#defining-client-labels" class="xref page">Defining Client Labels</a> in the Platform documentation.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>green*</code> refers to any label
+values that start with the <code>green</code> string.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Instance Name</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>A string that matches the client&#8217;s name in the client&#8217;s configuration. This string can include
+wildcard characters (<code>\*</code>).</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>*-client</code> refers
+to any instance name that end with the <code>-client</code> string.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>IP Address</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>IP address of a client (IPv4 or
+IPv6) with optional range characters (<code>\*</code> and <code>-</code>) instead of any
+byte group.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>10.3.10.*</code> refers to IPs between <code>10.3.10.0</code>
+and <code>10.3.10.255</code>. The <code>10.3.10.4-18</code> refers to IPs between <code>10.3.10.4</code>
+and <code>10.3.10.18</code> (4 and 18 included).</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+It&#8217;s useful to assign roles to your clients by configuring them with labels. These labels are displayed in Management Center. You can filter clients that have certain labels.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>When a cluster member receives the deployed filter list, it immediately applies the list to
+all currently connected clients and then uses it for newly connecting
+clients. Clients on the deny-list connect to another cluster
+only if they are configured with a failover cluster. Otherwise,
+clients on the deny-list shut down.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If some cluster members are not reachable from Management Center, those members keep using the last filter list that they received.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="client-filtering-synchronization"><a class="anchor" href="#client-filtering-synchronization"></a>Synchronization of Filter Lists Across Multiple Instances of Management Center</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you have more than one instance of Management Center connected to the same cluster, the cluster synchronizes changes to its filter lists among all Management Center instances. When you create, update, or delete an active filter list, the cluster receives the filter list and sends it to the other connected instances of Management Center. Any existing filter lists on those instances of Management Center are overwritten.</p>
+</div>
+<div class="paragraph">
+<p>When another Management Center instance deploys a new filter list, the following message is displayed in the app and the <strong>Client Filtering Settings</strong> and
+<strong>Filter Lists</strong> data is automatically refreshed:</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Client filtering
+configuration was updated by another Management Center instance</p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/ClientFilteringUpdated.png" alt="Client Filtering Updated"></span></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="reconnecting-clients-to-the-primary-cluster"><a class="anchor" href="#reconnecting-clients-to-the-primary-cluster"></a>Reconnecting Clients to the Primary Cluster</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When you disconnect a client from its primary cluster using a filter list, that client cannot automatically reconnect to the primary cluster.</p>
+</div>
+<div class="paragraph">
+<p>You must deploy a new filter list to the cluster to update the client connection.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="related-resources"><a class="anchor" href="#related-resources"></a>Related Resources</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>See
+<a href="../../../hazelcast/5.7/clients/java#blue-green-deployment-and-disaster-recovery" class="xref page">Blue-Green Deployment and Disaster Recovery</a>
+in the Platform documentation.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="changing-cluster-client-filtering-example"><a class="anchor" href="#changing-cluster-client-filtering-example"></a>Next Steps</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="create-filter-lists-ui" class="xref page">Deploying a Client Filter List from the UI</a>.</p>
+</li>
+<li>
+<p><a href="create-filter-lists-rest" class="xref page">Deploying a Client Filter List with the REST API</a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>

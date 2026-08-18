@@ -35,32 +35,41 @@ const { buildLockfile } = require('./antora-extension/emit-manifest')
 const { lockfileKey, lockfileKeyFromFile } = require('./fidelity/lockfile-key')
 const { goldenPages } = require('./fidelity/lib/pairing')
 const { resolveHref } = require('./converter/lib/links')
-const { isVersioned, CURRENT_SEG, VERSIONS } = require('./lib/layout')
+const { isVersioned, currentSegFor, VERSIONS } = require('./lib/layout')
 
 // A versioned component's LIVE set: current (main) + the releases this build
 // emits. The golden spans every version (incl. frozen ones outside the live
 // set), so image placement must be gated to the live set or we write orphan
 // images for versions Docusaurus never builds. Unversioned components: no gate.
+// The current seg is PER COMPONENT (currentSegFor) -- the default
+// `latest-snapshot` is only operator's; MC's is `5.12-snapshot` and clc's is
+// `5.5.1`, and gating those against the default would drop every current-version
+// image on the floor.
 function inLiveSet (component, url) {
   if (!isVersioned(component)) return true
   const releases = (VERSIONS[component] && VERSIONS[component].releases) || []
   const seg = url.replace(/^\/+/, '').split('/')[1] // /<component>/<seg>/…
-  return new Set([CURRENT_SEG, ...releases]).has(seg)
+  return new Set([currentSegFor(component), ...releases]).has(seg)
 }
 
 // Site-absolute pub.url -> repo-relative co-located destination (leading slash
 // stripped, Antora's `_images` dir renamed to `images`). For a VERSIONED
-// component the URL's version segment selects the tree: `latest-snapshot` (main)
-// lands in the plugin's current tree `<component>/images/`, and a release `<seg>`
-// in `<component>_versioned_docs/version-<seg>/images/`. This per-version mapping
-// MUST mirror the prefix imageSrc() strips in converter/lib/html-to-mdx.js, or
-// the emitted references and the placed files disagree and the build breaks.
+// component the URL's version segment selects the tree: the component's CURRENT
+// seg (main) lands in the plugin's current tree `<component>/images/`, and a
+// release `<seg>` in `<component>_versioned_docs/version-<seg>/images/`. This
+// per-version mapping MUST mirror the prefix imageSrc() strips in
+// converter/lib/html-to-mdx.js, or the emitted references and the placed files
+// disagree and the build breaks.
+//
+// A multi-module component (MC) keeps the module in the tail, because Antora
+// publishes a module's images under `/<component>/<seg>/<module>/_images/…` and
+// the converter's relative reference is resolved from the page's own output file.
 function destRel (url) {
   const stripped = url.replace(/^\/+/, '').replace(/(^|\/)_images\//, '$1images/')
   const [component, seg, ...rest] = stripped.split('/')
   if (!isVersioned(component)) return stripped
-  const tail = rest.join('/') // "images/foo.png"
-  return seg === CURRENT_SEG
+  const tail = rest.join('/') // "images/foo.png", or "<module>/images/foo.png"
+  return seg === currentSegFor(component)
     ? path.posix.join(component, tail)
     : path.posix.join(`${component}_versioned_docs`, `version-${seg}`, tail)
 }

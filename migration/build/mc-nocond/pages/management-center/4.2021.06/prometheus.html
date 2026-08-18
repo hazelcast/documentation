@@ -1,0 +1,81 @@
+<div class="paragraph">
+<p>Hazelcast Management Center can expose the metrics collected from cluster members to <a href="https://prometheus.io/" target="_blank" rel="noopener">Prometheus</a>. This
+feature can be turned on by setting the <code>hazelcast.mc.prometheusExporter.enabled</code> system property to <code>true</code>.</p>
+</div>
+<div class="paragraph">
+<p>Prometheus can be configured to scrape Management Center in <code>prometheus.yml</code> as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">scrape_configs:
+  - job_name: 'HZ MC'
+    # scheme defaults to 'http'.
+    static_configs:
+    - targets: ['localhost:8080'] # replace this address with the network address of Hazelcast Management Center</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>After starting Prometheus with this configuration, all metrics will be exported to Prometheus with the <code>hz_</code> prefix. The metrics
+are also available via the <a href="../../imdg/4.2/management/jmx-api" class="xref page">member JMX API</a>.
+With the default configuration, Management Center exports all metrics reported by the cluster members. Since it can be overly
+verbose for some usecases, the metrics can be filtered with the <code>hazelcast.mc.prometheusExporter.filter.metrics.included</code>
+or the <code>hazelcast.mc.prometheusExporter.filter.metrics.excluded</code> system properties, both being comma-separated lists of
+metric names.</p>
+</div>
+<div class="paragraph">
+<p>Example of starting Management Center with specifying the metrics exported to Prometheus:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">java -jar -Dhazelcast.mc.prometheusExporter.enabled=true \
+  -Dhazelcast.mc.prometheusExporter.filter.metrics.included=hz_topic_totalReceivedMessages,hz_map_totalPutLatency \
+  -jar hazelcast-management-center-4.2021.06.jar</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Example of starting Management Center with specifying the metrics to be excluded from the Prometheus export:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">java -jar -Dhazelcast.mc.prometheusExporter.enabled=true \
+  -Dhazelcast.mc.prometheusExporter.filter.metrics.excluded=hz_os_systemLoadAverage,hz_memory_freeHeap \
+  -jar hazelcast-management-center-4.2021.06.jar</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>By default, Prometheus connects via the same IP and port as the Management Center web interface. It is possible to
+override the port number using the <code>-Dhazelcast.mc.prometheusExporter.port</code> system property. Let&#8217;s say you have
+started Management Center as shown below:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">java -jar -Dhazelcast.mc.prometheusExporter.enabled=true \
+  -Dhazelcast.mc.prometheusExporter.port=2222 \
+  -jar hazelcast-management-center-4.2021.06.jar</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then, the Prometheus endpoint will be available at <code><a href="http://localhost:2222/metrics" class="bare">http://localhost:2222/metrics</a></code>, which should be reflected by the
+Prometheus configuration as below:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">scrape_configs:
+  - job_name: 'HZ MC'
+    static_configs:
+    - targets: ['localhost:2222']</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you want to visualize the Prometheus metrics using Grafana, then you can start with
+<a href="https://grafana.com/grafana/dashboards/13183">this dashboard</a>.
+</td>
+</tr>
+</table>
+</div>

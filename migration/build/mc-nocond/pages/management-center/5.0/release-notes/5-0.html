@@ -1,0 +1,141 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>These release notes list any new features, enhancements, and fixes that were made between version 4.x and 5.0 of Hazelcast Management Center.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="new-features"><a class="anchor" href="#new-features"></a>New Features</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>User Interface Redesign: Management Center has a completely redesigned interface for a better and more consistent user experience.</p>
+</li>
+<li>
+<p>In addition to the simplified and improved overall usage functionalities, the user experience around WAN Replication/Sync and Client Filtering pages have been redesigned.</p>
+</li>
+<li>
+<p>DML Support for SQL Browser: It is now possible to use SQL DML statements such as CREATE MAPPING, INSERT INTO and SINK INTO in the SQL Browser.</p>
+</li>
+<li>
+<p>Secure Clustered REST API Endpoints: Clustered REST API now requires authentication. [MC-825]</p>
+</li>
+<li>
+<p>Command line tool mc-conf manages the tokens for the Clustered REST API Endpoints. [MC-822]</p>
+</li>
+<li>
+<p>Clustered REST API Endpoint for Client Filtering: You can use the new API endpoints for client filtering to automate
+the process of filtering clients of a cluster. [MC-630]</p>
+</li>
+<li>
+<p>Secure Prometheus Exporter: You can configure the Prometheus exporter to require authentication now. [MC-772]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="enhancements"><a class="anchor" href="#enhancements"></a>Enhancements</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Introduced automatic run of a Config Healthcheck when cluster topology or effective configuration of member changes [MC-674]</p>
+</li>
+<li>
+<p>Improved the integration with Hazelcast Cloud; Management Center user interface now hides elements that are not usable on Hazelcat Cloud. [MC-613]</p>
+</li>
+<li>
+<p>Optimized metrics storage for writes. [MC-803]</p>
+</li>
+<li>
+<p>Management Center now shows periodic diagnostics information about the metrics storage. [MC-257]</p>
+</li>
+<li>
+<p>Added inconsistent Jet config detection to Config Healthcheck. [MC-999]</p>
+</li>
+<li>
+<p>Added support for using Active Directory over TLS. [MC-960]</p>
+</li>
+<li>
+<p>Distributed map entries that are generic records serialized via compact serialization can now be viewed via Map Browser. [MC-959]</p>
+</li>
+<li>
+<p>Added environment variables to specify a target cluster when starting Management Center via Docker. [MC-913]</p>
+</li>
+<li>
+<p>Added a command line option to specify the hostname representing the interface to which the embedded Jetty instance will bind. [MC-897]</p>
+</li>
+<li>
+<p>Added an option to output as JSON to the mc-conf command for creating tokens. [MC-898]</p>
+</li>
+<li>
+<p>Hazelcast license feature names have been updated to reflect the current features that Hazelcast offers in its enterprise edition.</p>
+</li>
+<li>
+<p>All Hazelcast license features are now shown on the Cluster License page. [MC-853]</p>
+</li>
+<li>
+<p>Improved the wording for the warning message about recommended number of available processors. [MC-929]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="fixes"><a class="anchor" href="#fixes"></a>Fixes</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>No connection failure message is shown when connecting to a new cluster successfully. [MC-793]</p>
+</li>
+<li>
+<p>Rolling Upgrade screen now shows the next version of Hazelcast as 5.0. [MC-893]</p>
+</li>
+<li>
+<p>Inaccurate warning message about cluster having members not included in the config are no longer shown in the Edit Cluster Config dialog. [MC-912]</p>
+</li>
+<li>
+<p>Cluster Type is replaced with a "Supports Streaming" flag. [MC-908]</p>
+</li>
+<li>
+<p>Connecting to a cluster that has advanced network configured now works correctly. [MC-860]</p>
+</li>
+<li>
+<p>Memory is no longer shown as 0 when a map is configured with OBJECT in-memory format. [MC-341]</p>
+</li>
+<li>
+<p>Invalid maximum size policies are removed from the map configuration screen and missing ones are added. [MC-545]</p>
+</li>
+<li>
+<p>Cache names having special characters are handled correctly now. [MC-217]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="notes"><a class="anchor" href="#notes"></a>Notes</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Management Center 5.0 does not support Jet 4.5. It only supports IMDG 4.2, Hazelcast Platform 5.0 and later.</p>
+</li>
+<li>
+<p>Management Center 5.0 supports SQL Browsing on Hazelcast Platform 5.0 and later.</p>
+</li>
+<li>
+<p>You should avoid updating the client filtering configuration during the rolling upgrade if multiple Management Center
+instances are connected to the same cluster to keep the configuration consistent.</p>
+</li>
+<li>
+<p>Prometheus exporter is now a licensed feature.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>

@@ -1,0 +1,195 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>These release notes list any new features, enhancements, and fixes that were made between version 5.0 and 5.1.1 of Hazelcast Management Center (MC).</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="new-features"><a class="anchor" href="#new-features"></a>New Features</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="../tools/sql-browser" class="xref page">SQL Browser</a> has a new design which shows queryable objects with a schema and index explorer. [MC-1231] [MC-1292] [MC-1235]</p>
+</li>
+<li>
+<p>SQL Browser now handles streaming SQL queries and shows the last 1,000 entries as they are received. [MC-1293]</p>
+</li>
+<li>
+<p>New <a href="../cp-subsystem/dashboard" class="xref page">CP Subsystem metrics screens</a> added to MC. [MC-533]</p>
+</li>
+<li>
+<p>Dynamic Configuration allows for additions to be made to the cluster config via MC. [MC-1268]</p>
+</li>
+<li>
+<p><a href="../deploy-manage/system-properties" class="xref page">System properties and environment variables</a> can now be used interchangeably. [MC-1107]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="enh-511"><a class="anchor" href="#enh-511"></a>Enhancements</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Security: Console access can be enabled or disabled in the members' config.  This defaults to disabled (breaking change). See <a href="../../../hazelcast/5.1/maintain-cluster/monitoring#managing-console-support" class="xref page">Managing Console Support</a> in the Platform documentation. [MC-1121]</p>
+</li>
+<li>
+<p>Security: Data access via the SQL Browser and Map Browser can be disabled in the members' configuration. [MC-1039]</p>
+</li>
+<li>
+<p>Standardization of naming of start scripts.  <code>hz-mc</code> should be used and <code>hz-mc conf</code> for any MC offline configuration. [MC-1087]</p>
+</li>
+<li>
+<p>Introduced the <code>mc-hz conf cluster list</code> command to list all configured cluster names. [MC-1091]</p>
+</li>
+<li>
+<p>SQL Browser provides instructions if <code>hazelcast-sql</code> has not been included in the classpath. [MC-871]</p>
+</li>
+<li>
+<p>SQL Browser has improved messages when mappings cannot be automatically generated. [MC-1160]</p>
+</li>
+<li>
+<p>SQL Browser when creating a mapping, the mapping name now defaults to the map&#8217;s name. [MC-1288]</p>
+</li>
+<li>
+<p>SQL Browser the returned results for each field is capped to 1024 characters to prevent large fields from slowing down MC. [MC-1203]</p>
+</li>
+<li>
+<p>MC now quickly identifies whether the cluster has SQL/Streaming enabled or not. [MC-992]</p>
+</li>
+<li>
+<p><a href="../clusters/healthcheck" class="xref page">Config healthcheck</a> can be customised to ignore specific problems via the Ignore button. [MC-541]</p>
+</li>
+<li>
+<p>Updated Config Heatcheck to allow different config for some security parts. [ [MC-925]</p>
+</li>
+<li>
+<p>Added a button to <a href="../data-structures/map" class="xref page">clear all map entries</a>. [MC-1176]</p>
+</li>
+<li>
+<p>Queues age-related queue metrics can now be reset. [MC-1109]</p>
+</li>
+<li>
+<p>Improved tables with auto widths based on the content. [MC-1073]</p>
+</li>
+<li>
+<p>Improved support for large clusters with lots of metrics. [MC-1242]</p>
+</li>
+<li>
+<p>Persistence of metrics can be disabled via <a href="../deploy-manage/system-properties#hazelcast-mc-metrics-persistence-enabled" class="xref page"><code>hazelcast.mc.metrics.persistence.enabled</code></a> property [MC-1225]</p>
+</li>
+<li>
+<p>Duration column has been added to the Completed Jobs table [MC-151]</p>
+</li>
+<li>
+<p>Near Cache stats now includes <code>invalidations</code> and <code>invalidationRequest</code> metrics. [MC-340]</p>
+</li>
+<li>
+<p>MC own connection(s) to the cluster are now excluded from the client count. [MC-1162]</p>
+</li>
+<li>
+<p>MC&#8217;s operation timeout with the cluster can now be configured so that long-running operations (like script executions) do not timeout. [MC-1285]</p>
+</li>
+<li>
+<p><strong>Shutdown member</strong> and <strong>Shutdown cluster</strong> now behave identically for single-node clusters. [MC-514]</p>
+</li>
+<li>
+<p>Changed the button from <strong>Connect</strong> to <strong>Add</strong> on the Cluster Connections screen. [MC-808]</p>
+</li>
+<li>
+<p>Pendo.io is used to collect usage analytics and performance of Management Center (Pendo can be disabled by disabling MC phone homes) [MC-1299]</p>
+</li>
+<li>
+<p>Java 17 is now supported. [MC-1120]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="fixes-511"><a class="anchor" href="#fixes-511"></a>Fixes</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Helpful error if running on an architecture that is not supported by RocksDB. [MC-1208]</p>
+</li>
+<li>
+<p>MC will fail fast if it does not have write access to its data directory. [MC-206]</p>
+</li>
+<li>
+<p>Map configs without actual IMap are not shown in SQL Browser dropdown. [MC-1122]</p>
+</li>
+<li>
+<p>Config healthcheck: fixed a false alarm that could be generated for the default map. [MC-700]</p>
+</li>
+<li>
+<p>Clients detail page: display a human-readable text for the corresponding client language.[MC-804]</p>
+</li>
+<li>
+<p>Empty lib directory has been added to support usercode deployment. [MC-1107]</p>
+</li>
+<li>
+<p>The left menu section that was previously opened is now remembered. [MC-1111]</p>
+</li>
+<li>
+<p>Button added to Security Provide configs to clear current value in the field. [MC-201]</p>
+</li>
+<li>
+<p>Fixed a TTL setting in metrics storage. [MC-150]</p>
+</li>
+<li>
+<p>Fixed an incorrect avgEventLatency on WAN Replication screen. [MC-1151]</p>
+</li>
+<li>
+<p>WAN Sync menu dropdowns have been expanded to match the length of the Map names.  [MC-1139]</p>
+</li>
+<li>
+<p>Fixed the tooltips shown in the WAN Replication screens so they do not overlap. [MC-1153]</p>
+</li>
+<li>
+<p>Fix for displaying a large number of maps in the WAN Sync screen. [MC-1185]</p>
+</li>
+<li>
+<p>Fix for the maps counter in the left menu to say the total maps count includes system maps. [MC-1207]</p>
+</li>
+<li>
+<p>Fix for the Map Browser TTL value to show time remaining rather than an expiray date. [MC-1366]</p>
+</li>
+<li>
+<p>Maximize chart icon is no longer shown after clicking on it. [MC-1141]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="breaking-changes"><a class="anchor" href="#breaking-changes"></a>Breaking Changes</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Console access is now disabled by default in the members' configuration. If you use the console in Management Center, console access needs to be enabled. See <a href="../../../hazelcast/5.1/maintain-cluster/monitoring#managing-console-support" class="xref page">Managing Console Support</a> in the Platform documentation.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="notes-511"><a class="anchor" href="#notes-511"></a>Notes</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Management Center 5.1 does not support Jet 4.5. It only supports IMDG 4.2, Hazelcast Platform 5.0 and later.</p>
+</li>
+<li>
+<p>Management Center 5.1 supports SQL Browsing on Hazelcast Platform 5.0 and later.  Platform 5.1 is highly recommended for SQL/Streaming support.</p>
+</li>
+<li>
+<p>You should avoid updating the Client Filtering configuration during rolling upgrades if multiple Management Center instances are connected to the same cluster to keep the configuration consistent.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>

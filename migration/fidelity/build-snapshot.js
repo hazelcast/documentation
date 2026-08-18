@@ -338,13 +338,22 @@ async function main () {
   // sentinels gate with the conditional and strip byte-for-byte in readGolden().
   if (markConditionals) {
     let marked = 0
+    // Blocks left unmarked because injecting a sentinel there would change the
+    // parse (mark-conditionals canMark). Reported rather than silent: each one is
+    // a snapshot-only region that will BAKE into the version tree instead of
+    // becoming <IfSnapshot>, which is a real (if safe) loss to know about.
+    const stats = {}
     for (const file of contentCatalog.getFiles()) {
       const fam = file.src && file.src.family
       if ((fam !== 'page' && fam !== 'partial') || !file.contents) continue
-      const wrapped = wrapConditionals(file.contents.toString())
+      const wrapped = wrapConditionals(file.contents.toString(), stats)
       if (wrapped !== file.contents.toString()) { file.contents = Buffer.from(wrapped); marked++ }
     }
     if (marked) console.log(`[snapshot] conditional marking: instrumented ${marked} source file(s)`)
+    if (stats.skipped) {
+      console.log(`[snapshot] conditional marking: skipped ${stats.skipped} block(s) with no blank line ` +
+        'around the directive (marking there would change the parse; they bake instead)')
+    }
   }
 
   const pagesDir = path.join(outDir, 'pages')

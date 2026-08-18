@@ -1,0 +1,426 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can customize the content of logs as well as enable audit logging.</p>
+</div>
+<div class="paragraph">
+<p>Management Center uses <a href="https://logging.apache.org/log4j/2.x/">Log4j 2</a>
+for its logging. By default, Management Center prints all logs except audit logs to standard output. This behavior is defined by the following Log4j 2 configuration file:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">appender.console.type = Console
+appender.console.name = STDOUT
+appender.console.layout.type = PatternLayout
+appender.console.layout.pattern = %d [%highlight{%5p}{FATAL=red, ERROR=red, WARN=yellow, INFO=green, DEBUG=magenta}] [%style{%t{1.}}{cyan}] [%style{%c{1.}}{blue}]: %m%n
+appender.console.filter.threshold.type = ThresholdFilter
+appender.console.filter.threshold.level = ${sys:hazelcast.mc.log.level:-all}
+
+logger.hazelcast.name = com.hazelcast
+logger.hazelcast.level = ${sys:hazelcast.mc.log.level:-error}
+logger.hazelcast.additivity = false
+logger.hazelcast.appenderRef.rolling.ref = STDOUT
+
+logger.mc.name = com.hazelcast.webmonitor
+logger.mc.level = ${sys:hazelcast.mc.log.level:-info}
+logger.mc.additivity = false
+logger.mc.appenderRef.rolling.ref = STDOUT
+
+logger.jetty.name = org.eclipse.jetty
+logger.jetty.level = ${sys:hazelcast.mc.log.level:-warn}
+logger.jetty.additivity = false
+logger.jetty.appenderRef.rolling.ref = STDOUT
+
+logger.spring.name = org.springframework
+logger.spring.level = ${sys:hazelcast.mc.log.level:-warn}
+logger.spring.additivity = false
+logger.spring.appenderRef.rolling.ref = STDOUT
+
+logger.hibernatevalidator.name = org.hibernate.validator
+logger.hibernatevalidator.level = ${sys:hazelcast.mc.log.level:-warn}
+logger.hibernatevalidator.additivity = false
+logger.hibernatevalidator.appenderRef.rolling.ref = STDOUT
+
+logger.flywaydb.name = org.flywaydb
+logger.flywaydb.level = ${sys:hazelcast.mc.log.level:-warn}
+logger.flywaydb.additivity = false
+logger.flywaydb.appenderRef.rolling.ref = STDOUT
+
+logger.hikari.name = com.zaxxer.hikari
+logger.hikari.level = ${sys:hazelcast.mc.log.level:-warn}
+logger.hikari.additivity = false
+logger.hikari.appenderRef.rolling.ref = STDOUT
+
+# Otherwise every resolved exception is logged
+logger.springerror.name = org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver
+logger.springerror.level = ${sys:hazelcast.mc.log.level:-error}
+logger.springerror.additivity = false
+logger.springerror.appenderRef.rolling.ref = STDOUT
+
+rootLogger.level = ${sys:hazelcast.mc.log.level:-info}
+rootLogger.appenderRef.stdout.ref = STDOUT</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="changing-the-log-level"><a class="anchor" href="#changing-the-log-level"></a>Changing the Log Level</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To change the logging level for all loggers, start
+Management Center with the <code>hazelcast.mc.log.level</code> property. For example, to use the debug logging level, start Management Center with the following line:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">-Dhazelcast.mc.log.level=debug</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="customizing-the-logging-configuraton"><a class="anchor" href="#customizing-the-logging-configuraton"></a>Customizing the Logging Configuraton</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To further customize the logging configuration, you can create a custom
+Log4j configuration file and start Management Center with
+the <code>logging.config</code> property.</p>
+</div>
+<div class="paragraph">
+<p>For example, you can create a file named <code>log4j2-custom.properties</code> with the following
+content and set logging level to <code>DEBUG</code>.
+To use this file as the logging configuration, you would start Management Center with the
+<code>-Dlogging.config=/path/to/your/log4j2-custom.properties</code> command line parameter:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">appender.console.type = Console
+appender.console.name = STDOUT
+appender.console.layout.type = PatternLayout
+appender.console.layout.pattern = %d [%highlight{%5p}{FATAL=red, ERROR=red, WARN=yellow, INFO=green, DEBUG=magenta}] [%style{%t{1.}}{cyan}] [%style{%c{1.}}{blue}]: %m%n
+appender.console.filter.threshold.type = ThresholdFilter
+appender.console.filter.threshold.level = ${sys:hazelcast.mc.log.level:-all}
+
+rootLogger.level = debug
+rootLogger.appenderRef.stdout.ref = STDOUT</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To write log messages into rolling log files, you can use a similar Log4j configuration file:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">appender.console.type=Console
+appender.console.name=STDOUT
+appender.console.layout.type=PatternLayout
+appender.console.layout.pattern=%d [%highlight{${LOG_LEVEL_PATTERN:-%5p}}{FATAL=red, ERROR=red, WARN=yellow, INFO=green, DEBUG=magenta}] [%style{%t{1.}}{cyan}] [%style{%c{1.}}{blue}]: %m%n
+
+appender.rolling.type=RollingFile
+appender.rolling.name=RollingFile
+appender.rolling.fileName=${sys:user.home}/mc-logs/mc.log
+appender.rolling.filePattern=${sys:user.home}/mc-logs/mc.%d{yyyy-MM-dd}.log
+appender.rolling.layout.type=PatternLayout
+appender.rolling.layout.pattern=%d [%5p] [%t] [%c{.1}]: %m%n
+appender.rolling.policies.type = Policies
+appender.rolling.policies.time.type = TimeBasedTriggeringPolicy
+
+rootLogger.level=info
+rootLogger.appenderRef.stdout.ref=STDOUT
+rootLogger.appenderRef.rolling.ref=RollingFile</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="audit-logging"><a class="anchor" href="#audit-logging"></a>Audit Logging</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To make it easier to examine suspicious activity and troubleshoot issues, you can use audit logging to keep a record of events that happen in Management Center such as user logins.</p>
+</div>
+<div class="paragraph">
+<p>To enable audit logging, start Management Center with the <a href="system-properties#hazelcast-mc-auditlog-enabled" class="xref page"><code>hazelcast.mc.auditlog.enabled</code> property</a> set to <code>true</code>.</p>
+</div>
+<div class="paragraph">
+<p>Log entries from the audit logging will be marked with the
+<code>hazelcast.auditlog</code> logging category, abbreviated as <code>h.auditlog</code> in logs.</p>
+</div>
+<div class="paragraph">
+<p>An example log entry looks like the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">2020-10-13 09:57:54,803 [ INFO] [qtp973576304-35] [h.auditlog]: MC-2001 [Auth]:User logged in:{username=JohnHallaign}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><code>MC-2001 [Auth]</code> you see in this example represents the log&#8217;s type.</p>
+</div>
+<div class="sect2">
+<h3 id="audit-logging-event-types"><a class="anchor" href="#audit-logging-event-types"></a>Audit Logging Event Types</h3>
+<div class="paragraph">
+<p>The following table lists the current log categories along with their
+types:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 28.5714%;">
+<col style="width: 71.4286%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Event Category</th>
+<th class="tableblock halign-left valign-top">Log Type/Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Management Center Configuration Logs</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
+<ul>
+<li>
+<p><code>MC-0003 [Config]</code>: User is created.</p>
+</li>
+<li>
+<p><code>MC-0004 [Config]</code>: User is edited.</p>
+</li>
+<li>
+<p><code>MC-0005 [Config]</code>: User&#8217;s password is changed.</p>
+</li>
+<li>
+<p><code>MC-0006 [Config]</code>: User is deleted.</p>
+</li>
+<li>
+<p><code>MC-0009 [Config]</code>: License is set.</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Cluster Configuration Logs</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
+<ul>
+<li>
+<p><code>MC-1001 [Cluster Config]</code>: Map&#8217;s configuration is changed.</p>
+</li>
+<li>
+<p><code>MC-1003 [Cluster Config]</code>: Cluster&#8217;s state is changed.</p>
+</li>
+<li>
+<p><code>MC-1004 [Cluster Config]</code>: Cluster is shut down.</p>
+</li>
+<li>
+<p><code>MC-1005 [Cluster Config]</code>: Member is shut down.</p>
+</li>
+<li>
+<p><code>MC-1006 [Cluster Config]</code>: Lite member is promoted.</p>
+</li>
+<li>
+<p><code>MC-1007 [Cluster Config]</code>: Cluster version is changed.</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Authentication Logs</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
+<ul>
+<li>
+<p><code>MC-2001 [Auth]</code>: User logs in.</p>
+</li>
+<li>
+<p><code>MC-2002 [Auth]</code>: User logs out.</p>
+</li>
+<li>
+<p><code>MC-2003 [Auth]</code>: Login failures.</p>
+</li>
+<li>
+<p><code>MC-2004 [Auth]</code>: User authentication token is issued.</p>
+</li>
+<li>
+<p><code>MC-2005 [Auth]</code>: User authentication token is revoked.</p>
+</li>
+<li>
+<p><code>MC-2006 [Auth]</code>: User authentication token login failed.</p>
+</li>
+<li>
+<p><code>MC-2010 [Auth]</code>: Prometheus authentication failed.</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Scripting Logs</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
+<ul>
+<li>
+<p><code>MC-3001 [Script]</code>: Script is executed on a member.</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Console Logs</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
+<ul>
+<li>
+<p><code>MC-4001 [Console]</code>: Console command is executed on the cluster.</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Map/Cache Logs</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
+<ul>
+<li>
+<p><code>MC-5001 [Browser]</code>: User browses through a map screen in Management Center.</p>
+</li>
+<li>
+<p><code>MC-5002 [Browser]</code>: User browses through a cache screen in Management Center.</p>
+</li>
+<li>
+<p><code>MC-5003 [Browser]</code>: Map cleared.</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Persistence Logs</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
+<ul>
+<li>
+<p><code>MC-6001 [Persistence]</code>: Force start is run.</p>
+</li>
+<li>
+<p><code>MC-6002 [Persistence]</code>: Partial start is run.</p>
+</li>
+<li>
+<p><code>MC-6003 [Persistence]</code>: Hot backup operation is triggered.</p>
+</li>
+<li>
+<p><code>MC-6004 [Persistence]</code>: Hot backup operation is interrupted.</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>WAN Replication Logs</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
+<ul>
+<li>
+<p><code>MC-7001 [WAN]</code>: WAN configuration is added.</p>
+</li>
+<li>
+<p><code>MC-7002 [WAN]</code>: WAN consistency check operation is run.</p>
+</li>
+<li>
+<p><code>MC-7003 [WAN]</code>: WAN synchronization on a map is run.</p>
+</li>
+<li>
+<p><code>MC-7004 [WAN]</code>: State of the WAN publisher is changed.</p>
+</li>
+<li>
+<p><code>MC-7005 [WAN]</code>: Clear operation for the WAN events queue is run.</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>CP Subsystem Logs</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
+<ul>
+<li>
+<p><code>MC-8001 [CP Subsystem]</code>: Member is promoted to be a CP subsystem member.</p>
+</li>
+<li>
+<p><code>MC-8002 [CP Subsystem]</code>: Member is removed from CP subsystem.</p>
+</li>
+<li>
+<p><code>MC-8003 [CP Subsystem]</code>: CP subsystem is reset.</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Streaming Job Logs</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="ulist">
+<ul>
+<li>
+<p><code>MC-9001 [Streaming]</code>: Job is restarted.</p>
+</li>
+<li>
+<p><code>MC-9002 [Streaming]</code>: Job is suspended.</p>
+</li>
+<li>
+<p><code>MC-9003 [Streaming]</code>: Job is resumed.</p>
+</li>
+<li>
+<p><code>MC-9004 [Streaming]</code>: Job is cancelled.</p>
+</li>
+<li>
+<p><code>MC-9005 [Streaming]</code>: Job snapshot is deleted.</p>
+</li>
+<li>
+<p><code>MC-9006 [Streaming]</code>: Job snapshot is exported.</p>
+</li>
+<li>
+<p><code>MC-9007 [Streaming]</code>: Job is cancelled and snapshot is exported.</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="writing-audit-logs-to-rolling-files"><a class="anchor" href="#writing-audit-logs-to-rolling-files"></a>Writing Audit Logs to Rolling Files</h3>
+<div class="paragraph">
+<p>To write audit logs to separate rolling log files, you can use a Log4j configuration file such as the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">appender.console.type=Console
+appender.console.name=STDOUT
+appender.console.layout.type=PatternLayout
+appender.console.layout.pattern=%d [%highlight{${LOG_LEVEL_PATTERN:-%5p}}{FATAL=red, ERROR=red, WARN=yellow, INFO=green, DEBUG=magenta}] [%style{%t{1.}}{cyan}] [%style{%c{1.}}{blue}]: %m%n
+
+appender.audit.type=RollingFile
+appender.audit.name=AuditFile
+appender.audit.fileName=${sys:user.home}/mc-logs/audit.log
+appender.audit.filePattern=${sys:user.home}/mc-logs/audit.%d{yyyy-MM-dd}.log
+appender.audit.layout.type=PatternLayout
+appender.audit.layout.pattern=%d [%5p] [%t] [%c{.1}]: %m%n
+appender.audit.policies.type = Policies
+appender.audit.policies.time.type = TimeBasedTriggeringPolicy
+
+logger.audit.name=hazelcast.auditlog
+logger.audit.level=info
+logger.audit.additivity=false
+logger.audit.appenderRef.audit.ref=AuditFile
+
+rootLogger.level=info
+rootLogger.appenderRef.stdout.ref=STDOUT</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>

@@ -1,0 +1,328 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can define filter lists to allow or disallow client connections to clusters, using the REST API in Management Center.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="before-you-begin"><a class="anchor" href="#before-you-begin"></a>Before you Begin</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Configure your Hazelcast clients with one or more failover clusters to make sure that disconnected clients can connect to another cluster. For a tutorial, see <a href="../../../hazelcast/5.4/getting-started/blue-green" class="xref page">Deploy Blue-Green Clusters</a>.</p>
+</li>
+<li>
+<p>Enable clustered REST, using the <a href="../deploy-manage/system-properties#hazelcast-mc-rest-enabled" class="xref page"><code>hazelcast.mc.rest.enabled</code></a> property.</p>
+</li>
+<li>
+<p>If you are not using Management Center in dev mode, generate an <a href="../integrate/clustered-rest" class="xref page">authentication token</a> to use in HTTP requests.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>You can deploy either an allow list or a deny list to a cluster, not both. If you deploy an allow list, the cluster disallows connections from any clients that aren&#8217;t in the allow list. If you deploy a deny list, the cluster allows connections from any client that isn&#8217;t in the deny list.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="creating-a-filter-list"><a class="anchor" href="#creating-a-filter-list"></a>Creating a Filter List</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Use the <a href="../integrate/client-filtering#/paths/<sub>1rest</sub>1clusters<sub>1%7Bcluster%7D</sub>1clientfiltering~1lists/post" class="xref page"><code>/clientfiltering/lists</code></a> endpoint to create a new filter list.</p>
+</div>
+<div class="paragraph">
+<p>This example creates a deny list that blocks all client connections on the cluster.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">curl --location --request POST "$MANAGEMENT_CENTER_IP:$MANAGEMENT_CENTER_PORT/rest/clusters/$CLUSTER_NAME/clientfiltering/lists" \
+--header 'Content-Type: application/json' \
+--data-raw '{   "name": "block all clients", "status": "ACTIVE",
+"type": "DENYLIST",
+"entries": [
+   {
+       "type": "INSTANCE_NAME",
+       "value": "*"
+   }
+]}'</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="deploying-a-filter-list-to-a-connected-cluster"><a class="anchor" href="#deploying-a-filter-list-to-a-connected-cluster"></a>Deploying a Filter List to a Connected Cluster</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To deploy an active filter list to a connected cluster, use the <a href="../integrate/client-filtering#/paths/<sub>1rest</sub>1clusters<sub>1%7Bcluster%7D</sub>1clientfiltering~1deploy/post" class="xref page"><code>/clientfiltering/deploy</code></a> endpoint.</p>
+</div>
+<div class="paragraph">
+<p>This example deploys all active deny lists.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">curl --location --request POST "$MANAGEMENT_CENTER_IP:$MANAGEMENT_CENTER_PORT/rest/clusters/$CLUSTER_NAME/clientfiltering/deploy" \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "status": "ENABLED",
+    "type": "DENYLIST"
+}'</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="example-scripts"><a class="anchor" href="#example-scripts"></a>Example Scripts</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To automate the process of managing filter lists, you can use bash scripts. These examples are for enabling and disabling a deny list that blocks all client connections from a cluster.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+These examples assume that Management Center is in dev mode. If you use another security provider, make sure to provide an authentication token in these scripts.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">configure-client-filtering.sh</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">#!/bin/bash
+# Parameters: port cluster
+defPort=8081
+defCluster="hazelcast-b"
+defIP="localhost"
+argC=$#
+help="False"
+
+if [[ "$argC" -gt "3" ]]
+then
+    help="True"
+fi
+
+if [[ "$argC" == "1" ]] &amp;&amp; [[ "$1" == "--help" ]]
+then
+    help="True"
+fi
+
+if [[ "$help" == "True" ]]
+then
+    echo Creates a Client Filtering rule to block all clients on the chosen cluster via Management Center
+    echo ""
+    echo usage: $0
+    echo usage: $0 [port]
+    echo usage: $0 [port] [MC IP]
+    echo usage: $0 [port] [MC IP] [clustername]
+    echo ""
+    echo "Defaults to MC running on $defIP:$defPort and cluster: $defCluster"
+    exit
+fi
+
+if [[ "$argC" -eq "3" ]]
+then
+    port=$1
+    ip=$2
+    cluster=$3
+fi
+
+if [[ "$argC" -eq "2" ]]
+then
+    port=$1
+    ip=$2
+    cluster=$defCluster
+fi
+
+if [[ "$argC" -eq "1" ]]
+then
+    port=$1
+    ip=$defIP
+    cluster=$defCluster
+fi
+
+if [[ "$argC" -eq "0" ]]
+then
+    port=$defPort
+    ip=$defIP
+    cluster=$defCluster
+fi
+
+echo "Creating Client Filtering rule to block all clients on MC running on $ip:$port for cluster $cluster"
+echo ""
+set -x
+curl --location --request POST "${ip}:${port}/rest/clusters/${cluster}/clientfiltering/lists" \
+--header 'Content-Type: application/json' \
+--data-raw '{   "name": "block all clients", "status": "ACTIVE",
+"type": "DENYLIST",
+"entries": [
+   {
+       "type": "INSTANCE_NAME",
+       "value": "*"
+   }
+]}'</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">deploy-client-filtering.sh</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">#!/bin/bash
+# Parameters: port cluster
+defPort=8081
+defCluster="hazelcast-b"
+defIP="localhost"
+argC=$#
+help="False"
+
+if [[ "$argC" -gt "3" ]]
+then
+    help="True"
+fi
+
+if [[ "$argC" == "1" ]] &amp;&amp; [[ "$1" == "--help" ]]
+then
+    help="True"
+fi
+
+if [[ "$help" == "True" ]]
+then
+    echo Enables Client Filtering on the chosen cluster via Management Center
+    echo ""
+    echo usage: enable-client-filtering.sh
+    echo usage: enable-client-filtering.sh [port]
+    echo usage: enable-client-filtering.sh [port] [MC IP]
+    echo usage: enable-client-filtering.sh [port] [MC IP] [clustername]
+    echo ""
+    echo "Defaults to MC running on $defIP:$defPort and cluster: $defCluster"
+    exit
+fi
+
+if [[ "$argC" -eq "3" ]]
+then
+    port=$1
+    ip=$2
+    cluster=$3
+fi
+
+if [[ "$argC" -eq "2" ]]
+then
+    port=$1
+    ip=$2
+    cluster=$defCluster
+fi
+
+if [[ "$argC" -eq "1" ]]
+then
+    port=$1
+    ip=$defIP
+    cluster=$defCluster
+fi
+
+if [[ "$argC" -eq "0" ]]
+then
+    port=$defPort
+    ip=$defIP
+    cluster=$defCluster
+fi
+
+echo "Enabling Client Filtering on MC running on $ip:$port for cluster $cluster"
+echo ""
+set -x
+curl --location --request POST "${ip}:${port}/rest/clusters/${cluster}/clientfiltering/deploy" \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "status": "ENABLED",
+    "type": "DENYLIST"
+}'</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">disable-client-filtering.sh</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">#!/bin/bash
+# Parameters: port cluster
+defPort=8081
+defCluster="hazelcast-b"
+defIP="localhost"
+argC=$#
+help="False"
+
+if [[ "$argC" -gt "3" ]]
+then
+    help="True"
+fi
+
+if [[ "$argC" == "1" ]] &amp;&amp; [[ "$1" == "--help" ]]
+then
+    help="True"
+fi
+
+if [[ "$help" == "True" ]]
+then
+    echo Disables Client Filtering on the chosen cluster via Management Center
+    echo ""
+    echo usage: disable-client-filtering.sh
+    echo usage: disable-client-filtering.sh [port]
+    echo usage: disable-client-filtering.sh [port] [MC IP]
+    echo usage: disable-client-filtering.sh [port] [MC IP] [clustername]
+    echo ""
+    echo "Defaults to MC running on $defIP:$defPort and cluster: $defCluster"
+    exit
+fi
+
+if [[ "$argC" -eq "3" ]]
+then
+    port=$1
+    ip=$2
+    cluster=$3
+fi
+
+if [[ "$argC" -eq "2" ]]
+then
+    port=$1
+    ip=$2
+    cluster=$defCluster
+fi
+
+if [[ "$argC" -eq "1" ]]
+then
+    port=$1
+    ip=$defIP
+    cluster=$defCluster
+fi
+
+if [[ "$argC" -eq "0" ]]
+then
+    port=$defPort
+    ip=$defIP
+    cluster=$defCluster
+fi
+
+echo "Disabling Client Filtering on MC running on $ip:$port for cluster $cluster"
+echo ""
+set -x
+curl --location --request POST "${ip}:${port}/rest/clusters/${cluster}/clientfiltering/deploy" \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "status": "DISABLED",
+    "type": "DENYLIST"
+}'</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="related-resources"><a class="anchor" href="#related-resources"></a>Related Resources</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="../integrate/client-filtering" class="xref page">Client Filtering API</a>.</p>
+</div>
+<div class="paragraph">
+<p><a href="create-filter-lists-ui" class="xref page">Deploying a Client Filter List from the UI</a>.</p>
+</div>
+</div>
+</div>

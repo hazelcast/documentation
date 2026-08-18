@@ -78,6 +78,120 @@ export const versionedVariables: Record<string, Record<string, Record<string, st
       "hazelcast-cloud": "Cloud"
     }
   },
+  "management-center": {
+    "current": {
+      "enterprise-product-name": "Enterprise Edition",
+      "full-version": "5.12.0-SNAPSHOT",
+      "mc-repo-swagger-branch": "master",
+      "open-source-product-name": "Community Edition",
+      "page-latest-supported-clc": "5.5.1",
+      "page-latest-supported-hazelcast": "5.8-snapshot"
+    },
+    "5.11": {
+      "enterprise-product-name": "Enterprise Edition",
+      "full-version": "5.11.0",
+      "mc-repo-swagger-branch": "5.11.0",
+      "open-source-product-name": "Community Edition",
+      "page-latest-supported-clc": "5.5.1",
+      "page-latest-supported-hazelcast": "5.7"
+    },
+    "5.10": {
+      "enterprise-product-name": "Enterprise Edition",
+      "full-version": "5.10.0",
+      "mc-repo-swagger-branch": "5.10.0",
+      "open-source-product-name": "Community Edition",
+      "page-latest-supported-clc": "5.5.1",
+      "page-latest-supported-hazelcast": "5.6"
+    },
+    "5.9": {
+      "enterprise-product-name": "Enterprise Edition",
+      "full-version": "5.9.0",
+      "mc-repo-swagger-branch": "5.9.0",
+      "open-source-product-name": "Community Edition",
+      "page-latest-supported-clc": "5.5.1",
+      "page-latest-supported-hazelcast": "5.6"
+    },
+    "5.8": {
+      "enterprise-product-name": "Enterprise Edition",
+      "full-version": "5.8.0",
+      "mc-repo-swagger-branch": "5.8.0",
+      "open-source-product-name": "Community Edition",
+      "page-latest-supported-clc": "5.4.1",
+      "page-latest-supported-hazelcast": "5.5"
+    },
+    "5.7": {
+      "enterprise-product-name": "Enterprise Edition",
+      "full-version": "5.7.1",
+      "mc-repo-swagger-branch": "5.7.0",
+      "open-source-product-name": "Community Edition",
+      "page-latest-supported-clc": "5.4.1",
+      "page-latest-supported-hazelcast": "5.7"
+    },
+    "5.6": {
+      "enterprise-product-name": "Enterprise Edition",
+      "full-version": "5.6.0",
+      "mc-repo-swagger-branch": "5.6.0",
+      "open-source-product-name": "Community Edition",
+      "page-latest-supported-clc": "5.4.1",
+      "page-latest-supported-hazelcast": "5.5"
+    },
+    "5.5": {
+      "enterprise-product-name": "Enterprise Edition",
+      "full-version": "5.5.2",
+      "mc-repo-swagger-branch": "5.5.2",
+      "open-source-product-name": "Community Edition",
+      "page-latest-supported-hazelcast": "5.5"
+    },
+    "5.4": {
+      "enterprise-product-name": "Enterprise Edition",
+      "full-version": "5.4.1",
+      "mc-repo-swagger-branch": "5.4.1",
+      "open-source-product-name": "Community Edition",
+      "page-latest-supported-hazelcast": "5.4"
+    },
+    "5.3": {
+      "enterprise-product-name": "Enterprise Edition",
+      "full-version": "5.3.4",
+      "mc-repo-swagger-branch": "5.3.4",
+      "open-source-product-name": "Community Edition",
+      "page-latest-supported-hazelcast": "5.3"
+    },
+    "5.2": {
+      "enterprise-product-name": "Enterprise Edition",
+      "full-version": "5.2.1",
+      "mc-repo-swagger-branch": "5.2.1",
+      "open-source-product-name": "Community Edition",
+      "page-latest-supported-hazelcast": "5.2"
+    },
+    "5.1": {
+      "enterprise-product-name": "Enterprise Edition",
+      "full-version": "5.1.4",
+      "mc-repo-swagger-branch": "5.1.4",
+      "open-source-product-name": "Community Edition",
+      "page-latest-supported-hazelcast": "5.1"
+    },
+    "5.0": {
+      "enterprise-product-name": "Enterprise Edition",
+      "full-version": "5.0.4",
+      "open-source-product-name": "Community Edition",
+      "page-latest-supported-hazelcast": "5.0"
+    },
+    "4.2021.06": {
+      "page-latest-supported-hazelcast": ""
+    },
+    "4.2021.04": {
+      "page-latest-supported-hazelcast": ""
+    },
+    "4.2021.03": {
+      "page-latest-supported-hazelcast": ""
+    },
+    "4.2021.02": {
+      "page-latest-supported-hazelcast": ""
+    },
+    "4.2020.12": {
+      "page-latest-supported-hazelcast": ""
+    }
+  },
   "operator": {
     "current": {
       "operator-chart-version": "5.19.0-snapshot",

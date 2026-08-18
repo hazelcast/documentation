@@ -1,0 +1,85 @@
+---
+title: "Configure Management Center"
+sidebar_label: "Overview"
+sidebar_position: 1
+slug: /deploy-manage/configuring
+---
+
+You can use various options to configure the Management Center instance as well as the client that Management Center uses to connect to and interact with Hazelcast clusters.
+
+For example, you may want to configure the client to connect to certain Hazelcast members. You may also want to configure the home directory of the Management Center instance to customize where metrics and other configuration data is saved.
+
+## Where Management Center saves data
+
+By default, Management Center saves the following data in the `hazelcast-mc` directory of the user's home directory:
+
+- Configuration settings
+- Metrics
+
+You can configure Management Center to save this data in a different location, using the [`hazelcast.mc.home` property](./system-properties.mdx#hazelcast-mc-home).
+
+## Ways to configure Management Center
+
+You can either configure Management Center in the UI while it's running or preconfigure it in the terminal so that it starts with the settings you need.
+
+<table>
+<thead>
+<tr>
+<th>Configuration method</th>
+<th>Use case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UI</td>
+<td>
+
+Configure a running instance of Management Center. Use this method for the following:
+
+- Managing connections to clusters
+- Setting a security provider
+- Setting and updating license keys
+- Managing users in the local security provider
+
+</td>
+</tr>
+<tr>
+<td>[System properties and environment variables](./system-properties.mdx)</td>
+<td>Configure any aspect of Management Center on start from the command line, including client configuration, feature flags, JMX, and home directory.</td>
+</tr>
+<tr>
+<td>[`hz-mc conf` tool](./mc-conf.mdx)</td>
+<td>
+
+Preconfigure Management Center before starting it. Use this method for the following:
+
+- Managing connections to clusters
+- Setting and updating security providers
+- Managing users
+- Setting system properties
+
+</td>
+</tr>
+</tbody>
+</table>
+
+### Configure the client
+
+Because Management Center connects to Hazelcast clusters as a client, you can configure it, using the following methods:
+
+- A client configuration file (XML or YAML):
+
+  - [UI](../cluster-connections/connecting-to-clusters-ui.mdx#using-a-client-configuration-file)
+  - [`hz-mc conf` tool](../cluster-connections/connecting-to-clusters-mc-conf.mdx#using-a-client-configuration-file)
+- [System properties](./system-properties.mdx#client-config) (only the client connection strategy)
+
+However, Management Center does not allow you to override the following settings:
+
+- `instance-name`: Set to the name of the cluster.
+- `connection-strategy.async-start`: Set to `true` so that Management Center starts without waiting to get a cluster connection.
+- `connection-strategy.cluster-connect-timeout-millis`: Set to infinity so that Management Center never gives up trying to connect to the cluster.
+- `network.smart-routing`: Set to `true` so that Management Center will open connections to all members.
+
+### Member-side configuration
+
+On a Hazelcast member, you can also use the `management-center` setting to enable or disable both scripting and the console as well as setting up trusted interfaces. See <Variable href="/hazelcast/{page-latest-supported-hazelcast}/maintain-cluster/monitoring#management-center" text="Management Center"/> in the Platform documentation.

@@ -1,0 +1,526 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can install Management Center, using Docker, a package manager, or the binary distribution.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="before-you-begin"><a class="anchor" href="#before-you-begin"></a>Before you begin</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hazelcast Management Center requires Java 17 or later to run.</p>
+</div>
+<div class="paragraph">
+<p><a href="overview#requirements" class="xref page">Review the requirements</a> to make sure that you meet them.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="use-docker"><a class="anchor" href="#use-docker"></a>Use Docker</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Deploying via Docker is a convenient way to evaluate the latest version of Management Center:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a href="https://docs.docker.com/get-docker/" target="_blank" rel="noopener">Install Docker</a>.</p>
+</li>
+<li>
+<p>Check that Docker is correctly installed.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">docker version</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>If you do not see a version number, see the <a href="https://docs.docker.com/config/daemon/" target="_blank" rel="noopener">Docker docs</a> for troubleshooting information.</p>
+</li>
+<li>
+<p>Pull the Management Center Docker image from Docker Hub.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">docker pull hazelcast/management-center:5.11.0</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Start the Management Center service.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">docker run --rm -p 8080:8080 hazelcast/management-center:5.11.0</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>In some cases, such as querying maps that contain custom objects, you may need to add those object classes to the classpath of Management Center before starting it. To add your own classes to the classpath, you can do one of the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Pass the <code>MC_CLASSPATH</code> environment variable the paths to your classes, separated by a semicolon.</p>
+</li>
+<li>
+<p>Put your classes in the <code>bin/user-lib/</code> directory, and mount that directory to the Docker container.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>You can find more details on <a href="https://hub.docker.com/r/hazelcast/management-center">DockerHub</a>.</p>
+</div>
+<div class="paragraph">
+<p>To start Management Center with a valid Enterprise Edition license, you can pass the environment variable <code>MC_LICENSE</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">docker run --rm -p 8080:8080 -e MC_LICENSE=&lt;your-licence-key&gt; hazelcast/management-center:5.11.0</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="use-a-package-manager"><a class="anchor" href="#use-a-package-manager"></a>Use a package manager</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hazelcast offers package managers for Linux and Mac operating systems.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>To install Management Center, use one of the following methods, depending on your operating system:</p>
+<div class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li>
+<p><a id="tabset1_mac"></a>Mac</p>
+</li>
+<li>
+<p><a id="tabset1_linux"></a>Linux</p>
+</li>
+<li>
+<p><a id="tabset1_windows"></a>Windows</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="tabset1_mac">
+<div class="paragraph">
+<p>To install on macOS, use the Homebrew package manager.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">brew tap hazelcast/hz
+brew install hazelcast/hz/hazelcast-management-center@5.11.0</code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset1_linux">
+<div class="paragraph">
+<p>To install on Linux, you can use either of these package managers, depending on your Linux distribution:
+.Debian</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">wget -qO - https://repository.hazelcast.com/api/gpg/key/public | gpg --dearmor | sudo tee /usr/share/keyrings/hazelcast-archive-keyring.gpg &gt; /dev/null
+echo "deb [signed-by=/usr/share/keyrings/hazelcast-archive-keyring.gpg] https://repository.hazelcast.com/debian stable main"| sudo tee -a /etc/apt/sources.list
+sudo apt update &amp;&amp; sudo apt install hazelcast-management-center=5.11.0</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">RPM</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">wget https://repository.hazelcast.com/rpm/stable/hazelcast-rpm-stable.repo -O hazelcast-rpm-stable.repo
+sudo mv hazelcast-rpm-stable.repo /etc/yum.repos.d/
+sudo yum install hazelcast-management-center-5.11.0</code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset1_windows">
+<div class="paragraph">
+<p>At the moment, Management Center does not support any Windows package managers.</p>
+</div>
+<div class="paragraph">
+<p>To get started with Management Center on Windows, use one of the other available installation options.</p>
+</div>
+</div>
+</div>
+</div>
+</li>
+<li>
+<p>Check that Management Center is installed.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">hz-mc -V</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You should see the version of Management Center.</p>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>For more information about the package manager, see the <a href="https://github.com/hazelcast/hazelcast-management-center-packaging">GitHub repository</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="binary"><a class="anchor" href="#binary"></a>Use binary packages</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hazelcast Management Center is included in the Hazelcast Platform download package.</p>
+</div>
+<div class="paragraph">
+<p>When a new version of Hazelcast Platform is released, it comes with a compatible version of Management Center. You can download Hazelcast Platform from the <a href="https://hazelcast.com/open-source-projects/downloads/#hazelcast-platform">download page</a>
+of the Hazelcast website.</p>
+</div>
+<div class="paragraph">
+<p>If a new version of Management Center is released before a new
+version of Hazelcast Platform, you can download the new version as a
+separate package
+from the <a href="https://hazelcast.com/open-source-projects/downloads/#hazelcast-management-center">download page</a>.</p>
+</div>
+<div class="paragraph">
+<p>To start Management Center from the binary package, use the scripts that come with the download package.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+You cannot use Management Center as a library. Management Center runs as a standalone web application.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>You can preconfigure a cluster connection in Management Center by setting the following environment variables:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>MC_DEFAULT_CLUSTER_MEMBERS</code>—this should contain a comma-separated list of the cluster member addresses.</p>
+</li>
+<li>
+<p><code>MC_DEFAULT_CLUSTER</code>—this should contain the cluster name, and defaults to <code>dev</code> if not provided.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The recommended way to start Management Center with the binary package is the built-in start scripts in the <code>bin/</code> directory. A script is available as a batch file for Windows or a shell script for Mac and Linux.</p>
+</div>
+<div class="paragraph">
+<p>You can start this file from the command line using the following command:</p>
+</div>
+<div class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li>
+<p><a id="tabset2_linux-and-mac"></a>Linux and Mac</p>
+</li>
+<li>
+<p><a id="tabset2_windows"></a>Windows</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="tabset2_linux-and-mac">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">hz-mc start</code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset2_windows">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">mc-start.cmd</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="starting-with-an-extra-classpath"><a class="anchor" href="#starting-with-an-extra-classpath"></a>Provide an extra classpath</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In some cases, such as querying maps that contain custom objects, you may need to add those object classes to the classpath of Management Center before starting it. To add your own classes to the classpath, do one of the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Pass the <code>MC_CLASSPATH</code> environment variable the paths to your classes, separated by semicolons.</p>
+</li>
+<li>
+<p>Put your classes in the <code>bin/user-lib/</code> directory.</p>
+</li>
+</ul>
+</div>
+<div class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li>
+<p><a id="tabset3_linux-and-mac"></a>Linux and Mac</p>
+</li>
+<li>
+<p><a id="tabset3_windows"></a>Windows</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="tabset3_linux-and-mac">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">export MC_CLASSPATH="/path/to/an/extra.jar:/path/to/an/otherextra.jar"
+hz-mc start</code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset3_windows">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">SET MC_CLASSPATH="/path/to/an/extra.jar;/path/to/an/otherextra.jar"
+mc-start.cmd</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="starting-with-enterprise-license"><a class="anchor" href="#starting-with-enterprise-license"></a>Starting Management Center with an Enterprise license</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you want to start Management Center with a valid Enterprise Edition license via the command line,
+you can set the <code>MC_LICENSE</code> or pass the Java property <code>hazelcast.mc.license</code> environment variable (see <a href="../deploy-manage/system-properties#starting-with-a-license" class="xref page"><code>hazelcast.mc.license</code> property</a> for more details).</p>
+</div>
+<div class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li>
+<p><a id="tabset4_linux-and-mac"></a>Linux and Mac</p>
+</li>
+<li>
+<p><a id="tabset4_windows"></a>Windows</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="tabset4_linux-and-mac">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">export MC_LICENSE=&lt;license-key&gt;
+hz-mc start</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>or</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">hz-mc start -Dhazelcast.mc.license=&lt;license key&gt;</code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset4_windows">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">SET MC_LICENSE=&lt;license-key&gt;
+mc-start.cmd</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Alternatively, you can set the license via the UI as documented in the <a href="../deploy-manage/license-management" class="xref page">Enterprise licenses</a> section.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="stop-management-center-via-the-command-line"><a class="anchor" href="#stop-management-center-via-the-command-line"></a>Stop Management Center via the command line</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The following command stops all Management Center processes that are started with either <code>hz-mc start</code> or <code>mc-start.cmd</code> commands:</p>
+</div>
+<div class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li>
+<p><a id="tabset5_linux-and-mac"></a>Linux and Mac</p>
+</li>
+<li>
+<p><a id="tabset5_windows"></a>Windows</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="tabset5_linux-and-mac">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">hz-mc stop</code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset5_windows">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">mc-stop.cmd</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+These commands stop Management Center processes that have exactly the same version as the script. If you have multiple versions of Management Center running,
+you need to stop each version using its corresponding script.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="snapshot-versions"><a class="anchor" href="#snapshot-versions"></a>Snapshot versions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Development versions of an upcoming release are available as snapshots. To use the most recent snapshot version of Management Center, do the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Docker:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">docker run --rm -p 8080:8080 --pull=always hazelcast/management-center:latest-snapshot</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Binary packages:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://repository.hazelcast.com/download/management-center/hazelcast-management-center-latest-snapshot.zip">Download ZIP</a></p>
+</li>
+<li>
+<p><a href="https://repository.hazelcast.com/download/management-center/hazelcast-management-center-latest-snapshot.tar.gz">Download TAR</a></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Package managers:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Homebrew</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">brew tap hazelcast/hz
+brew install hazelcast-management-center@latest-snapshot</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Linux</p>
+<div class="listingblock">
+<div class="title">Debian</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">wget -qO - https://repository.hazelcast.com/api/gpg/key/public | gpg --dearmor | sudo tee /usr/share/keyrings/hazelcast-archive-keyring.gpg &gt; /dev/null
+echo "deb [signed-by=/usr/share/keyrings/hazelcast-archive-keyring.gpg] https://repository.hazelcast.com/debian snapshot main"| sudo tee -a /etc/apt/sources.list
+sudo apt update &amp;&amp; sudo apt install hazelcast-management-center</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">RPM</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">wget https://repository.hazelcast.com/rpm/snapshot/hazelcast-rpm.repo -O hazelcast-snapshot-rpm.repo
+sudo mv hazelcast-snapshot-rpm.repo /etc/yum.repos.d/
+sudo yum install hazelcast-management-center</code></pre>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>When you use a snapshot version, it can be useful to query the build information to be able to tell what revision you are using.
+You can find version metadata about a running instance of Management Center at the following endpoint: <code>&lt;hazelcast.mc.home&gt;/api/buildInfo</code>. This endpoint returns JSON.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="next-steps"><a class="anchor" href="#next-steps"></a>Next steps</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For guidance on how to get up and running quickly, see <a href="get-started" class="xref page">Get Started with Management Center Using Docker Compose</a>.</p>
+</div>
+<div class="paragraph">
+<p>To learn how to connect to a cluster, see <a href="../deploy-manage/cluster-connections" class="xref page">Cluster connections</a>.</p>
+</div>
+<div class="paragraph">
+<p>To serve Management Center over HTTPS instead of HTTP, see <a href="../deploy-manage/serve-mc-over-https" class="xref page">Serve Management Center over HTTPS</a>.</p>
+</div>
+<div class="paragraph">
+<p>For information about the options you can provide when starting Management Center, see <a href="../deploy-manage/system-properties" class="xref page">System properties and environment variables</a>.</p>
+</div>
+<details>
+<summary class="title">Enterprise topics</summary>
+<div class="content">
+<div class="paragraph">
+<p>To explore the licensed features of Management Center, see:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="../integrate/clustered-rest" class="xref page">Clustered REST</a></p>
+</li>
+<li>
+<p><a href="../integrate/jmx" class="xref page">Clustered JMX</a></p>
+</li>
+<li>
+<p><a href="../clusters/client-filtering" class="xref page">Cluster Client Filtering</a></p>
+</li>
+<li>
+<p><a href="../integrate/prometheus-monitoring" class="xref page">Prometheus Exporter</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For the Management Center features that rely on your cluster&#8217;s enterprise capabilities, see:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="../clusters/wan-replication" class="xref page">WAN Replication</a></p>
+</li>
+<li>
+<p><a href="../clusters/persistence" class="xref page">Persistence</a></p>
+</li>
+<li>
+<p><a href="../clusters/triggering-rolling-upgrade" class="xref page">Rolling Upgrades</a></p>
+</li>
+</ul>
+</div>
+</div>
+</details>
+</div>
+</div>

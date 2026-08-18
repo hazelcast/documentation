@@ -1,0 +1,86 @@
+<div class="sect1">
+<h2 id="limitations-of-the-config-import-java-command"><a class="anchor" href="#limitations-of-the-config-import-java-command"></a>Limitations of the "config import-java" command</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>CLC can import a limited subset of Hazelcast client XML configuration using the <code>config import-java</code> command. However, configuration features that depend on Java-specific XML features, such as replacers, are not supported. See the <a href="https://docs.hazelcast.com/clc/latest/clc-config#clc-config-import-java">CLC Documentation</a> for further information. The recommended workaround is to remove any use of, or references to, variable replacers in your config file.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="clc-fails-to-connect-when-client-passwords-are-used"><a class="anchor" href="#clc-fails-to-connect-when-client-passwords-are-used"></a>CLC fails to connect when client passwords are used</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>As a workaround, you can either:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Use the original Management Center Console</p>
+</li>
+<li>
+<p>Not use username/password auth on Hazelcast Platform</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<a href="https://docs.hazelcast.com/hazelcast/5.5/security/tls-ssl#mutual-authentication">mTLS</a> can be supported to maintain a secure cluster.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="clc-does-not-connect-when-security-certificates-are-missing"><a class="anchor" href="#clc-does-not-connect-when-security-certificates-are-missing"></a>CLC does not connect when security certificates are missing</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Management Center&#8217;s embedded CLC does not connect when the security certificates are missing. Ensure that the correct security certificates are included.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="clc-cannot-use-keystorestruststores-that-use-jks"><a class="anchor" href="#clc-cannot-use-keystorestruststores-that-use-jks"></a>CLC cannot use keystores/truststores that use JKS</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>CLC can only use PEM files for SSL certificates.
+As a workaround, you can either:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Enable the original Management Center console, which runs directly on the members (and therefore does not require a TLS certificate) by setting <code>hazelcast.mc.original.console.enabled</code> to true.</p>
+</li>
+<li>
+<p>Convert your JKS certs to PEM. For more information, see <a href="https://docs.hazelcast.com/hazelcast/5.5/security/integrating-openssl#configuring-hazelcast-for-openssl">Configuring Hazelcast for OpenSSL</a>. Note that:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>If you use trustStore, using the <code>trustStore</code> property is not recommended — use <code>trustCertCollectionFile</code> instead.</p>
+</li>
+<li>
+<p>If you use keyStore, using the <code>keyStore</code> property is not recommended — use <code>keyFile</code> and <code>keyCertChainFile</code> instead. If you must use it, then it must be converted to PKCS12.</p>
+</li>
+<li>
+<p>To convert from JKS to PEM:</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs"># Convert JKS file into PKCS12
+keytool -importkeystore -srckeystore keystore.jks -destkeystore keystore.p12 -srcstoretype JKS -deststoretype PKCS12
+# Convert PKCS12 file to PEM
+openssl pkcs12 -in keystore.p12 -out keystore.pem</code></pre>
+</div>
+</div>
+</div>
+</div>

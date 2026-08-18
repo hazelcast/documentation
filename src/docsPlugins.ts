@@ -51,10 +51,17 @@ export function docs(id: string): PluginConfig {
 // whichever version is `lastVersion` is '' (the bare root), so a new release
 // left to the default would quietly take over `/<component>/`.
 //
-// `currentSeg` is the segment (and dropdown label) Antora gives the main branch:
-// `latest-snapshot` where main is a -snapshot line, or the release number where
-// main declares itself released (clc's main IS 5.5.1). It is the one thing not
-// derivable from <id>_versions.json — bump it here when main's version changes.
+// `currentSeg` is the URL segment Antora gives the main branch: `latest-snapshot`
+// where main is a -snapshot line, a release number where main declares itself
+// released (clc's main IS 5.5.1), or a numbered snapshot (management-center's main
+// is `5.12-snapshot`). It is the one thing not derivable from <id>_versions.json —
+// bump it here when main's version changes.
+//
+// `currentLabel` is what the version dropdown shows for that version, for the case
+// where Antora's `display_version` differs from the URL segment — MC publishes
+// under `5.12-snapshot` but displays `5.12-SNAPSHOT`, and the label is reader-
+// facing text while the segment is a URL we must preserve verbatim. Defaults to
+// currentSeg, which is right wherever the two agree (operator, clc).
 //
 // `defaultVersion` is where the version dropdown lands: `latest-release` (the
 // newest entry in <id>_versions.json) where main is an unreleased snapshot, or
@@ -69,10 +76,12 @@ export function docs(id: string): PluginConfig {
 export function versionedDocs({
   id,
   currentSeg,
+  currentLabel = currentSeg,
   defaultVersion,
 }: {
   id: string;
   currentSeg: string;
+  currentLabel?: string;
   defaultVersion: 'current' | 'latest-release';
 }): PluginConfig {
   const releases = readReleases(id);
@@ -88,7 +97,7 @@ export function versionedDocs({
     routeBasePath: id,
     lastVersion: defaultVersion === 'current' ? 'current' : releases[0],
     versions: {
-      current: {label: currentSeg, path: currentSeg},
+      current: {label: currentLabel, path: currentSeg},
       ...Object.fromEntries(releases.map((version) => [version, {path: version}])),
     },
     admonitions,

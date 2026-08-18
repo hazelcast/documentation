@@ -1,0 +1,343 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The clustered REST API can be enabled to allow you to monitor clustered statistics of distributed objects through HTTP endpoints.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="enable-clustered-rest"><a class="anchor" href="#enable-clustered-rest"></a>Enable Clustered REST</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The REST API is disabled by default.</p>
+</div>
+<div class="paragraph">
+<p>To enable clustered REST in Management Center, use the
+<a href="../deploy-manage/system-properties#hazelcast-mc-rest-enabled" class="xref page"><code>hazelcast.mc.rest.enabled</code> property</a> at startup.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="root-endpoint"><a class="anchor" href="#root-endpoint"></a>Root endpoint</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The entry point for the clustered REST API is <code>/rest</code>. This
+resource does not have any attributes.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="parameters"><a class="anchor" href="#parameters"></a>Parameters</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>All parameters that are used in the REST endpoints, such as
+cluster names and distributed data structure names, must be
+<a href="https://en.wikipedia.org/wiki/Percent-encoding">URL encoded</a>.
+Such parameters are marked in braces (<code>{</code> and <code>}</code>) in the URL description
+for each endpoint. For example, <code>name.with/special@chars</code>
+parameter value would be encoded as <code>name.with%2Fspecial%40chars</code>.</p>
+</div>
+<div class="paragraph">
+<p>If no data can be
+found for an endpoint, that endpoint returns a 404 HTTP status code.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="authentication"><a class="anchor" href="#authentication"></a>Authentication</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Unless the security provider is set to dev mode, users need an authentication (auth) token to send requests to the REST API.</p>
+</div>
+<div class="paragraph">
+<p>The auth token must be included in the following header:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Authorization: Bearer &lt;user_auth_token&gt;</p>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="generate-auth-tokens"><a class="anchor" href="#generate-auth-tokens"></a>Generate auth tokens</h3>
+<div class="paragraph">
+<p>The way in which you generate an auth token depends on the security provider that you use. See <a href="../deploy-manage/security-providers" class="xref page">Security Providers</a>.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+All auth tokens inherit roles from the user.
+</td>
+</tr>
+</table>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Security Provider</th>
+<th class="tableblock halign-left valign-top">Method for issuing tokens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Local Security Provider</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Use the <code>user issue-token</code> task of the <code>hz-mc conf</code> tool.</p>
+</div>
+<div class="paragraph">
+<p>Send a <code>POST</code> request to the <code>/api/tokens</code> endpoint.</p>
+</div>
+<div class="paragraph">
+<p>Use Auth <code>Settings/API</code> screen on the UI.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>All other security providers other than dev mode</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Send a <code>POST</code> request to the <code>/api/tokens</code> endpoint.</p>
+</div>
+<div class="paragraph">
+<p>Use Auth <code>Settings/API</code> screen on the UI.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<div class="sect3">
+<h4 id="use-apitokens-endpoint"><a class="anchor" href="#use-apitokens-endpoint"></a>Use <code>api/tokens</code> endpoint</h4>
+<div class="paragraph">
+<p>To use the /api/tokens endpoint for security providers except SAML and OIDC, run the following command. Replace the &lt;username&gt; and &lt;password&gt; placeholders with the credentials of a user logged in to the Management Center.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">curl -u &lt;username&gt;:&lt;password&gt; -d '{"username":"&lt;username&gt;"}' -H "Content-Type: application/json" -X POST http://localhost:8080/api/tokens</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To use the /api/tokens endpoint for SAML and OIDC, run the following command.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">curl -d '{"username":"&lt;username&gt;"}' -H "X-CSRF-TOKEN: &lt;x-csrf-token&gt;" -H "Cookie: &lt;cookie&gt;" -H "Content-Type: application/json" -X POST http://localhost:8080/api/tokens</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here, replace the <code>&lt;username&gt;</code> placeholders with the username of a user logged in to the Management Center, and replace the <code>&lt;x-csrf-token&gt;</code> and <code>&lt;cookie&gt;</code> with X-CSRF-TOKEN and Cookie headers. You can get the headers from any request on Network tab in Developer Tools when you are logged into Management Center:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/ClusteredRestProvideHeaders.png" alt="Clustered Rest Provide Headers"></span></p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="use-hz-mc-conf-tool"><a class="anchor" href="#use-hz-mc-conf-tool"></a>Use <code>hz-mc conf</code> tool</h4>
+<div class="paragraph">
+<p>To use the <code>hz-mc conf</code> tool, do the following:</p>
+</div>
+<div class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li>
+<p><a id="tabset1_linux-and-mac"></a>Linux and Mac</p>
+</li>
+<li>
+<p><a id="tabset1_windows"></a>Windows</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="tabset1_linux-and-mac">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">hz-mc conf user issue-token -n &lt;username&gt;</code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset1_windows">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">mc-conf.bat user issue-token -n &lt;username&gt;</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The created token is displayed in the output:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">Successfully issued a token for user 'test_user'.
+Token: 'mJMMDfaSWZ1MuqhmGhA8m4erCNZtPi_A4_VyR_y8eH0'
+Label: 'test_user_2021-07-07T17:24 EEST'</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="use-auth-token-management-ui"><a class="anchor" href="#use-auth-token-management-ui"></a>Use Auth Token Management UI</h4>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Click <strong>Settings</strong> in the Top Bar.</p>
+</li>
+<li>
+<p>Navigate to the <strong>API</strong> tab.</p>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/AuthTokenManagementPage.png" alt="Auth Token Management Page"></span></p>
+</div>
+</li>
+<li>
+<p>Select the user that you want to create a token for. Only an admin can create tokens for other users.</p>
+</li>
+<li>
+<p>Enter the label of the token that you want to create. Default value has the <code>username_creationTime</code> format.</p>
+</li>
+<li>
+<p>Click <strong>Create Token</strong>.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>The created token appears on the right-hand side.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/AuthTokenManagementPage_createdToken.png" alt="Created Token"></span></p>
+</div>
+<div class="paragraph">
+<p>You can copy your token to the clipboard.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The token will not be displayed again, so make sure you note it before leaving the page or creating a new one.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>You can see the list of existing tokens in the table, at the bottom of the page.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/AuthTokenManagementPage_TokenList.png" alt="Created Token List"></span></p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 80%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Time Issued</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Date and time when the token was created.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>User</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Username which the token is created for.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Token Label</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Label of the token.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Action</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Action for revoking a token.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="revoke-all-auth-tokens"><a class="anchor" href="#revoke-all-auth-tokens"></a>Revoke all auth tokens</h3>
+<div class="paragraph">
+<p>To revoke all auth tokens for a user, use the <code>user revoke-tokens</code> task.</p>
+</div>
+<div class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li>
+<p><a id="tabset2_linux-and-mac"></a>Linux and Mac</p>
+</li>
+<li>
+<p><a id="tabset2_windows"></a>Windows</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="tabset2_linux-and-mac">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">hz-mc conf user revoke-tokens -n &lt;username&gt;</code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset2_windows">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">mc-conf.bat user revoke-tokens -n &lt;username&gt;</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="openapi-definitions"><a class="anchor" href="#openapi-definitions"></a>OpenAPI definitions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The Clustered REST endpoints are documented in OpenAPI format. See the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="client-filtering" class="xref page">Client Filtering API</a></p>
+</li>
+<li>
+<p><a href="cluster-metrics" class="xref page">Cluster Metrics API</a></p>
+</li>
+<li>
+<p><a href="cluster-connections" class="xref page">Cluster Connections API</a></p>
+</li>
+<li>
+<p><a href="wan-replication" class="xref page">WAN Replication API</a></p>
+</li>
+<li>
+<p><a href="diagnostics-config" class="xref page">Diagnostics Config API</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This documentation is also accessible at the <code>/swagger-ui/index.html</code> endpoint of Management Center. For example <code>http://localhost:8080/swagger-ui/index.html</code>.</p>
+</div>
+</div>
+</div>

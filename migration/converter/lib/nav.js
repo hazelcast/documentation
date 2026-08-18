@@ -27,11 +27,48 @@ const ITEM_RE = /^(\*+)\s+xref:([^[\]]+?)\[(.*)\]\s*$/
 // the label text. Tested only after ITEM_RE fails, so it never eats a page item.
 const GROUP_RE = /^(\*+)\s+(\S.*?)\s*$/
 
-// A nav xref target -> the page stem (cloud is single-module + flat, so the
-// stem is the last path/colon segment with .adoc and any #fragment removed).
-function targetStem (target) {
-  return target.trim().replace(/#.*$/, '').replace(/\.adoc$/, '').split(/[:/]/).pop()
+// A nav xref target -> { key, stem }.
+//
+// `key` identifies the PAGE, and must be MODULE-QUALIFIED: it is the plan's map
+// key, so a bare stem silently merges same-named pages from different modules.
+// That is not hypothetical — management-center has 13 such pages in 5 groups
+// (`dashboard` in clusters, cp-subsystem and monitor-streaming; `overview` in
+// getting-started, tools and data-structures; …), and merging them meant all but
+// the first lost its nav entry AND its output file, because one plan entry
+// supplies the relFile both pages are written to.
+//
+// The qualification is Antora's own coordinate — `module:stem`, bare for ROOT —
+// which is also exactly what an injected nav line has to say (see
+// injectNavEntries), so one key form serves both.
+//
+// `stem` is the bare file stem, used for folder names and humanised labels.
+//
+// Grammar: `[version@][component:][module:]relative/path.adoc[#fragment]`. The
+// module is the LAST coordinate segment, so a component-qualified target keys off
+// its module too; a target in ANOTHER component is a phantom either way (it
+// matches no page in this component's manifest and so plans nothing), which is
+// the pre-existing behaviour and not something a component-less planner can fix.
+function parseTarget (target) {
+  const clean = target.trim().replace(/#.*$/, '')
+  const at = clean.indexOf('@')
+  const segs = (at === -1 ? clean : clean.slice(at + 1)).split(':')
+  const relative = segs.pop().replace(/\.adoc$/, '')
+  const stem = relative.split('/').pop()
+  const module = segs.length ? segs[segs.length - 1] : ''
+  return { key: pageKey(module, relative), stem }
 }
+
+// The plan/nav key for a page: Antora's `module:relative` coordinate, with the
+// ROOT module left implicit exactly as Antora writes it. Shared by the nav side
+// (parseTarget) and the page side (convert.js relFileForPage) so the two cannot
+// key the same page differently.
+function pageKey (module, relative) {
+  return module && module !== 'ROOT' ? `${module}:${relative}` : relative
+}
+
+// The bare stem of a plan key (drops the module coordinate) — for folder names
+// and humanised labels, which are per-page names, not identifiers.
+const keyStem = (key) => key.split(':').pop().split('/').pop()
 
 function parseNav (adoc) {
   const roots = []
@@ -49,7 +86,8 @@ function parseNav (adoc) {
     const item = line.match(ITEM_RE)
     if (item) {
       const depth = item[1].length // 1..4
-      const node = { type: 'page', stem: targetStem(item[2]), label: item[3].trim(), children: [] }
+      const { key, stem } = parseTarget(item[2])
+      const node = { type: 'page', key, stem, label: item[3].trim(), children: [] }
       const parent = stack[depth - 1]
       if (!parent) continue // malformed depth jump; skip defensively
       parent.children.push(node)
@@ -83,19 +121,21 @@ function parseNav (adoc) {
 // category, the un-setting of `unlisted` — falls out of buildPlan exactly as it
 // does for a page that was in the nav all along, and the fix survives re-runs.
 //
-// `injections` is [{ stem, after }]: place `xref:<stem>.adoc[]` immediately after
+// `injections` is [{ key, after }]: place `xref:<key>.adoc[]` immediately after
 // the existing item for `after`, copying that item's depth so it lands as its
-// sibling. A missing anchor THROWS rather than skipping: silently doing nothing
-// would leave the page an orphan at the component root, which is precisely the
-// state the injection exists to fix, and the caller has already established that
-// the page exists in this version.
+// sibling. Both are plan KEYS (`module:stem`, bare for ROOT), which is why the key
+// form is Antora's coordinate — the injected line is valid nav AsciiDoc as it
+// stands, module and all. A missing anchor THROWS rather than skipping: silently
+// doing nothing would leave the page an orphan at the component root, which is
+// precisely the state the injection exists to fix, and the caller has already
+// established that the page exists in this version.
 function injectNavEntries (adoc, injections) {
   if (!injections || !injections.length) return adoc
   const lines = adoc.split('\n')
-  for (const { stem, after } of injections) {
-    const at = lines.findIndex((l) => { const m = l.match(ITEM_RE); return m && targetStem(m[2]) === after })
-    if (at === -1) throw new Error(`nav injection for "${stem}": anchor item "${after}" not found in nav.adoc`)
-    lines.splice(at + 1, 0, `${lines[at].match(ITEM_RE)[1]} xref:${stem}.adoc[]`)
+  for (const { key, after } of injections) {
+    const at = lines.findIndex((l) => { const m = l.match(ITEM_RE); return m && parseTarget(m[2]).key === after })
+    if (at === -1) throw new Error(`nav injection for "${key}": anchor item "${after}" not found in nav.adoc`)
+    lines.splice(at + 1, 0, `${lines[at].match(ITEM_RE)[1]} xref:${key}.adoc[]`)
   }
   return lines.join('\n')
 }
@@ -104,15 +144,38 @@ const folderName = (label) => label.toLowerCase().trim().replace(/[^a-z0-9]+/g, 
 const humanize = (stem) => stem.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 
 // Build the plan from a parsed nav tree.
-//   titles: Map<stem, doctitle> (from the manifest) — used for category labels
-//           of parent pages whose nav label is empty, and to decide whether a
-//           leaf needs an explicit sidebar_label.
-// Returns { pages: Map<stem, {relFile, slug, sidebarLabel, sidebarPosition}>,
-//           categories: [{relFile, content}], duplicates: [stem] }
+//   titles: Map<key, doctitle> (from the manifest, keyed by the same
+//           module-qualified plan key) — used for category labels of parent pages
+//           whose nav label is empty, and to decide whether a leaf needs an
+//           explicit sidebar_label.
+// Returns { pages: Map<key, {relFile, sidebarLabel, sidebarPosition}>,
+//           categories: [{relFile, content}], duplicates: [key] }
+//
+// There is deliberately no `slug` here: a page's slug is the one thing the plan
+// must NOT guess, because it is what preserves the published URL. convert.js
+// derives it from the page's real URL (urlToSlug), which is the only source that
+// carries the module segment a nav-derived guess would drop.
 function buildPlan (roots, titles = new Map()) {
   const pages = new Map()
   const categories = []
   const duplicates = []
+  // relFile -> the key that claimed it. Two DIFFERENT pages landing on one output
+  // file would silently overwrite each other (the second write wins, and the first
+  // page's URL is then served by the second page's content). Same-stem pages in
+  // different modules make that reachable, so the collision is resolved by
+  // qualifying the loser's filename rather than left to the filesystem.
+  const takenFiles = new Map()
+
+  // Claim `relFile` for `key`, qualifying it with the module coordinate if another
+  // page already holds it. Returns the file actually claimed.
+  function claimFile (relFile, key) {
+    if (!takenFiles.has(relFile)) { takenFiles.set(relFile, key); return relFile }
+    const module = key.includes(':') ? key.slice(0, key.indexOf(':')) : ''
+    const ext = path.extname(relFile)
+    const qualified = path.join(path.dirname(relFile), `${path.basename(relFile, ext)}-${module || 'root'}${ext}`)
+    takenFiles.set(qualified, key)
+    return qualified
+  }
 
   function categoryFile (relDir, label, position) {
     // link: null makes the category a pure, non-clickable grouping and disables
@@ -142,11 +205,11 @@ function buildPlan (roots, titles = new Map()) {
       const only = node.children.length === 1 ? node.children[0] : null
       if (only && only.type === 'page' && only.children.length) {
         categoryFile(dir, node.label, position)
-        if (!pages.has(only.stem)) {
-          pages.set(only.stem, {
-            relFile: path.join(dir, 'overview.mdx'), slug: '/' + only.stem, sidebarLabel: 'Overview', sidebarPosition: 0,
+        if (!pages.has(only.key)) {
+          pages.set(only.key, {
+            relFile: claimFile(path.join(dir, 'overview.mdx'), only.key), sidebarLabel: 'Overview', sidebarPosition: 0,
           })
-        } else duplicates.push(only.stem)
+        } else duplicates.push(only.key)
         let i = 1
         for (const grandchild of only.children) walk(grandchild, dir, i++)
         return true
@@ -162,15 +225,14 @@ function buildPlan (roots, titles = new Map()) {
       return true
     }
     // page
-    if (pages.has(node.stem)) { duplicates.push(node.stem); return false }
+    if (pages.has(node.key)) { duplicates.push(node.key); return false }
     if (node.children.length) {
       // Parent page -> category folder + an Overview page holding its content.
       const dir = path.join(parentDir, node.stem)
-      const label = node.label || titles.get(node.stem) || humanize(node.stem)
+      const label = node.label || titles.get(node.key) || humanize(node.stem)
       categoryFile(dir, label, position)
-      pages.set(node.stem, {
-        relFile: path.join(dir, 'overview.mdx'),
-        slug: '/' + node.stem,
+      pages.set(node.key, {
+        relFile: claimFile(path.join(dir, 'overview.mdx'), node.key),
         sidebarLabel: 'Overview',
         sidebarPosition: 0,
       })
@@ -179,11 +241,10 @@ function buildPlan (roots, titles = new Map()) {
       return true
     }
     // Leaf page.
-    const title = titles.get(node.stem)
+    const title = titles.get(node.key)
     const sidebarLabel = node.label && node.label !== title ? node.label : null
-    pages.set(node.stem, {
-      relFile: path.join(parentDir, node.stem + '.mdx'),
-      slug: '/' + node.stem,
+    pages.set(node.key, {
+      relFile: claimFile(path.join(parentDir, node.stem + '.mdx'), node.key),
       sidebarLabel,
       sidebarPosition: position,
     })
@@ -195,4 +256,4 @@ function buildPlan (roots, titles = new Map()) {
   return { pages, categories, duplicates }
 }
 
-module.exports = { parseNav, buildPlan, injectNavEntries, targetStem, folderName }
+module.exports = { parseNav, buildPlan, injectNavEntries, parseTarget, pageKey, keyStem, folderName }

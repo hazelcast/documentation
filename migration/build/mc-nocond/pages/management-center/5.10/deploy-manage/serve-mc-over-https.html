@@ -1,0 +1,371 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>In this tutorial, you&#8217;ll serve Management Center over HTTPS, using a self-signed certificate.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="overview"><a class="anchor" href="#overview"></a>Overview</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You will learn how to do the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Generate a self-signed certificate for Management Center.</p>
+</li>
+<li>
+<p>Use a variable replacer to encrypt the keystore password.</p>
+</li>
+<li>
+<p>Serve Management Center over HTTPS on localhost.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="prerequisites"><a class="anchor" href="#prerequisites"></a>Prerequisites</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To complete this tutorial, you need the following:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Requirements</th>
+<th class="tableblock halign-left valign-top">Useful resources</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Java KeyTool</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>To check if you have the Java KeyTool, run this command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">keytool --help</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you don&#8217;t see a list of commands, install Java.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Firefox browser</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><a href="https://www.mozilla.org/en-US/firefox/download">Download Firefox</a></p>
+</div>
+<div class="paragraph">
+<p>You can use any browser, but this tutorial uses Firefox because it&#8217;s simple to configure Firefox to trust self-signed certificates.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="create-a-key-pair"><a class="anchor" href="#create-a-key-pair"></a>Create a key pair</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To be able to use HTTPS, you need to generate a public/private key pair that Management Center can use to encrypt the HTTP traffic.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Use the following command to generate a key pair.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">keytool \
+-genkey \ <i class="conum" data-value="1"></i><b>(1)</b>
+-alias mc \ <i class="conum" data-value="2"></i><b>(2)</b>
+-keyalg RSA \ <i class="conum" data-value="3"></i><b>(3)</b>
+-validity 365 \ <i class="conum" data-value="4"></i><b>(4)</b>
+-keystore mc.keystore \ <i class="conum" data-value="5"></i><b>(5)</b>
+-storetype PKCS12 <i class="conum" data-value="6"></i><b>(6)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Generate a key pair.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Give this key pair an alias of <code>mc</code> to make it easy to manage it.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Use the RSA algorithm to generate the key pair.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>Make the key pair valid for one year.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>Store the private key and certificate chain in the <code>mc.keystore</code> keystore.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="6"></i><b>6</b></td>
+<td>Use the PKCS12 format to store the key.</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Enter the following password.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">mc-test123</code></pre>
+</div>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+This password is used only to make later steps easy to follow by copying and pasting commands. In a production environment, you should choose a secure password and store it in a safe place.
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Complete the questions in the prompt.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">Answer the following questions when prompted:
+What is your first and last name?
+[Unknown]:  &lt;user's name&gt;
+What is the name of your organizational unit?
+[Unknown]:  &lt;department name&gt;
+What is the name of your organization?
+[Unknown]:  &lt;company name&gt;
+What is the name of your City or Locality?
+[Unknown]:  &lt;city name&gt;
+What is the name of your State or Province?
+[Unknown]:  &lt;state name&gt;
+What is the two-letter country code for this unit?
+[Unknown]:  &lt;country name&gt;
+Enter yes to confirm the provided information is correct:
+Is CN=&lt;user's name&gt;, OU=&lt;department name&gt;, O="&lt;company name&gt;",
+L=&lt;city name&gt;, ST=&lt;state name&gt;, C=&lt;country name&gt;  correct?
+[no]:  yes
+Enter your desired keystore password:
+Enter key password for &lt;server&gt;
+(Return if same as keystore password)</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>You should see the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">Generating 2,048 bit RSA key pair and self-signed certificate (SHA256withRSA) with a validity of 365 days</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The key and certificate are stored in the <code>mc.keystore</code> file in your current directory.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="extract-a-self-signed-certificate-from-the-keystore"><a class="anchor" href="#extract-a-self-signed-certificate-from-the-keystore"></a>Extract a self-signed certificate from the keystore</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To allow Management Center to prove its identity, it needs a certificate that is signed with its private key.</p>
+</div>
+<div class="paragraph">
+<p>Use the following command to extract a self-signed certificate from the keystore.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">keytool -export -alias mc -keystore mc.keystore -file mc-public.cert</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You should see the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">Certificate stored in file &lt;mc-public.cert&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The signed certificate is stored in the <code>mc-public.cert</code> file in your current directory.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="encrypt-the-keystore-password"><a class="anchor" href="#encrypt-the-keystore-password"></a>Encrypt the keystore password</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For improved security, you can mask your keystore password by encrypting it with the built-in encryption replacer.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Create a file called <code>password</code>. You will use this file to store the master password that Management Center will need to encrypt and decrypt the keystore password.</p>
+</li>
+<li>
+<p>Inside the <code>password</code> file, add the following password: <code>/Za-uG3dDfpd,5.-</code>.</p>
+</li>
+<li>
+<p>Execute the encryption replacer to output the encrypted keystore password.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">java -cp hazelcast-management-center-5.10.0.jar \ <i class="conum" data-value="1"></i><b>(1)</b>
+     -Dhazelcast.mc.configReplacer.prop.passwordFile=/path/to/password \ <i class="conum" data-value="2"></i><b>(2)</b>
+     -Dhazelcast.mc.configReplacer.prop.passwordUserProperties=false \ <i class="conum" data-value="3"></i><b>(3)</b>
+     com.hazelcast.webmonitor.configreplacer.EncryptionReplacer \
+     "mc-test123" <i class="conum" data-value="4"></i><b>(4)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Add the Management Center Java file to the classpath. This file contains the <code>EncryptionReplacer</code> class.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Configure the replacer with the path to your password file.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Tell the replacer not to use the current user properties to encrypt the variable. This way, you can execute this command from any user and the result will be the same.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>Pass the replacer the keystore password that you want to encrypt.</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Copy your encrypted keystore password from the output.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">$ENC{h7kmetFZwh8=:531:dOsG5ezhSZiyBXY5JNx8gg==}</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="start-management-center"><a class="anchor" href="#start-management-center"></a>Start Management Center</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Start Management Center and pass it the information it needs to use the keystore.</p>
+<div class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li>
+<p><a id="tabset1_linux-and-mac"></a>Linux and Mac</p>
+</li>
+<li>
+<p><a id="tabset1_windows"></a>Windows</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="tabset1_linux-and-mac">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">hz-mc start -Dhazelcast.mc.tls.enabled=true \
+-Dhazelcast.mc.https.port=443 \ <i class="conum" data-value="1"></i><b>(1)</b>
+-Dhazelcast.mc.tls.enableHttpPort=true \ <i class="conum" data-value="2"></i><b>(2)</b>
+-Dhazelcast.mc.configReplacer.class=com.hazelcast.webmonitor.configreplacer.EncryptionReplacer \ <i class="conum" data-value="3"></i><b>(3)</b>
+-Dhazelcast.mc.configReplacer.prop.passwordFile=path/to/password \
+-Dhazelcast.mc.configReplacer.prop.passwordUserProperties=false \
+-Dhazelcast.mc.tls.keyStore=mc.keystore \
+-Dhazelcast.mc.tls.keyStorePassword='$ENC{h7kmetFZwh8=:531:dOsG5ezhSZiyBXY5JNx8gg==}' <i class="conum" data-value="4"></i><b>(4)</b></code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset1_windows">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">mc-start.cmd -Dhazelcast.mc.tls.enabled=true ^
+-Dhazelcast.mc.https.port=443 ^ <i class="conum" data-value="1"></i><b>(1)</b>
+-Dhazelcast.mc.tls.enableHttpPort=true ^ <i class="conum" data-value="2"></i><b>(2)</b>
+-Dhazelcast.mc.configReplacer.class=com.hazelcast.webmonitor.configreplacer.EncryptionReplacer ^ <i class="conum" data-value="3"></i><b>(3)</b>
+-Dhazelcast.mc.configReplacer.prop.passwordFile=path/to/password ^
+-Dhazelcast.mc.configReplacer.prop.passwordUserProperties=false ^
+-Dhazelcast.mc.tls.keyStore=mc.keystore ^
+-Dhazelcast.mc.tls.keyStorePassword='$ENC{h7kmetFZwh8=:531:dOsG5ezhSZiyBXY5JNx8gg==}' <i class="conum" data-value="4"></i><b>(4)</b></code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Override the default port of 8443 so that Management Center is available on the standard port 443.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Redirect HTTP traffic to HTTPS.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Tell Management Center to use the encryption replacer to decrypt variables that are prefixed with <code>$ENC</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>Use the encrypted form of the keystore password from the last step.</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Open Management Center in Firefox at https://localhost:443.</p>
+</li>
+<li>
+<p>Click <strong>Advanced</strong> and <strong>Accept the Risk and Continue</strong>.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>You should see that Management Center is being served over HTTPS.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="next-steps"><a class="anchor" href="#next-steps"></a>Next steps</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="tls-security" class="xref page">Explore TLS security topics</a> for Management Center.</p>
+</div>
+<div class="paragraph">
+<p>To allow all browsers to trust your certificate, have it signed by a trusted certificate authority.</p>
+</div>
+<div class="paragraph">
+<p>To learn more about variable replacers such as the encryption replacer and how you can implement your own, see <a href="variable-replacers" class="xref page">Variable replacers</a>.</p>
+</div>
+</div>
+</div>

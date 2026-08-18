@@ -1,0 +1,186 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>These release notes list any new features, enhancements, and fixes that were made between version 5.1 and 5.2.0 of Hazelcast Management Center (MC).</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="nf-520"><a class="anchor" href="#nf-520"></a>New Features</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><strong>SQL Browser:</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Separated the workflows for batch and streaming queries for Hazelcast Platform 5.2. [MC-1620]</p>
+</li>
+<li>
+<p>Added autocompletion support for the editors. [MC-1435]</p>
+</li>
+<li>
+<p>Added connector wizards for Kafka and File connectors. [MC-1435] [MC-1436]</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Introduced customizable tables, in terms of selected columns and order. [MC-1074]</p>
+</li>
+<li>
+<p>Introduced cluster connection diagnosis functionality. [MC-1332]</p>
+</li>
+<li>
+<p>Added Map Index statistics table. [MC-153]</p>
+</li>
+<li>
+<p>Added a chart for Tiered Storage usage monitoring. [MC-1478]</p>
+</li>
+<li>
+<p>Added support for Command Line Client (CLC). [MC-1548]</p>
+</li>
+<li>
+<p>Added health checks for the number of connected clients, and Tiered Storage metrics and configuration. [MC-1476] [MC-1477] [MC-1481] [MC-1581]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="enh-520"><a class="anchor" href="#enh-520"></a>Enhancements</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><strong>SQL Browser:</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>You can now get Map Browser information for a record in SQL query results. [MC-1438]</p>
+</li>
+<li>
+<p>Schema panel now can be hidden/shown. [MC-1395]</p>
+</li>
+<li>
+<p>You can now see an explanation why the suggested mapping cannot be provided. [MC-1448]</p>
+</li>
+<li>
+<p>Increased the speed of the Schema tab population. [MC-1336]</p>
+</li>
+<li>
+<p>Added a proper label for the Schema tab when connected to a Hazelcast Platform 5.0 cluster. [MC-1418]</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Updated RocksDB version to support Apple M1. [MC-1291]</p>
+</li>
+<li>
+<p>Increased log level for Jetty classes that log HTTP request information. [MC-1625]</p>
+</li>
+<li>
+<p>Introduced a property to configure SQL export cell size limit. [MC-1609]</p>
+</li>
+<li>
+<p>Introduced a property to configure a size limit for asynchronous table loading. [MC-1551]</p>
+</li>
+<li>
+<p>Introduced HealthCheck "WARNING" status. [MC-1686]</p>
+</li>
+<li>
+<p>Improved logging for RocksDB filesystem permission errors. [MC-1432]</p>
+</li>
+<li>
+<p>Improved Time Travel usability. [MC-1414]</p>
+</li>
+<li>
+<p>Time Travel is now disabled when metrics persistence is disabled. [MC-1463]</p>
+</li>
+<li>
+<p>Proper error message when Console is disabled on member. [MC-1434]</p>
+</li>
+<li>
+<p>Removed excessive Spring framework warnings. [MC-1041]</p>
+</li>
+<li>
+<p>MC no longer starts RocksDB for metrics persistence on unsupported operating systems (currently z/os). [MC-1486]</p>
+</li>
+<li>
+<p>Added progress indicator for Cluster remove operation. [MC-1471]</p>
+</li>
+<li>
+<p>TTL and Max Idle in Map Browser are shown as Unlimited if set to 0 or more than 1000 years. [MC-1392]</p>
+</li>
+<li>
+<p>Client version is shown even if the client stats are disabled. [MC-1611]</p>
+</li>
+<li>
+<p>Introduced a label for client filtering status in the left menu. [MC-1560]</p>
+</li>
+<li>
+<p>Improved CP Session metrics. [MC-1674]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="fixes-520"><a class="anchor" href="#fixes-520"></a>Fixes</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>MC no longer fails when receiving malformed client stats. [MC-1639] [MC-1307]</p>
+</li>
+<li>
+<p>MC no longer fails when the node limit is exceeded. [MC-1397]</p>
+</li>
+<li>
+<p>MC no longer throws OOME when it receives lots of Jet metrics. [MC-1532]</p>
+</li>
+<li>
+<p>MC no longer prints excessive messages about non-monotonic member timestamps. [MC-1347]</p>
+</li>
+<li>
+<p>MC no longer shows a target map in SQL connector wizard dropdown after the mapping is created. [MC-1638]</p>
+</li>
+<li>
+<p>Fixed disabled <strong>Rolling Upgrade</strong> button issue. [MC-1569]</p>
+</li>
+<li>
+<p>Fixed data recovery policy overlap on the <strong>Persistence</strong> page. [MC-1555]</p>
+</li>
+<li>
+<p>Fixed MC error when AP member joins cluster with CP members. [MC-1502]</p>
+</li>
+<li>
+<p>Fixed MC error when CP member is shut down and needs to be removed from CP Subsystem. [MC-1505]</p>
+</li>
+<li>
+<p>kbd:[Ctrl-C] now kills the MC container on Linux. [MC-1423]</p>
+</li>
+<li>
+<p>Fixed <strong>Preview</strong> button behavior on the <strong>Update config</strong> page. [MC-1394]</p>
+</li>
+<li>
+<p>Fixed an error when multiple persistent memory directories are configured. [MC-1379]</p>
+</li>
+<li>
+<p>Fixed WAN sync status calculation. [MC-1676]</p>
+</li>
+<li>
+<p>Fixed SQL Browser horizontal scrolling. [MC-1636]</p>
+</li>
+<li>
+<p>Fixed SQL Browser pagination controls inconsistency. [MC-1359]</p>
+</li>
+<li>
+<p>Fixed Promote member to CP dialog responsivity. [MC-1520]</p>
+</li>
+</ul>
+</div>
+</div>
+</div>

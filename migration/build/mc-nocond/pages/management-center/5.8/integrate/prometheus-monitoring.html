@@ -1,0 +1,348 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Prometheus is an open source monitoring system for metrics. You can export Hazelcast cluster metrics to a scrape endpoint in Management Center that Prometheus can consume. This allows you to monitor Hazelcast along with your other applications in the same monitoring tool.</p>
+</div>
+<div class="paragraph">
+<p>Management Center&#8217;s Prometheus Exporter automatically updates with any cluster changes and allows you to easily collect metrics for the whole cluster, or multiple clusters, from a single endpoint. Without it, you would have to scrape each member individually, manage any changes from scaling, restarts, and IP configuration, and collate the metrics from all members.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="enabling-the-prometheus-exporter"><a class="anchor" href="#enabling-the-prometheus-exporter"></a>Enabling the Prometheus Exporter</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To start exposing metrics via the Prometheus Exporter, set the <code>hazelcast.mc.prometheusExporter.enabled</code> system property to <code>true</code>.</p>
+</div>
+<div class="paragraph">
+<p>Metrics are exposed to the <code>/metrics</code> endpoint, which is the Prometheus default. The endpoint provides metrics for all clusters that Management Center is connected to.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Management Center also reformats the metrics to align with Prometheus best practice recommendations. See <a href="prometheus-metrics" class="xref page">Prometheus metrics</a> for details.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="disabling-timestamps"><a class="anchor" href="#disabling-timestamps"></a>Disabling Timestamps</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Management Center collects metrics with the timestamp of individual members, and sends this timestamp to Prometheus. Prometheus discards metrics with the oldest timestamps. You can disable sending timestamps so that your monitoring system continues to operate when clock shifts happen in the cluster.</p>
+</div>
+<div class="paragraph">
+<p>To stop sending timestamps to Prometheus, set the <a href="#prometheus-timestamp"><code>hazelcast.mc.prometheusExporter.timestamp.enabled</code></a> property to <code>false</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configuring-prometheus"><a class="anchor" href="#configuring-prometheus"></a>Configuring Prometheus</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>After enabling the Prometheus Exporter, you can configure your Prometheus YAML file to scrape metrics from Management Center.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+For guidance, see the <a href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/#scrape_config">Prometheus configuration documentation</a>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>To allow Prometheus to scrape metrics from Management Center, set the <code>static_configs.targets</code> parameter to the URL of your Management Center instance.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">scrape_configs:
+  - job_name: 'HZ MC'
+    # scheme defaults to HTTP.
+    static_configs:
+    - targets: ['localhost:8080'] # replace this address with the network address of Hazelcast Management Center</code></pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="authenticating-the-scrape-endpoint"><a class="anchor" href="#authenticating-the-scrape-endpoint"></a>Authenticating the Scrape Endpoint</h3>
+<div class="paragraph">
+<p>To secure the scrape endpoint, you can set up basic authentication.</p>
+</div>
+<div class="paragraph">
+<p>To set up basic authentication, use the <code>set prometheus-auth</code> task of the <code>hz-mc conf</code> tool. Replace the <code>&lt;my-user&gt;</code> and <code>&lt;my-pass&gt;</code> placeholders with your chosen username and password.</p>
+</div>
+<div class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li>
+<p><a id="tabset1_linux-and-mac"></a>Linux and Mac</p>
+</li>
+<li>
+<p><a id="tabset1_windows"></a>Windows</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="tabset1_linux-and-mac">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">hz-mc conf set prometheus-auth &lt;my-user&gt; &lt;my-pass&gt;</code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset1_windows">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">mc-conf.bat set prometheus-auth &lt;my-user&gt; &lt;my-pass&gt;</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Then, add the credentials to the <code>basic_auth</code> parameter of the Prometheus YAML file:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">  - job_name: 'HZ MC'
+    static_configs:
+    - targets: ['localhost:8080']
+    basic_auth:
+      username: my-user
+      password: my-pass</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="resetting-the-authentication-credentials"><a class="anchor" href="#resetting-the-authentication-credentials"></a>Resetting the Authentication Credentials</h3>
+<div class="paragraph">
+<p>To reset authentication credentials for the scrape endpoint, use the <code>security reset</code> task of the <code>hz-mc conf</code> tool. You must stop Management Center to apply this change.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+This task will also delete all users from the database.
+</td>
+</tr>
+</table>
+</div>
+<div class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li>
+<p><a id="tabset2_linux-and-mac"></a>Linux and Mac</p>
+</li>
+<li>
+<p><a id="tabset2_windows"></a>Windows</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="tabset2_linux-and-mac">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">hz-mc conf security reset</code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset2_windows">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">mc-conf.bat security reset</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="filtering-metrics"><a class="anchor" href="#filtering-metrics"></a>Filtering Metrics</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>By default, Management Center exports all metrics that are reported by the cluster.</p>
+</div>
+<div class="paragraph">
+<p>To filter the metrics that are exposed to the scrape endpoint, use the <code>hazelcast.mc.prometheusExporter.filter.metrics.included</code>
+and <code>hazelcast.mc.prometheusExporter.filter.metrics.excluded</code> system properties.</p>
+</div>
+<div class="paragraph">
+<p>For example, this configuration exposes only the following metrics:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>hz_topic_totalReceivedMessages</code></p>
+</li>
+<li>
+<p><code>hz_map_totalPutLatency</code></p>
+</li>
+</ul>
+</div>
+<div class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li>
+<p><a id="tabset3_linux-and-mac"></a>Linux and Mac</p>
+</li>
+<li>
+<p><a id="tabset3_windows"></a>Windows</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="tabset3_linux-and-mac">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">hz-mc start -Dhazelcast.mc.prometheusExporter.enabled=true \
+  -Dhazelcast.mc.prometheusExporter.filter.metrics.included=hz_topic_totalReceivedMessages,hz_map_totalPutLatency</code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset3_windows">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">mc-start.cmd -Dhazelcast.mc.prometheusExporter.enabled=true ^
+  -Dhazelcast.mc.prometheusExporter.filter.metrics.included=hz_topic_totalReceivedMessages,hz_map_totalPutLatency</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>This configuration exposes all metrics except the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>hz_os_systemLoadAverage,hz_memory_freeHeap</code></p>
+</li>
+</ul>
+</div>
+<div class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li>
+<p><a id="tabset4_linux-and-mac"></a>Linux and Mac</p>
+</li>
+<li>
+<p><a id="tabset4_windows"></a>Windows</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="tabset4_linux-and-mac">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">hz-mc start -Dhazelcast.mc.prometheusExporter.enabled=true \
+  -Dhazelcast.mc.prometheusExporter.filter.metrics.excluded=hz_os_systemLoadAverage,hz_memory_freeHeap</code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset4_windows">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">mc-start.cmd -Dhazelcast.mc.prometheusExporter.enabled=true ^
+  -Dhazelcast.mc.prometheusExporter.filter.metrics.excluded=hz_os_systemLoadAverage,hz_memory_freeHeap</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+As described in <a href="prometheus-metrics" class="xref page">Prometheus metrics</a>, Management Center reformats metrics to align with Prometheus best practice recommendations. Filtering matches against metrics in any format. For example, if you exclude <code>map.getCount</code>, you will exclude <code>hz_map_getCount</code> and <code>hazelcast_map_operations_total</code>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="overriding-the-default-port"><a class="anchor" href="#overriding-the-default-port"></a>Overriding the Default Port</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>By default, metrics are exposed on the same port as the Management Center web interface. To
+override the port number, use the <code>-Dhazelcast.mc.prometheusExporter.port</code> system property.</p>
+</div>
+<div class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li>
+<p><a id="tabset5_linux-and-mac"></a>Linux and Mac</p>
+</li>
+<li>
+<p><a id="tabset5_windows"></a>Windows</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="tabset5_linux-and-mac">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">hz-mc start -Dhazelcast.mc.prometheusExporter.enabled=true \
+  -Dhazelcast.mc.prometheusExporter.port=2222</code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset5_windows">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">mc-start.cmd -Dhazelcast.mc.prometheusExporter.enabled=true ^
+  -Dhazelcast.mc.prometheusExporter.port=2222</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>In this example, the Prometheus endpoint will be available at <code><a href="http://localhost:2222/metrics" class="bare">http://localhost:2222/metrics</a></code>. To allow Prometheus to scrape metrics from Management Center, make sure to set the <code>static_configs.targets</code> parameter to this port.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">scrape_configs:
+  - job_name: 'HZ MC'
+    static_configs:
+    - targets: ['localhost:2222']</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="visualizing-metrics-in-grafana"><a class="anchor" href="#visualizing-metrics-in-grafana"></a>Visualizing Metrics in Grafana</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Grafana is an open source data visualization solution that allows you to build monitoring dashboards from your Prometheus metrics. To start visualizing Prometheus metrics in Grafana, refer to the <a href="https://grafana.com/docs/grafana/latest/getting-started/get-started-grafana-prometheus/">Grafana documentation</a>. Hazelcast provides an <a href="https://grafana.com/grafana/dashboards/13183">example dashboard</a> to help you get started.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="next-steps"><a class="anchor" href="#next-steps"></a>Next Steps</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Learn more about the <a href="../deploy-manage/mc-conf" class="xref page"><code>hz-mc conf</code> tool</a>.</p>
+</div>
+<div class="paragraph">
+<p>Explore <a href="../deploy-manage/system-properties" class="xref page">system properties</a> and their definitions.</p>
+</div>
+</div>
+</div>

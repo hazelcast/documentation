@@ -51,19 +51,30 @@ function droppedUrls (dispositions, manifest) {
 }
 
 // Nav entries the migration ADDS for a component: a `keep-in-nav` orphan whose
-// entry carries a `nav.after` placement (the stem of the sibling it follows).
+// entry carries a `nav.after` placement (the nav key of the sibling it follows).
 // The source nav.adoc is left untouched; the injection happens in-memory during
 // conversion, so the fix is reproducible on every run and reviewable as data.
-// Returns [{ stem, after }].
+// Returns [{ key, after }], where both are the converter's module-qualified nav
+// keys (`module:stem`, bare for ROOT — Antora's own coordinate). A logical key's
+// `module/` segment becomes the `module:` coordinate: the injected line is nav
+// AsciiDoc, so it has to name the module the way an xref does, and a bare stem
+// would resolve against ROOT and point at nothing.
 function navInjectionsFor (dispositions, component) {
   const out = []
   for (const [key, entry] of dispositions) {
     if (!entry || entry.disposition !== 'keep-in-nav' || !entry.nav) continue
     const [comp, rest] = [key.slice(0, key.indexOf(':')), key.slice(key.indexOf(':') + 1)]
     if (comp !== component) continue
-    out.push({ stem: rest.split('/').pop(), after: entry.nav.after })
+    out.push({ key: navKey(rest), after: entry.nav.after })
   }
   return out
+}
+
+// A logical key's page part (`[module/]relative`) -> the nav coordinate
+// (`[module:]relative`). ROOT-module pages carry no module segment in either form.
+const navKey = (rest) => {
+  const i = rest.indexOf('/')
+  return i === -1 ? rest : `${rest.slice(0, i)}:${rest.slice(i + 1)}`
 }
 
 module.exports = { loadDispositions, keyOf, isDropped, droppedUrls, navInjectionsFor, ALLOWLIST }

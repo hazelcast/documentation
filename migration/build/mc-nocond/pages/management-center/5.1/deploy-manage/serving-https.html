@@ -1,0 +1,183 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Serving Management Center over HTTPS secures communication between Management Center and HTTP clients such as web browsers that are connected to it.</p>
+</div>
+<div class="paragraph">
+<p>To serve Management Center over HTTPS, you need to enable TLS in the Management Center configuration. This topic explains the options you have for serving Management Center over HTTPS. For a tutorial, see <a href="serve-mc-over-https" class="xref page">Serve Management Center over HTTPS</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="enabling-tls-for-management-center"><a class="anchor" href="#enabling-tls-for-management-center"></a>Enabling TLS for Management Center</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To enable TLS, you need to do the following:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Generate key pairs and a signed certificate. If you are using a self-signed certificate, see <a href="#self-signed-certificates">Self-Signed Certificates</a> on this page.</p>
+</li>
+<li>
+<p>If your Hazelcast clusters use mutual authentication, add the signed Management Center certificate to your cluster members' truststores, and restart them. See <a href="../../../hazelcast/5.1/security/tls-ssl#mutual-authentication" class="xref page">Mutual Authentication</a> in the Platform documentation.</p>
+</li>
+<li>
+<p>Start Management Center with the following system properties:</p>
+<div class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li>
+<p><a id="tabset1_linux-and-mac"></a>Linux and Mac</p>
+</li>
+<li>
+<p><a id="tabset1_windows"></a>Windows</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="tabset1_linux-and-mac">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">hz-mc start -Dhazelcast.mc.tls.enabled=true \
+     -Dhazelcast.mc.tls.keyStore=/path/to/keystore \
+     -Dhazelcast.mc.tls.keyStorePassword=yourkeystorepassword</code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset1_windows">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">mc-start.cmd -Dhazelcast.mc.tls.enabled=true ^
+     -Dhazelcast.mc.tls.keyStore=/path/to/keystore ^
+     -Dhazelcast.mc.tls.keyStorePassword=yourkeystorepassword</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+To encrypt the keystore/truststore passwords and pass them
+as command line arguments in encrypted form, see <a href="variable-replacers" class="xref page">Variable Replacers</a>.
+</td>
+</tr>
+</table>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>When TLS is enabled, you can access Management Center over HTTPS on port 8443: <code>https://localhost:8443</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="self-signed-certificates"><a class="anchor" href="#self-signed-certificates"></a>Self-Signed Certificates</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>It&#8217;s not always necessary to have certificates signed by a well-known certificate authority. For example, you may want to set up HTTPS on a private network or a staging environment. In this case, you can use a self-signed certificate.</p>
+</div>
+<div class="paragraph">
+<p>If you want to use a self-signed certificate, do one of the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Create the certificate with the hostname of the machine you will
+deploy the Management Center on.</p>
+</li>
+<li>
+<p>Disable hostname verification by setting the <a href="system-properties#hazelcast-mc-disablehostnameverification" class="xref page"><code>hazelcast.mc.disableHostnameVerification</code> property</a> to <code>true</code>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Otherwise, you may see this exceptions in the member logs:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">javax.net.ssl.SSLHandshakeException: java.security.cert.CertificateException:
+No subject alternative names matching IP address 127.0.0.1 found</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When using a self-signed certificate, your browser may warn you that the connection is not secure. If so, add your certficate to the browsers list of trusted certificates.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="overrriding-the-default-https-port"><a class="anchor" href="#overrriding-the-default-https-port"></a>Overrriding the Default HTTPS port</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To override the HTTPS port, you can use the <code>hazelcast.mc.https.port</code>
+property when starting the Management Center. For example:</p>
+</div>
+<div class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li>
+<p><a id="tabset2_linux-and-mac"></a>Linux and Mac</p>
+</li>
+<li>
+<p><a id="tabset2_windows"></a>Windows</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="tabset2_linux-and-mac">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">hz-mc start -Dhazelcast.mc.tls.enabled=true \
+     -Dhazelcast.mc.tls.keyStore=/path/to/keystore \
+     -Dhazelcast.mc.tls.keyStorePassword=yourkeystorepassword \
+     -Dhazelcast.mc.https.port=443</code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="tabset2_windows">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">mc-start.cmd -Dhazelcast.mc.tls.enabled=true ^
+     -Dhazelcast.mc.tls.keyStore=/path/to/keystore ^
+     -Dhazelcast.mc.tls.keyStorePassword=yourkeystorepassword ^
+     -Dhazelcast.mc.https.port=443</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>This command starts the Management Center on HTTPS port 443.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="enabling-http-port"><a class="anchor" href="#enabling-http-port"></a>Redirecting the HTTP Port to HTTPS</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>By default, the HTTP port is disabled when you enable TLS. If you want to
+have an open HTTP port that redirects to the HTTPS port, set the <a href="system-properties#hazelcast-mc-tls-enablehttpport" class="xref page"><code>hazelcast.mc.tls.enableHttpPort</code> property</a> to <code>true</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="mutual-authentication"><a class="anchor" href="#mutual-authentication"></a>Mutual Authentication</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To make sure that only authenticated HTTP clients such as web browsers or cURL can connect to Management Center, you can enable mutual authentication.</p>
+</div>
+<div class="paragraph">
+<p>When mutual authentication is enabled, HTTP clients need to present their own TLS certificate to Management Center before they are allowed to connect. You can store trusted clients' TLS certificates in the Management Center truststore so that it can authenticate them.</p>
+</div>
+<div class="paragraph">
+<p>To enable mutual authentication,
+you need to use the <a href="system-properties#hazelcast-mc-tls-mutualauthentication" class="xref page"><code>hazelcast.mc.tls.mutualAuthentication</code> property</a>.</p>
+</div>
+</div>
+</div>

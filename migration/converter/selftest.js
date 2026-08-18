@@ -24,7 +24,7 @@ const { resolveHref } = require('./lib/links')
 const { convertBody } = require('./lib/html-to-mdx')
 const { classifyHref } = require('../fidelity/lib/links')
 const { collectOccurrences, decide, slugFor, componentNameFor, parseId } = require('./lib/partials')
-const { parseNav, buildPlan, injectNavEntries, targetStem, folderName } = require('./lib/nav')
+const { parseNav, buildPlan, injectNavEntries, parseTarget, pageKey, folderName } = require('./lib/nav')
 const { wrapRefs, wrappableRefs } = require('../antora-extension/mark-attributes')
 const substitute = require('../../plugins/lib/substitute-attributes')
 
@@ -290,12 +290,34 @@ const renderedCode = (md) => {
   ok('decide: version-scoped import base (no cross-version partial bleed)')
 }
 
-// --- nav: target stem + folder name ------------------------------------------
+// --- nav: target parsing + folder name ---------------------------------------
+// SPEC: a nav target's KEY must identify the page, and a multi-module component
+// has same-named pages in different modules (management-center has 13, across 5
+// name groups), so the key has to carry the module. It is Antora's own coordinate
+// so an injected nav line can be written with it verbatim. The bare `stem` remains
+// the page's NAME, for folders and humanised labels.
 {
-  assert.strictEqual(targetStem('install.adoc'), 'install', 'plain target')
-  assert.strictEqual(targetStem('mymod:dir/page.adoc#frag'), 'page', 'strips module, path, and fragment')
+  assert.deepStrictEqual(parseTarget('install.adoc'), { key: 'install', stem: 'install' },
+    'plain (ROOT-module) target: key is the bare stem')
+  assert.deepStrictEqual(parseTarget('mymod:page.adoc#frag'), { key: 'mymod:page', stem: 'page' },
+    'module coordinate is kept in the key; the fragment is dropped')
+  assert.deepStrictEqual(parseTarget('ROOT:page.adoc'), { key: 'page', stem: 'page' },
+    'an explicit ROOT coordinate keys the same as writing no coordinate at all')
+  assert.deepStrictEqual(parseTarget('mymod:dir/page.adoc'), { key: 'mymod:dir/page', stem: 'page' },
+    'a page in a module subdir keeps its path in the key, but not in the stem')
+  assert.deepStrictEqual(parseTarget('5.7@comp:mymod:page.adoc'),
+    { key: 'mymod:page', stem: 'page' }, 'version@ and component coordinates are stripped; the module is the last one')
+  // The two same-stem pages that used to collide must now be distinct keys.
+  assert.notStrictEqual(parseTarget('clusters:dashboard.adoc').key, parseTarget('cp-subsystem:dashboard.adoc').key,
+    'same stem in two modules -> two different keys')
+  // pageKey is the page-side derivation; it must agree with the nav side exactly,
+  // or a page silently misses the nav entry that names it.
+  assert.strictEqual(pageKey('clusters', 'dashboard'), parseTarget('clusters:dashboard.adoc').key,
+    'pageKey (manifest side) and parseTarget (nav side) agree')
+  assert.strictEqual(pageKey('ROOT', 'ask-ai'), parseTarget('ask-ai.adoc').key,
+    'pageKey leaves ROOT implicit, as the nav does')
   assert.strictEqual(folderName('Data Structures & Maps'), 'data-structures-maps', 'label -> kebab folder name')
-  ok('targetStem / folderName: nav target and label normalisation')
+  ok('parseTarget / pageKey / folderName: nav target and label normalisation')
 }
 
 // --- nav: parse the nav.adoc grammar -----------------------------------------
@@ -319,17 +341,46 @@ const renderedCode = (md) => {
 {
   const path = require('node:path')
 
-  // Correctness property (URL preservation, the migration's actual requirement):
-  // whatever the folder layout, EVERY page's slug must reproduce its flat Antora
-  // URL, i.e. '/' + stem. The file/category layout below it is a free choice.
+  // Correctness property: a plan entry supplies the file a page is WRITTEN to, so
+  // two distinct pages sharing one relFile means the second write destroys the
+  // first and one of the two URLs then serves the other's content. Whatever the
+  // folder layout, the map from key to relFile must stay injective.
+  // (The slug — the actual URL preserver — is deliberately NOT the plan's business;
+  // convert.js derives it from the page's real URL. See buildPlan's header.)
   const plan = buildPlan(parseNav([
     '.Guide',
     '* xref:intro.adoc[Intro]',
     '* xref:section.adoc[Section]', // parent page -> Overview
     '** xref:child.adoc[Child]',
   ].join('\n')))
-  for (const [stem, page] of plan.pages) assert.strictEqual(page.slug, '/' + stem, `slug preserves the URL for ${stem}`)
-  ok('buildPlan: every page slug reproduces its flat Antora URL (URL preservation)')
+  const files = [...plan.pages.values()].map((p) => p.relFile)
+  assert.strictEqual(new Set(files).size, files.length, 'no two planned pages share an output file')
+  assert.ok([...plan.pages.values()].every((p) => !('slug' in p)),
+    'the plan carries no slug: guessing a URL from the nav is what drops module segments')
+  ok('buildPlan: distinct pages never share an output file')
+
+  // --- SPEC: same-stem pages in different modules -----------------------------
+  // The multi-module case (management-center). Requirement stated independently of
+  // the walk: three pages named `dashboard` in three modules are three pages, so
+  // the plan must hold three entries, write three files, and report no duplicate.
+  {
+    const multi = buildPlan(parseNav([
+      '.Monitor',
+      '* xref:clusters:dashboard.adoc[Cluster]',
+      '* xref:cp-subsystem:dashboard.adoc[CP Subsystem]',
+      '* xref:monitor-streaming:dashboard.adoc[Streaming]',
+    ].join('\n')))
+    assert.strictEqual(multi.pages.size, 3, 'three same-named pages in three modules -> three plan entries')
+    assert.deepStrictEqual(multi.duplicates, [],
+      'they are NOT duplicates: a duplicate means one page listed twice, not two pages named alike')
+    const multiFiles = [...multi.pages.values()].map((p) => p.relFile)
+    assert.strictEqual(new Set(multiFiles).size, 3, 'each gets its own output file')
+    // Placed in ONE nav folder, the bare filenames collide; the module coordinate
+    // is what disambiguates, rather than the filesystem silently picking a winner.
+    assert.ok(multiFiles.some((f) => /dashboard-(clusters|cp-subsystem|monitor-streaming)\.mdx$/.test(f)),
+      'a filename collision within one folder is resolved by qualifying with the module')
+    ok('buildPlan: same-stem pages in different modules stay distinct pages')
+  }
 
   // --- SPEC: migration-injected nav entries ----------------------------------
   // A page missing from nav.adoc gets no plan entry, so it would be emitted at
@@ -344,12 +395,11 @@ const renderedCode = (md) => {
     const asIfPresent = ['.Reference', '* xref:commands.adoc[Command Reference]',
       '** xref:cfg.adoc[]', '** xref:cpmap.adoc[]', '** xref:demo.adoc[]'].join('\n')
 
-    const injected = buildPlan(parseNav(injectNavEntries(source, [{ stem: 'cpmap', after: 'cfg' }])))
+    const injected = buildPlan(parseNav(injectNavEntries(source, [{ key: 'cpmap', after: 'cfg' }])))
     const expected = buildPlan(parseNav(asIfPresent))
 
     assert.deepStrictEqual(injected.pages.get('cpmap'), expected.pages.get('cpmap'),
       'an injected page is planned exactly as if nav.adoc had listed it')
-    assert.strictEqual(injected.pages.get('cpmap').slug, '/cpmap', 'injection preserves the flat URL')
     // Placement: it lands between its anchor and the next sibling, and pushes
     // that sibling down — i.e. it is really IN the order, not appended.
     const pos = (p, s) => p.pages.get(s).sidebarPosition
@@ -358,11 +408,17 @@ const renderedCode = (md) => {
     assert.strictEqual(pos(injected, 'demo'), pos(expected, 'demo'),
       'the displaced sibling gets the same position it would have had')
     // Injection is by ANCHOR, not by line number: same anchor, different nav shape.
-    const deeper = injectNavEntries('.R\n* xref:top.adoc[T]\n** xref:cfg.adoc[]', [{ stem: 'cpmap', after: 'cfg' }])
+    const deeper = injectNavEntries('.R\n* xref:top.adoc[T]\n** xref:cfg.adoc[]', [{ key: 'cpmap', after: 'cfg' }])
     assert(/^\*\* xref:cpmap\.adoc\[\]$/m.test(deeper), 'injected entry copies its anchor\'s depth')
+    // A module-qualified key must inject a MODULE-QUALIFIED xref: a bare stem would
+    // resolve against ROOT and the nav entry would point at nothing.
+    const inMod = injectNavEntries('.R\n* xref:mymod:cfg.adoc[]', [{ key: 'mymod:cpmap', after: 'mymod:cfg' }])
+    assert(/^\* xref:mymod:cpmap\.adoc\[\]$/m.test(inMod), 'injected entry names its module as an xref coordinate')
+    assert(buildPlan(parseNav(inMod)).pages.has('mymod:cpmap'),
+      'and the injected line round-trips back to the key it came from')
     // A missing anchor must be loud: silently skipping would leave the page an
     // orphan at the component root, the exact state injection exists to fix.
-    assert.throws(() => injectNavEntries(source, [{ stem: 'cpmap', after: 'nope' }]), /anchor/i,
+    assert.throws(() => injectNavEntries(source, [{ key: 'cpmap', after: 'nope' }]), /anchor/i,
       'a missing anchor throws rather than silently doing nothing')
     assert.strictEqual(injectNavEntries(source, []), source, 'no injections leaves the nav byte-identical')
     ok('injectNavEntries: injected page is planned as if the nav had listed it')

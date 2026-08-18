@@ -1,0 +1,945 @@
+---
+title: "Prometheus metrics"
+sidebar_position: 1
+slug: /integrate/prometheus-metrics
+enterprise: true
+---
+
+Management Center automatically reformats all Hazelcast cluster metrics for compatibility with Prometheus. In addition, Management Center updates a subset of metrics to align with Prometheus best practice recommendations. This makes it easier to construct complex queries, build dashboards, and work alongside metrics from other applications.
+
+By default, Management Center exposes two versions of metrics based on <Variable href="/hazelcast/{page-latest-supported-hazelcast}/list-of-metrics" text="Hazelcast’s JMX metrics system"/>:
+
+- **Version 1 (V1) metrics** apply a basic transformation for compatibility with Prometheus:
+
+  - Convert `.` to `_`
+  - Add `hz_` prefix
+- **Version 2 (V2) metrics (currently in BETA)** apply an advanced transformation for conformity with [Prometheus naming conventions](https://prometheus.io/docs/practices/naming/):
+
+  - Use `snake_case`
+  - Add `hazelcast_` prefix
+  - Update metric names where appropriate
+  - Combine related metrics and add labels
+  - Convert to recommended base units:
+
+    - Time in seconds
+    - Memory in bytes
+    - Percentages as ratios (for example, 50% converts to 0.5)
+  - Append units to metric names
+  - Remove unit labels
+  - Append `_total` to accumulated metrics
+
+You can optionally [change which set of metrics is exposed](#config).
+
+The following examples illustrate the differences between the V1 and V2 metrics.
+
+- Rename and remove `unit` label, add `_total` suffix:
+
+  ```none
+  # V1
+  hz_map_queryCount{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="COUNT",} 0.0 1737715903399
+  # V2
+  hazelcast_map_queries_total{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",} 0.0 1737715903399
+  ```
+- Rename and append unit, remove `unit` label, convert value (1.7x10<sup>12</sup> milliseconds to 1.7x10<sup>9</sup> seconds):
+
+  ```none
+  # V1
+  hz_map_creationTime{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="MS",} 1.737715861118E12 1737715903399
+  # V2
+  hazelcast_map_creation_timestamp_seconds{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",} 1.737715861118E9 1737715903399
+  ```
+- Rename and append unit, remove `unit` label, add `remove` label:
+
+  ```none
+  # V1
+  hz_map_totalMaxRemoveLatency{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="MS",} 0.0 1737715903399
+  # V2
+  hazelcast_map_latency_max_seconds{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",operation="remove",} 0.0 1737715903399
+  ```
+- Rename, append unit suffix and `_total` suffix, remove `unit` label, add `remove` label, convert value from milliseconds to seconds:
+
+  ```none
+  # V1
+  hz_map_totalPutLatency{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="MS",} 2019.0 1743601193973
+  # V2
+  hazelcast_map_latency_seconds_total{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",operation="put",} 2.019 1743601193973
+  ```
+
+## Change the metrics version {/* #config */}
+
+To change which set of metrics is exposed to Prometheus, update the `hazelcast.mc.prometheusExporter.printers` system property:
+
+- V1: `hazelcast.mc.prometheusExporter.printers=V1`
+- V2: `hazelcast.mc.prometheusExporter.printers=V2`
+- V1 and V2 (default): `hazelcast.mc.prometheusExporter.printers=V1,V2`
+
+See [System properties and environment variables](../../deploy-and-manage/configuration/system-properties.mdx).
+
+:::important
+
+If you set the property to `V2`, Management Center will only expose the subset of metrics that have updated versions available.
+
+:::
+
+## Metrics list
+
+The following table lists all V2 metrics with their V1 equivalents. The full <Variable href="/hazelcast/{page-latest-supported-hazelcast}/list-of-metrics" text="list of Hazelcast metrics"/> and descriptions is provided in the Hazelcast Platform documentation.
+
+In some cases, several V1 metrics are combined into a single V2 metric differentiated by labels. For example, `hazelcast_map_operations_total` replaces `hz_map_getCount` and `hz_map_setCount` by adding `operation="get"` and `operation="set"` labels.
+
+<details>
+<summary>Map</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| map\_backupCount | map\_backups\_total | n/a |
+| map\_backupEntryCount | map\_backup\_entries\_total | n/a |
+| map\_backupEntryMemoryCost | map\_backup\_entries\_memory\_cost\_bytes | n/a |
+| map\_creationTime | map\_creation\_timestamp\_seconds | n/a |
+| map\_dirtyEntryCount | map\_dirty\_entries\_total | n/a |
+| map\_evictionCount | map\_evictions\_total | n/a |
+| map\_expirationCount | map\_expirations\_total | n/a |
+| map\_getCount | map\_operations\_total | operation=get |
+| map\_heapCost | map\_heap\_cost\_bytes | n/a |
+| map\_indexedQueryCount | map\_indexed\_queries\_total | n/a |
+| map\_lastAccessTime | map\_last\_access\_timestamp\_seconds | n/a |
+| map\_lastUpdateTime | map\_last\_update\_timestamp\_seconds | n/a |
+| map\_lockedEntryCount | map\_locked\_entries\_total | n/a |
+| map\_merkleTreesCost | map\_merkle\_trees\_cost\_bytes | n/a |
+| map\_numberOfEvents | map\_events\_total | n/a |
+| map\_numberOfOtherOperations | map\_operations\_total | operation=other |
+| map\_ownedEntryCount | map\_owned\_entries\_total | n/a |
+| map\_ownedEntryMemoryCost | map\_owned\_entry\_memory\_cost\_bytes | n/a |
+| map\_putCount | map\_operations\_total | operation=put |
+| map\_queryCount | map\_queries\_total | n/a |
+| map\_removeCount | map\_operations\_total | operation=remove |
+| map\_setCount | map\_operations\_total | operation=set |
+| map\_hits | map\_hits\_total | n/a |
+| map\_totalGetLatency | map\_latency\_seconds\_total | operation=get |
+| map\_totalMaxGetLatency | map\_latency\_max\_seconds | operation=get |
+| map\_totalPutLatency | map\_latency\_seconds\_total | operation=put |
+| map\_totalMaxPutLatency | map\_latency\_max\_seconds | operation=put |
+| map\_totalRemoveLatency | map\_latency\_seconds\_total | operation=remove |
+| map\_totalMaxRemoveLatency | map\_latency\_max\_seconds | operation=remove |
+| map\_totalSetLatency | map\_latency\_seconds\_total | operation=set |
+| map\_totalMaxSetLatency | map\_latency\_max\_seconds | operation=set |
+| map\_index\_creationTime | map\_index\_creation\_timestamp\_seconds | n/a |
+| map\_index\_hitCount | map\_index\_hits\_total | n/a |
+| map\_index\_insertCount | map\_index\_inserts\_total | n/a |
+| map\_index\_memoryCost | map\_index\_memory\_cost\_bytes | n/a |
+| map\_index\_queryCount | map\_index\_queries\_total | n/a |
+| map\_index\_removeCount | map\_index\_removes\_total | n/a |
+| map\_index\_totalInsertLatency | map\_index\_latency\_seconds\_total | operation=insert |
+| map\_index\_totalRemoveLatency | map\_index\_latency\_seconds\_total | operation=remove |
+| map\_index\_totalUpdateLatency | map\_index\_latency\_seconds\_total | operation=update |
+| map\_index\_updateCount | map\_index\_updates\_total | n/a |
+
+</details>
+
+<details>
+<summary>Set</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| set\_creationTime | set\_creation\_timestamp\_seconds | n/a |
+| set\_lastAccessTime | set\_last\_access\_timestamp\_seconds | n/a |
+| set\_lastUpdateTime | set\_last\_update\_timestamp\_seconds | n/a |
+
+</details>
+
+<details>
+<summary>List</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| list\_creationTime | list\_creation\_timestamp\_seconds | n/a |
+| list\_lastAccessTime | list\_last\_access\_timestamp\_seconds | n/a |
+| list\_lastUpdateTime | list\_last\_update\_timestamp\_seconds | n/a |
+
+</details>
+
+<details>
+<summary>Operating System</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| os.committedVirtualMemorySize | os\_committed\_virtual\_memory\_size\_bytes | n/a |
+| os.freePhysicalMemorySize | os\_free\_physical\_memory\_size\_bytes | n/a |
+| os.freeSwapSpaceSize | os\_free\_swap\_space\_size\_bytes | n/a |
+| os.maxFileDescriptorCount | os\_max\_file\_descriptor\_total | n/a |
+| os.openFileDescriptorCount | os\_open\_file\_descriptor\_total | n/a |
+| os.processCpuLoad | os\_process\_cpu\_load\_ratio | n/a |
+| os.processCpuTime | os\_process\_cpu\_time\_seconds | n/a |
+| os.systemCpuLoad | os\_system\_cpu\_load\_ratio | n/a |
+| os.systemLoadAverage | os\_system\_load\_average\_ratio | n/a |
+| os.totalPhysicalMemorySize | os\_total\_physical\_memory\_size\_bytes | n/a |
+| os.totalSwapSpaceSize | os\_total\_swap\_space\_size\_bytes | n/a |
+
+</details>
+
+<details>
+<summary>Events</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| event.eventQueueSize | event\_queue\_size\_total | n/a |
+| event.eventsProcessed | event\_processed\_total | n/a |
+| event.listenerCount | event\_listeners\_total | n/a |
+| event.publicationCount | event\_publications\_total | n/a |
+| event.queueCapacity | event\_queue\_capacity\_total | n/a |
+| event.rejectedCount | event\_rejected\_total | n/a |
+| event.syncDeliveryFailureCount | event\_sync\_delivery\_failures\_total | n/a |
+| event.threadCount | event\_threads\_total | n/a |
+| event.totalFailureCount | event\_failures\_total | n/a |
+
+</details>
+
+<details>
+<summary>Listeners</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| listeners.eventsProcessed | listeners\_events\_processed\_total | n/a |
+| listeners.eventQueueSize | listeners\_event\_queue\_size\_total | n/a |
+
+</details>
+
+<details>
+<summary>Capacity</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| file.partition.freeSpace | file\_partition\_free\_space\_bytes | n/a |
+| file.partition.totalSpace | file\_partition\_total\_space\_bytes | n/a |
+| file.partition.usableSpace | file\_partition\_usable\_space\_bytes | n/a |
+
+</details>
+
+<details>
+<summary>Garbage Collection</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| gc.majorCount | gc\_major\_total | n/a |
+| gc.majorTime | gc\_major\_time\_seconds\_total | n/a |
+| gc.minorCount | gc\_minor\_total | n/a |
+| gc.minorTime | gc\_minor\_time\_seconds\_total | n/a |
+| gc.unknownCount | gc\_unknown\_total | n/a |
+| gc.unknownTime | gc\_unknown\_time\_seconds\_total | n/a |
+
+</details>
+
+<details>
+<summary>Memory</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| memory.committedHeap | memory\_committed\_heap\_bytes | n/a |
+| memory.committedNative | memory\_committed\_native\_bytes | n/a |
+| memory.freeHeap | memory\_free\_heap\_bytes | n/a |
+| memory.freeNative | memory\_free\_native\_bytes | n/a |
+| memory.freePhysical | memory\_free\_physical\_bytes | n/a |
+| memory.maxHeap | memory\_max\_heap\_bytes | n/a |
+| memory.maxMetadata | memory\_max\_metadata\_bytes | n/a |
+| memory.maxNative | memory\_max\_native\_bytes | n/a |
+| memory.totalPhysical | memory\_total\_physical\_bytes | n/a |
+| memory.usedHeap | memory\_used\_heap\_bytes | n/a |
+| memory.usedMetadata | memory\_used\_metadata\_bytes | n/a |
+| memory.usedNative | memory\_used\_native\_bytes | n/a |
+
+</details>
+
+<details>
+<summary>Operations</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| operation.adhoc.executedOperationsCount | operation\_adhoc\_executed\_operations\_total | n/a |
+| operation.asyncOperations | operation\_async\_operations\_total | n/a |
+| operation.completedCount | operation\_completed\_total | n/a |
+| operation.failedBackups | operation\_failed\_backups\_total | n/a |
+| operation.generic.executedOperationsCount | operation\_generic\_executed\_operations\_total | n/a |
+| operation.genericPriorityQueueSize | operation\_generic\_priority\_queue\_size\_total | n/a |
+| operation.genericQueueSize | operation\_generic\_queue\_size\_total | n/a |
+| operation.genericThreadCount | operation\_generic\_threads\_total | n/a |
+| operation.invocations.backupTimeoutMillis | operation\_invocations\_backup\_timeout\_seconds | n/a |
+| operation.invocations.backupTimeouts | operation\_invocations\_backup\_timeouts\_total | n/a |
+| operation.invocations.delayedExecutionCount | operation\_invocations\_delayed\_executions\_total | n/a |
+| operation.invocations.heartbeatBroadcastPeriodMillis | operation\_invocations\_heartbeat\_broadcast\_period\_seconds | n/a |
+| operation.invocations.heartbeatPacketsReceived | operation\_invocations\_heartbeat\_packets\_received\_total | n/a |
+| operation.invocations.heartbeatPacketsSent | operation\_invocations\_heartbeat\_packets\_sent\_total | n/a |
+| operation.invocations.invocationScanPeriodMillis | operation\_invocations\_invocation\_scan\_period\_seconds | n/a |
+| operation.invocations.invocationTimeoutMillis | operation\_invocations\_invocation\_timeout\_seconds | n/a |
+| operation.invocations.lastCallId | operation\_invocations\_last\_call\_id\_total | n/a |
+| operation.invocations.normalTimeouts | operation\_invocations\_normal\_timeouts\_total | n/a |
+| operation.invocations.pending | operation\_invocations\_pending\_total | n/a |
+| operation.invocations.usedPercentage | operation\_invocations\_used\_ratio | n/a |
+| operation.parker.parkQueueCount | operation\_parker\_park\_queue\_total | n/a |
+| operation.parker.totalParkedOperationCount | operation\_parker\_parked\_operations\_total | n/a |
+| operation.partition.executedOperationsCount | operation\_partition\_executed\_operations\_total | n/a |
+| operation.partitionThreadCount | operation\_partition\_threads\_total | n/a |
+| operation.priorityQueueSize | operation\_priority\_queue\_size\_total | n/a |
+| operation.queueSize | operation\_queue\_size\_total | n/a |
+| operation.responseQueueSize | operation\_response\_queue\_size\_total | n/a |
+| operation.responses.backupCount | operation\_responses\_backups\_total | n/a |
+| operation.responses.errorCount | operation\_responses\_errors\_total | n/a |
+| operation.responses.missingCount | operation\_responses\_missing\_total | n/a |
+| operation.responses.normalCount | operation\_responses\_normal\_total | n/a |
+| operation.responses.timeoutCount | operation\_responses\_timeouts\_total | n/a |
+| operation.retryCount | operation\_retries\_total | n/a |
+| operation.runningCount | operation\_running\_total | n/a |
+| operation.runningGenericCount | operation\_running\_generic\_total | n/a |
+| operation.runningPartitionCount | operation\_running\_partition\_total | n/a |
+| operation.thread.completedOperationCount | operation\_thread\_completed\_operations\_total | n/a |
+| operation.thread.completedOperationBatchCount | operation\_thread\_completed\_operation\_batches\_total | n/a |
+| operation.thread.completedPacketCount | operation\_thread\_completed\_packets\_total | n/a |
+| operation.thread.completedPartitionSpecificRunnableCount | operation\_thread\_completed\_partition\_specific\_runnables\_total | n/a |
+| operation.thread.completedRunnableCount | operation\_thread\_completed\_runnables\_total | n/a |
+| operation.thread.completedTotalCount | operation\_thread\_completed\_total | n/a |
+| operation.thread.errorCount | operation\_thread\_errors\_total | n/a |
+| operation.thread.normalPendingCount | operation\_thread\_normal\_pending\_total | n/a |
+| operation.thread.priorityPendingCount | operation\_thread\_priority\_pending\_total | n/a |
+
+</details>
+
+<details>
+<summary>Runtime</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| runtime.availableProcessors | runtime\_available\_processors\_total | n/a |
+| runtime.freeMemory | runtime\_free\_memory\_bytes | n/a |
+| runtime.maxMemory | runtime\_max\_memory\_bytes | n/a |
+| runtime.totalMemory | runtime\_total\_memory\_bytes | n/a |
+| runtime.uptime | runtime\_up\_time\_seconds\_total | n/a |
+| runtime.usedMemory | runtime\_used\_memory\_bytes | n/a |
+
+</details>
+
+<details>
+<summary>TCP</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| tcp.acceptor.eventCount | tcp\_acceptor\_events\_total | n/a |
+| tcp.acceptor.exceptionCount | tcp\_acceptor\_exceptions\_total | n/a |
+| tcp.acceptor.idleTimeMillis | tcp\_acceptor\_idle\_time\_seconds | n/a |
+| tcp.acceptor.selectorRecreateCount | tcp\_acceptor\_selector\_recreate\_total | n/a |
+| tcp.balancer.imbalanceDetectedCount | tcp\_balancer\_imbalance\_detected\_total | n/a |
+| tcp.balancer.migrationCompletedCount | tcp\_balancer\_migration\_completed\_total | n/a |
+| tcp.bytesReceived | tcp\_received\_bytes | n/a |
+| tcp.bytesSend | tcp\_sent\_bytes | n/a |
+| tcp.connection.acceptedSocketCount | tcp\_connection\_accepted\_socket\_total | n/a |
+| tcp.connection.activeCount | tcp\_connection\_active\_total | n/a |
+| tcp.connection.clientCount | tcp\_connection\_clients\_total | n/a |
+| tcp.connection.closedCount | tcp\_connection\_closed\_total | n/a |
+| tcp.connection.connectionListenerCount | tcp\_connection\_listeners\_total | n/a |
+| tcp.connection.count | tcp\_connection\_total | n/a |
+| tcp.connection.inProgressCount | tcp\_connection\_in\_progress\_total | n/a |
+| tcp.connection.openedCount | tcp\_connection\_opened\_total | n/a |
+| tcp.connection.textCount | tcp\_connection\_text\_total | n/a |
+| tcp.connection.in.completedMigrations | tcp\_connection\_completed\_migrations\_total | direction=in |
+| tcp.connection.out.completedMigrations | tcp\_connection\_completed\_migrations\_total | direction=out |
+| tcp.connection.in.opsInterested | tcp\_connection\_ops\_interested\_total | direction=in |
+| tcp.connection.out.opsInterested | tcp\_connection\_ops\_interested\_total | direction=out |
+| tcp.connection.in.opsReady | tcp\_connection\_ops\_ready\_total | direction=in |
+| tcp.connection.out.opsReady | tcp\_connection\_ops\_ready\_total | direction=out |
+| tcp.connection.in.ownerId | tcp\_connection\_owner\_id\_total | direction=in |
+| tcp.connection.out.ownerId | tcp\_connection\_owner\_id\_total | direction=out |
+| tcp.connection.in.processCount | tcp\_connection\_process\_total | direction=in |
+| tcp.connection.out.processCount | tcp\_connection\_process\_total | direction=out |
+| tcp.connection.in.startedMigrations | tcp\_connection\_started\_migrations\_total | direction=in |
+| tcp.connection.out.startedMigrations | tcp\_connection\_started\_migrations\_total | direction=out |
+| tcp.connection.in.bytesRead | tcp\_connection\_in\_read\_bytes | n/a |
+| tcp.connection.in.idleTimeMs | tcp\_connection\_in\_idle\_time\_seconds | n/a |
+| tcp.connection.in.normalFramesRead | tcp\_connection\_in\_normal\_frames\_read\_total | n/a |
+| tcp.connection.in.priorityFramesRead | tcp\_connection\_in\_priority\_frames\_read\_total | n/a |
+| tcp.connection.out.bytesWritten | tcp\_connection\_out\_written\_bytes | n/a |
+| tcp.connection.out.idleTimeMillis | tcp\_connection\_out\_idle\_time\_seconds | n/a |
+| tcp.connection.out.normalFramesWritten | tcp\_connection\_out\_normal\_frames\_written\_total | n/a |
+| tcp.connection.out.priorityFramesWritten | tcp\_connection\_out\_priority\_frames\_written\_total | n/a |
+| tcp.connection.out.priorityWriteQueuePendingBytes | tcp\_connection\_out\_priority\_write\_queue\_pending\_bytes | n/a |
+| tcp.connection.out.priorityWriteQueueSize | tcp\_connection\_out\_priority\_write\_queue\_size\_total | n/a |
+| tcp.connection.out.scheduled | tcp\_connection\_out\_scheduled\_total | n/a |
+| tcp.connection.out.writeQueuePendingBytes | tcp\_connection\_out\_write\_queue\_pending\_bytes | n/a |
+| tcp.connection.out.writeQueueSize | tcp\_connection\_out\_write\_queue\_size\_total | n/a |
+| tcp.inputThread.bytesTransceived | tcp\_transceived\_bytes | thread=input |
+| tcp.outputThread.bytesTransceived | tcp\_transceived\_bytes | thread=output |
+| tcp.inputThread.completedTaskCount | tcp\_completed\_tasks\_total | thread=input |
+| tcp.outputThread.completedTaskCount | tcp\_completed\_tasks\_total | thread=output |
+| tcp.inputThread.eventCount | tcp\_events\_total | thread=input |
+| tcp.outputThread.eventCount | tcp\_events\_total | thread=output |
+| tcp.inputThread.framesTransceived | tcp\_transceived\_frames\_total | thread=input |
+| tcp.outputThread.framesTransceived | tcp\_transceived\_frames\_total | thread=output |
+| tcp.inputThread.idleTimeMillis | tcp\_idle\_seconds | thread=input |
+| tcp.outputThread.idleTimeMillis | tcp\_idle\_seconds | thread=output |
+| tcp.inputThread.ioThreadId | tcp\_io\_thread\_id\_total | thread=input |
+| tcp.outputThread.ioThreadId | tcp\_io\_thread\_id\_total | thread=output |
+| tcp.inputThread.priorityFramesTransceived | tcp\_priority\_frames\_transceived\_total | thread=input |
+| tcp.outputThread.priorityFramesTransceived | tcp\_priority\_frames\_transceived\_total | thread=output |
+| tcp.inputThread.processCount | tcp\_process\_total | thread=input |
+| tcp.outputThread.processCount | tcp\_process\_total | thread=output |
+| tcp.inputThread.selectorIOExceptionCount | tcp\_selector\_io\_exceptions\_total | thread=input |
+| tcp.outputThread.selectorIOExceptionCount | tcp\_selector\_io\_exceptions\_total | thread=output |
+| tcp.inputThread.taskQueueSize | tcp\_task\_queue\_size\_total | thread=input |
+| tcp.outputThread.taskQueueSize | tcp\_task\_queue\_size\_total | thread=output |
+
+</details>
+
+<details>
+<summary>Threads</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| thread.daemonThreadCount | thread\_daemon\_total | n/a |
+| thread.peakThreadCount | thread\_peak\_total | n/a |
+| thread.threadCount | thread\_total | n/a |
+| thread.totalStartedThreadCount | thread\_started\_total | n/a |
+
+</details>
+
+<details>
+<summary>Topic</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| topic.creationTime | topic\_creation\_timestamp\_seconds | n/a |
+| topic.totalPublishes | topic\_publishes\_total | n/a |
+| topic.totalReceivedMessages | topic\_received\_messages\_total | n/a |
+
+</details>
+
+<details>
+<summary>Reliable Topic</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| reliableTopic.creationTime | reliable\_topic\_creation\_timestamp\_seconds | n/a |
+| reliableTopic.totalPublishes | reliable\_topic\_publishes\_total | n/a |
+| reliableTopic.totalReceivedMessages | reliable\_topic\_received\_messages\_total | n/a |
+
+</details>
+
+<details>
+<summary>Flake ID Generator</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| flakeIdGenerator.batchCount | flake\_id\_generator\_batches\_total | n/a |
+| flakeIdGenerator.creationTime | flake\_id\_generator\_creation\_timestamp\_seconds | n/a |
+| flakeIdGenerator.idCount | flake\_id\_generator\_ids\_total | n/a |
+
+</details>
+
+<details>
+<summary>PN Counter</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| pnCounter.creationTime | pn\_counter\_creation\_timestamp\_seconds | n/a |
+| pnCounter.totalDecrementOperationCount | pn\_counter\_decrement\_operations\_total | n/a |
+| pnCounter.totalIncrementOperationCount | pn\_counter\_increment\_operations\_total | n/a |
+| pnCounter.value | pn\_counter\_value\_total | n/a |
+
+</details>
+
+<details>
+<summary>User Code Deployment</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| classloading.loadedClassesCount | user\_code\_deployment\_currently\_loaded\_classes\_total | n/a |
+| classloading.totalLoadedClassesCount | user\_code\_deployment\_loaded\_classes\_total | n/a |
+| classloading.unloadedClassesCount | user\_code\_deployment\_unloaded\_classes\_total | n/a |
+
+</details>
+
+<details>
+<summary>Clients</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| client.endpoint.count | client\_endpoints\_total | n/a |
+| client.endpoint.totalRegistrations | client\_endpoint\_registrations\_total | n/a |
+
+</details>
+
+<details>
+<summary>Client Invocations</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| invocations.maxCurrentInvocations | invocations\_max\_current\_total | n/a |
+| invocations.pendingCalls | invocations\_pending\_calls\_total | n/a |
+| invocations.startedInvocations | invocations\_started\_total | n/a |
+
+</details>
+
+<details>
+<summary>HD Memory Store</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| map.usedMemory | map\_hd\_used\_memory\_bytes | n/a |
+| map.forceEvictionCount | map\_hd\_force\_evictions\_total | n/a |
+| map.forceEvictedEntryCount | map\_hd\_force\_evicted\_entries\_total | n/a |
+| map.entryCount | map\_hd\_entries\_total | n/a |
+
+</details>
+
+<details>
+<summary>Proxies</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| proxy.createdCount | proxy\_created\_total | n/a |
+| proxy.destroyedCount | proxy\_destroyed\_total | n/a |
+| proxy.proxyCount | proxy\_active\_total | n/a |
+
+</details>
+
+<details>
+<summary>Transactions</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| transactions.commitCount | transactions\_committed\_total | n/a |
+| transactions.rollbackCount | transactions\_rolled\_back\_total | n/a |
+| transactions.startCount | transactions\_started\_total | n/a |
+
+</details>
+
+<details>
+<summary>User Code Namespace (UCN)</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| ucn.updateTime | ucn\_update\_timestamp\_seconds | n/a |
+| ucn.resourceCount | ucn\_resources\_total | n/a |
+| ucn.resource.resourceType | ucn\_resource\_type\_info | n/a |
+| ucn.resource.resourceSizeBytes | ucn\_resource\_size\_bytes | n/a |
+
+</details>
+
+<details>
+<summary>Persistence</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| persistence.liveTombstones | persistence\_live\_tombstones\_total | n/a |
+| persistence.liveValues | persistence\_live\_values\_total | n/a |
+| persistence.tombGarbage | persistence\_tomb\_garbage\_bytes | n/a |
+| persistence.tombOccupancy | persistence\_tomb\_occupancy\_bytes | n/a |
+| persistence.valGarbage | persistence\_val\_garbage\_bytes | n/a |
+| persistence.valOccupancy | persistence\_val\_occupancy\_bytes | n/a |
+
+</details>
+
+<details>
+<summary>Streaming Engine</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| blockingWorkerCount | streaming\_engine\_blocking\_workers\_total | n/a |
+| jobs.submitted | streaming\_engine\_jobs\_submitted\_total | n/a |
+| jobs.completedSuccessfully | streaming\_engine\_jobs\_completed\_successfully\_total | n/a |
+| jobs.completedWithFailure | streaming\_engine\_jobs\_completed\_with\_failure\_total | n/a |
+| jobs.executionStarted | streaming\_engine\_jobs\_executions\_started\_total | n/a |
+| jobs.executionTerminated | streaming\_engine\_jobs\_executions\_terminated\_total | n/a |
+| iterationCount | streaming\_engine\_iterations\_total | n/a |
+| taskletCount | streaming\_engine\_tasklets\_total | n/a |
+
+</details>
+
+<details>
+<summary>Cluster</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| cluster.clock.clusterStartTime | cluster\_clock\_cluster\_start\_timestamp\_seconds | n/a |
+| cluster.clock.clusterTime | cluster\_clock\_cluster\_time\_seconds\_total | n/a |
+| cluster.clock.clusterTimeDiff | cluster\_clock\_cluster\_time\_diff\_seconds | n/a |
+| cluster.clock.clusterUpTime | cluster\_clock\_cluster\_up\_time\_seconds\_total | n/a |
+| cluster.clock.localClockTime | cluster\_clock\_local\_clock\_timestamp\_seconds | n/a |
+| cluster.clock.maxClusterTimeDiff | cluster\_clock\_max\_cluster\_time\_diff\_seconds | n/a |
+| cluster.connection.closedTime | cluster\_connection\_closed\_timestamp\_seconds | n/a |
+| cluster.connection.connectionId | cluster\_connection\_connection\_id\_info | n/a |
+| cluster.connection.eventHandlerCount | cluster\_connection\_event\_handlers\_total | n/a |
+| cluster.heartbeat.lastHeartbeat | cluster\_heartbeat\_last\_heartbeat\_timestamp\_seconds | n/a |
+| cluster.size | cluster\_size\_total | n/a |
+
+</details>
+
+<details>
+<summary>Executor Service</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| executor.cancelled | executor\_operations\_total | operation=cancelled |
+| executor.completed | executor\_operations\_total | operation=completed |
+| executor.creationTime | executor\_creation\_timestamp\_seconds | n/a |
+| executor.pending | executor\_operations\_total | operation=pending |
+| executor.started | executor\_operations\_total | operation=started |
+| executor.totalExecutionTime | executor\_execution\_time\_seconds\_total | n/a |
+| executor.totalStartLatency | executor\_start\_latency\_seconds\_total | n/a |
+| executor.internal.completedTasks | executor\_internal\_completed\_tasks\_total | n/a |
+| executor.internal.maximumPoolSize | executor\_internal\_maximum\_pool\_size\_total | n/a |
+| executor.internal.poolSize | executor\_internal\_pool\_size\_total | n/a |
+| executor.internal.queueSize | executor\_internal\_queue\_size\_total | n/a |
+| executor.internal.remainingQueueCapacity | executor\_internal\_remaining\_queue\_capacity\_total | n/a |
+
+</details>
+
+<details>
+<summary>Queue</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| queue.averageAge | queue\_average\_age\_seconds | n/a |
+| queue.backupItemCount | queue\_backup\_items\_total | n/a |
+| queue.creationTime | queue\_creation\_timestamp\_seconds | n/a |
+| queue.eventOperationCount | queue\_event\_operations\_total | n/a |
+| queue.maxAge | queue\_max\_age\_seconds | n/a |
+| queue.minAge | queue\_min\_age\_seconds | n/a |
+| queue.numberOfEmptyPolls | queue\_empty\_polls\_total | n/a |
+| queue.numberOfEvents | queue\_events\_total | n/a |
+| queue.numberOfOffers | queue\_operations\_total | operation=offer |
+| queue.numberOfOtherOperations | queue\_operations\_total | operation=other |
+| queue.numberOfPolls | queue\_operations\_total | operation=poll |
+| queue.numberOfRejectedOffers | queue\_rejected\_offers\_total | n/a |
+| queue.ownedItemCount | queue\_owned\_items\_total | n/a |
+| queue.total | queue\_operations\_total | n/a |
+
+</details>
+
+<details>
+<summary>Near Cache</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| nearcache.creationTime | nearcache\_creation\_timestamp\_seconds | n/a |
+| nearcache.evictions | nearcache\_evictions\_total | n/a |
+| nearcache.expirations | nearcache\_expirations\_total | n/a |
+| nearcache.hits | nearcache\_hits\_total | n/a |
+| nearcache.invalidationRequests | nearcache\_invalidation\_requests\_total | n/a |
+| nearcache.invalidations | nearcache\_invalidations\_total | n/a |
+| nearcache.lastPersistenceDuration | nearcache\_last\_persistence\_duration\_seconds | n/a |
+| nearcache.lastPersistenceKeyCount | nearcache\_last\_persistence\_keys\_total | n/a |
+| nearcache.lastPersistenceTime | nearcache\_last\_persistence\_timestamp\_seconds | n/a |
+| nearcache.lastPersistenceWrittenBytes | nearcache\_last\_persistence\_written\_bytes | n/a |
+| nearcache.misses | nearcache\_misses\_total | n/a |
+| nearcache.ownedEntryCount | nearcache\_owned\_entries\_total | n/a |
+| nearcache.ownedEntryMemoryCost | nearcache\_owned\_entries\_memory\_cost\_bytes | n/a |
+| nearcache.persistenceCount | nearcache\_persistences\_total | n/a |
+
+</details>
+
+<details>
+<summary>Cache</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| cache.averageGetTime | cache\_average\_operation\_time\_seconds | operation=get |
+| cache.averagePutTime | cache\_average\_operation\_time\_seconds | operation=put |
+| cache.averageRemovalTime | cache\_average\_operation\_time\_seconds | operation=remove |
+| cache.cacheEvictions | cache\_evictions\_total | n/a |
+| cache.cacheGets | cache\_operations\_total | operation=get |
+| cache.cacheHits | cache\_hits\_total | n/a |
+| cache.cacheHitPercentage | cache\_hit\_ratio | n/a |
+| cache.cachePuts | cache\_operations\_total | operation=put |
+| cache.cacheRemovals | cache\_operations\_total | operation=remove |
+| cache.cacheMisses | cache\_misses\_total | n/a |
+| cache.cacheMissPercentage | cache\_miss\_ratio | n/a |
+| cache.creationTime | cache\_creation\_timestamp\_seconds | n/a |
+| cache.lastAccessTime | cache\_last\_access\_timestamp\_seconds | n/a |
+| cache.lastUpdateTime | cache\_last\_update\_timestamp\_seconds | n/a |
+| cache.ownedEntryCount | cache\_owned\_entries\_total | n/a |
+
+</details>
+
+<details>
+<summary>Raft</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| raft.destroyedGroupIds | raft\_destroyed\_group\_ids\_total | n/a |
+| raft.group.availableLogCapacity | raft\_group\_available\_log\_capacity\_total | n/a |
+| raft.group.commitIndex | raft\_group\_commit\_index\_total | n/a |
+| raft.group.lastApplied | raft\_group\_last\_applied\_total | n/a |
+| raft.group.lastLogIndex | raft\_group\_last\_log\_index\_total | n/a |
+| raft.group.lastLogTerm | raft\_group\_last\_log\_term\_total | n/a |
+| raft.group.memberCount | raft\_group\_members\_total | n/a |
+| raft.group.snapshotIndex | raft\_group\_snapshot\_index\_total | n/a |
+| raft.group.term | raft\_group\_term\_total | n/a |
+| raft.metadata.activeMembersCommitIndex | raft\_metadata\_active\_members\_commit\_index\_total | n/a |
+| raft.metadata.activeMembers | raft\_metadata\_active\_members\_total | n/a |
+| raft.metadata.groups | raft\_metadata\_groups\_total | n/a |
+| raft.missingMembers | raft\_missing\_members\_total | n/a |
+| raft.nodes | raft\_nodes\_total | n/a |
+| raft.terminatedRaftNodeGroupIds | raft\_terminated\_node\_group\_ids\_total | n/a |
+
+</details>
+
+<details>
+<summary>Replicated Map</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| replicatedMap.creationTime | replicated\_map\_creation\_timestamp\_seconds | n/a |
+| replicatedMap.getCount | replicated\_map\_operations\_total | operation=get |
+| replicatedMap.hits | replicated\_map\_hits\_total | n/a |
+| replicatedMap.lastAccessTime | replicated\_map\_last\_access\_timestamp\_seconds | n/a |
+| replicatedMap.lastUpdateTime | replicated\_map\_last\_update\_timestamp\_seconds | n/a |
+| replicatedMap.maxGetLatency | replicated\_map\_latency\_max\_seconds | operation=get |
+| replicatedMap.maxPutLatency | replicated\_map\_latency\_max\_seconds | operation=put |
+| replicatedMap.maxRemoveLatency | replicated\_map\_latency\_max\_seconds | operation=remove |
+| replicatedMap.numberOfEvents | replicated\_map\_events\_total | n/a |
+| replicatedMap.numberOfOtherOperations | replicated\_map\_operations\_total | operation=other |
+| replicatedMap.ownedEntryCount | replicated\_map\_owned\_entries\_total | n/a |
+| replicatedMap.ownedEntryMemoryCost | replicated\_map\_owned\_entry\_memory\_cost\_bytes | n/a |
+| replicatedMap.putCount | replicated\_map\_operations\_total | operation=put |
+| replicatedMap.removeCount | replicated\_map\_operations\_total | operation=remove |
+| replicatedMap.totalGetLatencies | replicated\_map\_latency\_seconds\_total | operation=get |
+| replicatedMap.totalPutLatencies | replicated\_map\_latency\_seconds\_total | operation=put |
+| replicatedMap.totalRemoveLatencies | replicated\_map\_latency\_seconds\_total | operation=remove |
+| replicatedMap.total | replicated\_map\_operations\_total | n/a |
+
+</details>
+
+<details>
+<summary>Streaming Engine Job-Specific</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| executionStartTime | streaming\_job\_execution\_timestamp\_seconds | phase=start |
+| executionCompletionTime | streaming\_job\_execution\_timestamp\_seconds | phase=completion |
+| status | streaming\_job\_status\_info | n/a |
+| userCancelled | streaming\_job\_user\_cancelled\_info | n/a |
+| snapshotBytes | streaming\_job\_snapshot\_bytes | n/a |
+| snapshotKeys | streaming\_job\_snapshot\_keys\_total | n/a |
+| distributedBytesIn | streaming\_job\_distributed\_bytes | direction=in |
+| distributedBytesOut | streaming\_job\_distributed\_bytes | direction=out |
+| distributedItemsIn | streaming\_job\_distributed\_items\_total | direction=in |
+| distributedItemsOut | streaming\_job\_distributed\_items\_total | direction=out |
+| topObservedWm | streaming\_job\_watermark\_seconds | type=top\_observed |
+| coalescedWm | streaming\_job\_watermark\_seconds | type=coalesced |
+| lastForwardedWm | streaming\_job\_watermark\_seconds | type=last\_forwarded |
+| lastForwardedWmLatency | streaming\_job\_watermark\_latency\_seconds | n/a |
+| queuesCapacity | streaming\_job\_queues\_capacity\_total | n/a |
+| queuesSize | streaming\_job\_queues\_size\_total | n/a |
+| emittedCount | streaming\_job\_items\_emitted\_total | n/a |
+| receivedCount | streaming\_job\_items\_received\_total | n/a |
+| receivedBatches | streaming\_job\_batches\_received\_total | n/a |
+| numInFlightOps | streaming\_job\_operations\_in\_flight\_total | n/a |
+| totalKeys | streaming\_job\_keys\_total | n/a |
+| totalWindows | streaming\_job\_windows\_total | n/a |
+| totalFrames | streaming\_job\_frames\_total | n/a |
+| totalKeysInFrames | streaming\_job\_keys\_in\_frames\_total | n/a |
+| lateEventsDropped | streaming\_job\_late\_events\_dropped\_total | n/a |
+
+</details>
+
+<details>
+<summary>Vector Collection</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| vectorCollection.backupCount | vector\_collection\_backups\_total | n/a |
+| vectorCollection.backupEntryCount | vector\_collection\_backup\_entries\_total | n/a |
+| vectorCollection.backupEntryHeapMemoryCost | vector\_collection\_backup\_entry\_heap\_memory\_cost\_bytes | n/a |
+| vectorCollection.clearCount | vector\_collection\_operations\_total | operation=clear |
+| vectorCollection.creationTime | vector\_collection\_creation\_timestamp\_seconds | n/a |
+| vectorCollection.deleteCount | vector\_collection\_operations\_total | operation=delete |
+| vectorCollection.getCount | vector\_collection\_operations\_total | operation=get |
+| vectorCollection.heapCost | vector\_collection\_heap\_cost\_bytes | n/a |
+| vectorCollection.lastAccessTime | vector\_collection\_last\_access\_timestamp\_seconds | n/a |
+| vectorCollection.lastUpdateTime | vector\_collection\_last\_update\_timestamp\_seconds | n/a |
+| vectorCollection.maxClearLatency | vector\_collection\_latency\_max\_seconds | operation=clear |
+| vectorCollection.maxOptimizeLatency | vector\_collection\_latency\_max\_seconds | operation=optimize |
+| vectorCollection.maxSearchLatency | vector\_collection\_latency\_max\_seconds | operation=search |
+| vectorCollection.maxSizeLatency | vector\_collection\_latency\_max\_seconds | operation=size |
+| vectorCollection.optimizeCount | vector\_collection\_operations\_total | operation=optimize |
+| vectorCollection.ownedEntryCount | vector\_collection\_owned\_entries\_total | n/a |
+| vectorCollection.ownedEntryHeapMemoryCost | vector\_collection\_owned\_entry\_heap\_memory\_cost\_bytes | n/a |
+| vectorCollection.putAllCount | vector\_collection\_operations\_total | operation=put\_all |
+| vectorCollection.putAllEntryCount | vector\_collection\_put\_all\_entries\_total | n/a |
+| vectorCollection.putCount | vector\_collection\_operations\_total | operation=put |
+| vectorCollection.removeCount | vector\_collection\_operations\_total | operation=remove |
+| vectorCollection.searchCount | vector\_collection\_operations\_total | operation=search |
+| vectorCollection.searchIndexQueryCount | vector\_collection\_search\_index\_queries\_total | n/a |
+| vectorCollection.searchIndexVisitedNodes | vector\_collection\_search\_index\_visited\_nodes\_total | n/a |
+| vectorCollection.searchResultsCount | vector\_collection\_search\_results\_total | n/a |
+| vectorCollection.setCount | vector\_collection\_operations\_total | operation=set |
+| vectorCollection.sizeCount | vector\_collection\_operations\_total | operation=size |
+| vectorCollection.totalClearLatency | vector\_collection\_latency\_seconds\_total | operation=clear |
+| vectorCollection.totalDeleteLatency | vector\_collection\_latency\_seconds\_total | operation=delete |
+| vectorCollection.totalGetLatency | vector\_collection\_latency\_seconds\_total | operation=get |
+| vectorCollection.totalMaxDeleteLatency | vector\_collection\_latency\_max\_seconds | operation=delete |
+| vectorCollection.totalMaxGetLatency | vector\_collection\_latency\_max\_seconds | operation=get |
+| vectorCollection.totalMaxPutAllLatency | vector\_collection\_latency\_max\_seconds | operation=put\_all |
+| vectorCollection.totalMaxPutLatency | vector\_collection\_latency\_max\_seconds | operation=put |
+| vectorCollection.totalMaxRemoveLatency | vector\_collection\_latency\_max\_seconds | operation=remove |
+| vectorCollection.totalMaxSetLatency | vector\_collection\_latency\_max\_seconds | operation=set |
+| vectorCollection.totalOptimizeLatency | vector\_collection\_latency\_seconds\_total | operation=optimize |
+| vectorCollection.totalPutAllLatency | vector\_collection\_latency\_seconds\_total | operation=put\_all |
+| vectorCollection.totalPutLatency | vector\_collection\_latency\_seconds\_total | operation=put |
+| vectorCollection.totalRemoveLatency | vector\_collection\_latency\_seconds\_total | operation=remove |
+| vectorCollection.totalSearchLatency | vector\_collection\_latency\_seconds\_total | operation=search |
+| vectorCollection.totalSetLatency | vector\_collection\_latency\_seconds\_total | operation=set |
+| vectorCollection.totalSizeLatency | vector\_collection\_latency\_seconds\_total | operation=size |
+
+</details>
+
+<details>
+<summary>MultiMap</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| multiMap.backupCount | multi\_map\_backups\_total | n/a |
+| multiMap.backupEntryCount | multi\_map\_backup\_entries\_total | n/a |
+| multiMap.backupEntryMemoryCost | multi\_map\_backup\_entries\_memory\_cost\_bytes | n/a |
+| multiMap.creationTime | multi\_map\_creation\_timestamp\_seconds | n/a |
+| multiMap.dirtyEntryCount | multi\_map\_dirty\_entries\_total | n/a |
+| multiMap.getCount | multi\_map\_operations\_total | operation=get |
+| multiMap.heapCost | multi\_map\_heap\_cost\_bytes | n/a |
+| multiMap.hits | multi\_map\_hits\_total | n/a |
+| multiMap.indexedQueryCount | multi\_map\_indexed\_queries\_total | n/a |
+| multiMap.lastAccessTime | multi\_map\_last\_access\_timestamp\_seconds | n/a |
+| multiMap.lastUpdateTime | multi\_map\_last\_update\_timestamp\_seconds | n/a |
+| multiMap.lockedEntryCount | multi\_map\_locked\_entries\_total | n/a |
+| multiMap.merkleTreesCost | multi\_map\_merkle\_trees\_cost\_bytes | n/a |
+| multiMap.numberOfEvents | multi\_map\_events\_total | n/a |
+| multiMap.numberOfOtherOperations | multi\_map\_operations\_total | operation=other |
+| multiMap.ownedEntryCount | multi\_map\_owned\_entries\_total | n/a |
+| multiMap.ownedEntryMemoryCost | multi\_map\_owned\_entry\_memory\_cost\_bytes | n/a |
+| multiMap.putCount | multi\_map\_operations\_total | operation=put |
+| multiMap.queryCount | multi\_map\_queries\_total | n/a |
+| multiMap.removeCount | multi\_map\_operations\_total | operation=remove |
+| multiMap.setCount | multi\_map\_operations\_total | operation=set |
+| multiMap.totalGetLatency | multi\_map\_latency\_seconds\_total | operation=get |
+| multiMap.totalMaxGetLatency | multi\_map\_latency\_max\_seconds | operation=get |
+| multiMap.totalMaxPutLatency | multi\_map\_latency\_max\_seconds | operation=put |
+| multiMap.totalMaxRemoveLatency | multi\_map\_latency\_max\_seconds | operation=remove |
+| multiMap.totalMaxSetLatency | multi\_map\_latency\_max\_seconds | operation=set |
+| multiMap.totalPutLatency | multi\_map\_latency\_seconds\_total | operation=put |
+| multiMap.totalRemoveLatency | multi\_map\_latency\_seconds\_total | operation=remove |
+| multiMap.totalSetLatency | multi\_map\_latency\_seconds\_total | operation=set |
+
+</details>
+
+<details>
+<summary>CP Subsystem</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| cp.atomiclong.value | cp\_atomiclong\_value\_info | n/a |
+| cp.countdownlatch.count | cp\_countdownlatch\_total | n/a |
+| cp.countdownlatch.remaining | cp\_countdownlatch\_remaining\_total | n/a |
+| cp.countdownlatch.round | cp\_countdownlatch\_round\_total | n/a |
+| cp.lock.acquireLimit | cp\_lock\_acquire\_limit\_total | n/a |
+| cp.lock.lockCount | cp\_lock\_locks\_total | n/a |
+| cp.lock.owner | cp\_lock\_owner\_info | n/a |
+| cp.lock.ownerSessionId | cp\_lock\_owner\_session\_id\_info | n/a |
+| cp.semaphore.available | cp\_semaphore\_available\_total | n/a |
+| cp.semaphore.initialized | cp\_semaphore\_initialized\_info | n/a |
+| cp.map.size | cp\_map\_size\_total | n/a |
+| cp.map.sizeBytes | cp\_map\_size\_bytes | n/a |
+| cp.session.creationTime | cp\_session\_creation\_timestamp\_seconds | n/a |
+| cp.session.endpoint | cp\_session\_endpoint\_info | n/a |
+| cp.session.endpointType | cp\_session\_endpoint\_type\_info | n/a |
+| cp.session.expirationTime | cp\_session\_expiration\_timestamp\_seconds | n/a |
+| cp.session.version | cp\_session\_version\_total | n/a |
+| cp.atomiclong.summary.destroyed.count | cp\_summary\_total | object\_type=atomiclong, state=destroyed |
+| cp.atomiclong.summary.live.count | cp\_summary\_total | object\_type=atomiclong, state=live |
+| cp.atomicref.summary.destroyed.count | cp\_summary\_total | object\_type=atomicref, state=destroyed |
+| cp.atomicref.summary.live.count | cp\_summary\_total | object\_type=atomicref, state=live |
+| cp.countdownlatch.summary.destroyed.count | cp\_summary\_total | object\_type=countdownlatch, state=destroyed |
+| cp.countdownlatch.summary.live.count | cp\_summary\_total | object\_type=countdownlatch, state=live |
+| cp.lock.summary.destroyed.count | cp\_summary\_total | object\_type=lock, state=destroyed |
+| cp.lock.summary.live.count | cp\_summary\_total | object\_type=lock, state=live |
+| cp.map.summary.destroyed.count | cp\_summary\_total | object\_type=map, state=destroyed |
+| cp.map.summary.live.count | cp\_summary\_total | object\_type=map, state=live |
+| cp.semaphore.summary.destroyed.count | cp\_summary\_total | object\_type=semaphore, state=destroyed |
+| cp.semaphore.summary.live.count | cp\_summary\_total | object\_type=semaphore, state=live |
+
+</details>
+
+<details>
+<summary>Partitions</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| partitions.activePartitionCount | partitions\_active\_total | n/a |
+| partitions.completedMigrations | partitions\_completed\_migrations\_total | period=latest\_repartitioning |
+| partitions.elapsedDestinationCommitTime | partitions\_elapsed\_destination\_commit\_time\_seconds\_total | period=latest\_repartitioning |
+| partitions.elapsedMigrationOperationTime | partitions\_elapsed\_migration\_operation\_time\_seconds\_total | period=latest\_repartitioning |
+| partitions.elapsedMigrationTime | partitions\_elapsed\_migration\_time\_seconds\_total | period=latest\_repartitioning |
+| partitions.lastRepartitionTime | partitions\_last\_repartition\_timestamp\_seconds | n/a |
+| partitions.localPartitionCount | partitions\_local\_total | n/a |
+| partitions.maxBackupCount | partitions\_max\_backups\_total | n/a |
+| partitions.memberGroupsSize | partitions\_member\_groups\_size\_total | n/a |
+| partitions.migrationActive | partitions\_migration\_active\_info | n/a |
+| partitions.migrationQueueSize | partitions\_migration\_queue\_size\_total | n/a |
+| partitions.partitionCount | partitions\_total | n/a |
+| partitions.plannedMigrations | partitions\_planned\_migrations\_total | n/a |
+| partitions.replicaSyncRequestsCounter | partitions\_replica\_sync\_requests\_total | n/a |
+| partitions.replicaSyncSemaphore | partitions\_replica\_sync\_semaphore\_permits\_total | n/a |
+| partitions.stateStamp | partitions\_state\_stamp\_info | n/a |
+| partitions.totalCompletedMigrations | partitions\_completed\_migrations\_total | period=since\_beginning |
+| partitions.totalElapsedDestinationCommitTime | partitions\_elapsed\_destination\_commit\_time\_seconds\_total | period=since\_beginning |
+| partitions.totalElapsedMigrationOperationTime | partitions\_elapsed\_migration\_operation\_time\_seconds\_total | period=since\_beginning |
+| partitions.totalElapsedMigrationTime | partitions\_elapsed\_migration\_time\_seconds\_total | period=since\_beginning |
+
+</details>
+
+<details>
+<summary>WAN Replication</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| wan.ackDelayCurrentMillis | wan\_ack\_delay\_current\_time\_seconds | n/a |
+| wan.ackDelayLastEnd | wan\_ack\_delay\_last\_end\_timestamp\_seconds | n/a |
+| wan.ackDelayLastStart | wan\_ack\_delay\_last\_start\_timestamp\_seconds | n/a |
+| wan.ackDelayTotalCount | wan\_ack\_delay\_total | n/a |
+| wan.ackDelayTotalMillis | wan\_ack\_delay\_total\_time\_seconds | n/a |
+| wan.consistencyCheck.lastCheckedPartitionCount | wan\_consistency\_check\_last\_checked\_partitions\_total | n/a |
+| wan.consistencyCheck.lastCheckedLeafCount | wan\_consistency\_check\_last\_checked\_leaves\_total | n/a |
+| wan.consistencyCheck.lastDiffLeafCount | wan\_consistency\_check\_last\_diff\_leaves\_total | n/a |
+| wan.consistencyCheck.lastDiffPartitionCount | wan\_consistency\_check\_last\_diff\_partitions\_total | n/a |
+| wan.consistencyCheck.lastEntriesToSync | wan\_consistency\_check\_last\_entries\_to\_sync\_total | n/a |
+| wan.droppedCount | wan\_events\_total | event\_type=drop |
+| wan.outboundQueueSize | wan\_outbound\_queue\_size\_total | n/a |
+| wan.removeCount | wan\_events\_total | event\_type=remove |
+| wan.syncCount | wan\_events\_total | event\_type=sync |
+| wan.sync.avgEntriesPerLeaf | wan\_sync\_entries\_per\_leaf\_total | aggregation=avg |
+| wan.sync.maxLeafEntryCount | wan\_sync\_entries\_per\_leaf\_total | aggregation=max |
+| wan.sync.minLeafEntryCount | wan\_sync\_entries\_per\_leaf\_total | aggregation=min |
+| wan.sync.nodesSynced | wan\_sync\_nodes\_synced\_total | n/a |
+| wan.sync.partitionsSynced | wan\_sync\_partitions\_synced\_total | n/a |
+| wan.sync.partitionsToSync | wan\_sync\_partitions\_to\_sync\_total | n/a |
+| wan.sync.recordsSynced | wan\_sync\_records\_synced\_total | n/a |
+| wan.sync.syncDurationNanos | wan\_sync\_duration\_seconds | n/a |
+| wan.sync.stdDevEntriesPerLeaf | wan\_sync\_entries\_per\_leaf\_total | aggregation=std\_dev |
+| wan.sync.syncStartNanos | wan\_sync\_start\_time\_seconds | n/a |
+| wan.totalPublishLatency | wan\_publish\_latency\_seconds\_total | n/a |
+| wan.totalPublishedEventCount | wan\_published\_events\_total | n/a |
+| wan.updateCount | wan\_events\_total | event\_type=update |
+| wan.connectionHealth | wan\_connection\_healthy\_info | n/a |
+| wan.failedTransmitCount | wan\_failed\_transmits\_total | n/a |
+
+</details>
+
+<details>
+<summary>Management Center</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| healthcheck\_status\_fail | healthcheck\_failures\_total | n/a |
+| healthcheck\_status\_warning | healthcheck\_warnings\_total | n/a |
+| healthcheck\_status\_info | healthcheck\_info\_total | n/a |
+| healthcheck\_status\_pass | healthcheck\_passes\_total | n/a |
+| healthcheck\_status\_na | healthcheck\_na\_total | n/a |
+| slow\_operation\_invocation\_duration | slow\_operation\_invocations\_duration\_seconds\_total | n/a |
+| slow\_operation\_total\_invocations | slow\_operation\_invocations\_total | n/a |
+
+</details>

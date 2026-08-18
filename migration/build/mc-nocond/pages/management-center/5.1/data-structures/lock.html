@@ -1,0 +1,100 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can use the scripting feature of the Management Center to
+monitor the locks in your cluster. See the <a href="../tools/scripting" class="xref page">Scripting section</a>
+to learn how to use this feature.</p>
+</div>
+<div class="paragraph">
+<p>You can use these JavaScript functions to retrieve various information
+about the locks in your cluster.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="finding-active-locks"><a class="anchor" href="#finding-active-locks"></a>Finding Active Locks</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To find the number of active locks in your cluster, use the following script:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-javascript hljs" data-lang="javascript">var findLocks = function() {
+    var lockstr = '';
+    var node = hazelcast.getCluster().getLocalMember();
+
+    var locks = hazelcast.node.nodeEngine.getService('hz:impl:lockService').getAllLocks();
+    return "Active Lock Count : " + locks.size();
+
+}
+
+findLocks();</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="printing-locks"><a class="anchor" href="#printing-locks"></a>Printing Locks</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To print the locks in your cluster, use the following script:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-javascript hljs" data-lang="javascript">var findLocks = function() {
+        var lockStr = '';
+        var distributedObjects = hazelcast.getDistributedObjects();
+        for each(distributedObject in distributedObjects) {
+            if(distributedObject.getServiceName().equals("hz:impl:lockService")){
+                lockStr += distributedObject.getName() + '\n';
+            }
+
+        }
+        return lockStr;
+}
+
+findLocks();</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="unlocking-forcefully"><a class="anchor" href="#unlocking-forcefully"></a>Unlocking Forcefully</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To force unlock a lock in your cluster, use the following script:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-javascript hljs" data-lang="javascript">var forceUnlock = function(lockName) {
+
+    hazelcast.getLock(lockName).forceUnlock();
+    return 'OK';
+
+}
+
+forceUnlock('your_Lock_Name');</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="checking-locks"><a class="anchor" href="#checking-locks"></a>Checking Locks</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To check if a lock is being hold by a member, use the following script:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-javascript hljs" data-lang="javascript">var isLocked = function(lockName) {
+
+    var locked = hazelcast.getLock(lockName).isLocked();
+    return lockName + ' -&gt; ' + locked;
+
+}
+
+isLocked('your_Lock_Name');</code></pre>
+</div>
+</div>
+</div>
+</div>

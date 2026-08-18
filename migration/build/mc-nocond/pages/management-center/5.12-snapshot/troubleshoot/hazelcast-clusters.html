@@ -1,0 +1,57 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Management Center writes log entries for each connection failure and allows you to trigger garbage collection and take thread dumps. This topic describes how to work with these operations to help identify the issues in a Hazelcast cluster.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="logs-for-cluster-connection-failures"><a class="anchor" href="#logs-for-cluster-connection-failures"></a>Logs for cluster connection failures</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Management Center logs all cluster connection failures, their reasons and retry attempts to <code>hz-client.log</code> in <code>hazelcast.mc.home</code> directory.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="run-garbage-collection"><a class="anchor" href="#run-garbage-collection"></a>Run garbage collection</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Running a garbage collection means cleaning up a member&#8217;s memory, for example, removing the unused
+data structure objects.
+Hazelcast do not recommend you run it unless instructed to do so by the Hazelcast support team.</p>
+</div>
+<div class="paragraph">
+<p>To run garbage collection for a specific member, go to <strong>Cluster</strong> &gt; <strong>Members</strong> and select
+the member in question. In the member details screen, you will see <strong>Run GC</strong>.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="_images/run-gc.png" alt="RUN GC button"></span></p>
+</div>
+<div class="paragraph">
+<p>Click the button, and you will be prompted to confirm. Note that this operation
+does not write information to a file, it only cleans up the member&#8217;s memory in the background.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="take-a-thread-dump"><a class="anchor" href="#take-a-thread-dump"></a>Take a thread dump</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Thread dumps may be useful to troubleshoot a member that is deadlocked or slow;
+they provide detailed information on threads, including the state for each thread.
+We recommend collecting and providing multiple thread dumps when submitting a support ticket.</p>
+</div>
+<div class="paragraph">
+<p>To take a thread dump for a member, go to <strong>Cluster</strong> &gt; <strong>Members</strong> and select
+the member in question. In the member details screen, you will see <strong>Thread Dump</strong> next to <strong>Run GC</strong>
+as shown in the above screenshot. This operation shows the collected thread dump in a separate dialog box.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="_images/thread-dump.png" alt="Thread Dump"></span></p>
+</div>
+<div class="paragraph">
+<p>You can copy the content to the clipboard to include it in a file.</p>
+</div>
+</div>
+</div>

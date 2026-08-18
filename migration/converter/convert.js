@@ -31,7 +31,7 @@ const { execFileSync } = require('node:child_process')
 const { goldenPages } = require('../fidelity/lib/pairing')
 const { convertBody } = require('./lib/html-to-mdx')
 const { collectOccurrences, decide } = require('./lib/partials')
-const { parseNav, buildPlan, injectNavEntries } = require('./lib/nav')
+const { parseNav, buildPlan, injectNavEntries, pageKey } = require('./lib/nav')
 const { loadDispositions, isDropped, navInjectionsFor } = require('../lib/dispositions')
 // Single-sources "which contexts render into flow text" with the marking pass, so
 // prose reverse-mapping and marking can never disagree — see scanPageAttrs.
@@ -71,6 +71,22 @@ const SINGLE_SOURCE_ATTRS = {
   // page-latest-supported-mc (curated per version). Distinctive values -> value
   // reverse-map, single-sourced per version like operator's.
   clc: ['full-version', 'page-latest-supported-mc'],
+  // MC's own antora.yml set, all per-version: full-version (its own release),
+  // page-latest-supported-hazelcast / -clc (curated compatibility numbers), the
+  // two product-name strings, and mc-repo-swagger-branch (the git ref the
+  // swagger_ui macro fetches the OpenAPI spec from — per-release, so it must not
+  // bake). The product names are multi-word strings rather than version numbers,
+  // but the reverse-map is source-scoped either way (only pages whose source
+  // references the name are touched), and refcheck's `extra` finding is the gate
+  // on a coincidental literal being caught up in it.
+  'management-center': [
+    'full-version',
+    'page-latest-supported-hazelcast',
+    'page-latest-supported-clc',
+    'open-source-product-name',
+    'enterprise-product-name',
+    'mc-repo-swagger-branch',
+  ],
 }
 
 // Build the single-sourced-attribute maps, reading resolved values from the
@@ -303,10 +319,11 @@ function parseArgs (argv) {
   }
 }
 
-// url -> page-resource; and a stem -> title map for the nav planner, both scoped
+// url -> page-resource; and a key -> title map for the nav planner, both scoped
 // to ONE (component, version). Bare stems like "overview" recur across
-// components AND versions (often literally titled "Overview"), so an unscoped
-// map would clobber the titles the nav labels are drawn from.
+// components, versions AND modules (often literally titled "Overview"), so an
+// unscoped or module-blind map would clobber the titles the nav labels are drawn
+// from — hence the module-qualified plan key (see pageKey in lib/nav.js).
 // A component-version's FULL resolved attribute table from the manifest (not just
 // the single-sourced subset): what Antora would resolve on that branch.
 function attrTableFor (manifest, component, seg) {
@@ -323,16 +340,19 @@ const withAttrs = (text, lookup) => (text == null ? text : substitute(text, look
 
 function indexManifest (manifest, component, seg) {
   const byUrl = new Map()
-  const titleByStem = new Map()
-  const prefix = '/' + component + (seg ? '/' + seg : '') + '/'
+  const titleByKey = new Map()
   for (const r of manifest.resources || []) {
     if (r.family !== 'page' || !r.url || r.component !== component) continue
     if (seg && r.version !== seg) continue
     byUrl.set(r.url, r)
-    if (r.title && r.url.startsWith(prefix)) titleByStem.set(r.url.split('/').pop(), r.title)
+    if (r.title) titleByKey.set(keyOf(r), r.title)
   }
-  return { byUrl, titleByStem }
+  return { byUrl, titleByKey }
 }
+
+// A page resource's plan key. Derived from the manifest record's own module +
+// relative path (NOT from its URL), so it is exactly the coordinate the nav writes.
+const keyOf = (r) => pageKey(r.module, String(r.relative || '').replace(/\.adoc$/, ''))
 
 // Co-located example files -> a content-addressed index for the converter:
 // canonical file content -> { file, conums }. The converter matches a golden
@@ -423,14 +443,22 @@ function loadNavAdoc (component, seg, sourcesDir) {
 // flow line and so counts as prose, which keeps today's behaviour for cloud's
 // `page-cloud-platform-version` and clc's `page-latest-supported-mc` rather than
 // silently changing how their links resolve.
+// Keyed by the module-qualified plan KEY, and scanned across EVERY module: the
+// nav.adoc path only tells us where the nav lives (always ROOT), not where the
+// pages live. Scoping the grep to ROOT's own `pages/` would silently find nothing
+// on a multi-module component like MC, whose 102 pages are spread over 11 modules
+// — every single-sourced attribute would then look unreferenced and bake.
 function scanPageAttrs (component, seg, sourcesDir) {
   const names = SINGLE_SOURCE_ATTRS[component] || []
   const src = NAV_SOURCES[component]
-  const byStem = new Map()
-  if (!names.length || !src) return byStem
+  const byKey = new Map()
+  if (!names.length || !src) return byKey
   const ref = src.refFor ? src.refFor(seg) : src.ref
   const repoDir = path.join(sourcesDir, src.repo)
-  const pagesGlob = path.posix.join(path.posix.dirname(src.file), 'pages')
+  // `docs/modules/ROOT/nav.adoc` -> `docs/modules`: every module's tree.
+  const modulesGlob = path.posix.dirname(path.posix.dirname(src.file))
+  // `<modulesGlob>/<module>/pages/<relative>.adoc` -> the page's plan key.
+  const PAGE_PATH = new RegExp(`^${modulesGlob}/([^/]+)/pages/(.+)\\.adoc$`)
   const textCache = new Map()
   const textOf = (file) => {
     if (!textCache.has(file)) {
@@ -443,20 +471,22 @@ function scanPageAttrs (component, seg, sourcesDir) {
   for (const name of names) {
     let out
     try {
-      out = execFileSync('git', ['-C', repoDir, 'grep', '-l', '--fixed-strings', `{${name}}`, ref, '--', pagesGlob], { encoding: 'utf8' })
+      out = execFileSync('git', ['-C', repoDir, 'grep', '-l', '--fixed-strings', `{${name}}`, ref, '--', modulesGlob], { encoding: 'utf8' })
     } catch { continue } // no match for this attr on this branch
     for (const line of out.split('\n')) {
       if (!line) continue
       const idx = line.indexOf(':') // `ref:path`
       const file = idx === -1 ? line : line.slice(idx + 1)
-      const stem = path.basename(file).replace(/\.adoc$/, '')
-      if (!byStem.has(stem)) byStem.set(stem, { all: new Set(), prose: new Set() })
-      const rec = byStem.get(stem)
+      const m = file.match(PAGE_PATH)
+      if (!m) continue // a partial/example/nav, not a page
+      const key = pageKey(m[1], m[2])
+      if (!byKey.has(key)) byKey.set(key, { all: new Set(), prose: new Set() })
+      const rec = byKey.get(key)
       rec.all.add(name)
       if (wrappableRefs(textOf(file), [name]).has(name)) rec.prose.add(name)
     }
   }
-  return byStem
+  return byKey
 }
 
 // value->name map of the attrs a page references (source-scoped), resolved to
@@ -542,13 +572,48 @@ function deriveTitle (html) {
 // The output file (relative to the component out dir) a golden page converts to,
 // derived from its nav entry — the SINGLE derivation used both to emit the page
 // and to build the URL->file map, so the map can't drift from what is written.
+//
+// `key` is the module-qualified plan key; a page with no nav entry (an orphan)
+// falls back to the key's own shape as a path, so a multi-module component's
+// orphans land under their module rather than all piling into the tree root where
+// two same-named pages from different modules would overwrite each other. The
+// file path is free to differ from the nav layout either way: the URL is preserved
+// by the page's `slug`, never by where the file sits.
 function relFileForPage (p, byUrl, plan) {
   const rec = byUrl.get(p.url)
-  const stem = rec && rec.relative
-    ? path.basename(rec.relative).replace(/\.adoc$/, '')
+  const key = rec
+    ? keyOf(rec)
     : (p.url.replace(/\/$/, '').split('/').pop() || 'index')
-  const entry = plan.pages.get(stem)
-  return { stem, rec, entry, relFile: entry ? entry.relFile : (stem || 'index') + '.mdx' }
+  const stem = key.split(':').pop().split('/').pop()
+  const entry = plan.pages.get(key)
+  return { key, stem, rec, entry, relFile: entry ? entry.relFile : key.replace(/:/g, '/') + '.mdx' }
+}
+
+// Remove the files a previous conversion of this version tree wrote — `.mdx`
+// pages/partials and `_category_.json` descriptors — and then any directory that
+// leaves empty, so a page moved by a nav change does not linger at its old path.
+//
+// It deletes by WHAT IT WROTE rather than by clearing the tree and sparing a
+// couple of known asset folder names, because co-located assets do not all sit at
+// the tree root: a multi-module component (MC) has `<module>/images/`, and
+// skip-listing `images` at the top level only meant `troubleshoot/` was removed
+// wholesale, images included — which the build then caught as a broken image
+// reference (onBrokenMarkdownImages: 'throw'), the good outcome of a bad delete.
+// Anything this converter does not produce is now left alone wherever it sits.
+function pruneGenerated (dir) {
+  if (!fs.existsSync(dir)) return false // nothing here
+  let kept = 0
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name)
+    if (e.isDirectory()) {
+      if (pruneGenerated(p)) kept++
+      continue
+    }
+    if (e.name.endsWith('.mdx') || e.name === '_category_.json') fs.rmSync(p, { force: true })
+    else kept++
+  }
+  if (kept === 0) { fs.rmdirSync(dir); return false }
+  return true
 }
 
 function convertVersion (ver, ctx) {
@@ -566,12 +631,12 @@ function convertVersion (ver, ctx) {
   const exampleLookup = { ...Object.fromEntries(ctx.flat), ...Object.fromEntries(perVer) }
   const outDir = outDirFor(opts.outRoot, component, ver)
 
-  const { byUrl, titleByStem } = indexManifest(manifest, component, seg)
+  const { byUrl, titleByKey } = indexManifest(manifest, component, seg)
 
-  // Nav-driven plan (file layout, slugs, sidebar metadata, categories).
+  // Nav-driven plan (file layout, sidebar metadata, categories).
   // `keep-in-nav` orphans are injected first, so a page merely forgotten upstream
   // is planned exactly like any nav page. Only inject where the page actually
-  // exists in THIS version (titleByStem is this version's manifest): an older
+  // exists in THIS version (titleByKey is this version's manifest): an older
   // branch may predate the page, and a nav entry pointing at nothing would be a
   // broken link rather than a fix.
   // Nav labels are the one place attributes are deliberately BAKED. Everything
@@ -586,9 +651,9 @@ function convertVersion (ver, ctx) {
   // failure to bake, not a reference.
   const navAttrs = attrTableFor(manifest, component, seg)
   const navAdoc = withAttrs(loadNavAdoc(component, seg, opts.sourcesDir), navAttrs)
-  const injections = navInjectionsFor(ctx.dispositions, component).filter((i) => titleByStem.has(i.stem))
+  const injections = navInjectionsFor(ctx.dispositions, component).filter((i) => titleByKey.has(i.key))
   const plan = navAdoc
-    ? buildPlan(parseNav(injectNavEntries(navAdoc, injections)), titleByStem)
+    ? buildPlan(parseNav(injectNavEntries(navAdoc, injections)), titleByKey)
     : { pages: new Map(), categories: [], duplicates: [] }
 
   const allPages = allGoldenForComponent.filter((p) => (seg ? p.versionSeg === seg : true))
@@ -633,16 +698,8 @@ function convertVersion (ver, ctx) {
   const { decisions, report } = decide(pagesOcc, baseDir)
 
   // Full (non-scoped) run regenerates the whole version tree from scratch, so
-  // stale files from a previous layout do not linger. Preserve co-located assets
-  // (images/): those are placed by extract-images.js, not regenerated here.
-  if (!opts.dry && !opts.id && fs.existsSync(outDir)) {
-    for (const name of fs.readdirSync(outDir)) {
-      // Co-located assets are placed by sibling steps (extract-images.js /
-      // extract-examples.js), not regenerated here, so preserve them.
-      if (name === 'images' || name === 'examples') continue
-      fs.rmSync(path.join(outDir, name), { recursive: true, force: true })
-    }
-  }
+  // stale files from a previous layout do not linger.
+  if (!opts.dry && !opts.id) pruneGenerated(outDir)
 
   // Single-sourced example files (from extract-examples.js): content -> the file
   // to import. The converter content-matches a code block's text to one of these
@@ -652,7 +709,7 @@ function convertVersion (ver, ctx) {
 
   // Reverse-map single-sourced attributes (no-baking): which attrs each page's
   // source references, so a value is only ever matched on a page that uses it.
-  const attrsByStem = scanPageAttrs(component, seg, opts.sourcesDir)
+  const attrsByKey = scanPageAttrs(component, seg, opts.sourcesDir)
 
   let written = 0
   let dropped = 0
@@ -661,7 +718,7 @@ function convertVersion (ver, ctx) {
   for (const p of pages) {
     // Stem/entry/relFile via the shared derivation (see relFileForPage), so the
     // emitted file matches the URL->file map used for relative-link resolution.
-    const { stem, rec, entry, relFile } = relFileForPage(p, byUrl, plan)
+    const { key, stem, rec, entry, relFile } = relFileForPage(p, byUrl, plan)
 
     // A `drop-404` orphan is a page a human decided not to carry over (dead or
     // empty, nothing links to it, its URL may 404). Emit nothing at all: the
@@ -676,7 +733,7 @@ function convertVersion (ver, ctx) {
     if (!title) { title = deriveTitle(html); derived = true }
     if (!title) { title = (stem || 'index').replace(/-/g, ' '); derived = true }
 
-    const attrsHere = attrsByStem.get(stem)
+    const attrsHere = attrsByKey.get(key)
     const pageVars = buildPageVars(attrsHere && attrsHere.all, exampleLookup)
     const proseVars = proseVarsFor(pageVars, (attrsHere && attrsHere.prose) || new Set(), markedAttrsFor(component))
 

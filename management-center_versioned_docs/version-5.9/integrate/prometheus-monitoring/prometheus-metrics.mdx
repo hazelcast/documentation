@@ -1,0 +1,399 @@
+---
+title: "Prometheus metrics"
+sidebar_position: 1
+slug: /integrate/prometheus-metrics
+enterprise: true
+---
+
+Management Center automatically reformats all Hazelcast cluster metrics for compatibility with Prometheus. In addition, Management Center updates a subset of metrics to align with Prometheus best practice recommendations. This makes it easier to construct complex queries, build dashboards, and work alongside metrics from other applications.
+
+By default, Management Center exposes two versions of metrics based on <Variable href="/hazelcast/{page-latest-supported-hazelcast}/list-of-metrics" text="Hazelcast’s JMX metrics system"/>:
+
+- **Version 1 (V1) metrics** apply a basic transformation for compatibility with Prometheus:
+
+  - Convert `.` to `_`
+  - Add `hz_` prefix
+- **Version 2 (V2) metrics (currently in BETA)** apply an advanced transformation for conformity with [Prometheus naming conventions](https://prometheus.io/docs/practices/naming/):
+
+  - Use `snake_case`
+  - Add `hazelcast_` prefix
+  - Update metric names where appropriate
+  - Combine related metrics and add labels
+  - Convert to recommended base units:
+
+    - Time in seconds
+    - Memory in bytes
+    - Percentages as ratios (for example, 50% converts to 0.5)
+  - Append units to metric names
+  - Remove unit labels
+  - Append `_total` to accumulated metrics
+
+You can optionally [change which set of metrics is exposed](#config).
+
+The following examples illustrate the differences between the V1 and V2 metrics.
+
+- Rename and remove `unit` label, add `_total` suffix:
+
+  ```none
+  # V1
+  hz_map_queryCount{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="COUNT",} 0.0 1737715903399
+  # V2
+  hazelcast_map_queries_total{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",} 0.0 1737715903399
+  ```
+- Rename and append unit, remove `unit` label, convert value (1.7x10<sup>12</sup> milliseconds to 1.7x10<sup>9</sup> seconds):
+
+  ```none
+  # V1
+  hz_map_creationTime{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="MS",} 1.737715861118E12 1737715903399
+  # V2
+  hazelcast_map_creation_timestamp_seconds{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",} 1.737715861118E9 1737715903399
+  ```
+- Rename and append unit, remove `unit` label, add `remove` label:
+
+  ```none
+  # V1
+  hz_map_totalMaxRemoveLatency{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="MS",} 0.0 1737715903399
+  # V2
+  hazelcast_map_latency_max_seconds{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",operation="remove",} 0.0 1737715903399
+  ```
+- Rename, append unit suffix and `_total` suffix, remove `unit` label, add `remove` label, convert value from milliseconds to seconds:
+
+  ```none
+  # V1
+  hz_map_totalPutLatency{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="MS",} 2019.0 1743601193973
+  # V2
+  hazelcast_map_latency_seconds_total{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",operation="put",} 2.019 1743601193973
+  ```
+
+## Change the metrics version {/* #config */}
+
+To change which set of metrics is exposed to Prometheus, update the `hazelcast.mc.prometheusExporter.printers` system property:
+
+- V1: `hazelcast.mc.prometheusExporter.printers=V1`
+- V2: `hazelcast.mc.prometheusExporter.printers=V2`
+- V1 and V2 (default): `hazelcast.mc.prometheusExporter.printers=V1,V2`
+
+See [System properties and environment variables](../../deploy-and-manage/configuration/system-properties.mdx).
+
+:::important
+
+If you set the property to `V2`, Management Center will only expose the subset of metrics that have updated versions available.
+
+:::
+
+## Metrics list
+
+The following table lists all V2 metrics with their V1 equivalents. The full <Variable href="/hazelcast/{page-latest-supported-hazelcast}/list-of-metrics" text="list of Hazelcast metrics"/> and descriptions is provided in the Hazelcast Platform documentation.
+
+In some cases, several V1 metrics are combined into a single V2 metric differentiated by labels. For example, `hazelcast_map_operations_total` replaces `hz_map_getCount` and `hz_map_setCount` by adding `operation="get"` and `operation="set"` labels.
+
+<details>
+<summary>Map</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| map\_backupCount | map\_backups\_total | n/a |
+| map\_backupEntryCount | map\_backup\_entries\_total | n/a |
+| map\_backupEntryMemoryCost | map\_backup\_entries\_memory\_cost\_bytes | n/a |
+| map\_creationTime | map\_creation\_timestamp\_seconds | n/a |
+| map\_dirtyEntryCount | map\_dirty\_entries\_total | n/a |
+| map\_evictionCount | map\_evictions\_total | n/a |
+| map\_expirationCount | map\_expirations\_total | n/a |
+| map\_getCount | map\_operations\_total | operation=get |
+| map\_heapCost | map\_heap\_cost\_bytes | n/a |
+| map\_indexedQueryCount | map\_indexed\_queries\_total | n/a |
+| map\_lastAccessTime | map\_last\_access\_timestamp\_seconds | n/a |
+| map\_lastUpdateTime | map\_last\_update\_timestamp\_seconds | n/a |
+| map\_lockedEntryCount | map\_locked\_entries\_total | n/a |
+| map\_merkleTreesCost | map\_merkle\_trees\_cost\_bytes | n/a |
+| map\_numberOfEvents | map\_events\_total | n/a |
+| map\_numberOfOtherOperations | map\_operations\_total | operation=other |
+| map\_ownedEntryCount | map\_owned\_entries\_total | n/a |
+| map\_ownedEntryMemoryCost | map\_owned\_entry\_memory\_cost\_bytes | n/a |
+| map\_putCount | map\_operations\_total | operation=put |
+| map\_queryCount | map\_queries\_total | n/a |
+| map\_removeCount | map\_operations\_total | operation=remove |
+| map\_setCount | map\_operations\_total | operation=set |
+| map\_hits | map\_hits\_total | n/a |
+| map\_totalGetLatency | map\_latency\_seconds\_total | operation=get |
+| map\_totalMaxGetLatency | map\_latency\_max\_seconds | operation=get |
+| map\_totalPutLatency | map\_latency\_seconds\_total | operation=put |
+| map\_totalMaxPutLatency | map\_latency\_max\_seconds | operation=put |
+| map\_totalRemoveLatency | map\_latency\_seconds\_total | operation=remove |
+| map\_totalMaxRemoveLatency | map\_latency\_max\_seconds | operation=remove |
+| map\_totalSetLatency | map\_latency\_seconds\_total | operation=set |
+| map\_totalMaxSetLatency | map\_latency\_max\_seconds | operation=set |
+| map\_index\_creationTime | map\_index\_creation\_timestamp\_seconds | n/a |
+| map\_index\_hitCount | map\_index\_hits\_total | n/a |
+| map\_index\_insertCount | map\_index\_inserts\_total | n/a |
+| map\_index\_memoryCost | map\_index\_memory\_cost\_bytes | n/a |
+| map\_index\_queryCount | map\_index\_queries\_total | n/a |
+| map\_index\_removeCount | map\_index\_removes\_total | n/a |
+| map\_index\_totalInsertLatency | map\_index\_latency\_seconds\_total | operation=insert |
+| map\_index\_totalRemoveLatency | map\_index\_latency\_seconds\_total | operation=remove |
+| map\_index\_totalUpdateLatency | map\_index\_latency\_seconds\_total | operation=update |
+| map\_index\_updateCount | map\_index\_updates\_total | n/a |
+
+</details>
+
+<details>
+<summary>Set</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| set\_creationTime | set\_creation\_timestamp\_seconds | n/a |
+| set\_lastAccessTime | set\_last\_access\_timestamp\_seconds | n/a |
+| set\_lastUpdateTime | set\_last\_update\_timestamp\_seconds | n/a |
+
+</details>
+
+<details>
+<summary>List</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| list\_creationTime | list\_creation\_timestamp\_seconds | n/a |
+| list\_lastAccessTime | list\_last\_access\_timestamp\_seconds | n/a |
+| list\_lastUpdateTime | list\_last\_update\_timestamp\_seconds | n/a |
+
+</details>
+
+<details>
+<summary>Operating System</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| os.committedVirtualMemorySize | os\_committed\_virtual\_memory\_size\_bytes | n/a |
+| os.freePhysicalMemorySize | os\_free\_physical\_memory\_size\_bytes | n/a |
+| os.freeSwapSpaceSize | os\_free\_swap\_space\_size\_bytes | n/a |
+| os.maxFileDescriptorCount | os\_max\_file\_descriptor\_total | n/a |
+| os.openFileDescriptorCount | os\_open\_file\_descriptor\_total | n/a |
+| os.processCpuLoad | os\_process\_cpu\_load\_ratio | n/a |
+| os.processCpuTime | os\_process\_cpu\_time\_seconds | n/a |
+| os.systemCpuLoad | os\_system\_cpu\_load\_ratio | n/a |
+| os.systemLoadAverage | os\_system\_load\_average\_ratio | n/a |
+| os.totalPhysicalMemorySize | os\_total\_physical\_memory\_size\_bytes | n/a |
+| os.totalSwapSpaceSize | os\_total\_swap\_space\_size\_bytes | n/a |
+
+</details>
+
+<details>
+<summary>Events</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| event.eventQueueSize | event\_queue\_size\_total | n/a |
+| event.eventsProcessed | event\_processed\_total | n/a |
+| event.listenerCount | event\_listeners\_total | n/a |
+| event.publicationCount | event\_publications\_total | n/a |
+| event.queueCapacity | event\_queue\_capacity\_total | n/a |
+| event.rejectedCount | event\_rejected\_total | n/a |
+| event.syncDeliveryFailureCount | event\_sync\_delivery\_failures\_total | n/a |
+| event.threadCount | event\_threads\_total | n/a |
+| event.totalFailureCount | event\_failures\_total | n/a |
+
+</details>
+
+<details>
+<summary>Listeners</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| listeners.eventsProcessed | listeners\_events\_processed\_total | n/a |
+| listeners.eventQueueSize | listeners\_event\_queue\_size\_total | n/a |
+
+</details>
+
+<details>
+<summary>Capacity</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| file.partition.freeSpace | file\_partition\_free\_space\_bytes | n/a |
+| file.partition.totalSpace | file\_partition\_total\_space\_bytes | n/a |
+| file.partition.usableSpace | file\_partition\_usable\_space\_bytes | n/a |
+
+</details>
+
+<details>
+<summary>Garbage Collection</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| gc.majorCount | gc\_major\_total | n/a |
+| gc.majorTime | gc\_major\_time\_seconds\_total | n/a |
+| gc.minorCount | gc\_minor\_total | n/a |
+| gc.minorTime | gc\_minor\_time\_seconds\_total | n/a |
+| gc.unknownCount | gc\_unknown\_total | n/a |
+| gc.unknownTime | gc\_unknown\_time\_seconds\_total | n/a |
+
+</details>
+
+<details>
+<summary>Memory</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| memory.committedHeap | memory\_committed\_heap\_bytes | n/a |
+| memory.committedNative | memory\_committed\_native\_bytes | n/a |
+| memory.freeHeap | memory\_free\_heap\_bytes | n/a |
+| memory.freeNative | memory\_free\_native\_bytes | n/a |
+| memory.freePhysical | memory\_free\_physical\_bytes | n/a |
+| memory.maxHeap | memory\_max\_heap\_bytes | n/a |
+| memory.maxMetadata | memory\_max\_metadata\_bytes | n/a |
+| memory.maxNative | memory\_max\_native\_bytes | n/a |
+| memory.totalPhysical | memory\_total\_physical\_bytes | n/a |
+| memory.usedHeap | memory\_used\_heap\_bytes | n/a |
+| memory.usedMetadata | memory\_used\_metadata\_bytes | n/a |
+| memory.usedNative | memory\_used\_native\_bytes | n/a |
+
+</details>
+
+<details>
+<summary>Operations</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| operation.adhoc.executedOperationsCount | operation\_adhoc\_executed\_operations\_total | n/a |
+| operation.asyncOperations | operation\_async\_operations\_total | n/a |
+| operation.completedCount | operation\_completed\_total | n/a |
+| operation.failedBackups | operation\_failed\_backups\_total | n/a |
+| operation.generic.executedOperationsCount | operation\_generic\_executed\_operations\_total | n/a |
+| operation.genericPriorityQueueSize | operation\_generic\_priority\_queue\_size\_total | n/a |
+| operation.genericQueueSize | operation\_generic\_queue\_size\_total | n/a |
+| operation.genericThreadCount | operation\_generic\_threads\_total | n/a |
+| operation.invocations.backupTimeoutMillis | operation\_invocations\_backup\_timeout\_seconds | n/a |
+| operation.invocations.backupTimeouts | operation\_invocations\_backup\_timeouts\_total | n/a |
+| operation.invocations.delayedExecutionCount | operation\_invocations\_delayed\_executions\_total | n/a |
+| operation.invocations.heartbeatBroadcastPeriodMillis | operation\_invocations\_heartbeat\_broadcast\_period\_seconds | n/a |
+| operation.invocations.heartbeatPacketsReceived | operation\_invocations\_heartbeat\_packets\_received\_total | n/a |
+| operation.invocations.heartbeatPacketsSent | operation\_invocations\_heartbeat\_packets\_sent\_total | n/a |
+| operation.invocations.invocationScanPeriodMillis | operation\_invocations\_invocation\_scan\_period\_seconds | n/a |
+| operation.invocations.invocationTimeoutMillis | operation\_invocations\_invocation\_timeout\_seconds | n/a |
+| operation.invocations.lastCallId | operation\_invocations\_last\_call\_id\_total | n/a |
+| operation.invocations.normalTimeouts | operation\_invocations\_normal\_timeouts\_total | n/a |
+| operation.invocations.pending | operation\_invocations\_pending\_total | n/a |
+| operation.invocations.usedPercentage | operation\_invocations\_used\_ratio | n/a |
+| operation.parker.parkQueueCount | operation\_parker\_park\_queue\_total | n/a |
+| operation.parker.totalParkedOperationCount | operation\_parker\_parked\_operations\_total | n/a |
+| operation.partition.executedOperationsCount | operation\_partition\_executed\_operations\_total | n/a |
+| operation.partitionThreadCount | operation\_partition\_threads\_total | n/a |
+| operation.priorityQueueSize | operation\_priority\_queue\_size\_total | n/a |
+| operation.queueSize | operation\_queue\_size\_total | n/a |
+| operation.responseQueueSize | operation\_response\_queue\_size\_total | n/a |
+| operation.responses.backupCount | operation\_responses\_backups\_total | n/a |
+| operation.responses.errorCount | operation\_responses\_errors\_total | n/a |
+| operation.responses.missingCount | operation\_responses\_missing\_total | n/a |
+| operation.responses.normalCount | operation\_responses\_normal\_total | n/a |
+| operation.responses.timeoutCount | operation\_responses\_timeouts\_total | n/a |
+| operation.retryCount | operation\_retries\_total | n/a |
+| operation.runningCount | operation\_running\_total | n/a |
+| operation.runningGenericCount | operation\_running\_generic\_total | n/a |
+| operation.runningPartitionCount | operation\_running\_partition\_total | n/a |
+| operation.thread.completedOperationCount | operation\_thread\_completed\_operations\_total | n/a |
+| operation.thread.completedOperationBatchCount | operation\_thread\_completed\_operation\_batches\_total | n/a |
+| operation.thread.completedPacketCount | operation\_thread\_completed\_packets\_total | n/a |
+| operation.thread.completedPartitionSpecificRunnableCount | operation\_thread\_completed\_partition\_specific\_runnables\_total | n/a |
+| operation.thread.completedRunnableCount | operation\_thread\_completed\_runnables\_total | n/a |
+| operation.thread.completedTotalCount | operation\_thread\_completed\_total | n/a |
+| operation.thread.errorCount | operation\_thread\_errors\_total | n/a |
+| operation.thread.normalPendingCount | operation\_thread\_normal\_pending\_total | n/a |
+| operation.thread.priorityPendingCount | operation\_thread\_priority\_pending\_total | n/a |
+
+</details>
+
+<details>
+<summary>Runtime</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| runtime.availableProcessors | runtime\_available\_processors\_total | n/a |
+| runtime.freeMemory | runtime\_free\_memory\_bytes | n/a |
+| runtime.maxMemory | runtime\_max\_memory\_bytes | n/a |
+| runtime.totalMemory | runtime\_total\_memory\_bytes | n/a |
+| runtime.uptime | runtime\_up\_time\_seconds\_total | n/a |
+| runtime.usedMemory | runtime\_used\_memory\_bytes | n/a |
+
+</details>
+
+<details>
+<summary>TCP</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| tcp.acceptor.eventCount | tcp\_acceptor\_events\_total | n/a |
+| tcp.acceptor.exceptionCount | tcp\_acceptor\_exceptions\_total | n/a |
+| tcp.acceptor.idleTimeMillis | tcp\_acceptor\_idle\_time\_seconds | n/a |
+| tcp.acceptor.selectorRecreateCount | tcp\_acceptor\_selector\_recreate\_total | n/a |
+| tcp.balancer.imbalanceDetectedCount | tcp\_balancer\_imbalance\_detected\_total | n/a |
+| tcp.balancer.migrationCompletedCount | tcp\_balancer\_migration\_completed\_total | n/a |
+| tcp.bytesReceived | tcp\_received\_bytes | n/a |
+| tcp.bytesSend | tcp\_sent\_bytes | n/a |
+| tcp.connection.acceptedSocketCount | tcp\_connection\_accepted\_socket\_total | n/a |
+| tcp.connection.activeCount | tcp\_connection\_active\_total | n/a |
+| tcp.connection.clientCount | tcp\_connection\_clients\_total | n/a |
+| tcp.connection.closedCount | tcp\_connection\_closed\_total | n/a |
+| tcp.connection.connectionListenerCount | tcp\_connection\_listeners\_total | n/a |
+| tcp.connection.count | tcp\_connection\_total | n/a |
+| tcp.connection.inProgressCount | tcp\_connection\_in\_progress\_total | n/a |
+| tcp.connection.openedCount | tcp\_connection\_opened\_total | n/a |
+| tcp.connection.textCount | tcp\_connection\_text\_total | n/a |
+| tcp.connection.in.completedMigrations | tcp\_connection\_completed\_migrations\_total | direction=in |
+| tcp.connection.out.completedMigrations | tcp\_connection\_completed\_migrations\_total | direction=out |
+| tcp.connection.in.opsInterested | tcp\_connection\_ops\_interested\_total | direction=in |
+| tcp.connection.out.opsInterested | tcp\_connection\_ops\_interested\_total | direction=out |
+| tcp.connection.in.opsReady | tcp\_connection\_ops\_ready\_total | direction=in |
+| tcp.connection.out.opsReady | tcp\_connection\_ops\_ready\_total | direction=out |
+| tcp.connection.in.ownerId | tcp\_connection\_owner\_id\_total | direction=in |
+| tcp.connection.out.ownerId | tcp\_connection\_owner\_id\_total | direction=out |
+| tcp.connection.in.processCount | tcp\_connection\_process\_total | direction=in |
+| tcp.connection.out.processCount | tcp\_connection\_process\_total | direction=out |
+| tcp.connection.in.startedMigrations | tcp\_connection\_started\_migrations\_total | direction=in |
+| tcp.connection.out.startedMigrations | tcp\_connection\_started\_migrations\_total | direction=out |
+| tcp.connection.in.bytesRead | tcp\_connection\_in\_read\_bytes | n/a |
+| tcp.connection.in.idleTimeMs | tcp\_connection\_in\_idle\_time\_seconds | n/a |
+| tcp.connection.in.normalFramesRead | tcp\_connection\_in\_normal\_frames\_read\_total | n/a |
+| tcp.connection.in.priorityFramesRead | tcp\_connection\_in\_priority\_frames\_read\_total | n/a |
+| tcp.connection.out.bytesWritten | tcp\_connection\_out\_written\_bytes | n/a |
+| tcp.connection.out.idleTimeMillis | tcp\_connection\_out\_idle\_time\_seconds | n/a |
+| tcp.connection.out.normalFramesWritten | tcp\_connection\_out\_normal\_frames\_written\_total | n/a |
+| tcp.connection.out.priorityFramesWritten | tcp\_connection\_out\_priority\_frames\_written\_total | n/a |
+| tcp.connection.out.priorityWriteQueuePendingBytes | tcp\_connection\_out\_priority\_write\_queue\_pending\_bytes | n/a |
+| tcp.connection.out.priorityWriteQueueSize | tcp\_connection\_out\_priority\_write\_queue\_size\_total | n/a |
+| tcp.connection.out.scheduled | tcp\_connection\_out\_scheduled\_total | n/a |
+| tcp.connection.out.writeQueuePendingBytes | tcp\_connection\_out\_write\_queue\_pending\_bytes | n/a |
+| tcp.connection.out.writeQueueSize | tcp\_connection\_out\_write\_queue\_size\_total | n/a |
+| tcp.inputThread.bytesTransceived | tcp\_transceived\_bytes | thread=input |
+| tcp.outputThread.bytesTransceived | tcp\_transceived\_bytes | thread=output |
+| tcp.inputThread.completedTaskCount | tcp\_completed\_tasks\_total | thread=input |
+| tcp.outputThread.completedTaskCount | tcp\_completed\_tasks\_total | thread=output |
+| tcp.inputThread.eventCount | tcp\_events\_total | thread=input |
+| tcp.outputThread.eventCount | tcp\_events\_total | thread=output |
+| tcp.inputThread.framesTransceived | tcp\_transceived\_frames\_total | thread=input |
+| tcp.outputThread.framesTransceived | tcp\_transceived\_frames\_total | thread=output |
+| tcp.inputThread.idleTimeMillis | tcp\_idle\_seconds | thread=input |
+| tcp.outputThread.idleTimeMillis | tcp\_idle\_seconds | thread=output |
+| tcp.inputThread.ioThreadId | tcp\_io\_thread\_id\_total | thread=input |
+| tcp.outputThread.ioThreadId | tcp\_io\_thread\_id\_total | thread=output |
+| tcp.inputThread.priorityFramesTransceived | tcp\_priority\_frames\_transceived\_total | thread=input |
+| tcp.outputThread.priorityFramesTransceived | tcp\_priority\_frames\_transceived\_total | thread=output |
+| tcp.inputThread.processCount | tcp\_process\_total | thread=input |
+| tcp.outputThread.processCount | tcp\_process\_total | thread=output |
+| tcp.inputThread.selectorIOExceptionCount | tcp\_selector\_io\_exceptions\_total | thread=input |
+| tcp.outputThread.selectorIOExceptionCount | tcp\_selector\_io\_exceptions\_total | thread=output |
+| tcp.inputThread.taskQueueSize | tcp\_task\_queue\_size\_total | thread=input |
+| tcp.outputThread.taskQueueSize | tcp\_task\_queue\_size\_total | thread=output |
+
+</details>
+
+<details>
+<summary>Threads</summary>
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| thread.daemonThreadCount | thread\_daemon\_total | n/a |
+| thread.peakThreadCount | thread\_peak\_total | n/a |
+| thread.threadCount | thread\_total | n/a |
+| thread.totalStartedThreadCount | thread\_started\_total | n/a |
+
+</details>

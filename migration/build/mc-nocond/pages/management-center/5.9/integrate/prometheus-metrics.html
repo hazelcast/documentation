@@ -1,0 +1,1480 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Management Center automatically reformats all Hazelcast cluster metrics for compatibility with Prometheus. In addition, Management Center updates a subset of metrics to align with Prometheus best practice recommendations. This makes it easier to construct complex queries, build dashboards, and work alongside metrics from other applications.</p>
+</div>
+<div class="paragraph">
+<p>By default, Management Center exposes two versions of metrics based on <a href="../../../hazelcast/5.6/list-of-metrics" class="xref page">Hazelcast&#8217;s JMX metrics system</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Version 1 (V1) metrics</strong> apply a basic transformation for compatibility with Prometheus:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Convert <code>.</code> to <code>_</code></p>
+</li>
+<li>
+<p>Add <code>hz_</code> prefix</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Version 2 (V2) metrics (currently in BETA)</strong> apply an advanced transformation for conformity with <a href="https://prometheus.io/docs/practices/naming/">Prometheus naming conventions</a>:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Use <code>snake_case</code></p>
+</li>
+<li>
+<p>Add <code>hazelcast_</code> prefix</p>
+</li>
+<li>
+<p>Update metric names where appropriate</p>
+</li>
+<li>
+<p>Combine related metrics and add labels</p>
+</li>
+<li>
+<p>Convert to recommended base units:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Time in seconds</p>
+</li>
+<li>
+<p>Memory in bytes</p>
+</li>
+<li>
+<p>Percentages as ratios (for example, 50% converts to 0.5)</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Append units to metric names</p>
+</li>
+<li>
+<p>Remove unit labels</p>
+</li>
+<li>
+<p>Append <code>_total</code> to accumulated metrics</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>You can optionally <a href="#config">change which set of metrics is exposed</a>.</p>
+</div>
+<div class="paragraph">
+<p>The following examples illustrate the differences between the V1 and V2 metrics.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Rename and remove <code>unit</code> label, add <code>_total</code> suffix:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs"># V1
+hz_map_queryCount{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="COUNT",} 0.0 1737715903399
+# V2
+hazelcast_map_queries_total{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",} 0.0 1737715903399</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Rename and append unit, remove <code>unit</code> label, convert value (1.7x10<sup>12</sup> milliseconds to 1.7x10<sup>9</sup> seconds):</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs"># V1
+hz_map_creationTime{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="MS",} 1.737715861118E12 1737715903399
+# V2
+hazelcast_map_creation_timestamp_seconds{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",} 1.737715861118E9 1737715903399</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Rename and append unit, remove <code>unit</code> label, add <code>remove</code> label:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs"># V1
+hz_map_totalMaxRemoveLatency{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="MS",} 0.0 1737715903399
+# V2
+hazelcast_map_latency_max_seconds{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",operation="remove",} 0.0 1737715903399</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Rename, append unit suffix and <code>_total</code> suffix, remove <code>unit</code> label, add <code>remove</code> label, convert value from milliseconds to seconds:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs"># V1
+hz_map_totalPutLatency{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="MS",} 2019.0 1743601193973
+# V2
+hazelcast_map_latency_seconds_total{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",operation="put",} 2.019 1743601193973</code></pre>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="config"><a class="anchor" href="#config"></a>Change the metrics version</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To change which set of metrics is exposed to Prometheus, update the <code>hazelcast.mc.prometheusExporter.printers</code> system property:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>V1: <code>hazelcast.mc.prometheusExporter.printers=V1</code></p>
+</li>
+<li>
+<p>V2: <code>hazelcast.mc.prometheusExporter.printers=V2</code></p>
+</li>
+<li>
+<p>V1 and V2 (default): <code>hazelcast.mc.prometheusExporter.printers=V1,V2</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>See <a href="../deploy-manage/system-properties" class="xref page">System properties and environment variables</a>.</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+If you set the property to <code>V2</code>, Management Center will only expose the subset of metrics that have updated versions available.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="metrics-list"><a class="anchor" href="#metrics-list"></a>Metrics list</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The following table lists all V2 metrics with their V1 equivalents. The full <a href="../../../hazelcast/5.6/list-of-metrics" class="xref page">list of Hazelcast metrics</a> and descriptions is provided in the Hazelcast Platform documentation.</p>
+</div>
+<div class="paragraph">
+<p>In some cases, several V1 metrics are combined into a single V2 metric differentiated by labels. For example, <code>hazelcast_map_operations_total</code> replaces <code>hz_map_getCount</code> and <code>hz_map_setCount</code> by adding <code>operation="get"</code> and <code>operation="set"</code> labels.</p>
+</div>
+<details>
+<summary class="title">Map</summary>
+<div class="content">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">V1 metric <code>hz_</code></th>
+<th class="tableblock halign-left valign-top">V2 metric <code>hazelcast_</code></th>
+<th class="tableblock halign-left valign-top">Additional labels</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_backupCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_backups_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_backupEntryCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_backup_entries_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_backupEntryMemoryCost</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_backup_entries_memory_cost_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_creationTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_creation_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_dirtyEntryCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_dirty_entries_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_evictionCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_evictions_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_expirationCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_expirations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_getCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_operations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation=get</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_heapCost</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_heap_cost_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_indexedQueryCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_indexed_queries_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_lastAccessTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_last_access_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_lastUpdateTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_last_update_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_lockedEntryCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_locked_entries_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_merkleTreesCost</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_merkle_trees_cost_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_numberOfEvents</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_events_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_numberOfOtherOperations</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_operations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation=other</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_ownedEntryCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_owned_entries_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_ownedEntryMemoryCost</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_owned_entry_memory_cost_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_putCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_operations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation=put</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_queryCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_queries_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_removeCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_operations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation=remove</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_setCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_operations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation=set</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_hits</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_hits_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_totalGetLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_latency_seconds_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation=get</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_totalMaxGetLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_latency_max_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation=get</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_totalPutLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_latency_seconds_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation=put</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_totalMaxPutLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_latency_max_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation=put</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_totalRemoveLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_latency_seconds_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation=remove</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_totalMaxRemoveLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_latency_max_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation=remove</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_totalSetLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_latency_seconds_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation=set</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_totalMaxSetLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_latency_max_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation=set</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_creationTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_creation_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_hitCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_hits_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_insertCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_inserts_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_memoryCost</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_memory_cost_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_queryCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_queries_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_removeCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_removes_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_totalInsertLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_latency_seconds_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation=insert</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_totalRemoveLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_latency_seconds_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation=remove</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_totalUpdateLatency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_latency_seconds_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation=update</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_updateCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map_index_updates_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</details>
+<details>
+<summary class="title">Set</summary>
+<div class="content">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">V1 metric <code>hz_</code></th>
+<th class="tableblock halign-left valign-top">V2 metric <code>hazelcast_</code></th>
+<th class="tableblock halign-left valign-top">Additional labels</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set_creationTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set_creation_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set_lastAccessTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set_last_access_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set_lastUpdateTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set_last_update_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</details>
+<details>
+<summary class="title">List</summary>
+<div class="content">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">V1 metric <code>hz_</code></th>
+<th class="tableblock halign-left valign-top">V2 metric <code>hazelcast_</code></th>
+<th class="tableblock halign-left valign-top">Additional labels</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">list_creationTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">list_creation_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">list_lastAccessTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">list_last_access_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">list_lastUpdateTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">list_last_update_timestamp_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</details>
+<details>
+<summary class="title">Operating System</summary>
+<div class="content">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">V1 metric <code>hz_</code></th>
+<th class="tableblock halign-left valign-top">V2 metric <code>hazelcast_</code></th>
+<th class="tableblock halign-left valign-top">Additional labels</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os.committedVirtualMemorySize</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os_committed_virtual_memory_size_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os.freePhysicalMemorySize</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os_free_physical_memory_size_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os.freeSwapSpaceSize</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os_free_swap_space_size_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os.maxFileDescriptorCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os_max_file_descriptor_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os.openFileDescriptorCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os_open_file_descriptor_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os.processCpuLoad</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os_process_cpu_load_ratio</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os.processCpuTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os_process_cpu_time_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os.systemCpuLoad</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os_system_cpu_load_ratio</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os.systemLoadAverage</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os_system_load_average_ratio</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os.totalPhysicalMemorySize</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os_total_physical_memory_size_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os.totalSwapSpaceSize</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">os_total_swap_space_size_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</details>
+<details>
+<summary class="title">Events</summary>
+<div class="content">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">V1 metric <code>hz_</code></th>
+<th class="tableblock halign-left valign-top">V2 metric <code>hazelcast_</code></th>
+<th class="tableblock halign-left valign-top">Additional labels</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event.eventQueueSize</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event_queue_size_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event.eventsProcessed</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event_processed_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event.listenerCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event_listeners_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event.publicationCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event_publications_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event.queueCapacity</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event_queue_capacity_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event.rejectedCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event_rejected_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event.syncDeliveryFailureCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event_sync_delivery_failures_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event.threadCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event_threads_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event.totalFailureCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event_failures_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</details>
+<details>
+<summary class="title">Listeners</summary>
+<div class="content">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">V1 metric <code>hz_</code></th>
+<th class="tableblock halign-left valign-top">V2 metric <code>hazelcast_</code></th>
+<th class="tableblock halign-left valign-top">Additional labels</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">listeners.eventsProcessed</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">listeners_events_processed_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">listeners.eventQueueSize</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">listeners_event_queue_size_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</details>
+<details>
+<summary class="title">Capacity</summary>
+<div class="content">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">V1 metric <code>hz_</code></th>
+<th class="tableblock halign-left valign-top">V2 metric <code>hazelcast_</code></th>
+<th class="tableblock halign-left valign-top">Additional labels</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">file.partition.freeSpace</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">file_partition_free_space_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">file.partition.totalSpace</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">file_partition_total_space_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">file.partition.usableSpace</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">file_partition_usable_space_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</details>
+<details>
+<summary class="title">Garbage Collection</summary>
+<div class="content">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">V1 metric <code>hz_</code></th>
+<th class="tableblock halign-left valign-top">V2 metric <code>hazelcast_</code></th>
+<th class="tableblock halign-left valign-top">Additional labels</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">gc.majorCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">gc_major_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">gc.majorTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">gc_major_time_seconds_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">gc.minorCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">gc_minor_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">gc.minorTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">gc_minor_time_seconds_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">gc.unknownCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">gc_unknown_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">gc.unknownTime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">gc_unknown_time_seconds_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</details>
+<details>
+<summary class="title">Memory</summary>
+<div class="content">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">V1 metric <code>hz_</code></th>
+<th class="tableblock halign-left valign-top">V2 metric <code>hazelcast_</code></th>
+<th class="tableblock halign-left valign-top">Additional labels</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory.committedHeap</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory_committed_heap_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory.committedNative</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory_committed_native_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory.freeHeap</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory_free_heap_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory.freeNative</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory_free_native_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory.freePhysical</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory_free_physical_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory.maxHeap</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory_max_heap_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory.maxMetadata</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory_max_metadata_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory.maxNative</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory_max_native_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory.totalPhysical</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory_total_physical_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory.usedHeap</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory_used_heap_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory.usedMetadata</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory_used_metadata_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory.usedNative</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">memory_used_native_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</details>
+<details>
+<summary class="title">Operations</summary>
+<div class="content">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">V1 metric <code>hz_</code></th>
+<th class="tableblock halign-left valign-top">V2 metric <code>hazelcast_</code></th>
+<th class="tableblock halign-left valign-top">Additional labels</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.adhoc.executedOperationsCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_adhoc_executed_operations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.asyncOperations</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_async_operations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.completedCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_completed_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.failedBackups</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_failed_backups_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.generic.executedOperationsCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_generic_executed_operations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.genericPriorityQueueSize</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_generic_priority_queue_size_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.genericQueueSize</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_generic_queue_size_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.genericThreadCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_generic_threads_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.invocations.backupTimeoutMillis</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_invocations_backup_timeout_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.invocations.backupTimeouts</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_invocations_backup_timeouts_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.invocations.delayedExecutionCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_invocations_delayed_executions_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.invocations.heartbeatBroadcastPeriodMillis</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_invocations_heartbeat_broadcast_period_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.invocations.heartbeatPacketsReceived</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_invocations_heartbeat_packets_received_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.invocations.heartbeatPacketsSent</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_invocations_heartbeat_packets_sent_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.invocations.invocationScanPeriodMillis</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_invocations_invocation_scan_period_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.invocations.invocationTimeoutMillis</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_invocations_invocation_timeout_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.invocations.lastCallId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_invocations_last_call_id_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.invocations.normalTimeouts</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_invocations_normal_timeouts_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.invocations.pending</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_invocations_pending_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.invocations.usedPercentage</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_invocations_used_ratio</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.parker.parkQueueCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_parker_park_queue_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.parker.totalParkedOperationCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_parker_parked_operations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.partition.executedOperationsCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_partition_executed_operations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.partitionThreadCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_partition_threads_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.priorityQueueSize</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_priority_queue_size_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.queueSize</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_queue_size_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.responseQueueSize</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_response_queue_size_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.responses.backupCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_responses_backups_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.responses.errorCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_responses_errors_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.responses.missingCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_responses_missing_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.responses.normalCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_responses_normal_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.responses.timeoutCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_responses_timeouts_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.retryCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_retries_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.runningCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_running_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.runningGenericCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_running_generic_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.runningPartitionCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_running_partition_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.thread.completedOperationCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_thread_completed_operations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.thread.completedOperationBatchCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_thread_completed_operation_batches_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.thread.completedPacketCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_thread_completed_packets_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.thread.completedPartitionSpecificRunnableCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_thread_completed_partition_specific_runnables_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.thread.completedRunnableCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_thread_completed_runnables_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.thread.completedTotalCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_thread_completed_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.thread.errorCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_thread_errors_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.thread.normalPendingCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_thread_normal_pending_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation.thread.priorityPendingCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operation_thread_priority_pending_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</details>
+<details>
+<summary class="title">Runtime</summary>
+<div class="content">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">V1 metric <code>hz_</code></th>
+<th class="tableblock halign-left valign-top">V2 metric <code>hazelcast_</code></th>
+<th class="tableblock halign-left valign-top">Additional labels</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">runtime.availableProcessors</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">runtime_available_processors_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">runtime.freeMemory</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">runtime_free_memory_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">runtime.maxMemory</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">runtime_max_memory_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">runtime.totalMemory</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">runtime_total_memory_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">runtime.uptime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">runtime_up_time_seconds_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">runtime.usedMemory</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">runtime_used_memory_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</details>
+<details>
+<summary class="title">TCP</summary>
+<div class="content">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">V1 metric <code>hz_</code></th>
+<th class="tableblock halign-left valign-top">V2 metric <code>hazelcast_</code></th>
+<th class="tableblock halign-left valign-top">Additional labels</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.acceptor.eventCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_acceptor_events_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.acceptor.exceptionCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_acceptor_exceptions_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.acceptor.idleTimeMillis</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_acceptor_idle_time_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.acceptor.selectorRecreateCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_acceptor_selector_recreate_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.balancer.imbalanceDetectedCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_balancer_imbalance_detected_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.balancer.migrationCompletedCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_balancer_migration_completed_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.bytesReceived</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_received_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.bytesSend</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_sent_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.acceptedSocketCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_accepted_socket_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.activeCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_active_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.clientCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_clients_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.closedCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_closed_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.connectionListenerCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_listeners_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.count</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.inProgressCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_in_progress_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.openedCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_opened_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.textCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_text_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.in.completedMigrations</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_completed_migrations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">direction=in</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.out.completedMigrations</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_completed_migrations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">direction=out</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.in.opsInterested</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_ops_interested_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">direction=in</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.out.opsInterested</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_ops_interested_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">direction=out</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.in.opsReady</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_ops_ready_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">direction=in</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.out.opsReady</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_ops_ready_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">direction=out</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.in.ownerId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_owner_id_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">direction=in</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.out.ownerId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_owner_id_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">direction=out</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.in.processCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_process_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">direction=in</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.out.processCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_process_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">direction=out</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.in.startedMigrations</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_started_migrations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">direction=in</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.out.startedMigrations</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_started_migrations_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">direction=out</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.in.bytesRead</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_in_read_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.in.idleTimeMs</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_in_idle_time_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.in.normalFramesRead</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_in_normal_frames_read_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.in.priorityFramesRead</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_in_priority_frames_read_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.out.bytesWritten</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_out_written_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.out.idleTimeMillis</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_out_idle_time_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.out.normalFramesWritten</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_out_normal_frames_written_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.out.priorityFramesWritten</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_out_priority_frames_written_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.out.priorityWriteQueuePendingBytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_out_priority_write_queue_pending_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.out.priorityWriteQueueSize</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_out_priority_write_queue_size_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.out.scheduled</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_out_scheduled_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.out.writeQueuePendingBytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_out_write_queue_pending_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.connection.out.writeQueueSize</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_connection_out_write_queue_size_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.inputThread.bytesTransceived</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_transceived_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=input</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.outputThread.bytesTransceived</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_transceived_bytes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=output</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.inputThread.completedTaskCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_completed_tasks_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=input</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.outputThread.completedTaskCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_completed_tasks_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=output</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.inputThread.eventCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_events_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=input</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.outputThread.eventCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_events_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=output</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.inputThread.framesTransceived</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_transceived_frames_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=input</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.outputThread.framesTransceived</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_transceived_frames_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=output</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.inputThread.idleTimeMillis</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_idle_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=input</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.outputThread.idleTimeMillis</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_idle_seconds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=output</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.inputThread.ioThreadId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_io_thread_id_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=input</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.outputThread.ioThreadId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_io_thread_id_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=output</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.inputThread.priorityFramesTransceived</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_priority_frames_transceived_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=input</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.outputThread.priorityFramesTransceived</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_priority_frames_transceived_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=output</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.inputThread.processCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_process_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=input</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.outputThread.processCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_process_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=output</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.inputThread.selectorIOExceptionCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_selector_io_exceptions_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=input</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.outputThread.selectorIOExceptionCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_selector_io_exceptions_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=output</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.inputThread.taskQueueSize</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_task_queue_size_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=input</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp.outputThread.taskQueueSize</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tcp_task_queue_size_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread=output</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</details>
+<details>
+<summary class="title">Threads</summary>
+<div class="content">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">V1 metric <code>hz_</code></th>
+<th class="tableblock halign-left valign-top">V2 metric <code>hazelcast_</code></th>
+<th class="tableblock halign-left valign-top">Additional labels</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread.daemonThreadCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread_daemon_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread.peakThreadCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread_peak_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread.threadCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread.totalStartedThreadCount</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thread_started_total</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n/a</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</details>
+</div>
+</div>

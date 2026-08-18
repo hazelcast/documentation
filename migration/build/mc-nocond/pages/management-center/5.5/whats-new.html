@@ -1,0 +1,134 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Here are the highlights of what’s new and improved in Hazelcast Management Center 5.5.</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+Hazelcast Management Center 5.5 requires Java 17 or later.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>With enhanced monitoring and an improved console experience, these improvements are designed to elevate your cluster management experience.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+For new and improved features in Hazelcast Platform 5.5, see <a href="../../hazelcast/5.5/whats-new" class="xref page">What&#8217;s new in Hazelcast Platform 5.5</a>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="lite-member-management"><a class="anchor" href="#lite-member-management"></a>Lite Member management</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hazelcast supports two kinds of members:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Full Members</strong> for when you need to scale both data storage and computational capabilities across the cluster</p>
+</li>
+<li>
+<p><strong>Lite Members</strong> are useful when you need additional computational power or clients that access data without the overhead of data storage and synchronization</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>With Hazelcast Platform 5.5, it&#8217;s now possible to execute Jet jobs only on the Lite members and therefore scale computational power independently of storage. Management Center has always supported promoting a Lite member to a Full member but in this release you can also now demote a Full member to a Lite member.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="multi-member-routing-for-java-clients"><a class="anchor" href="#multi-member-routing-for-java-clients"></a>Multi-member routing for Java clients</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hazelcast Platform 5.5 adds an additional client routing option for Java client applications connecting to geographically dispersed clusters. Management Center now supports this new multi-member client routing.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="multi-resource-user-code-namespaces"><a class="anchor" href="#multi-resource-user-code-namespaces"></a>Multi-resource User Code Namespaces</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>With Management Center 5.5 you can use <strong>Namespaces</strong> to monitor all the User Code Namespaces that are connected to your Hazelcast cluster. User Code Namespaces provide a container for Java classpath resources. Management Center has enhanced its support for User Code namespaces. For more info, see <a href="clusters/namespaces" class="xref page">User Code Namespaces</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="support-for-log4j2-json-template-logging"><a class="anchor" href="#support-for-log4j2-json-template-logging"></a>Support for Log4j2 JSON template logging</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Management Center now supports JSON Templates for logging purposes. You can customize the content of logs as well as enable audit logging. For further information see <a href="deploy-manage/logging" class="xref page">Logging</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="improved-reporting-on-slow-operations"><a class="anchor" href="#improved-reporting-on-slow-operations"></a>Improved reporting on slow operations</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Reporting on slow operations has been improved to provide information on operations detected by the <code>SlowOperationsDetector</code>. This detailed information is now included on the <strong>Members</strong> page, which helps better identify potential problems. For more info, see <a href="clusters/members#slow-operations" class="xref page">Slow Operations</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="vector-collections-beta"><a class="anchor" href="#vector-collections-beta"></a>Vector Collections (BETA)</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>Vector Collections</strong> support a specialized type of vector that&#8217;s optimized for storing, searching, and managing vector embeddings along with additional metadata. This feature allows you to include metadata values for filtering, processing, and detailed analysis of vectors.</p>
+</div>
+<div class="paragraph">
+<p>Management Center 5.5 has added support for Vector Collection metrics. For more info, see <a href="data-structures/vector-collection" class="xref page">Vector Collections</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="additional-improvements-and-fixes"><a class="anchor" href="#additional-improvements-and-fixes"></a>Additional Improvements and fixes</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>Client Filtering Preview</strong>: see the effects of Client Filtering actions before they&#8217;re made live. For more info, see <a href="clusters/client-filtering#client-filtering-preview" class="xref page">Client Filtering preview</a>.</p>
+</div>
+<div class="paragraph">
+<p><strong>Limit Client Filtering modes</strong>: you can now use a system property to limit the available Client Filtering modes to <code>ALLOWLIST</code>, <code>DENYLIST</code>, or both (which is the default). For more info, see <a href="clusters/client-filtering#configuring-client-filtering-modes" class="xref page">Client Filtering modes</a>.</p>
+</div>
+<div class="paragraph">
+<p><strong>WAN Replication table</strong>: this table has been improved to increase readability, and it&#8217;s also now possible to configure the <code>consistency-check-strategy</code> during the dynamic creation of a WAN publisher within Management Center. The dropdown fields now also support long values without impacting the UI.</p>
+</div>
+<div class="paragraph">
+<p><strong>Config Healthcheck</strong>: the warning icon in the Side Bar now displays the color of the highest severity issue detected.</p>
+</div>
+<div class="paragraph">
+<p><strong>OpenID Connect</strong>: you can now load configuration parameters from an OIDC configuration endpoint.</p>
+</div>
+<div class="paragraph">
+<p><strong>SQL Browser</strong>: when closed, you are now redirected to the previous page instead of the Dashboard.</p>
+</div>
+<div class="paragraph">
+<p><strong>Clustered REST</strong>: the allowed values for <code>memberConnection</code> have changed from <code>ALL</code> | <code>&lt;member-address&gt;</code> to
+<code>ALL_MEMBERS</code> | <code>MULTI_MEMBER</code> | <code>SINGLE_MEMBER</code>.</p>
+</div>
+<div class="paragraph">
+<p><br></p>
+</div>
+<div class="paragraph">
+<p>For a full list of bug fixes and enhancements, see <a href="release-notes/releases" class="xref page">Hazelcast Management Center 5.5.x release notes</a>.</p>
+</div>
+<div class="paragraph">
+<p>To get started with Hazelcast Management Center, or upgrade an existing installation, see <a href="getting-started/install" class="xref page">Installing and Starting Management Center</a>.</p>
+</div>
+</div>
+</div>

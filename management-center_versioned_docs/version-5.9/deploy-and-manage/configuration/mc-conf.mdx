@@ -1,0 +1,141 @@
+---
+title: "Management Center Configuration Tool"
+sidebar_position: 3
+slug: /deploy-manage/mc-conf
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+The Management Center Configuration Tool (`hz-mc conf`) is a command line tool that allows you to automate processes that require configuring Management Center, without using the UI.
+
+This tool makes changes to the configuration settings in the `hazelcast-mc` directory of the user's home directory. As a result, the tool must be used on the same device as the Management Center web application is deployed on, and Management Center must not be running while using the tool.
+
+## Get started
+
+To use the `hz-mc conf` tool, execute the `hz-mc conf` command in the `bin/` directory of the Management Center distribution. This command is available as a shell script (`hz-mc conf`) for Linux and Mac or a batch file (`mc-conf.bat`) for Windows.
+
+1. Make sure Management Center isn't running.
+
+   You cannot use this tool while Management Center is running.
+2. To see all available commands, execute the `hz-mc conf` command with no additional arguments.
+
+   <Tabs>
+   <TabItem value="linux-and-mac" label="Linux and Mac">
+
+   ```bash
+   hz-mc conf
+   ```
+
+   </TabItem>
+   <TabItem value="windows" label="Windows">
+
+   ```bash
+   mc-conf.bat
+   ```
+
+   </TabItem>
+   </Tabs>
+
+   :::tip
+
+   If you've set a non-default home directory with the [`hazelcast.mc.home` property](./system-properties.mdx#hazelcast-mc-home), you must provide the path to the home directory with the `-H` or `--home` options.
+
+   :::
+3. To see documentation for a specific command, enter the command, followed by the `-h` flag.
+
+   <Tabs>
+   <TabItem value="linux-and-mac" label="Linux and Mac">
+
+   ```bash
+   hz-mc conf user -h
+   ```
+
+   </TabItem>
+   <TabItem value="windows" label="Windows">
+
+   ```bash
+   mc-conf.bat user -h
+   ```
+
+   </TabItem>
+   </Tabs>
+4. To see documentation for a specific task, enter the command, followed by the task and the `-h` flag.
+
+   <Tabs>
+   <TabItem value="linux-and-mac" label="Linux and Mac">
+
+   ```bash
+   hz-mc conf user create -h
+   ```
+
+   </TabItem>
+   <TabItem value="windows" label="Windows">
+
+   ```bash
+   mc-conf.bat user create -h
+   ```
+
+   </TabItem>
+   </Tabs>
+
+## Commands
+
+The `hz-mc conf` tool comes with the following commands. Each command includes tasks that you can execute.
+
+| Command | Description |
+| --- | --- |
+| `cluster` | Manage cluster connections. See [Connect with hz-mc conf](../cluster-connections/connecting-to-clusters-mc-conf.mdx). |
+| `user` | Manage users in the default security provider. See [Local security provider](../security/user-authentication/local-security-provider.mdx) |
+| `ldap` | Manage the LDAP security provider. See [LDAP](../security/user-authentication/ldap.mdx) |
+| `active-directory` | Manage the Active Directory security provider. See [Active Directory](../security/user-authentication/active-directory.mdx) |
+| `jaas` | Manage the JAAS security provider. See [JAAS](../security/user-authentication/jaas.mdx) |
+| `oidc` | Manage the OpenID Connect security provider. See [OpenID Connect](../security/user-authentication/openid.mdx) |
+| `saml` | Manage the SAML security provider. See [SAML](../security/user-authentication/saml.mdx) |
+| `security` | Manage security providers. See [Switch to a new security provider](../security/user-authentication/switching-security-provider.mdx) |
+| `set` | Change some settings in Management Center. |
+| `get` | Read some settings from Management Center. |
+| `dev-mode` | Manage the dev mode security provider. See [Dev mode](../security/user-authentication/dev-mode.mdx) |
+
+## Skip the check for a lock file
+
+When you execute `hz-mc conf` or `mc-conf.bat`, the script checks if Management Center is running by looking for a lock file called `mc.lock` in the Management Center home directory. If the `mc.lock` file is found, the script exits with an error. You can disable this check by starting Management Center with the [`hazelcast.mc.lock.skip` property](./system-properties.mdx#hazelcast-mc-lock-skip).
+
+```bash
+export JAVA_OPTS='-Dhazelcast.mc.lock.skip=true'
+hz-mc conf ...
+```
+
+This property can be useful when you run Management Center on Kubernetes, and the home directory is on a mounted persistent volume. In this case, when Kubernetes restarts the container for any reason, the `mc.lock` file won't be deleted, therefore the next startup will be prevented due to the lock file.
+
+## Hide sensitive configuration in the UI
+
+The `set sensitive-properties` task configures the sensitive properties that must not be shown in plain text in Management Center. `--hidden-properties` is a comma-separated list of member properties to be hidden in the member properties. `--masked-config-properties` is a comma-separated list of XPath expressions in the member configuration to be masked.
+
+## Secure interactive prompt for passwords
+
+By default, passwords are displayed in the console as you type. If you want to hide your password from the console, you can use a secure interactive prompt.
+
+To use a secure interactive prompt, enter the `password` option without providing a value. For example, instead of `--password=<password>`, use `--password`.
+
+When you use the `--password` option without providing a value, you will get a prompt to enter a value on the console.
+
+```bash
+hz-mc conf user update-password --username=admin --password
+Enter value for --password (Password for the user record. Provide value directly,
+or use without value to enter securely with interactive prompt.): ********
+Successfully changed password for user 'admin'.
+```
+
+As you can see in the above example, the password input is not echoed to the console since it's provided with the secure interactive mode.
+
+## Argument files
+
+When an argument beginning with the character `@` is encountered, it is treated as a path leading to a text file. The contents of that file are automatically expanded into the current task. An example of the argument file usage is shown below.
+
+```bash
+hz-mc conf user update-password @arg-file.txt
+Successfully changed password for user 'admin'.
+cat arg-file.txt
+--username=admin --password=mnb3c4s0
+```

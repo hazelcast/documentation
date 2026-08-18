@@ -156,6 +156,65 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
   ok('wrapConditionals: injects sentinels inside the block, leaves non-snapshot text alone')
 }
 
+// --- mark-conditionals: marking must not change the parse --------------------
+// THE invariant the whole approach rests on: strip(marked golden) === clean
+// golden. Asciidoctor is the oracle — render each source with the `snapshot`
+// attribute set, once marked and once bare, strip the sentinels, and require the
+// two to agree. An `ifdef` is invisible to the block parser, so a padded sentinel
+// injected next to a line that was continuing a block ends that block and the
+// render genuinely improves — which is a broken baseline, not a win.
+{
+  const render = (src) => adoc.convert(src, { attributes: { snapshot: '' }, safe: 'safe' })
+  const roundTrips = (src) =>
+    stripConditionalSentinels(render(wrapConditionals(src))) === render(src)
+
+  // The management-center install.adoc shape: no blank line before the directive,
+  // so Asciidoctor absorbs `.Debian` into the preceding paragraph. Marking would
+  // promote it to a block title.
+  const glued = [
+    'Use either of these package managers:',
+    'ifdef::snapshot[]',
+    '.Debian',
+    '[source,shell]',
+    '----',
+    'apt install hazelcast',
+    '----',
+    'endif::[]',
+    '',
+  ].join('\n')
+  assert(/\.Debian/.test(render(glued)),
+    'precondition: with no blank line, Asciidoctor absorbs `.Debian` into the paragraph')
+  assert.strictEqual(wrapConditionals(glued), glued,
+    'a directive glued to the previous line is left unmarked')
+  assert(roundTrips(glued), 'and so the golden still strips back byte-for-byte')
+
+  // A block that continues AFTER the endif is the mirror image of the same hazard.
+  const gluedAfter = [
+    '',
+    'ifdef::snapshot[]',
+    'snapshot text',
+    'endif::[]',
+    '.Trailing',
+    'more text',
+    '',
+  ].join('\n')
+  assert.strictEqual(wrapConditionals(gluedAfter), gluedAfter,
+    'a line glued to the endif is left unmarked too (the hazard is symmetric)')
+  assert(roundTrips(gluedAfter), 'round-trip holds for the trailing case')
+
+  // The safe shape — blank lines on both sides — IS marked, and round-trips.
+  const spaced = ['Intro paragraph.', '', 'ifdef::snapshot[]', 'snapshot only', 'endif::[]', '', 'Outro.', ''].join('\n')
+  assert.notStrictEqual(wrapConditionals(spaced), spaced, 'a properly separated block is marked')
+  assert(roundTrips(spaced), 'and round-trips byte-for-byte')
+
+  // Counters are reported, so a skip is never silent.
+  const stats = {}
+  wrapConditionals(spaced, stats)
+  wrapConditionals(glued, stats)
+  assert.deepStrictEqual(stats, { marked: 1, skipped: 1 }, 'marked/skipped are both counted')
+  ok('wrapConditionals: only marks where injection is parse-neutral (Asciidoctor oracle)')
+}
+
 // --- normalize-monospace: recover literal `__x` / `_` from Antora's mangling --
 // Asciidoctor itself is the oracle. The bug is a CROSS-SPAN bleed: an `_`/`*` in a
 // monospace span opens an emphasis that pairs with a DISTANT delimiter, so both

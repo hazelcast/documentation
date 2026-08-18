@@ -112,6 +112,18 @@ const config: Config = {
     // the previous release (5.5.0) is cut as a versioned copy, matching the two
     // versions clc serves in production.
     versionedDocs({id: 'clc', currentSeg: '5.5.1', defaultVersion: 'current'}),
+    // Management Center docs — migration target #4, and the first MULTI-MODULE
+    // component: its 102 pages live in 11 Antora modules, whose names are URL
+    // segments (/management-center/5.11/clusters/dashboard), so a page is
+    // identified by module + stem rather than stem alone. Its main is a NUMBERED
+    // snapshot — published under `5.12-snapshot`, displayed as `5.12-SNAPSHOT` —
+    // and the dropdown lands on the newest release (5.11), as production does.
+    versionedDocs({
+      id: 'management-center',
+      currentSeg: '5.12-snapshot',
+      currentLabel: '5.12-SNAPSHOT',
+      defaultVersion: 'latest-release',
+    }),
     // Reproduces Antora's page-aliases as static meta-refresh redirect stubs at
     // the old URLs, so existing bookmarks/inbound links still land on the moved
     // page. Pairs are generated from the manifest into src/redirects.ts by the
@@ -162,6 +174,13 @@ const config: Config = {
           position: 'left',
           label: 'CLC',
         },
+        {
+          type: 'docSidebar',
+          docsPluginId: 'management-center',
+          sidebarId: 'defaultSidebar',
+          position: 'left',
+          label: 'Management Center',
+        },
         // Version dropdown for the operator instance (current + live releases).
         {
           type: 'docsVersionDropdown',
@@ -172,6 +191,13 @@ const config: Config = {
         {
           type: 'docsVersionDropdown',
           docsPluginId: 'clc',
+          position: 'right',
+        },
+        // Version dropdown for the management-center instance (5.12-SNAPSHOT +
+        // the 5.11/5.10/5.9 copies).
+        {
+          type: 'docsVersionDropdown',
+          docsPluginId: 'management-center',
           position: 'right',
         },
         // CTA, rendered as a HIVE Button (Try Free on Cloud pages,

@@ -1,0 +1,240 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>In this tutorial, you&#8217;ll start up an instance of Management Center that automatically connects to a Hazelcast cluster, using a Docker container. To get up and running as quickly as possible, an example <code>docker-compose.yml</code> is provided. No other configuration or dependencies are required.</p>
+</div>
+<div class="paragraph">
+<p>You&#8217;ll complete the following steps:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Create a <code>docker-compose.yml</code> to run a Hazelcast environment from a Docker container on your local machine.</p>
+</li>
+<li>
+<p>Start up Management Center and a Hazelcast cluster, using Docker Compose.</p>
+</li>
+<li>
+<p>Launch Management Center from a browser to view cluster details.</p>
+</li>
+<li>
+<p>Create a map using the SQL browser.</p>
+</li>
+<li>
+<p>Monitor the map.</p>
+</li>
+<li>
+<p>Shut down your Hazelcast environment.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="before-you-begin"><a class="anchor" href="#before-you-begin"></a>Before You Begin</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To complete this tutorial, you need the following:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Prerequisites</th>
+<th class="tableblock halign-left valign-top">Useful resources</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Docker Compose</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><a href="https://docs.docker.com/compose/install/">Install Docker Compose</a></p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="step-1-start-management-center"><a class="anchor" href="#step-1-start-management-center"></a>Step 1. Start Management Center</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check that Docker Compose is installed correctly.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">docker compose version</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you do not see a version number, see the <a href="https://docs.docker.com/get-started/08_using_compose/">Docker docs</a> for troubleshooting information.</p>
+</div>
+</li>
+<li>
+<p>Create a new directory on your local machine. In the directory, create a file named <code>docker-compose.yml</code> and copy in the following details:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">version: "3.8"
+services:
+  hazelcast:
+    image: hazelcast/hazelcast:5.0.4
+    ports:
+    - "5701:5701"
+  management-center:
+    image: hazelcast/management-center:5.0.4
+    ports:
+    - "8080:8080"
+    environment:
+    - MC_DEFAULT_CLUSTER=dev
+    - MC_DEFAULT_CLUSTER_MEMBERS=hazelcast</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can preconfigure a cluster connection in Management Center by setting the following environment variables:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>MC_DEFAULT_CLUSTER: The cluster name that Management Center connects to.</p>
+</li>
+<li>
+<p>MC_DEFAULT_CLUSTER_MEMBERS: A comma-separated list of the cluster member addresses or host names.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>To pull the required images, and to start up a Management Center instance already connected to a Hazelcast cluster, run the following:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">docker compose up</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Wait until you see the following message in the console:</p>
+</div>
+<div class="paragraph">
+<p><code>Hazelcast Management Center successfully started at <a href="http://localhost:8080" class="bare">http://localhost:8080</a></code>.</p>
+</div>
+<div class="paragraph">
+<p>Followed by:</p>
+</div>
+<div class="paragraph">
+<p><code>MC Client connected to cluster dev.</code></p>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="step-2-launch-management-center"><a class="anchor" href="#step-2-launch-management-center"></a>Step 2. Launch Management Center</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now that Management Center is connected to a running cluster, you can start to explore.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>In a web browser, go to <code>localhost:8080</code>. Details of the Hazelcast cluster that Management Center connected to during startup are displayed.</p>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/ConnectionEstablishedDev.png" alt="Connecting to the dev cluster"></span></p>
+</div>
+<div class="paragraph">
+<p>Management Center is running in dev mode. This mode is a special security provider that allows you to evaluate Management Center, without needing login credentials or authentication tokens for the REST API. For details about security providers, see <a href="../deploy-manage/security-providers" class="xref page">Security Providers</a>.</p>
+</div>
+</li>
+<li>
+<p>Click <strong>View Cluster</strong> to see the cluster&#8217;s dashboard.</p>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/Dashboard.png" alt="Cluster dashboard"></span></p>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="step-3-create-a-map"><a class="anchor" href="#step-3-create-a-map"></a>Step 3. Create a Map</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Management Center comes with a variety of tools for communicating with clusters. In this step, you&#8217;ll use the SQL browser to create a map in the cluster and put some data in it.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Click <strong>SQL Browser</strong> in the toolbar.</p>
+<div class="paragraph">
+<p>After each of the following SQL queries, click <strong>Execute Query</strong>.</p>
+</div>
+</li>
+<li>
+<p>Create a map called <code>my_distributed_map</code>.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE MAPPING my_distributed_map TYPE IMap OPTIONS ('keyFormat'='varchar','valueFormat'='varchar');</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Put some data into the map.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">SINK INTO my_distributed_map VALUES
+   ('1', 'John'),
+   ('2', 'Mary'),
+   ('3', 'Jane');</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Now you can query the data you have written:</p>
+<div class="listingblock">
+<div class="content">
+<pre>SELECT * FROM my_distributed_map;</pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="step-4-monitor-the-map"><a class="anchor" href="#step-4-monitor-the-map"></a>Step 4. Monitor the Map</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Go to back the cluster&#8217;s dashboard and select <strong>Storage</strong> &gt; <strong>Maps</strong>, and then select <strong>my_distributed_map</strong> from the list of maps. You can now see the statistics of your map:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/MapStats.png" alt="Map Statistics"></span></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="step-5-shut-down-hazelcast"><a class="anchor" href="#step-5-shut-down-hazelcast"></a>Step 5. Shut Down Hazelcast</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To shut down your Hazelcast environment gracefully, press CTRL+C.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="next-steps"><a class="anchor" href="#next-steps"></a>Next Steps</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you have an Enterprise license or you want to learn about Enterprise features, see <a href="../deploy-manage/license-management" class="xref page">Enterprise Licenses</a>.</p>
+</div>
+<div class="paragraph">
+<p>To serve Management Center over HTTPS instead of HTTP, see <a href="../deploy-manage/serve-mc-over-https" class="xref page">Serve Management Center over HTTPS</a>.</p>
+</div>
+<div class="paragraph">
+<p>For the options you can provide when starting Management Center, see <a href="../deploy-manage/system-properties" class="xref page">System Properties and Environment Variables</a>.</p>
+</div>
+</div>
+</div>

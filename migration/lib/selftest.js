@@ -11,7 +11,7 @@ const assert = require('node:assert')
 const path = require('node:path')
 
 const {
-  CURRENT_SEG, currentSegFor, markedAttrsFor, isVersioned, refFor, versionsToProcess, outDirFor, urlToSlug,
+  CURRENT_SEG, VERSIONS, currentSegFor, markedAttrsFor, isVersioned, refFor, versionsToProcess, outDirFor, urlToSlug,
 } = require('./layout')
 
 let n = 0
@@ -39,7 +39,31 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
     'clc has no -snapshot line: its current seg is the released 5.5.1')
   assert.notStrictEqual(currentSegFor('clc'), CURRENT_SEG,
     'clc must NOT reuse the default latest-snapshot seg (it has no such render)')
+  // MC overrides the seg for the OTHER reason: its main is a snapshot line, but a
+  // NUMBERED one (`5.12-snapshot`), so the override is not a clc-style "main is
+  // released" case -- see the refFor group, where MC still reads main.
+  assert.strictEqual(currentSegFor('management-center'), '5.12-snapshot',
+    'MC main declares a numbered snapshot -> that number is its current seg')
   ok('currentSegFor: default for -snapshot mains, per-component override for clc')
+}
+
+// --- a current seg is never also a release --------------------------------
+// Structural invariant over the LIVE config, not a per-component fact: the
+// current version and the releases are separate Docusaurus versions served at
+// separate paths, so a seg listed as both would emit the same branch twice --
+// once as current, once as a versioned copy that shadows it. This is the "do NOT
+// also snapshot v/5.5.1" clc gotcha, asserted rather than remembered.
+{
+  for (const component of Object.keys(VERSIONS)) {
+    const current = currentSegFor(component)
+    assert(!(VERSIONS[component].releases || []).includes(current),
+      `${component}: current seg ${current} must not also be listed as a release`)
+    assert.deepStrictEqual(
+      versionsToProcess(component).filter((v) => v.seg === current),
+      [{ seg: current, kind: 'current' }],
+      `${component}: the current seg appears exactly once, as current`)
+  }
+  ok('current seg is disjoint from the release list for every versioned component')
 }
 
 // --- branch selection per segment -----------------------------------------
@@ -52,6 +76,12 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
   assert.strictEqual(refFor('clc', currentSegFor('clc')), 'v/5.5.1',
     'clc current seg reads its v/5.5.1 tag, NOT main')
   assert.strictEqual(refFor('clc', '5.5.0'), 'v/5.5.0', 'clc release -> its v/ branch')
+  // MC has an overridden current seg like clc, but for an unrelated reason, so it
+  // must NOT inherit clc's "read a v/ tag for the current seg" behaviour: its
+  // 5.12-snapshot IS main, and there is no v/5.12-snapshot branch to read.
+  assert.strictEqual(refFor('management-center', currentSegFor('management-center')), 'main',
+    'MC current seg is main, despite the seg being overridden')
+  assert.strictEqual(refFor('management-center', '5.11'), 'v/5.11', 'MC release -> its v/ branch')
   ok('refFor: current->main, release->v/<seg>, unknown->null; clc current->v/ tag')
 }
 
@@ -115,6 +145,13 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
     'clc current: strips the /clc/5.5.1 prefix')
   assert.strictEqual(urlToSlug('/clc/5.5.1/', 'clc', '5.5.1'), '/',
     'clc current root maps to /')
+  // MC is multi-module (11 modules), so the module segment carries the bulk of its
+  // URL space -- a stem-only slug would collide `clusters/administration` with any
+  // other module's `administration` and silently move both pages.
+  assert.strictEqual(urlToSlug('/management-center/5.11/clusters/administration', 'management-center', '5.11'),
+    '/clusters/administration', 'MC release: keeps the module segment')
+  assert.strictEqual(urlToSlug('/management-center/5.12-snapshot/ask-ai', 'management-center', '5.12-snapshot'),
+    '/ask-ai', 'MC ROOT-module page: no module segment, prefix includes the snapshot seg')
   ok('urlToSlug: strips prefix, keeps module path, normalises roots and trailing slash')
 }
 

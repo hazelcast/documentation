@@ -1,0 +1,276 @@
+<div class="paragraph">
+<p>Use this menu item to monitor each cluster
+member and perform operations like running
+garbage collection (GC) and taking a thread dump.</p>
+</div>
+<div class="paragraph">
+<p>You can see a list of all the members in your
+cluster by clicking on the <strong>Members</strong> menu item
+on the left panel. A new
+page is opened on the right, as shown below.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/MemberGridView.png" alt="Member Grid View"></span></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+You may see a warning icon with exclamation mark in the list
+when your runtime or hardware configuration does not follow the performance
+recommendations. See <a href="https://hazelcast.com/resources/hazelcast-deployment-operations-guide/">IMDG Deployment and Operations Guide</a>
+for more information.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/MemberGridViewWarning.png" alt="Member Grid View with Warnings"></span></p>
+</div>
+<div class="paragraph">
+<p>You can filter the members shown and you can also
+sort the table by clicking on the column headers.
+Members that participate in the
+<a href="../../../imdg/4.2/cp-subsystem/cp-subsystem" class="xref page">CP subsystem</a>
+are marked with the CP icon. Clicking on a member
+name opens a new page for monitoring that
+member on the right, as shown below.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/MonitoringMembers.png" alt="Monitoring Members"></span></p>
+</div>
+<div class="paragraph">
+<p><a id="member-operations"></a>You can perform the following operations on the selected member
+using the buttons located at the top left of the page:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Run GC</strong>: Executes garbage collection on the
+selected member. A notification stating that the GC execution was
+successful is shown.</p>
+</li>
+<li>
+<p><strong>Thread Dump</strong>: Takes a thread dump of the
+selected member and shows it in a separate dialog.</p>
+</li>
+<li>
+<p><strong>Shutdown Member</strong>: Shuts down the selected member.</p>
+</li>
+<li>
+<p><strong>Promote Member</strong>: It is only shown for the lite members.
+When pressed, the lite member becomes a data member.</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Shutdown member operation requires enabled REST API in the IMDG cluster. See the
+<a href="../../../imdg/4.2/clients/rest" class="xref page">IMDG documentation</a>
+for more information.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Next to the above operation buttons, you can see the informative buttons
+as described below:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Number of Owned Partitions</strong>: Shows how many partitions are assigned
+to the selected member.</p>
+</li>
+<li>
+<p><strong>Member Version</strong>: Shows the Hazelcast IMDG cluster version which
+the selected member belongs to.</p>
+</li>
+<li>
+<p><strong>CP Member UUID</strong>: Shows CP member UUID if the member participates
+in the CP subsystem of the cluster.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><a id="utilization-charts"></a>The <strong>CPU Utilization</strong> chart shows the percentage
+of CPU usage on the selected member. The <strong>Heap/Memory
+Utilization</strong> charts show the memory usage on the
+selected member with three different metrics
+(maximum, used and total memory). You can open
+each chart as a separate dialog using
+the <span class="image"><img src="../_images/MaximizeChart.png" alt="maximize"></span> button
+placed at top right of them; this gives you
+a clearer view of the chart.</p>
+</div>
+<div class="paragraph">
+<p><a id="runtime"></a><strong>Runtime</strong> is a dynamically updated window tab
+showing the processor number, the start and up
+times, and the maximum, total and free memory
+sizes of the selected member. These values are
+collected from the default MXBeans provided by
+the Java Virtual Machine (JVM). Descriptions from
+the Javadocs and some explanations are below:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Number of Processors</strong>: Number of processors
+available to the member (JVM).</p>
+</li>
+<li>
+<p><strong>Start Time</strong>: Start time of the member (JVM)
+in milliseconds.</p>
+</li>
+<li>
+<p><strong>Up Time</strong>: Uptime of the member (JVM) in milliseconds</p>
+</li>
+<li>
+<p><strong>Maximum Memory</strong>: Maximum amount of memory that
+the member (JVM) will attempt to use.</p>
+</li>
+<li>
+<p><strong>Free Memory</strong>: Amount of free memory in the member (JVM).</p>
+</li>
+<li>
+<p><strong>Used Heap Memory</strong>: Amount of used memory in bytes.</p>
+</li>
+<li>
+<p><strong>Max Heap Memory</strong>: Maximum amount of memory in
+bytes that can be used for memory management.</p>
+</li>
+<li>
+<p><strong>Used Non-Heap Memory</strong>: Amount of used memory
+in bytes.</p>
+</li>
+<li>
+<p><strong>Max Non-Heap Memory</strong>: Maximum amount of memory
+in bytes that can be used for memory management.</p>
+</li>
+<li>
+<p><strong>Total Loaded Classes</strong>: Total number of classes
+that have been loaded since the member (JVM) has started execution.</p>
+</li>
+<li>
+<p><strong>Current Loaded Classes</strong>: Number of classes that
+are currently loaded in the member (JVM).</p>
+</li>
+<li>
+<p><strong>Total Unloaded Classes</strong>: Total number of classes
+unloaded since the member (JVM) has started execution.</p>
+</li>
+<li>
+<p><strong>Total Thread Count</strong>: Total number of threads created
+and also started since the member (JVM) started.</p>
+</li>
+<li>
+<p><strong>Active Thread Count</strong>: Current number of live threads
+including both daemon and non-daemon threads.</p>
+</li>
+<li>
+<p><strong>Peak Thread Count</strong>: Peak live thread count since the
+member (JVM) started or peak was reset.</p>
+</li>
+<li>
+<p><strong>Daemon Thread Count</strong>: Current number of live daemon threads.</p>
+</li>
+<li>
+<p><strong>OS: Free Physical Memory</strong>: Amount of free physical
+memory in bytes.</p>
+</li>
+<li>
+<p><strong>OS: Committed Virtual Memory</strong>: Amount of virtual
+memory that is guaranteed to be available to the running process in bytes.</p>
+</li>
+<li>
+<p><strong>OS: Total Physical Memory</strong>: Total amount of physical memory in bytes.</p>
+</li>
+<li>
+<p><strong>OS: Free Swap Space</strong>: Amount of free swap space
+in bytes. Swap space is used when the amount of physical
+memory (RAM) is full. If the system needs more memory resources
+and the RAM is full, inactive pages in memory are moved to the swap space.</p>
+</li>
+<li>
+<p><strong>OS: Total Swap Space</strong>: Total amount of swap space in bytes.</p>
+</li>
+<li>
+<p><strong>OS: Maximum File Descriptor Count</strong>: Maximum number of file
+descriptors. File descriptor is an integer number that uniquely
+represents an opened file in the operating system.</p>
+</li>
+<li>
+<p><strong>OS: Open File Descriptor Count</strong>: Number of open file descriptors.</p>
+</li>
+<li>
+<p><strong>OS: Process CPU Time</strong>: CPU time used by the process on
+which the member (JVM) is running in nanoseconds.</p>
+</li>
+<li>
+<p><strong>OS: Process CPU Load</strong>: Recent CPU usage for the member
+(JVM) process. This is a double with a value from 0.0 to 1.0.
+A value of 0.0 means that none of the CPUs were running threads
+from the member (JVM) process during the recent period of time
+observed, while a value of 1.0 means that all CPUs were actively
+running threads from the member (JVM) 100% of the time during the
+recent period being observed. Threads from the member (JVM) include
+the application threads as well as the member (JVM) internal threads.</p>
+</li>
+<li>
+<p><strong>OS: System Load Average</strong>: System load average for the last minute.
+The system load average is the average over a period of time of this sum:
+(the number of runnable entities queued to the available processors) + (the number of runnable entities running on the available processors). The way in which the load average is calculated is operating system specific
+but it is typically a damped time-dependent average.</p>
+</li>
+<li>
+<p><strong>OS: System CPU Load</strong>:
+Recent CPU usage for the whole system represented as a percentage value.
+<code>0%</code> means that all CPUs were idle during the recent period of time
+observed, while <code>100%</code> means that all CPUs were actively running during
+the recent period being observed.</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+These descriptions may vary according to the JVM version or vendor.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><a id="member-properties"></a>Next to the <strong>Runtime</strong> tab, the <strong>Properties</strong> tab shows the system
+properties.</p>
+</div>
+<div class="paragraph">
+<p>The <strong>Member Configuration</strong> window shows the XML
+configuration of the connected Hazelcast cluster.</p>
+</div>
+<div class="paragraph">
+<p><a id="slow-operations"></a>The <strong>List of Slow Operations</strong> gives an overview of detected slow
+operations which occurred on that member. The data is collected by the
+<a href="../../../imdg/4.2/performance/slowoperationdetector" class="xref page">SlowOperationDetector</a>.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/ListOfSlowOperations.png" alt="List of Slow Operations"></span></p>
+</div>
+<div class="paragraph">
+<p>Click on an entry to open a dialog which shows the stacktrace and
+detailed information about each slow invocation of this operation.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/SlowOperationDetail.png" alt="Slow Operations Details"></span></p>
+</div>

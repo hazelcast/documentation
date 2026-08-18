@@ -1,0 +1,259 @@
+---
+title: "Logging"
+sidebar_position: 5
+slug: /deploy-manage/logging
+---
+
+You can customize the content of logs as well as enable audit logging.
+
+Management Center uses [Log4j 2](https://logging.apache.org/log4j/2.x/) for its logging. By default, Management Center prints all logs except audit logs to standard output. This behavior is defined by the following Spring Boot configuration properties:
+
+```properties
+logging.pattern.console=%d [%highlight{%5p}{FATAL=red, ERROR=red, WARN=yellow, INFO=green, DEBUG=magenta}] [%style{%t{1.}}{cyan}] [%style{%c{1.}}{blue}]: %m%n%xwEx
+logging.level.root=${hazelcast.mc.log.level:INFO}
+logging.level.com.hazelcast=${hazelcast.mc.log.level:ERROR}
+logging.level.com.hazelcast.webmonitor=${hazelcast.mc.log.level:INFO}
+logging.level.org.springframework=${hazelcast.mc.log.level:WARN}
+logging.level.org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver=${hazelcast.mc.log.level:ERROR}
+logging.level.MetricsTrace=TRACE
+logging.level.com.zaxxer.hikari=${hazelcast.mc.log.level:WARN}
+logging.level.liquibase=${hazelcast.mc.log.level:WARN}
+logging.level.org.hibernate.validator=${hazelcast.mc.log.level:WARN}
+logging.level.org.eclipse.jetty=WARN
+```
+
+## Change the log level
+
+To change the logging level for all loggers, start Management Center with the `hazelcast.mc.log.level` property. For example, to use the debug logging level, start Management Center with the following line:
+
+```bash
+-Dhazelcast.mc.log.level=debug
+```
+
+To change the logging level for the specific logger, start Management Center with the system property of the following format: `logging.level.<logger-name>=<level>`, where `level` is one of `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`, or `OFF`. The `root` logger can be configured by using `logging.level.root`.
+
+For example,
+
+```bash
+-Dlogging.level.root=DEBUG
+-Dlogging.level.web=TRACE
+-Dlogging.level.org.springframework=INFO
+```
+
+## Customize the logging configuration
+
+To further customize the logging configuration, you can create a custom Log4j 2 configuration file and start Management Center with the `logging.config` property.
+
+For example, you can create a file named `log4j2-custom.properties` with the following content and write log messages into rolling log files. To use this file as the logging configuration, start Management Center with the `-Dlogging.config=/path/to/your/log4j2-custom.properties` command line parameter:
+
+```properties
+appender.console.type=Console
+appender.console.name=STDOUT
+appender.console.layout.type=PatternLayout
+appender.console.layout.pattern=%d [%highlight{${LOG_LEVEL_PATTERN:-%5p}}{FATAL=red, ERROR=red, WARN=yellow, INFO=green, DEBUG=magenta}] [%style{%t{1.}}{cyan}] [%style{%c{1.}}{blue}]: %m%n
+
+appender.rolling.type=RollingFile
+appender.rolling.name=RollingFile
+appender.rolling.fileName=${sys:user.home}/mc-logs/mc.log
+appender.rolling.filePattern=${sys:user.home}/mc-logs/mc.%d{yyyy-MM-dd}.log
+appender.rolling.layout.type=PatternLayout
+appender.rolling.layout.pattern=%d [%5p] [%t] [%c{.1}]: %m%n
+appender.rolling.policies.type = Policies
+appender.rolling.policies.time.type = TimeBasedTriggeringPolicy
+
+rootLogger.level=info
+rootLogger.appenderRef.stdout.ref=STDOUT
+rootLogger.appenderRef.rolling.ref=RollingFile
+```
+
+To enable JSON logging, activate the `json-logging` profile by starting Management Center with the following parameter:
+
+```
+-Dspring.profiles.active=json-logging
+```
+
+By default, Management Center uses a JSON logging template compliant with [Elastic Common Schema (ECS) specification](https://www.elastic.co/guide/en/ecs/current/ecs-reference.html). You can change the logging template by providing a JSON logging template file as follows:
+
+```
+-Dlogging.json.template=<json-file-path>
+```
+
+:::note
+
+To use a custom JSON logging template, you must activate the `json-logging` profile as described above.
+
+:::
+
+For more information about the JSON logging templates, see the [Log4j2 JSON Layout documentation](https://logging.apache.org/log4j/2.x/manual/json-template-layout.html).
+
+## Audit logging
+
+To make it easier to examine suspicious activity and troubleshoot issues, you can use audit logging to keep a record of events that happen in Management Center such as user logins.
+
+To enable audit logging, start Management Center with the [`hazelcast.mc.auditlog.enabled` property](./system-properties.mdx#hazelcast-mc-auditlog-enabled) set to `true`.
+
+Log entries from the audit logging will be marked with the `hazelcast.auditlog` logging category, abbreviated as `h.auditlog` in logs.
+
+An example log entry looks like the following:
+
+```none
+2020-10-13 09:57:54,803 [ INFO] [qtp973576304-35] [h.auditlog]: MC-2001 [Auth]:User logged in:{username=JohnHallaign}
+```
+
+`MC-2001 [Auth]` you see in this example represents the log's type.
+
+### Audit logging event types
+
+The following table lists the current log categories along with their types:
+
+<table>
+<thead>
+<tr>
+<th>Event Category</th>
+<th>Log Type/Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Management Center Configuration Logs</td>
+<td>
+
+- `MC-0003 [Config]`: User is created.
+- `MC-0004 [Config]`: User is edited.
+- `MC-0005 [Config]`: User's password is changed.
+- `MC-0006 [Config]`: User is deleted.
+- `MC-0009 [Config]`: License is set.
+
+</td>
+</tr>
+<tr>
+<td>Cluster Configuration Logs</td>
+<td>
+
+- `MC-1001 [Cluster Config]`: Map's configuration is changed.
+- `MC-1003 [Cluster Config]`: Cluster's state is changed.
+- `MC-1004 [Cluster Config]`: Cluster is shut down.
+- `MC-1005 [Cluster Config]`: Member is shut down.
+- `MC-1006 [Cluster Config]`: Lite member is promoted.
+- `MC-1007 [Cluster Config]`: Cluster version is changed.
+- `MC-1008 [Cluster Config]`: Data member is demoted.
+
+</td>
+</tr>
+<tr>
+<td>Authentication Logs</td>
+<td>
+
+- `MC-2001 [Auth]`: User logs in.
+- `MC-2002 [Auth]`: User logs out.
+- `MC-2003 [Auth]`: Login failures.
+- `MC-2004 [Auth]`: User authentication token is issued.
+- `MC-2005 [Auth]`: User authentication token is revoked.
+- `MC-2006 [Auth]`: User authentication token login failed.
+- `MC-2010 [Auth]`: Prometheus authentication failed.
+
+</td>
+</tr>
+<tr>
+<td>Scripting Logs</td>
+<td>
+
+- `MC-3001 [Script]`: Script is executed on a member.
+
+</td>
+</tr>
+<tr>
+<td>Console Logs</td>
+<td>
+
+- `MC-4001 [Console]`: Console command is executed on the cluster.
+
+</td>
+</tr>
+<tr>
+<td>Map/Cache Logs</td>
+<td>
+
+- `MC-5001 [Browser]`: User browses through a map screen in Management Center.
+- `MC-5002 [Browser]`: User browses through a cache screen in Management Center.
+- `MC-5003 [Browser]`: Map cleared.
+
+</td>
+</tr>
+<tr>
+<td>Persistence Logs</td>
+<td>
+
+- `MC-6001 [Persistence]`: Force start is run.
+- `MC-6002 [Persistence]`: Partial start is run.
+- `MC-6003 [Persistence]`: Hot backup operation is triggered.
+- `MC-6004 [Persistence]`: Hot backup operation is interrupted.
+
+</td>
+</tr>
+<tr>
+<td>WAN Replication Logs</td>
+<td>
+
+- `MC-7001 [WAN]`: WAN configuration is added.
+- `MC-7002 [WAN]`: WAN consistency check operation is run.
+- `MC-7003 [WAN]`: WAN synchronization on a map is run.
+- `MC-7004 [WAN]`: State of the WAN publisher is changed.
+- `MC-7005 [WAN]`: Clear operation for the WAN events queue is run.
+
+</td>
+</tr>
+<tr>
+<td>CP Subsystem Logs</td>
+<td>
+
+- `MC-8001 [CP Subsystem]`: Member is promoted to be a CP subsystem member.
+- `MC-8002 [CP Subsystem]`: Member is removed from CP subsystem.
+- `MC-8003 [CP Subsystem]`: CP subsystem is reset.
+
+</td>
+</tr>
+<tr>
+<td>Streaming Job Logs</td>
+<td>
+
+- `MC-9001 [Streaming]`: Job is restarted.
+- `MC-9002 [Streaming]`: Job is suspended.
+- `MC-9003 [Streaming]`: Job is resumed.
+- `MC-9004 [Streaming]`: Job is cancelled.
+- `MC-9005 [Streaming]`: Job snapshot is deleted.
+- `MC-9006 [Streaming]`: Job snapshot is exported.
+- `MC-9007 [Streaming]`: Job is cancelled and snapshot is exported.
+
+</td>
+</tr>
+</tbody>
+</table>
+
+### Write audit logs to rolling files
+
+To write audit logs to separate rolling log files, you can use a Log4j 2 configuration file such as the following:
+
+```properties
+appender.console.type=Console
+appender.console.name=STDOUT
+appender.console.layout.type=PatternLayout
+appender.console.layout.pattern=%d [%highlight{${LOG_LEVEL_PATTERN:-%5p}}{FATAL=red, ERROR=red, WARN=yellow, INFO=green, DEBUG=magenta}] [%style{%t{1.}}{cyan}] [%style{%c{1.}}{blue}]: %m%n
+
+appender.audit.type=RollingFile
+appender.audit.name=AuditFile
+appender.audit.fileName=${sys:user.home}/mc-logs/audit.log
+appender.audit.filePattern=${sys:user.home}/mc-logs/audit.%d{yyyy-MM-dd}.log
+appender.audit.layout.type=PatternLayout
+appender.audit.layout.pattern=%d [%5p] [%t] [%c{.1}]: %m%n
+appender.audit.policies.type = Policies
+appender.audit.policies.time.type = TimeBasedTriggeringPolicy
+
+logger.audit.name=hazelcast.auditlog
+logger.audit.level=info
+logger.audit.additivity=false
+logger.audit.appenderRef.audit.ref=AuditFile
+
+rootLogger.level=info
+rootLogger.appenderRef.stdout.ref=STDOUT
+```

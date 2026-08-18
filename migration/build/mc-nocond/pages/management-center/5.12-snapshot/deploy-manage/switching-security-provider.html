@@ -1,0 +1,95 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you&#8217;ve set up dev mode, you can switch to a new security provider by disabling dev mode in the UI.</p>
+</div>
+<div class="paragraph">
+<p>If you&#8217;ve set up any other security provider, you must use the <code>hz-mc conf</code> tool to reset the security provider before setting up a new one.</p>
+</div>
+<div class="paragraph">
+<p>If you want to use the <code>hz-mc conf</code> tool to switch from dev mode to another security provider, you must reset the security provider first.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="use-the-ui"><a class="anchor" href="#use-the-ui"></a>Use the UI</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To switch to a different security provider from dev mode in the UI, go to <strong>Settings</strong> &gt; <strong>Security Providers</strong>.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/SecurityProviders.png" alt="Security Providers"></span></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="use-mc-conf"><a class="anchor" href="#use-mc-conf"></a>Use mc-conf</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To switch to another security provider with the <code>hz-mc conf</code> tool, use the <code>security reset</code> task to reset the provider first.</p>
+</div>
+<div class="paragraph">
+<p>This task deletes all existing user accounts and auth tokens.</p>
+</div>
+<div class="paragraph">
+<p>Then, you can configure another local security provider. For help setting one up, see <a href="security-providers" class="xref page">Security Providers</a></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="fetch-the-security-provider-details"><a class="anchor" href="#fetch-the-security-provider-details"></a>Fetch the security provider details</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can fetch the configuration details of the security provider to validate if this is set correctly using the <code>hz-mc conf</code> tool with the <code>security get</code> task.
+Sensitive fields such as <code>password</code> or <code>clientSecret</code> are masked in the output.</p>
+</div>
+<div class="paragraph">
+<p>This can be done only when the Management Center web application is stopped.</p>
+</div>
+<div class="paragraph">
+<p>If the security provider is not set you should see the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">{
+  "currentProvider" : null
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If the Dev Mode is set you should see the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">{
+  "currentProvider" : "Dev Mode"
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For the other security providers, you should see the list of the configured properties. For example, if the LDAP is configured you should see the following set of properties with the values which were set during the LDAP configuration:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">{
+  "configuration" : {
+    "adminGroup" : "Admins",
+    "startTls" : false,
+    "url" : "ldap://localhost:56830",
+    "nestedGroupSearch" : true,
+    "password" : "****",
+    "groupDn" : "ou=Groups,dc=mancenter,dc=hazelcast,dc=com",
+    "userSearchFilter" : "uid={0}",
+    "groupSearchFilter" : "uniquemember={0}",
+    "readonlyUserGroup" : "Readers",
+    "metricsOnlyGroup" : "Metrics",
+    "userGroup" : "Writers",
+    "userDn" : "ou=Users,dc=mancenter,dc=hazelcast,dc=com",
+    "username" : "cn=admin,dc=mancenter,dc=hazelcast,dc=com"
+  },
+  "currentProvider" : "LDAP"
+}</code></pre>
+</div>
+</div>
+</div>
+</div>

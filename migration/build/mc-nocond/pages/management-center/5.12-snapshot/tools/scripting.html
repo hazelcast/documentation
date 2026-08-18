@@ -1,0 +1,159 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can use the scripting feature of the Management Center to execute scripts
+on the cluster.</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>When scripting is enabled, it grants full, unrestricted access to the cluster. Scripts run arbitrary code on cluster members with the same permissions as the member process, and are <strong>not</strong> limited by the permissions assigned to the Management Center user or principal that runs them. Any user who can access scripting can therefore perform any operation on the cluster.</p>
+</div>
+<div class="paragraph">
+<p>Use scripting with caution, especially in production environments. If granular access control is critical, consider leaving scripting disabled. See <a href="../../../hazelcast/5.8-snapshot/maintain-cluster/monitoring#managing-scripting-support" class="xref page">Toggle Scripting Support</a> to enable or disable it.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="before-you-begin"><a class="anchor" href="#before-you-begin"></a>Before you begin</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Scripting is disabled by default, and you need to enable it
+in your cluster&#8217;s configuration. See the
+<a href="../../../hazelcast/5.8-snapshot/maintain-cluster/monitoring#managing-scripting-support" class="xref page">Toggle Scripting Support</a> for details. The member list shows whether
+scripting is enabled or disabled for each member.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Java 15 and newer versions do not come with a JavaScript engine. If you want to use JavaScript as a scripting language on a member with Java 15 and newer, the appropriate libraries should be placed in the classpath of that member. See the <a href="#scripting-languages">Enabling Scripting Languages section</a> for more details.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/MemberGridView.png" alt="Member Grid View"></span></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="scripting-in-javascript"><a class="anchor" href="#scripting-in-javascript"></a>Scripting in JavaScript</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To use this feature, click on the <strong>Scripting</strong> menu item
+on the left panel.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/Scripting.png" alt="Scripting"></span></p>
+</div>
+<div class="paragraph">
+<p>In this window, the left panel is the actual script code editor.
+The combo box located at the top part of the editor enables
+you to select a scripting language: currently, JavaScript, Ruby, Groovy and Python
+languages are supported. You can select the members on which the code will execute
+from the <strong>Members</strong> list shown on the right side of the screen.
+After you write your script and press the <strong>Execute</strong> button, you can see
+the execution result in the <strong>Result</strong> part of the window.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+To use the scripting languages other than JavaScript on a member,
+the libraries for those languages should be placed in the classpath of that member.
+See the <a href="#scripting-languages">Enabling Scripting Languages section</a>
+for more details.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>There are <strong>Save</strong> and <strong>Delete</strong> buttons on the top right of the scripting editor.
+To save your scripts, press the <strong>Save</strong> button after you type a name for your script
+into the field next to this button. The scripts you saved are listed in the <strong>Saved Scripts</strong>
+part of the window, located at the bottom right of the page. Click on a saved script from
+this list to execute or edit it. If you want to remove a script that you wrote and saved
+before, select it from this list and press the <strong>Delete</strong> button.</p>
+</div>
+<div class="paragraph">
+<p>In the scripting engine you have a <code>HazelcastInstance</code> bonded to a variable
+named <code>hazelcast</code>. You can invoke any method that <code>HazelcastInstance</code> has via
+the <code>hazelcast</code> variable. An example usage for JavaScript is below:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-javascript hljs" data-lang="javascript">var name = hazelcast.getName();
+var node = hazelcast.getCluster().getLocalMember();
+var employees = hazelcast.getMap("employees");
+employees.put("1","John Doe");
+employees.get("1"); // will return "John Doe"</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="scripting-languages"><a class="anchor" href="#scripting-languages"></a>Enable scripting languages</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hazelcast members use the <code>javax.script.ScriptEngineManager</code> API for the execution of the script.
+The JavaScript engine is available in most JVMs of versions older than 15 by default.
+To use a scripting language on a member, you need to add the
+corresponding scripting engine and all its transitive dependencies to the classpath of that member.</p>
+</div>
+<div class="paragraph">
+<p>Here is an example of
+Maven configuration for several scripting engines:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;dependencies&gt;
+    &lt;!-- JavaScript --&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;org.openjdk.nashorn&lt;/groupId&gt;
+      &lt;artifactId&gt;nashorn-core&lt;/artifactId&gt;
+      &lt;version&gt;15.3&lt;/version&gt;
+    &lt;/dependency&gt;
+    &lt;!-- Groovy --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.codehaus.groovy&lt;/groupId&gt;
+        &lt;artifactId&gt;groovy-jsr223&lt;/artifactId&gt;
+        &lt;version&gt;3.0.9&lt;/version&gt;
+    &lt;/dependency&gt;
+    &lt;!-- Ruby (JRuby) --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mule.modules&lt;/groupId&gt;
+        &lt;artifactId&gt;mule-module-scripting-jruby&lt;/artifactId&gt;
+        &lt;version&gt;3.9.0&lt;/version&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;joda-time&lt;/groupId&gt;
+        &lt;artifactId&gt;joda-time&lt;/artifactId&gt;
+        &lt;version&gt;2.10.2&lt;/version&gt;
+    &lt;/dependency&gt;
+    &lt;!-- Python (Jython) --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.python&lt;/groupId&gt;
+        &lt;artifactId&gt;jython-standalone&lt;/artifactId&gt;
+        &lt;version&gt;2.7.1&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;</code></pre>
+</div>
+</div>
+</div>
+</div>

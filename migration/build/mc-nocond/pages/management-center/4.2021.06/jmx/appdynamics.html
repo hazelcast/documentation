@@ -1,0 +1,32 @@
+<div class="paragraph">
+<p>Use the Clustered JMX interface to integrate the Hazelcast Management Center
+with <strong>AppDynamics</strong>. To perform this integration, attach the AppDynamics
+Java agent to the Management Center.</p>
+</div>
+<div class="paragraph">
+<p>For agent installation, see the
+<a href="http://docs.appdynamics.com/display/PRO14S/Install%2Bthe%2BApp%2BAgent%2Bfor%2BJava">Install the App Agent for Java</a> page.</p>
+</div>
+<div class="paragraph">
+<p>For monitoring on AppDynamics, see the
+<a href="http://docs.appdynamics.com/display/PRO14S/Monitor%2BJMX%2BMBeans#MonitorJMXMBeans-UsingAppDynamicsforJMXMonitoring">Using AppDynamics for JMX Monitoring</a> page.</p>
+</div>
+<div class="paragraph">
+<p>After installing AppDynamics agent, you can start the Management Center as shown below:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">java -javaagent:/path/to/javaagent.jar \
+     -Dhazelcast.mc.jmx.enabled=true \
+     -Dhazelcast.mc.jmx.port=9999 -jar hazelcast-management-center-4.2021.06.jar</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When the Management Center starts, you should see the logs below:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">Started AppDynamics Java Agent Successfully.
+Hazelcast Management Center starting on port 8080 at path : /</code></pre>
+</div>
+</div>

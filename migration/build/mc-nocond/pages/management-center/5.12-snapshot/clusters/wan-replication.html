@@ -1,0 +1,295 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can use the <strong>WAN Replication</strong> menu item to check the status of WAN replication, synchronize map and cache data structures across clusters, and add dynamic configuration for WAN replication.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/WanReplication.png" alt="Monitoring WAN Replication"></span></p>
+</div>
+<div class="paragraph">
+<p>On this page, you see the <strong>WAN Replication Configurations</strong> that contain replication publishers.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Name</strong>: Name of the WAN replication config.</p>
+</li>
+<li>
+<p><strong>State</strong>: Current state of the WAN replication or publisher. See
+<a href="#changing-wan-publisher-state">Changing WAN Publisher State</a> for the
+list of possible WAN publisher states.</p>
+</li>
+<li>
+<p><strong>Members</strong>: Count of WAN publishers on the cluster members.</p>
+<div class="paragraph">
+<p>Members = (Cluster Members) * (WAN publishers).</p>
+</div>
+</li>
+<li>
+<p><strong>Max Queue Fill Ratio</strong>: Maximum value of <strong>Outbound Queue Fill Ratio</strong> among the publishers.</p>
+</li>
+<li>
+<p><strong>Total Queue</strong>: Sum of <strong>Outbound Queue Size</strong> from the publishers.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>To see the replication publishers, click on a replication config.</p>
+</div>
+<div class="paragraph">
+<p>For detailed information about the corresponding replication publisher, click <strong>Show details</strong>.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/WanReplicationPublishers.png" alt="WAN Replication Publishers"></span></p>
+</div>
+<div class="paragraph">
+<p>This page includes the following details:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Member</strong>: Hazelcast cluster member that has a WAN publisher. Icon shows the connection state (red=disconnected/green=connected).</p>
+</li>
+<li>
+<p><strong>Action</strong>: Pause, stop or resume replication of a member&#8217;s
+records. You can also clear the event queues in a member using
+the <strong>Clear Queues</strong> action.  For example, if you know that the
+target cluster is being shut down, decommissioned, or put out of use
+and it will never come back, you may additionally clear the WAN queues
+to release the consumed heap after the publisher has been switched. Or,
+when a failure happens and queues are not replicated anymore, you could
+manually clear the queues using the <strong>Clear Queues</strong> action.</p>
+</li>
+<li>
+<p><strong>State</strong>: Shows current state of the WAN publisher on a member. See
+<a href="#changing-wan-publisher-state">Changing WAN Publisher State</a> for the
+list of possible WAN publisher states.</p>
+</li>
+<li>
+<p><strong>Events Published per Second</strong>: Number of published events
+per second. Please see the paragraph below.</p>
+</li>
+<li>
+<p><strong>Average Event Latency</strong>: Average latency of sending a record
+to the target from this member. See below for details.</p>
+</li>
+<li>
+<p><strong>Outbound Queue Fill Ratio</strong>: Percentage of how full the outbound queue is.<br>
+Outbound Queue Fill Ratio = (Outbound Queue Size / Outbound Queue Capacity) * 100</p>
+</li>
+<li>
+<p><strong>Outbound Queue Size</strong>: Number of records waiting in the queue
+to be sent to the target.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Events Published per Second</strong> and <strong>Average Event Latency</strong> are
+based on the following internal statistics:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Total published event count (TBEC): Total number of events that
+are successfully sent to the target cluster since the start-up of the member.</p>
+</li>
+<li>
+<p>Total latency (TL): Grand total of each event&#8217;s waiting time in
+the queue, including network transmit and receiving ACK from the target.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Each member sends these two statistics to the Management Center at
+intervals of 3 seconds (update interval). Management Center derives
+<strong>Events Published per Second</strong> and <strong>Average Event Latency</strong> from
+these statistics as formulated below:</p>
+</div>
+<div class="paragraph">
+<p>Events Published per Second = (Current TBEC - Previous TBEC) / Update Interval</p>
+</div>
+<div class="paragraph">
+<p>Average Event Latency = (Current TL - Previous TL) / (Current TBEC - Previous TBEC)</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<strong>Outbound Queue Fill Ratio</strong> is only available for version 5 and later of Hazelcast Platform clusters.
+<strong>Outbound Queue Fill Ratio</strong> may briefly go over 100% if the outbound queue overflows.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="changing-wan-publisher-state"><a class="anchor" href="#changing-wan-publisher-state"></a>Change WAN publisher state</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A WAN publisher can be in one of the following states:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Replicating</strong> (default): State where both enqueuing new events are
+allowed; enqueued events are replicated to the
+target cluster.</p>
+</li>
+<li>
+<p><strong>Paused</strong>: State where new events are enqueued but are not dequeued.
+Some events which have been dequeued before
+the state was switched may still be replicated to the target cluster,
+but further events will not be
+replicated.</p>
+</li>
+<li>
+<p><strong>Stopped</strong>: State where neither new events are enqueued nor dequeued.
+As with the <strong>Paused</strong> state, some events might
+still be replicated after the publisher has switched to this state.</p>
+</li>
+<li>
+<p><strong>Mixed</strong>: Applicable only to a replication or a publisher, not applicable to a publisher member.
+State when members do not have the same state. For instance, two members are replicating
+and one member is paused.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>To change a WAN publisher&#8217;s state, click the <strong>Change State</strong>
+dropdown button on top right corner of the WAN Publisher Table.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="wan-sync"><a class="anchor" href="#wan-sync"></a>WAN sync</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can initiate a synchronization operation on a map for a specific
+target cluster. This operation is useful if
+two remote clusters lost their synchronization due to WAN queue overflow
+or in restart scenarios.</p>
+</div>
+<div class="paragraph">
+<p>Hazelcast provides the following synchronization options:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Default WAN synchronization operation: All the data of a map is sent to a target cluster to align the state of the target map with the
+source map. See <a href="../../../hazelcast/5.8-snapshot/wan/advanced-features#synchronizing-wan-clusters" class="xref page">Synchronizing WAN Clusters</a>
+for more information.</p>
+</li>
+<li>
+<p>WAN synchronization using <a href="https://en.wikipedia.org/wiki/Merkle_tree">Merkle trees</a>: To
+initiate this type of synchronization, you need to configure the
+cluster members. See
+<a href="../../../hazelcast/5.8-snapshot/wan/advanced-features#delta-wan-synchronization" class="xref page">Delta WAN Synchronization</a>
+in the Hazelcast documentation for details about configuring them. Make sure
+you meet <a href="../../../hazelcast/5.8-snapshot/wan/advanced-features#requirements-for-delta-wan-sync" class="xref page">all the requirements</a>
+to use Delta WAN Synchronization and perform the configuration on both the source and target clusters.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>To initiate WAN Sync, open the <strong>WAN Replication</strong> menu item on the left
+and navigate to the <strong>Sync</strong> tab.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/WanSyncTab.png" alt="WAN Sync Tab"></span></p>
+</div>
+<div class="paragraph">
+<p>Select <strong>Endpoint</strong>(replication config), <strong>Target</strong>(publisher), and one or more <strong>Maps</strong>(configured with the selected replication)
+and click <strong>Sync</strong> to start the operation.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/WanSyncConfig.png" alt="WAN Sync Config"></span></p>
+</div>
+<div class="paragraph">
+<p>You can also use the <strong>Select All</strong> option in the Maps dropdown
+to synchronize all the maps in source and target cluster.</p>
+</div>
+<div class="paragraph">
+<p>Once you initiate the sync, you&#8217;ll see the WAN Sync status entry shown in the table below:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/WanSyncOperation.png" alt="WAN Sync Operation"></span></p>
+</div>
+<div class="paragraph">
+<p>To see the progress of the sync, click on <strong>See details</strong>.</p>
+</div>
+<div class="sect2">
+<h3 id="wan-consistency-check"><a class="anchor" href="#wan-consistency-check"></a>WAN Consistency Check</h3>
+<div class="paragraph">
+<p>You can check if a map is in sync with a specific target cluster.
+Configure the same options as for the WAN Sync and click
+<strong>CHECK</strong> to start the operation.<br>
+You can see the WAN Sync status entry in the table below once you initiate the sync:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/WanConsistencyCheckOperation.png" alt="WAN Consistency Check Operation"></span></p>
+</div>
+<div class="paragraph">
+<p>You can see the details of the consistency check if you click on <strong>See details</strong>:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/WanConsistencyCheckProgress.png" alt="WAN Consistency Check Progress"></span></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+You need to use Merkle trees for WAN synchronization to
+check for consistency between two
+clusters. You must configure the Merkle trees on both the source and
+target clusters. If you do not configure it for the source
+cluster, consistency check is ignored. If it&#8217;s enabled for the
+source cluster but not for the target cluster,
+all entries are reported as if they need a sync, because a sync
+operation will be a full sync in the absence of
+Merkle trees.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/WanConsistencyCheckIgnored.png" alt="WAN Consistency Check Ignored"></span></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="add-temporary-wan-replication-config"><a class="anchor" href="#add-temporary-wan-replication-config"></a>Add temporary WAN replication configuration</h3>
+<div class="paragraph">
+<p>You can add a temporary WAN replication configuration dynamically to a
+cluster. It is useful for having one-off
+WAN sync operations. The added configuration is not persistent, so it does not survive a member restart.</p>
+</div>
+<div class="paragraph">
+<p>If you configure a data structure to use the new WAN configuration, entries added after the configuration change
+are automatically replicated by the new WAN replication configuration.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/AddWanReplicationConfiguration.png" alt="Add Temporary WAN Replication Configuration"></span></p>
+</div>
+<div class="paragraph">
+<p>After clicking the <strong>Add Configuration</strong> button, the new WAN replication configuration
+is added to the cluster.
+You can see the new configuration when you try to initiate a WAN sync operation, as
+described in the previous section.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="related-resources"><a class="anchor" href="#related-resources"></a>Related resources</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For details about this feature, see <a href="../../../hazelcast/5.8-snapshot/wan/wan#synchronizing-wan-clusters" class="xref page">WAN Replication</a> in the Platform documentation.</p>
+</div>
+</div>
+</div>

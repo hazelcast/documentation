@@ -1,0 +1,405 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <strong>Jobs</strong> menu item provides a general overview of the jobs in a Hazelcast cluster that have Jet enabled.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/jobs.png" alt="Jobs"></span></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="active-jobs"><a class="anchor" href="#active-jobs"></a>Active Jobs</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This section displays the list of actively running jobs in the cluster:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Name:</strong> Name/ID of the job.</p>
+</li>
+<li>
+<p><strong>Status:</strong> Current status of the job.</p>
+</li>
+<li>
+<p><strong>Start Time:</strong> Start time of the job.</p>
+</li>
+<li>
+<p><strong>Items In:</strong> Total number of items read from the sources of the jobs.</p>
+</li>
+<li>
+<p><strong>Items Out:</strong> Total number of items written to the sinks of the jobs.</p>
+</li>
+<li>
+<p><strong>Suspension Cause:</strong> Shows the reason when the task is suspended due to a problem.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="failed-jobs"><a class="anchor" href="#failed-jobs"></a>Failed Jobs</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This section displays a list of failed jobs in the cluster with the following information:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Name:</strong> Name/ID of the job.</p>
+</li>
+<li>
+<p><strong>Status:</strong> Current status of the job.</p>
+</li>
+<li>
+<p><strong>Start Time:</strong> Start time of the job.</p>
+</li>
+<li>
+<p><strong>Completion Time:</strong> Completion time of the job.</p>
+</li>
+<li>
+<p><strong>Items In:</strong> Total number of items read from the sources of the jobs.</p>
+</li>
+<li>
+<p><strong>Items Out:</strong> Total number of items written to the sinks of the jobs.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="completed-jobs"><a class="anchor" href="#completed-jobs"></a>Completed Jobs</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This section displays a list of completed jobs in the cluster with the following information:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Name:</strong> Name/ID of the job.</p>
+</li>
+<li>
+<p><strong>Status:</strong> Current status of the job.</p>
+</li>
+<li>
+<p><strong>Start Time:</strong> Start time of the job.</p>
+</li>
+<li>
+<p><strong>Completion Time:</strong> Completion time of the job.</p>
+</li>
+<li>
+<p><strong>Items In:</strong> Total number of items read from the sources of the jobs.</p>
+</li>
+<li>
+<p><strong>Items Out:</strong> Total number of items written to the sinks of the jobs.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="job-details"><a class="anchor" href="#job-details"></a>Job Details</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When you click on a job, you&#8217;ll see a detailed view of it.</p>
+</div>
+<div class="paragraph">
+<p>This view offers the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A tool for diagnosing data flow within the job.</p>
+</li>
+<li>
+<p>A graphical visualization of the stages.</p>
+</li>
+<li>
+<p>The ability to manage the lifecycle of the job and peek into dataflow stats across the DAG.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/job-detail.png" alt="Job Details"></span></p>
+</div>
+<div class="sect2">
+<h3 id="job-management"><a class="anchor" href="#job-management"></a>Job Management</h3>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/job-lifecycle.png" alt="Job Lifecycle"></span></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+You must be an admin user to execute any of the following actions.
+</td>
+</tr>
+</table>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Suspend:</strong> Suspends the running job, only visible when the job is in the <strong>Running</strong> state.</p>
+</li>
+<li>
+<p><strong>Resume:</strong> Resumes the suspended job, only visible when the job is in the <strong>Suspended</strong> state.</p>
+</li>
+<li>
+<p><strong>Cancel:</strong> Stops the execution of the job.</p>
+</li>
+<li>
+<p><strong>Restart:</strong> Stops the execution of the job and starts a new execution for it.</p>
+</li>
+<li>
+<p><strong>Export Snapshot:</strong> Initiates a named snapshot export; exported snapshots can be managed via <a href="snapshots" class="xref page">snapshots</a> view.</p>
+</li>
+<li>
+<p><strong>Status:</strong> Current status of the job.</p>
+</li>
+<li>
+<p><strong>Mode:</strong> Processing guarantee mode of the job; either
+<code>None</code>, <code>At Least Once</code> or <code>Exactly Once</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="items-flow"><a class="anchor" href="#items-flow"></a>Items Flow</h3>
+<div class="paragraph">
+<p>This section displays the dataflow metrics for the cluster:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Total In:</strong> Total number of items read from the source of the job.</p>
+</li>
+<li>
+<p><strong>Total Out:</strong> Total number of items written to the sink of the job.</p>
+</li>
+<li>
+<p><strong>Last Min In:</strong> Number of items read from the source of the job in the last minute.</p>
+</li>
+<li>
+<p><strong>Last Min Out:</strong> Number of items written to the sink of the job in the last minute.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="nodes"><a class="anchor" href="#nodes"></a>Nodes</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Used:</strong> Number of members used by the job.</p>
+</li>
+<li>
+<p><strong>Total:</strong> Number of total members in the cluster.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="job-details-2"><a class="anchor" href="#job-details-2"></a>Job Details</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Start Time:</strong> Start time of the job.</p>
+</li>
+<li>
+<p><strong>Completion Time:</strong> Completion time of the job.</p>
+</li>
+<li>
+<p><strong>Duration</strong>: Duration of the job.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="last-successful-snapshot"><a class="anchor" href="#last-successful-snapshot"></a>Last Successful Snapshot</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Completion Time:</strong> Latest successful snapshot completion time.</p>
+</li>
+<li>
+<p><strong>Size:</strong> Size of the snapshot.</p>
+</li>
+<li>
+<p><strong>Duration:</strong> Duration of the snapshot creation.</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+These metrics are for only non-exported snapshots.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="job-graph"><a class="anchor" href="#job-graph"></a>Job Graph</h3>
+<div class="paragraph">
+<p>This section displays a graphical representation of the job&#8217;s processing plan as a directed acyclic graph (DAG). Each processing step is a node in the DAG.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/dag.png" alt="DAG Visualization"></span></p>
+</div>
+<div class="paragraph">
+<p>If you click a node in the graph, you&#8217;ll see the following details about that processing step:</p>
+</div>
+<div class="paragraph">
+<p><strong>Parallelism:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Local:</strong> Number of processors running for that vertex on each member.</p>
+</li>
+<li>
+<p><strong>Global:</strong> Total number of processors running for that vertex on the cluster.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Incoming Items:</strong></p>
+</div>
+<div class="paragraph">
+<p>This section displays all the incoming edges by their source vertices and shows the following
+information and totals for each of them.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>All Time:</strong> Total number of items received by this vertex.</p>
+</li>
+<li>
+<p><strong>Last Min:</strong> Number of items received by this vertex in the last minute.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Outgoing Items:</strong></p>
+</div>
+<div class="paragraph">
+<p>This section displays all the outgoing edges by their target vertices and shows the following
+information and totals for each of them.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>All Time:</strong> Total number of items sent by this vertex.</p>
+</li>
+<li>
+<p><strong>Last Min:</strong> Number of items sent by this vertex in the last minute.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Watermark Statistics:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Latency:</strong> This is the time difference between wall-clock time and the
+last forwarded watermark (“event time, time of the stream”). Multiple factors
+contribute to the total latency, such as the latency in the external system,
+allowed lag (which is always included), clock drift and also long
+event-to-event intervals in any partition (this one is the trickiest).
+See <a href="#latency">here</a> for more information.</p>
+</li>
+<li>
+<p><strong>Skew:</strong> This is the difference between latencies of the processor with the
+highest and lowest latencies. Most common cause is a long event-to-event interval
+in some source partition or an idle partition (until the idle timeout elapses).
+Overload of events in one partition can also cause it.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Processors:</strong></p>
+</div>
+<div class="paragraph">
+<p>This section displays all the processors this vertex has in the cluster and shows the following
+information for each of them.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Queue Size:</strong> Current size of the processor inbox queue.</p>
+</li>
+<li>
+<p><strong>Queue Cap:</strong> Capacity of the processor inbox queue.</p>
+</li>
+<li>
+<p><strong>Queue Cap Usage:</strong> Queue utilization percentage.</p>
+</li>
+<li>
+<p><strong>Items In:</strong> Total number of items received by this processor.</p>
+</li>
+<li>
+<p><strong>Items Out:</strong> Total number of items sent by this processor.</p>
+</li>
+<li>
+<p><a id="latency"></a><strong>Latency:</strong> Time difference between the wall-clock
+time and the last forwarded watermark (“event time, time of the stream”).
+Multiple factors contribute to the total latency:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>latency in the external system</strong>; events arrive already delayed to Stream source</p>
+</li>
+<li>
+<p><strong>allowed lag</strong>; if you allow for some time to wait
+for delayed events, watermarks will always be delayed by this
+lag. Note that the actual output might not be delayed.</p>
+</li>
+<li>
+<p><strong>event-to-event interval</strong>; if there is a time period
+between two events, the event time “stops” for that time. In
+other words, until a new event occurs, the current
+time is the time of the last event. As “current event time”
+is tracked independently for each partition, this can be the
+major source of skew. If your events are irregular, you might
+consider adding heartbeat events.
+This factor also applies if you use
+<code>withIngestionTimestamps</code> since a new
+wall-clock time is assigned only if a new
+event occurs.</p>
+</li>
+<li>
+<p><strong>time to execute map/filter stages</strong>; these contribute to
+the latency of the async call or to the time to execute
+CPU-heavy sync call.</p>
+</li>
+<li>
+<p><strong>internal processing latency of Hazelcast</strong>; typically
+very low: 1 or 2 milliseconds. It can be higher if the network is slow, the system
+is overloaded, if there are many vertices in the job, or many
+jobs which cause lots of switching, etc.</p>
+</li>
+<li>
+<p><strong>clock drift</strong>; since we&#8217;re comparing to the real time,
+latency can be caused by a clock drift between this and the machine
+where event time is assigned (which can also be an end
+user&#8217;s device). It can even be negative. Always use NTP to
+keep wall-clock precise, and avoid using timestamps from devices
+out of your control as event time.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>

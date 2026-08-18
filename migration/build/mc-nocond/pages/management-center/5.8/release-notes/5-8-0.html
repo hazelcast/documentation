@@ -1,0 +1,251 @@
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>These release notes list any new features, enhancements, fixes, and breaking changes implemented between version 5.7.1 and version 5.8.0 of Hazelcast Management Center (MC).</p>
+</div>
+<div class="paragraph">
+<p>For help downloading Hazelcast Management Center, see <a href="../getting-started/install" class="xref page">Installing and Starting Management Center</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="new-features"><a class="anchor" href="#new-features"></a>New features</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Console support</strong>: If you are experiencing any issues using the Command Line Client (CLC) in Management Center, there is a new option to switch from the CLC-based console to the original console. You can enable this by setting the environment variable <code>HAZELCAST_MC_ORIGINAL_CONSOLE_ENABLED</code> to <code>true</code>.</p>
+<div class="paragraph">
+<p>For more information, see <a href="../tools/console" class="xref page">Executing console commands</a>.</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="security"><a class="anchor" href="#security"></a>Security</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Security Fix for CVE-2024-47554 – Uncontrolled resource consumption vulnerability in Apache Commons IO</strong>: We have resolved <a href="https://nvd.nist.gov/vuln/detail/cve-2024-47554">CVE-2024-47554</a>, a high-severity vulnerability in Apache Commons IO where the <code>XmlStreamReader</code> class could excessively consume CPU resources when processing maliciously crafted input. This issue affected versions 2.0 up to but not including 2.14.0. The vulnerability has been mitigated by upgrading to a version that includes Apache Commons IO 2.14.0 or later.</p>
+</li>
+<li>
+<p><strong>Security Fix for CVE-2025-22235 – Improper input validation vulnerability in Spring Boot</strong>: We have resolved <a href="https://nvd.nist.gov/vuln/detail/CVE-2025-22235">CVE-2025-22235</a>, a medium-severity vulnerability in Spring Boot where <code>EndpointRequest.to()</code> could create a matcher for <code>null/**</code> if the targeted actuator endpoint was disabled or not exposed. This misconfiguration could unintentionally leave the <code>/null</code> path unprotected if it was handled by the application and expected to be secured. The issue has been addressed by upgrading to Spring Boot version 3.4.5.</p>
+</li>
+<li>
+<p><strong>Security Fix for CVE-2025-22228 – Authentication bypass vulnerability in Spring Security Crypto</strong>: We have resolved <a href="https://nvd.nist.gov/vuln/detail/CVE-2025-22228">CVE-2025-22228</a>, a high-severity vulnerability in Spring Security&#8217;s <code>BCryptPasswordEncoder</code> where the <code>matches()</code> function would incorrectly return true for passwords longer than 72 characters, provided the first 72 characters matched. This flaw could allow attackers to bypass authentication checks by exploiting password truncation. The vulnerability has been mitigated by upgrading to spring-security-crypto version 6.4.5.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="breaking-changes"><a class="anchor" href="#breaking-changes"></a>Breaking changes</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Changes to Prometheus Exporter metrics v2 (BETA)</strong>: The following changes have been implemented to Prometheus Exporter metrics v2, which are currently in BETA:</p>
+<div class="paragraph">
+<p>Note: There are no changes to the format of v1 metrics. All v1 metrics start with <code>hz_</code> and all v2 metrics start with <code>hazelcast_</code>. For more information, see <a href="../integrate/prometheus-metrics" class="xref page">Prometheus metrics</a>.</p>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The following Prometheus Exporter metrics v2 have been renamed:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 66.6667%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Version 5.7.x</th>
+<th class="tableblock halign-left valign-top">Version 5.8.0</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_backups</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_backups_total</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_entries_backup</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_backup_entries_total</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_entries_backup_memory_cost</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_backup_entries_memory_cost_bytes</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_entries_dirty</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_dirty_entries_total</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_evictions</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_evictions_total</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_expirations</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_expirations_total</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_queries_indexed</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_indexed_queries_total</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_entries_locked</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_locked_entries_total</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_events</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_events_total</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_entries_owned</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_owned_entries_total</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_entries_owned_memory_cost</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_owned_entry_memory_cost_bytes</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_queries</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_queries_total</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_hits</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_hits_total</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_latency_total_seconds</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_latency_seconds_total</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_index_hits</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_index_hits_total</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_index_inserts</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_index_inserts_total</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_index_memory_cost</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_index_memory_cost_bytes</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_index_queries</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_index_queries_total</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_index_removes</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_index_removes_total</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_index_latency_total_seconds</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_index_latency_seconds_total</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_index_updates</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_map_index_updates_total</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_set_creation_timestamp</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>hazelcast_set_creation_timestamp_seconds</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>

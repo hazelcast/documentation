@@ -1,0 +1,356 @@
+<div id="preamble">
+<div class="sectionbody">
+<div id="changing-cluster-client-filtering" class="paragraph">
+<p>You can use the <strong>Client Filtering</strong> menu item to create filter lists that define which clients are allowed to connect to the cluster:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Allow-list</strong>: Clients that <strong>are allowed</strong> to connect to the cluster.</p>
+<div class="paragraph">
+<p>If an allow-list contains entries and a deny-list does not, all clients except those in the allow-list are denied access to the cluster.</p>
+</div>
+</li>
+<li>
+<p><strong>Deny-list</strong>: Clients that <strong>are not allowed</strong> to connect to the cluster.</p>
+<div class="paragraph">
+<p>If a deny-list contains entries and an allow-list does not, all clients except those in the deny-list are allowed access to the cluster.</p>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/ClientFilteringView.png" alt="Client Filtering View"></span></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Client Filtering can also be managed via <a href="../integrate/clustered-rest" class="xref page">MC&#8217;s Clustered REST endpoint</a>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="creating-a-new-filter-list"><a class="anchor" href="#creating-a-new-filter-list"></a>Creating a New Filter List</h2>
+<div class="sectionbody">
+<div id="changing-cluster-client-filtering-example" class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Make sure that client filtering is enabled.</p>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/enable-client-filtering.png" alt="Toggle button to enable client filtering"></span></p>
+</div>
+</li>
+<li>
+<p>Click the <strong>New List</strong> button.</p>
+</li>
+<li>
+<p>Give the list a name, a status and a type. For example, you could use the following:</p>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Example filter list</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 60%;">
+<col style="width: 20%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>List Name</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Name of the filter list.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Example_allow_list</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>List Status</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Whether the filter list is active (in use by)</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><strong>Active</strong></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>List Type</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Whether the filter list is an allow-list or a deny-list.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><strong>Allow-list</strong></p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p>In the entries section of the form, add one or more entries for the list.</p>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 2. Address types</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 60%;">
+<col style="width: 20%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Address type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>IP Address</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>IP address of a client (IPv4 or
+IPv6) with optional range characters (<code>\*</code> and <code>-</code>) instead of any
+byte group.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>10.3.10.*</code> refers to IPs between <code>10.3.10.0</code>
+and <code>10.3.10.255</code>. The <code>10.3.10.4-18</code> refers to IPs between <code>10.3.10.4</code>
+and <code>10.3.10.18</code> (4 and 18 included).</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Label</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>A string that matches the client label in the client&#8217;s configuration. This string can include
+wildcard characters (<code>\*</code>). See <a href="../../../hazelcast/5.2/clients/java#defining-client-labels" class="xref page">Defining Client Labels</a> in the Platform documentation.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>green*</code> refers to any label
+values that start with the <code>green</code> string.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Instance Name</strong></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>A string that matches the client&#8217;s name in the client&#8217;s configuration. This string can include
+wildcard characters (<code>\*</code>).</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>*-client</code> refers
+to any instance name that end with the <code>-client</code> string.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p>Click <strong>Save</strong>.</p>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/ClientFilteringExampleStep4.png" alt="Example Step 4"></span></p>
+</div>
+<div class="paragraph">
+<p>The orange status indicator means that the list has not yet been deployed to the cluster.</p>
+</div>
+</li>
+<li>
+<p>Click <strong>Deploy Configuration</strong> to deploy the list to the cluster.</p>
+<div class="paragraph">
+<p>When a cluster member receives the deployed filter list, it immediately applies the list to
+all currently connected clients and then uses it for newly connecting
+clients. Clients on the deny-list may connect to another cluster
+if they are configured to support <a href="#related-resources">blue-green deployment</a>. If they are not,
+they shut down when denied access to the cluster.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If some of the cluster members are not reachable from
+the Management Center, those members keep using the last client
+list applied to them.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/ClientFilteringExampleStep5.png" alt="Example Step 5"></span></p>
+</div>
+</li>
+<li>
+<p>Click <strong>Report</strong> to see the list of deployed rules from all lists.</p>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/ClientFilteringExampleStep6.png" alt="Example Step 6"></span></p>
+</div>
+</li>
+</ol>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Wildcard rules such as <strong>blue</strong>* are displayed first.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="editing-an-existing-filter-list"><a class="anchor" href="#editing-an-existing-filter-list"></a>Editing an Existing Filter List</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Click the <strong>Edit</strong> button on a list row.</p>
+</li>
+<li>
+<p>Make your changes.</p>
+</li>
+<li>
+<p>Click <strong>Save and Deploy</strong> to deploy the new list to the cluster.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/ClientFilteringEditList.png" alt="Edit Client Filtering List"></span></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="deleting-an-entry"><a class="anchor" href="#deleting-an-entry"></a>Deleting an Entry</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Click the <strong>Edit</strong> button on a list row.</p>
+</li>
+<li>
+<p>Click <strong>Delete</strong> next to the entry.</p>
+</li>
+<li>
+<p>Click <strong>Save and Deploy</strong> to deploy the new list to the cluster.</p>
+</li>
+</ol>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you deploy an allow-list that contains no entries, all clients are disconnected.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="disabling-an-existing-filter-list"><a class="anchor" href="#disabling-an-existing-filter-list"></a>Disabling an Existing Filter List</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To keep a filter list saved in Management Center, but remove it from the cluster:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Click the <strong>Edit</strong> button on a list row.</p>
+</li>
+<li>
+<p>Change the <strong>List Type</strong> field to <strong>Inactive</strong>.</p>
+</li>
+<li>
+<p>Click <strong>Save</strong>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="deleting-a-filter-list"><a class="anchor" href="#deleting-a-filter-list"></a>Deleting a Filter List</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To delete an entire filter list:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Click the <strong>Edit</strong> button on a list row.</p>
+</li>
+<li>
+<p>Click <strong>Delete this list and deploy</strong> in the top-right corner.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="client-filtering-synchronization"><a class="anchor" href="#client-filtering-synchronization"></a>Client Filtering Synchronization</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you have multiple instances of Management Center connected to the same clusters, the clusters' client filtering configuration is synchronized among all those Management Center instances. This synchronization is triggered by the following actions:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Clicking on the <strong>Deploy Configuration</strong> button.</p>
+</li>
+<li>
+<p>Creating, updating, or deleting a list that is active and matches the deployed type (<strong>Allow-list</strong> or <strong>Deny-list</strong>).</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+These actions override the client filtering configuration
+on other instances of Management Center that are connected to the same cluster.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>When Management Center connects to a cluster that already has some client filtering configuration
+deployed, Management Center saves the client filtering configuration from the cluster to the local persistent
+storage. The previous configuration stored in Management Center is overwritten.</p>
+</div>
+<div class="paragraph">
+<p>When another Management Center instance deploys a new client filtering configuration, then a message "Client filtering
+configuration was updated by another Management Center instance" is displayed and the <strong>Client Filtering Settings</strong> and
+<strong>Filter Lists</strong> data is automatically refreshed.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../_images/ClientFilteringUpdated.png" alt="Client Filtering Updated"></span></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="related-resources"><a class="anchor" href="#related-resources"></a>Related Resources</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>See
+<a href="../../../hazelcast/5.7/clients/java#blue-green-deployment-and-disaster-recovery" class="xref page">Blue-Green Deployment and Disaster Recovery</a>
+in the Platform documentation.</p>
+</div>
+</div>
+</div>

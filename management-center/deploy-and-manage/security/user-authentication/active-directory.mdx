@@ -1,0 +1,96 @@
+---
+title: "Active Directory"
+sidebar_position: 4
+slug: /deploy-manage/active-directory
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+You can use your existing Active Directory server for authentication and authorization in Management Center.
+
+## Set up the Active Directory security provider
+
+To set up Active Directory, you need to configure settings either in the UI or the `hz-mc conf` tool.
+
+<Tabs>
+<TabItem value="ui" label="UI">
+
+To set up the local security provider in the UI, go to **Settings** \> **Security Providers** \> **Active Directory**.
+
+Before saving your configuration, test it by clicking **Test**. The user you test with must be a member of one of the groups you have configured for the Management Center.
+
+</TabItem>
+<TabItem value="mc-conf" label="mc-conf">
+
+Use the `active-directory configure` task. For help, use the `-h` flag or see [Management Center Configuration Tool](../../configuration/mc-conf.mdx).
+
+```bash title="Linux and Mac"
+hz-mc conf active-directory configure
+```
+
+```bash title="Windows"
+mc-conf.bat active-directory configure
+```
+
+</TabItem>
+</Tabs>
+
+- **URL:** URL of your Active Directory server, including the schema (`ldap://` or `ldaps://`) and port.
+- **Domain:** Domain of your organization on Active Directory.
+- **User Search Filter:** LDAP search filter expression to search for the users. `{0}` will be replaced with `username@domain` and `{1}` will be replaced with only the `username`. You can use both placeholders, only one of them or none in your search filter. For example, `(&(objectClass=user)(userPrincipalName={0}))` searches for a username that matches with the `userPrincipalName` attribute and member of the object class `user`.
+
+  :::note
+
+  You can use the [`hazelcast.mc.ldap.timeout` property](../../configuration/system-properties.mdx#hazelcast-mc-ldap-timeout) to specify both connect and read timeout values for Active Directory search queries. It is in milliseconds and its default value is `3000` milliseconds.
+
+  :::
+- **Admin Groups:** Members of this group and its nested groups have admin privileges on the Management Center. To use more than one group, separate them with a semicolon (;).
+- **User Groups:** Members of this group and its nested groups have read and write privileges on the Management Center. To use more than one group, separate them with a semicolon (;).
+- **Read-only User Groups:** Members of this group and its nested groups have only read privilege on the Management Center. To use more than one group, separate them with a semicolon (;).
+- **Metrics-only Groups:** Members of this group and its nested groups have the privilege to see only the metrics on Management Center. To use more than one group, separate them with a semicolon (;).
+- **Nested Group Search:** Disable if you have a large LDAP group structure and it takes a long time to query all nested groups during login.
+
+## Create and manage users
+
+To create and manage additional users, you must configure them in Active Directory.
+
+When creating users, be sure to give them a valid role. See [User management](../../user-management.mdx).
+
+## Update Active Directory settings
+
+Once configured, Active Directory settings are saved in a local database managed by Management Center. If you need to update your settings afterwards, you need to provide the import properties file under `<hazelcast-mc>/import/securityHotReload.properties`, and then click **Reload Security Config** on the login page. The `securityHotReload.properties` should contain the following properties:
+
+```none
+url=<active directory instance url>
+domain=<domain>
+adminGroup=<Admin group(s). Use ';' to separate multiple groups>
+userGroup=<Read-write group(s). Use ';' to separate multiple groups>
+readonlyUserGroup<Read-only group(s). Use ';' to separate multiple groups>
+metricsOnlyGroup<Metrics-only group(s). Use ';' to separate multiple groups>
+```
+
+:::note
+
+The **Reload Security Config** button will only appear when the `<hazelcast-mc>/import/securityHotReload.properties` file is present. After a successful import, the file will be renamed as `importedSecurityHotReload-<import_timestamp>.properties.bak`.
+
+:::
+
+Alternatively, you can use the `hz-mc conf` tool's `security reset` and `active-directory configure` tasks to configure the Active Directory security provider from scratch, but you need to stop the Management Center service for this configuration option. You can also use `active-directory configure --force` to reconfigure Active Directory without running `security reset` first. See [Management Center Configuration Tool](../../configuration/mc-conf.mdx) for more information.
+
+## Enable TLS/SSL for Active Directory {/* #ad-ssl */}
+
+If your Active Directory service is using TLS/SSL protocol, use the command line parameters for your Management Center deployment [Active Directory SSL configuration options](../../configuration/system-properties.mdx#hazelcast-mc-ad-ssl-protocol).
+
+## Using --force to configure Active Directory {/* #using-force-to-configure-active-directory */}
+
+Use the `-f` / `--force` flag with `active-directory configure` to make configuration idempotent:
+
+- If Active Directory is not yet configured, it is set up.
+- If Active Directory is already configured with the same settings, the command succeeds without making any changes.
+- If Active Directory is already configured with different settings, the existing configuration is overwritten without needing to run `security reset` first.
+- If a **different** security provider is currently active, the command fails with an error even when `--force` is used.
+
+## Next steps
+
+For details about the `hz-mc conf` tool, see [Management Center Configuration Tool](../../configuration/mc-conf.mdx).
