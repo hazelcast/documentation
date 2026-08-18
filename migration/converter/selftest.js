@@ -604,6 +604,41 @@ const renderedCode = (md) => {
   ok('fixSwallowedBlockTitles: leaves non-matching shapes untouched')
 }
 
+// --- a block title on a PARAGRAPH survives -----------------------------------
+// Asciidoctor puts a paragraph's `.Title` in a <div class="title"> BESIDE the <p>,
+// so a handler that reads only the <p> drops it. The spec: the title's text
+// reaches the output as its own block, ABOVE the paragraph's content, with its
+// inline markup converted -- and an untitled paragraph is byte-for-byte unchanged.
+// Oracle is the golden shape from management-center tools/sql-browser (a title
+// above an inline image), not the implementation.
+{
+  const { convertBody } = require('./lib/html-to-mdx')
+  const titled = '<div class="paragraph"><div class="title">Example query results</div>' +
+    '<p><span class="image"><img src="_images/SQLBrowserQueryResultTab.png" alt="A list of query results"></span></p></div>'
+  const { body } = convertBody(titled, {})
+  assert.ok(body.includes('Example query results'), 'the title text is not dropped')
+  assert.ok(body.indexOf('Example query results') < body.indexOf('!['),
+    'it comes ABOVE the block it titles')
+  assert.match(body, /Example query results\n\s*\n/, 'and is its own block, not glued to the content')
+  assert.ok(body.includes('![A list of query results]'), 'the paragraph content still converts')
+
+  // Inline markup in a title is converted, not flattened to text.
+  const marked = '<div class="paragraph"><div class="title">The <code>foo</code> result</div><p>body</p></div>'
+  assert.ok(convertBody(marked, {}).body.includes('`foo`'), 'inline markup inside a title is converted')
+
+  // An untitled paragraph is untouched -- the change must not perturb the 99%.
+  const plain = '<div class="paragraph"><p>Just prose.</p></div>'
+  assert.strictEqual(convertBody(plain, {}).body.trim(), 'Just prose.',
+    'an untitled paragraph is unchanged')
+
+  // No <p> at all (Asciidoctor emits bare cell text this way): the title must
+  // still appear exactly once, never doubled by the fallback path.
+  const noP = '<div class="paragraph"><div class="title">Caption</div>bare text</div>'
+  const nb = convertBody(noP, {}).body
+  assert.strictEqual((nb.match(/Caption/g) || []).length, 1, 'the title is emitted exactly once')
+  ok('paragraph block title: kept as its own block, above the content, once')
+}
+
 // --- marked attribute inside INLINE code -> JSX <code> ----------------------
 // The one context neither of the other two mechanisms reaches: a code span is
 // literal, so a `{name}` token in backticks stays literal, and the `vars` flag is

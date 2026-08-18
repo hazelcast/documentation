@@ -325,8 +325,26 @@ function convertBlock ($, node, st, depth) {
     return convertSection($, node, st, depth)
   }
   if (cls.includes('paragraph')) {
+    // A block title on a PARAGRAPH (`.Example query results` above an inline
+    // image). Asciidoctor emits it as a <div class="title"> BESIDE the <p>, so
+    // reading only the <p> silently dropped it -- 12 occurrences in the live set
+    // (management-center tools/sql-browser, clusters/update-config), caught by
+    // Layer 1 as a missing prose segment.
+    //
+    // Emitted as its own paragraph rather than a styled caption, because that is
+    // what the reader sees today: the Antora UI's caption rules cover
+    // listing/literal/image/admonition/example/open blocks and table captions,
+    // and NOTHING selects `.paragraph > .title`, so the live site renders it as
+    // an ordinary line of text above the block. A real caption would be an
+    // improvement on the golden, which needs a fidelity accept entry, not a
+    // silent divergence. Removed from the tree first (as convertAdmonition does)
+    // so the no-<p> fallback below cannot emit it twice.
+    const titleEl = $(node).children('.title').first()
+    const title = titleEl.length ? escapeBlockStart(inline($, titleEl[0], st).trim()) : ''
+    titleEl.remove()
     const p = $(node).children('p').first()
-    return escapeBlockStart(inline($, (p[0] || node), st))
+    const body = escapeBlockStart(inline($, (p[0] || node), st))
+    return title ? `${title}\n\n${body}` : body
   }
   if (cls.includes('admonitionblock')) return convertAdmonition($, node, st, depth)
   // `literalblock` is the standalone literal block; the bare `literal` class is
