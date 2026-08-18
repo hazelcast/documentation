@@ -27,6 +27,13 @@ const ADMONITION_TYPES = ['note', 'tip', 'warning', 'caution', 'important']
 // `[.enterprise]*…*` roles) -> the global <Badge type> component, keyed by the
 // front-end BADGES registry. Any other strong class (align=*, navy, blue) is
 // presentational and stays plain bold.
+// The `role=` values on a CONTENT icon that src/components/Icon renders. Closed
+// set, deliberately: an unlisted role means the front-end registry has no glyph
+// for it, so it must be added there before the converter starts emitting it --
+// and until then the icon keeps its current (dropped) behaviour rather than
+// producing an <Icon> that renders nothing.
+const ICON_ROLES = new Set(['success', 'error'])
+
 const BADGE_CLASSES = new Set(['enterprise', 'serverless', 'dedicated', 'beta', 'experimental'])
 const VOID_ELEMENTS = new Set(['img', 'br', 'hr', 'col', 'input', 'source', 'area', 'wbr'])
 // HTML attribute -> JSX prop name for the handful that differ and that we keep.
@@ -372,8 +379,18 @@ function convertList ($, listEl, st, depth, ordered) {
   if (!listEl) return ''
   const items = $(listEl).children('li').toArray()
   const lines = []
+  // An AsciiDoc CHECKLIST (`- [ ]` / `- [*]`) renders as `<ul class="checklist">`
+  // whose items open with a checkbox icon. GFM has native task lists, so the
+  // marker round-trips as itself -- and it has to: the box is not decoration, it
+  // is the item's state, and dropping it turned cloud's migrate-to-cloud
+  // checklist (whose own prose says "see the following checklist") into an
+  // ordinary bullet list. Nothing catches that -- the golden's <i> holds no text
+  // for Layer 1 to miss and Layer 2 counts no icons -- so today every box is
+  // unchecked and no information is lost, but the first `- [*]` anyone writes
+  // would silently render as done-and-not-done alike.
+  const checklist = !ordered && hasClass(listEl, 'checklist')
   items.forEach((li, i) => {
-    const marker = ordered ? `${i + 1}.` : '-'
+    const marker = ordered ? `${i + 1}.` : (checklist ? `- [${checkedState($, li) ? 'x' : ' '}]` : '-')
     const indent = ' '.repeat(marker.length + 1)
     const blocks = convertListItem($, li, st, depth)
     const text = blocks.filter((b) => b && b.trim()).join('\n\n')
@@ -382,6 +399,13 @@ function convertList ($, listEl, st, depth, ordered) {
     for (const l of itemLines.slice(1)) lines.push(l === '' ? '' : indent + l)
   })
   return lines.join('\n')
+}
+
+// A checklist item's state, from the checkbox glyph Asciidoctor emits:
+// `fa-check-square-o` for `[*]`/`[x]`, `fa-square-o` for `[ ]`. The <i> is then
+// dropped by the ordinary decorative-icon path, so the box is not emitted twice.
+function checkedState ($, li) {
+  return $(li).find('i.fa-check-square-o').length > 0
 }
 
 function convertListItem ($, li, st, depth) {
@@ -854,13 +878,43 @@ function hasSpan (cell) {
 }
 
 function gfmTable ($, headRow, bodyRows, st) {
-  const head = $(headRow).children('th,td').toArray().map((c) => cellInline($, c, st))
-  const sep = head.map(() => '---')
+  const headCells = $(headRow).children('th,td').toArray()
+  const head = headCells.map((c) => cellInline($, c, st))
+  const sep = headCells.map((c, i) => alignSep(columnAlign($, c, bodyRows, i)))
   const rows = bodyRows.map((tr) =>
     $(tr).children('th,td').toArray().map((c) => cellInline($, c, st)))
   const fmt = (cols) => '| ' + cols.join(' | ') + ' |'
   return [fmt(head), fmt(sep), ...rows.map(fmt)].join('\n')
 }
+
+// Column alignment from a `[cols=…]` spec. `^15%` (centre) and `>15%` (right)
+// reach the golden as `halign-center` / `halign-right` on every cell of the
+// column; GFM expresses the same thing in the delimiter row, so it round-trips.
+// Worth carrying: management-center's feature matrix centres its two ✓/✗ columns
+// deliberately, and neither Layer 1 (text only) nor Layer 2 (element counts) can
+// see alignment, so dropping it was silent.
+//
+// Read from the FIRST BODY cell of the column, falling back to the header: a
+// `[cols=…]` spec applies per column, but an individual cell can override it
+// (`[align=left]` in a header, as that same table does), and it is the body cells
+// that carry the column's own setting.
+function columnAlign ($, headCell, bodyRows, i) {
+  const first = bodyRows.length ? $(bodyRows[0]).children('th,td').toArray()[i] : null
+  for (const cell of [first, headCell]) {
+    if (!cell) continue
+    const cls = classes(cell)
+    if (cls.includes('halign-center')) return 'center'
+    if (cls.includes('halign-right')) return 'right'
+    if (cls.includes('halign-left')) return 'left'
+  }
+  return null
+}
+
+// GFM delimiter for an alignment. `left` is emitted as a bare `---`, not `:---`:
+// left IS the default, so the two render identically and the bare form keeps the
+// output unchanged for every table that does not actually set an alignment.
+const alignSep = (align) =>
+  align === 'center' ? ':---:' : align === 'right' ? '---:' : '---'
 
 function cellInline ($, cell, st) {
   // A single-line literal (`[cols="l"]`) cell is inline monospace.
@@ -977,9 +1031,15 @@ function inlineTag ($, node, st, opt) {
     }
     case 'em': return `*${kids()}*`
     case 'i':
-      // Asciidoctor renders emphasis as <em>; <i> is ALWAYS a font icon
-      // (checklist checkbox, external-link marker, ...). Icons carry no text and
-      // must be dropped -- treating them as italic emits an empty `**`/`*`.
+      // Asciidoctor renders emphasis as <em>; an <i> is a font ICON. Most are
+      // chrome -- the admonition glyph, the external-link marker -- and are
+      // dropped, because Docusaurus draws its own and treating one as italic
+      // emits an empty `**`/`*`.
+      //
+      // An icon that is CONTENT is handled one level up, on its `span.icon`
+      // parent (see the 'span' case): Asciidoctor wraps `icon:x[role=y]` in
+      // `<span class="icon y">`, and nothing else here wears that class. So by
+      // the time we reach a bare <i>, the icon really is decoration.
       if (cls.some((c) => c === 'fa' || c.startsWith('fa-') || c.startsWith('icon-'))) return ''
       return kids().trim() ? `*${kids()}*` : ''
     case 'code': {
@@ -1076,6 +1136,16 @@ function inlineTag ($, node, st, opt) {
     case 'span': {
       const attr = markerName(node)
       if (attr) return `<Variable name=${jsxAttr(attr)}/>` // marked {attr} reference -> <Variable>
+      // A CONTENT icon: `icon:check-circle[role=success]` -> `<span class="icon
+      // success"><i class="fa fa-check-circle"></i></span>`. The role is the
+      // meaning (success = supported, error = not), and on management-center's
+      // feature matrix these ticks and crosses are the table's only data -- so
+      // they must survive, unlike the decorative <i> handled above. Emitted as
+      // <Icon> (globally registered) rather than a ✓/✗ character because the
+      // golden's <i> carries NO text: a character would ADD text the source never
+      // rendered and fail the Layer-1 diff.
+      const iconRole = cls.includes('icon') ? cls.find((c) => ICON_ROLES.has(c)) : null
+      if (iconRole) return `<Icon role=${jsxAttr(iconRole)}/>`
       if (cls.includes('image')) {
         const img = $(node).find('img')[0]
         return img ? imageMd($, img, st) : ''

@@ -24,27 +24,27 @@ Applications in <Variable name="hazelcast-cloud"/> are split into two parts:
 
 To separate your embedded application into these two parts, see the following checklist:
 
-- Deploy [cluster-side modules](/cloud/cluster-side-modules) to <Variable name="hazelcast-cloud"/>. If you use classes such as MapStore or an entry processor, or if you store custom objects in Hazelcast, you need to add those classes to the classpath of the cluster by deploying them as cluster-side modules.
-- Copy any data structure configuration over to <Variable name="hazelcast-cloud"/>. Data structures are configured in the Hazelcast <Variable name="hazelcast-cloud"/> console.
+- [ ] Deploy [cluster-side modules](/cloud/cluster-side-modules) to <Variable name="hazelcast-cloud"/>. If you use classes such as MapStore or an entry processor, or if you store custom objects in Hazelcast, you need to add those classes to the classpath of the cluster by deploying them as cluster-side modules.
+- [ ] Copy any data structure configuration over to <Variable name="hazelcast-cloud"/>. Data structures are configured in the Hazelcast <Variable name="hazelcast-cloud"/> console.
 
-  :::warning[Heap memory limits]
+      :::warning[Heap memory limits]
 
-  <Variable name="hazelcast-cloud"/> Standard clusters have the following heap memory limits:
+      <Variable name="hazelcast-cloud"/> Standard clusters have the following heap memory limits:
 
-  - Production clusters: 1 GB memory per cluster member
-  - Development clusters: 300 MB per cluster
+      - Production clusters: 1 GB memory per cluster member
+      - Development clusters: 300 MB per cluster
 
-  Exceeding these limits can lead to cluster failure.
+      Exceeding these limits can lead to cluster failure.
 
-  Be aware that the following operations use heap memory: writing, caching, or replicating data to data structures other than IMap an JCache.
+      Be aware that the following operations use heap memory: writing, caching, or replicating data to data structures other than IMap an JCache.
 
-  For further information on <Variable name="hazelcast-cloud"/> Standard clusters and their limits, see [Cloud Standard Clusters](/cloud/serverless-cluster).
+      For further information on <Variable name="hazelcast-cloud"/> Standard clusters and their limits, see [Cloud Standard Clusters](/cloud/serverless-cluster).
 
-  :::
-- Remove member configuration from your code. Hazelcast configures the cluster for the best possible performance. All you need to do is configure the client and any data structures.
-- If you use the executor service, make sure that you are using the 'default' service in both uploaded executor services and client code. You cannot access named executor services in <Variable name="hazelcast-cloud"/>.
-- Replace any instance of `HazelcastInstance
-  newHazelcastInstance` with a client. `newHazelcastInstance` creates an instance of a Hazelcast member. Instead, you need to configure a client to [connect to the cluster](/cloud/connect-to-cluster).
+      :::
+- [ ] Remove member configuration from your code. Hazelcast configures the cluster for the best possible performance. All you need to do is configure the client and any data structures.
+- [ ] If you use the executor service, make sure that you are using the 'default' service in both uploaded executor services and client code. You cannot access named executor services in <Variable name="hazelcast-cloud"/>.
+- [ ] Replace any instance of `HazelcastInstance
+      newHazelcastInstance` with a client. `newHazelcastInstance` creates an instance of a Hazelcast member. Instead, you need to configure a client to [connect to the cluster](/cloud/connect-to-cluster).
 
 ## Migrating Stateful Data {/* #migrate */}
 

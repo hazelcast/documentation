@@ -97,6 +97,19 @@ const astKeys = (text) => new Set(detectAst(text).map((c) => `${c.category}:${c.
   assert(!inl.has('inline-macro:query:'), 'a coordinate segment is not an independent macro')
   assert(!keys('Visit https://example.com[the site] today.').has('inline-macro:https:'),
     'a URL scheme is not a macro')
+  // A VERSION-PINNED coordinate (`{attr}@component:module:page.adoc`) puts the
+  // component name after `@`, not after `:`, so the lookbehind has to reject `@`
+  // too. Real case: management-center getting-started/overview:137 reported a
+  // non-existent `hazelcast:` macro. Asserted for both directives that take a
+  // coordinate, since either can carry the pin.
+  const pinned = keys('include::{page-latest-supported-hazelcast}@hazelcast:deploy:versioning-compatibility.adoc[tag=supported-jvms]')
+  assert(!pinned.has('inline-macro:hazelcast:'),
+    'the component of a version-pinned coordinate is not a macro')
+  assert(!pinned.has('inline-macro:deploy:'), 'nor is its module')
+  assert(pinned.has('include:relative [x-comp]'), 'and the include itself is still classified')
+  const pinnedXref = keys('See xref:5.7@hazelcast:sql:create-index.adoc[CREATE INDEX] for details.')
+  assert(pinnedXref.has('inline-macro:xref:'), 'a version-pinned xref is still an xref macro')
+  assert(!pinnedXref.has('inline-macro:hazelcast:'), 'but its component is not a second macro')
   ok('macros: block :: vs inline :, URL schemes and coordinate segments excluded')
 }
 

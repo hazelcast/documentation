@@ -18,6 +18,8 @@
 const assert = require('node:assert')
 const { micromark } = require('micromark')
 const cheerio = require('cheerio')
+const { gfm } = require('micromark-extension-gfm')
+const { gfmHtml } = require('micromark-extension-gfm')
 
 const { mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode } = require('./lib/mdx')
 const { resolveHref } = require('./lib/links')
@@ -468,6 +470,94 @@ const renderedCode = (md) => {
   assert.ok(dupSection.categories.some((c) => c.content.label === 'Guide'),
     'a section that DID place a page still emits its category')
   ok('buildPlan: a page repeated in a second nav section drops that empty category')
+}
+
+// --- SPEC: a column's alignment survives as a GFM delimiter ------------------
+// `[cols="<30%,^15%,^15%,<40%"]` reaches the golden as halign-left/center on the
+// cells; GFM says the same thing in the delimiter row, so it must round-trip.
+// management-center's feature matrix centres its two ✓/✗ columns deliberately,
+// and NOTHING catches the loss -- Layer 1 compares text, Layer 2 counts elements.
+// The oracle is a real CommonMark+GFM render: assert the built cells carry the
+// alignment, rather than asserting the delimiter string the converter chose.
+{
+  const cell = (tag, align, text) => `<${tag} class="tableblock halign-${align} valign-top"><p class="tableblock">${text}</p></${tag}>`
+  const table = (aligns) =>
+    '<table class="tableblock frame-all grid-all stretch"><thead><tr>' +
+    aligns.map((a, i) => cell('th', a, `H${i}`)).join('') +
+    '</tr></thead><tbody><tr>' +
+    aligns.map((a, i) => cell('td', a, `v${i}`)).join('') +
+    '</tr></tbody></table>'
+
+  const { body } = convertBody(table(['left', 'center', 'right']), { pageUrl: '/x' })
+  const $ = cheerio.load(micromark(body, { extensions: [gfm()], htmlExtensions: [gfmHtml()] }))
+  const styles = $('tbody td').toArray().map((td) => ($(td).attr('align') || $(td).attr('style') || '').replace(/text-align:\s*/, '').replace(/;$/, ''))
+  assert.strictEqual(styles[1], 'center', 'a ^ (centre) column renders centred')
+  assert.strictEqual(styles[2], 'right', 'a > (right) column renders right-aligned')
+  assert.ok(!styles[0], 'a left column emits no alignment (left is the GFM default, so the render is identical)')
+
+  // A table with no alignment at all is byte-unchanged -- this is what keeps the
+  // change from rewriting every already-converted table.
+  const plain = convertBody(
+    '<table class="tableblock"><thead><tr><th class="tableblock"><p class="tableblock">H</p></th></tr></thead>' +
+    '<tbody><tr><td class="tableblock"><p class="tableblock">v</p></td></tr></tbody></table>', { pageUrl: '/x' }).body
+  assert.strictEqual(plain, '| H |\n| --- |\n| v |', 'an unaligned table keeps the bare --- delimiter')
+  ok('table alignment: ^ and > columns round-trip as GFM delimiters (GFM oracle)')
+}
+
+// --- SPEC: an icon that is CONTENT survives; a decorative one is dropped -----
+// Asciidoctor emits <i class="fa …"> for BOTH the admonition/checklist glyphs
+// (chrome — Docusaurus draws its own) and for `icon:x[role=y]` used as data. The
+// discriminator is the `span.icon <role>` wrapper, which only the latter carries.
+// management-center's feature matrix is the real case: 36 ticks and crosses per
+// version that were being dropped, leaving "feature | | | description" rows.
+{
+  const iconCell = (role, glyph) =>
+    `<div class="paragraph"><p><span class="icon ${role}"><i class="fa fa-${glyph} fa-lg"></i></span></p></div>`
+
+  const { body: yes } = convertBody(iconCell('success', 'check-circle'), { pageUrl: '/x' })
+  assert.strictEqual(yes, '<Icon role="success"/>', 'icon:check-circle[role=success] -> <Icon role="success"/>')
+  const { body: no } = convertBody(iconCell('error', 'times'), { pageUrl: '/x' })
+  assert.strictEqual(no, '<Icon role="error"/>', 'icon:times[role=error] -> <Icon role="error"/>')
+
+  // No TEXT is emitted, which is the fidelity requirement: the golden's <i> holds
+  // none, so a ✓/✗ character here would add content the source never rendered.
+  assert.strictEqual(renderedText(yes.replace(/<[^>]+>/g, '')), '', 'a content icon contributes no text')
+
+  // Decoration still goes: an admonition glyph and a bare <i> with no span.icon
+  // wrapper must vanish rather than become an empty `*`/`**`.
+  const { body: chrome } = convertBody(
+    '<div class="paragraph"><p><i class="fa icon-note"></i>Body text</p></div>', { pageUrl: '/x' })
+  assert.strictEqual(chrome, 'Body text', 'a decorative glyph is dropped, leaving no empty emphasis')
+
+  // An UNKNOWN role has no glyph in the front-end registry, so it must NOT become
+  // an <Icon> that renders nothing — it keeps the old dropped behaviour until the
+  // registry gains an entry.
+  const { body: unknown } = convertBody(iconCell('warning', 'exclamation'), { pageUrl: '/x' })
+  assert.strictEqual(unknown, '', 'an unregistered role is not emitted as <Icon>')
+  ok('content icons: span.icon <role> becomes <Icon>, decoration is still dropped')
+}
+
+// --- SPEC: a checklist keeps its checkbox (GFM task list) --------------------
+// `- [ ]` / `- [*]` render as <ul class="checklist"> with a checkbox glyph. The
+// box is the item's STATE, not decoration, and GFM expresses it natively — so the
+// marker round-trips as itself. cloud's migrate-to-cloud is the real case (its
+// own prose says "see the following checklist"), where it had become a plain
+// bullet list. Nothing else catches this: the glyph carries no text for Layer 1
+// and Layer 2 counts no icons.
+{
+  const item = (glyph, text) =>
+    `<li><p><i class="fa fa-${glyph}"></i> ${text}</p></li>`
+  const list = (...items) => `<div class="ulist checklist"><ul class="checklist">${items.join('')}</ul></div>`
+
+  const { body } = convertBody(list(item('square-o', 'Todo'), item('check-square-o', 'Done')), { pageUrl: '/x' })
+  assert.strictEqual(body, '- [ ] Todo\n- [x] Done',
+    'unchecked -> `- [ ]`, checked -> `- [x]`; the state is preserved, not flattened')
+
+  // A plain (non-checklist) ulist is untouched — no stray checkboxes.
+  const { body: plain } = convertBody(
+    '<div class="ulist"><ul><li><p>Just a bullet</p></li></ul></div>', { pageUrl: '/x' })
+  assert.strictEqual(plain, '- Just a bullet', 'an ordinary bullet list gains no checkbox')
+  ok('checklists: the checkbox state round-trips as a GFM task list')
 }
 
 // --- fixSwallowedBlockTitles: recover a mis-rendered block title ------------

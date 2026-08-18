@@ -52,10 +52,15 @@ const RE_BLOCKMAC = /^([a-z][a-z0-9_-]*)::([^[\s]*)\[/
 const RE_SOURCELANG = /^\[source%?,\s*([A-Za-z0-9_+#.-]+)|^\[,\s*([A-Za-z0-9_+#.-]+)/
 const RE_BRACKET = /^\[(.+)\]\s*$/
 const RE_SUBS = /^\[.*\bsubs=/
-// Inline macro: NAME:target[…]. The `(?<![A-Za-z0-9:])` guard rejects the 2nd+
-// segment of a coordinate (the `:` before it), so `xref:` is a macro but the
-// `query:` in `xref:query:foo[]` is not.
-const RE_INLINEMAC = /(?<![A-Za-z0-9:])([a-z][a-z0-9_-]*):(?!:)([^\s[]*)\[/g
+// Inline macro: NAME:target[…]. The lookbehind rejects a coordinate segment that
+// is not the macro name, so `xref:` is a macro but the `query:` in
+// `xref:query:foo[]` is not. It has to reject THREE preceding characters:
+//   `:`  the ordinary `component:module:page` chain (`query:` above);
+//   `@`  the VERSION PIN, `{page-latest-supported-hazelcast}@hazelcast:deploy:x.adoc`
+//        — without `@` listed, the component name reads as a macro called
+//        `hazelcast:` (found on management-center getting-started/overview);
+//   alphanumerics, which keep `foo bar:baz[` from matching mid-word.
+const RE_INLINEMAC = /(?<![A-Za-z0-9:@])([a-z][a-z0-9_-]*):(?!:)([^\s[]*)\[/g
 const RE_PASS = /pass:\w*\[/
 // A block delimiter line. Two forms: a run of the same delimiter char (`----`,
 // `====`, `****`, `____`, `....`, `++++`, `////`) or the open block `--`; PLUS a
