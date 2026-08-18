@@ -639,6 +639,53 @@ const renderedCode = (md) => {
   ok('paragraph block title: kept as its own block, above the content, once')
 }
 
+// --- URLs in prose: no invented links, placeholders as code ------------------
+// Two rules, both about a URL the golden does NOT present as a link.
+// (a) Markdown autolinks a bare URL where Asciidoctor did not, ADDING a link.
+// (b) An address the reader types (loopback / .local / example.*) is not a
+//     destination, so it reads as code -- normalising the five ways the corpus
+//     authors it. (b) diverges from the golden ON PURPOSE and is accept-listed.
+// Oracle: the real golden shapes from management-center, plus the controls that
+// must NOT move.
+{
+  const { convertBody } = require('./lib/html-to-mdx')
+  const para = (inner) => `<div class="paragraph"><p>${inner}</p></div>`
+  const body = (html) => convertBody(html, {}).body.trim()
+  const bare = (u) => `<a href="${u}" class="bare">${u}</a>`
+
+  // (a) the Swagger pages: an unregistered macro's text carries a bare URL.
+  const swagger = body(para('swagger_ui::https://github.com/hazelcast/x.yaml[]'))
+  assert.ok(!/\[https|\]\(/.test(swagger), 'no Markdown link is invented')
+  assert.ok(swagger.includes('https:{/**/}//github.com/hazelcast/x.yaml'),
+    'the text run is split just after the scheme so GFM cannot autolink it')
+  assert.ok(!swagger.includes('https://github'), 'the contiguous URL is gone from the source text')
+
+  // (b) placeholder URLs, in all three shapes the corpus uses.
+  assert.strictEqual(body(para('at https://localhost:443.')), 'at `https://localhost:443`.',
+    'a placeholder left as text becomes code, and the full stop stays outside it')
+  assert.strictEqual(body(para('enter \u201chttp://127.0.0.1:8080/oidc/auth\u201d.')),
+    'enter "`http://127.0.0.1:8080/oidc/auth`".',
+    'the closing typographic quote is not swallowed into the code span')
+  assert.strictEqual(body(para(`a site (${bare('https://example.com')})`)), 'a site (`https://example.com`)',
+    "a golden AUTOLINK of a placeholder loses the link and keeps the text as code")
+  assert.strictEqual(body(para(`at <code>${bare('http://localhost:2222/metrics')}</code>.`)),
+    'at `http://localhost:2222/metrics`.',
+    'a placeholder autolinked INSIDE a code span keeps the code, drops the link')
+
+  // Controls: real links must not move.
+  assert.strictEqual(body(para(`see ${bare('https://hazelcast.com/pricing/')}.`)),
+    'see [https://hazelcast.com/pricing/](https://hazelcast.com/pricing/).',
+    'a real external link survives, and its URL LABEL is not autolink-broken')
+  assert.strictEqual(body(para('see <a href="https://x.com/a">the docs</a>.')), 'see [the docs](https://x.com/a).',
+    'a labelled external link is untouched')
+  assert.strictEqual(body(para('see <a href="http://localhost:8080">the console</a>.')),
+    'see [the console](http://localhost:8080).',
+    'a placeholder URL with a REAL label keeps its link -- code would lose the label')
+  assert.strictEqual(body(para('<code><a href="#Type">Type</a></code>')), '[`Type`](#Type)',
+    'a monospaced internal xref is unaffected')
+  ok('prose URLs: autolinks not invented, placeholders normalised to code, real links intact')
+}
+
 // --- non-heading anchors survive, and are REGISTERED -------------------------
 // AsciiDoc `[[id]]` mid-content becomes an empty `<a id>` in the golden. Two things
 // must hold: the id reaches the output (a dropped one is a dead link), and it is

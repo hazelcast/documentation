@@ -58,6 +58,52 @@ function jsxAttr (s) {
 
 // Inline code content is verbatim; pick a backtick fence longer than any run
 // inside so the content is never split (CommonMark rule).
+// --- URLs in prose ----------------------------------------------------------
+// Two different problems, both about a URL that is NOT a link in the golden.
+//
+// (1) GFM AUTOLINK LITERALS. Markdown turns a bare `https://…` in prose into a
+// link; Asciidoctor did not (the author escaped it `\https://`, or a preceding
+// character blocked Asciidoctor's autolink rule). So faithfully copying the text
+// ADDS a link, which Layer 2 catches as `links: golden=N converted=N+1`.
+//
+// Escaping does NOT fix this, despite being the obvious move: `https\://` works
+// only when the host has no dot. Measured through this site's own pipeline
+// (@mdx-js/mdx + remark-gfm): `http\://127.0.0.1:8080/a`, `http\://example.com/a`,
+// `http&#58;//…` and `www\.example.com` ALL still autolink, because micromark
+// recognises the URL across the escape. What does work is splitting the text run
+// with an empty MDX expression immediately after the scheme's colon --
+// `https:{/**/}//github.com/x` -- which renders the identical characters, cannot
+// swallow a neighbouring <Variable/> (unlike wrapping the URL in a JSX string),
+// and leaves real Markdown links untouched. Verified in a paragraph, a list item,
+// a table cell, and between smart quotes.
+const SCHEME = /\b(https?:)(?=\/\/[^\s<]*[A-Za-z0-9])/g
+const breakAutolinks = (s) => s.replace(SCHEME, '$1{/**/}')
+
+// (2) PLACEHOLDER URLS. An address the reader types or opens on their own
+// machine is never a navigable destination, so it should read as code, never as a
+// link. The corpus authors this five different ways (backtick + `\` escape,
+// backtick alone, bare + escape, bare, smart-quoted), which renders three
+// different ways -- so the converter normalises it: inline code, no link.
+//
+// The hosts are exactly the ones that CANNOT resolve for a reader: loopback,
+// the mDNS `.local` suffix (RFC 6762) and the reserved example domains
+// (RFC 2606). This is the same judgement the harness already records for an
+// angle-bracket pseudo-URL (`http://<mc-ip-address>:8080`, where the converter
+// drops the un-followable anchor and keeps the code) extended from "cannot be a
+// valid URL" to "is not a real destination".
+const PLACEHOLDER_URL = /^https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0|[\w-]+\.local|example\.(?:com|org|net))(?::\d+)?(?:[/?#]|$)/i
+const isPlaceholderUrl = (url) => PLACEHOLDER_URL.test(url)
+
+// A URL inside a run of prose. The character class is RFC 3986's, listed
+// positively rather than as "not whitespace": a negative class swallowed the
+// closing typographic quote of Antora's `“http://127.0.0.1:8080/oidc/auth”` into
+// the code span, which also stopped foldTypographic seeing it. The last
+// character may not be sentence punctuation, so "…at https://localhost:443."
+// keeps its full stop outside the span.
+const URL_CHAR = "A-Za-z0-9\\-._~:/?#\\[\\]@!$&'()*+,;=%"
+const URL_END = "A-Za-z0-9\\-_~/#@$&+=%"
+const PROSE_URL = new RegExp(`https?://[${URL_CHAR}]*[${URL_END}]`, 'g')
+
 function inlineCode (text) {
   const longest = (text.match(/`+/g) || []).reduce((n, r) => Math.max(n, r.length), 0)
   const fence = '`'.repeat(longest + 1)
@@ -73,4 +119,5 @@ function fencedCode (code, lang = '') {
   return fence + lang + '\n' + code + '\n' + fence
 }
 
-module.exports = { mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode }
+module.exports = {
+  breakAutolinks, isPlaceholderUrl, PROSE_URL, mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode }

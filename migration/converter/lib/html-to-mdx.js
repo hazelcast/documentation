@@ -19,7 +19,10 @@
 const path = require('node:path')
 const cheerio = require('cheerio')
 const GithubSlugger = require('github-slugger')
-const { mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode } = require('./mdx')
+const {
+  mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode,
+  breakAutolinks, isPlaceholderUrl, PROSE_URL,
+} = require('./mdx')
 const { resolveHref } = require('./links')
 
 const ADMONITION_TYPES = ['note', 'tip', 'warning', 'caution', 'important']
@@ -1079,8 +1082,27 @@ function inlineFrom ($, nodes, st, opt = {}) {
 
 function escapeInlineText (data, opt, st) {
   const collapsed = data.replace(/\s+/g, ' ')
-  const esc = opt.cell ? mdEscapeCell(collapsed) : mdEscape(collapsed)
-  return st && st.proseVars ? reverseProseVars(esc, st.proseVars) : esc
+  const prose = (text) => {
+    const esc = opt.cell ? mdEscapeCell(text) : mdEscape(text)
+    // Autolink-breaking goes LAST, and by position (just after the scheme's
+    // colon) rather than by matching the whole URL, so it is unaffected by the
+    // backslashes mdEscape adds inside a path and by a <Variable/> that
+    // reverseProseVars may have put in one.
+    const withVars = st && st.proseVars ? reverseProseVars(esc, st.proseVars) : esc
+    return opt.inLink ? withVars : breakAutolinks(withVars)
+  }
+  // A PLACEHOLDER URL is normalised to inline code (see mdx.js): pulled out
+  // BEFORE prose escaping, because a code span must carry the raw characters --
+  // mdEscape's backslashes would render literally inside backticks.
+  let out = ''
+  let last = 0
+  PROSE_URL.lastIndex = 0
+  for (let m; (m = PROSE_URL.exec(collapsed)) !== null;) {
+    if (!isPlaceholderUrl(m[0])) continue
+    out += prose(collapsed.slice(last, m.index)) + inlineCode(m[0])
+    last = m.index + m[0].length
+  }
+  return out + prose(collapsed.slice(last))
 }
 
 function inlineTag ($, node, st, opt) {
@@ -1131,7 +1153,12 @@ function inlineTag ($, node, st, opt) {
         // a real link — and its invalid URL fails Docusaurus compile. Keep it as
         // inline code with no link. Genuine cross-references (api-ref's `#Type`)
         // become a link whose label is code (Markdown allows code in a label).
-        if (kind !== 'empty' && kind !== 'malformed' && !/[<>]/.test(href)) {
+        // A PLACEHOLDER URL is not a destination (see mdx.js isPlaceholderUrl), so
+        // it keeps the code and loses the link -- the same treatment the
+        // angle-bracket pseudo-URL below already gets, and what the 6 correctly
+        // authored occurrences in the corpus (`\http://…` in backticks) render as.
+        if (kind !== 'empty' && kind !== 'malformed' && !/[<>]/.test(href) &&
+            !isPlaceholderUrl(a.attribs.href)) {
           const label = inlineCode($(node).text())
           return `[${label}](${/[()\s]/.test(href) ? `<${href}>` : href})`
         }
@@ -1162,7 +1189,10 @@ function inlineTag ($, node, st, opt) {
       // reports dead-anchor-self.
       const anchorEl = id ? anchorJsx(id) : ''
       if (cls.includes('anchor')) return opt.skipAnchors ? '' : anchorEl // heading self-link: no text
-      const label = kids().trim()
+      // `inLink`: inside a `[…]` label no autolink can form, so the
+      // autolink-breaker must stay out -- otherwise a bare-URL label (the golden's
+      // own autolink text, `[https://x](https://x)`) gets a pointless `{/**/}`.
+      const label = inlineFrom($, node.children, st, { ...opt, inLink: true }).trim()
       const rawHref = (node.attribs && node.attribs.href) || ''
       const resolved = healDocRef(resolveHref(rawHref, st.pageUrl), st)
       const kind = resolved.kind
@@ -1217,6 +1247,17 @@ function inlineTag ($, node, st, opt) {
       // <a> alike). Keep the visible text (jsxText encodes the brackets) and drop
       // the un-followable link wrapper — the only form that compiles.
       if (/[<>]/.test(href)) return anchorEl + label
+      // Asciidoctor autolinks a bare `http://…` in prose, including addresses the
+      // reader is meant to TYPE (`https://example.com`, `http://localhost:8080`).
+      // Those are not navigable destinations, so we render them as inline code and
+      // drop the link -- normalising the five ways the corpus authors this to the
+      // one the careful pages already use. A DELIBERATE divergence from the golden
+      // (which links them), recorded in fidelity/accepted.json. Only a bare
+      // autolink qualifies: a placeholder URL carrying a real label is left alone,
+      // since dropping the link would lose the label's meaning.
+      if (isPlaceholderUrl(rawHref) && $(node).text().trim() === rawHref) {
+        return anchorEl + inlineCode(rawHref)
+      }
       // A marked {attr} reference in the label became a <Variable/> in `label`
       // (via the span case). MDX cannot parse a component inside a `[…]` link
       // label, so emit a raw <a> with the component in the children. A raw <a> is
