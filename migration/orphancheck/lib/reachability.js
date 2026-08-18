@@ -131,7 +131,7 @@ function validateAllowlist (allow) {
 //   allowed — orphans a human has triaged (grouped for the report)
 //   staleKeys — allowlist keys that match no current orphan (a page that stopped
 //               being an orphan; surfaced so the entry can be pruned, not fatal)
-function applyAllowlist (orphans, allow) {
+function applyAllowlist (orphans, allow, component) {
   const allowMap = allow || {}
   const flagged = []
   const allowed = []
@@ -144,7 +144,14 @@ function applyAllowlist (orphans, allow) {
       flagged.push(o)
     }
   }
-  const staleKeys = Object.keys(allowMap).filter((k) => !matchedKeys.has(k))
+  // Staleness is only judgeable for keys this run could have MATCHED. A
+  // `--component X` run sees no other component's pages, so every other
+  // component's entry would report as stale -- five false "prune me" lines on a
+  // scoped run, which is exactly how a reader learns to skim past the warning and
+  // miss a real one. Same scope rule the fidelity and refcheck accept-lists use.
+  const staleKeys = Object.keys(allowMap)
+    .filter((k) => !matchedKeys.has(k))
+    .filter((k) => !component || k.startsWith(component + ':'))
   return { flagged, allowed, staleKeys }
 }
 

@@ -150,7 +150,7 @@ async function main () {
 
   const linkedByIds = new Map([...linkedBy].map(([id, set]) => [id, [...set]]))
   const orphans = classifyOrphans({ pages: inScope, navIds, startIds, linkedBy: linkedByIds })
-  const { flagged, allowed, staleKeys } = applyAllowlist(orphans, allow)
+  const { flagged, allowed, staleKeys } = applyAllowlist(orphans, allow, opts.component)
 
   report(opts, migratedVersions, { scanned: inScope.length, orphans: orphans.length }, flagged, allowed, staleKeys, allowErrors)
   process.exit(flagged.length > 0 || allowErrors.length > 0 ? 1 : 0)

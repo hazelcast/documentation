@@ -173,6 +173,24 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
   assert.deepStrictEqual(flagged.map((o) => o.id), ['i3'], 'the un-listed page stays flagged')
   assert.deepStrictEqual(staleKeys, ['c:ghost'], 'an allow key matching no orphan is reported stale')
   ok('deny-by-default: only listed keys clear (all versions); stale keys surfaced')
+
+  // SPEC: staleness is only judgeable where the run could have MATCHED. Under
+  // `--component c`, another component's entry is unmatchable by construction, so
+  // calling it stale is a false "prune me" -- and a warning that is permanently
+  // wrong is how a reader learns to skim past the real ones.
+  const other = { 'c:a': { disposition: 'drop-404' }, 'd:elsewhere': { disposition: 'drop-404' } }
+  assert.deepStrictEqual(applyAllowlist(orphans, other).staleKeys, ['d:elsewhere'],
+    'unscoped: another component\'s unmatched entry IS stale')
+  assert.deepStrictEqual(applyAllowlist(orphans, other, 'c').staleKeys, [],
+    'scoped to c: d\'s entry is out of scope, not stale')
+  assert.deepStrictEqual(applyAllowlist(orphans, { ...other, 'c:ghost': { disposition: 'drop-404' } }, 'c').staleKeys,
+    ['c:ghost'], 'scoping does not hide a stale entry that IS in scope')
+  // Scoping is by component, not by prefix: a component whose name merely starts
+  // with the scoped one must not be swept in.
+  assert.deepStrictEqual(
+    applyAllowlist(orphans, { 'cloudy:x': { disposition: 'drop-404' } }, 'c').staleKeys, [],
+    'a same-prefix component name is not treated as the scoped component')
+  ok('stale keys are judged only within the run\'s scope')
 }
 
 console.log(`\n[orphancheck selftest] ${n} groups passed.`)

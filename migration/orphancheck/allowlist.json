@@ -1,5 +1,5 @@
 {
-  "description": "Orphan allowlist for orphancheck/run.js. DENY BY DEFAULT: a key in `allow` means a human has triaged that orphan page (a published page in no navigation tree) and recorded what to do with it. Keys are the LOGICAL page key exactly as the gate reports it — `{component}[:{module}]/{relative-without-.adoc}`, e.g. \"cloud:teams-and-users\" or \"hazelcast:clients/rest\" — and one key covers that page across EVERY branch it is orphaned in. Each entry is an object with a required `disposition` and an optional one-line `note` (the audit trail): 'keep-in-nav' (will be added to the nav during migration, so it stops being an orphan), 'keep-referenced' (intentionally not in nav, reachable only via inline xref), 'redirect' (drop the page and 301 its old URL to `to`, a required sibling URL), or 'drop-404' (drop the page, a 404 is acceptable — nothing external should rely on it). Ships EMPTY: until an orphan's key is added here, the gate flags it.",
+  "description": "Orphan allowlist for orphancheck/run.js. DENY BY DEFAULT: a key in `allow` means a human has triaged that orphan page (a published page in no navigation tree) and recorded what to do with it. Keys are the LOGICAL page key exactly as the gate reports it \u2014 `{component}[:{module}]/{relative-without-.adoc}`, e.g. \"cloud:teams-and-users\" or \"hazelcast:clients/rest\" \u2014 and one key covers that page across EVERY branch it is orphaned in. Each entry is an object with a required `disposition` and an optional one-line `note` (the audit trail): 'keep-in-nav' (will be added to the nav during migration, so it stops being an orphan), 'keep-referenced' (intentionally not in nav, reachable only via inline xref), 'redirect' (drop the page and 301 its old URL to `to`, a required sibling URL), or 'drop-404' (drop the page, a 404 is acceptable \u2014 nothing external should rely on it). Ships EMPTY: until an orphan's key is added here, the gate flags it.",
   "allow": {
     "clc:clc-cpmap": {
       "disposition": "keep-in-nav",
@@ -29,6 +29,14 @@
     "clc:clc-platform": {
       "disposition": "drop-404",
       "note": "Empty page: clc-platform.adoc is a 0-byte file in ALL nine branches (5.2.1-5.5.1) and has never been in nav. Nothing to preserve, no inbound links. User decision 2026-08-13: delete it, a 404 is fine. ACTED ON: the converter skips drop-404 pages, so no .mdx is emitted and the URL 404s; the gates drop it from scope rather than counting it as not-yet-converted."
+    },
+    "management-center:whats-new": {
+      "disposition": "drop-404",
+      "note": "\"What's new in Management Center 5.7\" (29 lines) exists ONLY on v/5.9, where it is a version behind: it describes 5.7's highlights (Prometheus Exporter metric formats, CP Subsystem screen, FIPS/BouncyCastle) on the 5.9 docs, so it is stale where it is published and absent from every other live version. Never in nav and nothing links to it (the gate classifies it UNREACHABLE), so it is already invisible on the current Antora site. User decision 2026-08-18: drop it, a 404 is acceptable -- the page is about 5.7 and so irrelevant in 5.9. ACTED ON: the converter skips drop-404 pages, so no .mdx is emitted and the URL 404s; the gates drop it from scope rather than counting it as not-yet-converted. NOTE this is a DIFFERENT page from operator:whats-new, which was kept in nav -- that one is version-specific and current in the versions it appears in."
+    },
+    "management-center:deploy-manage/h2-upgrade": {
+      "disposition": "drop-404",
+      "note": "\"H2 upgrade\" documents a one-off metadata migration from H2 1.x to 2.x that was needed when upgrading FROM 5.4: it says the migration is implicit from 5.4.0 onward via the bundled hz-mc tool, and only matters for custom start scripts predating that. Present in all four live versions (5.9-5.12) but never in nav in any of them, and nothing links to it (the gate classifies it UNREACHABLE), so it is already invisible on the current Antora site. User decision 2026-08-18: drop it, a 404 is acceptable -- the content is about upgrading from 5.4, five releases back. ACTED ON: the converter skips drop-404 pages, so no .mdx is emitted and the URL 404s; the gates drop it from scope. If the `hz-mc upgrade-h2` command is still supported, its reference belongs in the CLI/upgrade docs rather than an unlinked page."
     }
   }
 }
