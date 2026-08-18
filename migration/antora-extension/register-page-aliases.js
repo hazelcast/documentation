@@ -56,17 +56,34 @@ function registerPageAliases (contentCatalog, siteAsciiDocConfig = {}) {
   // resource id -> raw cloud-* attribute strings, for pages that carry
   // `cloud-tags` (the api/cloud.json console index). See CLOUD_ATTRIBUTES.
   const cloudMeta = new Map()
+  // The header must be parsed with the page's OWN component-version asciidoc
+  // config, the one classifyContent resolved from that component's antora.yml —
+  // not the site config. A doctitle may reference a component attribute
+  // (`= Management Center {full-version}`), and under the site config that name is
+  // simply undefined, so the brace survives into every consumer: the manifest
+  // `title` (hence frontmatter `title:` and the nav labels derived from it) and
+  // `page.asciidoc.xreftext`, which is what an empty-text `xref:foo.adoc[]`
+  // renders as its LINK TEXT in the golden. Antora's own pipeline converts with
+  // the per-version config, so a site-config header parse makes the golden
+  // unfaithful: MC's cluster-license linked to "Manage {enterprise-product-name}
+  // license keys" on all 10 versions where the live site reads "Enterprise
+  // Edition". Falls back to the site config for a page whose component version
+  // carries none.
+  const configFor = (page) => {
+    const cv = contentCatalog.getComponentVersion(page.src.component, page.src.version)
+    return (cv && cv.asciidoc) || siteAsciiDocConfig
+  }
   for (const page of contentCatalog.getPages((p) => p.out)) {
     let meta
     try {
       // headerOnly: we only need the header (page-aliases + doctitle).
       // attribute-missing:skip silences the missing-attribute warnings the
-      // header parse would otherwise emit (this pass uses the site config, not
-      // the per-version render config).
+      // header parse would otherwise emit for genuinely undefined names.
+      const config = configFor(page)
       const doc = loadAsciiDoc(page, contentCatalog, {
-        ...siteAsciiDocConfig,
+        ...config,
         headerOnly: true,
-        attributes: { ...siteAsciiDocConfig.attributes, 'attribute-missing': 'skip' },
+        attributes: { ...config.attributes, 'attribute-missing': 'skip' },
       })
       meta = extractAsciiDocMetadata(doc)
     } catch {
