@@ -31,6 +31,9 @@ const { execFileSync } = require('node:child_process')
 const { goldenPages } = require('../fidelity/lib/pairing')
 const { convertBody } = require('./lib/html-to-mdx')
 const { collectOccurrences, decide, consumerAttrs } = require('./lib/partials')
+// Link targets written with an `{attribute}` in them — the exact-match href path
+// (see buildHrefVars); shared with the selftest so the grammar has one definition.
+const { attrHrefTemplates } = require('./lib/links')
 const { parseNav, buildPlan, injectNavEntries, pageKey } = require('./lib/nav')
 const { loadDispositions, isDropped, navInjectionsFor } = require('../lib/dispositions')
 // Single-sources "which contexts render into flow text" with the marking pass, so
@@ -480,10 +483,14 @@ function scanPageAttrs (component, seg, sourcesDir) {
       const m = file.match(PAGE_PATH)
       if (!m) continue // a partial/example/nav, not a page
       const key = pageKey(m[1], m[2])
-      if (!byKey.has(key)) byKey.set(key, { all: new Set(), prose: new Set() })
+      if (!byKey.has(key)) byKey.set(key, { all: new Set(), prose: new Set(), hrefs: new Set() })
       const rec = byKey.get(key)
       rec.all.add(name)
       if (wrappableRefs(textOf(file), [name]).has(name)) rec.prose.add(name)
+      // Link targets written with an `{attribute}` in them, for the exact-match
+      // href path (see hrefVars below). Collected from the same text, and a Set
+      // so revisiting this file under another attribute name is idempotent.
+      for (const t of attrHrefTemplates(textOf(file))) rec.hrefs.add(t)
     }
   }
   return byKey
@@ -497,6 +504,31 @@ function buildPageVars (names, lookup) {
   for (const name of names) {
     const v = lookup[name]
     if (v != null && v !== '') m.set(String(v), name)
+  }
+  return m
+}
+
+// Resolved URL -> the source link target that produced it, for the page's own
+// targets that carry an `{attribute}` reference. Substituting this version's
+// values into the template reproduces exactly the href Antora wrote into the
+// golden, so the converter recognises it by string equality and re-emits the
+// template — the only way to recover a reference the author followed with more
+// text (`…/tree/v{page-latest-supported-hazelcast}.0/…`,
+// `{page-cloud-console}settings/developer`), which the value reverse-map must
+// refuse because it cannot tell that `.0` continues the URL but not the version.
+//
+// A template is only used when EVERY name in it is single-sourced on this page
+// (`all`): emitting a `{name}` the site has no variable for would put literal
+// braces in an href. Templates that substitute to themselves (nothing known)
+// are dropped for the same reason.
+function buildHrefVars (attrsHere, lookup) {
+  const m = new Map()
+  if (!attrsHere || !attrsHere.hrefs) return m
+  for (const tpl of attrsHere.hrefs) {
+    const names = [...tpl.matchAll(/\{([A-Za-z0-9_][A-Za-z0-9_-]*)\}/g)].map((x) => x[1])
+    if (!names.length || !names.every((n) => attrsHere.all.has(n))) continue
+    const resolved = substitute(tpl, lookup)
+    if (resolved !== tpl) m.set(resolved, tpl)
   }
   return m
 }
@@ -736,10 +768,11 @@ function convertVersion (ver, ctx) {
     const attrsHere = attrsByKey.get(key)
     const pageVars = buildPageVars(attrsHere && attrsHere.all, exampleLookup)
     const proseVars = proseVarsFor(pageVars, (attrsHere && attrsHere.prose) || new Set(), markedAttrsFor(component))
+    const hrefVars = buildHrefVars(attrsHere, exampleLookup)
 
     let body, imports
     try {
-      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, latestVersions: ctx.latestVersions, urlToRelFile }))
+      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, hrefVars, latestVersions: ctx.latestVersions, urlToRelFile }))
     } catch (err) {
       problems.push({ url: p.url, error: err.message })
       continue

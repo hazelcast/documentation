@@ -125,12 +125,40 @@ function dropLiteralFences (text) {
 
 const countMatches = (text, re) => (text.match(re) || []).length
 
+// A reference the CENSUS CANNOT SEE, so this side must not count it either: an
+// attribute used as an xref's VERSION COORDINATE
+// (`xref:{page-latest-supported-hazelcast}@hazelcast:sql:create-index.adoc[…]`).
+// Antora resolves those during classification, and the census has to substitute
+// the real value into xref/include targets BEFORE poisoning or 1431 xrefs stop
+// resolving (preResolveTargets) — so a coordinate never becomes a token and never
+// enters `expected`. Counting the reference the converter emits for it therefore
+// inflates `actual`, which showed up as a false OVER-variableised finding on MC's
+// update-config once its two genuine URL references were fixed. The same
+// asymmetry previously MASKED a bake on that page, reporting 2->1 when both URLs
+// were baked and the survivor was the coordinate.
+//
+// Excluding on THIS side rather than adding to `expected` keeps the gate ignorant
+// of converter behaviour. The converter does not always emit a reference for a
+// coordinate: where the version equals the target component's current latest it
+// floats the link to `/<comp>/latest/…` instead (MC@5.11, whose value 5.7 is
+// hazelcast's latest). Both outcomes balance here — a floated link leaves no token
+// to count, an emitted one is excluded — whereas an `expected`-side count would
+// have to model the float rule to avoid a false bake.
+//
+// The shape is specific: a site-absolute cross-component path whose VERSION
+// SEGMENT is the reference. An external URL that merely contains a reference
+// (cloud's `https://docs.hazelcast.com/hazelcast/{page-cloud-platform-version}/…`)
+// has a scheme and so does not match, and is correctly still counted.
+const coordinateRefRe = (name) => new RegExp(`href="/[^/"]+/\\{${escRe(name)}\\}(?=[/"])`, 'g')
+const dropCoordinateRefs = (body, name) => body.replace(coordinateRefRe(name), 'href="/')
+
 // References to NAME in one MDX file's own body (imports and literal fences
 // already removed).
 function countMdxRefs (body, name) {
   const n = escRe(name)
-  return countMatches(body, new RegExp(`\\bname="${n}"`, 'g')) +
-    countMatches(body, new RegExp(`(?<!\\\\)\\{${n}\\}`, 'g'))
+  const counted = dropCoordinateRefs(body, name)
+  return countMatches(counted, new RegExp(`\\bname="${n}"`, 'g')) +
+    countMatches(counted, new RegExp(`(?<!\\\\)\\{${n}\\}`, 'g'))
 }
 
 // References to NAME in an imported example file: raw text, so only `{NAME}`.

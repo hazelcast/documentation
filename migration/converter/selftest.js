@@ -22,7 +22,7 @@ const { gfm } = require('micromark-extension-gfm')
 const { gfmHtml } = require('micromark-extension-gfm')
 
 const { mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode } = require('./lib/mdx')
-const { resolveHref } = require('./lib/links')
+const { resolveHref, attrHrefTemplates } = require('./lib/links')
 const { convertBody } = require('./lib/html-to-mdx')
 const { classifyHref } = require('../fidelity/lib/links')
 const { collectOccurrences, decide, slugFor, componentNameFor, parseId, consumerAttrs } = require('./lib/partials')
@@ -825,6 +825,56 @@ const renderedCode = (md) => {
   assert.deepStrictEqual(decisions.get('c:ROOT:partial$p.adoc').pages, ['/a', '/b'],
     'a factored decision carries the pages that include it')
   ok('factored partials: attribute scope is the union of the including pages\' own scopes')
+}
+
+// --- href templates: recovering a reference the author wrote text after --------
+// `link:…/tree/v{ver}.0/…` and `link:{console}settings/developer` cannot be
+// recovered by matching the resolved value in the finished URL: the matcher would
+// have to decide that `.0` continues the URL but not the version, and the rule
+// that makes it safe elsewhere (varCodeTokenRe) must refuse exactly this. The
+// template comes from the source instead, and the match is string equality.
+//
+// The oracle is the substituter the site itself uses: filling the version's values
+// into the extracted template must reproduce the href Antora wrote, so the pair
+// (template, resolved) is checked against `substitute`, not against a fixture.
+{
+  const src = [
+    '- link:https://github.com/hazelcast/hazelcast/tree/v{page-latest-supported-hazelcast}.0/x/full-example.xml[XML example]',
+    '- https://github.com/hazelcast/hazelcast/tree/v{page-latest-supported-hazelcast}.0/x/full-example.yaml[YAML example]',
+    'Keys live in the link:{page-cloud-console}settings/developer[console].',
+    'See xref:{page-latest-supported-mc}@management-center::index.adoc[MC].',
+    'A plain link:https://example.com/nothing[label].',
+  ].join('\n')
+  const tpls = [...attrHrefTemplates(src)]
+  assert.strictEqual(tpls.length, 3, 'both link forms and the prefix form are targets; xref and attribute-free links are not')
+  assert.ok(tpls.every((t) => /\{[a-z-]+\}/.test(t)), 'every extracted target carries a reference')
+  assert.ok(!tpls.some((t) => t.includes('management-center')),
+    'xref targets are excluded — their attribute is a version COORDINATE, resolved by Antora')
+
+  // Round-trip through the real substituter: template + values === the golden href.
+  const lookup = { 'page-latest-supported-hazelcast': '5.7', 'page-cloud-console': 'https://cloud.hazelcast.com/' }
+  const xml = tpls.find((t) => t.endsWith('.xml'))
+  assert.strictEqual(substitute(xml, lookup),
+    'https://github.com/hazelcast/hazelcast/tree/v5.7.0/x/full-example.xml',
+    'the template resolves to exactly the href Antora rendered')
+
+  // Given that map, the converter emits the template — and the LABEL keeps its own
+  // (different) reference, which an href-only substitution would have dropped.
+  const hrefVars = new Map([[substitute(xml, lookup), xml]])
+  const pageVars = new Map([['5.11.0', 'full-version']])
+  const html = '<div class="paragraph"><p><a href="https://github.com/hazelcast/hazelcast/tree/v5.7.0/x/full-example.xml">Example for 5.11.0</a></p></div>'
+  const out = convertBody(html, { pageUrl: '/management-center/5.11/x', component: 'management-center', seg: '5.11', hrefVars, pageVars, proseVars: pageVars }).body
+  assert.ok(out.includes('href="https://github.com/hazelcast/hazelcast/tree/v{page-latest-supported-hazelcast}.0/x/full-example.xml"'),
+    'the href is emitted as the source template, references intact')
+  assert.ok(out.includes('{full-version}') && !out.includes('5.11.0'),
+    'and the label is still templated — the href path must not bypass the label')
+  assert.ok(!out.includes('v5.7.0'), 'no resolved version is left baked in the href')
+
+  // An href with no matching template is untouched by this path.
+  const other = convertBody('<div class="paragraph"><p><a href="https://example.com/x">x</a></p></div>',
+    { pageUrl: '/management-center/5.11/x', component: 'management-center', seg: '5.11', hrefVars }).body
+  assert.ok(other.includes('https://example.com/x'), 'an unrelated href is left alone')
+  ok('href templates: a reference followed by authored text is recovered from the source, label included')
 }
 
 // --- nav labels: attributes are BAKED, deliberately --------------------------

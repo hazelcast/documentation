@@ -158,6 +158,43 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
   ok('countMdxRefs/countExampleRefs: count every preserved form, reject baked and escaped literals')
 }
 
+// --- MDX side: an xref VERSION COORDINATE is not countable --------------------
+// The census cannot see a coordinate (preResolveTargets substitutes the real value
+// into xref targets before poisoning, or the render breaks), so it never enters
+// `expected` — and counting it here would make `actual` exceed `expected` on any
+// page that also has a genuine reference to the same attribute.
+//
+// The oracle is the gate's own invariant rather than the shape of the regex: on a
+// page carrying one coordinate and one real reference, actual must equal the ONE
+// occurrence the census can see. Both of the converter's outcomes for a coordinate
+// are exercised, because the gate must balance without knowing which it chose.
+{
+  const attr = 'page-latest-supported-hazelcast'
+  const real = '<Variable href="https://github.com/hazelcast/hazelcast/tree/v{page-latest-supported-hazelcast}.0/x.xml" text="XML"/>'
+  const coord = '<Variable href="/hazelcast/{page-latest-supported-hazelcast}/sql/create-index" text="CREATE INDEX"/>'
+  const floated = '[CREATE INDEX](/hazelcast/latest/sql/create-index)'
+
+  assert.strictEqual(countMdxRefs(coord, attr), 0, 'a coordinate alone counts as nothing')
+  assert.strictEqual(countMdxRefs(floated, attr), 0, 'a coordinate floated to /latest/ leaves nothing to count')
+  assert.strictEqual(countMdxRefs(real, attr), 1, 'a reference inside an external URL still counts')
+  // The page that produced the false finding: same census expectation (1) either
+  // way, so the gate balances whichever form the converter emitted.
+  assert.strictEqual(countMdxRefs(`${coord}\n${real}`, attr), 1,
+    'coordinate + real reference == the one occurrence the census can see')
+  assert.strictEqual(countMdxRefs(`${floated}\n${real}`, attr), 1,
+    'floated coordinate + real reference == the same count')
+
+  // The exclusion is narrow: only the version SEGMENT of a site-absolute path. An
+  // external URL that happens to contain the same attribute mid-path is a real
+  // reference (cloud's release-notes link) and must survive.
+  const external = '<Variable href="https://docs.hazelcast.com/hazelcast/{page-cloud-platform-version}/release-notes/releases" text="notes"/>'
+  assert.strictEqual(countMdxRefs(external, 'page-cloud-platform-version'), 1,
+    'a scheme-bearing URL is not a coordinate, however similar the path looks')
+  assert.strictEqual(countMdxRefs('<Variable name="page-latest-supported-hazelcast"/>', attr), 1,
+    'a prose <Variable> for the same attribute is untouched by the exclusion')
+  ok('countMdxRefs: an xref version coordinate is excluded, matching what the census can see')
+}
+
 // --- MDX side: a plain fence is literal, a `vars` fence is not ---------------
 {
   const mdx = ['```yaml', 'name: {ucn}', '```', '', '```shell vars', 'install {ucn}', '```'].join('\n')

@@ -93,6 +93,14 @@ function convertBody (html, ctx) {
     // proseVarsFor in convert.js). Code keeps the full pageVars — marking cannot
     // reach inside a verbatim block.
     proseVars: ctx.proseVars || ctx.pageVars || new Map(),
+    // Resolved URL -> the source LINK TARGET that produced it, for targets where
+    // an attribute reference is followed by authored text (`…/tree/v{ver}.0/…`,
+    // `{page-cloud-console}settings/developer`). Built in convert.js from the
+    // page's own source (attrHrefTemplates), so recognising the href is exact
+    // string equality rather than the value reverse-map's boundary guess — which
+    // cannot work here, since it would have to decide that `.0` continues the
+    // URL but not the version.
+    hrefVars: ctx.hrefVars || new Map(),
     // component -> current stable latest version, for floating versionless
     // cross-component xrefs to `/<comp>/latest/` (see floatCrossComponentLatest).
     latestVersions: ctx.latestVersions || {},
@@ -1122,6 +1130,20 @@ function inlineTag ($, node, st, opt) {
       const varName = st.linkVars.get(rawHref)
       if (varName) {
         return anchorEl + `<Variable href=${jsxAttr(`{${varName}}`)} text=${jsxAttr(tokenText)}/>`
+      }
+      // Source-derived template: this exact href is what one of the page's own
+      // link targets resolves to, so emit that target verbatim with its `{attr}`
+      // references intact. Tried before the value reverse-map below because it is
+      // exact where the reverse-map has to guess a boundary — it is the only thing
+      // that recovers a reference followed by authored text (`v{ver}.0`).
+      // The LABEL still goes through the value reverse-map: an href template says
+      // nothing about the link text, which carries its own references (cloud's
+      // release-notes link is `.../{page-cloud-platform-version}/...` labelled
+      // `Hazelcast Platform {full-version}` — two different attributes).
+      const hrefTpl = st.hrefVars.get(rawHref)
+      if (hrefTpl) {
+        const { code: textTpl } = reverseCodeVars(tokenText, st.pageVars)
+        return anchorEl + `<Variable href=${jsxAttr(hrefTpl)} text=${jsxAttr(textTpl)}/>`
       }
       // Templated single-sourcing: a version value can be a SUBSTRING of the
       // href and/or label (e.g. the release-notes link `.../{page-cloud-platform-

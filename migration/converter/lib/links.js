@@ -32,4 +32,37 @@ function resolveHref (raw, pageUrl) {
   return { kind: 'internal', href: u.pathname + u.hash, path: u.pathname, hash: u.hash }
 }
 
-module.exports = { resolveHref, EXTERNAL }
+// Every LINK TARGET in a page's AsciiDoc source that contains an `{attribute}`
+// reference, as written — the raw template, e.g.
+//   `https://github.com/hazelcast/hazelcast/tree/v{page-latest-supported-hazelcast}.0/…`
+//   `{page-cloud-console}settings/developer`
+//
+// These are the references the value reverse-map structurally cannot recover. It
+// matches a resolved VALUE back in the rendered href, so it needs to know where
+// the value ends — and in a URL it cannot, because the author writes more text
+// straight after the reference (`.0`, `settings/developer`). The boundary rule
+// that makes the fence path safe is exactly what has to refuse these: a version
+// followed by `.0` is not a whole version (see varCodeTokenRe in html-to-mdx.js).
+//
+// The template sidesteps the question. Substituting the version's values into it
+// reproduces the finished URL Antora put in the golden, so the converter can
+// recognise that href by EXACT EQUALITY and emit the template — no inference
+// about where a value starts or stops.
+//
+// Two macro forms carry a target: explicit `link:TARGET[` and a bare
+// `https://TARGET[` (Asciidoctor auto-links a URL followed by a label). `xref:`
+// is deliberately excluded: its attribute references are version COORDINATES,
+// resolved by Antora during classification and handled by the latestVersions
+// path, not by substitution. Targets cannot contain whitespace.
+const LINK_TARGET = /(?:link:|(?<![\w:])(?=https?:\/\/))(\S*?)\[/g
+function attrHrefTemplates (text) {
+  const out = new Set()
+  if (!text) return out
+  for (const m of String(text).matchAll(LINK_TARGET)) {
+    const target = m[1]
+    if (target && /\{[A-Za-z0-9_][A-Za-z0-9_-]*\}/.test(target)) out.add(target)
+  }
+  return out
+}
+
+module.exports = { resolveHref, EXTERNAL, attrHrefTemplates }
