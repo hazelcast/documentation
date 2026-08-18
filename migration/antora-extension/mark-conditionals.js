@@ -90,12 +90,13 @@ function wrapConditionals (text, stats) {
     const branches = branchesAt(lines, i)
     if (!branches) { out.push(lines[i]); continue }
     const last = branches[branches.length - 1]
-    if (!canMark(lines, i, last.end)) {
+    const why = markability(lines, i, last.end)
+    if (!why) {
       count('skipped')
       out.push(lines[i])
       continue // body/endif are copied by the ordinary path
     }
-    count('marked')
+    count(why === 'neutral' ? 'marked' : 'markedPromotingTitle')
     for (const b of branches) {
       const [open, close] = sentinelsFor(b.kind)
       out.push(lines[b.start]) // ifdef::snapshot[] / ifndef::snapshot[]
@@ -155,11 +156,52 @@ function wrapConditionals (text, stats) {
 // with the Platform migration where hz-docs pages are converted and the gates can
 // see the result. Nothing in the migrated set needs it: management-center's
 // conditionals have no tag comments.
-function canMark (lines, ifdefAt, endifAt) {
-  const boundaryBefore = ifdefAt === 0 || lines[ifdefAt - 1].trim() === ''
-  const boundaryAfter = endifAt === lines.length - 1 || lines[endifAt + 1].trim() === ''
-  return boundaryBefore && boundaryAfter
+// A line that ENDS whatever block is open, so nothing can continue across it: any
+// block delimiter, including the open block `--` and a table's `|===`. After such
+// a line the hazard boundaryAfter guards against cannot arise, so it counts as a
+// boundary even though it is not blank. management-center's install.adoc needs
+// this: its conditional pair is the last thing inside a list item's open block, so
+// the line after the final `endif::[]` is `--`.
+const ENDS_BLOCK = /^(?:--|-{4,}|={4,}|\*{4,}|_{4,}|\.{4,}|\+{4,}|\/{4,}|[|!]===)$/
+
+// A block title (`.Debian`) — the first line of a branch whose preceding paragraph
+// has absorbed it. See canMark's `promotesTitle`.
+const BLOCK_TITLE = /^\.[^.\s]/
+
+// Is injecting a blank-line-padded passthrough block just inside this unit
+// parse-neutral — or, in one named case, changing the parse for the better?
+//
+// Returns null when marking is unsafe, else a reason string: 'neutral', or
+// 'promotes-title' for the case below, which the caller counts separately because
+// it makes the golden diverge from Antora deliberately.
+function markability (lines, ifdefAt, endifAt) {
+  const after = endifAt === lines.length - 1 ? '' : lines[endifAt + 1].trim()
+  const boundaryAfter = after === '' || ENDS_BLOCK.test(after)
+  if (!boundaryAfter) return null
+
+  const before = ifdefAt === 0 ? '' : lines[ifdefAt - 1].trim()
+  if (before === '') return 'neutral'
+
+  // The SWALLOWED BLOCK TITLE case. `ifdef` is invisible to the block parser, so a
+  // paragraph immediately above it absorbs the branch's first line — and when that
+  // line is a block title, Asciidoctor renders it as stray paragraph text. This is
+  // exactly management-center install.adoc's "…depending on your Linux
+  // distribution: .Debian", visible on the live site today.
+  //
+  // Injecting here ends the paragraph and promotes `.Debian` to the block title it
+  // was written as, so the render CHANGES — deliberately, and only in that one
+  // respect. Marking anyway is the same call already taken for the same species of
+  // defect by the converter's fixSwallowedBlockTitles (operator's dangling `+
+  // .For Openshift`), whose fidelity diffs are accepted as `upstream`. The
+  // alternative is leaving the branch baked, which costs version-cut safety —
+  // install.adoc's snapshot half tells readers to install the UNPINNED package, so
+  // a cut would ship that on a release.
+  const firstInBranch = (lines[ifdefAt + 1] || '').trim()
+  if (BLOCK_TITLE.test(firstInBranch)) return 'promotes-title'
+  return null
 }
+
+const canMark = (lines, ifdefAt, endifAt) => markability(lines, ifdefAt, endifAt) !== null
 
 // Strip the rendered sentinel comments, reproducing the un-instrumented golden
 // byte-for-byte. Writer (wrapConditionals) and matcher must stay in lockstep.
@@ -169,6 +211,6 @@ const SENTINEL_RE = /^<!--hz-if(?:not)?:snapshot:(?:start|end)-->\n?/gm
 const stripConditionalSentinels = (html) => html.replace(SENTINEL_RE, '')
 
 module.exports = {
-  wrapConditionals, canMark, branchesAt, stripConditionalSentinels, SENTINEL_RE,
+  wrapConditionals, canMark, markability, branchesAt, stripConditionalSentinels, SENTINEL_RE,
   START, END, NOT_START, NOT_END,
 }

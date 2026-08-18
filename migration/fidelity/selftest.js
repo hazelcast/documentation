@@ -21,7 +21,7 @@ const {
   GOLDEN_STRIP, GOLDEN_TABLE,
 } = require('./lib/layer1')
 const { stripSentinels } = require('../antora-extension/mark-partials')
-const { wrapConditionals, stripConditionalSentinels, START, END } = require('../antora-extension/mark-conditionals')
+const { wrapConditionals, markability, stripConditionalSentinels, START, END } = require('../antora-extension/mark-conditionals')
 const { literalizeMonospace } = require('../antora-extension/normalize-monospace')
 const { lockfileKey } = require('./lockfile-key')
 const { buildIndex, variants } = require('./lib/manifest-index')
@@ -184,9 +184,20 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
   ].join('\n')
   assert(/\.Debian/.test(render(glued)),
     'precondition: with no blank line, Asciidoctor absorbs `.Debian` into the paragraph')
-  assert.strictEqual(wrapConditionals(glued), glued,
-    'a directive glued to the previous line is left unmarked')
-  assert(roundTrips(glued), 'and so the golden still strips back byte-for-byte')
+  // This shape IS marked, and is the one case where the render deliberately
+  // changes: the swallowed `.Debian` becomes the block title it was written as.
+  assert.strictEqual(markability(glued.split('\n'), 1, 7), 'promotes-title',
+    'a paragraph above a branch whose first line is a block title marks as promotes-title')
+  assert(!roundTrips(glued), 'so it does NOT round-trip — the divergence is the point')
+  // Bounded: the ONLY change is the promotion. Oracle is the visible text, which
+  // must be identical once the title loses the leading dot it had as prose.
+  const visible = (html) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  assert.strictEqual(
+    visible(stripConditionalSentinels(render(wrapConditionals(glued)))),
+    visible(render(glued)).replace(' .Debian', ' Debian'),
+    'nothing else about the render moves — same text, one dot fewer')
+  assert(/<div class="title">Debian<\/div>/.test(render(wrapConditionals(glued))),
+    'and the promotion really is a block title in the output')
 
   // A block that continues AFTER the endif is the mirror image of the same hazard.
   const gluedAfter = [
@@ -211,7 +222,9 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
   const stats = {}
   wrapConditionals(spaced, stats)
   wrapConditionals(glued, stats)
-  assert.deepStrictEqual(stats, { marked: 1, skipped: 1 }, 'marked/skipped are both counted')
+  wrapConditionals(gluedAfter, stats)
+  assert.deepStrictEqual(stats, { marked: 1, markedPromotingTitle: 1, skipped: 1 },
+    'the three outcomes are counted separately — a promoting mark is never hidden in `marked`')
   ok('wrapConditionals: only marks where injection is parse-neutral (Asciidoctor oracle)')
 }
 

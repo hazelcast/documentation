@@ -873,10 +873,18 @@ function convertVersion (ver, ctx) {
       })
       if (!fragment.trim()) { spliceSkips.push({ url: page.url, donor, reason: 'empty' }); continue }
       spliced.push({ url: page.url, missing, donor })
+      // Match the counterpart's INDENTATION. These regions are often inside a list
+      // item or a <TabItem> (install.adoc's are), where Markdown reads a block at
+      // column 0 as ending the item — so an unindented splice would silently move
+      // the content out of the tab it belongs to.
+      // Anchored to the whole LINE so the counterpart's own indent is captured and
+      // reapplied to every line of the fragment, its opening tag included.
       // Keep the source order: then-branch first, else-branch second.
-      return missing === 'ifndef'
-        ? mdx.replace('</IfSnapshot>', `</IfSnapshot>\n\n${fragment}`)
-        : mdx.replace('<IfNotSnapshot>', `${fragment}\n\n<IfNotSnapshot>`)
+      const anchor = missing === 'ifndef' ? /^([ \t]*)<\/IfSnapshot>/m : /^([ \t]*)<IfNotSnapshot>/m
+      const indentAll = (indent) => fragment.split('\n').map((l) => (l.trim() ? indent + l : l)).join('\n')
+      return mdx.replace(anchor, (line, indent) => (missing === 'ifndef'
+        ? `${indent}</IfSnapshot>\n\n${indentAll(indent)}`
+        : `${indentAll(indent)}\n\n${indent}<IfNotSnapshot>`))
     }
     return mdx
   }

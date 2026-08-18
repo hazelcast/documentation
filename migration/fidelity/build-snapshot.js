@@ -350,6 +350,16 @@ async function main () {
       if (wrapped !== file.contents.toString()) { file.contents = Buffer.from(wrapped); marked++ }
     }
     if (marked) console.log(`[snapshot] conditional marking: instrumented ${marked} source file(s)`)
+    // Units marked even though the injection CHANGES the render, in the one way
+    // that is an improvement: a block title the preceding paragraph had swallowed
+    // is promoted to a real title (mark-conditionals markability 'promotes-title').
+    // Printed every run because it is the only record — the golden carries the
+    // promotion, so the converted output matches it and no gate can see that we
+    // deliberately diverge from what Antora renders on the live site.
+    if (stats.markedPromotingTitle) {
+      console.log(`[snapshot] conditional marking: ${stats.markedPromotingTitle} unit(s) marked WITH a promoted block title ` +
+        '(the golden deliberately differs from Antora there: a swallowed `.Title` becomes a real one)')
+    }
     if (stats.skipped) {
       console.log(`[snapshot] conditional marking: skipped ${stats.skipped} block(s) with no blank line ` +
         'around the directive (marking there would change the parse; they bake instead)')
