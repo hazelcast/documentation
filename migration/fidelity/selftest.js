@@ -215,6 +215,63 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
   ok('wrapConditionals: only marks where injection is parse-neutral (Asciidoctor oracle)')
 }
 
+// --- the ifdef/ifndef PAIR, and comment-transparency -------------------------
+// The pair is the corpus's normal shape (38 of 41 live `ifdef`s are one half of
+// one), and it has no blank line between the halves by construction — so it can
+// only be judged, and marked, as a UNIT.
+//
+// Asciidoctor is again the oracle, now in BOTH attribute states: the then-branch
+// renders only with `snapshot` set and the else-branch only without it, so a pair
+// that round-trips in one state proves nothing about the other.
+{
+  const renderWith = (src, attrs) => adoc.convert(src, { attributes: attrs, safe: 'safe' })
+  const roundTripsBoth = (src) => {
+    const marked = wrapConditionals(src)
+    for (const attrs of [{ snapshot: '' }, {}]) {
+      if (stripConditionalSentinels(renderWith(marked, attrs)) !== renderWith(src, attrs)) return false
+    }
+    return true
+  }
+
+  // The MC update-config shape: `endif::[]` immediately followed by the else
+  // directive. Judged as one unit on its OUTER boundaries, so it marks — where
+  // testing each half alone would reject it for want of an interior blank line.
+  const pair = ['Intro.', '', 'ifdef::snapshot[]', 'master link', 'endif::[]',
+    'ifndef::snapshot[]', 'tag link', 'endif::[]', '', 'Outro.', ''].join('\n')
+  const markedPair = wrapConditionals(pair)
+  assert(markedPair.includes('hz-if:snapshot:start') && markedPair.includes('hz-ifnot:snapshot:start'),
+    'both halves of the pair are marked, each with its own sentinel')
+  assert(roundTripsBoth(pair), 'and the render round-trips with `snapshot` both set and unset')
+  const pairStats = {}
+  wrapConditionals(pair, pairStats)
+  assert.deepStrictEqual(pairStats, { marked: 1 }, 'a pair counts as ONE unit, not two')
+
+  // Each branch renders only in its own state — the reason both states must be
+  // checked, and the reason the current tree cannot simply wrap what it has.
+  assert(/master link/.test(renderWith(pair, { snapshot: '' })) && !/tag link/.test(renderWith(pair, { snapshot: '' })),
+    'with snapshot set, only the then-branch renders')
+  assert(/tag link/.test(renderWith(pair, {})) && !/master link/.test(renderWith(pair, {})),
+    'with snapshot unset, only the else-branch renders')
+
+  // A standalone `ifndef` is marked as the else-branch on its own.
+  const soloElse = ['Intro.', '', 'ifndef::snapshot[]', 'released only', 'endif::[]', '', 'Outro.', ''].join('\n')
+  assert(wrapConditionals(soloElse).includes('hz-ifnot:snapshot:start'), 'a standalone ifndef is marked')
+  assert(roundTripsBoth(soloElse), 'and round-trips in both states')
+
+  // A `// tag::name[]` line above the directive keeps the unit UNMARKED, so it
+  // bakes. Deliberate: see canMark. Treating the comment as transparent marks
+  // hz-docs' install-enterprise, whose then-branch is a list item, and the padded
+  // sentinel then closes the `<ol>` — parse-neutral by the blank-line test and
+  // still a changed render. The shape below is that page's, reduced.
+  const taggedList = ['Intro.', '', '// tag::x[]', 'ifdef::snapshot[]',
+    '. first item', 'endif::[]', 'ifndef::snapshot[]', '. other first item', 'endif::[]',
+    '. second item', '', 'Outro.', ''].join('\n')
+  assert.strictEqual(wrapConditionals(taggedList), taggedList,
+    'a tag comment above the directive is not read as a boundary, so the unit bakes')
+  assert(roundTripsBoth(taggedList), 'and the golden is therefore untouched')
+  ok('wrapConditionals: pairs judged as one unit; a comment is not a boundary')
+}
+
 // --- normalize-monospace: recover literal `__x` / `_` from Antora's mangling --
 // Asciidoctor itself is the oracle. The bug is a CROSS-SPAN bleed: an `_`/`*` in a
 // monospace span opens an emphasis that pairs with a DISTANT delimiter, so both

@@ -42,6 +42,9 @@ const { wrappableRefs } = require('../antora-extension/mark-attributes')
 // Shared with the build-time example-attributes loader so the match key the
 // converter computes reproduces exactly what the loader renders (no drift).
 const substitute = require('../../plugins/lib/substitute-attributes')
+// The marking pass's branch grammar, reused so the converter's idea of an
+// `ifdef`/`ifndef` snapshot branch cannot drift from the marker's.
+const { branchesAt } = require('../antora-extension/mark-conditionals')
 // Layout/source config shared with the reference checker (refcheck/run.js) so
 // the two resolve source branches and output paths identically (no drift):
 // which mirror + branch each component reads (NAV_SOURCES), which versions are
@@ -508,6 +511,65 @@ function buildPageVars (names, lookup) {
   return m
 }
 
+// --- snapshot conditionals: give every version tree BOTH branches ------------
+//
+// A paired `ifdef::snapshot[]` / `ifndef::snapshot[]` renders ONE half per
+// version: the snapshot render carries the then-branch, a release render the
+// else-branch. So each tree's golden shows only its own half, and wrapping what is
+// there leaves every tree missing the other one. That matters in two ways:
+//
+//   * the CURRENT tree is what `docusaurus docs:version` copies, so a cut would
+//     produce a release with the snapshot half hidden and no else half at all;
+//   * MC@5.9 renders the THEN half today (its antora.yml wrongly sets
+//     `snapshot: true`), so as a released version it would show neither.
+//
+// The missing half is not lost — this run has every version's golden in hand, so
+// it is taken from a version whose render kept it. Two rules make that safe:
+//   1. the branch's SOURCE text must be identical on both branches (the pinned
+//      sources are read per version anyway), else the donor is not what this
+//      version would have rendered — skipped and reported, never guessed;
+//   2. the donor's region is converted with the DONOR's variable maps but the
+//      RECIPIENT's page URL. Values are baked per version, so mapping them back to
+//      references needs the donor's values; link resolution depends on where the
+//      page LIVES, so it needs the recipient's. Getting this pair the wrong way
+//      round bakes the donor's version number, or points relative links at the
+//      donor's tree.
+// Because the spliced region carries `{attribute}` references rather than values,
+// it is correct in the recipient at any version — which is only true now that
+// href templates recover `…/tree/v{page-latest-supported-hazelcast}.0/…`.
+// The sentinel token for a branch kind: `ifdef` regions are marked `hz-if`,
+// `ifndef` regions `hz-ifnot` (mark-conditionals.js START/NOT_START).
+const SENTINEL_KIND = { ifdef: 'if', ifndef: 'ifnot' }
+const condRegionRe = (kind) => {
+  const s = SENTINEL_KIND[kind]
+  return new RegExp(`<!--hz-${s}:snapshot:start-->[\\s\\S]*?<!--hz-${s}:snapshot:end-->`, 'g')
+}
+const condRegions = (html, kind) => html.match(condRegionRe(kind)) || []
+
+// The body text of a source file's `ifdef`/`ifndef` snapshot branch, or null.
+// Uses the marking pass's own grammar so the two cannot disagree about what a
+// branch is.
+function sourceBranchText (text, kind) {
+  const lines = String(text || '').split('\n')
+  for (let i = 0; i < lines.length; i++) {
+    const bs = branchesAt(lines, i)
+    if (!bs) continue
+    const b = bs.find((x) => x.kind === kind)
+    if (b) return lines.slice(b.start + 1, b.end).join('\n').trim()
+    i = bs[bs.length - 1].end
+  }
+  return null
+}
+
+// A page resource's source path in its repo, e.g.
+// `docs/modules/clusters/pages/update-config.adoc`.
+function sourcePathFor (component, rec) {
+  const src = NAV_SOURCES[component]
+  if (!src || !rec || !rec.module || !rec.relative) return null
+  const modules = path.posix.dirname(path.posix.dirname(src.file)) // .../modules
+  return `${modules}/${rec.module}/pages/${rec.relative}`
+}
+
 // Resolved URL -> the source link target that produced it, for the page's own
 // targets that carry an `{attribute}` reference. Substituting this version's
 // values into the template reproduces exactly the href Antora wrote into the
@@ -658,9 +720,14 @@ function convertVersion (ver, ctx) {
   // seg), matching versionedVariables; global (unversioned) values fill in
   // behind. `kind` already distinguishes current from a release, so we key off it
   // rather than re-deriving the current seg here.
-  const versionName = seg == null ? null : (kind === 'current' ? 'current' : seg)
-  const perVer = (versionName && ctx.versioned.get(component) && ctx.versioned.get(component).get(versionName)) || new Map()
-  const exampleLookup = { ...Object.fromEntries(ctx.flat), ...Object.fromEntries(perVer) }
+  // Parameterised by version so a DONOR version's values can be resolved too, for
+  // conditional-branch splicing (see withBothConditionalBranches).
+  const lookupFor = (v) => {
+    const name = v.seg == null ? null : (v.kind === 'current' ? 'current' : v.seg)
+    const per = (name && ctx.versioned.get(component) && ctx.versioned.get(component).get(name)) || new Map()
+    return { ...Object.fromEntries(ctx.flat), ...Object.fromEntries(per) }
+  }
+  const exampleLookup = lookupFor({ seg, kind })
   const outDir = outDirFor(opts.outRoot, component, ver)
 
   const { byUrl, titleByKey } = indexManifest(manifest, component, seg)
@@ -743,6 +810,77 @@ function convertVersion (ver, ctx) {
   // source references, so a value is only ever matched on a page that uses it.
   const attrsByKey = scanPageAttrs(component, seg, opts.sourcesDir)
 
+  // Snapshot-conditional splicing (see the block comment above condRegionRe).
+  // Same page, other versions: slug -> seg -> golden file. Keyed by slug because
+  // that is version-independent, and built from every version's golden because the
+  // donor half lives in a version this pass is not converting.
+  const goldenBySlug = new Map()
+  for (const gp of allGoldenForComponent) {
+    const s = urlToSlug(gp.url, component, gp.versionSeg)
+    if (!goldenBySlug.has(s)) goldenBySlug.set(s, new Map())
+    goldenBySlug.get(s).set(gp.versionSeg, gp.file)
+  }
+  // Donor order: the else-branch is kept by RELEASE renders (newest first, so the
+  // content is the most current authored form); the then-branch only by the
+  // snapshot render. Versions this component does not publish are not candidates.
+  const releaseSegs = (VERSIONS[component] && VERSIONS[component].releases) || []
+  const donorOrder = { ifndef: releaseSegs, ifdef: [currentSegFor(component)] }
+  const spliced = []
+  const spliceSkips = []
+  const srcText = (ref, file) => {
+    try {
+      return execFileSync('git', ['-C', path.join(opts.sourcesDir, NAV_SOURCES[component].repo), 'show', `${ref}:${file}`], { encoding: 'utf8' })
+    } catch { return null }
+  }
+
+  // Add whichever conditional branch this version's render did not keep, taken
+  // from a version that kept it. No-op unless the page has exactly one branch.
+  function withBothConditionalBranches (mdx, { page, rec, relFile, pageVars, proseVars, hrefVars }) {
+    if (seg == null) return mdx // unversioned component: no cut, no other version
+    const has = { ifdef: /<IfSnapshot>/.test(mdx), ifndef: /<IfNotSnapshot>/.test(mdx) }
+    if (has.ifdef === has.ifndef) return mdx // neither, or already both
+    const missing = has.ifdef ? 'ifndef' : 'ifdef'
+    const srcPath = sourcePathFor(component, rec)
+    const mine = srcPath && sourceBranchText(srcText(refFor(component, seg), srcPath), missing)
+    if (!mine) return mdx // this version's source has no such branch: nothing to add
+
+    const bySeg = goldenBySlug.get(urlToSlug(page.url, component, seg)) || new Map()
+    for (const donor of donorOrder[missing] || []) {
+      if (donor === seg || !bySeg.has(donor)) continue
+      const theirs = sourceBranchText(srcText(refFor(component, donor), srcPath), missing)
+      if (theirs !== mine) {
+        spliceSkips.push({ url: page.url, donor, reason: 'source-differs' })
+        continue
+      }
+      const regions = condRegions(fs.readFileSync(bySeg.get(donor), 'utf8'), missing)
+      if (regions.length !== 1) {
+        spliceSkips.push({ url: page.url, donor, reason: `donor has ${regions.length} regions` })
+        continue
+      }
+      // Donor's variable maps (its values are what is baked in that render),
+      // recipient's page URL (links must resolve where this page lives).
+      const donorVer = { seg: donor, kind: donor === currentSegFor(component) ? 'current' : 'release' }
+      const donorLookup = lookupFor(donorVer)
+      const donorAttrs = scanPageAttrs(component, donor, opts.sourcesDir).get(keyOf(rec))
+      const dPageVars = buildPageVars(donorAttrs && donorAttrs.all, donorLookup)
+      const { body: fragment } = convertBody(regions[0], {
+        pageUrl: page.url, relFile, component, seg, partials: new Map(), linkVars: ctx.linkVars, examples,
+        pageVars: dPageVars,
+        proseVars: proseVarsFor(dPageVars, (donorAttrs && donorAttrs.prose) || new Set(), markedAttrsFor(component)),
+        hrefVars: buildHrefVars(donorAttrs, donorLookup),
+        latestVersions: ctx.latestVersions,
+        urlToRelFile,
+      })
+      if (!fragment.trim()) { spliceSkips.push({ url: page.url, donor, reason: 'empty' }); continue }
+      spliced.push({ url: page.url, missing, donor })
+      // Keep the source order: then-branch first, else-branch second.
+      return missing === 'ifndef'
+        ? mdx.replace('</IfSnapshot>', `</IfSnapshot>\n\n${fragment}`)
+        : mdx.replace('<IfNotSnapshot>', `${fragment}\n\n<IfNotSnapshot>`)
+    }
+    return mdx
+  }
+
   let written = 0
   let dropped = 0
   const orphans = []
@@ -773,6 +911,7 @@ function convertVersion (ver, ctx) {
     let body, imports
     try {
       ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, hrefVars, latestVersions: ctx.latestVersions, urlToRelFile }))
+      body = withBothConditionalBranches(body, { page: p, rec, relFile, pageVars, proseVars, hrefVars })
     } catch (err) {
       problems.push({ url: p.url, error: err.message })
       continue
@@ -856,7 +995,7 @@ function convertVersion (ver, ctx) {
   // same component do not overwrite each other.
   writePartialsReport(opts, component, seg, report, decisions)
 
-  return { seg, kind, outDir, written, dropped, cats, partialsWritten, orphans, problems, partialProblems, duplicates: plan.duplicates }
+  return { seg, kind, outDir, written, dropped, cats, partialsWritten, orphans, problems, partialProblems, spliced, spliceSkips, duplicates: plan.duplicates }
 }
 
 // Per-version partials audit: what was factored, declined, or left inline
@@ -990,6 +1129,18 @@ function main () {
     console.log(`[convert] ${tag}: ${r.written} page(s)` +
       (opts.dry ? ' converted (dry-run)' : ` + ${r.cats} categor${r.cats === 1 ? 'y' : 'ies'} + ${r.partialsWritten} partial(s) -> ${where}`))
     if (r.duplicates.length) console.log(`   nav duplicates (kept first): ${[...new Set(r.duplicates)].join(', ')}`)
+    // Conditional branches taken from another version's render, and the ones
+    // refused. Reported rather than silent: a skip means that version's page
+    // carries only one half of a snapshot conditional, so a cut from it (or, for a
+    // release, the page itself) is missing content.
+    if (r.spliced.length) {
+      console.log(`   ${r.spliced.length} conditional branch(es) added from another version:`)
+      for (const s of r.spliced) console.log(`     + ${s.missing === 'ifndef' ? '<IfNotSnapshot>' : '<IfSnapshot>'} from @${s.donor}  ${s.url}`)
+    }
+    if (r.spliceSkips.length) {
+      console.log(`   ${r.spliceSkips.length} conditional branch(es) NOT added (that half stays absent):`)
+      for (const s of r.spliceSkips) console.log(`     - ${s.url} from @${s.donor}: ${s.reason}`)
+    }
     if (r.orphans.length) console.log(`   ${r.orphans.length} page(s) NOT in nav (placed flat): ${r.orphans.map((u) => u.replace(/\/$/, '').split('/').pop()).join(', ')}`)
     if (r.partialProblems.length) {
       hardFail = true

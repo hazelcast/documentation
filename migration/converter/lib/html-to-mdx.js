@@ -152,13 +152,21 @@ function collapseSentinels ($, node, st) {
       // wrongly marked `snapshot: true` — will then diverge from its golden and
       // fail Layer 2: a TRUE POSITIVE flagging that source bug, cleared by the
       // source fix.)
-      if (c.data.trim() === 'hz-if:snapshot:start') {
+      // Both branches of the conditional are marked (mark-conditionals.js) and
+      // both become components: the `ifdef` region <IfSnapshot>, the `ifndef`
+      // region <IfNotSnapshot>. Which one a given version's golden CONTAINS is
+      // decided by Antora — a snapshot render carries the then-branch, a release
+      // render the else-branch — so a page normally yields one or the other here.
+      const cond = c.data.trim().match(/^hz-(if|ifnot):snapshot:start$/)
+      if (cond) {
+        const endMark = `hz-${cond[1]}:snapshot:end`
         const inner = []
         let j = i + 1
-        while (j < kids.length && !(kids[j].type === 'comment' && kids[j].data.trim() === 'hz-if:snapshot:end')) {
+        while (j < kids.length && !(kids[j].type === 'comment' && kids[j].data.trim() === endMark)) {
           inner.push(kids[j]); j++
         }
-        const wrapper = { type: 'tag', name: 'hzifsnapshot', attribs: {}, children: inner, parent: node }
+        const name = cond[1] === 'if' ? 'hzifsnapshot' : 'hzifnotsnapshot'
+        const wrapper = { type: 'tag', name, attribs: {}, children: inner, parent: node }
         for (const n of inner) n.parent = wrapper
         out.push(wrapper)
         i = j
@@ -292,12 +300,13 @@ function convertBlock ($, node, st, depth) {
     return `<${d.componentName}/>`
   }
 
-  // Snapshot-conditional region (see collapseSentinels): render its block
-  // content inside <IfSnapshot> (globally registered, no import). Blank-line
-  // padded so MDX parses the children as Markdown.
-  if (name === 'hzifsnapshot') {
+  // Snapshot-conditional region (see collapseSentinels): render its block content
+  // inside <IfSnapshot> / <IfNotSnapshot> (both globally registered, no import).
+  // Blank-line padded so MDX parses the children as Markdown.
+  if (name === 'hzifsnapshot' || name === 'hzifnotsnapshot') {
+    const tag = name === 'hzifsnapshot' ? 'IfSnapshot' : 'IfNotSnapshot'
     const inner = convertChildren($, node, st, depth).trim()
-    return inner ? `<IfSnapshot>\n\n${inner}\n\n</IfSnapshot>` : ''
+    return inner ? `<${tag}>\n\n${inner}\n\n</${tag}>` : ''
   }
 
   // Headings that appear as direct children (section titles live inside
