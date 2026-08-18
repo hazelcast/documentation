@@ -5,6 +5,7 @@ import CodeCallouts from '@site/src/components/CodeCallouts';
 import IfSnapshot from '@site/src/components/IfSnapshot';
 import IfNotSnapshot from '@site/src/components/IfNotSnapshot';
 import Icon from '@site/src/components/Icon';
+import Anchor from '@site/src/components/Anchor';
 
 // Components registered here are available in every MDX page without an import.
 export default {
@@ -15,4 +16,5 @@ export default {
   IfSnapshot,
   IfNotSnapshot,
   Icon,
+  Anchor,
 };

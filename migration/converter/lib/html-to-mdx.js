@@ -286,6 +286,25 @@ function jsxCode ($, node) {
   return `<code>${body}</code>`
 }
 
+// A non-heading link target. <Anchor> (globally registered, no import) renders the
+// same empty `<span id>` a raw span would, and additionally REGISTERS the id via
+// Docusaurus's useBrokenLinks().collectAnchor -- which is the only way the
+// broken-anchor validation learns an anchor exists. A bare `<span id>` resolves in
+// the browser but is invisible to that check, so every link to one was reported by
+// `onBrokenAnchors`; with hundreds of anchors that noise would hide a real break.
+const anchorJsx = (id) => `<Anchor id=${jsxAttr(id)}/>`
+
+// Every bare anchor (an `<a id>` carrying no href) inside `node`, in document
+// order, as <Anchor> elements -- for the callers that flatten an element to its
+// text and would otherwise lose them.
+//
+// An `<a>` with BOTH id and href is deliberately excluded: it is a link, and the
+// link paths handle it. Checked rather than assumed -- the golden has 18 of those
+// (hz-docs footnote refs) and NONE is nested in a <code>, so no id is lost here.
+function anchorsIn ($, node) {
+  return $(node).find('a[id]:not([href])').toArray().map((a) => anchorJsx(a.attribs.id)).join('')
+}
+
 function convertBlock ($, node, st, depth) {
   const name = node.name
   const cls = classes(node)
@@ -1123,15 +1142,25 @@ function inlineTag ($, node, st, opt) {
       // which a code span has no room for). JSX <code> can, so emit that
       // instead -- visually identical, and the reference stays single-sourced.
       if ($(node).find('span[class^="hz-attr-"]').length) return jsxCode($, node)
-      return inlineCode($(node).text())
+      // A bare inline anchor NESTED IN the code span
+      // (`<code><a id="hazelcast-mc-http-port"></a>hazelcast.mc.http.port</code>`,
+      // AsciiDoc `|[[id]]name` in a table cell). inlineCode() takes the element's
+      // TEXT, so the anchor was silently dropped -- 105 of them on
+      // management-center deploy-manage/system-properties alone, which killed 5
+      // same-page links and 32 inbound deep links per version.
+      //
+      // Emitted BEFORE the code span rather than inside it: an empty anchor is
+      // zero-width either way, so the scroll target is the same, and keeping the
+      // content as a Markdown code span avoids turning every such cell into JSX.
+      return anchorsIn($, node) + inlineCode($(node).text())
     }
     case 'br': return '<br/>'
     case 'a': {
       const id = node.attribs && node.attribs.id
-      // Preserve a bare inline anchor target (`<a id="step-5"></a>`) as an
-      // id-bearing element so `#step-5` links still resolve; without this the
-      // anchor is dropped and Layer 3 reports dead-anchor-self.
-      const anchorEl = id ? `<span id=${jsxAttr(id)}></span>` : ''
+      // Preserve a bare inline anchor target (`<a id="step-5"></a>`) so `#step-5`
+      // links still resolve; without this the anchor is dropped and Layer 3
+      // reports dead-anchor-self.
+      const anchorEl = id ? anchorJsx(id) : ''
       if (cls.includes('anchor')) return opt.skipAnchors ? '' : anchorEl // heading self-link: no text
       const label = kids().trim()
       const rawHref = (node.attribs && node.attribs.href) || ''

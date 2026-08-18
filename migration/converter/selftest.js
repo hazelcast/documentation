@@ -639,6 +639,41 @@ const renderedCode = (md) => {
   ok('paragraph block title: kept as its own block, above the content, once')
 }
 
+// --- non-heading anchors survive, and are REGISTERED -------------------------
+// AsciiDoc `[[id]]` mid-content becomes an empty `<a id>` in the golden. Two things
+// must hold: the id reaches the output (a dropped one is a dead link), and it is
+// emitted as <Anchor>, which registers itself with Docusaurus's broken-anchor
+// validation -- a raw `<span id>` resolves in the browser but is invisible to that
+// check, so links to it get reported and the noise hides real breaks.
+{
+  const { convertBody } = require('./lib/html-to-mdx')
+  const body = (html) => convertBody(html, {}).body.trim()
+
+  // The shape that was losing anchors: management-center system-properties, where
+  // the anchor sits INSIDE the cell's code span and inlineCode() read only text.
+  const cell = '<p class="tableblock"><code><a id="hazelcast-mc-http-port"></a>hazelcast.mc.http.port</code></p>'
+  const out = body(cell)
+  assert.ok(out.includes('<Anchor id="hazelcast-mc-http-port"/>'), 'an anchor nested in code is kept')
+  assert.ok(out.includes('`hazelcast.mc.http.port`'), 'and the content stays a Markdown code span')
+  assert.ok(out.indexOf('<Anchor') < out.indexOf('`'), 'the anchor precedes the code it targets')
+
+  // A bare anchor in prose: same component, so there is ONE anchor form.
+  assert.ok(body('<div class="paragraph"><p><a id="step-5"></a>Then do this.</p></div>')
+    .includes('<Anchor id="step-5"/>'), 'a bare anchor in prose uses the same form')
+  assert.ok(!/<span id=/.test(body('<div class="paragraph"><p><a id="step-5"></a>x</p></div>')),
+    'no raw <span id> is emitted any more -- it would not be registered')
+
+  // Not an anchor: a monospaced cross-reference keeps being a link with a code
+  // label, and gains no stray <Anchor>.
+  const xref = body('<div class="paragraph"><p><code><a href="#Type">Type</a></code></p></div>')
+  assert.strictEqual(xref, '[`Type`](#Type)', 'a code-wrapped link is unaffected')
+
+  // Multiple anchors in one code span are all kept, in document order.
+  const two = body('<p class="tableblock"><code><a id="a1"></a><a id="a2"></a>name</code></p>')
+  assert.ok(two.indexOf('id="a1"') < two.indexOf('id="a2"'), 'several anchors keep source order')
+  ok('inline anchors: kept (incl. nested in code) and emitted as the registered <Anchor>')
+}
+
 // --- marked attribute inside INLINE code -> JSX <code> ----------------------
 // The one context neither of the other two mechanisms reaches: a code span is
 // literal, so a `{name}` token in backticks stays literal, and the `vars` flag is
