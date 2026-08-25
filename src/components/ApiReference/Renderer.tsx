@@ -4,10 +4,7 @@ import {useColorMode, useThemeConfig} from '@docusaurus/theme-common';
 import {
   ApiInfo,
   AppStore,
-  ContentItems,
-  MiddlePanel,
   OptionsProvider,
-  Row,
   StoreProvider,
   ThemeProvider,
   loadAndBundleSpec,
@@ -18,6 +15,7 @@ import type {PrismTheme} from 'prism-react-renderer';
 import {Button} from '@hazelcast/ui/lib/components/Button';
 
 import {specUrlFor} from '@site/plugins/lib/api-spec-url';
+import {ApiItems} from './Operation';
 import {usePublishApiToc} from './apiToc';
 import {redocTheme} from './theme';
 import styles from './styles.module.css';
@@ -36,31 +34,6 @@ const TOC_METHOD_CLASS = 'api-toc-method';
 // Redoc's search box goes with the sidebar. That is the one deliberate loss —
 // the site's own search covers these pages, and keeping Redoc's would mean
 // keeping the chrome that motivated dropping it.
-
-// Redoc highlights its samples with its own copy of prism-dark, baked into a
-// styled-component (PrismDiv) and reachable by neither its theme object nor any
-// option. Here the samples are ordinary code blocks in the page, so they are
-// restyled from the SITE's configured Prism theme — the very object
-// @theme/CodeBlock renders with — rather than from a second palette invented
-// here. The scope class is doubled to out-specify Redoc's own `.sc-x .token-y`
-// rules, which are of equal specificity and would otherwise win on order.
-function prismTokenCss(theme: PrismTheme, scope: string): string {
-  const at = (selector: string) => `.${scope}.${scope} ${selector}`;
-  const rules = [
-    `${at(`pre[class*='language-'], .${scope}.${scope} code[class*='language-']`)} {` +
-      ` color: ${theme.plain.color ?? 'inherit'}; background: none; text-shadow: none; }`,
-  ];
-  for (const {types, style} of theme.styles) {
-    const declarations = Object.entries(style)
-      .filter(([, value]) => value !== undefined)
-      .map(([property, value]) => `${property.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}: ${value}`);
-    if (!declarations.length) {
-      continue;
-    }
-    rules.push(`${types.map((type) => at(`.token.${type}`)).join(', ')} { ${declarations.join('; ')}; }`);
-  }
-  return rules.join('\n');
-}
 
 const escapeHtml = (text: string) =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -97,15 +70,7 @@ function tocItemsFor(store: AppStore): TOCItem[] {
   return items;
 }
 
-function ApiContent({
-  store,
-  specUrl,
-  prismTheme,
-}: {
-  store: AppStore;
-  specUrl: string;
-  prismTheme: PrismTheme;
-}): React.ReactElement {
+function ApiContent({store, specUrl}: {store: AppStore; specUrl: string}): React.ReactElement {
   const publish = usePublishApiToc();
 
   // Redoc's scroll and history services are wired up here rather than by its own
@@ -128,22 +93,17 @@ function ApiContent({
       <StoreProvider value={store}>
         <OptionsProvider value={store.options}>
           <div className={styles.apiReference}>
-            <style>{prismTokenCss(prismTheme, styles.apiReference!)}</style>
             <ApiInfo store={store} />
             {/* Redoc's own download link is hidden by styles.module.css and
                 replaced here with a real HIVE Button, so the one call to action
                 on the page matches every other button on the site. It points at
-                the same published attachment URL Redoc's link used, and goes in
-                Redoc's own Row/MiddlePanel so it lines up with the content
-                above it rather than against the container edge. */}
-            <Row>
-              <MiddlePanel className={styles.download}>
-                <Button component="a" href={specUrl} variant="outlined" color="primary">
-                  Download OpenAPI specification
-                </Button>
-              </MiddlePanel>
-            </Row>
-            <ContentItems items={store.menu.items as any} />
+                the same published attachment URL Redoc's link used. */}
+            <div className={styles.download}>
+              <Button component="a" href={specUrl} variant="outlined" color="primary">
+                Download OpenAPI specification
+              </Button>
+            </div>
+            <ApiItems items={store.menu.items} />
           </div>
         </OptionsProvider>
       </StoreProvider>
@@ -208,5 +168,5 @@ export default function Renderer({source}: {source: string}): React.ReactElement
   if (!store) {
     return <div className={styles.placeholder}>Loading API reference…</div>;
   }
-  return <ApiContent store={store} specUrl={specUrl} prismTheme={prismTheme} />;
+  return <ApiContent store={store} specUrl={specUrl} />;
 }

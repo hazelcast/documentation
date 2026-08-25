@@ -134,10 +134,11 @@ async function fetchSpec ({ owner, repo, ref, filePath }, token, etag) {
   if (response.status === 304) return { unchanged: true }
   if (!response.ok) {
     const detail = await response.text().catch(() => '')
-    const hint =
-      response.status === 404 && !token
-        ? ' (no GITHUB_TOKEN in the environment, and the spec repo is private)'
-        : ''
+    // A private repo answers an unauthenticated request with 404, not 403, so
+    // the missing token has to be named or this reads as a bad path.
+    const hint = response.status === 404 && !token
+      ? ' — no GITHUB_TOKEN in the environment, and this spec repo is private'
+      : ''
     throw new Error(`GitHub API ${response.status} for ${owner}/${repo}@${ref}/${filePath}${hint}\n  ${detail.slice(0, 200)}`)
   }
   const json = await response.json()
@@ -214,6 +215,7 @@ module.exports = function openapiSpecsPlugin (context, options) {
 
       const staged = new Set()
       const failures = []
+      const missingWithoutToken = []
       let updated = 0
       let unchanged = 0
 
@@ -221,6 +223,18 @@ module.exports = function openapiSpecsPlugin (context, options) {
         [...byUpstream.values()].map(async ({ key, request, targets }) => {
           const cached = cache[key]
           const present = targets.every((t) => fs.existsSync(t))
+          // No token, no request. These repos are private, so an unauthenticated
+          // fetch cannot succeed — it can only spend the anonymous rate limit and
+          // turn one missing token into a page of 403s.
+          if (!token) {
+            if (present) {
+              targets.forEach((t) => staged.add(t))
+              unchanged++
+            } else {
+              missingWithoutToken.push(key)
+            }
+            return
+          }
           // The dev server re-runs this on every docs edit (getPathsToWatch), so
           // it fetches only what is MISSING; a build always revalidates, because
           // a build is what publishes, and the branch these specs track moves.
@@ -262,11 +276,35 @@ module.exports = function openapiSpecsPlugin (context, options) {
       )
 
       staged.add(cachePath)
-      pruneStale(stagingDir, staged)
       fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2) + '\n')
+      // Only a run that fetched everything it meant to knows what is stale. After
+      // a failure the unwritten targets are indistinguishable from withdrawn
+      // ones, and pruning would throw away copies that are still serving.
+      if (!failures.length && !missingWithoutToken.length) pruneStale(stagingDir, staged)
 
+      // A build publishes what it stages. Without a token it cannot check any of
+      // it against the product repo, so it says so rather than quietly shipping
+      // whatever a previous run happened to leave behind.
+      if (!token && isBuild && staged.size) {
+        console.warn(
+          '[openapi-specs] no GitHub token set, so the staged specs were published without being' +
+          ' checked against the repos that own them. Set GITHUB_TOKEN in CI.',
+        )
+      }
+      if (missingWithoutToken.length) {
+        // One message for the whole run, not one per spec: there is a single
+        // cause and a single fix.
+        const message =
+          `[openapi-specs] ${missingWithoutToken.length} spec(s) are not staged and no GitHub token ` +
+          'is set, so they cannot be fetched — the repos that own them are private.' +
+          `\n  ${missingWithoutToken.join('\n  ')}`
+        if (isBuild) throw new Error(message)
+        console.warn(`${message}\n  Those API pages will not render. Stage them with:` +
+          '\n    GITHUB_TOKEN=$(gh auth token) npm start')
+      }
       if (failures.length) {
-        const message = `[openapi-specs] could not fetch ${failures.length} spec(s):\n  ${failures.join('\n  ')}`
+        const message =
+          `[openapi-specs] could not fetch ${failures.length} spec(s):\n  ${failures.join('\n  ')}`
         if (isBuild) throw new Error(message)
         console.warn(message)
       }

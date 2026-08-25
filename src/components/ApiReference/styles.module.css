@@ -10,13 +10,6 @@
   display: none;
 }
 
-/* Redoc forces min-height: 100vh + 1px on its last section so that its own
- * scroll-spy can reach the final entry. The page's table of contents does that
- * job here, so all it would add is a screen of blank space above the footer. */
-.apiReference > :last-child {
-  min-height: initial;
-}
-
 /* Two colours Redoc hardcodes outside its theme, so nothing passed to it can
  * reach them — and both are dark slate, which is unreadable on a dark page.
  * Restating them here is also the better place for them: CSS can use the custom
@@ -25,10 +18,6 @@
  *   :last-of-type  the rule Redoc draws between operations */
 .apiReference h5 {
   color: var(--ifm-color-emphasis-700);
-  border-bottom-color: var(--ifm-color-emphasis-300);
-}
-
-.apiReference [data-section-id]:not(:last-of-type)::after {
   border-bottom-color: var(--ifm-color-emphasis-300);
 }
 
@@ -59,20 +48,106 @@
   text-transform: uppercase;
 }
 
-/* The response-code tabs above a sample. Redoc styles the SELECTED one with
- * `background: rightPanel.textColor`, which works only on its own assumption
- * that the panel is dark and its text white — with the panel now following the
- * site's code surface, that rule paints the selected tab in the text colour.
- * The intent is "a raised surface", so that is what it gets. Its separator is
- * hardcoded black, and is restated for the same reason. */
-/* The doubled class is specificity, not a typo: Redoc's own rule is
- * `.sc-hash > ul > li.react-tabs__tab--selected`, which outranks a single
- * class + one element. */
-.apiReference.apiReference :global(li.react-tabs__tab) {
-  border-bottom-color: var(--ifm-color-emphasis-300);
+/* Type scale.
+ *
+ * Redoc has its own, keyed to a 14px base and setting every heading at weight
+ * 400 — which inside a docs page reads as no hierarchy at all: an operation
+ * title comes out LIGHTER than the bold run of text beside it, and there is
+ * nothing to show where one operation stops and the next starts. Worse, headings
+ * it leaves unsized (the "Response samples" rail heading) fall through to
+ * Infima's h3 and land bold at a different size from the h3 next to them, so the
+ * same level is typeset two ways on one screen.
+ *
+ * So the headings are mapped onto the PAGE's scale rather than tuned: an
+ * operation is an h2 and everything under it an h3, exactly as they would be if
+ * this content were written in Markdown.
+ *
+ * Getting that scale is not just `var(--ifm-h2-font-size)`: Infima applies the
+ * DOCS heading sizes only to direct children of `.markdown` (`.markdown > h2 {
+ * --ifm-h2-font-size: 2rem }`), and these headings are nested inside the API
+ * container, so they would take the 1.5rem root value and come out a step small.
+ * The rules below re-declare Infima's own overrides — the same local custom
+ * property, the same rhythm margins, the same 576px breakdown — for that nested
+ * position, so an operation title is the size an h2 is anywhere else on the site.
+ * The explicit font-size is still needed on top of the property: Infima sets it
+ * with a bare element selector, which loses to the generated class Redoc puts on
+ * the element itself. The doubled class is for that same reason.
+ *
+ * Note Redoc's H3 COMPONENT renders an <h2> element, so a spec with tag groups
+ * would render its subsections at h2 size. None of the Management Center specs
+ * use tags; revisit if one ever does. */
+.apiReference.apiReference h2 {
+  --ifm-h2-font-size: 2rem;
+
+  margin-top: calc(var(--ifm-h2-vertical-rhythm-top) * var(--ifm-leading));
+  margin-bottom: calc(var(--ifm-heading-vertical-rhythm-bottom) * var(--ifm-leading));
+  font-size: var(--ifm-h2-font-size);
+  font-weight: var(--ifm-heading-font-weight);
+  line-height: var(--ifm-heading-line-height);
 }
 
-.apiReference.apiReference :global(li.react-tabs__tab--selected) {
-  background: var(--ifm-background-surface-color);
-  border-color: var(--ifm-color-emphasis-300);
+.apiReference.apiReference h3 {
+  --ifm-h3-font-size: 1.5rem;
+
+  margin-top: calc(var(--ifm-h3-vertical-rhythm-top) * var(--ifm-leading));
+  margin-bottom: calc(var(--ifm-heading-vertical-rhythm-bottom) * var(--ifm-leading));
+  font-size: var(--ifm-h3-font-size);
+  font-weight: var(--ifm-heading-font-weight);
+  line-height: var(--ifm-heading-line-height);
+}
+
+@media (max-width: 576px) {
+  .apiReference.apiReference h2 {
+    --ifm-h2-font-size: 1.5rem;
+  }
+
+  .apiReference.apiReference h3 {
+    --ifm-h3-font-size: 1.25rem;
+  }
+}
+
+/* The field labels ("PATH PARAMETERS"). Redoc sizes these and the property
+ * tables under them at four separate values between 11.7px and 14.9px; one step
+ * below body text for all of them is what stops the page reading as noise. */
+.apiReference.apiReference h5 {
+  font-size: var(--ifm-h5-font-size);
+}
+
+.apiReference.apiReference td,
+.apiReference.apiReference th {
+  font-size: var(--ifm-h5-font-size);
+}
+
+/* Supporting text: the type name and "required" flag in a property table, and
+ * the response-code chips. Redoc gives each of these its own size, so a single
+ * operation shows five sizes between 12px and 15px doing one job. They inherit
+ * their container's instead, leaving the page two steps below its headings:
+ * body text, and this. */
+.apiReference.apiReference td span,
+.apiReference.apiReference td div {
+  font-size: inherit;
+}
+
+.apiReference.apiReference button {
+  font-size: var(--ifm-h5-font-size);
+}
+
+/* One operation. The rule between operations is a border rather than Redoc's
+ * ::after (removed above), so it sits above the heading where it separates
+ * rather than trailing the last thing in the section. */
+.operation + .operation {
+  border-top: 1px solid var(--ifm-color-emphasis-200);
+}
+
+/* The method + path line under an operation title. */
+.endpoint {
+  display: flex;
+  gap: 0.6em;
+  align-items: baseline;
+}
+
+.method {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }

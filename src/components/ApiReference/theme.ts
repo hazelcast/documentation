@@ -95,9 +95,13 @@ function resolve(group: Record<string, string>): Record<string, string> {
 // then (ColorModeAttribute.set runs before the state update that re-renders us).
 export function redocTheme(prismPlain: {color?: string; backgroundColor?: string}): RedocRawOptions['theme'] {
   return {
-    // The one spacing value the Antora theme set, kept: it is what stops each
-    // operation being separated by a screenful of whitespace.
-    spacing: {sectionVertical: 20},
+    // sectionVertical is the one spacing value the Antora theme set, kept: it is
+    // what stops each operation being separated by a screenful of whitespace.
+    // sectionHorizontal is Redoc indenting its content panel away from the edge
+    // of the page it expects to own; here that panel sits in a docs column that
+    // is already indented, so the padding only pushes the API description out of
+    // line with the page title above it and the operations below.
+    spacing: {sectionVertical: 20, sectionHorizontal: 0},
     // Redoc splits each operation into a description column and a dark samples
     // column, sized as a fraction of the VIEWPORT because it expects to own the
     // page. Here it has one docs column to work in, which is never wide enough
@@ -124,7 +128,15 @@ export function redocTheme(prismPlain: {color?: string; backgroundColor?: string
     typography: {
       fontFamily: 'var(--ifm-font-family-base)',
       headings: {fontFamily: 'var(--ifm-heading-font-family)'},
-      code: {fontFamily: 'var(--ifm-font-family-monospace)', ...resolve(TOKENS.code)},
+      code: {
+        fontFamily: 'var(--ifm-font-family-monospace)',
+        // Redoc's 13px base for code compounds down through the JSON viewer's
+        // nested ems to about 12.3px — noticeably smaller than a code block
+        // anywhere else on the site. An absolute step keeps the sample legible
+        // and stops it drifting further with nesting depth.
+        fontSize: '0.9rem',
+        ...resolve(TOKENS.code),
+      },
       links: resolve(TOKENS.links),
     },
   } as RedocRawOptions['theme'];
