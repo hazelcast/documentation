@@ -1,0 +1,78 @@
+.placeholder {
+  padding: var(--ifm-spacing-vertical) 0;
+  color: var(--ifm-color-emphasis-600);
+}
+
+/* Redoc's <ApiInfo> opens with the spec's own title, which on these pages
+ * restates the page title immediately above it. The rest of that block — the
+ * description and the "Download OpenAPI specification" link — is kept. */
+.apiReference h1 {
+  display: none;
+}
+
+/* Redoc forces min-height: 100vh + 1px on its last section so that its own
+ * scroll-spy can reach the final entry. The page's table of contents does that
+ * job here, so all it would add is a screen of blank space above the footer. */
+.apiReference > :last-child {
+  min-height: initial;
+}
+
+/* Two colours Redoc hardcodes outside its theme, so nothing passed to it can
+ * reach them — and both are dark slate, which is unreadable on a dark page.
+ * Restating them here is also the better place for them: CSS can use the custom
+ * properties directly, where the theme object cannot (see theme.ts).
+ *   h5  the section labels — "PATH PARAMETERS", "REQUEST BODY SCHEMA"
+ *   :last-of-type  the rule Redoc draws between operations */
+.apiReference h5 {
+  color: var(--ifm-color-emphasis-700);
+  border-bottom-color: var(--ifm-color-emphasis-300);
+}
+
+.apiReference [data-section-id]:not(:last-of-type)::after {
+  border-bottom-color: var(--ifm-color-emphasis-300);
+}
+
+/* Redoc's own "Download OpenAPI specification" line, hidden in favour of the
+ * HIVE Button rendered next to it (see Renderer.tsx). Matched by the paragraph
+ * that holds the download anchor, which is the only thing identifying it —
+ * Redoc's class names are generated. */
+.apiReference p:has(a[download]) {
+  display: none;
+}
+
+.download {
+  padding-bottom: var(--ifm-paragraph-margin-bottom);
+}
+
+/* The HTTP method badge on an operation's table-of-contents entry. Global
+ * because it is injected as raw HTML into a TOC entry (Renderer.tsx), which no
+ * CSS-module class name can reach. The colour is set inline, from Redoc's own
+ * resolved theme, so a badge matches the method label in the content. */
+:global(.api-toc-method) {
+  /* No width of its own: a min-width wide enough for GET is narrower than
+   * DELETE, so the gap before the label would change from row to row. The badge
+   * is sized by its own text and the gap is the one constant. */
+  margin-right: 0.5em;
+  font-size: 0.75em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* The response-code tabs above a sample. Redoc styles the SELECTED one with
+ * `background: rightPanel.textColor`, which works only on its own assumption
+ * that the panel is dark and its text white — with the panel now following the
+ * site's code surface, that rule paints the selected tab in the text colour.
+ * The intent is "a raised surface", so that is what it gets. Its separator is
+ * hardcoded black, and is restated for the same reason. */
+/* The doubled class is specificity, not a typo: Redoc's own rule is
+ * `.sc-hash > ul > li.react-tabs__tab--selected`, which outranks a single
+ * class + one element. */
+.apiReference.apiReference :global(li.react-tabs__tab) {
+  border-bottom-color: var(--ifm-color-emphasis-300);
+}
+
+.apiReference.apiReference :global(li.react-tabs__tab--selected) {
+  background: var(--ifm-background-surface-color);
+  border-color: var(--ifm-color-emphasis-300);
+}

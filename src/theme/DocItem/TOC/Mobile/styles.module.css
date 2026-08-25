@@ -1,0 +1,15 @@
+/* Mirrors theme-classic's own DocItem/TOC/Mobile styles, which cannot be
+ * imported from a wrapper (a theme component's CSS module is private to it).
+ * Same purpose: the mobile TOC is server-rendered, so it must be hidden on
+ * desktop by CSS rather than by a viewport check, or it flashes on hydration. */
+@media (min-width: 997px) {
+  .tocMobile {
+    display: none;
+  }
+}
+
+@media print {
+  .tocMobile {
+    display: none;
+  }
+}

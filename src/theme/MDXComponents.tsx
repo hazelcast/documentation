@@ -6,6 +6,7 @@ import IfSnapshot from '@site/src/components/IfSnapshot';
 import IfNotSnapshot from '@site/src/components/IfNotSnapshot';
 import Icon from '@site/src/components/Icon';
 import Anchor from '@site/src/components/Anchor';
+import ApiReference from '@site/src/components/ApiReference';
 
 // Components registered here are available in every MDX page without an import.
 export default {
@@ -17,4 +18,5 @@ export default {
   IfNotSnapshot,
   Icon,
   Anchor,
+  ApiReference,
 };

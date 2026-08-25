@@ -13,6 +13,16 @@ import {variables, versionedVariables} from './src/variables';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
+// Management Center's docs instance, declared once because two plugins need it:
+// the docs instance itself, and openapi-specs, which has to know the URL segment
+// the current version is served at to stage that version's API specs there.
+const managementCenter = {
+  id: 'management-center',
+  currentSeg: '5.12-snapshot',
+  currentLabel: '5.12-SNAPSHOT',
+  defaultVersion: 'latest-release',
+} as const;
+
 const config: Config = {
   title: 'Hazelcast Documentation',
   tagline: 'Hazelcast product documentation',
@@ -28,6 +38,14 @@ const config: Config = {
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
+
+  // '.api-specs' is where plugins/openapi-specs stages the OpenAPI specs it
+  // fetches from the product repos: gitignored, rebuilt every run, and listed
+  // here so Docusaurus copies it on `build` and serves it on `start` exactly as
+  // it does `static`. That is what republishes each spec at the attachment URL
+  // the Antora site uses, which Redoc's "Download OpenAPI specification" button
+  // links to.
+  staticDirectories: ['static', '.api-specs'],
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
@@ -118,12 +136,7 @@ const config: Config = {
     // identified by module + stem rather than stem alone. Its main is a NUMBERED
     // snapshot — published under `5.12-snapshot`, displayed as `5.12-SNAPSHOT` —
     // and the dropdown lands on the newest release (5.11), as production does.
-    versionedDocs({
-      id: 'management-center',
-      currentSeg: '5.12-snapshot',
-      currentLabel: '5.12-SNAPSHOT',
-      defaultVersion: 'latest-release',
-    }),
+    versionedDocs(managementCenter),
     // Reproduces Antora's page-aliases as static meta-refresh redirect stubs at
     // the old URLs, so existing bookmarks/inbound links still land on the moved
     // page. Pairs are generated from the manifest into src/redirects.ts by the
@@ -138,6 +151,10 @@ const config: Config = {
     // — the console index the Hazelcast Cloud console fetches. Permanent
     // replacement for the Antora api-json.js extension; see plugins/cloud-console-index.
     './plugins/cloud-console-index',
+    // Stages the OpenAPI specs the <ApiReference/> pages render, fetching each
+    // from the product repo that owns it at the branch that version's
+    // {…-swagger-branch} attribute names. See plugins/openapi-specs.
+    ['./plugins/openapi-specs', {variables, versionedVariables, docs: [managementCenter]}],
   ],
 
   themeConfig: {
