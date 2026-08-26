@@ -102,10 +102,6 @@ const config: Config = {
     ],
   ],
 
-  // Runs after the themes' client modules, which is what keeps the PrismJS
-  // manual flag in place -- see the module's own comment.
-  clientModules: ['./src/clientModules/prism-manual.js'],
-
   plugins: [
     // Compiles HIVE's shipped .module.scss (Button.module.scss, constants,
     // helpers) so swizzled components can import them.

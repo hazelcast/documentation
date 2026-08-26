@@ -2,6 +2,12 @@ import React, {useEffect, useMemo} from 'react';
 import {useActivePluginAndVersion} from '@docusaurus/plugin-content-docs/client';
 import {useHistory, useLocation} from '@docusaurus/router';
 import {useColorMode, useThemeConfig} from '@docusaurus/theme-common';
+
+// MUST stay above the `redoc` import: redoc's bundle needs a real global Prism
+// in place when its module factory runs, and this is what puts one there. Import
+// order is evaluation order, so moving or sorting this line below the next one
+// crashes every API page -- see the module for what the failure looks like.
+import './prism-global';
 import {
   ApiInfo,
   AppStore,
