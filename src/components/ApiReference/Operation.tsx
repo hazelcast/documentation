@@ -2,9 +2,11 @@ import React from 'react';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import CodeBlock from '@theme/CodeBlock';
+import Heading from '@theme/Heading';
 import {Markdown, Parameters, ResponsesList, useStore} from 'redoc';
 import type {MediaContentModel, OperationModel} from 'redoc';
 
+import {anchorFor} from './anchors';
 import styles from './styles.module.css';
 
 // One operation, rendered with the site's own components where Redoc's would
@@ -103,11 +105,20 @@ export function ApiOperation({operation}: {operation: OperationModel}): React.Re
   });
 
   return (
-    // Both attributes carry the same value: `id` is what an anchor and the
-    // page's table of contents resolve against, `data-section-id` is what
-    // Redoc's own scroll service looks for.
+    // `data-section-id` is what Redoc's own scroll service looks for, and the
+    // div keeps Redoc's `id` too so an `#operation/…` link still resolves — it
+    // is a real anchor this page used to publish, and it costs nothing to honour.
+    // The anchor the page ADVERTISES is the readable one, and it goes on the
+    // heading, so it is what the hash-link copies and what the TOC points at.
     <div id={operation.id} data-section-id={operation.id} className={styles.operation}>
-      <h2>{operation.name}</h2>
+      {/* @theme/Heading, not a bare <h2>: it is what renders the hash-link
+          affordance on every other heading in the docs. Without it these were
+          the one kind of heading on the site a contributor could not get a link
+          to by hovering it — which is how a JSON pointer nobody could have
+          guessed came to be pasted into the AsciiDoc sources by hand. */}
+      <Heading as="h2" id={anchorFor(operation)}>
+        {operation.name}
+      </Heading>
       <p className={styles.endpoint}>
         <span
           className={styles.method}
@@ -138,8 +149,10 @@ export function ApiItems({items}: {items: readonly any[]}): React.ReactElement {
           <ApiOperation key={item.id} operation={item as OperationModel} />
         ) : (
           <React.Fragment key={item.id}>
-            <div id={item.id} data-section-id={item.id}>
-              <h2>{item.name}</h2>
+            <div data-section-id={item.id}>
+              <Heading as="h2" id={anchorFor(item)}>
+                {item.name}
+              </Heading>
               {item.description && <Markdown source={item.description} />}
             </div>
             {item.items?.length ? <ApiItems items={item.items} /> : null}

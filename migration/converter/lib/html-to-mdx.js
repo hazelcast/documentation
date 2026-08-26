@@ -23,7 +23,7 @@ const {
   mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode,
   breakAutolinks, isPlaceholderUrl, PROSE_URL,
 } = require('./mdx')
-const { resolveHref } = require('./links')
+const { resolveHref, repairApiDeepLink } = require('./links')
 
 const ADMONITION_TYPES = ['note', 'tip', 'warning', 'caution', 'important']
 // `<strong class="…">` classes that are inline badges (from Asciidoctor
@@ -347,6 +347,8 @@ function convertBlock ($, node, st, depth) {
     return convertSection($, node, st, depth)
   }
   if (cls.includes('paragraph')) {
+    const apiRef = swaggerMacro($, node, st)
+    if (apiRef) return apiRef
     // A block title on a PARAGRAPH (`.Example query results` above an inline
     // image). Asciidoctor emits it as a <div class="title"> BESIDE the <p>, so
     // reading only the <p> silently dropped it -- 12 occurrences in the live set
@@ -390,6 +392,37 @@ function convertBlock ($, node, st, depth) {
 
   // Unknown element: fall back to a faithful raw-HTML rendering.
   return serializeJsx($, node, st)
+}
+
+// The `swagger_ui::URL[]` block macro (hazelcast-docs-tools), which publishes an
+// OpenAPI spec and renders a reference for it. The golden render does NOT load
+// that extension (see the `extensions:` note in antora/index-playbook.yml -- it
+// needs a token for the private product repos), so Asciidoctor leaves the whole
+// line as literal paragraph text, which is what this matches. The macro takes no
+// attributes, so the brackets are always empty and the target cannot contain
+// whitespace.
+//
+// Emitted as the site's own <ApiReference> (globally registered in
+// MDXComponents, so no import). The same declaration is read at build time by
+// plugins/openapi-specs, which fetches the spec and stages it as a static
+// attachment; the component only resolves the URL it was staged at.
+const SWAGGER_MACRO = /^swagger_ui::(\S+)\[\]$/
+
+// The branch in the spec URL is an {attribute} reference in the source
+// (`.../blob/{mc-repo-swagger-branch}/...`), and the no-baking rule applies to it
+// like any other. It is restored as a LITERAL `{name}` token rather than the
+// prose <Variable/> form: `source` is a plain JSX string that both the plugin and
+// the component read as text, and a `{name}` inside it is exactly what
+// refcheck/lib/mdx-refs.js counts as this page's one reference -- so the census
+// balances with no disposition. The whole-token boundary (varTokenRe, the link
+// path's) is right here: the value is a complete URL segment.
+function swaggerMacro ($, node, st) {
+  const p = $(node).children('p').first()
+  if (!p.length) return null
+  const m = p.text().trim().match(SWAGGER_MACRO)
+  if (!m) return null
+  const { code: source } = reverseCodeVars(m[1], st.pageVars)
+  return `<ApiReference source=${jsxAttr(source)} />`
 }
 
 function heading ($, node, st) {
@@ -1194,7 +1227,10 @@ function inlineTag ($, node, st, opt) {
       // own autolink text, `[https://x](https://x)`) gets a pointless `{/**/}`.
       const label = inlineFrom($, node.children, st, { ...opt, inLink: true }).trim()
       const rawHref = (node.attribs && node.attribs.href) || ''
-      const resolved = healDocRef(resolveHref(rawHref, st.pageUrl), st)
+      // `rawHref` stays the golden's verbatim href -- it is the KEY into linkVars
+      // and hrefVars, which are built from the resolved golden URLs. Only the
+      // href we RESOLVE is repaired (see repairApiDeepLink).
+      const resolved = healDocRef(resolveHref(repairApiDeepLink(rawHref), st.pageUrl), st)
       const kind = resolved.kind
       // Internal link: prefer a relative link to the target .mdx of THIS
       // component+version (survives version cuts); otherwise keep the absolute

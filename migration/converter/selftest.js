@@ -22,7 +22,7 @@ const { gfm } = require('micromark-extension-gfm')
 const { gfmHtml } = require('micromark-extension-gfm')
 
 const { mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode } = require('./lib/mdx')
-const { resolveHref, attrHrefTemplates } = require('./lib/links')
+const { resolveHref, attrHrefTemplates, unmangleSubscripts, repairApiDeepLink } = require('./lib/links')
 const { convertBody } = require('./lib/html-to-mdx')
 const { classifyHref } = require('../fidelity/lib/links')
 const { collectOccurrences, decide, slugFor, componentNameFor, parseId, consumerAttrs } = require('./lib/partials')
@@ -653,12 +653,17 @@ const renderedCode = (md) => {
   const body = (html) => convertBody(html, {}).body.trim()
   const bare = (u) => `<a href="${u}" class="bare">${u}</a>`
 
-  // (a) the Swagger pages: an unregistered macro's text carries a bare URL.
-  const swagger = body(para('swagger_ui::https://github.com/hazelcast/x.yaml[]'))
-  assert.ok(!/\[https|\]\(/.test(swagger), 'no Markdown link is invented')
-  assert.ok(swagger.includes('https:{/**/}//github.com/hazelcast/x.yaml'),
+  // (a) a bare URL in prose that the golden did NOT link. This used to be the
+  // Swagger pages -- an unregistered macro's text carrying a bare URL -- and
+  // since those convert to <ApiReference> the corpus has no live occurrence
+  // left: every remaining bare URL in the golden is a placeholder, handled by
+  // (b) below. The rule stays as a SAFETY NET (a new one must not silently gain
+  // a link), so it is stated here on a synthetic input instead.
+  const unlinked = body(para('Fetch it from https://github.com/hazelcast/x.yaml first.'))
+  assert.ok(!/\[https|\]\(/.test(unlinked), 'no Markdown link is invented')
+  assert.ok(unlinked.includes('https:{/**/}//github.com/hazelcast/x.yaml'),
     'the text run is split just after the scheme so GFM cannot autolink it')
-  assert.ok(!swagger.includes('https://github'), 'the contiguous URL is gone from the source text')
+  assert.ok(!unlinked.includes('https://github'), 'the contiguous URL is gone from the source text')
 
   // (b) placeholder URLs, in all three shapes the corpus uses.
   assert.strictEqual(body(para('at https://localhost:443.')), 'at `https://localhost:443`.',
@@ -1013,6 +1018,117 @@ const renderedCode = (md) => {
   assert.strictEqual(substitute('Keep {not-an-attribute}', lookup), 'Keep {not-an-attribute}',
     'an unknown name is left literal, as Antora leaves an undefined attribute')
   ok('nav labels: attribute references are resolved before they become YAML')
+}
+
+// --- swagger_ui:: block macro -> <ApiReference> ------------------------------
+// The golden render does not load the swagger-ui extension (see the
+// `extensions:` note in antora/index-playbook.yml), so the macro survives as
+// literal paragraph text. The requirement has two halves, both checked against
+// independent oracles rather than against the emitted string:
+//   1. ROUND TRIP -- substituting the version's attribute values back into the
+//      emitted `source` must reproduce the macro target byte-for-byte, using the
+//      same substituter the build-time plugin/loader uses. Anything the converter
+//      dropped, re-encoded or mis-bounded shows up as a URL that differs.
+//   2. THE GATE'S OWN COUNTER -- refcheck decides whether the attribute stayed a
+//      reference. Asking countMdxRefs (the gate's function) rather than grepping
+//      for `{name}` means the test cannot pass while the gate fails.
+{
+  const { countMdxRefs } = require('../refcheck/lib/mdx-refs')
+  const macro = (target) => `<div class="paragraph"><p>swagger_ui::${target}[]</p></div>`
+  const tpl = 'https://github.com/hazelcast/management-center/blob/{mc-repo-swagger-branch}/hazelcast-management-center/src/openapi/external/rest-client-api.yaml'
+
+  // Every live MC version, including the snapshot line whose value is the
+  // generic word `master` -- the boundary rule has to accept it between slashes.
+  for (const value of ['5.11.0', '5.10.0', '5.9.0', 'master']) {
+    const resolved = substitute(tpl, { 'mc-repo-swagger-branch': value })
+    const ctx = { pageUrl: '/management-center/x/integrate/client-filtering', pageVars: new Map([[value, 'mc-repo-swagger-branch']]) }
+    const { body, imports } = convertBody(macro(resolved), ctx)
+
+    const src = body.match(/<ApiReference\s+source="([^"]+)"\s*\/>/)
+    assert.ok(src, `the macro converts to <ApiReference> (value ${value})`)
+    assert.strictEqual(substitute(src[1], { 'mc-repo-swagger-branch': value }), resolved,
+      `resolving the emitted source reproduces the macro target verbatim (value ${value})`)
+    assert.strictEqual(countMdxRefs(body, 'mc-repo-swagger-branch'), 1,
+      `refcheck counts exactly one surviving reference (value ${value})`)
+    assert.strictEqual(imports.size, 0, 'ApiReference is globally registered, so no import is emitted')
+    assert.ok(!/swagger_ui/.test(body), 'no trace of the macro text is left in the output')
+  }
+  ok('swagger_ui:: -> <ApiReference>, target round-trips, attribute stays a reference')
+
+  // With no page vars the target is emitted verbatim: the converter never
+  // invents a reference, it only restores one the page's source really has.
+  const bare = 'https://github.com/hazelcast/management-center/blob/master/x/y.yaml'
+  assert.ok(convertBody(macro(bare), { pageUrl: '/x' }).body.includes(`source="${bare}"`),
+    'an unmapped target is emitted verbatim')
+
+  // Negatives: only a paragraph that is ENTIRELY the macro converts. Prose that
+  // merely mentions it, and a macro carrying attributes (a shape the corpus does
+  // not use, so converting it would be a guess), stay on the paragraph path.
+  const para = (text) => `<div class="paragraph"><p>${text}</p></div>`
+  assert.ok(!/<ApiReference/.test(convertBody(para('The swagger_ui::https://x/y.yaml[] macro publishes a spec.'), { pageUrl: '/x' }).body),
+    'a paragraph that merely mentions the macro is not converted')
+  assert.ok(!/<ApiReference/.test(convertBody(para('swagger_ui::https://x/y.yaml[title=API]'), { pageUrl: '/x' }).body),
+    'a macro carrying attributes is left on the paragraph path for the gates to flag, not guessed at')
+  ok('swagger_ui:: negatives: only a whole-paragraph, attribute-less macro converts')
+}
+
+// --- repairApiDeepLink: restore, then retarget, a link into an API page -------
+// Asciidoctor's subscript substitution eats the `~` pairs out of a JSON-pointer
+// deep link into an API reference, so the golden href carries <sub> elements.
+// The requirement is stated against json-pointer itself: after unmangling, the
+// fragment must PARSE as the pointer the author wrote, i.e. back to the spec
+// path and HTTP verb. A test that compared strings would only restate the regex.
+{
+  const jsonPointer = require('json-pointer')
+  const authored = '#/paths/~1rest~1clusters~1%7Bcluster%7D~1clientfiltering~1lists/post'
+  const mangled = '#/paths/<sub>1rest</sub>1clusters<sub>1%7Bcluster%7D</sub>1clientfiltering~1lists/post'
+
+  assert.strictEqual(unmangleSubscripts(mangled), authored,
+    'the golden href is restored to the target the author wrote')
+  assert.deepStrictEqual(
+    jsonPointer.parse(decodeURIComponent(unmangleSubscripts(mangled).replace(/^#/, ''))),
+    ['paths', '/rest/clusters/{cluster}/clientfiltering/lists', 'post'],
+    'and it parses as the spec pointer for that path + verb (json-pointer oracle)')
+
+  // Idempotent, and a no-op on everything else -- `<`/`>` are illegal in a URL,
+  // so nothing that is a real href can be touched.
+  assert.strictEqual(unmangleSubscripts(authored), authored, 'an already-correct target is unchanged')
+  for (const href of ['../integrate/client-filtering', '/a/b#operation/createFilteringRules',
+    'https://example.com/x?a=1&b=2', '#section-title', '']) {
+    assert.strictEqual(unmangleSubscripts(href), href, `left alone: ${JSON.stringify(href)}`)
+  }
+  ok('unmangleSubscripts: the mangled pointer parses back to its path + verb')
+
+  // Step 2 -- retarget. The pointer is not an anchor the page publishes, so the
+  // converted link must carry the SITE's anchor for that operation. Oracle: the
+  // anchor is recomputed from the path and verb that json-pointer independently
+  // parsed out of the authored fragment, via the same module the page renders
+  // its heading ids from -- so a converter that retargeted to the wrong
+  // operation, or to a string the page does not publish, fails here.
+  const { operationAnchor } = require('../../plugins/lib/api-anchors')
+  const [, parsedPath, parsedVerb] = jsonPointer.parse(
+    decodeURIComponent(unmangleSubscripts(mangled).replace(/^#/, '')))
+  assert.strictEqual(repairApiDeepLink(`../integrate/client-filtering${mangled}`),
+    `../integrate/client-filtering#${operationAnchor(parsedVerb, parsedPath)}`,
+    'the pointer is retargeted to the anchor the page publishes for that path + verb')
+
+  // Retargeting is scoped to operation pointers and leaves every other fragment
+  // alone -- including a `/paths/` fragment whose last segment is not a method.
+  for (const href of ['../x#section-title', '../x#operation/createFilteringRules', '../x',
+    '../x#/paths/~1rest~1clusters/notamethod', 'https://example.com/a#frag']) {
+    assert.strictEqual(repairApiDeepLink(href), href, `left alone: ${JSON.stringify(href)}`)
+  }
+  ok('repairApiDeepLink: only an operation pointer is retargeted, to the published anchor')
+
+  // End to end through the converter: the deep link on management-center
+  // clusters/create-filter-lists-rest lands on the readable anchor.
+  const html = `<div class="paragraph"><p>Use the <a href="${mangled.replace('#', '../integrate/client-filtering#')}"><code>/clientfiltering/lists</code></a> endpoint.</p></div>`
+  const { body } = convertBody(html, { pageUrl: '/management-center/5.11/clusters/create-filter-lists-rest' })
+  assert.ok(body.includes('#post-rest-clusters-cluster-clientfiltering-lists'),
+    'the converted link carries the published operation anchor')
+  assert.ok(!/sub%3E|<sub>|~1|\/paths\//.test(body),
+    'and no trace of the pointer or the subscript markup, encoded or not')
+  ok('deep link: the converted href lands on the published operation anchor')
 }
 
 console.log(`\n[converter selftest] ${n} groups passed.`)
