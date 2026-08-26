@@ -7,6 +7,7 @@ import {Markdown, Parameters, ResponsesList, useStore} from 'redoc';
 import type {MediaContentModel, OperationModel} from 'redoc';
 
 import {anchorFor} from './anchors';
+import {titleFor} from './title';
 import styles from './styles.module.css';
 
 // One operation, rendered with the site's own components where Redoc's would
@@ -90,6 +91,8 @@ function Samples({title, payloads}: {title: string; payloads: Payload[]}): React
 
 export function ApiOperation({operation}: {operation: OperationModel}): React.ReactElement {
   const store = useStore();
+  // The heading, and whether it consumed the description (see ./title).
+  const {title, usesDescription} = titleFor(operation);
   const httpColors =
     (store?.options.theme.colors as {http?: Record<string, string>} | undefined)?.http ?? {};
   // Response samples are tabbed by status code, since that is what a reader
@@ -117,7 +120,7 @@ export function ApiOperation({operation}: {operation: OperationModel}): React.Re
           to by hovering it — which is how a JSON pointer nobody could have
           guessed came to be pasted into the AsciiDoc sources by hand. */}
       <Heading as="h2" id={anchorFor(operation)}>
-        {operation.name}
+        {title}
       </Heading>
       <p className={styles.endpoint}>
         <span
@@ -128,7 +131,9 @@ export function ApiOperation({operation}: {operation: OperationModel}): React.Re
         </span>
         <code>{operation.path}</code>
       </p>
-      {operation.description !== undefined && <Markdown source={operation.description} />}
+      {!usesDescription && operation.description !== undefined && (
+        <Markdown source={operation.description} />
+      )}
       <Parameters parameters={operation.parameters} body={operation.requestBody} />
       <Samples title="Request sample" payloads={payloadsOf(operation.requestBody?.content)} />
       <ResponsesList responses={operation.responses} />
@@ -151,7 +156,7 @@ export function ApiItems({items}: {items: readonly any[]}): React.ReactElement {
           <React.Fragment key={item.id}>
             <div data-section-id={item.id}>
               <Heading as="h2" id={anchorFor(item)}>
-                {item.name}
+                {titleFor(item).title}
               </Heading>
               {item.description && <Markdown source={item.description} />}
             </div>

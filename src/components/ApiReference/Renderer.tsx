@@ -27,6 +27,7 @@ import {specUrlFor} from '@site/plugins/lib/api-spec-url';
 // once and pointed at by each of their URLs.
 import bundledSpecs from '@generated/openapi-specs/default/specs.json';
 import {anchorFor} from './anchors';
+import {titleFor} from './title';
 import {ApiItems} from './Operation';
 import {usePublishApiToc} from './apiToc';
 import {redocTheme} from './theme';
@@ -62,12 +63,18 @@ const escapeHtml = (text: string) =>
 // is what makes the badge possible; the label itself is escaped, since it comes
 // from the spec. The method colour is read off the resolved theme rather than
 // restated, so a badge here and the same badge in the content cannot diverge.
+//
+// The label comes from ./title, the same helper the heading uses -- not from
+// Redoc's `sidebarLabel`, which is its `name` verbatim (checked for both menu
+// models) and so carried the truncated fallback into the TOC as well. Deriving
+// both from one helper is what makes a TOC entry and the heading it points at
+// provably the same string.
 function tocItemsFor(store: AppStore): TOCItem[] {
   const httpColors = (store.options.theme.colors as {http?: Record<string, string>}).http ?? {};
   const items: TOCItem[] = [];
   const walk = (menuItems: readonly any[], level: number) => {
     for (const item of menuItems) {
-      const label = escapeHtml(item.sidebarLabel || item.name);
+      const label = escapeHtml(titleFor(item).title);
       const verb: string | undefined = item.type === 'operation' ? item.httpVerb : undefined;
       const value = verb
         ? `<span class="${TOC_METHOD_CLASS}" style="color:${httpColors[verb.toLowerCase()] ?? 'inherit'}">` +
