@@ -33,9 +33,13 @@ const { convertBody } = require('./lib/html-to-mdx')
 const { collectOccurrences, decide, consumerAttrs } = require('./lib/partials')
 // Link targets written with an `{attribute}` in them — the exact-match href path
 // (see buildHrefVars); shared with the selftest so the grammar has one definition.
-const { attrHrefTemplates } = require('./lib/links')
+const { attrHrefTemplates, resolveHref } = require('./lib/links')
 const { parseNav, buildPlan, injectNavEntries, pageKey } = require('./lib/nav')
 const { loadDispositions, isDropped, navInjectionsFor } = require('../lib/dispositions')
+// Co-located image placement, computed from the reference graph. The converter
+// is the only thing that knows every page's OUTPUT FILE (the nav plan decides
+// it, not the URL), so it owns the plan and writes it out for extract-images.js.
+const { planImagePlacement } = require('../lib/image-placement')
 // Single-sources "which contexts render into flow text" with the marking pass, so
 // prose reverse-mapping and marking can never disagree — see scanPageAttrs.
 const { wrappableRefs } = require('../antora-extension/mark-attributes')
@@ -683,6 +687,19 @@ function relFileForPage (p, byUrl, plan) {
   return { key, stem, rec, entry, relFile: entry ? entry.relFile : key.replace(/:/g, '/') + '.mdx' }
 }
 
+// Every internal image URL a golden page references, resolved against the page's
+// own URL exactly as the converter resolves it when emitting the reference — so
+// the placement plan and the emitted `src` cannot be computed from different
+// sets.
+function imageUrlsIn (html, pageUrl) {
+  const out = []
+  for (const m of html.matchAll(/<img\b[^>]*\bsrc="([^"]*)"/gi)) {
+    const r = resolveHref(m[1], pageUrl)
+    if (r.kind === 'internal') out.push(r.path)
+  }
+  return out
+}
+
 // Remove the files a previous conversion of this version tree wrote — `.mdx`
 // pages/partials and `_category_.json` descriptors — and then any directory that
 // leaves empty, so a page moved by a nav change does not linger at its old path.
@@ -796,6 +813,19 @@ function convertVersion (ver, ctx) {
   const baseDir = path.relative(opts.outRoot, outDir).split(path.sep).join('/')
   const { decisions, report } = decide(pagesOcc, baseDir)
 
+  // Co-located image placement for this version, from the REFERENCE GRAPH: each
+  // image lands in the `images/` folder of the deepest directory that contains
+  // every page using it (see lib/image-placement.js for why its published URL
+  // cannot answer this). Spans allPages, never the --id subset, so a
+  // single-page run places images exactly where a full run would; pages dropped
+  // by orphan triage are excluded, since nothing will reference their images.
+  const imagePlacement = planImagePlacement(allPages.flatMap((p) => {
+    const { rec, relFile } = relFileForPage(p, byUrl, plan)
+    if (rec && isDropped(ctx.dispositions, rec)) return []
+    const dir = path.posix.dirname(relFile.split(path.sep).join('/'))
+    return imageUrlsIn(readGoldenRaw(p), p.url).map((url) => ({ url, dir: dir === '.' ? '' : dir }))
+  }))
+
   // Full (non-scoped) run regenerates the whole version tree from scratch, so
   // stale files from a previous layout do not linger.
   if (!opts.dry && !opts.id) pruneGenerated(outDir)
@@ -870,6 +900,7 @@ function convertVersion (ver, ctx) {
         hrefVars: buildHrefVars(donorAttrs, donorLookup),
         latestVersions: ctx.latestVersions,
         urlToRelFile,
+        imagePlacement,
       })
       if (!fragment.trim()) { spliceSkips.push({ url: page.url, donor, reason: 'empty' }); continue }
       spliced.push({ url: page.url, missing, donor })
@@ -918,7 +949,7 @@ function convertVersion (ver, ctx) {
 
     let body, imports
     try {
-      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, hrefVars, latestVersions: ctx.latestVersions, urlToRelFile }))
+      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, hrefVars, latestVersions: ctx.latestVersions, urlToRelFile, imagePlacement }))
       body = withBothConditionalBranches(body, { page: p, rec, relFile, pageVars, proseVars, hrefVars })
     } catch (err) {
       problems.push({ url: p.url, error: err.message })
@@ -973,7 +1004,7 @@ function convertVersion (ver, ctx) {
   for (const [id, d] of decisions) {
     try {
       const { pageVars, proseVars } = partialVarsFor(d)
-      const { body, imports } = convertBody(d.representative, { pageUrl: pages[0].url, relFile: path.join('_partials', d.slug + '.mdx'), component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, latestVersions: ctx.latestVersions, urlToRelFile })
+      const { body, imports } = convertBody(d.representative, { pageUrl: pages[0].url, relFile: path.join('_partials', d.slug + '.mdx'), component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, latestVersions: ctx.latestVersions, urlToRelFile, imagePlacement })
       const importBlock = imports.size ? [...imports].join('\n') + '\n\n' : ''
       d.mdx = importBlock + body + '\n'
     } catch (err) {
@@ -1003,7 +1034,7 @@ function convertVersion (ver, ctx) {
   // same component do not overwrite each other.
   writePartialsReport(opts, component, seg, report, decisions)
 
-  return { seg, kind, outDir, written, dropped, cats, partialsWritten, orphans, problems, partialProblems, spliced, spliceSkips, duplicates: plan.duplicates }
+  return { seg, kind, outDir, written, dropped, cats, partialsWritten, orphans, problems, partialProblems, spliced, spliceSkips, duplicates: plan.duplicates, imagePlacement }
 }
 
 // Per-version partials audit: what was factored, declined, or left inline
@@ -1042,6 +1073,40 @@ function writePartialsReport (opts, component, seg, report, decisions) {
       }, null, 2) + '\n')
   }
   return { factored, declined, unmarked }
+}
+
+// `build/image-placement.json`: image URL -> repo-relative destination file, the
+// handover to extract-images.js. The converter is the producer because placement
+// follows the reference graph and each page's output file, both of which only
+// exist here; extract-images is a pure consumer that writes bytes where this
+// says. That replaces the previous design, where the same URL-rewriting rule was
+// written out by hand in both files and had to be kept in lockstep.
+//
+// MERGED, not overwritten, and scoped to the segments this run actually
+// regenerated — for the same reason `--releases` must not shrink versions.json:
+// a subset run leaves the other versions' trees (and their images) on disk and
+// live, so their placements must survive it.
+function writeImagePlacement (opts, results) {
+  if (opts.dry) return null
+  const file = path.join(path.dirname(opts.goldenDir), 'image-placement.json')
+  let placements = {}
+  try {
+    placements = JSON.parse(fs.readFileSync(file, 'utf8')).placements || {}
+  } catch { /* first run — start empty */ }
+
+  const prefixes = results.map((r) => `/${opts.component}/` + (r.seg ? r.seg + '/' : ''))
+  for (const url of Object.keys(placements)) {
+    if (prefixes.some((pre) => url.startsWith(pre))) delete placements[url]
+  }
+  for (const r of results) {
+    const treeRel = path.relative(opts.outRoot, r.outDir).split(path.sep).join('/')
+    for (const [url, dest] of r.imagePlacement) placements[url] = path.posix.join(treeRel, dest)
+  }
+
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  const sorted = Object.fromEntries(Object.keys(placements).sort().map((k) => [k, placements[k]]))
+  fs.writeFileSync(file, JSON.stringify({ generatedBy: 'converter/convert.js', placements: sorted }, null, 2) + '\n')
+  return { file, count: Object.keys(sorted).length }
 }
 
 // `<component>_versions.json`: the ordered release list (newest first) that a
@@ -1111,6 +1176,9 @@ function main () {
   // versions it skipped (their docs trees are still on disk and still live).
   const canonicalReleases = (VERSIONS[opts.component] && VERSIONS[opts.component].releases) || []
   if (isVersioned(opts.component)) writeVersionsFile(opts, opts.component, canonicalReleases)
+
+  const placed = writeImagePlacement(opts, results)
+  if (placed) console.log(`[convert] image placement -> ${placed.file} (${placed.count} image(s) site-wide)`)
 
   // Site-wide generated files, written once with full manifest context so a
   // per-component run keeps the other components' entries intact.

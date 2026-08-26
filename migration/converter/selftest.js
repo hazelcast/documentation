@@ -1131,4 +1131,51 @@ const renderedCode = (md) => {
   ok('deep link: the converted href lands on the published operation anchor')
 }
 
+
+// --- image references follow the placement plan ------------------------------
+// The requirement: whatever path the plan gives an image, the emitted reference
+// must be that same FILE seen from the consuming page -- so an independent
+// oracle (resolve the emitted relative path against the page's own directory)
+// must reproduce the planned destination exactly, from any depth. Getting this
+// wrong yields a path that still resolves for SOME page, which is why it needs
+// a real check rather than a fixed expected string.
+{
+  const path = require('node:path')
+  const plan = new Map([
+    ['/mc/5.11/_images/Dashboard.png', 'cluster/images/Dashboard.png'],
+    ['/mc/5.11/_images/Root.png', 'images/Root.png'],
+  ])
+  const emit = (relFile, pageUrl, src) => {
+    const { body } = convertBody(`<div class="imageblock"><div class="content"><img src="${src}" alt="a"></div></div>`,
+      { pageUrl, relFile, component: 'mc', seg: '5.11', imagePlacement: plan })
+    return body.match(/\]\(([^)]*)\)/)[1]
+  }
+  const resolveFrom = (relFile, ref) => path.posix.normalize(path.posix.join(path.posix.dirname(relFile), ref))
+
+  for (const [relFile, url, planned] of [
+    ['cluster/dashboard.mdx', '/mc/5.11/cluster/dashboard', 'cluster/images/Dashboard.png'],
+    ['cluster/administration/persistence/backup.mdx', '/mc/5.11/cluster/administration/persistence/backup', 'cluster/images/Dashboard.png'],
+    ['index.mdx', '/mc/5.11/', 'cluster/images/Dashboard.png'],
+  ]) {
+    const ref = emit(relFile, url, '/mc/5.11/_images/Dashboard.png')
+    assert.strictEqual(resolveFrom(relFile, ref), planned,
+      `from ${relFile} the reference must resolve to the planned file, not just to something`)
+    assert(ref.startsWith('.'), 'a co-located reference must be relative, so webpack resolves and hashes it')
+  }
+
+  // A SPLICED conditional branch is converted from another version's golden with
+  // this page's context, so its image URLs carry the DONOR's segment. Same
+  // image, so it must find the same planned destination.
+  const donor = emit('cluster/dashboard.mdx', '/mc/5.11/cluster/dashboard', '/mc/5.10/_images/Dashboard.png')
+  assert.strictEqual(resolveFrom('cluster/dashboard.mdx', donor), 'cluster/images/Dashboard.png',
+    "a donor version's image URL resolves through this version's plan")
+
+  // No plan (or an image the plan does not cover) must NOT invent a path: the
+  // site-absolute src is left alone so the build's onBrokenMarkdownImages
+  // rejects it, rather than a wrong relative path resolving silently.
+  const unplanned = emit('cluster/dashboard.mdx', '/mc/5.11/cluster/dashboard', '/mc/5.11/_images/Absent.png')
+  assert.strictEqual(unplanned, '/mc/5.11/_images/Absent.png', 'an unplanned image is left as-is, not guessed')
+  ok('imageSrc: emits the planned file as a relative path, from any depth, donor segs included')
+}
+
 console.log(`\n[converter selftest] ${n} groups passed.`)

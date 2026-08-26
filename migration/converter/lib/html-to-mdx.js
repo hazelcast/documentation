@@ -110,6 +110,11 @@ function convertBody (html, ctx) {
     // URL -> output .mdx file (this component+version), for emitting
     // same-version internal links as relative file links (see relativeDocLink).
     urlToRelFile: ctx.urlToRelFile || null,
+    // Image URL -> tree-relative destination, computed by convert.js from the
+    // reference graph (lib/image-placement.js). Absent in a bare convertBody
+    // call (the selftest), which falls back to the site-absolute src — the site
+    // build then rejects it, rather than a wrong path passing silently.
+    imagePlacement: ctx.imagePlacement || null,
   }
   collapseSentinels($, $.root()[0], state)
   fixSwallowedBlockTitles($)
@@ -878,16 +883,37 @@ function healDocRef (resolved, st) {
 // (`<component>_versioned_docs/version-<seg>/images/`), so the prefix stripped
 // here includes the version segment — mirroring extract-images.js's per-version
 // destination. Unversioned components (cloud) strip only the component prefix.
+// Look a resolved image URL up in this version's placement plan.
+//
+// A SPLICED conditional branch is converted from another version's golden but
+// with this page's context (see withBothConditionalBranches in convert.js), so
+// its image URLs carry the DONOR's version segment. Re-point those at this
+// version before giving up — the same image, published twice under two segs.
+function placementFor (abs, st) {
+  if (!st.imagePlacement) return null
+  const direct = st.imagePlacement.get(abs)
+  if (direct) return direct
+  if (!st.component || !st.seg) return null
+  const segs = abs.split('/') // ['', component, donorSeg, …]
+  if (segs[1] !== st.component) return null
+  segs[2] = st.seg
+  return st.imagePlacement.get(segs.join('/')) || null
+}
+
+// An image reference is RELATIVE to the consuming file, so webpack resolves,
+// verifies and content-hashes it (a missing image fails the build). Where the
+// file itself lands is not derivable from the image's URL — see
+// lib/image-placement.js — so the destination comes from the plan, and this
+// only has to make it relative.
 function imageSrc (raw, st) {
   const resolved = resolveHref(raw, st.pageUrl)
   if (resolved.kind !== 'internal') return resolved.href
   const abs = resolved.path
   const hash = resolved.hash || ''
-  const prefix = st.component ? `/${st.component}/${st.seg ? st.seg + '/' : ''}` : ''
-  if (!prefix || !abs.startsWith(prefix)) return abs + hash
-  const within = abs.slice(prefix.length).replace(/(^|\/)_images\//, '$1images/') // "_images/foo.png" -> "images/foo.png"
+  const dest = placementFor(abs, st)
+  if (!dest) return abs + hash
   const fromDir = path.posix.dirname(st.relFile || '')
-  let rel = path.posix.relative(fromDir === '.' ? '' : fromDir, within)
+  let rel = path.posix.relative(fromDir === '.' ? '' : fromDir, dest)
   if (!rel.startsWith('.')) rel = './' + rel
   return rel + hash
 }

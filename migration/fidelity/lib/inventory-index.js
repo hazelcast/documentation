@@ -10,7 +10,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 
 const { goldenPages, readGolden } = require('./pairing')
-const { inventory, ASCIIDOC_PROFILE } = require('./structure')
+const { inventory, ASCIIDOC_PROFILE, INVENTORY_VERSION } = require('./structure')
 
 function buildInventoryIndex (goldenDir) {
   const index = new Map()
@@ -24,13 +24,17 @@ function loadInventoryIndex (goldenDir, lockfileKey, cacheFile) {
   if (cacheFile && fs.existsSync(cacheFile)) {
     try {
       const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'))
-      if (cached.lockfileKey === lockfileKey) return new Map(Object.entries(cached.byPage))
+      // Keyed by the source pin AND the extractor's version: the pin alone
+      // cannot notice that inventory() started extracting a new field.
+      if (cached.lockfileKey === lockfileKey && cached.inventoryVersion === INVENTORY_VERSION) {
+        return new Map(Object.entries(cached.byPage))
+      }
     } catch { /* rebuild */ }
   }
   const index = buildInventoryIndex(goldenDir)
   if (cacheFile) {
     fs.mkdirSync(path.dirname(cacheFile), { recursive: true })
-    fs.writeFileSync(cacheFile, JSON.stringify({ lockfileKey, byPage: Object.fromEntries(index) }))
+    fs.writeFileSync(cacheFile, JSON.stringify({ lockfileKey, inventoryVersion: INVENTORY_VERSION, byPage: Object.fromEntries(index) }))
   }
   return index
 }

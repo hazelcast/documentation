@@ -18,6 +18,18 @@ const cheerio = require('cheerio')
 
 const ADMONITION_TYPES = ['note', 'tip', 'warning', 'caution', 'important']
 
+// Bumped whenever inventory() changes what it extracts. The golden inventory is
+// CACHED to disk keyed by the source pin (see inventory-index.js), which cannot
+// notice that this file changed -- so without this a new field would compare an
+// old cache's `undefined` against a freshly extracted value on every page.
+const INVENTORY_VERSION = 3
+
+// An image's identity for comparison purposes: its file name. Both sides lose
+// the directory anyway -- Docusaurus flattens every imported asset into
+// /assets/images/ -- and there are no duplicate image basenames across the
+// module image directories of any source repo, so the name identifies the file.
+const imageBasename = (src) => (src || '').split(/[?#]/)[0].split('/').pop()
+
 // Asciidoctor (Antora golden) profile.
 const ASCIIDOC_PROFILE = {
   // <li> covers ulist/olist; description lists use <dt>. Count both as items.
@@ -34,6 +46,7 @@ const ASCIIDOC_PROFILE = {
   // it.) Count both: sets, and total tabs across sets.
   tabSetSelector: '.tabset',
   tabItemSelector: '.tab-pane',
+  imageName: imageBasename,
 }
 
 // Docusaurus profile -- STUB. Filled in against real converted output (the
@@ -53,6 +66,15 @@ const DOCUSAURUS_PROFILE = {
   },
   tabSetSelector: '.tabs-container',
   tabItemSelector: '[role="tabpanel"]',
+  // Docusaurus content-hashes an imported asset to `<name>-<32 hex>.<ext>` --
+  // EXCEPT one under ~10KB, which webpack inlines as a base64 `data:` URI,
+  // erasing the file name from the built HTML entirely. `null` means "this
+  // position carries no comparable name" (see compareInventory), which is 50 of
+  // the 2,771 image references in the built site -- 1.8%, all small icons. The
+  // `images` COUNT still covers those; only their identity is unverifiable.
+  imageName: (src) => (/^data:/i.test(src || '')
+    ? null
+    : imageBasename(src).replace(/-[0-9a-f]{32}(\.[^.]+)$/i, '$1')),
 }
 
 function inventory (html, profile = ASCIIDOC_PROFILE, { fragment = true } = {}) {
@@ -67,6 +89,12 @@ function inventory (html, profile = ASCIIDOC_PROFILE, { fragment = true } = {}) 
     admonitions[profile.admonitionType($, el)]++
   })
 
+  // Built with .each rather than .map().get(): cheerio's map DROPS null entries,
+  // which would silently shift every position after an inlined image and make
+  // the comparison misalign instead of skip.
+  const imageNames = []
+  $('img').each((_, el) => { imageNames.push(profile.imageName($(el).attr('src'))) })
+
   return {
     headings,
     headingsTotal: Object.values(headings).reduce((a, b) => a + b, 0),
@@ -79,6 +107,11 @@ function inventory (html, profile = ASCIIDOC_PROFILE, { fragment = true } = {}) 
     admonitionsTotal: Object.values(admonitions).reduce((a, b) => a + b, 0),
     tables: $(profile.contentTableSelector).length,
     images: $('img').length,
+    // WHICH images, in document order -- not just how many. A count alone
+    // cannot see a page pointing at the wrong file, which is the whole failure
+    // mode of computing image placement (a swapped path still resolves, so
+    // `onBrokenMarkdownImages: 'throw'` stays silent too).
+    imageNames,
     // Navigable links only. Asciidoctor auto-links a bare `http://…` URL even
     // inside backticks, so a monospaced PLACEHOLDER pseudo-URL like
     // `http://<mc-ip-address>:8080` renders as `<code><a class="bare">…</a></code>`
@@ -94,4 +127,4 @@ function inventory (html, profile = ASCIIDOC_PROFILE, { fragment = true } = {}) 
   }
 }
 
-module.exports = { inventory, ASCIIDOC_PROFILE, DOCUSAURUS_PROFILE, ADMONITION_TYPES }
+module.exports = { inventory, ASCIIDOC_PROFILE, DOCUSAURUS_PROFILE, ADMONITION_TYPES, INVENTORY_VERSION }

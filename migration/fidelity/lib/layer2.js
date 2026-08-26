@@ -32,6 +32,28 @@ function compareInventory (golden, converted) {
   for (const field of ['codeBlocks', 'tables', 'images', 'links', 'listItems', 'tabSets', 'tabItems']) {
     push(field, golden[field], converted[field])
   }
+
+  // WHICH images, in document order. The `images` count above cannot see a page
+  // that renders the right NUMBER of wrong pictures -- and neither can any other
+  // layer (L1 is text, an <img> contributes none; L3 reads only <a href>), nor
+  // the site build, whose `onBrokenMarkdownImages: 'throw'` proves a path
+  // resolves, never that it resolves to the intended file.
+  //
+  // Only reported when the counts already agree: a length difference is the
+  // `images` diff above, and repeating it here as a name list would be noise.
+  const gNames = golden.imageNames || []
+  const cNames = converted.imageNames || []
+  // A converted name of null is an image webpack inlined as a base64 data URI,
+  // which carries no file name to compare -- skipped rather than reported, since
+  // the alternative is a false positive on every small icon.
+  if (gNames.length === cNames.length && gNames.some((n, i) => cNames[i] != null && n !== cNames[i])) {
+    const at = gNames.map((n, i) => [i, n, cNames[i]]).filter(([, g, c]) => c != null && g !== c)
+    diffs.push({
+      field: 'imageNames',
+      golden: at.map(([i, g]) => `#${i} ${g}`).join(', '),
+      converted: at.map(([i, , c]) => `#${i} ${c}`).join(', '),
+    })
+  }
   return diffs
 }
 

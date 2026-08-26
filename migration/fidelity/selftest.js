@@ -25,7 +25,7 @@ const { wrapConditionals, markability, stripConditionalSentinels, START, END } =
 const { literalizeMonospace } = require('../antora-extension/normalize-monospace')
 const { lockfileKey } = require('./lockfile-key')
 const { buildIndex, variants } = require('./lib/manifest-index')
-const { inventory, ASCIIDOC_PROFILE } = require('./lib/structure')
+const { inventory, ASCIIDOC_PROFILE, DOCUSAURUS_PROFILE } = require('./lib/structure')
 const { compareInventory } = require('./lib/layer2')
 const { extractMain } = require('./lib/extract-main')
 const { checkPage } = require('./lib/layer3')
@@ -462,6 +462,81 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
   const twoH1 = base(); twoH1.headings.h1 = 2
   assert.strictEqual(compareInventory(base(), twoH1).length, 1, 'converted +2 h1 is flagged')
   ok('compareInventory: reports field diffs, lenient on a single extra title h1')
+}
+
+// --- image IDENTITY, not just image count ------------------------------------
+// The count answers "how many pictures"; nothing else in the harness answers
+// "which". L1 is text (an <img> contributes none), L3 reads only <a href>, and
+// the site build's onBrokenMarkdownImages proves a path RESOLVES, never that it
+// resolves to the intended file. So a page can render the right number of wrong
+// pictures and pass everything -- the failure mode computed image placement
+// (lib/image-placement.js) can actually produce.
+{
+  const inv = (names) => ({
+    headings: { h1: 0, h2: 0, h3: 0, h4: 0, h5: 0, h6: 0 },
+    admonitions: { note: 0, tip: 0, warning: 0, caution: 0, important: 0, unknown: 0 },
+    codeBlocks: 0, tables: 0, images: names.length, links: 0, listItems: 0, tabSets: 0, tabItems: 0,
+    imageNames: names,
+  })
+  assert.deepStrictEqual(compareInventory(inv(['a.png', 'b.png']), inv(['a.png', 'b.png'])), [],
+    'same images in the same order -> no diff')
+
+  const swapped = compareInventory(inv(['a.png', 'b.png']), inv(['a.png', 'c.png']))
+  assert.strictEqual(swapped.length, 1, 'a substituted image is reported exactly once')
+  assert.strictEqual(swapped[0].field, 'imageNames')
+  assert(swapped[0].golden.includes('b.png') && swapped[0].converted.includes('c.png'),
+    'the diff names both sides of the substitution')
+  assert(!swapped[0].golden.includes('a.png'), 'and reports only the positions that differ')
+
+  // ORDER matters: two pages swapping each other's pictures is a real
+  // regression, and a set comparison would call it clean.
+  assert.strictEqual(compareInventory(inv(['a.png', 'b.png']), inv(['b.png', 'a.png'])).length, 1,
+    'reordered images are a diff, not a match')
+
+  // A length difference is already the `images` count diff; repeating it as a
+  // name list would be noise, so exactly one finding is expected.
+  const dropped = compareInventory(inv(['a.png', 'b.png']), inv(['a.png']))
+  assert.deepStrictEqual(dropped.map((d) => d.field), ['images'],
+    'a dropped image is reported by the count only, not twice')
+
+  // Inventories predating the field (an older cache) must not read as a diff.
+  const legacy = inv(['a.png']); delete legacy.imageNames
+  assert.deepStrictEqual(compareInventory(legacy, legacy), [], 'inventories with no imageNames -> no diff')
+  // An image webpack inlined as a base64 data URI has no name in the built HTML
+  // (imageName -> null). Comparing it would false-positive on every small icon,
+  // so the position is skipped -- and the positions around it must still be
+  // checked, which is what this asserts.
+  const withInlined = compareInventory(inv(['a.png', 'b.png', 'c.png']), inv(['a.png', null, 'c.png']))
+  assert.deepStrictEqual(withInlined, [], 'an inlined (nameless) image is skipped, not reported')
+  const inlinedPlusReal = compareInventory(inv(['a.png', 'b.png', 'c.png']), inv(['a.png', null, 'z.png']))
+  assert.strictEqual(inlinedPlusReal.length, 1, 'a real substitution beside an inlined image is still caught')
+  assert(inlinedPlusReal[0].converted.includes('z.png') && !inlinedPlusReal[0].converted.includes('null'),
+    'and the inlined position is not named in the diff')
+
+  ok('compareInventory: catches a swapped or reordered image, without double-reporting a dropped one')
+}
+
+// --- the Docusaurus profile must undo webpack's content hash -----------------
+// Otherwise every single image on every page reads as a substitution.
+{
+  const golden = inventory('<div class="imageblock"><img src="../_images/Dashboard.png" alt="d"></div>',
+    ASCIIDOC_PROFILE)
+  const converted = inventory('<img src="/assets/images/Dashboard-a103b50b234f1db0ff303c271242b05c.png" alt="d">',
+    DOCUSAURUS_PROFILE)
+  assert.deepStrictEqual(golden.imageNames, ['Dashboard.png'], 'golden side: the file name')
+  assert.deepStrictEqual(converted.imageNames, ['Dashboard.png'], 'converted side: hash stripped')
+  assert.deepStrictEqual(compareInventory(golden, converted), [], 'the two sides compare equal')
+
+  // Under ~10KB webpack inlines the image and the file name is gone from the
+  // HTML altogether -- the one image identity the harness cannot check.
+  const inlined = inventory('<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==">', DOCUSAURUS_PROFILE)
+  assert.deepStrictEqual(inlined.imageNames, [null], 'an inlined data URI yields no comparable name')
+  assert.strictEqual(inlined.images, 1, 'but it is still COUNTED as an image')
+
+  // A hyphen + hex-looking name that is NOT a 32-char content hash must survive.
+  const literal = inventory('<img src="/assets/images/step-1a2b.png">', DOCUSAURUS_PROFILE)
+  assert.deepStrictEqual(literal.imageNames, ['step-1a2b.png'], 'a short hyphenated name is not a hash')
+  ok('inventory: image names normalise across the golden and Docusaurus profiles')
 }
 
 // --- extract-main: pull the comparable fragment from a full page -------------

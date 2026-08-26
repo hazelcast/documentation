@@ -1,26 +1,30 @@
 'use strict'
 
-// Extract image assets from the pinned Antora sources into the Docusaurus docs
-// tree, CO-LOCATED with the pages that use them. Runs the same aggregator +
-// classifier as the index pass (no UI, no document conversion), then writes every
-// migrated component's image into an `images/` folder in the docs tree -- its
-// published path rooted at the site, with Antora's `_images` dir renamed to
-// `images` (e.g. /cloud/_images/foo.png -> new-docs/cloud/images/foo.png).
-// The converter emits references RELATIVE to each page's output file (see
-// imageSrc() in converter/lib/html-to-mdx.js), so webpack resolves and
-// content-hashes them and a missing image fails the build instead of 404ing.
+// Place image assets from the pinned Antora sources into the Docusaurus docs
+// tree, CO-LOCATED with the pages that use them.
+//
+// This is a pure CONSUMER of the placement plan the converter writes to
+// build/image-placement.json. It does not decide where an image goes: that
+// follows the reference graph and each page's output file, neither of which is
+// derivable from the image's published URL (see lib/image-placement.js), and
+// both of which only exist inside the converter. So the pipeline order is
+//
+//   fidelity:snapshot  ->  converter  ->  extract-images
+//
+// and this file's only job is to put the bytes where the plan says, then delete
+// any image the plan no longer places.
 //
 //   node extract-images.js [path/to/playbook.yml] [--root DIR] [--component X] [--dry-run]
 //
-// Scope matches the golden allowlist (MIGRATED below): images for resolution-only
-// components (imdg, tutorials) are skipped -- those pages are never emitted, so
-// nothing links to their images. Idempotent: identical files are left untouched,
-// so a re-run produces zero git churn unless an image actually changed upstream.
+// Scope is whatever the plan covers, which is exactly the converted components
+// and their live versions -- so no MIGRATED allowlist and no live-set gate are
+// needed here any more, and an image no page references simply has no
+// destination and is not placed. (There is deliberately no `--all`: an
+// unreferenced image has no consumer to co-locate with, so placing it would
+// mean reviving the flat per-component dump this layout exists to remove.)
 //
-// Versioned components (operator) are supported: each version's images are
-// co-located in its own tree -- latest-snapshot (main) at /<component>/images/
-// and a release <v> at <component>_versioned_docs/version-<v>/images/ -- via
-// destRel() below, keyed off the version segment in each image's pub.url.
+// Idempotent: identical files are left untouched, so a re-run produces zero git
+// churn unless an image actually changed upstream.
 
 const fs = require('node:fs')
 const path = require('node:path')
@@ -33,71 +37,14 @@ const { configureLogger } = require('@antora/logger')
 
 const { buildLockfile } = require('./antora-extension/emit-manifest')
 const { lockfileKey, lockfileKeyFromFile } = require('./fidelity/lockfile-key')
-const { goldenPages } = require('./fidelity/lib/pairing')
-const { resolveHref } = require('./converter/lib/links')
-const { isVersioned, currentSegFor, VERSIONS } = require('./lib/layout')
+const { IMAGES_DIR } = require('./lib/image-placement')
+const { versionsToProcess, outDirFor } = require('./lib/layout')
 
-// A versioned component's LIVE set: current (main) + the releases this build
-// emits. The golden spans every version (incl. frozen ones outside the live
-// set), so image placement must be gated to the live set or we write orphan
-// images for versions Docusaurus never builds. Unversioned components: no gate.
-// The current seg is PER COMPONENT (currentSegFor) -- the default
-// `latest-snapshot` is only operator's; MC's is `5.12-snapshot` and clc's is
-// `5.5.1`, and gating those against the default would drop every current-version
-// image on the floor.
-function inLiveSet (component, url) {
-  if (!isVersioned(component)) return true
-  const releases = (VERSIONS[component] && VERSIONS[component].releases) || []
-  const seg = url.replace(/^\/+/, '').split('/')[1] // /<component>/<seg>/…
-  return new Set([currentSegFor(component), ...releases]).has(seg)
-}
-
-// Site-absolute pub.url -> repo-relative co-located destination (leading slash
-// stripped, Antora's `_images` dir renamed to `images`). For a VERSIONED
-// component the URL's version segment selects the tree: the component's CURRENT
-// seg (main) lands in the plugin's current tree `<component>/images/`, and a
-// release `<seg>` in `<component>_versioned_docs/version-<seg>/images/`. This
-// per-version mapping MUST mirror the prefix imageSrc() strips in
-// converter/lib/html-to-mdx.js, or the emitted references and the placed files
-// disagree and the build breaks.
-//
-// A multi-module component (MC) keeps the module in the tail, because Antora
-// publishes a module's images under `/<component>/<seg>/<module>/_images/…` and
-// the converter's relative reference is resolved from the page's own output file.
-function destRel (url) {
-  const stripped = url.replace(/^\/+/, '').replace(/(^|\/)_images\//, '$1images/')
-  const [component, seg, ...rest] = stripped.split('/')
-  if (!isVersioned(component)) return stripped
-  const tail = rest.join('/') // "images/foo.png", or "<module>/images/foo.png"
-  return seg === currentSegFor(component)
-    ? path.posix.join(component, tail)
-    : path.posix.join(`${component}_versioned_docs`, `version-${seg}`, tail)
-}
-
-// Keep in step with fidelity/build-snapshot.js: the components whose pages are
-// emitted. Only their images are needed.
-const MIGRATED = new Set([
-  'hazelcast', 'management-center', 'clc', 'operator', 'cloud', 'jdbc-driver', 'home', 'privacy',
-])
-
-// The set of image URLs actually referenced by the migrated golden pages. With
-// co-location an unreferenced image is a committed orphan (the cloud repo alone
-// carries ~4.6MB of stale assets no page uses), so by default we place only what
-// is referenced -- exactly the co-location win. Read straight from the golden
-// (the faithful render), resolving each <img src> against its page URL the same
-// way the converter does, so this and the emitted references cannot disagree.
-function referencedImageUrls (goldenDir, inScope) {
-  const urls = new Set()
-  for (const page of goldenPages(goldenDir)) {
-    if (!inScope(page.component)) continue
-    const html = fs.readFileSync(page.file, 'utf8')
-    for (const m of html.matchAll(/<img\b[^>]*\bsrc="([^"]*)"/gi)) {
-      const r = resolveHref(m[1], page.url)
-      if (r.kind === 'internal') urls.add(r.path)
-    }
-  }
-  return urls
-}
+// Images this large are worth a second look before they ship: they are almost
+// always an uncompressed screen recording, and every live version keeps its own
+// copy. Advisory only -- a big image can be the right call, and this is not a
+// gate.
+const SIZE_WARN_BYTES = 1_000_000
 
 function parseArgs (argv) {
   const args = argv.slice(2)
@@ -105,25 +52,96 @@ function parseArgs (argv) {
     const i = args.indexOf(flag)
     return i === -1 ? fallback : args[i + 1]
   }
-  const flagValues = new Set(['--root', '--component', '--lockfile', '--golden'].map((f) => args.indexOf(f) + 1))
+  const flagValues = new Set(['--root', '--component', '--lockfile', '--plan'].map((f) => args.indexOf(f) + 1))
   const positional = args.filter((a, i) => !a.startsWith('--') && !flagValues.has(i))
   return {
     playbookFile: path.resolve(positional[0] || 'antora/index-playbook.yml'),
-    // Site root: pub.url is site-absolute (/cloud/_images/foo.png), so joining it
-    // under the Docusaurus project root co-locates it in the docs tree.
+    // Site root: the plan's destinations are repo-relative, so joining them
+    // under the Docusaurus project root lands them in the docs tree.
     rootDir: path.resolve(valueOf('--root', path.join(__dirname, '..'))),
-    goldenDir: path.resolve(valueOf('--golden', 'build/golden')),
+    planFile: path.resolve(valueOf('--plan', 'build/image-placement.json')),
     component: valueOf('--component', null),
     lockfileFile: path.resolve(valueOf('--lockfile', 'build/manifest/lockfile.json')),
-    // Place every migrated component image, referenced or not. Off by default:
-    // co-location means unreferenced images are just committed orphans.
-    all: args.includes('--all'),
     dryRun: args.includes('--dry-run'),
   }
 }
 
+function loadPlan (planFile, component) {
+  let raw
+  try {
+    raw = JSON.parse(fs.readFileSync(planFile, 'utf8'))
+  } catch {
+    console.error(
+      `[extract-images] no placement plan at ${planFile} -- run the converter first ` +
+        '(node converter/convert.js --component <x>), which computes where each image goes.'
+    )
+    process.exit(1)
+  }
+  const entries = Object.entries(raw.placements || {})
+    .filter(([url]) => !component || url.split('/')[1] === component)
+  return new Map(entries)
+}
+
+// The version trees the plan covers, so pruning can be scoped to directories
+// this tool owns. Derived from the canonical layout helpers rather than by
+// parsing destination paths, so it cannot drift from where the converter writes.
+function ownedTrees (rootDir, components) {
+  const trees = []
+  for (const component of components) {
+    for (const ver of versionsToProcess(component)) trees.push(outDirFor(rootDir, component, ver))
+  }
+  return trees
+}
+
+// Delete every file under an `images/` directory of an owned tree that this run
+// did not place, then any `images/` directory that leaves empty. Without this a
+// re-layout (or an image losing its last reference) would leave the old copy
+// behind forever: the write path is idempotent by content and never removes.
+// Scoped to `images/` directories so nothing else in the tree can be touched.
+function pruneImages (trees, placed, dryRun) {
+  let removed = 0
+  const walk = (dir) => {
+    let entries
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true })
+    } catch { return }
+    for (const e of entries) {
+      const p = path.join(dir, e.name)
+      if (e.isDirectory()) {
+        if (e.name === IMAGES_DIR) sweep(p)
+        else walk(p)
+      }
+    }
+  }
+  const sweep = (dir) => {
+    let entries
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true })
+    } catch { return }
+    let kept = 0
+    for (const e of entries) {
+      const p = path.join(dir, e.name)
+      if (e.isDirectory()) { sweep(p); if (fs.existsSync(p)) kept++; continue }
+      if (placed.has(p)) { kept++; continue }
+      removed++
+      if (!dryRun) fs.rmSync(p, { force: true })
+    }
+    if (kept === 0 && !dryRun) { try { fs.rmdirSync(dir) } catch { /* not empty after all */ } }
+  }
+  for (const t of trees) walk(t)
+  return removed
+}
+
 async function main () {
-  const { playbookFile, rootDir, goldenDir, component, lockfileFile, all, dryRun } = parseArgs(process.argv)
+  const { playbookFile, rootDir, planFile, component, lockfileFile, dryRun } = parseArgs(process.argv)
+
+  const plan = loadPlan(planFile, component)
+  if (plan.size === 0) {
+    console.error(`[extract-images] the plan places no images${component ? ` for component=${component}` : ''}.`)
+    process.exit(1)
+  }
+  const components = new Set([...plan.keys()].map((url) => url.split('/')[1]))
+  console.log(`[extract-images] plan: ${plan.size} image(s) across ${[...components].sort().join(', ')}`)
 
   const playbook = buildPlaybook(['--playbook', playbookFile], {})
   configureLogger(playbook.runtime.log)
@@ -149,43 +167,21 @@ async function main () {
     }
   } catch { /* no committed lockfile yet -- nothing to check against */ }
 
-  const inScope = (c) => component ? c === component : MIGRATED.has(c)
-
-  // By default place only images referenced by the migrated golden pages (see
-  // referencedImageUrls). --all overrides to place every in-scope component image.
-  let referenced = null
-  if (!all) {
-    if (!fs.existsSync(path.join(goldenDir, 'pages'))) {
-      console.error(
-        `[extract-images] no golden pages at ${goldenDir}/pages -- run fidelity:snapshot ` +
-          'first, or pass --all to place every component image regardless of references.'
-      )
-      process.exit(1)
-    }
-    referenced = referencedImageUrls(goldenDir, inScope)
-    console.log(`[extract-images] ${referenced.size} image(s) referenced by the golden`)
-  }
-
   const images = contentCatalog.findBy({ family: 'image' })
-    .filter((file) => file.pub && file.pub.url && inScope(file.src.component))
-    .filter((file) => inLiveSet(file.src.component, file.pub.url))
-    .filter((file) => all || referenced.has(file.pub.url))
+    .filter((file) => file.pub && file.pub.url && plan.has(file.pub.url))
 
   const perComponent = {}
+  const placed = new Set()
+  const heavy = []
   let written = 0
   let unchanged = 0
   let skipped = 0
   for (const file of images) {
-    const url = file.pub.url
     const contents = file.contents
     if (!contents || !contents.length) { skipped++; continue }
-    // pub.url is a site-absolute path (/cloud/_images/foo.png, or the versioned
-    // /operator/5.16/_images/foo.png); destRel co-locates it in the docs tree,
-    // renaming `_images`->`images` and, for versioned components, routing the
-    // version segment to the right (current vs versioned_docs) tree. This layout
-    // MUST match imageSrc() in converter/lib/html-to-mdx.js.
-    const rel = destRel(url)
-    const dest = path.join(rootDir, rel)
+    const dest = path.join(rootDir, plan.get(file.pub.url))
+    placed.add(dest)
+    if (contents.length > SIZE_WARN_BYTES) heavy.push({ bytes: contents.length, url: file.pub.url })
 
     let changed = true
     try {
@@ -203,14 +199,40 @@ async function main () {
     perComponent[key].written++
   }
 
+  const missing = [...plan.keys()].filter((url) => !images.some((f) => f.pub.url === url))
+  const removed = pruneImages(ownedTrees(rootDir, components), placed, dryRun)
+
   console.log(
     `[extract-images] ${dryRun ? '[dry-run] would write' : 'wrote'} ${written} image(s), ` +
       `${unchanged} unchanged` + (skipped ? `, ${skipped} empty skipped` : '') +
+      (removed ? `, ${dryRun ? 'would remove' : 'removed'} ${removed} stale` : '') +
       ` -> ${rootDir}`
   )
   for (const key of Object.keys(perComponent).sort()) {
     const c = perComponent[key]
     console.log(`  ${key.padEnd(32)} ${c.written} written, ${c.unchanged} unchanged`)
+  }
+  // Every version keeps its OWN copy of every image (a deliberate decision -- no
+  // sharing across versions), so one heavy source file is paid for once per live
+  // version. Report the source images, largest first.
+  if (heavy.length) {
+    const bySrc = new Map()
+    for (const h of heavy) {
+      const name = h.url.split('/').pop()
+      bySrc.set(name, { bytes: h.bytes, copies: (bySrc.get(name) || { copies: 0 }).copies + 1 })
+    }
+    console.warn(`\n[extract-images] ${bySrc.size} image(s) over ${(SIZE_WARN_BYTES / 1e6).toFixed(1)} MB:`)
+    for (const [name, v] of [...bySrc].sort((a, b) => b[1].bytes - a[1].bytes)) {
+      console.warn(`  ${(v.bytes / 1e6).toFixed(2)} MB  ${name}` + (v.copies > 1 ? `  x${v.copies} versions` : ''))
+    }
+  }
+  // A planned image with no file in the catalog means the plan and the pinned
+  // sources disagree -- a stale plan, or a page referencing an image that was
+  // deleted upstream. The site build would fail on it later; say so now.
+  if (missing.length) {
+    console.error(`\n[extract-images] ${missing.length} planned image(s) NOT FOUND in the sources:`)
+    for (const url of missing.slice(0, 10)) console.error(`  ${url}`)
+    process.exitCode = 1
   }
 }
 
