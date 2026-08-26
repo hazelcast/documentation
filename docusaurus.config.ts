@@ -176,10 +176,10 @@ const config: Config = {
       items: [
         {
           type: 'docSidebar',
-          docsPluginId: 'cloud',
+          docsPluginId: 'management-center',
           sidebarId: 'defaultSidebar',
           position: 'left',
-          label: 'Cloud',
+          label: 'Management Center',
         },
         {
           type: 'docSidebar',
@@ -190,17 +190,17 @@ const config: Config = {
         },
         {
           type: 'docSidebar',
+          docsPluginId: 'cloud',
+          sidebarId: 'defaultSidebar',
+          position: 'left',
+          label: 'Cloud',
+        },
+        {
+          type: 'docSidebar',
           docsPluginId: 'clc',
           sidebarId: 'defaultSidebar',
           position: 'left',
           label: 'CLC',
-        },
-        {
-          type: 'docSidebar',
-          docsPluginId: 'management-center',
-          sidebarId: 'defaultSidebar',
-          position: 'left',
-          label: 'Management Center',
         },
         // Version dropdown for the operator instance (current + live releases).
         {
