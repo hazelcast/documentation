@@ -24,6 +24,7 @@ const {
   breakAutolinks, isPlaceholderUrl, PROSE_URL,
 } = require('./mdx')
 const { resolveHref, repairApiDeepLink } = require('./links')
+const { normalizeValues, groupIdFor } = require('./tabs')
 
 const ADMONITION_TYPES = ['note', 'tip', 'warning', 'caution', 'important']
 // `<strong class="…">` classes that are inline badges (from Asciidoctor
@@ -925,23 +926,27 @@ function convertTabs ($, node, st, depth) {
   st.imports.add("import TabItem from '@theme/TabItem';")
   const labelList = $(node).children('.ulist.tabs').find('> ul > li').toArray()
   const panes = $(node).children('.content').children('.tab-pane').toArray()
-  const items = []
-  panes.forEach((pane, i) => {
+  const labels = panes.map((pane, i) => {
+    const li = labelList[i]
+    return li ? $(li).find('p').text().trim() : `Tab ${i + 1}`
+  })
+  // Values name the axis, not the page, so they are normalised across repos and
+  // then decide which tabsets share a selection — see lib/tabs.js.
+  const values = normalizeValues(panes.map((pane, i) => {
     const li = labelList[i]
     const anchor = li ? $(li).find('a[id]')[0] : null
-    const labelText = li ? $(li).find('p').text().trim() : `Tab ${i + 1}`
     const id = anchor && anchor.attribs.id
-    const value = id ? id.replace(/^tabset\d+_/, '') : slug(labelText)
+    return id ? id.replace(/^tabset\d+_/, '') : slug(labels[i])
+  }))
+  const items = panes.map((pane, i) =>
     // Convert the whole tab-pane: content is usually wrapped in an .openblock,
     // but Asciidoctor also emits pane-level siblings (e.g. an admonition after
     // the block). Recursing the pane picks those up; the .openblock unwraps
     // itself in convertBlock.
-    const paneBody = convertChildren($, pane, st, depth).trim()
-    items.push(
-      `<TabItem value=${jsxAttr(value)} label=${jsxAttr(labelText)}>\n\n${paneBody}\n\n</TabItem>`
-    )
-  })
-  return `<Tabs>\n${items.join('\n')}\n</Tabs>`
+    `<TabItem value=${jsxAttr(values[i])} label=${jsxAttr(labels[i])}>\n\n` +
+    `${convertChildren($, pane, st, depth).trim()}\n\n</TabItem>`
+  )
+  return `<Tabs groupId=${jsxAttr(groupIdFor(values))}>\n${items.join('\n')}\n</Tabs>`
 }
 
 const slug = (s) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')

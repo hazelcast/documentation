@@ -26,6 +26,7 @@ const { resolveHref, attrHrefTemplates, unmangleSubscripts, repairApiDeepLink } 
 const { convertBody } = require('./lib/html-to-mdx')
 const { classifyHref } = require('../fidelity/lib/links')
 const { collectOccurrences, decide, slugFor, componentNameFor, parseId, consumerAttrs } = require('./lib/partials')
+const { normalizeValues, groupIdFor } = require('./lib/tabs')
 const { parseNav, buildPlan, injectNavEntries, parseTarget, pageKey, folderName } = require('./lib/nav')
 const { wrapRefs, wrappableRefs } = require('../antora-extension/mark-attributes')
 const substitute = require('../../plugins/lib/substitute-attributes')
@@ -1176,6 +1177,150 @@ const renderedCode = (md) => {
   const unplanned = emit('cluster/dashboard.mdx', '/mc/5.11/cluster/dashboard', '/mc/5.11/_images/Absent.png')
   assert.strictEqual(unplanned, '/mc/5.11/_images/Absent.png', 'an unplanned image is left as-is, not guessed')
   ok('imageSrc: emits the planned file as a relative path, from any depth, donor segs included')
+}
+
+
+// --- tab group syncing -------------------------------------------------------
+// The requirement (lib/tabs.js): two tabsets on the SAME axis share a selection,
+// tabsets on different axes do not. Docusaurus implements that purely through
+// `groupId`, so the spec is a statement about which of the corpus's tabsets map
+// to one id.
+//
+// The oracle is the corpus itself: every distinct tab-value signature in the
+// migrated docs, each labelled with the axis a reader would say it is on. That
+// is an independent statement of intent -- it says nothing about how tabs.js
+// decides, only what the answer has to be -- so a broken alias or family table
+// shows up as a signature landing in the wrong bucket.
+{
+  // [signature, axis]. axis === null means "syncs only with itself".
+  // Signatures are as the sources slug them, inconsistencies included: that
+  // inconsistency is exactly what has to be normalised away.
+  const corpus = [
+    [['linux-and-mac', 'windows'], 'os'],
+    [['mac', 'linux', 'windows'], 'os'],
+    [['windows', 'install-script-linux-macos'], 'os'],
+    [['clc', 'java', 'nodejs', 'go', 'python', 'net'], 'language'],
+    [['clc', 'java', 'nodejs', 'go', 'python'], 'language'],
+    [['java', 'node-js', 'go', 'python'], 'language'],
+    [['java', 'python', 'net', 'cli-clc'], 'language'],
+    [['xml', 'yaml'], 'config-format'],
+    [['java', 'xml', 'yaml'], 'config-format'],
+    [['ui', 'mc-conf'], 'mc-config'],
+    [['ui', 'hz-mc-conf'], 'mc-config'],
+    [['aws', 'gcp', 'azure'], 'cloud'],
+    [['kubernetes', 'openshift'], 'k8s'],
+    [['hazelcast', 'management-center'], 'product'],
+    [['hazelcast'], 'product'],
+    [['s3', 'gcs', 'abs'], 'storage'],
+    [['executor-service', 'durable-executor-service', 'scheduled-executor-service'], null],
+    [['bucket-configuration', 'hotbackup-resource-name'], null],
+    [['configmap', 'secret'], null],
+    [['cluster-wide-installation', 'restricted-installation'], null],
+    [['https', 'ssh'], null],
+    [['non-interactive-mode', 'interactive-mode'], null],
+    [['open-source', 'enterprise'], null],
+    [['email', 'github', 'google'], null],
+    [['development-cluster', 'production-cluster'], null],
+  ]
+
+  const resolved = corpus.map(([values, axis]) => {
+    const normalized = normalizeValues(values)
+    return { values, axis, normalized, groupId: groupIdFor(normalized) }
+  })
+
+  // 1. Same axis -> same groupId. Without this, switching one tabset leaves its
+  //    siblings on the page behind -- the bug this exists to fix.
+  const byAxis = new Map()
+  for (const r of resolved) {
+    if (r.axis === null) continue
+    if (!byAxis.has(r.axis)) byAxis.set(r.axis, [])
+    byAxis.get(r.axis).push(r)
+  }
+  for (const [axis, members] of byAxis) {
+    const ids = new Set(members.map((m) => m.groupId))
+    assert.strictEqual(ids.size, 1,
+      `every tabset on the ${axis} axis must share one groupId, got ${[...ids].join(', ')}`)
+  }
+
+  // 2. Different axes -> different groupIds, and a self-only signature shares
+  //    with nothing. Switching "XML" must not move a Kubernetes/OpenShift tabset.
+  const owner = new Map()
+  for (const r of resolved) {
+    const claim = r.axis === null ? Symbol('self') : r.axis
+    const prev = owner.get(r.groupId)
+    if (prev !== undefined) {
+      assert.strictEqual(prev, claim,
+        `groupId ${r.groupId} is claimed by two different axes -- [${r.values.join(', ')}] would sync with an unrelated tabset`)
+    }
+    owner.set(r.groupId, claim)
+  }
+
+  // 3. A shared groupId is only USEFUL where the groups have a value in common:
+  //    Docusaurus falls back to a group's own default when the stored value is
+  //    absent from it. So members of an axis must overlap pairwise-transitively
+  //    -- every member shares at least one value with some other member.
+  for (const [axis, members] of byAxis) {
+    if (members.length < 2) continue
+    for (const m of members) {
+      const overlaps = members.some((o) => o !== m && o.normalized.some((v) => m.normalized.includes(v)))
+      assert(overlaps,
+        `[${m.values.join(', ')}] shares groupId ${axis} but no value with any sibling, so the sync can never fire`)
+    }
+  }
+
+  // 4. Docusaurus's own constraint (ensureNoDuplicateValue in
+  //    theme-common/utils/tabsUtils): values within one <Tabs> must be unique.
+  //    Normalisation must not break that -- an alias that merges two tabs of the
+  //    SAME tabset would throw at render time.
+  for (const r of resolved) {
+    assert.strictEqual(new Set(r.normalized).size, r.normalized.length,
+      `normalising [${r.values.join(', ')}] must keep every value distinct`)
+  }
+  ok('tabs: same-axis tabsets share a groupId, different axes do not, and every group overlaps (corpus oracle)')
+}
+
+// A colliding alias must FAIL rather than emit a <Tabs> Docusaurus throws on.
+{
+  assert.throws(() => normalizeValues(['mc-conf', 'hz-mc-conf']), /collides/,
+    'an alias that merges two tabs of one tabset must be rejected, not emitted')
+  assert.throws(() => groupIdFor(['java']), /matches families/,
+    'a signature matching two families must be rejected, not silently assigned to one')
+  ok('tabs: an ambiguous alias or family match is a hard error, never a silent choice')
+}
+
+// End to end through the real converter: the emitted <Tabs> carries the groupId
+// its (normalised) values imply, the LABELS survive verbatim -- normalisation
+// renames the machine-readable value only, never what the reader sees -- and the
+// pane bodies stay with their own tab.
+{
+  const tabset = (n, tabs) =>
+    `<div class="tabset is-loading"><div class="ulist tabs"><ul>` +
+    tabs.map(([v, l]) => `<li><p><a id="tabset${n}_${v}"></a>${l}</p></li>`).join('') +
+    `</ul></div><div class="content">` +
+    tabs.map(([v, , body]) => `<div class="tab-pane" aria-labelledby="tabset${n}_${v}"><div class="paragraph"><p>${body}</p></div></div>`).join('') +
+    `</div></div>`
+
+  const { body } = convertBody(
+    tabset(1, [['ui', 'UI', 'click it'], ['hz-mc-conf', 'hz-mc-conf', 'type it']]), { pageUrl: '/x' })
+
+  assert.match(body, /<Tabs groupId="mc-config-method">/,
+    'the emitted tabset must carry the groupId of its axis')
+  assert.match(body, /<TabItem value="mc-conf" label="hz-mc-conf">/,
+    "the value is normalised for syncing but the label is the source's, verbatim")
+  const panes = [...body.matchAll(/<TabItem value="([^"]*)"[^>]*>\s*([^<]*?)\s*<\/TabItem>/g)]
+    .map((m) => [m[1], m[2]])
+  assert.deepStrictEqual(panes, [['ui', 'click it'], ['mc-conf', 'type it']],
+    'each pane body must stay with its own tab, in source order')
+
+  // Two tabsets on one page, differently slugged by their authors, must come out
+  // with one groupId -- the mc-conf page's actual bug.
+  const two = convertBody(
+    tabset(1, [['linux-and-mac', 'Linux and Mac', 'a'], ['windows', 'Windows', 'b']]) +
+    tabset(2, [['windows', 'Windows', 'c'], ['install-script-linux-macos', 'Install Script (Linux/macOS)', 'd']]),
+    { pageUrl: '/x' }).body
+  const ids = [...two.matchAll(/<Tabs groupId="([^"]*)">/g)].map((m) => m[1])
+  assert.deepStrictEqual(ids, ['os', 'os'], 'both OS tabsets on the page must share one groupId')
+  ok('tabs: convertBody emits the groupId, normalises values, and keeps labels + pane bodies intact')
 }
 
 console.log(`\n[converter selftest] ${n} groups passed.`)
