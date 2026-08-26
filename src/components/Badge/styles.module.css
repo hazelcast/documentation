@@ -4,10 +4,13 @@
   vertical-align: middle;
 }
 
-/* Page-level badge row, above the title. */
+/* Page-level badge row, above the title. `align-items` matters: the version
+   badge is a bare pill directly in the row, so the default `stretch` made it
+   taller than the badges beside it, which are insulated by a popover wrapper. */
 .row {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
   gap: 0.4rem;
   margin-bottom: 0.6rem;
 }

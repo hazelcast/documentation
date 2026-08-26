@@ -1,6 +1,8 @@
 import React from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
+import {useDocsVersion} from '@docusaurus/plugin-content-docs/client';
+import DocVersionBadge from '@theme/DocVersionBadge';
 import {
   Badge as HiveBadge,
   BadgeIcon,
@@ -99,18 +101,25 @@ export default function Badge({
 
 // Page-level badge row, above the title (source #2). Uses the REAL HIVE <Badge>
 // inside a <div> wrapper (HIVE's Badge is a <div>, illegal inside a <span>).
-// Returns null when the page declares no badge frontmatter.
+// Docusaurus' own version pill leads the row: it is the same kind of thing and
+// the same HIVE pill (see src/theme/DocVersionBadge), so it belongs on the same
+// line rather than stacked above. That is why this only renders from
+// DocItem/Content, where the docs-version context exists — DocItem/Layout no
+// longer renders <DocVersionBadge/> itself. Returns null when the page has
+// neither a version badge nor badge frontmatter.
 export function TitleBadgeRow({
   names,
 }: {
   names: string[];
 }): React.ReactElement | null {
+  const {badge: hasVersionBadge} = useDocsVersion();
   const known = names.filter((name) => BADGES[name]);
-  if (known.length === 0) {
+  if (!hasVersionBadge && known.length === 0) {
     return null;
   }
   return (
     <div className={styles.row}>
+      {hasVersionBadge && <DocVersionBadge />}
       {known.map((name) => {
         const def = BADGES[name];
         return (

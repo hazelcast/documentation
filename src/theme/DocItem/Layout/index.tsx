@@ -4,7 +4,6 @@ import {useWindowSize} from '@docusaurus/theme-common';
 import {useDoc} from '@docusaurus/plugin-content-docs/client';
 import DocItemPaginator from '@theme/DocItem/Paginator';
 import DocVersionBanner from '@theme/DocVersionBanner';
-import DocVersionBadge from '@theme/DocVersionBadge';
 import DocItemFooter from '@theme/DocItem/Footer';
 import DocItemTOCMobile from '@theme/DocItem/TOC/Mobile';
 import DocItemTOCDesktop from '@theme/DocItem/TOC/Desktop';
@@ -16,12 +15,16 @@ import {ApiTocProvider, useApiTocState} from '@site/src/components/ApiReference/
 
 import styles from './styles.module.css';
 
-// Ejected from theme-classic for ONE reason: an API-reference page has no MDX
-// headings, so the stock `toc.length > 0` test hides the TOC column on exactly
-// the pages that need it most. Its operations are discovered in the browser and
-// published up from the content (src/components/ApiReference/apiToc.tsx), so the
-// decision also has to consider what has been published so far. Everything else
-// here is stock — keep it that way, and re-diff against theme-classic on upgrade.
+// Ejected from theme-classic for two reasons. (1) An API-reference page has no
+// MDX headings, so the stock `toc.length > 0` test hides the TOC column on
+// exactly the pages that need it most. Its operations are discovered in the
+// browser and published up from the content
+// (src/components/ApiReference/apiToc.tsx), so the decision also has to consider
+// what has been published so far. (2) The stock `<DocVersionBadge/>` that sat
+// here is gone: it now rides in the badge row that DocItem/Content renders, so
+// the version pill and the page-level badges share one line. Everything else
+// here is stock — keep it that way, and re-diff against theme-classic on
+// upgrade.
 
 /**
  * Decide if the toc should be rendered, on mobile or desktop viewports
@@ -60,7 +63,6 @@ export default function DocItemLayout({children}: Props): ReactNode {
           <div className={styles.docItemContainer}>
             <article>
               <DocBreadcrumbs />
-              <DocVersionBadge />
               {docTOC.mobile}
               <DocItemContent>{children}</DocItemContent>
               <DocItemFooter />
