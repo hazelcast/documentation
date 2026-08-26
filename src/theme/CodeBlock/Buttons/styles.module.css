@@ -1,0 +1,31 @@
+/* Upstream's button group, minus the absolute positioning and the hover-only
+ * opacity: the buttons live in the code block's header bar and stay visible.
+ * The bar shares the code's background, so they are drawn as bare icons and
+ * take a tint only on hover/focus. */
+
+.buttonGroup {
+  display: flex;
+  align-items: center;
+  column-gap: 0.2rem;
+  /* Pulls the icons' own padding back out of the bar so their hover target can
+   * be generous without making the bar taller. */
+  margin: -0.4rem 0;
+}
+
+.buttonGroup button {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  color: var(--code-header-color);
+  border-radius: var(--ifm-global-radius);
+  padding: 0.4rem;
+  line-height: 0;
+  transition: color var(--ifm-transition-fast) ease-in-out,
+    background var(--ifm-transition-fast) ease-in-out;
+}
+
+.buttonGroup button:focus-visible,
+.buttonGroup button:hover {
+  background: var(--ifm-color-emphasis-200);
+  color: var(--prism-color);
+}

@@ -18,7 +18,7 @@ const assert = require('node:assert')
 
 const {
   canonicalize, diffSegments, normalizeProse, normalizeCode, segKey,
-  GOLDEN_STRIP, GOLDEN_TABLE,
+  GOLDEN_STRIP, GOLDEN_TABLE, DOCUSAURUS_STRIP,
 } = require('./lib/layer1')
 const { stripSentinels } = require('../antora-extension/mark-partials')
 const { wrapConditionals, markability, stripConditionalSentinels, START, END } = require('../antora-extension/mark-conditionals')
@@ -89,6 +89,22 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
   const stripped = canonicalize('<h2><a class="anchor">¶</a>Title</h2>')
   assert.deepStrictEqual(texts(stripped), ['Title'], 'the Asciidoctor ¶ self-link is stripped, not counted as content')
   ok('canonicalize: strips renderer chrome (heading anchor)')
+
+  // Our code block header bar (language label + buttons) is site chrome the
+  // golden has no counterpart for, so a block must canonicalize to exactly what
+  // the golden's <pre> does -- with the block TITLE, which Asciidoctor renders
+  // too, still compared.
+  const withHeader = canonicalize(
+    '<div class="theme-code-block">' +
+    '<div class="codeBlockTitle_x">config.yaml</div>' +
+    '<div class="codeBlockContent_x">' +
+    '<div class="codeBlockHeader_x"><span class="codeBlockLanguage_x">YAML</span></div>' +
+    '<pre>port: 5701</pre></div></div>',
+    { stripSelectors: DOCUSAURUS_STRIP })
+  assert.deepStrictEqual(withHeader,
+    [{ kind: 'text', text: 'config.yaml' }, { kind: 'code', text: 'port: 5701' }],
+    'header bar contributes no segment; title and code still do')
+  ok('canonicalize: strips the code block header bar, keeps its title and code')
 }
 
 // --- diffSegments: only real changes surface ---------------------------------

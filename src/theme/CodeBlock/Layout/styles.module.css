@@ -1,0 +1,71 @@
+/* Upstream's .codeBlockContent, plus the block caption and the header bar.
+
+ * The caption sits ABOVE the block (outside the code surface), matching what
+ * Asciidoctor does with a block title and how the Antora UI styles it: body
+ * font, bold, secondary colour, tight against the block it names.
+ *
+ * The header bar shares the code's own background so the block reads as a
+ * single surface; only the label's muted colour separates it from the code.
+ * That colour is a local custom property, so dark mode is a single override —
+ * HIVE has no dark palette, so dark falls back to an Infima emphasis token
+ * (same approach as the table styles in custom.css). */
+
+.codeBlockContent {
+  position: relative;
+  /* rtl:ignore */
+  direction: ltr;
+  border-radius: inherit;
+}
+
+.codeBlockTitle {
+  color: var(--hive-color-text-secondary-v4);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin-bottom: 0.25rem;
+}
+
+[data-theme='dark'] .codeBlockTitle {
+  color: var(--ifm-color-emphasis-700);
+}
+
+.codeBlockHeader {
+  --code-header-color: var(--hive-color-text-secondary-v4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background: var(--prism-background-color);
+  /* No bottom padding: the code's own top padding (trimmed below) is the whole
+   * gap, so the label sits closer to the code it names than to the block's top
+   * edge. */
+  padding: var(--ifm-pre-padding) var(--ifm-pre-padding) 0;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+  /* Reserved so the browser-only buttons don't shift the bar when they mount. */
+  min-height: 2.25rem;
+}
+
+[data-theme='dark'] .codeBlockHeader {
+  --code-header-color: var(--ifm-color-emphasis-700);
+}
+
+.codeBlockLanguage {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.75rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--code-header-color);
+}
+
+/* The header always sits above the code, so the code is never the top edge, and
+ * needs a little less than its usual top padding under the label. The <pre> and
+ * its <code> belong to Content (a different CSS module), so they are reached
+ * through the theme's global container class rather than a local one. */
+:global(.theme-code-block) > .codeBlockContent > pre {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+:global(.theme-code-block) > .codeBlockContent > pre > code {
+  padding-top: calc(var(--ifm-pre-padding) * 0.75);
+}

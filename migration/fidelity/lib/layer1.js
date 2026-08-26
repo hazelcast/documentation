@@ -34,8 +34,12 @@ const TABLE_PLACEHOLDER = /^␟(\d+)␟$/
 
 const GOLDEN_STRIP = ['a.anchor'] // the ¶ self-link Asciidoctor prepends to headings
 // Docusaurus chrome that leaks text a golden fragment does not have: the
-// heading hash-link (zero-width text) and the admonition ICON.
-const DOCUSAURUS_STRIP = ['.hash-link', '[class*="admonitionIcon"]']
+// heading hash-link (zero-width text), the admonition ICON, and the code
+// block's header bar (src/theme/CodeBlock/Layout) -- a language label and the
+// copy/word-wrap buttons, site chrome we added, never page content. The block
+// TITLE bar is deliberately not stripped: Asciidoctor renders a block title too,
+// so it is content and must be compared.
+const DOCUSAURUS_STRIP = ['.hash-link', '[class*="admonitionIcon"]', '[class*="codeBlockHeader"]']
 
 // An admonition's heading text is chrome ONLY when it is the bare type word --
 // Docusaurus renders `:::note` as the heading "note" while Asciidoctor renders
