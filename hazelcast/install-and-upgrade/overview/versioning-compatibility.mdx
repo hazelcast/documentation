@@ -1,0 +1,157 @@
+---
+title: "Supported versions"
+sidebar_label: "Versioning and compatibility"
+sidebar_position: 2
+slug: /deploy/versioning-compatibility
+---
+
+Hazelcast Platform can be deployed in a wide range of environments with multiple clients and other components. It is important to ensure you use compatible versions for each part of your Hazelcast deployment.
+
+## Architectures
+
+Hazelcast Platform has been tested on the following system architectures.
+
+| Architecture | Supported |
+| --- | --- |
+| x86\_64 | From Platform 5.3 |
+| AArch64/ARM64 | From Platform 5.3 |
+
+## Operating systems
+
+Hazelcast Platform has been tested on the following operating systems. It may run on others that are not listed here.
+
+| OS | Platform 5.8.0-SNAPSHOT |
+| --- | --- |
+| RHEL 7, 8, 9 | ✓ |
+| Fedora 19, 28, 34 | ✓ |
+| Amazon Linux | ✓ |
+| Debian | ✓ |
+| Ubuntu | ✓ |
+| Windows Server 2019 | ✓ |
+| Windows 10, 11 | Supported for development only |
+| macOS | Supported for development only |
+
+:::note
+
+Windows 10 and 11 and macOS are not suitable for production. Some features are not available or are not supported.
+
+:::
+
+## Virtualization environments
+
+Hazelcast Platform has been tested in the following virtualization environments. It may run on others that are not listed here.
+
+| Environment | Platform 5.8.0-SNAPSHOT |
+| --- | --- |
+| VMWare 8.x | ✓ |
+| Docker 23, 27 | ✓ |
+| Kubernetes (1.4.x or newer) | ✓ |
+| RedHat OpenShift | ✓ |
+
+## Public cloud environments
+
+Hazelcast Platform has been tested in the following public cloud environments. It may run on others that are not listed here.
+
+| Environment | Platform 5.8.0-SNAPSHOT |
+| --- | --- |
+| Amazon Web Services (AWS) | ✓ |
+| Google Cloud Platform (GCP) | ✓ |
+| Microsoft Azure | ✓ |
+| RedHat OpenShift | ✓ |
+
+## Java Development Kits (JDKs)
+
+Hazelcast Platform runs on Java, and supports the following LTS JDKs. It may run on other JDK distributions that are not listed here.
+
+| JDK | Platform 5.8.0-SNAPSHOT |
+| --- | --- |
+| Amazon Corretto 17, 21 and 25 | ✓ |
+| Azul Core 17, 21 and 25 | ✓ |
+| Eclipse Temurin build of OpenJDK 17, 21 and 25 | ✓ |
+| IBM Semeru Runtime 17, 21 and 25 | ✓ |
+| Microsoft build of OpenJDK 17, 21 and 25 | ✓ |
+| Oracle JDK 17, 21 and 25 | ✓ |
+| Red Hat build of OpenJDK 17, 21 and 25 | ✓ |
+
+## Clients and tools
+
+The following table shows compatibility between this version of Hazelcast Platform and Hazelcast administrative tools.
+
+| Tool | Minimum version | Recommended version |
+| --- | --- | --- |
+| Management Center | 5.5 | 5.12-snapshot |
+| Operator | 5.13 | latest-snapshot |
+| CLC | 5.2.0 | 5.5.1 |
+
+The following table shows compatibility between this version of Hazelcast Platform and all official clients.
+
+| Client | Minimum version | Recommended version |
+| --- | --- | --- |
+| Java | 4.0.0 | 5.8.0-SNAPSHOT |
+| .NET | 4.0.0 | 5.7.0 |
+| C++ | 5.3.1 | 5.7.0 |
+| Python | 4.0.0 | 5.7.0 |
+| Node.js | 4.0.0 | 5.6.0 |
+| Go | 1.0.0 | 1.6.0 |
+
+:::note
+
+The Java client JAR is provided in the Hazelcast Platform package and has the same version number. Other clients are released separately.
+
+:::
+
+## Versioning and compatibility guarantees
+
+Hazelcast Platform uses [semantic versioning](https://semver.org/), where versions appear in the following format:
+
+`major.minor.patch`
+
+For example, in Platform version 5.2.1, **5** is the major version, **2** is the minor version, and **1** is the patch version.
+
+This also defines three types of release, with differing levels of backward compatibility:
+
+- Major: This version may include breaking changes.
+- Minor: This version includes backward-compatible functionality.
+- Patch: This version includes backward-compatible bug fixes.
+
+In addition, Hazelcast offers several compatibility guarantees to ensure a predictable upgrade path for your deployment.
+
+### APIs
+
+According to semantic versioning, a Platform job written using the Pipeline API in a previous minor version should compile and have the same behavior in later minor versions.
+
+However, note the following exceptions:
+
+- Classes in the `com.hazelcast.jet.core` package provide only patch-level compatibility guarantees.
+- Types and methods annotated with `@EvolvingApi` and `@Beta` provide only patch-level compatibility guarantee. These are typically new features where the API is subject to further changes.
+- Types and methods annotated with `@PrivateApi`, and classes in the `impl` and `internal` packages do not provide any compatibility guarantees between versions. These APIs are not meant for public use.
+
+### Members
+
+Hazelcast Platform members operating on the same major and minor Platform version are always compatible, regardless of the patch version.
+
+Each minor version is always compatible with the previous minor version.
+
+### Management Center
+
+All 5.x.y versions of Management Center are compatible with Hazelcast Platform 5.x.y versions. We recommend you use a version of Management Center at least as high as the Hazelcast Platform version in your cluster. For example, Management Center 5.1.1 may not support all the features of Hazelcast Platform 5.2, or vice versa. You should generally upgrade to the latest version of Management Center when available and refer to [Management Center release notes](/management-center/5.12-snapshot/release-notes/release-notes) for details on each version.
+
+### Job states
+
+Hazelcast Platform job states are only backward-compatible across the same minor versions. A newer patch version is able to understand the job states only from the previous patch versions of the same minor version.
+
+If you have a running job, using the rolling upgrades feature, you are able to upgrade the cluster to a newer patch version without losing the state of a running job. See [Rolling Upgrades](../upgrade/rolling-upgrades.mdx). Also note that jobs must be resubmitted after a rolling upgrade to a newer minor version since they don't run during upgrades. See [Submitting Jobs](../../develop-and-build/building-data-pipelines/submitting-jobs.mdx).
+
+Hazelcast clients that submit jobs (currently only Java clients) are compatible with members running on the same minor version. This means that a client using an older or newer patch version is able to connect and submit a job to a cluster that's running a different patch version.
+
+### Command line tools
+
+Hazelcast [CLI](../../operate-and-manage/maintaining-a-cluster/cluster-utilities.mdx#hazelcast-command-line-tool) and [cluster admin](../../operate-and-manage/maintaining-a-cluster/cluster-utilities.mdx#using-the-hz-cluster-admin-script) tools are backwards-compatible across the same minor versions.
+
+### Configuration files
+
+XML and YAML configuration files provided with the Hazelcast Platform package are backward-compatible across the same minor versions. After upgrading a cluster to a new minor version, the configuration files for the previous version can be used without any modification.
+
+### Metrics
+
+Hazelcast Platform sends metrics to Management Center and other means such as JMX. The names of these metrics may change across minor versions but not between patch versions.

@@ -1,0 +1,199 @@
+---
+title: "Install Hazelcast Community Edition"
+sidebar_label: "Install Community Edition"
+sidebar_position: 2
+slug: /getting-started/install-hazelcast
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+You can install the Community Edition of Hazelcast using a package manager, Docker, or the binary. Alternatively, you can add Hazelcast as a dependency in your Java project.
+
+:::note
+
+These instructions apply only to the Community Edition. If you have an Enterprise Edition license, follow the instructions in [Install Hazelcast Enterprise Edition](../enterprise-edition/install-enterprise.mdx).
+
+:::
+
+We recommend that you learn more about the benefits of an Enterprise Edition license to ensure that you do not require any of the additional functionality or support before you install Community Edition. If you continue with the Community Edition installation, you can move your Community Edition members to Enterprise Edition at any time if you subsequently want to benefit from the Enterprise Edition functionality without downtime.
+
+For further information on Enterprise Edition features, see [Hazelcast editions and distributions](../../get-started/editions.mdx). To migrate from Community Edition to Enterprise Edition, see [Upgrade to Enterprise Edition](../upgrade/rolling-restart/overview.mdx).
+
+## Distributions
+
+Both slim and full distributions are available. You can access the slim distribution using Docker or by downloading the binary:
+
+- [Use Docker](#use-docker)
+- [Use the binary](#use-the-binary)
+
+See [Hazelcast editions and distributions](../../get-started/editions.mdx#full-slim) for more information.
+
+## Use a package manager
+
+Hazelcast offers package managers for Linux and macOS operating systems.
+
+Package managers are the fastest way to install Hazelcast. This option is for development purposes and is only available for Hazelcast Community Edition. For production, use the other deployment options explained on this page.
+
+1. To install Hazelcast, use the appropriate command for your operating system:
+
+   <Tabs groupId="os">
+   <TabItem value="mac" label="Mac">
+
+   To install on macOS, use the Homebrew package manager.
+
+   ```bash
+   brew tap hazelcast/hz
+   brew trust hazelcast/hz
+   brew install hazelcast@5.8.0-SNAPSHOT
+   ```
+
+   </TabItem>
+   <TabItem value="linux" label="Linux">
+
+   You can use either of these package managers to install Hazelcast, depending on your Linux distribution:
+
+   ```shell title="Debian"
+   sudo apt-get install -y --no-upgrade wget gpg coreutils \
+     && wget -qO - https://repository.hazelcast.com/api/gpg/key/public | gpg --dearmor | sudo tee /usr/share/keyrings/hazelcast-archive-keyring.gpg > /dev/null \
+     && echo "deb [signed-by=/usr/share/keyrings/hazelcast-archive-keyring.gpg] https://repository.hazelcast.com/debian stable main" | sudo tee -a /etc/apt/sources.list \
+     && sudo apt update && sudo apt install hazelcast=5.8.0-SNAPSHOT
+   ```
+
+   ```shell title="RPM"
+   sudo yum -y install wget \
+     && wget https://repository.hazelcast.com/rpm/stable/hazelcast-rpm-stable.repo -O hazelcast-rpm-stable.repo \
+     && sudo mv hazelcast-rpm-stable.repo /etc/yum.repos.d/ \
+     && sudo yum install hazelcast-5.8.0-SNAPSHOT
+   ```
+
+   </TabItem>
+   <TabItem value="windows" label="Windows">
+
+   Hazelcast does not support any Windows package managers.
+
+   To get started with Hazelcast on Windows, you can use [Docker](../../get-started/start-a-local-cluster/get-started-docker.mdx), the [binary distribution](../../get-started/start-a-local-cluster/get-started-binary.mdx), or [Java](../../get-started/start-a-local-cluster/get-started-java.mdx).
+
+   </TabItem>
+   </Tabs>
+2. Check that Hazelcast Platform is correctly installed:
+
+   ```shell
+   hz -V
+   ```
+
+   You should see the version of both Hazelcast and the command line tool.
+
+For more information about the packages, see the [GitHub repository](https://github.com/hazelcast/hazelcast-packaging).
+
+## Use Docker
+
+1. [Install Docker](https://docs.docker.com/get-docker/).
+2. Check that Docker is correctly installed.
+
+   ```bash
+   docker version
+   ```
+
+   If you do not see a version number, see the [Docker documentation](https://docs.docker.com/config/daemon/) for troubleshooting information.
+3. Pull the Hazelcast Docker image:
+
+   ```shell
+   docker pull hazelcast/hazelcast:5.8.0-SNAPSHOT
+   ```
+
+## Use the binary
+
+Download the Hazelcast archive and extract the binaries:
+
+1. Download a package from [hazelcast.com](https://hazelcast.com/community-edition-projects/downloads/?utm_source=docs-website).
+2. Extract the downloaded package.
+
+## Use Java
+
+To install Hazelcast with Java, you can use one of the following:
+
+- Maven
+- JAR file
+- Modular Java
+
+### Use Maven
+
+Hazelcast runs on Java, which means you can add it as a dependency in your Java project.
+
+The Java package includes both a member API and a Java client API. The member API is for [embedded topologies](../overview/choosing-a-deployment-option.mdx) where you want to deploy and manage a cluster in the same Java Virtual Machine (JVM) as your applications. The Java client is for connecting to an existing member in a client/server topology, such as [Hazelcast Cloud](/cloud/overview).
+
+1. Download and install a [supported JDK](../overview/versioning-compatibility.mdx#supported-java-virtual-machines).
+2. Add the following to your `pom.xml` file.
+
+   ```xml conums
+   <dependencies>
+      <dependency>
+          <groupId>com.hazelcast</groupId>
+          <artifactId>hazelcast</artifactId> <1>
+          <version>5.8.0-SNAPSHOT</version> <2>
+      </dependency>
+   </dependencies>
+   ```
+
+   <CodeCallouts>
+
+   1. Hazelcast Community Edition dependency.
+   2. Hazelcast Community Edition version.
+
+   </CodeCallouts>
+
+## Use modular Java
+
+You can use Hazelcast as a module in the [Java Platform Module System](http://openjdk.java.net/projects/jigsaw/) (JPMS).
+
+To run your application with Hazelcast libraries on the module path, use `com.hazelcast.core` for the `hazelcast-5.8.0-SNAPSHOT.jar` module name.
+
+If you use JPMS, it enforces stricter visibility rules and Hazelcast uses the internal Java API to reach the best performance results.
+
+Hazelcast needs the `java.se` module and access to the following Java packages:
+
+- `java.base/jdk.internal.ref`
+- `java.base/java.nio` *(reflective access)*
+- `java.base/sun.nio.ch` *(reflective access)*
+- `java.base/java.lang` *(reflective access)*
+- `jdk.management/com.ibm.lang.management.internal` *(reflective access)*
+- `jdk.management/com.sun.management.internal` *(reflective access)*
+- `java.management/sun.management` *(reflective access)*
+
+You can provide access to these packages by using simple `--add-exports` and `--add-opens` (for reflective access) Java arguments.
+
+```bash title="Run a member on the classpath"
+java --add-modules java.se \
+  --add-exports java.base/jdk.internal.ref=ALL-UNNAMED \
+  --add-opens java.base/java.lang=ALL-UNNAMED \
+  --add-opens java.base/java.nio=ALL-UNNAMED \
+  --add-opens java.base/sun.nio.ch=ALL-UNNAMED \
+  --add-opens java.management/sun.management=ALL-UNNAMED \
+  --add-opens jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED \
+  --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
+  -jar hazelcast-5.8.0-SNAPSHOT.jar
+```
+
+```bash title="Run a member on the module path" conums
+java --add-modules java.se \
+  --add-exports java.base/jdk.internal.ref=com.hazelcast.core \
+  --add-opens java.base/java.lang=com.hazelcast.core \
+  --add-opens java.base/java.nio=com.hazelcast.core \
+  --add-opens java.base/sun.nio.ch=com.hazelcast.core \
+  --add-opens java.management/sun.management=com.hazelcast.core \
+  --add-opens jdk.management/com.ibm.lang.management.internal=com.hazelcast.core \
+  --add-opens jdk.management/com.sun.management.internal=com.hazelcast.core \
+  --module-path lib \ <1>
+  --module com.hazelcast.core/com.hazelcast.core.server.HazelcastMemberStarter
+```
+
+<CodeCallouts>
+
+1. This example requires the `hazelcast-5.8.0-SNAPSHOT.jar` file in the `lib` directory.
+
+</CodeCallouts>
+
+## Next steps
+
+To continue learning about Hazelcast, start a local cluster using [Docker](../../get-started/start-a-local-cluster/get-started-docker.mdx), [the binary](../../get-started/start-a-local-cluster/get-started-binary.mdx), or [Java](../../get-started/start-a-local-cluster/get-started-java.mdx).

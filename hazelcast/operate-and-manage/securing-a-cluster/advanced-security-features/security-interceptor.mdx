@@ -1,0 +1,20 @@
+---
+title: "Security Interceptor"
+sidebar_position: 7
+slug: /security/security-interceptor
+enterprise: true
+---
+
+import PartialSecurityMapSecurityInterceptorJava from '@site/hazelcast/_partials/security-MapSecurityInterceptor.java.mdx';
+
+Hazelcast allows you to intercept every remote operation executed by the client. This lets you add a very flexible custom security logic. To do this, implement `com.hazelcast.security.SecurityInterceptor`.
+
+<PartialSecurityMapSecurityInterceptorJava/>
+
+The `before` method is called before processing the request on the remote server. The `after` method is called after the processing. Exceptions thrown while executing the `before` method are propagated to the client, but exceptions thrown while executing the `after` method are suppressed.
+
+:::note
+
+`AccessControlException` has been deprecated as of Java 17. There is no current planned removal date from Oracle, nor is there an appropriate replacement available. This exception will be replaced in a future major release of Hazelcast.
+
+:::

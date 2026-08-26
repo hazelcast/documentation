@@ -1,0 +1,598 @@
+---
+title: "Using the generic MapLoader"
+sidebar_position: 1
+slug: /mapstore/configuring-a-generic-maploader
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+With the [generic MapLoader](./overview.mdx#options), you can configure a map to cache data from an external system. This topic includes an example of how to configure a map with a generic MapLoader that connects to a MySQL database.
+
+:::note
+
+The objects created in the distributed map are stored as GenericRecord. You can use the `type-name` property to store the data in a POJO (Plain Old Java Object).
+
+:::
+
+For a list of all supported external systems, including databases, see available [data connection types](../data-connections/data-connections-configuration.mdx#connectors).
+
+## Before you begin
+
+You need a [data connection](../data-connections/data-connections-configuration.mdx) that's configured on all cluster members.
+
+## Add dependencies
+
+If you are using a Hazelcast JAR file, you need to ensure the following is added to your classpath:
+
+```xml
+<dependency>
+     <groupId>com.hazelcast</groupId>
+     <artifactId>hazelcast-sql</artifactId>
+</dependency>
+
+<dependency>
+     <groupId>com.hazelcast</groupId>
+     <artifactId>hazelcast-mapstore</artifactId>
+</dependency>
+```
+
+:::note
+
+If you are using the slim distribution, you need to add `hazelcast-mapstore`. If you are using MongoDb, you also need to add `hazelcast-jet-mongodb`.
+
+:::
+
+## Quickstart configuration
+
+This example shows a basic map configuration that uses a data connection called `my-mysql-database`. See [Distributed Map](../distributed-data-structures/ap-data-structures/map/map.mdx) for the details of other properties that you can include in your map configuration.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml conums
+<hazelcast>
+    ...
+    <map name="myMapName">
+        <map-store enabled="true">
+            <class-name>com.hazelcast.mapstore.GenericMapLoader</class-name> <1>
+            <properties>
+                <property name="data-connection-ref">my-mysql-database</property> <2>
+            </properties>
+        </map-store>
+    </map>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml conums
+hazelcast:
+  map:
+    mymapname:
+      map-store:
+        enabled: true
+        class-name: com.hazelcast.mapstore.GenericMapLoader <1>
+        properties:
+            data-connection-ref: my-mysql-database <2>
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java conums
+MapConfig mapConfig = new MapConfig("myMapName");
+MapStoreConfig mapStoreConfig = new MapStoreConfig();
+mapStoreConfig.setClassName("com.hazelcast.mapstore.GenericMapLoader"); <1>
+mapStoreConfig.setProperty("data-connection-ref", "my-mysql-database"); <2>
+mapConfig.setMapStoreConfig(mapStoreConfig);
+instance().getConfig().addMapConfig(mapConfig);
+```
+
+</TabItem>
+</Tabs>
+
+<CodeCallouts>
+
+1. The [class name](./configuration-guide.mdx#class-name) of the generic MapLoader that's built into Hazelcast. This implementation reads from the data connection configuration to create a [SQL mapping](#mapping).
+2. The name of your data connection.
+
+</CodeCallouts>
+
+## SQL mapping for the generic MapLoader {/* #mapping */}
+
+When you configure a map with the generic MapLoader, Hazelcast creates a [SQL mapping with the JDBC connector](../sql/sql-over-jdbc/mapping-to-jdbc.mdx). The name of the mapping is the same name as your map prefixed with `__map-store.`. This mapping is used to read data from the external system, and is removed whenever the configured map is removed. You can also configure this SQL mapping, using [configuration properties](#data-connection-ref).
+
+## Configuration properties for the generic MapLoader {/* #properties */}
+
+These configuration properties allow you to configure the generic MapLoader and its SQL mapping.
+
+:::tip
+
+As well as these properties, you can also configure [general MapStore settings](./configuration-guide.mdx).
+
+:::
+
+:::note
+
+Property names are case-sensitive.
+
+:::
+
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><Anchor id="data-connection-ref"/>`data-connection-ref` (required)</td>
+<td>The name of the data connection that sets up a mapping. Use this property when you have an [existing data connection](../data-connections/data-connections-configuration.mdx) to an external system.</td>
+<td>`''` (empty)</td>
+<td>
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+  <map name="myMapName">
+    <map-store enabled="true">
+      <class-name>com.hazelcast.mapstore.GenericMapLoader</class-name>
+      <properties>
+          <property name="data-connection-ref">my-mysql-database</property>
+      </properties>
+    </map-store>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  map:
+    mymapname:
+      map-store:
+        enabled: true
+        class-name: com.hazelcast.mapstore.GenericMapLoader
+        properties:
+            data-connection-ref: my-mysql-database
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+MapConfig mapConfig = new MapConfig("myMapName");
+
+MapStoreConfig mapStoreConfig = new MapStoreConfig();
+mapStoreConfig.setClassName("com.hazelcast.mapstore.GenericMapLoader");
+mapStoreConfig.setProperty("data-connection-ref", "my-mysql-database");
+
+mapConfig.setMapStoreConfig(mapStoreConfig);
+```
+
+</TabItem>
+</Tabs>
+
+</td>
+</tr>
+<tr>
+<td><Anchor id="external-name"/>`external-name`</td>
+<td>External name of the data (e.g. table or collection) to read from. May be case sensitive, depending on database used.</td>
+<td>The name of the map.</td>
+<td>
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+  <map name="myMapName">
+    <map-store enabled="true">
+      <class-name>com.hazelcast.mapstore.GenericMapLoader</class-name>
+      <properties>
+          <property name="data-connection-ref">my-mysql-database</property>
+          <property name="external-name">test</property>
+      </properties>
+    </map-store>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  map:
+    mymapname:
+      map-store:
+        enabled: true
+        class-name: com.hazelcast.mapstore.GenericMapLoader
+        properties:
+            data-connection-ref: my-mysql-database
+            external-name: test
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+MapConfig mapConfig = new MapConfig("myMapName");
+
+MapStoreConfig mapStoreConfig = new MapStoreConfig();
+mapStoreConfig.setClassName("com.hazelcast.mapstore.GenericMapLoader");
+mapStoreConfig.setProperty("data-connection-ref", "my-mysql-database");
+mapStoreConfig.setProperty("external-name", "test");
+
+mapConfig.setMapStoreConfig(mapStoreConfig);
+```
+
+</TabItem>
+</Tabs>
+
+</td>
+</tr>
+<tr>
+<td><Anchor id="mapping-type"/>`mapping-type`</td>
+<td>SQL connector to use for the mapping. Case sensitive.</td>
+<td>The SQL connector is derived from the data connection in the configuration.</td>
+<td>
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+  <map name="myMapName">
+    <map-store enabled="true">
+      <class-name>com.hazelcast.mapstore.GenericMapLoader</class-name>
+      <properties>
+          <property name="data-connection-ref">my-mysql-database</property>
+          <property name="mapping-type">JDBC</property>
+      </properties>
+    </map-store>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  map:
+    mymapname:
+      map-store:
+        enabled: true
+        class-name: com.hazelcast.mapstore.GenericMapLoader
+        properties:
+            data-connection-ref: my-mysql-database
+            mapping-type: JDBC
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+MapConfig mapConfig = new MapConfig("myMapName");
+
+MapStoreConfig mapStoreConfig = new MapStoreConfig();
+mapStoreConfig.setClassName("com.hazelcast.mapstore.GenericMapLoader");
+mapStoreConfig.setProperty("data-connection-ref", "my-mysql-database");
+mapStoreConfig.setProperty("mapping-type", "JDBC");
+
+mapConfig.setMapStoreConfig(mapStoreConfig);
+```
+
+</TabItem>
+</Tabs>
+
+</td>
+</tr>
+<tr>
+<td><Anchor id="id-column"/>`id-column`</td>
+<td>Name of the column that contains the primary key. May be case sensitive, depending on database used.</td>
+<td>`id`</td>
+<td>
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+  <map name="myMapName">
+    <map-store enabled="true">
+      <class-name>com.hazelcast.mapstore.GenericMapLoader</class-name>
+      <properties>
+          <property name="data-connection-ref">my-mysql-database</property>
+          <property name="id-column">id</property>
+      </properties>
+    </map-store>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  map:
+    mymapname:
+      map-store:
+        enabled: true
+        class-name: com.hazelcast.mapstore.GenericMapLoader
+        properties:
+            data-connection-ref: my-mysql-database
+            id-column: id
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+MapConfig mapConfig = new MapConfig("myMapName");
+
+MapStoreConfig mapStoreConfig = new MapStoreConfig();
+mapStoreConfig.setClassName("com.hazelcast.mapstore.GenericMapLoader");
+mapStoreConfig.setProperty("data-connection-ref", "my-mysql-database");
+mapStoreConfig.setProperty("id-column", "id");
+
+mapConfig.setMapStoreConfig(mapStoreConfig);
+```
+
+</TabItem>
+</Tabs>
+
+</td>
+</tr>
+<tr>
+<td><Anchor id="columns"/>`columns`</td>
+<td>Names of the columns to map. This value must include a subset of columns in the table. Missing columns must have a default value defined. May be case sensitive, depending on database used.</td>
+<td></td>
+<td>
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+  <map name="myMapName">
+    <map-store enabled="true">
+      <class-name>com.hazelcast.mapstore.GenericMapLoader</class-name>
+      <properties>
+          <property name="data-connection-ref">my-mysql-database</property>
+          <property name="columns">name</property>
+      </properties>
+    </map-store>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  map:
+    mymapname:
+      map-store:
+        enabled: true
+        class-name: com.hazelcast.mapstore.GenericMapLoader
+        properties:
+            data-connection-ref: my-mysql-database
+            columns: name
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+MapConfig mapConfig = new MapConfig("myMapName");
+
+MapStoreConfig mapStoreConfig = new MapStoreConfig();
+mapStoreConfig.setClassName("com.hazelcast.mapstore.GenericMapLoader");
+mapStoreConfig.setProperty("data-connection-ref", "my-mysql-database");
+mapStoreConfig.setProperty("columns", "name");
+
+mapConfig.setMapStoreConfig(mapStoreConfig);
+```
+
+</TabItem>
+</Tabs>
+
+</td>
+</tr>
+<tr>
+<td><Anchor id="type-name"/>`type-name`</td>
+<td>The type name of the compact GenericRecord. Use this property to map your record to an existing domain class. Case sensitive.</td>
+<td>`The name of the map.`</td>
+<td>
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+  <map name="myMapName">
+    <map-store enabled="true">
+      <class-name>com.hazelcast.mapstore.GenericMapStore</class-name>
+      <properties>
+          <property name="data-connection-ref">my-mysql-database</property>
+          <property name="type-name">org.example.Person</property>
+      </properties>
+    </map-store>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  map:
+    mymapname:
+      map-store:
+        enabled: true
+        class-name: com.hazelcast.mapstore.GenericMapStore
+        properties:
+            data-connection-ref: my-mysql-database
+            type-name: org.example.Person
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+MapConfig mapConfig = new MapConfig("myMapName");
+
+MapStoreConfig mapStoreConfig = new MapStoreConfig();
+mapStoreConfig.setClassName("com.hazelcast.mapstore.GenericMapStore");
+mapStoreConfig.setProperty("data-connection-ref", "my-mysql-database");
+mapStoreConfig.setProperty("type-name", "org.example.Person");
+
+mapConfig.setMapStoreConfig(mapStoreConfig);
+```
+
+</TabItem>
+</Tabs>
+
+</td>
+</tr>
+<tr>
+<td><Anchor id="single-column-as-value"/>`single-column-as-value`</td>
+<td>If set to `true` and the table has only one column (besides the identifier column), the value of this column will be used as the value in the IMap, instead of `GenericRecord` with only one field.</td>
+<td>`false`</td>
+<td>
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+  <map name="myMapName">
+    <map-store enabled="true">
+      <class-name>com.hazelcast.mapstore.GenericMapStore</class-name>
+      <properties>
+          <property name="data-connection-ref">my-mysql-database</property>
+          <property name="single-column-as-value">true</property>
+      </properties>
+    </map-store>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  map:
+    mymapname:
+      map-store:
+        enabled: true
+        class-name: com.hazelcast.mapstore.GenericMapStore
+        properties:
+            data-connection-ref: my-mysql-database
+            single-column-as-value: true
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+MapConfig mapConfig = new MapConfig("myMapName");
+
+MapStoreConfig mapStoreConfig = new MapStoreConfig();
+mapStoreConfig.setClassName("com.hazelcast.mapstore.GenericMapStore");
+mapStoreConfig.setProperty("data-connection-ref", "my-mysql-database");
+mapStoreConfig.setProperty("single-column-as-value", "true");
+
+mapConfig.setMapStoreConfig(mapStoreConfig);
+```
+
+</TabItem>
+</Tabs>
+
+</td>
+</tr>
+<tr>
+<td><Anchor id="load-all-keys"/>`load-all-keys`</td>
+<td>If set to `true`, all keys will be read during `MapLoader` initialization.</td>
+<td>`true`</td>
+<td>
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+  <map name="myMapName">
+    <map-store enabled="true">
+      <class-name>com.hazelcast.mapstore.GenericMapStore</class-name>
+      <properties>
+          <property name="data-connection-ref">my-mysql-database</property>
+          <property name="load-all-keys">true</property>
+      </properties>
+    </map-store>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  map:
+    mymapname:
+      map-store:
+        enabled: true
+        class-name: com.hazelcast.mapstore.GenericMapStore
+        properties:
+            data-connection-ref: my-mysql-database
+            load-all-keys: true
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+MapConfig mapConfig = new MapConfig("myMapName");
+
+MapStoreConfig mapStoreConfig = new MapStoreConfig();
+mapStoreConfig.setClassName("com.hazelcast.mapstore.GenericMapStore");
+mapStoreConfig.setProperty("data-connection-ref", "my-mysql-database");
+mapStoreConfig.setProperty("load-all-keys", "true");
+
+mapConfig.setMapStoreConfig(mapStoreConfig);
+```
+
+</TabItem>
+</Tabs>
+
+</td>
+</tr>
+</tbody>
+</table>
+
+## Supported backends
+
+The generic MapStore needs a SQL Connector that supports `SELECT`, `UPDATE`, `SINK INTO` and `DELETE` statements.
+
+Officially supported connectors:
+
+- MySQL, PostgreSQL, Microsoft SQL Server, Oracle (it uses JDBC SQL Connector).
+- MongoDB (make sure you have `hazelcast-jet-mongodb` artifact included on the classpath).
+
+## Related resources
+
+- To monitor MapStores for each loaded entry, use the `EntryLoadedListener` interface. See the [Listening for Map Events section](../listening-to-events/object-events.mdx#listening-for-map-events) to learn how you can catch entry-based events.
+- [Map Operations that Trigger Methods on a MapStore](./mapstore-triggers.mdx).
+
+## Next steps
+
+See the [MapStore configuration guide](./configuration-guide.mdx) for details about configuration options, including caching behaviors.

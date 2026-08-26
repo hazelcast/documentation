@@ -1,0 +1,51 @@
+---
+title: "Backups"
+sidebar_position: 1
+slug: /fault-tolerance/backups
+---
+
+Hazelcast distributes your storage and computational data, along with their backups, among the cluster members; this way, if a member is lost, Hazelcast restores the data from these backups. As the data itself, its backups are distributed and stored also in the memory. The distribution happens on the partition level; the data and its backups are stored in the memory partitions. See the [Data Partitioning](../../develop-and-build/architecture/data-partitioning.mdx) and [Partition Grouping](../partition-groups-and-networking/partition-group-configuration.mdx) for more information about the partitioning.
+
+:::important
+
+Hazelcast does not support backup redistribution on a data structure level. Thus, changing the backup count of a nonempty data structure is **not** supported. For example, for a map:
+
+1. increasing the backup count<sup>\[<Anchor id="_footnoteref_1"/>[1](#_footnotedef_1)\]</sup> does **not** create additional copies of existing map entries,
+2. decreasing the backup count<sup>\[[1](#_footnotedef_1)\]</sup> does **not** remove any backups of existing map entries, so some backups will have stale data if the map entries are overwritten, and
+3. if some backups are lost due to node failure, additional copies are **not** created on other nodes to meet the backup count.
+
+:::
+
+When a member in your cluster is lost, Hazelcast redistributes the backups on the remaining members so that every partition has a backup. The number of backups is configurable. Based on the configuration, data can be kept in multiple replicas of a partition.
+
+There are two types of data backups for Hazelcast's standard utility collections such as maps, caches, queues and ringbuffers:
+
+- Synchronous (Sync): Using this type blocks the operations in the cluster until all backups are successfully copied to the members and acknowledgements are received. Therefore, backups are updated before a write(put, set, remove and their async counterparts) operation is completed, provided that the cluster is stable. Sync backup operations have a blocking cost which may lead to latency issues. This is the default type for the data structures mentioned above with the default value "1", i.e., the default number of backups is one.
+- Asynchronous (Async): Using this type does not block operations. They are fire & forget and do not require acknowledgements; the backup operations are performed at some point in time.
+
+See the relevant sections below on how you can configure sync and async backups for the data structures:
+
+- [Maps](../../develop-and-build/distributed-data-structures/ap-data-structures/map/backing-up-maps.mdx)
+- [Caches](../../develop-and-build/distributed-data-structures/ap-data-structures/jcache/icache.mdx#icache-configuration)
+- [MultiMaps](../../develop-and-build/distributed-data-structures/ap-data-structures/multimap.mdx#configuring-multimap)
+- [Queues](../../develop-and-build/distributed-data-structures/ap-data-structures/queue.mdx#configuring-queue), [Priority Queues](../../develop-and-build/distributed-data-structures/ap-data-structures/priority-queue.mdx)
+- [Sets](../../develop-and-build/distributed-data-structures/ap-data-structures/set.mdx#configuring-set), [Lists](../../develop-and-build/distributed-data-structures/ap-data-structures/list.mdx#configuring-list)
+- [Ringbuffers](../../develop-and-build/distributed-data-structures/ap-data-structures/ringbuffer.mdx#backing-up-ringbuffer)
+- [Cardinality Estimators](../../develop-and-build/distributed-data-structures/ai-ml-data-structures/cardinality-estimator-service.mdx)
+- [Vector Collections](../../develop-and-build/distributed-data-structures/ai-ml-data-structures/vector-collections/overview.mdx#configuration)
+
+See [this section](./fault-tolerance.mdx) for backup information about the Hazelcast jobs.
+
+<hr />
+
+<a href="#_footnoteref_1">1</a>
+
+. The backup count of an empty map can only be changed by modifying the
+
+<a href="/hazelcast/5.8-snapshot/configuration/understanding-configuration#static-configuration" className="xref page">static configuration</a>
+
+and
+
+<a href="/hazelcast/5.8-snapshot/maintain-cluster/restart-cluster" className="xref page">restarting the cluster</a>
+
+.

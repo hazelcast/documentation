@@ -1,0 +1,231 @@
+---
+title: "WAN Quickstart"
+sidebar_position: 4
+slug: /wan/quick-start
+enterprise: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+This section provides information about how you can start using WAN Replication with a minimal setup for both [Active-Passive](./modes.mdx#active-passive) and [Active-Active](./modes.mdx#active-active) modes.
+
+## Setting Up an Active-Passive Mode
+
+This mode usually requires configuration only on one of the clusters. Let's say you have two clusters, one in London and the other in Tokyo. You want to replicate the updates between each other and use the one in Tokyo as the active cluster.
+
+1 - Add the following configuration example on your cluster in Tokyo:
+
+<Tabs groupId="java-member-api--xml--yaml">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <wan-replication name="london-wan-rep">
+        <batch-publisher>
+            <publisher-id>londonPublisherId</publisher-id>
+            <cluster-name>london</cluster-name>
+            <target-endpoints>10.3.5.1:5701</target-endpoints>
+        </batch-publisher>
+    </wan-replication>
+
+    <map name="replicatedMap">
+        <wan-replication-ref name="london-wan-rep"/>
+    </map>
+
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```xml
+hazelcast:
+  wan-replication:
+    london-wan-rep:
+      batch-publisher:
+        londonPublisherId:
+          cluster-name: london
+          target-endpoints: 10.3.5.1:5701
+
+  map:
+    replicatedMap:
+      wan-replication-ref: london-wan-rep
+```
+
+</TabItem>
+<TabItem value="java-member-api" label="Java Member API">
+
+```java
+        Config config = new Config();
+        WanBatchPublisherConfig batchPublisherConfig = new WanBatchPublisherConfig()
+                .setPublisherId("londonPublisherId")
+                .setClusterName("london")
+                .setTargetEndpoints("10.3.5.1:5701");
+
+        WanReplicationConfig wrConfig = new WanReplicationConfig()
+                .setName("london-wan-rep")
+                .addBatchReplicationPublisherConfig(batchPublisherConfig);
+
+        config.addWanReplicationConfig(wrConfig);
+
+        config.getMapConfig("replicatedMap").setWanReplicationRef(new WanReplicationRef().setName("london-wan-rep"));
+```
+
+</TabItem>
+</Tabs>
+
+2 - Start your clusters to start using Active-Passive WAN Replication.
+
+Basically, what we did here is defining a WAN Replication configuration (`wan-replication`) and configuring our map to use it (`wan-replication-ref`). As mentioned, this is the minimal configuration example, which is fine for most use cases. There are more configuration options for tuning the WAN Replication; see the [Tuning WAN Replication section](./tuning.mdx).
+
+In the above example, we have configured the map named `replicatedMap` to replicate to the target cluster named `london` on a single endpoint, as specified with the `target-endpoints` element. Notice that the name of `wan-replication` configuration (`london-wan-rep`) is referenced in the `map` configuration using the `wan-replication-ref` element; this is how you make your map to use the WAN Replication feature. For now, only Hazelcast maps and caches support this feature.
+
+The `london` cluster might have more members than the one specified in this example, but only that endpoint will receive the WAN events. In that case and if you want the events to be forwarded to the other cluster members, see the `republishing-enabled` element description in the [Configuring for IMap and ICache section](./configuring-for-map-and-cache.mdx).
+
+This example configuration defines a static endpoint to specify the target cluster member, using the `target-endpoints` element or `setTargetEndpoints()` method, respectively. You can also use Hazelcast's Discovery SPI for WAN Replication to specify endpoints on various cloud infrastructures. See the [Using Discovery SPI section](./defining-wan-replication.mdx#wanbatchreplication-discovery-spi).
+
+## Setting Up an Active-Active Mode
+
+Using the above scenario, this mode requires configuration on both clusters.
+
+1 - Add the following configuration example on your cluster in Tokyo:
+
+<Tabs groupId="java-member-api--xml--yaml">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <cluster-name>tokyo</cluster-name>
+    <wan-replication name="london-wan-rep">
+        <batch-publisher>
+            <publisher-id>londonPublisherId</publisher-id>
+            <cluster-name>london</cluster-name>
+            <target-endpoints>10.3.5.1:5701</target-endpoints>
+        </batch-publisher>
+    </wan-replication>
+
+    <map name="replicatedMap">
+        <wan-replication-ref name="london-wan-rep"/>
+    </map>
+
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```xml
+hazelcast:
+  cluster-name: tokyo
+  wan-replication:
+    london-wan-rep:
+      batch-publisher:
+        londonPublisherId:
+          cluster-name: london
+          target-endpoints: 10.3.5.1:5701
+
+  map:
+    replicatedMap:
+      wan-replication-ref: london-wan-rep
+```
+
+</TabItem>
+<TabItem value="java-member-api" label="Java Member API">
+
+```java
+        Config config = new Config();
+        config.setClusterName("tokyo");
+        WanBatchPublisherConfig batchPublisherConfig = new WanBatchPublisherConfig()
+                .setPublisherId("londonPublisherId")
+                .setClusterName("london")
+                .setTargetEndpoints("10.3.5.1:5701");
+
+        WanReplicationConfig wrConfig = new WanReplicationConfig()
+                .setName("london-wan-rep")
+                .addBatchReplicationPublisherConfig(batchPublisherConfig);
+
+        config.addWanReplicationConfig(wrConfig);
+
+        config.getMapConfig("replicatedMap").setWanReplicationRef(new WanReplicationRef().setName("london-wan-rep"));
+```
+
+</TabItem>
+</Tabs>
+
+2 - Add the following configuration example on your cluster in London:
+
+<Tabs groupId="java-member-api--xml--yaml">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <cluster-name>london</cluster-name>
+    <wan-replication name="tokyo-wan-rep">
+        <batch-publisher>
+            <publisher-id>tokyoPublisherId</publisher-id>
+            <cluster-name>tokyo</cluster-name>
+            <target-endpoints>32.1.1.1:5701</target-endpoints>
+        </batch-publisher>
+    </wan-replication>
+
+    <map name="replicatedMap">
+        <wan-replication-ref name="tokyo-wan-rep"/>
+    </map>
+
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```xml
+hazelcast:
+  cluster-name: london
+  wan-replication:
+    tokyo-wan-rep:
+      batch-publisher:
+        tokyoPublisherId:
+          cluster-name: tokyo
+          target-endpoints: 32.1.1.1:5701
+  map:
+    replicatedMap:
+      wan-replication-ref: tokyo-wan-rep
+```
+
+</TabItem>
+<TabItem value="java-member-api" label="Java Member API">
+
+```java
+        Config config = new Config();
+        config.setClusterName("london");
+        WanBatchPublisherConfig batchPublisherConfig = new WanBatchPublisherConfig()
+                .setPublisherId("tokyoPublisherId")
+                .setClusterName("tokyo")
+                .setTargetEndpoints("32.1.1.1:5701");
+
+        WanReplicationConfig wrConfig = new WanReplicationConfig()
+                .setName("tokyo-wan-rep")
+                .addBatchReplicationPublisherConfig(batchPublisherConfig);
+
+        config.addWanReplicationConfig(wrConfig);
+
+        config.getMapConfig("replicatedMap").setWanReplicationRef(new WanReplicationRef().setName("tokyo-wan-rep"));
+```
+
+</TabItem>
+</Tabs>
+
+3 - Start your clusters to start using Active-Active WAN Replication.
+
+Notice the `cluster-name` configuration element (not the one under the `batch-publisher` element, but the one under the `hazelcast` element); this defines the name of the local Hazelcast cluster. The `cluster-name` defined under the `batch-publisher` element will need to match the name of the remote target cluster, as shown above.
+
+:::important
+
+When WAN replication is enabled between clusters where all members share the same `cluster-name`, WAN event republishing (forwarding) will not be functional. This is because WAN events can only be actioned once for each cluster, and this is tracked by recording the name of each cluster the event passes through. This mechanism prevents an infinite loop of republishing scenario.
+
+:::
+
+As in the Active-Passive example shown in the previous section, this example configuration also uses a static endpoint to specify the target cluster member. See the [Using Discovery SPI section](./defining-wan-replication.mdx#wanbatchreplication-discovery-spi) for information on using the Discovery SPI to specify target members.
+
+As mentioned previously, the above configurations are the minimal ones to get you started. In case you need to configure some additional aspects of your maps or caches that use WAN Replication, see the [Configuring for IMap and ICache section](./configuring-for-map-and-cache.mdx).

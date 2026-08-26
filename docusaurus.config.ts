@@ -112,6 +112,25 @@ const config: Config = {
     // have them substituted per-version at build. Fed from src/variables.ts.
     ['./plugins/example-attributes-plugin.js', {variables, versionedVariables}],
 
+    // Platform docs — migration target #5 and the biggest by a wide margin: 439
+    // pages over 46 Antora modules. The plugin id is the Antora component name
+    // `hazelcast`, because that is the URL segment production serves it at
+    // (/hazelcast/5.8-snapshot/sql/…); the navbar calls it "Platform", which is
+    // the product's name. Its main is a NUMBERED snapshot like MC's — published
+    // under `5.8-snapshot`, displayed `5.8-SNAPSHOT`.
+    //
+    // PHASE 1: the current (main) branch only, so the plugin is stood up and the
+    // whole corpus converted once before the release copies multiply it. The live
+    // release set (5.7 down to 5.3) goes into lib/layout.js VERSIONS.hazelcast,
+    // and `defaultVersion` flips to 'latest-release' when the first one lands —
+    // main is an unreleased snapshot, so the dropdown must land on a release, as
+    // production does. Until then 'current' is the only version there is.
+    versionedDocs({
+      id: 'hazelcast',
+      currentSeg: '5.8-snapshot',
+      currentLabel: '5.8-SNAPSHOT',
+      defaultVersion: 'current',
+    }),
     // Cloud docs — migration target #1. Unversioned: the only version is served
     // at the base path with no version segment, and routeBasePath === the Antora
     // component name, so URLs match production exactly (/cloud/<page>).
@@ -172,6 +191,13 @@ const config: Config = {
       items: [
         {
           type: 'docSidebar',
+          docsPluginId: 'hazelcast',
+          sidebarId: 'defaultSidebar',
+          position: 'left',
+          label: 'Platform',
+        },
+        {
+          type: 'docSidebar',
           docsPluginId: 'management-center',
           sidebarId: 'defaultSidebar',
           position: 'left',
@@ -197,6 +223,14 @@ const config: Config = {
           sidebarId: 'defaultSidebar',
           position: 'left',
           label: 'CLC',
+        },
+        // Version dropdown for the hazelcast (Platform) instance. A single entry
+        // (5.8-SNAPSHOT) while phase 1 runs; the live releases join it as they
+        // are converted.
+        {
+          type: 'docsVersionDropdown',
+          docsPluginId: 'hazelcast',
+          position: 'right',
         },
         // Version dropdown for the operator instance (current + live releases).
         {

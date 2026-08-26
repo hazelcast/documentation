@@ -1,0 +1,14 @@
+```java
+        TopicConfig topicConfig = new TopicConfig();
+        topicConfig.setGlobalOrderingEnabled( true );
+        topicConfig.setStatisticsEnabled( true );
+        topicConfig.setName( "yourTopicName" );
+        MessageListener<String> implementation = new MessageListener<String>() {
+            @Override
+            public void onMessage( Message<String> message ) {
+                // process the message
+            }
+        };
+        topicConfig.addMessageListenerConfig( new ListenerConfig( implementation ) );
+        HazelcastInstance instance = Hazelcast.newHazelcastInstance();
+```

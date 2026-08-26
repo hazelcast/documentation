@@ -1,0 +1,37 @@
+```java
+class EmployeePortable implements Portable {
+
+    private String name;
+    private int age;
+
+    public EmployeePortable() {
+    }
+
+    public EmployeePortable(int age, String name) {
+        this.age = age;
+        this.name = name;
+    }
+
+    public int getFactoryId() {
+        return 666;
+    }
+
+    public int getClassId() {
+        return 2;
+    }
+
+    public void writePortable(PortableWriter writer) throws IOException {
+        writer.writeString("n", name);
+        writer.writeInt("a", age);
+    }
+
+    public void readPortable(PortableReader reader) throws IOException {
+        name = reader.readString("n");
+        age = reader.readInt("a");
+    }
+
+    public int getAge() {
+        return age;
+    }
+}
+```

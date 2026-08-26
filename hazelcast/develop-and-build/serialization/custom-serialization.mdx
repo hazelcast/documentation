@@ -1,0 +1,199 @@
+---
+title: "Custom Serialization"
+sidebar_position: 4
+slug: /serialization/custom-serialization
+---
+
+import PartialSerializationEmployeeStreamSerializerJava from '@site/hazelcast/_partials/serialization-EmployeeStreamSerializer.java.mdx';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import PartialSerializationFooXmlSerializerJava from '@site/hazelcast/_partials/serialization-FooXmlSerializer.java.mdx';
+import PartialSerializationEmployeeByteArraySerializerJava from '@site/hazelcast/_partials/serialization-EmployeeByteArraySerializer.java.mdx';
+
+Hazelcast lets you plug in a custom serializer for serializing your objects. You can use [StreamSerializer](#implementing-streamserializer) and [ByteArraySerializer](#implementing-bytearrayserializer) interfaces for this purpose.
+
+## Implementing StreamSerializer
+
+You can use a stream to serialize and deserialize data by using `StreamSerializer`. This is a good option for your own implementations. It can also be adapted to external serialization libraries like Kryo, JSON and protocol buffers.
+
+### StreamSerializer Example Code 1
+
+First, let's create a simple object.
+
+```java
+public class EmployeeSS {
+    private String surname;
+    private String name;
+
+    public EmployeeSS( String surname ) {
+        this.surname = surname;
+    }
+
+    public String getSurname() {
+        return surname;
+    }
+    public String getName() {
+        return name;
+    }
+}
+```
+
+Now, let's implement StreamSerializer for `Employee` class.
+
+<PartialSerializationEmployeeStreamSerializerJava/>
+
+In practice, classes may have many fields. Just make sure the fields are read in the same order as they are written. The type ID must be unique and greater than or equal to **1**. Uniqueness of the type ID enables Hazelcast to determine which serializer is used during deserialization.
+
+As the last step, let's register the `EmployeeStreamSerializer` in the configuration file `hazelcast.xml/yaml`, as shown below.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <serialization>
+        <serializers>
+            <serializer type-class="EmployeeSS" class-name="EmployeeStreamSerializer" />
+        </serializers>
+    </serialization>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  serialization:
+    serializers:
+      - type-class: EmployeeSS
+        class-name: EmployeeStreamSerializer
+```
+
+</TabItem>
+</Tabs>
+
+:::note
+
+`StreamSerializer` cannot be created for well-known types, such as Long and String and primitive arrays. Hazelcast already registers these types.
+
+:::
+
+### StreamSerializer Example Code 2
+
+Let's take a look at another example implementing `StreamSerializer`.
+
+```java
+public class Foo {
+    private String foo;
+
+    public String getFoo() {
+        return foo;
+    }
+
+    public void setFoo( String foo ) {
+        this.foo = foo;
+    }
+}
+```
+
+Assume that our custom serialization serializes Foo into XML. First you need to implement a `com.hazelcast.nio.serialization.StreamSerializer`. A very simple one that uses XMLEncoder and XMLDecoder could look like the following:
+
+<PartialSerializationFooXmlSerializerJava/>
+
+### Configuring StreamSerializer
+
+Note that `typeId` must be unique because Hazelcast uses it to look up the `StreamSerializer` while it deserializes the object. The last required step is to register the `StreamSerializer` in your Hazelcast configuration. Below are the programmatic and declarative configurations for this step.
+
+```java
+SerializerConfig sc = new SerializerConfig()
+    .setImplementation(new FooXmlSerializer())
+    .setTypeClass(Foo.class);
+Config config = new Config();
+config.getSerializationConfig().addSerializerConfig(sc);
+```
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <serialization>
+        <serializers>
+            <serializer type-class="com.www.Foo" class-name="com.www.FooXmlSerializer" />
+        </serializers>
+    </serialization>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  serialization:
+    serializers:
+      - type-class: com.www.Foo
+        class-name: com.www.FooXmlSerializer
+```
+
+</TabItem>
+</Tabs>
+
+From now on, this Hazelcast example will use `FooXmlSerializer` to serialize Foo objects. In this way, you can write an adapter (StreamSerializer) for any Serialization framework and plug it into Hazelcast.
+
+:::note
+
+See the [Serialization Configuration Wrap-Up section](./serialization-configuration.mdx) for a full description of Hazelcast Serialization configuration elements.
+
+:::
+
+## Implementing ByteArraySerializer
+
+`ByteArraySerializer` exposes the raw ByteArray used internally by Hazelcast. It is a good option if the serialization library you are using deals with ByteArrays instead of streams.
+
+Let's implement `ByteArraySerializer` for the `Employee` class mentioned in [Implementing StreamSerializer](#implementing-streamserializer).
+
+<PartialSerializationEmployeeByteArraySerializerJava/>
+
+### Configuring ByteArraySerializer
+
+As usual, let's register the `EmployeeByteArraySerializer` in the configuration file `hazelcast.xml/yaml`, as shown below.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <serialization>
+        <serializers>
+            <serializer type-class="EmployeeSS" class-name="EmployeeByteArraySerializer" />
+        </serializers>
+    </serialization>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  serialization:
+    serializers:
+      - type-class: Employee
+        class-name: EmployeeByteArraySerializer
+```
+
+</TabItem>
+</Tabs>
+
+:::note
+
+See the [Serialization Configuration Wrap-Up section](./serialization-configuration.mdx) for a full description of Hazelcast Serialization configuration elements.
+
+:::

@@ -1,0 +1,108 @@
+---
+title: "Running Distributed Queries"
+sidebar_position: 2
+slug: /query/overview
+---
+
+Explore the tools that Hazelcast offers for running distributed queries.
+
+## What is a Distributed Query?
+
+In a distributed system such as Hazelcast, data is partitioned across different members in the cluster. As a result, to query that data you have two options:
+
+1. Request all data from members and iterate over it locally until you find what you're looking for.
+2. Build a distributed query that each member can run so that you receive only the data you want.
+
+Distributed queries allow you to request filtered data from members or external data sources without having to receive it all and iterate over it locally.
+
+## Available Tools
+
+Hazelcast offers the following tools for running distributed queries, depending on your use case:
+
+- [SQL](../sql/sql-overview.mdx): Use SQL syntax to query your cluster for data in map entries or query external systems such as Apache Kafka.
+- [Predicates API](../sql/predicate-overview.mdx): Use a client API to query your cluster for data in map entries.
+
+  :::note
+
+  In addition to the Java-based Predicates API, Hazelcast also supports [SQL](../sql/sql-overview.mdx) statements and functions, and streaming SQL queries.
+
+  :::
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th>SQL</th>
+<th>Predicates API</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>Can query data in external sources</th>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<th>Can query nested object fields</th>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<th>Can query nested object fields with cyclic dependencies</th>
+<td>No</td>
+<td>Yes</td>
+</tr>
+<tr>
+<th>Can query JSON data in map entries</th>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<th>Supported Hazelcast clients</th>
+<td>
+
+Java
+
+Node.js
+
+Python
+
+</td>
+<td>All clients</td>
+</tr>
+</tbody>
+</table>
+
+## Supported SQL Queries
+
+Hazelcast supports the following queries with SQL.
+
+| Query | Description |
+| --- | --- |
+| Ad-hoc queries | Query large datasets either in one or multiple systems and/or run aggregations on them to get deeper insights. |
+| Streaming queries, also known as continuous queries. | Keep an open connection to a streaming data source and run a continuous query to get near real-time updates. |
+| Federated queries | Query different datasets such as Kafka topics and Hazelcast maps, using a single query. Normally, querying in SQL is database or dataset-specific. However, with [mappings](#mappings), you can pull information from different sources to present a more complete picture. |
+
+## Supported Predicates Queries
+
+With the Predicates API, you can use the following queries:
+
+- Ad-hoc queries (also known as point queries or OLTP queries)
+- Batch querying (also known as OLAP queries)
+
+:::note
+
+If you need to do streaming or federated queries, use SQL.
+
+:::
+
+## Related Resources
+
+To learn more about SQL in Hazelcast, see the following resources:
+
+- [SQL](../sql/sql-overview.mdx)
+- [SQL Tutorial](../../get-started/get-started-with-sql/get-started-sql.mdx)
+
+To learn more about the Predicates API, see the following resources:
+
+- [Predicates API](../sql/predicate-overview.mdx)

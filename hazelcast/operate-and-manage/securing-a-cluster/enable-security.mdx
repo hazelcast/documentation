@@ -1,0 +1,54 @@
+---
+title: "Enabling Security"
+sidebar_position: 4
+slug: /security/enable-security
+enterprise: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+With Hazelcast's extensible security you can:
+
+- authenticate both cluster members and clients, and
+- perform access control checks on client operations.
+
+You can control access based on roles assigned to clients and client endpoint address.
+
+You can enable security declaratively or programmatically, as shown below.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <security enabled="true">
+    ...
+    </security>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  security:
+    enabled: true
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+Config cfg = new Config();
+SecurityConfig securityCfg = cfg.getSecurityConfig();
+securityCfg.setEnabled( true );
+```
+
+</TabItem>
+</Tabs>
+
+For information on how to set your Hazelcast Enterprise Edition license, see [Managing Enterprise license keys](../../install-and-upgrade/enterprise-edition/enterprise-licenses.mdx).

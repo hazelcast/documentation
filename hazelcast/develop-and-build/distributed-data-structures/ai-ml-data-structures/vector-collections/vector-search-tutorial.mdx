@@ -1,0 +1,164 @@
+---
+title: "Vector search tutorial"
+sidebar_position: 2
+slug: /data-structures/vector-search-tutorial
+enterprise: true
+beta: true
+---
+
+This tutorial shows you how to use Enterprise Edition to build an image search system. This solution uses the [CLIP sentence transformer](https://huggingface.co/sentence-transformers/clip-ViT-B-32) to map images and text onto a shared, 512-dimensional vector space.
+
+This tutorial uses:
+
+- A Hazelcast pipeline that consumes unstructured data (images), computes embeddings using Python, and stores them as vectors in a Hazelcast Enterprise `VectorCollection` data structure.
+- A Jupyter notebook that implements text-based image searching using a Hazelcast Python client.
+
+The ingestion pipeline has the following high level components:
+
+1. Directory Watcher detects the arrival of new images and creates an event containing the name of the new image.
+2. A `mapUsingPython` stage in which images are retrieved and converted into vectors using the previously mentioned CLIP sentence transformer.
+3. A sink which stores the image vectors, along with their URLs, in a Hazelcast `VectorCollection`.
+
+The diagram below shows you how the components fit together and the processing steps each component performs.
+
+![Tutorial Blueprint](./images/TutorialBlueprint.gif)
+
+## Prerequisites
+
+To complete this tutorial, you will need the following:
+
+- [Java Developer Kit](https://www.oracle.com/java/technologies/downloads/) 17 or later
+- A Java IDE (we suggest [IntelliJ IDEA](https://www.jetbrains.com/idea/))
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- A Hazelcast Enterprise license key with "Advanced AI" enabled
+
+  - [Get a Hazelcast Enterprise trial license.](https://hazelcast.com/get-started/?utm_source=docs-website)
+
+You will also need basic knowledge of both Java and Python to complete the hands-on sections in this tutorial.
+
+:::note
+
+This tutorial environment downloads several Python packages and Docker images. You will need a good internet connection to run it.
+
+:::
+
+## Pipeline References
+
+This tutorial makes use of the Hazelcast Pipeline API. If you are not familiar with the structure of a pipeline, refer to the links below.
+
+- [https://docs.hazelcast.com/hazelcast/latest/pipelines/overview](https://docs.hazelcast.com/hazelcast/latest/pipelines/overview)
+- [https://docs.hazelcast.org/docs/latest/javadoc/com/hazelcast/jet/pipeline/StreamStage.html](https://docs.hazelcast.org/docs/latest/javadoc/com/hazelcast/jet/pipeline/StreamStage.html)
+
+## Tutorial Setup
+
+1. Download the GitHub repo for this tutorial: [https://github.com/hazelcast-guides/hazelcast-image-search](https://github.com/hazelcast-guides/hazelcast-image-search)
+2. Download the CLIP model
+
+   ```sh
+   docker compose run download-model
+   ```
+
+   The model we will be using to perform embedding is almost 500 MB. To speed up everything that uses the model, you can download it ahead of time.
+3. Verify that the *models* folder of the project has been populated.
+4. Install Hazelcast license
+
+   This Docker Compose project is configured to read the license from the default Docker Compose property file, *.env*.
+
+   Create *.env* (note the file name begins with a *dot*) in the project base directory. Set the *HZ\_LICENSEKEY* variable to your license, as shown below.
+
+   ```sh
+   HZ_LICENSEKEY=Your-License-Here
+   ```
+
+## Create `VectorCollection`
+
+1. Review the `VectorCollection` configuration in the file `hazelcast.yaml`.
+
+   ```yaml
+   hazelcast:
+     properties:
+       hazelcast.logging.type: log4j2
+       hazelcast.partition.count: 13
+
+     jet:
+       enabled: True
+       resource-upload-enabled: True
+
+     vector-collection:
+       images:
+         indexes:
+           - name: semantic-search
+             dimension: 512
+             metric: COSINE
+   ```
+
+   - `hazelcast.partition.count`: Vector search performs better with fewer partitions. On the other hand, fewer partitions means larger partitions, which can cause problems during migration. A discussion of the tradeoffs can be found [here](https://docs.hazelcast.com/hazelcast/latest/data-structures/vector-search-overview#partition-count-impact).
+   - `jet`: This is the Hazelcast stream processing engine. Hazelcast pipelines are a scalable way to rapidly ingest or process large amounts of data. This example uses a pipeline to compute embeddings and load them into a vector collection, so stream processing must be enabled.
+   - `vector-collection`: If you are using a vector collection, you must configure the index settings. There are no defaults. In this case, the name of the collection is `images` and it has one index, which is called `semantic-search`. The dimension and distance metric are dependent on the embedding being used. The `dimension` must match the size of the vectors produced by the embedding. The `metric` defines the algorithm used to compute the distance between 2 vectors and it must match the one used to train the embedding. This tutorial uses the CLIP sentence transformer for embeddings. CLIP uses a dimension of 512 and cosine distance metric (literally the cosine of the angle between 2 vectors, adjusted to be non-negative). For more detail on supported options, see [Vector Collection](./overview.mdx).
+2. Start the tutorial environment.
+
+   ```sh
+   docker compose up -d
+   ```
+
+   This launches Hazelcast Platform, Hazelcast Management Center, and the Web server. Hazelcast Management Center is accessible at `http://localhost:8080`.
+3. Using your Java IDE, open `ImagesIngestPipeline.java` in the `image-ingest-pipeline` module. Follow the guidance and instructions in the file.
+4. Deploy the pipeline
+
+   1. build the project: `mvn clean package`
+   2. deploy the pipeline: `docker compose run submit-image-loader`
+   3. monitor the logs: `docker compose logs --follow hz`
+   4. check the job status: Open Hazelcast Management Center. Navigate to **Stream Processing \> Jobs** and select the image ingestion job.
+
+      :::note
+
+      Once you have deployed the pipeline, it will take a while for the status to change from **Starting** to **Running** (up to 5 minutes) because Hazelcast has to download and install many Python packages to support the embedding. You will see something like the following in the hazelcast logs when the Python stream stage has initialized.
+
+      ```bash
+      hazelcast-image-search-hz-1  | 2024-07-17 19:18:41,881 [ INFO] [hz.magical_joliot.cached.thread-7] [c.h.j.python]: [198.51.100.3]:5701 [dev] [5.8.0-SNAPSHOT] Started Python process: 246
+      hazelcast-image-search-hz-1  | 2024-07-17 19:18:41,881 [ INFO] [hz.magical_joliot.cached.thread-3] [c.h.j.python]: [198.51.100.3]:5701 [dev] [5.8.0-SNAPSHOT] Started Python process: 245
+      hazelcast-image-search-hz-1  | 2024-07-17 19:18:43,786 [ INFO] [hz.magical_joliot.cached.thread-7] [c.h.j.python]: [198.51.100.3]:5701 [dev] [5.8.0-SNAPSHOT] Python process 246 listening on port 39819
+      hazelcast-image-search-hz-1  | 2024-07-17 19:18:43,819 [ INFO] [hz.magical_joliot.cached.thread-3] [c.h.j.python]: [198.51.100.3]:5701 [dev] [5.8.0-SNAPSHOT] Python process 245 listening on port 39459
+      ```
+
+      :::
+5. Copy some images from the `images` folder into the `www` folder. Check the job status in Management Center. You will see a new pipeline event for each image.
+
+   :::note
+
+   A solution pipeline is available in the `hazelcast.platform.labs.image.similarity.solution` package. You can also choose to bypass building the pipeline and directly deploy the solution by running `docker compose run submit-image-loader-solution`
+
+   :::
+
+## Perform a Nearest Neighbor Search
+
+You need to use a Jupyter notebook for the remaining steps.
+
+1. Retrieve the login URL for Jupyter from the logs
+
+   ```sh
+   docker compose logs jupyter
+   ```
+
+   You will see the following output:
+
+   ```sh
+   hazelcast-image-search-jupyter-1  | [C 2024-07-17 19:57:47.478 ServerApp]
+   hazelcast-image-search-jupyter-1  |
+   hazelcast-image-search-jupyter-1  |     To access the server, open this file in a browser:
+   hazelcast-image-search-jupyter-1  |         file:///root/.local/share/jupyter/runtime/jpserver-1-open.html
+   hazelcast-image-search-jupyter-1  |     Or copy and paste one of these URLs:
+   hazelcast-image-search-jupyter-1  |         http://localhost:8888/tree?token=7a4d2794d4135eaa88ee9e9642e80e7044cb5c213717e2be
+   hazelcast-image-search-jupyter-1  |         http://127.0.0.1:8888/tree?token=7a4d2794d4135eaa88ee9e9642e80e7044cb5c213717e2be
+   ```
+2. Copy the URL from the output and paste it into a browser window. This will bring up a Jupyter notebook. Double-click on the "Hazelcast Image Similarity" notebook to open it and follow the directions there.
+
+## Summary
+
+You should now be able to load unstructured data into a Hazelcast vector collection and perform similarity searches.
+
+## Known Issues
+
+1. If an image is removed from the `www` directory, it will not be removed from the vector collection. This is because the underlying Java WatcherService is not detecting the delete events.
+2. If too many images are dumped into `www` at the same time, the pipeline will break with a 'grpc max message size exceeded' message. The solution can safely handle 200-250 images at the same time. This is a known issue with the Python integration that will be addressed in a future release.
+3. Deploying the pipeline can take 2-10 minutes depending on your internet connection. This is due to the need to download many Python packages.

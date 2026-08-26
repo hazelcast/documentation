@@ -1,0 +1,228 @@
+---
+title: "CREATE MAPPING"
+sidebar_label: "`CREATE MAPPING`"
+sidebar_position: 6
+slug: /sql/create-mapping
+---
+
+import PartialSqlWarnings from '@site/hazelcast/_partials/sql-warnings.mdx';
+
+The CREATE MAPPING statement creates a table that stores essential metadata about a source's data model, data connection or connection parameters, and serialization formats so that the SQL service can connect to the data source and query it.
+
+## Syntax Summary
+
+This code block is a quick reference with all the [parameters](#parameters) that you can use with the `CREATE MAPPING` statement.
+
+See some [practical examples](#examples).
+
+```sql
+CREATE [OR REPLACE] MAPPING [IF NOT EXISTS] mapping_name
+[EXTERNAL NAME external_name]
+[ ( column_name column_type [EXTERNAL NAME external_column_name] [, ...] ) ]
+{TYPE type_identifier | DATA CONNECTION data_connection_name [OBJECT TYPE resource_type]}
+[ OPTIONS ( 'option_name' = 'option_value' [, ...] ) ]
+```
+
+## Parameters
+
+The `CREATE MAPPING` statement accepts the following parameters.
+
+You must provide the following:
+
+- `mapping_name`
+- `type_identifier` or `data_connection_name`
+
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`OR REPLACE`</td>
+<td>Overwrite an existing mapping of the same name, if it exists.</td>
+<td>
+
+```sql
+CREATE OR REPLACE MAPPING myMap
+TYPE IMap
+OPTIONS (
+    'keyFormat'='varchar',
+    'valueFormat'='int');
+```
+
+</td>
+</tr>
+<tr>
+<td>`IF NOT EXISTS`</td>
+<td>Create a new mapping only if a mapping of the same name does not already exist.</td>
+<td>
+
+```sql
+CREATE MAPPING IF NOT EXISTS myMap
+TYPE IMap
+OPTIONS (
+    'keyFormat'='varchar',
+    'valueFormat'='int');
+```
+
+</td>
+</tr>
+<tr>
+<td>`mapping_name`</td>
+<td>Name of the mapping, which you can use to query the data.</td>
+<td>
+
+```sql
+CREATE MAPPING myMappingName
+TYPE IMap
+OPTIONS (
+    'keyFormat'='varchar',
+    'valueFormat'='int');
+```
+
+</td>
+</tr>
+<tr>
+<td>`external_name`</td>
+<td>An optional name that identifies the object or resource in the external system for which the mapping is created. For example, for a Kafka connector, the identifier is the topic name. For a JDBC connector, the identifier may be the name of a table, view, or other relation. By default, this parameter is equal to the mapping name.</td>
+<td></td>
+</tr>
+<tr>
+<td>`column_name`, `column_type`</td>
+<td>The name and data type of the column.</td>
+<td>
+
+```sql
+CREATE MAPPING myMap (
+    name VARCHAR,
+    id INT
+)
+TYPE IMap
+OPTIONS (
+    'keyFormat'='varchar',
+    'valueFormat'='json-flat');
+```
+
+</td>
+</tr>
+<tr>
+<td>`external_column_name`</td>
+<td>An optional name of a column. If omitted, Hazelcast assumes this name is equal to the `column_name` parameter. For key-value connectors (Kafka, IMap), the key's and value's fields are prefixed by `__key` and `this`.</td>
+<td></td>
+</tr>
+<tr>
+<td>`type_identifier`</td>
+<td>The connector to use to map the data. For example, if you use the `IMap` type, data is mapped to a Hazelcast map.</td>
+<td>
+
+```sql
+CREATE MAPPING myMap
+TYPE IMap
+OPTIONS (
+    'keyFormat'='varchar',
+    'valueFormat'='int');
+```
+
+</td>
+</tr>
+<tr>
+<td>`data_connection_name`</td>
+<td>An existing data connection that is used to connect to the external system.</td>
+<td>
+
+```sql
+CREATE MAPPING my_transactions_topic
+DATA CONNECTION myKafkaConnection
+OPTIONS (
+    'keyFormat' = 'bigint',
+    'valueFormat' = 'json-flat');
+```
+
+</td>
+</tr>
+<tr>
+<td>`resource_type`</td>
+<td>An optional name of the type of resource in the external system. For a JDBC connector, the resource may be a table, view, or other data structure. For a Kafka connector, the resource is a topic.</td>
+<td>
+
+```sql
+CREATE MAPPING my_transactions_topic (
+    __key BIGINT
+    transactionType VARCHAR,
+    amount INT)
+DATA CONNECTION myKafkaConnection
+OBJECT TYPE topic
+OPTIONS (
+    'keyFormat' = 'bigint',
+    'valueFormat' = 'json-flat');
+```
+
+</td>
+</tr>
+<tr>
+<td>`'option_name'`, `'option_value'`</td>
+<td>Data connection or connector parameters. Check the [reference page](../../../connectors/connectors.mdx) for your connector to find out what values you can use. These parameters must be enclosed in single quotes (a SQL `VARCHAR` literal).</td>
+<td>
+
+```sql
+CREATE MAPPING my_topic(
+    __key BIGINT,
+    ticker VARCHAR,
+    amount INT)
+TYPE Kafka
+OPTIONS (
+    'keyFormat' = 'bigint',
+    'valueFormat' = 'json-flat',
+    'bootstrap.servers' = '127.0.0.1:9092');
+```
+
+</td>
+</tr>
+</tbody>
+</table>
+
+## Permissions
+
+<Badge type="enterprise"/>
+
+If [security](../../../operate-and-manage/securing-a-cluster/enable-security.mdx) is enabled, you can grant or deny permission for certain clients to use this statement. See [SQL Permissions](../../../operate-and-manage/securing-a-cluster/client-authorization.mdx#sql-permission).
+
+## Auto-resolving Columns and Options
+
+Some connectors can resolve the column names and values of an object either by using the options you provide or by sampling a random record in the input. For example, if you give Hazelcast the name of a map that contains Java objects, Hazelcast will resolve the columns by reflecting that class.
+
+If the connector fails to resolve the columns, the statement will fail.
+
+## Examples
+
+This section lists some example SQL queries that show you how to use the `CREATE MAPPING` statement.
+
+### Create a Mapping to a Map
+
+See [Mapping to Hazelcast Maps](../sql-over-maps/mapping-to-maps.mdx).
+
+### Create a Mapping to a Kafka Topic
+
+See [Mapping to Kafka](../sql-over-kafka/mapping-to-kafka.mdx).
+
+### Create a Mapping to a File
+
+See [Creating a Mapping to a File System](../sql-over-file-systems/mapping-to-a-file-system.mdx).
+
+### Create a Mapping to a Database
+
+See [Mapping to JDBC](../sql-over-jdbc/mapping-to-jdbc.mdx).
+
+### Change a Mapping
+
+If you want to overwrite an existing mapping, use the `CREATE OR REPLACE MAPPING` statement.
+
+<PartialSqlWarnings/>
+
+```sql
+CREATE OR REPLACE MAPPING myMap TYPE IMap OPTIONS ('keyFormat'='varchar','valueFormat'='int');
+```

@@ -1,0 +1,7 @@
+```java
+        HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance();
+        ITopic<Object> news = hazelcastInstance.getTopic( "news" );
+        LocalTopicStats topicStatistics = news.getLocalTopicStats();
+        System.out.println( "number of publish operations = "
+                + topicStatistics.getPublishOperationCount() );
+```

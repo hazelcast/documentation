@@ -1,0 +1,89 @@
+---
+title: "TLS Authentication"
+sidebar_position: 5
+slug: /security/tls-authentication
+enterprise: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Hazelcast is able to protect network communication using TLS. TLS mutual authentication is also supported, which means that not only does the server side have to identify itself to a client (member, client, REST client, etc.), but the client side also needs to prove its identity by using a TLS (X.509) certificate.
+
+The `tls` authentication type verifies during Hazelcast authentication that the incoming connection has already authenticated the client's TLS certificate.
+
+This authentication type is able to parse a role name (or names) from the client's certificate subject DN. The `roleAttribute` property specifies the attribute name (a part of the Subject's DN) to be used as a role name in Hazelcast.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <network>
+        <ssl enabled="true">
+            <properties>
+                <property name="mutualAuthentication">REQUIRED</property>
+                <property name="keyStore">/opt/hazelcast-keystore.p12</property>
+                <property name="keyStorePassword">secret.123</property>
+                <property name="trustStore">/opt/hazelcast-truststore.p12</property>
+                <property name="trustStorePassword">changeit</property>
+            </properties>
+        </ssl>
+    </network>
+    <security enabled="true">
+        <realms>
+            <realm name="tlsRealm">
+                <authentication>
+                    <tls roleAttribute="cn" />
+                </authentication>
+            </realm>
+        </realms>
+        <client-authentication realm="tlsRealm"/>
+    </security>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  network:
+    ssl:
+      enabled: true
+      properties:
+        mutualAuthentication: REQUIRED
+        keyStore: /opt/hazelcast-keystore.p12
+        keyStorePassword: secret.123
+        trustStore: /opt/hazelcast-truststore.p12
+        trustStorePassword: changeit
+  security:
+    enabled: true
+    realms:
+      - name: tlsRealm
+        authentication:
+          tls:
+            roleAttribute: cn
+    client-authentication:
+      realm: tlsRealm
+```
+
+</TabItem>
+</Tabs>
+
+This `tls` authentication uses `cn` attribute from the subject DN as the role name. For example, if the subject DN in the certificate is `cn=admin,ou=Devs,o=Hazelcast` then the `"admin"` role name is assigned to the client.
+
+<table>
+<tbody>
+<tr>
+<td>Option Name</td>
+<td>Default Value</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`roleAttribute`</td>
+<td>`cn`</td>
+<td>Name of an attribute in client certificate's distinguished name (DN), where the attribute value is used as a Role name.</td>
+</tr>
+</tbody>
+</table>

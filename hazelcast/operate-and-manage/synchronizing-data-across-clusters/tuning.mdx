@@ -1,0 +1,743 @@
+---
+title: "Fine-Tuning WAN Replication"
+sidebar_position: 8
+slug: /wan/tuning
+enterprise: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+WAN Replication will work fine for most use cases with the default settings. However, there are some specific use cases where you might want to change the behavior of WAN Replication to suit your needs. You might also be interested in the details how WAN Replication works. If that is the case, this section is for you.
+
+## Batch Size
+
+The maximum size of events that are sent in a single batch can be changed depending on your needs. The batch of events is not sent until this size is reached or enough time has elapsed. The default value for batch size is `500`. The batch size can be set for each WAN publisher separately by modifying the related `WanBatchPublisherConfig`.
+
+Below is the configuration for changing the value of the element:
+
+<Tabs groupId="config-format">
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  wan-replication:
+    london-wan-rep:
+      batch-publisher:
+        cluster-name: london
+        batch-size: 1000
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <wan-replication name="london-wan-rep">
+        <batch-publisher>
+            <cluster-name>london</cluster-name>
+            <batch-size>1000</batch-size>
+        </batch-publisher>
+    </wan-replication>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+WanReplicationConfig wanConfig = config.getWanReplicationConfig("london-wan-rep");
+WanBatchPublisherConfig publisherConfig = new WanBatchPublisherConfig()
+        .setClusterName("london")
+        .setBatchSize(1000);
+wanConfig.addWanPublisherConfig(publisherConfig);
+```
+
+</TabItem>
+</Tabs>
+
+## Batch Maximum Delay
+
+When using the built-in WAN batch replication, if the number of WAN replication events generated does not reach [Batch Size](#batch-size), they are sent to the target cluster after a certain amount of time is passed. You can set this duration in milliseconds using this batch maximum delay configuration. Default value of for this duration is 1 second (1000 milliseconds).
+
+Maximum delay can be set for each target cluster by modifying related `WanBatchPublisherConfig`.
+
+You can change this element using the configuration as shown below.
+
+<Tabs groupId="config-format">
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  wan-replication:
+    london-wan-rep:
+      batch-publisher:
+        cluster-name: london
+        batch-max-delay-millis: 2000
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <wan-replication name="london-wan-rep">
+        <batch-publisher>
+            <cluster-name>london</cluster-name>
+            <batch-max-delay-millis>2000</batch-max-delay-millis>
+        </batch-publisher>
+    </wan-replication>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+WanReplicationConfig wanConfig = config.getWanReplicationConfig("london-wan-rep");
+WanBatchPublisherConfig publisherConfig = new WanBatchPublisherConfig()
+        .setClusterName("london")
+        .setBatchMaxDelayMillis(2000);
+wanConfig.addWanPublisherConfig(publisherConfig);
+```
+
+</TabItem>
+</Tabs>
+
+## Response Timeout
+
+After a replication event is sent to the target cluster, the source member waits for an acknowledgement of the delivery of the event to the target. If the confirmation is not received inside a timeout duration window, the event is resent to the target cluster. Default value of this duration is `60000` milliseconds.
+
+You can change this duration depending on your network latency for each target cluster by modifying related `WanBatchPublisherConfig`.
+
+Below is an example configuration:
+
+<Tabs groupId="config-format">
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  wan-replication:
+    london-wan-rep:
+      batch-publisher:
+        cluster-name: london
+        response-timeout-millis: 5000
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <wan-replication name="london-wan-rep">
+        <batch-publisher>
+            <cluster-name>london</cluster-name>
+            <response-timeout-millis>5000</response-timeout-millis>
+        </batch-publisher>
+    </wan-replication>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+WanReplicationConfig wanConfig = config.getWanReplicationConfig("london-wan-rep");
+WanBatchPublisherConfig publisherConfig = new WanBatchPublisherConfig()
+        .setClusterName("london")
+        .setResponseTimeoutMillis(5000);
+wanConfig.addWanPublisherConfig(publisherConfig);
+```
+
+</TabItem>
+</Tabs>
+
+## Queue Capacity
+
+For clusters with high data mutation rates or with long expected periods of disrupted connectivity between clusters, you might need to increase the replication queue size. The default queue size for replication queues is `10000`. This means, if you have heavy put/update/remove rates or if the target/passive cluster is unavailable for too long, you might exceed the queue size so that the oldest, not yet replicated, updates might get lost. Separate queues are used for each WAN Replication configured for IMap and ICache.
+
+Two queues are used for each WAN Replication: Primary and Backup. The primary queue is offered events from owned partitions, while the backup queue is offered events from partitions owned by other members. The configured queue capacity applies separately to each of the primary and backup event queues. Metrics for WAN outbound queue sizes report the primary event queue size.
+
+:::note
+
+During partition migrations, particularly when a cluster size shrinks, some elements in the backup events queue can be promoted to the primary events queue, resulting in an increased outbound queue size which can exceed the configured queue capacity. The total memory footprint of both queues combined will not increase in this case as the backup events queue was already in memory, so this temporary increase in the primary queue size is expected and necessary to prevent WAN event data loss.
+
+:::
+
+Queue capacity can be set for each target cluster by modifying the related `WanBatchPublisherConfig`.
+
+You can change this element using the configuration as shown below.
+
+<Tabs groupId="config-format">
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  wan-replication:
+    london-wan-rep:
+      batch-publisher:
+        cluster-name: london
+        queue-capacity: 15000
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <wan-replication name="london-wan-rep">
+        <batch-publisher>
+            <cluster-name>london</cluster-name>
+            <queue-capacity>15000</queue-capacity>
+        </batch-publisher>
+    </wan-replication>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+WanReplicationConfig wanConfig = config.getWanReplicationConfig("london-wan-rep");
+WanBatchPublisherConfig publisherConfig = new WanBatchPublisherConfig()
+        .setClusterName("london")
+        .setQueueCapacity(15000);
+wanConfig.addWanPublisherConfig(publisherConfig);
+```
+
+</TabItem>
+</Tabs>
+
+Note that you can clear a member's WAN replication event queue. It can be initiated through Management Center's [Clear Queues action](/management-center/5.12-snapshot/clusters/wan-replication) or Hazelcast's REST API. Below is the URL for its REST call:
+
+```none
+http://member_ip:port/hazelcast/rest/wan/clearWanQueues
+```
+
+:::caution[Deprecation Notice for the Community Edition REST API]
+
+The Community Edition REST API has been deprecated and will be removed as of Hazelcast version 7.0. An improved Enterprise version of this feature is available and actively being developed. For more information, see [Enterprise REST API](../../clients-and-apis/apis/enterprise-rest-api/overview.mdx).
+
+:::
+
+You need to add the following URL-encoded parameters to the request in the following order separated by "&";
+
+- Cluster name
+- Cluster password
+- Name of the WAN replication configuration
+- WAN replication publisher ID/target cluster name
+
+This may be useful, for instance, to release the consumed heap if you know that the target cluster is being shut down, decommissioned, put out of use and it will never come back. Or, when a failure happens and queues are not replicated anymore, you could clear the queues using this clearing action.
+
+## Queue Full Behavior
+
+You can also configure the policy to be applied when the WAN Replication event queues are full. The following policies are supported:
+
+- `DISCARD_AFTER_MUTATION`: If you select this option, the new WAN events generated by the member are dropped and not replicated to the target cluster when the WAN event queues are full.
+- `THROW_EXCEPTION`: If you select this option, the WAN queue size is checked before each supported mutating operation (like `IMap.put()`, `ICache.put()`). If one the queues of target cluster is full, `WanReplicationQueueFullException` is thrown and the operation is not allowed.
+- `THROW_EXCEPTION_ONLY_IF_REPLICATION_ACTIVE`: Its effect is similar to that of `THROW_EXCEPTION`. But, it throws exception only when WAN replication is active. It discards the new events if WAN replication is stopped.
+
+The following is an example configuration:
+
+<Tabs groupId="config-format">
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  wan-replication:
+    london-wan-rep:
+      batch-publisher:
+        cluster-name: london
+        queue-full-behavior: DISCARD_AFTER_MUTATION
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <wan-replication name="london-wan-rep">
+        <batch-publisher>
+            <cluster-name>london</cluster-name>
+            <queue-full-behavior>DISCARD_AFTER_MUTATION</queue-full-behavior>
+        </batch-publisher>
+    </wan-replication>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+WanReplicationConfig wanConfig = config.getWanReplicationConfig("london-wan-rep");
+WanBatchPublisherConfig publisherConfig = new WanBatchPublisherConfig()
+        .setClusterName("london")
+        .setQueueFullBehavior("DISCARD_AFTER_MUTATION");
+wanConfig.addWanPublisherConfig(publisherConfig);
+```
+
+</TabItem>
+</Tabs>
+
+:::note
+
+`queue-full-behavior` configuration is optional. Its default value is `DISCARD_AFTER_MUTATION`.
+
+:::
+
+## Acknowledgment Types
+
+WAN replication supports different acknowledgment (ACK) types for each target cluster. You can choose from two different acknowledgment types depending on your consistency and performance requirements. The following ACK types are supported:
+
+- `ACK_ON_RECEIPT`: A batch of replication events is considered successfully replicated as soon as it is received by the target cluster. This option does not guarantee that the received update is actually applied but it is faster.
+- `ACK_ON_OPERATION_COMPLETE`: This option guarantees that the event is received by the target cluster and it is applied. It is more time-consuming but it ensures that the updates have been successfully applied by the target cluster before sending the next batch of events.
+
+The following is an example configuration:
+
+<Tabs groupId="config-format">
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  wan-replication:
+    london-wan-rep:
+      batch-publisher:
+        cluster-name: london
+        acknowledge-type: ACK_ON_OPERATION_COMPLETE
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <wan-replication name="london-wan-rep">
+        <batch-publisher>
+            <cluster-name>london</cluster-name>
+            <acknowledge-type>ACK_ON_OPERATION_COMPLETE</acknowledge-type>
+        </batch-publisher>
+    </wan-replication>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+WanReplicationConfig wanConfig = config.getWanReplicationConfig("london-wan-rep");
+WanBatchPublisherConfig publisherConfig = new WanBatchPublisherConfig()
+        .setClusterName("london")
+        .setAcknowledgeType("ACK_ON_OPERATION_COMPLETE");
+wanConfig.addWanPublisherConfig(publisherConfig);
+```
+
+</TabItem>
+</Tabs>
+
+:::note
+
+`acknowledge-type` configuration is optional. Its default value is `ACK_ON_OPERATION_COMPLETE`.
+
+:::
+
+## Key-based Coalescing
+
+By default, WAN Replication will replicate all the updates on map and cache entries. If you are updating a single "hot" entry multiple times, WAN Replication will send an update event for every entry update. If you don't need to have all updates replicated and would like to simply replicate the latest update for a certain entry, you can turn on key-based coalescing, thus saving on amounts of data replicated between clusters.
+
+The following is an example configuration:
+
+<Tabs groupId="config-format">
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  wan-replication:
+    london-wan-rep:
+      batch-publisher:
+        cluster-name: london
+        snapshot-enabled: true
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <wan-replication name="london-wan-rep">
+        <batch-publisher>
+            <cluster-name>london</cluster-name>
+            <snapshot-enabled>true</snapshot-enabled>
+        </batch-publisher>
+    </wan-replication>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+</Tabs>
+
+:::note
+
+`snapshot-enabled` is optional. Its default value is `false`.
+
+:::
+
+## Achieving Lower Latencies and Higher Throughput {/* #low-latency-higher-throughput */}
+
+The WAN replication mechanism allows tuning for lower latencies of replication and higher throughput. In most cases, WAN replication is sufficient with out-of-the-box settings which cause WAN replication to replicate the map and cache events with little overhead. However, there might be some use cases where the latency between a map/cache mutation on one cluster and its visibility on the other cluster must be kept within some bounds. To achieve such demands, you can first try tuning the WAN replication mechanism using the following publisher elements:
+
+- `batch-size`
+- `batch-max-delay-millis`
+- `idle-min-park-ns`
+- `idle-max-park-ns`
+
+To understand the implications of these elements, let's first dive into how WAN replication works.
+
+WAN replication runs in a separate thread and tries to send map and cache mutation events in batches to the target endpoints for higher throughput. The target endpoints are usually members in a target Hazelcast cluster but different WAN implementations may have different target endpoints. The event batch is collected by iterating over the WAN queues for different partitions and, different maps and caches. WAN replication tries and collects a batch of a size which can be configured using the `batch-size` element.
+
+If enough time has passed and the WAN replication thread hasn't collected enough events to fill a batch, it sends what it has collected nevertheless. This is controlled by the `batch-max-delay-millis` element. The "enough time" precisely means that more than the configured amount of milliseconds has passed since the time the last batch was sent to any target endpoint.
+
+If there are no events in any of the WAN queues, the WAN replication thread goes into the idle state by parking the WAN replication thread. The minimum park time can be defined using the `idle-min-park-ns` element and the maximum park time can be controlled using the `idle-max-park-ns` element. If a WAN event is enqueued while the WAN replication thread is in the idle state, the latency for replication of that WAN event increases.
+
+An example WAN replication configuration using the default values of the above elements is shown below.
+
+<Tabs groupId="config-format">
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  wan-replication:
+    london-wan-rep:
+      batch-publisher:
+        cluster-name: london
+        batch-size: 500
+        batch-max-delay-millis: 1000
+        idle-min-park-ns: 10000000
+        idle-max-park-ns: 250000000
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <wan-replication name="london-wan-rep-batch">
+        <batch-publisher>
+            <cluster-name>london</cluster-name>
+            <batch-size>500</batch-size>
+            <batch-max-delay-millis>1000</batch-max-delay-millis>
+            <idle-min-park-ns>10000000</idle-min-park-ns> <!-- 10 ms -->
+            <idle-max-park-ns>250000000</idle-max-park-ns> <!-- 250 ms -->
+            ...
+        </batch-publisher>
+    </wan-replication>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+</Tabs>
+
+We will now discuss tuning these elements. Unfortunately, the exact tuning parameters heavily depend on the load, mutation rate, latency between the source and target clusters and even use cases. We will thus discuss some general approaches and pointers.
+
+When tuning for low latency, the first thing you might want to do is lower the `idle-min-park-ns` and `idle-max-park-ns` element values. This will affect the latencies that you see when having a low number of operations per second, since this is when the WAN replication thread will be mostly in idle state. Try lowering both elements but keep in mind that the lower the element value, the more time the WAN replication thread will spend consuming CPU in a quiescent state - when there is no mutation on the maps or caches.
+
+The next element you might lower is the `batch-max-delay-millis`. If you have a strict upper bound on the latency for WAN replication, this element must be below that limit. Setting this value too low might adversely affect the performance: in that case the WAN replication thread might send smaller batches than what it would if the element was higher and it had waited for some more time. You can even try setting this element to zero which instructs the WAN replication thread to send batches as soon as it is able to collect any events; but keep in mind this will result in many smaller batches instead of fewer larger event batches.
+
+When tuning for lower latencies, configuring the `batch-size` usually has little effect, especially at lower mutation rates. At a low number of operations per second, the event batches will usually be very small since the WAN replication thread will not be able to collect the full batch and respect the required latencies for replication. The `batch-size` element might have more effect at higher mutation rates. Here, you will probably want to use bigger batches to avoid paying for the latencies when sending lots of smaller batches, so try increasing the batch size and benchmarking at high load.
+
+There are a couple of other configuration values that you might try changing but it depends on your use case. The first one is adding a separate configuration for a WAN replication executor. Collecting of WAN event batches and processing the responses from the target endpoints are done in a thread pool shared between the other parts of the Hazelcast system and all WAN replication schemes. In some cases, you might want to define how many threads WAN replication can use by setting the thread pool size of WAN's dedicated executor. The name of this executor is `hz:wan`. Below is an example of a concrete, dedicated executor for WAN replication. See the [Configuring Executor Service section](../../develop-and-build/distributed-computing/executor-services/executor-service.mdx#configuring-executor-service) for more information about the configuration options of the executor.
+
+<Tabs groupId="config-format">
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  executor-service:
+    hz-wan:
+      pool-size: 16
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <executor-service name="hz:wan">
+        <pool-size>16</pool-size>
+    </executor-service>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+</Tabs>
+
+In this case, WAN replication is limited to use 16 threads at most, which is the default. Note that every configured WAN batch publisher occupies one thread from the executor's pool, therefore, the pool should have more threads than the number of the configured WAN batch publishers to leave threads available for processing other WAN related tasks such as asynchronously processing the responses of the WAN target clusters. Since the threads WAN executor uses are borrowed from a global thread pool to reduce the number of threads in use, the threads running WAN tasks do not have any specific name.
+
+The last two elements that you might want to change are `acknowledge-type` and `max-concurrent-invocations`. Changing these elements allow you to get a greater throughput at the expense of event ordering. This means that these elements may only be changed if your application can tolerate WAN events to be received out-of-order. For instance, if you are updating or removing the existing map or cache entries, an out-of-order WAN event delivery would mean that the event for the entry removal or update might be processed by the target cluster before the event is received to create that entry. This does not causes exceptions but it causes the clusters to fall out-of-sync. In these cases, you most probably will not be able to use these elements. On the other hand, if you are only creating new, immutable entries (which are then removed by the expiration mechanism), you can use these elements to achieve a greater throughput.
+
+The `acknowledge-type` element controls at which time the target cluster will send a response for the received WAN event batch. The default value is `ACK_ON_OPERATION_COMPLETE` which will ensure that all events are processed before the response is sent to the source cluster. The value `ACK_ON_RECEIPT` instructs the target cluster to send a response as soon as it has received the WAN event batch but before it has been processed. This has two implications. One is that events can now be processed out-of-order (see the previous paragraph) and the other is that the exceptions thrown on processing the WAN event batch will not be received by the source cluster and the WAN event batch will not be retried. As such, some events might get lost in case of errors and the clusters may fall out-of-sync. WAN sync can help bring those clusters in-sync. The benefit of the `ACK_ON_RECEIPT` value is that now the source cluster can send a new batch sooner, without waiting for the previous batch to be processed fully.
+
+:::note
+
+WAN synchronization strategies (neither the default nor the [Delta WAN synchronization](./advanced-features.mdx#delta-wan-synchronization)) synchronize the deletions since they are not yet tracked under WAN.
+
+:::
+
+The `max-concurrent-invocations` element controls the maximum number of WAN event batches being sent to the target cluster concurrently. Setting this element to anything less than 2 will only allow a single batch of events to be sent to each target endpoint and will maintain causality of events for a single partition (events are not received out-of-order). Setting this element to 2 or higher will allow multiple batches of WAN events to be sent to each target endpoint. Since this allows reordering of batches due to the network conditions, causality and ordering of events for a single partition is lost and batches for a single partition are now sent randomly to any available target endpoint. This, however, does present a faster WAN replication for certain scenarios such as replicating immutable, independent map entries which are only added once and where ordering, when these entries are added, is not necessary. Keep in mind that if you set this element to a value which is less than the target endpoint count, you will lose performance as not all target endpoints will be used at any point in time to process the WAN event batches. So, for instance, if you have a target cluster with 3 members (target endpoints) and you want to use this element, it makes sense to set it to a value equal to or greater than 3. Otherwise, you can simply disable it by setting it to less than 2 in which case WAN will use the default replication strategy and adapt to the target endpoint count while maintaining causality.
+
+:::note
+
+Configuring the `max-concurrent-invocations` to a value greater than 1 will improve WAN replication speed, but this will be a trade-off for higher CPU consumption as more threads are involved in WAN replication. If your replication setup is not saturating WAN queues (so there is no demand for faster WAN replication) then this functionality should not be used as serial replication will be sufficient without additional overhead or out-of-order risks.
+
+:::
+
+An example WAN replication configuration using the default values of the aforementioned elements is shown below.
+
+<Tabs groupId="config-format">
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  wan-replication:
+    london-wan-rep-batch:
+      cluster-name: london
+      acknowledge-type: ACK_ON_OPERATION_COMPLETE
+      max-concurrent-invocations: -1
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <wan-replication name="london-wan-rep-batch">
+        <batch-publisher>
+            <cluster-name>london</cluster-name>
+            <acknowledge-type>ACK_ON_OPERATION_COMPLETE</acknowledge-type>
+            <max-concurrent-invocations>-1</max-concurrent-invocations>
+            ...
+        </batch-publisher>
+    </wan-replication>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+</Tabs>
+
+Finally, as we've mentioned, the exact values which will give you the optimal performance depend on your environment and use case. Please benchmark and try out different values to find out the right values for you.
+
+## Discovery Period
+
+When using WAN Replication with Discovery SPI, you can set the period in seconds in which WAN tries to discover new target endpoints and reestablish connections to failed endpoints using the `discovery-period-seconds` property. The default value is 10 seconds.
+
+<Tabs groupId="config-format">
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  wan-replication:
+    london-wan-rep-batch:
+      cluster-name: london
+      discovery-period-seconds: 20
+```
+
+</TabItem>
+</Tabs>
+
+## Maximum Number of Target Endpoints
+
+When using WAN Replication with Discovery SPI, you can set the maximum number of endpoints that WAN connects to at any point using the `max-target-endpoints` property. This element has no effect when static endpoint addresses are defined using `target-endpoints`. Default is `Integer.MAX_VALUE`.
+
+<Tabs groupId="config-format">
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  wan-replication:
+    london-wan-rep-batch:
+      batch-publisher:
+        cluster-name: london
+        max-target-endpoints: 5
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <wan-replication name="london-wan-rep-batch">
+        <batch-publisher>
+            <cluster-name>london</cluster-name>
+            <max-target-endpoints>5</max-target-endpoints>
+            ...
+        </batch-publisher>
+    </wan-replication>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+</Tabs>
+
+## Use Endpoint Private Address
+
+When using WAN Replication with Discovery SPI, you can set whether the WAN connection manager should connect to the endpoint on the private address returned by the Discovery SPI using the `use-endpoint-private-address` property. By default, this element is `false` which means the WAN connection manager always uses the public address.
+
+<Tabs groupId="config-format">
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  wan-replication:
+    london-wan-rep-batch:
+      batch-publisher:
+        cluster-name: london
+        use-endpoint-private-address: true
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <wan-replication name="london-wan-rep-batch">
+        <batch-publisher>
+            <cluster-name>london</cluster-name>
+            <use-endpoint-private-address>true</use-endpoint-private-address>
+            ...
+        </batch-publisher>
+    </wan-replication>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+</Tabs>
+
+## Replicating `IMap`/`ICache` Evictions
+
+The replication of eviction events can be useful for maintaining stronger data consistency between clusters. However, you should use it with caution; source clusters with eviction enabled should replicate to target clusters which **do not** have eviction enabled. If both source and target clusters have eviction enabled, due to eviction being a largely local operation, it is possible for a target cluster to evict data that has not been evicted on the source cluster. When replication is used for data consistency on a failover deployment, it is important that eviction is re-enabled on the standby cluster when it becomes active.
+
+While enabling this functionality can help to maintain stronger data consistency over WAN between clusters, it is important to note that this **does not guarantee full data consistency**. You can enable the replication of `IMap` and `ICache` evictions to the other clusters by setting the `hazelcast.wan.replicate.imap/icache.evictions` property to `true`, as shown below.
+
+<Tabs groupId="config-format">
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+    ...
+    properties:
+      hazelcast.wan.replicate.imap.evictions: true
+      hazelcast.wan.replicate.icache.evictions: true
+    ...
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <properties>
+        <property name="hazelcast.wan.replicate.imap.evictions">true</property>
+        <property name="hazelcast.wan.replicate.icache.evictions">true</property>
+    </properties>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+</Tabs>
+
+You can find the specifications of these properties in [System Properties](../../reference/system-properties.mdx).
+
+## Static Endpoints Discovery Strategy Health Checking Properties
+
+The default behavior for the static endpoint discovery strategy is to perform health checks on the endpoints. There is no additional configuration required beyond defining the static endpoints as our default values cover the most use-cases. However, you can configure the cluster using the following properties for your specific needs.
+
+<Tabs groupId="config-format">
+<TabItem value="yaml" label="YAML">
+
+```yaml conums
+hazelcast:
+  wan-replication:
+    london-wan-rep:
+      batch-publisher:
+        londonID:
+          cluster-name: london
+          target-endpoints: 10.3.5.1:5701, 10.3.5.2:5701
+          properties:
+            health-check-interval-ms: 10000 <1>
+            health-check-timeout-ms: 3000 <2>
+            health-check-max-failed-probes: 10 <3>
+            health-check-eager-first-check: false <4>
+            health-check-initial-delay-ms: 1000 <5>
+            health-check-back-off-delay-step-ms: 5000 <6>
+            health-check-back-off-max-steps: 12 <7>
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml conums
+<hazelcast>
+    <wan-replication name="london-wan-rep">
+        <batch-publisher>
+            <cluster-name>london</cluster-name>
+            <publisher-id>londonID</publisher-id>
+            <target-endpoints>10.3.5.1:5701, 10.3.5.2:5701</target-endpoints>
+            <properties>
+                <property name="health-check-interval-ms">10000</property> <1>
+                <property name="health-check-timeout-ms">3000</property> <2>
+                <property name="health-check-max-failed-probes">10</property> <3>
+                <property name="health-check-eager-first-check">false</property> <4>
+                <property name="health-check-initial-delay-ms">1000</property> <5>
+                <property name="health-check-back-off-delay-step-ms">5000</property> <6>
+                <property name="health-check-back-off-max-steps">12</property> <7>
+            </properties>
+        </batch-publisher>
+    </wan-replication>
+</hazelcast>
+```
+
+</TabItem>
+</Tabs>
+
+<CodeCallouts>
+
+1. Defines the interval between the connection health check tasks, in milliseconds. Health checks attempt connections, and each connection attempt can take up to ten seconds to timeout. For this reason, ensure that tasks are sufficiently spaced to reduce the system resource usage. Default is `10000`.
+2. Defines the maximum duration to wait when checking connection health, in milliseconds. Default is `3000`.
+3. When an unhealthy connection is found during target discovery, it is marked as a failed probe attempt. This property defines the maximum number of times a connection probe can be marked as failed in a row, after which it is removed from subsequent health checks. Set to `-1` if you do not want to remove these connections from health checks. Default is `10`.
+4. Defines whether all connections are treated as potentially unhealthy on startup, and probed for liveness before being considered as a viable endpoint. This is useful when a large number of the configured endpoints are expected to be unavailable on startup. However, if most endpoints are expected to be lively on startup, this property should be set to `false` as it can cause delays in replication while connections are probed individually. Default is `false`.
+5. Defines the initial delay before the connection health check task's first execution, in milliseconds. When the `health-check-eager-first-check` property is set to `true`, set this value to a short period so that connection health can be probed as quickly as possible. Default is `1000`.
+6. Defines the additional back-off delay (step) duration, in milliseconds, added between liveness checks when an endpoint is found to be unhealthy. The total delay between the connection attempts is calculated by multiplying this duration by the connection's total failed connection attempts, up to a maximum multiplier of `health-check-back-off-max-steps`. Default is `5000`.
+7. Defines the maximum number of `health-check-back-off-delay-step-ms` steps used in the back-off strategy for the connection health checks. Default is `12`.
+
+</CodeCallouts>
+
+:::note
+
+You can enable the legacy behavior of static endpoints, where the connection health is not checked by setting the `hazelcast.wan.static.discovery.legacy` property to `true`.
+
+:::

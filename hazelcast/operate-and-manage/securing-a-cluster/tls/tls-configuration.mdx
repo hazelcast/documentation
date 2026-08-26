@@ -1,0 +1,168 @@
+---
+title: "Other TLS-Related Configurations"
+sidebar_position: 3
+slug: /security/tls-configuration
+enterprise: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+## TLS for Hazelcast Management Center
+
+In order to use a secured communication between the Hazelcast cluster and Management Center, you have to configure Management Center as explained in the [Connecting Hazelcast members to Management Center section](/management-center/5.12-snapshot/deploy-manage/cluster-connections) in the Hazelcast Management Center documentation.
+
+### Updating Certificates in the Running Cluster
+
+Hazelcast allows updating TLS certificates on the members. Depending on the property `keyMaterialDuration`, you might or might not need to [restart](../../maintaining-a-cluster/restart-cluster.mdx) cluster members.
+
+When a non-negative `keyMaterialDuration` value is used:
+
+**1. If new certificates are not trusted by the members**
+
+This is usually a case when self-signed certificates are used on the members.
+
+Before we can deploy new member certificates, we have to update the list of trusted certificates on all members:
+
+- Import all new certificates to every member trustStore, so it contains both old and new ones.
+- Wait at least for the time specified in the `keyMaterialDuration` parameter.
+- After completing the above steps, follow the steps described in the next section (certificates trusted).
+
+**2. When new certificates are already trusted by the members**
+
+Switch certificates/keys on all members:
+
+- Replace the private key and certificate in every member keyStore.
+
+At the latest, after the specified duration, all new connections will use the new key material.
+
+**3. If the old certificates need to be removed**
+
+When the mutual TLS authentication is enabled, and there is a key leakage, or the old certificates are not allowed to be used anymore for any reason, the trustStores have to be updated once more.
+
+It uses the same approach as point 1 above, just instead of adding new certificates, the old ones are removed from the updated truststores.
+
+At the latest, after the specified duration, new connections with old certificates (used for mutual authentication) won't be allowed.
+
+:::note
+
+When changing the key material, make sure your new configuration is valid and will allow others to connect. When the TLS key material is replaced, no changes are made to the existing connections. New material is only used for new connections. As a result, you might not realize any misconfigurations, if any, until a new connection is established. You can use the standard tools in your system to verify the connection TLS settings, e.g., `openssl s_client ...`. Or you can also start a new client or a light member with the new TLS configuration.
+
+:::
+
+<hr />
+
+Even with a non-expiring key material configuration, i.e., `keyMaterialDuration` is either negative or not configured, it's possible to update the material without fully stopping the cluster. You can stop the cluster members one by one and replace the certificates gradually. We can distinguish two cases based on the fact if the new certificate is already trusted:
+
+1. New certificates are not trusted on the members.
+
+   This is usually a case when self-signed certificates are used on the members.
+
+   Before we can deploy new member certificates, we have to update the list of trusted certificates on all members. Complete the following steps on each member (one by one) in the cluster:
+
+   - Gracefully shutdown the member
+   - Wait for the cluster safe state (rebalance)
+   - Import all new certificates to the member's truststore, so it contains both old and new ones.
+
+     You can use the `keytool` executable from Java installation to import the new certificates. Example:
+
+     ```bash
+     keytool -import -noprompt \
+       -keystore member.truststore -storepass s3crEt \
+       -alias new-cert-1 -file member-new-cert.crt
+     ```
+   - Start the member with the updated truststore
+   - Wait for the cluster safe state (rebalance)
+
+     After completing the above steps, follow the steps described in the next point (certificates trusted).
+2. New certificates are already trusted on the members
+
+   Switch certificate on each member one by one:
+
+   - Gracefully shutdown the member
+   - Wait for the cluster safe state (rebalance)
+   - Replace the private key and certificate in the member's keystore
+   - Start the member with the updated keystore
+   - Wait for the cluster safe state (rebalance)
+
+## Configuring Cipher Suites
+
+To get the best performance, the correct [cipher suites](https://en.wikipedia.org/wiki/Cipher_suite) need to be configured. Each cipher suite has different performance and security characteristics and depending on the hardware and selected cipher suite, the overhead of TLS can range from dramatic to almost negligible.
+
+The cipher suites are configured using the `ciphersuites` property as shown below:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <network>
+        <ssl enabled="true">
+            <factory-class-name>...</factory-class-name>
+            <properties>
+                <property name="keyStore">upload/hazelcast.keystore</property>
+                <property name="ciphersuites">TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
+                                      TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA</property>
+           </properties>
+       </ssl>
+    </network>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  network:
+    ssl:
+      enabled: true
+      factory-class-name: ...
+      properties:
+        keyStore: upload/hazelcast.keystore
+        ciphersuites: TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
+                                      TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA
+```
+
+</TabItem>
+</Tabs>
+
+The `ciphersuites` property accepts a comma separated list (spaces, enters, tabs are filtered out) of cipher suites in the order of preference.
+
+You can configure a member and client with different cipher suites; but there should be at least one shared cipher suite.
+
+Please check with your security expert to determine which cipher suites are appropriate and run performance tests to see which ones perform well in your environment.
+
+If you don't configure the cipher suites, then both client and/or member determine a cipher suite by themselves during the TLS handshake. This can lead to suboptimal performance and lower than required security.
+
+## Other Ways of Configuring Properties
+
+You can set all the properties presented in this section using the `javax.net.ssl` prefix, e.g., `javax.net.ssl.keyStore` and `javax.net.ssl.keyStorePassword`.
+
+Also note that these properties can be specified using the related Java system properties and also Java's `-D` command line option. This is very useful if you require a more flexible configuration, e.g., when doing performance tests.
+
+See below examples equivalent to each other:
+
+```none
+System.setProperty("javax.net.ssl.trustStore", "/user/home/hazelcast.ts");
+```
+
+Or,
+
+```none
+-Djavax.net.ssl.trustStore=/user/home/hazelcast.ts
+```
+
+Another two examples equivalent to each other:
+
+```none
+System.setProperty("javax.net.ssl.ciphersuites", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA");
+```
+
+Or,
+
+```none
+-Djavax.net.ssl.ciphersuites=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA
+```

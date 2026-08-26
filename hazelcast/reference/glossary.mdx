@@ -1,0 +1,234 @@
+---
+title: "Glossary"
+sidebar_position: 1
+slug: /glossary
+---
+
+<dl>
+<dt>2-phase commit</dt>
+<dd>An atomic commitment protocol for distributed systems. It consists of two phases: commit-request and commit. In commit-request phase, transaction manager coordinates all the transaction resources to commit or abort. In commit-phase, transaction manager decides to finalize operation by committing or aborting according to the votes of each transaction resource.</dd>
+<dt>ACID</dt>
+<dd>A set of properties (Atomicity, Consistency, Isolation, Durability) guaranteeing that transactions are processed reliably. Atomicity requires that each transaction be all or nothing, i.e., if one part of the transaction fails, the entire transaction fails. Consistency ensures that only valid data following all rules and constraints is written. Isolation ensures that transactions are securely and independently processed at the same time without interference (and without transaction ordering). Durability means that once a transaction has been committed, it will remain so, no matter if there is a power loss, crash, or error.</dd>
+<dt>BFF</dt>
+<dd>Backend-for-frontend. A web development architectural pattern that creates a dedicated backend for each frontend application.</dd>
+<dt>Blue/Green Deployment</dt>
+<dd>A client connection technique in Hazelcast Enterprise Edition that reduces system downtime by deploying two mirrored clusters: a blue (active) cluster and a green (standby) cluster. Clients initially connect to the blue cluster and can be automatically redirected to the green cluster in case of failure or for maintenance. This mechanism allows for seamless failover and phased cutover, ensuring high availability and minimal disruption during upgrades or disaster recovery.</dd>
+<dt>Cache</dt>
+<dd>A high-speed access area that can be either a reserved section of main memory or a storage device.</dd>
+<dt>Cache access patterns</dt>
+<dd>Strategies for optimizing memory access to improve performance and reduce latency. The most common access patterns are read-through, write-through, and write-behind.</dd>
+<dt>Caching</dt>
+<dd>Often referred to as memory caching, this is a technique that allows computer applications to temporarily store data in a computer's memory for quick retrieval.</dd>
+<dt>Cache miss</dt>
+<dd>An event in which a system or application makes a request to retrieve data from a cache, but that specific data is not currently in cache memory.</dd>
+<dt>Caller</dt>
+<dd>A Hazelcast member or client that interacts with the CP Subsystem through APIs.</dd>
+<dt>CAP theorem</dt>
+<dd>States that in a distributed system, at best only two of the following three properties can be guaranteed: Consistency (all clients see the same, up-to-date data), Availability (every request receives a valid response), and Partition Tolerance (the system continues operating despite network partitions).</dd>
+<dt>CDC</dt>
+<dd>Change data capture is a [data pipeline](#data-pipeline) pattern for observing changes made to a database and extracting them in a form usable by other systems, for the purposes of replication, analysis and more.</dd>
+<dt>CEP</dt>
+<dd>Complex event processing is a set of techniques for capturing and analyzing streams of data as they arrive to identify opportunities or threats in real time.</dd>
+<dt>CLC</dt>
+<dd>Hazelcast Command Line Client, used to connect to and interact with clusters on Hazelcast Cloud and Hazelcast Platform direct from the command line or through scripts.</dd>
+<dt>CLI</dt>
+<dd>Command-line interface.</dd>
+<dt>Client/server topology</dt>
+<dd>Hazelcast topology where members run outside the user application and are connected to clients using client libraries. The client library is installed in the user application.</dd>
+<dt>Cloud-native architecture</dt>
+<dd>An architecture in which an application is designed specifically for cloud deployment (in contrast to "lift-and-shift", where applications are moved to the cloud unchanged).</dd>
+<dt>Compact Serialization</dt>
+<dd>Hazelcast's schema-based, language-independent serialization format that separates schema from data to reduce memory/bandwidth, supports zero configuration for Java/.NET classes, enables schema evolution, and allows partial deserialization for faster queries and indexing.</dd>
+<dt>Connector</dt>
+<dd>A Hazelcast integration component that bridges external systems and a Hazelcast cluster to move data in or out of pipelines. Connectors operate as sources (ingesting batch or streaming data into Hazelcast) or sinks (delivering pipeline results to external systems). Hazelcast provides many built-in connectors (for example, Kafka, files, JDBC, MongoDB, and Hazelcast data structures) and supports pre-built Kafka Connect Source connectors; you can also build custom connectors via the Jet API.</dd>
+<dt>CP Subsystem</dt>
+<dd>A Hazelcast cluster component that provides strongly consistent, linearizable distributed data structures (such as CPMap, FencedLock, AtomicLong, Semaphore, AtomicReference, and CountDownLatch) using the Raft consensus algorithm. It prioritizes consistency over availability during network partitions and is intended for coordination and synchronization use cases.</dd>
+<dt>DaaS</dt>
+<dd>Data as a Service is a data management strategy and/or deployment model that focuses on the cloud (public or private) to deliver a variety of data-related services such as storage, processing, and analytics.</dd>
+<dt>Data-at-rest</dt>
+<dd>Data that is stored in a digital form on a physical device, which is not being actively accessed or used.</dd>
+<dt>Data grid</dt>
+<dd>A set of computers that directly interact with each other to coordinate the processing of large jobs.</dd>
+<dt>Data-in-motion</dt>
+<dd>A term that refers to digital data sets that are currently being moved over a network from one location to another.</dd>
+<dt>DAG</dt>
+<dd>A directed acyclic graph is a conceptual representation of a series of activities depicted by a graph.</dd>
+<dt><Anchor id="data-pipeline"/>Data pipeline</dt>
+<dd>A series of actions that ingest data from one or more sources and move it to a destination for storage and analysis.</dd>
+<dt>Deserialization</dt>
+<dd>The process of reconstructing a data structure or object from a series of bytes or a string in order to instantiate the object for consumption.</dd>
+<dt>Diagnostic logging</dt>
+<dd>A Hazelcast feature that captures detailed system, configuration, and performance information at regular intervals using diagnostics plugins. Logs are written to dedicated files and can be configured for rotation, retention, and output destination to aid troubleshooting and analysis.</dd>
+<dt>Distributed cache</dt>
+<dd>A system that pools together the random-access memory (RAM) of multiple networked computers into a single in-memory data store used as a data cache to provide fast access to data.</dd>
+<dt>Distributed computing</dt>
+<dd>Sometimes called distributed processing, this is the technique of linking together multiple computer servers over a network into a cluster, to share data and to coordinate processing power.</dd>
+<dt>Distributed hash table</dt>
+<dd>A decentralized data store that looks up data based on key-value pairs.</dd>
+<dt>Distributed transaction</dt>
+<dd>A set of operations on data that is performed across two or more data repositories (especially databases).</dd>
+<dt>EDA</dt>
+<dd>Event-driven architecture is a modern software design approach centered around data that describes events—selection of a button on a user interface (UI), the addition of an item to an online shopping cart, notification of payment on a point of sale (POS) system, etc.—in real-time and enables applications to act on them as they occur.</dd>
+<dt>Edge computing</dt>
+<dd>Sometimes called IoT edge processing, this refers to taking action on data as near to the source as possible rather than in a central, remote data center, to reduce latency and bandwidth use.</dd>
+<dt>Embedded topology</dt>
+<dd>Hazelcast topology where the members are in-process with the user application and act as both client and server.</dd>
+<dt>ESP</dt>
+<dd>Event stream processing is the practice of taking action on a series of data points that originate from a system that continuously creates data. The term "event" refers to each data point in the system, and "stream" refers to the ongoing delivery of those events.</dd>
+<dt>ETL</dt>
+<dd>Extract transform load is a [data pipeline](#data-pipeline) pattern for collecting data from various sources, transforming (changing) it to conform to some rules, and loading it into a sink.</dd>
+<dt>Event-driven architecture (EDA)</dt>
+<dd>A software design approach centered around data that describes events (such as selection of a button on a user interface (UI), the addition of an item to an online shopping cart, notification of payment on a point of sale (POS) system, etc.) in real-time and enables applications to act on them as they occur.</dd>
+<dt>Event stream processing (ESP)</dt>
+<dd>The practice of taking action on a series of data points that originate from a system that continuously creates data. The term "event" refers to each data point in the system, and "stream" refers to the ongoing delivery of those events. A series of events can also be referred to as "streaming data" or "data streams".</dd>
+<dt>Garbage collection</dt>
+<dd>The recovery of storage that is being used by an application when that application no longer needs the storage. This frees the storage for use by other applications (or processes within an application). It also ensures that an application using increasing amounts of storage does not reach its quota. Programming languages that use garbage collection are often interpreted within virtual machines like the JVM. The environment that runs the code is also responsible for garbage collection.</dd>
+<dt>Geo Replication</dt>
+<dd>See [WAN Replication](#wan-replication).</dd>
+<dt>Grid computing</dt>
+<dd>The practice of leveraging multiple computers, often geographically distributed but connected by networks, to work together to accomplish joint tasks.</dd>
+<dt>Hazelcast clients</dt>
+<dd>Libraries that run outside the cluster and connect to Hazelcast members over the network to access and operate on distributed data structures and services. Hazelcast provides clients for Java, .NET, Python, C++, Go, Node.js.</dd>
+<dt>Hazelcast cluster</dt>
+<dd>A virtual environment formed by Hazelcast members communicating with each other in the cluster.</dd>
+<dt>Hazelcast partition</dt>
+<dd>Memory segments containing data. Hazelcast automatically distributes data into primary and backup partitions across the cluster. Each partition can have hundreds or thousands of data entries, depending on your memory capacity. You can think of a partition as a block of data. In general and optimally, a partition should have a maximum size of 50-100 megabytes.</dd>
+<dt>Hazelcast Platform</dt>
+<dd>Hazelcast unifies a fast in-memory data store with distributed compute and a low-latency stream processing engine to deliver real-time, scalable, and resilient applications across event streams and data sources. Hazelcast can be deployed in a range of environments from the network edge to public and private clouds.</dd>
+<dt>HD Memory (High-Density Memory)</dt>
+<dd>A Hazelcast Enterprise Edition feature that provides an off-heap, native memory store for data structures such as Map, JCache, and Near Cache. HD Memory allows applications to efficiently use large amounts of physical memory without being limited by Java garbage collection, enabling predictable scaling and performance by minimizing GC pauses and supporting much larger memory configurations per node.</dd>
+<dt>Health check</dt>
+<dd>A Management Center feature that analyzes member configuration and metrics to detect issues and provide recommendations. Results are categorized by status and can be filtered or downloaded for further analysis.</dd>
+<dt>Hibernate second-level cache</dt>
+<dd>One of the data caching components available in the Hibernate object-relational mapping (ORM) library. Hibernate is a popular ORM library for the Java language, and it lets you store your Java object data in a relational database management system (RDBMS).</dd>
+<dt>IaaS</dt>
+<dd>Infrastructure as a Service is a cloud-based service offering in which the vendor provides compute, network and storage resources and the customer provides the operating system and application software.</dd>
+<dt>IaC</dt>
+<dd>Infrastructure as Code. A method of managing and provisioning IT infrastructure using code, rather than manual processes.</dd>
+<dt>IMDB</dt>
+<dd>In-memory database. A computer system that stores and retrieves data records that reside in a computer's main memory, e.g., random-access memory (RAM).</dd>
+<dt>IMDG</dt>
+<dd>An in-memory data grid (IMDG) is a data structure that resides entirely in memory and is distributed among many members in a single location or across multiple locations. IMDGs can support thousands of in-memory data updates per second and they can be clustered and scaled in ways that support large quantities of data.</dd>
+<dt>Inference runner</dt>
+<dd>A component in large-scale software systems that lets you plug in machine learning (ML) algorithms (or "models") to deliver data into those algorithms and calculate outputs.</dd>
+<dt>In-memory computation</dt>
+<dd>Also called in-memory computing, this is the technique of running computer calculations entirely in computer memory (e.g., in RAM).</dd>
+<dt>In-memory processing</dt>
+<dd>The practice of taking action on data entirely in computer memory (e.g., in RAM).</dd>
+<dt>Java heap</dt>
+<dd>The space that Java can reserve and use in memory for dynamic memory allocation. All runtime objects created by a Java application are stored in heap. By default, the heap size is 128 MB, but this limit is reached easily for business applications. Once the heap is full, new objects cannot be created and the Java application shows errors.</dd>
+<dt>Java microservices</dt>
+<dd>A set of software applications written in the Java programming language (and which typically leverage the vast ecosystem of Java tools and frameworks), designed for a limited scope, that work with each other to form a bigger solution.</dd>
+<dt>JCache/Java cache</dt>
+<dd>A de facto standard Java cache API for caching data.</dd>
+<dt>Jet engine</dt>
+<dd>Hazelcast's stream and batch processing engine that enables distributed, low-latency computation over large volumes of data. The Jet engine models data processing pipelines as directed acyclic graphs (DAGs) and distributes tasks across all available CPU cores in the cluster. It supports both stateless and stateful operations, event time-based windowing, and can process data from various sources to sinks using connectors. The Jet engine is used for building real-time and batch data pipelines, supporting use cases such as analytics, ETL, and event processing.</dd>
+<dt><Anchor id="job"/>Job</dt>
+<dd>A [data pipeline](#data-pipeline) that's packaged and submitted to a Hazelcast member for execution. Hazelcast plans it as a directed acyclic graph (DAG) and distributes its tasks across cluster members to run independently of the submitting client. Jobs can be created via the Java API or SQL, and they continue running until canceled or the cluster shuts down. Each job has a unique ID and can be managed via APIs or CLI tools.</dd>
+<dt>JWT</dt>
+<dd>JSON Web Token, an open standard for transmitting information securely between parties as a JSON object.</dd>
+<dt>K8s</dt>
+<dd>Kubernetes. An open source system that manages and deploys containerized applications.</dd>
+<dt>Kappa</dt>
+<dd>The Kappa Architecture is a software architecture used for processing [streaming data](#streaming-data).</dd>
+<dt>Key-value store</dt>
+<dd>A type of data storage software program that stores data as a set of unique identifiers, each of which have an associated value.</dd>
+<dt>Lambda architecture</dt>
+<dd>A deployment model for data processing that organizations use to combine a traditional batch pipeline with a fast real-time stream pipeline for data access.</dd>
+<dt>Least recently used (LRU)</dt>
+<dd>A cache eviction algorithm where entries are eligible for eviction due to lack of interest by applications.</dd>
+<dt>Least frequently used (LFU)</dt>
+<dd>A cache eviction algorithm where entries are eligible for eviction due to having the lowest usage frequency.</dd>
+<dt><Anchor id="lite-member"/>Lite member</dt>
+<dd>A member that does not store data and has no partitions. Lite members are typically used to execute compute-heavy tasks, run Jet jobs, and register listeners while accessing data hosted on data members. They can be promoted to data members (and demoted back) dynamically, which triggers partition rebalancing.</dd>
+<dt>Machine learning (ML) inference</dt>
+<dd>The process of running live data points into a machine learning algorithm (or "ML model") to calculate an output such as a single numerical score.</dd>
+<dt>Management Center</dt>
+<dd>Hazelcast's web-based tool for monitoring and managing clusters. It provides real-time dashboards and metrics for members, clients, and data structures; supports SQL browsing (including streaming results); and offers administrative features such as license management, client filtering, and diagnostics. Management Center can also expose clustered JMX and Prometheus metrics and integrates with enterprise authentication and RBAC (role-based access control) in Enterprise Edition.</dd>
+<dt>Member</dt>
+<dd>A Hazelcast instance. Depending on your Hazelcast topology, it can refer to a server or a Java virtual machine (JVM). Members belong to a Hazelcast cluster. Members may also be referred as member nodes, cluster members, Hazelcast members, or data members.</dd>
+<dt>Micro-batch processing</dt>
+<dd>The practice of collecting data in small groups ("batches") for the purposes of taking action on (processing) that data.</dd>
+<dt><Anchor id="microservices"/>Microservices</dt>
+<dd>A set of software applications designed for a limited scope that work with each other to form a bigger solution.</dd>
+<dt>Microservices architecture</dt>
+<dd>A software architecture approach in which a set of software applications designed for a limited scope, known as [microservices](#microservices), work together to form a bigger solution.</dd>
+<dt>mTLS</dt>
+<dd>Mutual authentication. A method that ensures the authenticity of the parties at each end of a network connection.</dd>
+<dt>Multicast</dt>
+<dd>A type of communication in which data is sent to a defined group of destination members simultaneously (one to many). Distinct from unicast (one to one) and broadcast (one to all).</dd>
+<dt>Near cache</dt>
+<dd>A caching model where an object retrieved from a remote member is put into the local cache and the future requests made to this object will be handled by this local member.</dd>
+<dt>NoSQL</dt>
+<dd>"Not Only SQL". A database model that provides a mechanism for storage and retrieval of data that is tailored in means other than the tabular relations used in relational databases. It is a type of database which does not adhere to the traditional relational database management system (RDMS) structure. It is not built on tables and does not employ SQL to manipulate data. It also may not provide full ACID guarantees, but still has a distributed and fault-tolerant architecture.</dd>
+<dt>OIDC</dt>
+<dd>OpenID Connect provider.</dd>
+<dt>OOME</dt>
+<dd>Out of Memory Error.</dd>
+<dt>Operator</dt>
+<dd>Hazelcast Platform Operator simplifies working with Hazelcast clusters on Kubernetes and Red Hat OpenShift by eliminating the need for manual deployment and life-cycle management.</dd>
+<dt>OSGI</dt>
+<dd>Formerly known as the Open Services Gateway initiative, it describes a modular system and a service platform for the Java programming language that implements a complete and dynamic component model.</dd>
+<dt>PaaS</dt>
+<dd>Platform as a Service is a cloud-based service offering in which the vendor provides hardware resources (as in IaaS), operating systems and management tools, and the customer provides the application software.</dd>
+<dt>Partitioning</dt>
+<dd>A technique used to divide the key space into multiple partitions (shards), each storing a portion of the data, which are replicated across cluster members for scalability, availability, and fault tolerance. A cluster-wide partition table maps partition IDs to the members that own their primary and backup replicas; the oldest (master) member maintains and periodically publishes this table so every member, including lite members, knows where each partition resides, and if the master fails, the next oldest member takes over publishing.</dd>
+<dt>Persistence</dt>
+<dd>A Hazelcast feature that allows map entries, JCache data, streaming job snapshots, and SQL metadata to be stored on disk. Persistence enables individual members or entire clusters to recover data after planned or unplanned shutdowns by loading persisted data from disk, reducing downtime and data loss compared to in-memory storage alone.</dd>
+<dt>PKCE</dt>
+<dd>Proof Key for Code Exchange. An extension used in OAuth 2.0 to improve security for public clients.</dd>
+<dt>Publish/subscribe</dt>
+<dd>A software architecture model by which applications create and share data. Pub/sub is particularly popular in serverless and microservices architectures.</dd>
+<dt>Race condition</dt>
+<dd>This condition occurs when two or more threads can access shared data and they try to change it at the same time.</dd>
+<dt>Raft consensus algorithm</dt>
+<dd>An algorithm used by Hazelcast's CP Subsystem to achieve strong consistency and linearizability for distributed data structures. Raft coordinates updates among CP members by electing a leader and replicating log entries, ensuring that all changes are committed only when a majority agrees. This approach allows Hazelcast to provide fault-tolerant, strongly consistent operations for coordination and synchronization use cases, even in the presence of failures or network partitions.</dd>
+<dt>Real-time database</dt>
+<dd>A data store designed to collect, process, and/or enrich an incoming series of data points (i.e., a data stream) in real time, typically immediately after the data is created.</dd>
+<dt>Real-time machine learning</dt>
+<dd>The process of training a machine learning model by running live data through it, to continuously improve the model.</dd>
+<dt>Real-time stream processing</dt>
+<dd>The process of taking action on data at the time the data is generated or published.</dd>
+<dt>REST API</dt>
+<dd>Hazelcast's REST API allows you to access and manage data structures and cluster operations over HTTP/HTTPS protocols. It provides endpoints for data retrieval, cluster and member actions, CP subsystem operations, configuration updates, and more. You can interact with it using tools such as cURL, REST clients, or programming languages with HTTP support. The REST API is disabled by default and must be explicitly enabled in member configuration.</dd>
+<dt>RSA</dt>
+<dd>An algorithm to generate, encrypt and decrypt keys for secure data transmissions.</dd>
+<dt>SAML</dt>
+<dd>Security Assertion Markup Language identity provider (IdP) authenticates users and passes authentication data to a service provider.</dd>
+<dt>Semantic data type</dt>
+<dd>A method of encoding data that allows software to discover and map data based upon its meaning rather than its structure.</dd>
+<dt>Serialization</dt>
+<dd>A process of converting an object into a stream of bytes in order to store the object or transmit it to memory, a database, or a file. Its main purpose is to save the state of an object in order to be able to recreate it when needed.</dd>
+<dt>Sharding</dt>
+<dd>The practice of optimizing database management systems by separating the rows or columns of a larger database table into multiple smaller tables.</dd>
+<dt>Sink</dt>
+<dd>A destination in a data pipeline where processed data is sent for storage or further processing. Sinks act as connectors between Hazelcast and external systems or data stores, allowing results from pipelines to be written to various targets such as files, databases, messaging systems, or Hazelcast data structures. A pipeline must have at least one sink to be valid.</dd>
+<dt>Snapshot</dt>
+<dd>A distributed map that contains the saved state of a [job's](#job) computations.</dd>
+<dt>Split-brain</dt>
+<dd>A state in which a cluster of members gets divided (or partitioned) into smaller clusters of members, each of which believes it is the only active cluster.</dd>
+<dt>SSE</dt>
+<dd>Server-sent events.</dd>
+<dt><Anchor id="streaming-data"/>Streaming data</dt>
+<dd>Also known as real-time data, event data, stream data processing, or data-in-motion, this refers to a continuous flow of information generated by various sources, such as sensors, applications, social media, or other digital platforms.</dd>
+<dt>Streaming database</dt>
+<dd>A data store designed to collect, process, and/or enrich an incoming series of data points (i.e., a data stream) in real time, typically immediately after the data is created.</dd>
+<dt>Streaming ETL (Extract, Transform, Load)</dt>
+<dd>The processing and movement of real-time data from one place to another.</dd>
+<dt>Taxonomy</dt>
+<dd>The practice of classifying and categorizing data.</dd>
+<dt>Time-series database (TSDB)</dt>
+<dd>A computer system that is designed to store and retrieve data records that are part of a "time series," which is a set of data points that are associated with timestamps. The timestamps provide a critical context for each of the data points in how they are related to others.</dd>
+<dt>Time to live (TTL)</dt>
+<dd>A value that determines how long data is retained, before it is discarded from internal cache.</dd>
+<dt>Transaction</dt>
+<dd>A sequence of information exchange and related work (such as data store updating) that is treated as a unit for the purposes of satisfying a request and for ensuring data store integrity.</dd>
+<dt>TSDB</dt>
+<dd>A time-series database is a computer system that is designed to store and retrieve data records that are part of a "time series" — a set of data points that are associated with timestamps.</dd>
+<dt>Vector search</dt>
+<dd>An advanced information retrieval method that allows systems to go beyond highly organized, quantitative structured data, and capture the context and semantic meaning of qualitative unstructured data that doesn't follow conventional models, including multimedia, textual, geospatial, and Internet of Things (IoT) data.</dd>
+<dt><Anchor id="wan-replication"/>WAN Replication</dt>
+<dd>Also known as Geo Replication, a feature that replicates map and cache updates between independent clusters over wide area networks to keep them in sync across data centers. Used for high availability and disaster recovery, it supports Active-Passive and Active-Active modes, buffers and retries during connectivity issues, and allows pausing/resuming and dynamically adding targets.</dd>
+<dt>WSDL</dt>
+<dd>Web Services Description Language.</dd>
+</dl>

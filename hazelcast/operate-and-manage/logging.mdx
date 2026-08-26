@@ -1,0 +1,300 @@
+---
+title: "Configuring Logging"
+sidebar_position: 2
+slug: /maintain-cluster/logging
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Hazelcast has a flexible logging configuration and does not depend on any logging framework except JDK logging. It has built-in adapters for a number of logging frameworks and it also supports custom loggers by providing logging interfaces.
+
+## Locating the Logs
+
+If you start a member using the `hz-start` script from the Hazelcast distribution package, the logs are written to `<HAZELCAST HOME>/logs` directory by default. The logs are configured to roll over daily. Note that the logs are also shown in the terminal where you start the member while it is up and running.
+
+In case you use Docker to start a member, the logs are written to stdout. You can use the `docker logs <Hazelcast container ID>` command to see the member logs at any point in time. The container ID can be seen using `docker ps`. You can also use `docker logs -f <Hazelcast container ID>` to follow the logs in real-time.
+
+## Setting Logging Type
+
+To use the built-in adapters, set the `hazelcast.logging.type` property to one of the predefined types below:
+
+- **jdk**: JDK logging (default)
+- **log4j**: Log4j
+- **log4j2**: Log4j2
+- **slf4j**: Slf4j
+- **none**: disable logging
+
+The following shows how you can set this property:
+
+:::note
+
+If you choose to use `log4j`, `log4j2`, or `slf4j`, you should include the proper dependencies in the classpath.
+
+:::
+
+<Tabs groupId="java-member-api--jvm--system-property--xml--yaml">
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  properties:
+    hazelcast.logging.type: log4j2
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <properties>
+        <property name="hazelcast.logging.type">log4j2</property>
+    </properties>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="java-member-api" label="Java member API">
+
+```
+Config config = new Config() ;
+config.setProperty( "hazelcast.logging.type", "log4j2" );
+```
+
+</TabItem>
+<TabItem value="jvm" label="JVM">
+
+```shell
+java -Dhazelcast.logging.type=log4j
+```
+
+</TabItem>
+<TabItem value="system-property" label="System Property">
+
+```shell
+System.setProperty( "hazelcast.logging.type", "log4j" );
+```
+
+</TabItem>
+</Tabs>
+
+## Logging Pattern
+
+The default log output resembles the following example:
+
+```bash
+2022-02-16 11:40:52,463 [ INFO] [main] [c.h.system]: [172.18.0.2]:5701 [hello-world] [5.8.0-SNAPSHOT] Copyright (c) 2008-2022, Hazelcast, Inc. All Rights Reserved.
+2022-02-16 11:40:52,463 [ INFO] [main] [c.h.system]: [172.18.0.2]:5701 [hello-world] [5.8.0-SNAPSHOT] Hazelcast Platform 5.8.0-SNAPSHOT (20220210 - 1d718cf) starting at [172.18.0.2]:5701
+2022-02-16 11:40:52,463 [ INFO] [main] [c.h.system]: [172.18.0.2]:5701 [hello-world] [5.8.0-SNAPSHOT] Cluster name: hello-world
+```
+
+The logging pattern is shown below.
+
+```plain
+[Date and time] [Log level] [Thread name] [Logger Class Name] [Member IP and port] [Cluster name] [Platform version] [Log message]
+```
+
+You can customize the default logging pattern using the `LOGGING_PATTERN` environment variable while starting a member.
+
+Here is an example usage.
+
+<Tabs groupId="cli--docker">
+<TabItem value="cli" label="CLI">
+
+```bash
+LOGGING_PATTERN='{"time":"%date{ISO8601}", "logger": "%logger{36}", "level": "%level", "msg": "%enc{%m %xEx}{JSON}"}%n' bin/hz start
+```
+
+</TabItem>
+<TabItem value="docker" label="Docker">
+
+```bash
+docker run \
+    -e LOGGING_PATTERN='{"time":"%date{ISO8601}", "logger": "%logger{36}", "level": "%level", "msg": "%enc{%m %xEx}{JSON}"}%n' \
+    hazelcast/hazelcast:5.8.0-SNAPSHOT
+```
+
+</TabItem>
+</Tabs>
+
+## Specifying Logging Configuration File
+
+You can specify the logging configuration file using the `LOGGING_CONFIG` environment variable. If it is not set, the default `<HAZELCAST HOME>/config/log4j2.properties` is used; you can change the logging configuration by modifying this file.
+
+Here is an example usage.
+
+<Tabs groupId="cli--docker">
+<TabItem value="cli" label="CLI">
+
+Provide the file's relative or absolute path, or a file in the `<HAZELCAST HOME>/config` directory.
+
+```bash
+LOGGING_CONFIG=config/myHzConfig.properties bin/hz start
+```
+
+</TabItem>
+<TabItem value="docker" label="Docker">
+
+Provide the file's relative or absolute path.
+
+```bash
+docker run \
+    -e LOGGING_CONFIG=config/myHzConfig.properties \
+    hazelcast/hazelcast:5.8.0-SNAPSHOT
+```
+
+</TabItem>
+</Tabs>
+
+You can also provide a properties file having a path of your choice. For Log4j2, you can specify this using the following JVM argument (which is the only way for Log4j2).
+
+```none
+-Dlog4j.configurationFile=/path/to/properties/log4j2.properties
+```
+
+## Modifying the Default Logging
+
+If you do not need detailed logs, the default settings are enough. Using the Hazelcast specific lines in the default configuration file, you can select to see specific logs (cluster, partition, hibernate, etc.) in desired levels:
+
+```shell
+...
+...
+#Hazelcast specific logs.
+#logger.com.hazelcast=debug
+
+#logger.com.hazelcast.cluster=debug
+#logger.com.hazelcast.partition=debug
+...
+....
+```
+
+To enable the debug logs for all Hazelcast operations, uncomment the below line in the configuration file:
+
+```none
+logger.com.hazelcast=debug
+```
+
+You can also use the `hazelcast.logging.details.enabled` property to specify whether the name, IP address and version of the cluster are included in the logs. When there are lots of log lines, it may be hard to follow. When set to `false`, those information will not appear.
+
+## Using JSON Template
+
+You can use JSON templates for the member log files. The JSON logging configuration file built on the default JSON template layout is `<HAZELCAST HOME>/config/log4j2-json.properties`.
+
+You can use a different JSON template via the `LOGGING_JSON_TEMPLATE` environment variable. Here is an example usage.
+
+<Tabs groupId="cli--docker">
+<TabItem value="cli" label="CLI">
+
+```bash
+LOGGING_CONFIG=log4j2-json.properties LOGGING_JSON_TEMPLATE="classpath:EcsLayout.json" bin/hz start
+```
+
+</TabItem>
+<TabItem value="docker" label="Docker">
+
+```bash
+docker run \
+    -e LOGGING_CONFIG=config/log4j2-json.properties \
+    -e LOGGING_JSON_TEMPLATE="classpath:EcsLayout.json" \
+    hazelcast/hazelcast:5.8.0-SNAPSHOT
+```
+
+</TabItem>
+</Tabs>
+
+See [Event Templates](https://logging.apache.org/log4j/2.x/manual/json-template-layout.html#event-templates) for available templates.
+
+## Changing Log Levels for JDK Logging
+
+As mentioned in the introduction of this section above, the default logging type of Hazelcast is JDK logging.
+
+The default logging level is `INFO`.
+
+You can change the JDK logging level as follows while starting a member.
+
+<Tabs groupId="docker--java-member-api">
+<TabItem value="docker" label="Docker">
+
+```bash
+docker run \
+    -e LOGGING_LEVEL=FINE \
+    hazelcast/hazelcast:5.8.0-SNAPSHOT
+```
+
+</TabItem>
+<TabItem value="java-member-api" label="Java member API">
+
+```java
+java.util.logging.Logger rootLogger = LogManager.getLogManager().getLogger("");
+rootLogger.setLevel(Level.FINE);
+for (Handler h : rootLogger.getHandlers()) {
+    h.setLevel(Level.FINE);
+}
+```
+
+</TabItem>
+</Tabs>
+
+## Dynamically Changing Log Levels
+
+You can change log levels without the need of restarting the cluster members. This may be useful while monitoring or diagnosing the events in your cluster.
+
+This feature is supported for the default (JDK/JUL), Log4j, and Log4j2 frameworks. The Slf4j framework is not supported since it does not provide any log level changing APIs.
+
+You can use either of the following ways to dynamically change the level of your cluster's logs:
+
+- Using JMX API: The logging service exposes its JMX MBean as `LoggingServiceMBean`. You can retrieve, set, and reset the level. See the [Monitoring with JMX section](#monitoring-with-jmx).
+- Using REST API: You can use the `/hazelcast/rest/log-level` REST endpoint to retrieve (`GET`), set (`POST`), and reset (`DELETE`) the level. See the [REST Endpoint Groups section](../clients/rest.mdx#using-the-rest-endpoint-groups).
+
+  :::caution[Deprecation Notice for the Community Edition REST API]
+
+  The Community Edition REST API has been deprecated and will be removed as of Hazelcast version 7.0. An improved Enterprise version of this feature is available and actively being developed. For more information, see [Enterprise REST API](../clients-and-apis/apis/enterprise-rest-api/overview.mdx).
+
+  :::
+
+## Logging for Client and Embedded Mode
+
+When using Hazelcast through the client or in embedded mode, Hazelcast doesn't automatically add any dependencies to any logging framework and allows configuration of which facade the logging should be done through.
+
+To configure the logging facade to use, you need to set a property in the configuration file:
+
+```yaml
+hazelcast-client:
+  properties:
+    hazelcast.logging.type: log4j2
+```
+
+Alternatively, you can use the system property `-Dhazelcast.logging.type` to configure the logging framework to use.
+
+## Using a Custom Logger
+
+If the provided logging mechanisms are not satisfactory, you can implement your own using the custom logging feature. To use it, implement the `com.hazelcast.logging.LoggerFactory` and `com.hazelcast.logging.ILogger` interfaces and set the system property `hazelcast.logging.class` as your custom `LoggerFactory` class name.
+
+```none
+-Dhazelcast.logging.class=foo.bar.MyLoggingFactory
+```
+
+## Listening to Logging Events
+
+You can also listen to logging events generated by Hazelcast runtime by registering `LogListener`s to `LoggingService`.
+
+```java
+LogListener listener = new LogListener() {
+  public void log( LogEvent logEvent ) {
+    // do something
+  }
+};
+HazelcastInstance instance = Hazelcast.newHazelcastInstance();
+LoggingService loggingService = instance.getLoggingService();
+loggingService.addLogListener( Level.INFO, listener );
+```
+
+Through the `LoggingService`, you can get the currently used ILogger implementation and log your own messages too.
+
+:::note
+
+If you are not using command line for configuring logging, you should be careful about Hazelcast classes. They may be defaulted to `jdk` logging before newly configured logging is read. When logging mechanism is selected, it will not change.
+
+:::

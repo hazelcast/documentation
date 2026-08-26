@@ -1,0 +1,18 @@
+---
+title: "Recovery from a partial or total failure"
+sidebar_position: 4
+slug: /troubleshoot/recovery-members
+---
+
+Under normal circumstances, Hazelcast members are self-recoverable as in the following scenarios:
+
+- Automatic split-brain resolution
+- Hazelcast allowing stuck/unreachable members to come back within configured tolerance levels; see the [Configuring for Fault Tolerance section](../operate-and-manage/fault-tolerance/backups.mdx).
+
+However, in the rare case when a member is declared unreachable by Hazelcast because it fails to respond, but the rest of the cluster is still running, consider the following for recovery:
+
+- Collect Hazelcast [logs](../operate-and-manage/maintaining-a-cluster/monitoring.mdx#logging) from all members, active and unresponsive.
+- Collect Hazelcast client [logs](../operate-and-manage/maintaining-a-cluster/monitoring.mdx#logging) or application logs from all clients.
+- If the cluster is running and one or more members were ejected from the cluster because it was stuck, take a [heap dump](./remedies-for-alerts.mdx#heap-dumps) and [thread dump](./remedies-for-alerts.mdx#thread-dumps) of any stuck members.
+- After collecting all the necessary artifacts, shut down the ailing members by calling shutdown hooks; see the [Shutting Down the Cluster section](../operate-and-manage/maintaining-a-cluster/shutdown.mdx).
+- After shutdown, start the ailing members and wait for them to join the cluster. After successfully joining, Hazelcast rebalances the data across the members.

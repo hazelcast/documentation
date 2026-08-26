@@ -1,0 +1,84 @@
+---
+title: "Upgrade to Enterprise Edition"
+sidebar_label: "Overview"
+sidebar_position: 0
+slug: /migrate/rolling-restart
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+You can upgrade your Community Edition cluster to an Enterprise Edition cluster using an in-place rolling restart to change each member in turn.
+
+This approach ensures that you can move your cluster without interruption to the service. Similar to the rolling upgrade process, a rolling restart allows you to move one member at a time.
+
+To use a rolling restart to upgrade your cluster to Enterprise Edition, the codebase of your Community Edition cluster must match the target Enterprise Edition release.
+
+For example, you can use a rolling restart to upgrade your cluster from Community Edition 5.5 to Enterprise Edition 5.5. However, you cannot use a rolling restart to move to Enterprise Edition 5.5 from an earlier Community Edition release, such as 5.3. To move from an earlier Community Edition release, you must migrate your Community Edition data and make any other associated updates, then set up Enterprise Edition. You might find the Data Migration Tool (DMT) suitable for migrating your data — see [Using the Data Migration Tool](./data-migration-tool.mdx).
+
+## Best practices
+
+Before starting a rolling restart, consider the following best practices:
+
+- Back up your IMap and ReplicatedMap data structures using your usual method. This is not essential, but it is recommended.
+- Ensure that the version of JDK meets the minimum required for the target Enterprise Edition release.
+- Plan sufficient time for the rolling restart to complete, and remember that the member cannot change during the move.
+
+## Perform a rolling restart
+
+Before starting, ensure you have your Enterprise Edition license key ready to add to the member configuration. See [Manage Enterprise Edition license keys](../../enterprise-edition/enterprise-licenses.mdx).
+
+To move your Community Edition cluster to Enterprise Edition, complete the following steps:
+
+1. Gracefully shut down the first member:
+
+   <Tabs groupId="cli--docker--management-center">
+   <TabItem value="cli" label="CLI">
+
+   :::important
+
+   This command shuts down all running members on the local machine.
+
+   :::
+
+   ```bash
+   hz-stop
+   ```
+
+   </TabItem>
+   <TabItem value="management-center" label="Management Center">
+
+   Go to **Members**, select the member's row in the table and select **Shutdown**.
+
+   </TabItem>
+   <TabItem value="docker" label="Docker">
+
+   ```bash
+   docker stop <CONTAINER_NAME>
+   ```
+
+   </TabItem>
+   </Tabs>
+2. Wait until all partition migrations are completed. You can monitor the progress of migrations on the [cluster dashboard](/management-center/5.12-snapshot/clusters/dashboard) in Management Center.
+3. Upgrade the member's codebase to match the Enterprise Edition version and add your Enterprise Edition license key to the configuration.
+4. Start a new member and wait until it joins the Enterprise Edition cluster.
+
+   <Tabs groupId="cli--docker">
+   <TabItem value="cli" label="CLI">
+
+   ```bash
+   hz start
+   ```
+
+   </TabItem>
+   <TabItem value="docker" label="Docker">
+
+   ```bash
+   docker start <CONTAINER_NAME>
+   ```
+
+   </TabItem>
+   </Tabs>
+5. Repeat this process for each member in the Community Edition cluster.
+
+When all members on the Community Edition cluster have been moved to the Enterprise Edition cluster, you can start configuring the Enterprise Edition features that you want to use. See [Hazelcast editions and distributions](../../../get-started/editions.mdx).

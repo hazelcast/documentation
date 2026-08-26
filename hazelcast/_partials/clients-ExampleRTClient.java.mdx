@@ -1,0 +1,17 @@
+```java
+        Config config = new Config();
+        RingbufferConfig ringbufferConfig = new RingbufferConfig("default");
+        ringbufferConfig.setCapacity(10000000)
+                .setTimeToLiveSeconds(5);
+        config.addRingBufferConfig(ringbufferConfig);
+
+        ClientConfig clientConfig = new ClientConfig();
+        ClientReliableTopicConfig topicConfig = new ClientReliableTopicConfig("default");
+        topicConfig.setTopicOverloadPolicy( TopicOverloadPolicy.BLOCK )
+                            .setReadBatchSize( 10 );
+        clientConfig.addReliableTopicConfig(topicConfig);
+
+        HazelcastInstance hz = Hazelcast.newHazelcastInstance(config);
+        HazelcastInstance client = HazelcastClient.newHazelcastClient(clientConfig);
+        ITopic topic = client.getReliableTopic(topicConfig.getName());
+```

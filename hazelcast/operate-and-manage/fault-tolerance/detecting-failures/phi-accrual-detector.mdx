@@ -1,0 +1,79 @@
+---
+title: "Phi Accrual Failure Detector"
+sidebar_position: 3
+slug: /clusters/phi-accrual-detector
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Phi Accrual Failure Detector keeps track of the intervals between heartbeats in a sliding window of time and measures the mean and variance of these samples and calculates a value of suspicion level (Phi). The value of phi increases when the period since the last heartbeat gets longer. If the network becomes slow or unreliable, the resulting mean and variance increase, there needs to be a longer period for which no heartbeat is received before the member is suspected.
+
+The following is an example configuration with property descriptions.
+
+<Tabs groupId="java-member-api--xml--yaml">
+<TabItem value="xml" label="XML">
+
+```xml conums
+<hazelcast>
+    ...
+    <properties>
+        <property name="hazelcast.heartbeat.failuredetector.type">phi-accrual</property> <1>
+        <property name="hazelcast.heartbeat.interval.seconds">1</property> <2>
+        <property name="hazelcast.max.no.heartbeat.seconds">60</property> <3>
+        <property name="hazelcast.heartbeat.phiaccrual.failuredetector.threshold">10</property> <4>
+        <property name="hazelcast.heartbeat.phiaccrual.failuredetector.sample.size">200</property> <5>
+        <property name="hazelcast.heartbeat.phiaccrual.failuredetector.min.std.dev.millis">100</property> <6>
+    </properties>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml conums
+hazelcast:
+  properties:
+    hazelcast.heartbeat.failuredetector.type: phi-accrual <1>
+    hazelcast.heartbeat.interval.seconds: 1 <2>
+    hazelcast.max.no.heartbeat.seconds: 60 <3>
+    hazelcast.heartbeat.phiaccrual.failuredetector.threshold: 10 <4>
+    hazelcast.heartbeat.phiaccrual.failuredetector.sample.size: 200 <5>
+    hazelcast.heartbeat.phiaccrual.failuredetector.min.std.dev.millis: 100 <6>
+```
+
+</TabItem>
+<TabItem value="java-member-api" label="Java Member API">
+
+```java conums
+Config config = ...;
+config.setProperty("hazelcast.heartbeat.failuredetector.type", "phi-accrual"); <1>
+config.setProperty("hazelcast.heartbeat.interval.seconds", "1"); <2>
+config.setProperty("hazelcast.max.no.heartbeat.seconds", "60"); <3>
+config.setProperty("hazelcast.heartbeat.phiaccrual.failuredetector.threshold", "10"); <4>
+config.setProperty("hazelcast.heartbeat.phiaccrual.failuredetector.sample.size", "200"); <5>
+config.setProperty("hazelcast.heartbeat.phiaccrual.failuredetector.min.std.dev.millis", "100"); <6>
+[...]
+```
+
+</TabItem>
+</Tabs>
+
+<CodeCallouts>
+
+1. The value must be `phi-accrual`.
+2. [Interval](./deadline-detector.mdx#heartbeat-interval) at which member heartbeat messages are sent to each other.
+3. Timeout that defines when a cluster member is suspect because it has not sent any heartbeats. As *Phi Accrual Failure Detector* is adaptive to network conditions, you can define a lower `hazelcast.max.no.heartbeat.seconds` than defined in the *Deadline Failure Detector* timeout. For further information on the *Deadline Failure Detector* timeout, see the [timeout](./deadline-detector.mdx#heartbeat-timeout) topic.
+4. The phi threshold at which a member is considered unreachable and marked as suspect. After calculated phi exceeds this threshold, a member is considered as unreachable and marked as suspected. A low threshold allows you to detect any crashes or failures in a member, but can generate more failures and cause the wrong member to be marked as suspect. A higher threshold generates fewer failures but is slower to detect actual crashes/failures. If you set `phi = 1`, the possibility of an incorrectly-identified failure is around 10%. If you set `phi = 2`, this falls to around 1%, and setting `phi = 3` reduces this further to around 0.1%. The likelihood of incorrectly-identified failures continues to reduce in this way as you increase the value. By default, the phi threshold is set to `10`.
+5. Number of samples to retain for history. By default, this is set to `200`.
+6. Minimum standard deviation for phi calculations in a normal distribution.
+
+   :::note
+
+   If you set the standard deviation too low, this can result in excessive sensitivity.
+
+   :::
+7. If you set the standard deviation too low, this can result in excessive sensitivity.
+
+</CodeCallouts>

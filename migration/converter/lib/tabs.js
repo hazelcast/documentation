@@ -45,8 +45,8 @@ const VALUE_ALIASES = new Map([
   ['install-script-linux-macos', 'linux-and-mac'],
 ])
 
-// Declaration order is not significant — a tabset matching two families is an
-// error, not a precedence question (see groupIdFor). `java` sits in two
+// Declaration order is not significant — a tabset matching two families joins
+// neither, rather than the first declared (see groupIdFor). `java` sits in two
 // vocabularies because both axes genuinely offer it: a client language, and
 // "configure programmatically" opposite XML/YAML.
 const FAMILIES = [
@@ -82,14 +82,23 @@ function normalizeValues (values) {
 }
 
 // The groupId for a tabset's already-normalised values.
+//
+// Matching more than one family means the values do not IDENTIFY an axis, so the
+// tabset joins neither and falls back to its own signature. That is not a silent
+// choice between the two — it is declining to sync a tabset we cannot place, and
+// it can only ever happen to a tabset whose values all lie in the intersection of
+// two vocabularies. Today that intersection is the single value `java`
+// (client-language ∩ config-format), so the case is exactly the lone `Java::`
+// tabset on hazelcast's data-structures/vector-collections — one tab, nothing to
+// switch to, so an island costs the reader nothing. A LONE value that belongs to
+// one family only still joins it (`['hazelcast']` -> product): one value is
+// enough to identify an axis when no other axis claims it.
+//
+// Widening a family so that a MULTI-value tabset becomes ambiguous is the case
+// worth noticing — it would quietly stop syncing a tabset that used to sync — so
+// split the vocabularies rather than leaning on this fallback.
 function groupIdFor (values) {
   const matches = FAMILIES.filter((f) => values.every((v) => f.values.has(v)))
-  if (matches.length > 1) {
-    throw new Error(
-      `tabs: [${values.join(', ')}] matches families ${matches.map((m) => m.id).join(' and ')}. ` +
-      `Disambiguate in converter/lib/tabs.js.`
-    )
-  }
   if (matches.length === 1) return matches[0].id
   return [...values].sort().join('--')
 }

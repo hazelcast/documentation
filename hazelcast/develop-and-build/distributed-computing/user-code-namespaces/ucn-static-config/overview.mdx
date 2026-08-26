@@ -1,0 +1,31 @@
+---
+title: "Static Configuration"
+sidebar_label: "Overview"
+sidebar_position: 0
+slug: /clusters/ucn-static-config
+enterprise: true
+---
+
+You can configure User Code Namespaces using static configuration in an XML or YAML file, or programmatically. The configuration is applied on start-up.
+
+To statically configure User Code Namespaces for your user code, you must do the following:
+
+- If not already done, [Enable User Code Namespaces](../ucn-enable.mdx)
+- Define the name of the User Code Namespaces
+- Define the locations of the resources
+- Identify the namespace used by the required user code in the data structure
+
+You can also configure a `default` namespace, which can be used to provide resources when no specific User Code Namespaces have been configured. For example, a data structure without an associated namespace, a partition loss listener, or when you are using an API that is not namespace-aware. For further information on using the `default` namespace, see the [Non-associated Namespaces](../ucn-non-associated.mdx) topic.
+
+If you want to instantiate and register a customization that looks up code in a namespace, you must also configure the permissions. For further information on permissions, see the [Security](../ucn-security.mdx) and [Client Authorization](../../../../operate-and-manage/securing-a-cluster/client-authorization.mdx) topics.
+
+## In the Hazelcast Configuration File
+
+To use the *hazelcast* configuration file to configure User Code Namespaces, see the following topics:
+
+- [Member Configuration](./ucn-member-side.mdx). This explains how to define the name of the User Code Namespaces and the location of the related resources
+- [Data Structures](./ucn-data-structures.mdx). This explains how to define the User Code Namespaces used by your data structures
+
+## Programmatically
+
+To configure User Code Namespaces programmatically, see the [Programmatic Configuration](./ucn-static-programmatic.mdx) topic.

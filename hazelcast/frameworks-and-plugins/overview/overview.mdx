@@ -1,0 +1,38 @@
+---
+title: "Integrate with Spring"
+sidebar_label: "Overview"
+sidebar_position: 0
+slug: /spring/overview
+---
+
+[Spring](https://spring.io/) is a popular framework for writing enterprise-grade Java applications. The [Spring Framework](https://spring.io/projects/spring-framework) includes a range of libraries to reduce the need for boilerplate code and encourages a consistent structure for ease of maintenance. [Spring Boot](https://spring.io/projects/spring-boot) further simplifies development by automatically configuring applications on your classpath.
+
+Hazelcast Platform is integrated with the Spring Framework and Spring Boot, allowing you to easily incorporate Hazelcast's fast data cache capabilities into your Spring applications.
+
+## Why use Hazelcast with Spring?
+
+You can use Hazelcast to enhance your Spring applications with caching and session replication.
+
+- **Cache**: you can use Hazelcast as a Spring cache manager or a JCache-compliant cache, as described in the [Spring Boot documentation](https://docs.spring.io/spring-boot/reference/io/caching.html#io.caching.provider.hazelcast).
+- **Hibernate second-level cache**: you can use Hazelcast as a second-level cache in your [Hibernate](https://hibernate.org/) `LocalSessionFactoryBean` configuration.
+- **Session replication**: you can use Hazelcast to replicate session data across multiple web applications or microservices. Hazelcast provides [plugins](../hazelcast-plugins/web-session-replication.mdx) for several web servers, including Spring's default web server, Tomcat.
+
+Using Spring also makes it easier to work with Hazelcast. You can:
+
+- Autowire Hazelcast objects, such as the distributed map (IMap), without needing to configure a Hazelcast member first. Spring Boot automatically configures a Hazelcast member if Hazelcast is on the classpath.
+- Use `@SpringAware` annotation on Hazelcast objects to enable dependency injection inside classes processed by Hazelcast, such as `EntryProcessor` and `Callable`.
+- Reduce the configuration needed to set up Hazelcast.
+
+## Architecture options
+
+You can embed Hazelcast members in the same Java process as your Spring application or deploy them separately in a client/server topology. See [Choosing an Application Topology](../../install-and-upgrade/overview/choosing-a-deployment-option.mdx).
+
+:::note
+
+Hazelcast can be used as a JCache compliant cache or as a Spring org.springframework.cache.CacheManager compliant cache. When setting 'spring.cache.type' to `hazelcast`, Spring Boot will use the org.springframework.cache.CacheManager based implementation. If you want to use Hazelcast as a JCache compliant cache, set 'spring.cache.type' to `jcache`. If you have multiple JCache compliant cache providers and want to force the use of Hazelcast, you have to [explicitly set the JCache provider](https://docs.spring.io/spring-boot/reference/io/caching.html#io.caching.provider.jcache).
+
+:::
+
+## Supported versions
+
+Hazelcast supports Spring Framework `7.0`, 6.2\` and `5.3`.

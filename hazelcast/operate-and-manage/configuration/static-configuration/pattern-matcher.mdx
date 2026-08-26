@@ -1,0 +1,19 @@
+---
+title: "Configuration Pattern Matcher"
+sidebar_position: 6
+slug: /configuration/pattern-matcher
+---
+
+import PartialExampleConfigPatternMatcherJava from '@site/hazelcast/_partials/ExampleConfigPatternMatcher.java.mdx';
+
+You can give a custom strategy to match an item name to a configuration pattern. By default Hazelcast uses a simplified wildcard matching. See [Using Wildcards section](./using-wildcards.mdx) for this. A custom configuration pattern matcher can be given by using either member or client `config` objects, as shown below:
+
+```java
+// Setting a custom config pattern matcher via member config object
+Config config = new Config();
+config.setConfigPatternMatcher(new ExampleConfigPatternMatcher());
+```
+
+And the following is an example pattern matcher:
+
+<PartialExampleConfigPatternMatcherJava/>

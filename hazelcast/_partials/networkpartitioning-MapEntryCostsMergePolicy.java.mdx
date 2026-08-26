@@ -1,0 +1,28 @@
+```java
+public class MapEntryCostsMergePolicy implements SplitBrainMergePolicy<Object, MapMergeTypes<Object, Object>, Object> {
+
+    @Override
+    public Object merge(MapMergeTypes mergingValue, MapMergeTypes existingValue) {
+        if (existingValue == null) {
+            return mergingValue.getValue();
+        }
+        System.out.println("========================== Merging key " + mergingValue.getKey() + "..."
+                + "\n    mergingValue costs: " + mergingValue.getCost()
+                + "\n    existingValue costs: " + existingValue.getCost()
+        );
+
+        if (mergingValue.getCost() > existingValue.getCost()) {
+            return mergingValue.getRawValue();
+        }
+        return existingValue.getRawValue();
+    }
+
+    @Override
+    public void writeData(ObjectDataOutput out) {
+    }
+
+    @Override
+    public void readData(ObjectDataInput in) {
+    }
+}
+```

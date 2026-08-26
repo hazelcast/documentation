@@ -597,14 +597,30 @@ function convertAdmonition ($, node, st, depth) {
   return `${head}\n\n${body.trim()}\n\n:::`
 }
 
+// The block-level vocabulary: the tag names and Asciidoctor class names that
+// convertBlock dispatches on. Single-sourced here because blockOrInline has to
+// ask the same question convertBlock answers -- "is this child a block?" -- and
+// a hand-copied second copy of the list is exactly how a block ends up
+// flattened into inline text. It happened: `tabset` was missing, so a
+// `[tabs]` block inside a TABLE CELL (hazelcast storage/configuring-persistence)
+// came out as the tab labels run together followed by multi-line `code spans`,
+// which is not even valid MDX. converter/selftest.js asserts convertBlock
+// claims every name listed here, so the two cannot drift again.
+const BLOCK_TAGS = ['ul', 'ol', 'table', 'pre', 'details']
+const BLOCK_CLASSES = [
+  'paragraph', 'ulist', 'olist', 'dlist', 'colist',
+  'listingblock', 'literalblock', 'literal', 'admonitionblock', 'imageblock',
+  'tabset', 'openblock', 'exampleblock', 'sidebarblock', 'quoteblock', 'verseblock',
+  'sect1', 'sect2', 'sect3', 'sect4', 'sect5',
+]
+
+const isBlockChild = (c) =>
+  c.type === 'tag' && (BLOCK_TAGS.includes(c.name) || classes(c).some((k) => BLOCK_CLASSES.includes(k)))
+
 // A container whose content may be block-level (wrapped in .paragraph/.ulist/...)
 // or bare inline text (Asciidoctor emits admonition/cell text without a <p>).
 function blockOrInline ($, container, st, depth) {
-  const hasBlocks = (container.children || []).some((c) =>
-    c.type === 'tag' && (c.name === 'ul' || c.name === 'ol' || c.name === 'table' || c.name === 'pre' ||
-      /^(paragraph|ulist|olist|listingblock|literalblock|literal|admonitionblock|imageblock|sect\d|olist|dlist|openblock|exampleblock)$/.test(classes(c).join(' ')) ||
-      classes(c).some((k) => /paragraph|ulist|olist|listingblock|literalblock|literal|admonitionblock|imageblock|openblock|exampleblock|dlist/.test(k))))
-  if (hasBlocks) return convertChildren($, container, st, depth)
+  if ((container.children || []).some(isBlockChild)) return convertChildren($, container, st, depth)
   return inline($, container, st)
 }
 
@@ -805,7 +821,12 @@ function convertImageBlock ($, node, st) {
 function imageMd ($, img, st) {
   const alt = (img.attribs && img.attribs.alt) || ''
   const src = imageSrc((img.attribs && img.attribs.src) || '', st)
-  return `![${alt.replace(/([[\]])/g, '\\$1')}](${src})`
+  // The alt is Markdown INLINE PROSE (CommonMark parses `![...]` as inline
+  // content), so it gets the same escaper as any other prose run rather than an
+  // ad-hoc brackets-only pass. `<` is why: hazelcast's
+  // install-and-upgrade/upgrade/migration-tool-imdg has `![Migrating 3.12 <-> 5.x]`,
+  // and an unescaped `<` opens JSX -- the build failed on it outright.
+  return `![${mdEscape(alt)}](${src})`
 }
 
 // Antora resolves a versionless cross-component xref (e.g.
@@ -1486,4 +1507,4 @@ function serAttrs (node, st) {
   return out
 }
 
-module.exports = { convertBody, serializeJsx, ADMONITION_TYPES }
+module.exports = { convertBody, serializeJsx, ADMONITION_TYPES, BLOCK_TAGS, BLOCK_CLASSES }

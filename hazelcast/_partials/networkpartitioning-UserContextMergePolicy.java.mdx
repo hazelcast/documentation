@@ -1,0 +1,43 @@
+```java
+public class UserContextMergePolicy<V> implements SplitBrainMergePolicy<V, MergingValue<V>, Object>, HazelcastInstanceAware {
+
+    public static final String TRUTH_PROVIDER_ID = "truthProvider";
+
+    private transient TruthProvider truthProvider;
+
+    @Override
+    public Object merge(MergingValue<V> mergingValue, MergingValue<V> existingValue) {
+        Object mergingUserValue = mergingValue.getValue();
+        Object existingUserValue = existingValue == null ? null : existingValue.getValue();
+        boolean isMergeable = truthProvider.isMergeable(mergingUserValue, existingUserValue);
+        System.out.println("========================== Merging..."
+                        + "\n    mergingValue: " + mergingUserValue
+                        + "\n    existingValue: " + existingUserValue
+                        + "\n    isMergeable(): " + isMergeable
+        );
+        if (isMergeable) {
+            return mergingValue.getRawValue();
+        }
+        return null;
+    }
+
+    @Override
+    public void writeData(ObjectDataOutput out) {
+    }
+
+    @Override
+    public void readData(ObjectDataInput in) {
+    }
+
+    @Override
+    public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
+        ConcurrentMap<String, Object> userContext = hazelcastInstance.getUserContext();
+        truthProvider = (TruthProvider) userContext.get(TRUTH_PROVIDER_ID);
+    }
+
+    public interface TruthProvider {
+
+        boolean isMergeable(Object mergingValue, Object existingValue);
+    }
+}
+```

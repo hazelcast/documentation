@@ -1,0 +1,18 @@
+```java
+public class YourMapStoreImplementation implements MapStore<String, Supplement>, MapLoaderLifecycleSupport {
+
+    private MongoClient mongoClient;
+    private MongoCollection collection;
+
+    public YourMapStoreImplementation() {
+    }
+
+    @Override
+    public void init(HazelcastInstance hazelcastInstance, Properties properties, String mapName) {
+        String mongoUrl = (String) properties.get("mongo.url");
+        String dbName = (String) properties.get("mongo.db");
+        String collectionName = (String) properties.get("mongo.collection");
+        this.mongoClient = new MongoClient(new MongoClientURI(mongoUrl));
+        this.collection = mongoClient.getDatabase(dbName).getCollection(collectionName);
+    }
+```

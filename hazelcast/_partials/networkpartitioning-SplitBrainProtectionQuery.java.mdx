@@ -1,0 +1,19 @@
+```java
+        String splitBrainProtectionName = "at-least-one-storage-member";
+        SplitBrainProtectionConfig splitBrainProtectionConfig = new SplitBrainProtectionConfig();
+        splitBrainProtectionConfig.setName(splitBrainProtectionName);
+        splitBrainProtectionConfig.setEnabled(true);
+
+        MapConfig mapConfig = new MapConfig();
+        mapConfig.setSplitBrainProtectionName(splitBrainProtectionName);
+
+        Config config = new Config();
+        config.addSplitBrainProtectionConfig(splitBrainProtectionConfig);
+        config.addMapConfig(mapConfig);
+
+        HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
+        SplitBrainProtectionService splitBrainProtectionService = hazelcastInstance.getSplitBrainProtectionService();
+        SplitBrainProtection splitBrainProtection = splitBrainProtectionService.getSplitBrainProtection(splitBrainProtectionName);
+
+        boolean splitBrainProtectionPresence = splitBrainProtection.hasMinimumSize();
+```

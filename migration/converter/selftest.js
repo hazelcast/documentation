@@ -23,7 +23,7 @@ const { gfmHtml } = require('micromark-extension-gfm')
 
 const { mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode } = require('./lib/mdx')
 const { resolveHref, attrHrefTemplates, unmangleSubscripts, repairApiDeepLink } = require('./lib/links')
-const { convertBody } = require('./lib/html-to-mdx')
+const { convertBody, BLOCK_TAGS, BLOCK_CLASSES } = require('./lib/html-to-mdx')
 const { classifyHref } = require('../fidelity/lib/links')
 const { collectOccurrences, decide, slugFor, componentNameFor, parseId, consumerAttrs } = require('./lib/partials')
 const { normalizeValues, groupIdFor } = require('./lib/tabs')
@@ -1283,9 +1283,17 @@ const renderedCode = (md) => {
 {
   assert.throws(() => normalizeValues(['mc-conf', 'hz-mc-conf']), /collides/,
     'an alias that merges two tabs of one tabset must be rejected, not emitted')
-  assert.throws(() => groupIdFor(['java']), /matches families/,
-    'a signature matching two families must be rejected, not silently assigned to one')
-  ok('tabs: an ambiguous alias or family match is a hard error, never a silent choice')
+  // A signature matching TWO families identifies no axis, so it joins neither
+  // rather than being assigned to whichever is declared first. `java` is the only
+  // such signature the vocabularies allow (client-language n config-format), and
+  // it occurs as a lone `Java::` tabset, which has nothing to sync anyway.
+  assert.strictEqual(groupIdFor(['java']), 'java',
+    'a signature matching two families must join neither, not be assigned to one')
+  // The fallback must not swallow a LONE value that only one family claims: one
+  // value identifies an axis when nothing else offers it.
+  assert.strictEqual(groupIdFor(['hazelcast']), 'product',
+    'a lone value unique to one family still joins that family')
+  ok('tabs: a colliding alias is a hard error; an unplaceable family match declines to sync')
 }
 
 // End to end through the real converter: the emitted <Tabs> carries the groupId
@@ -1321,6 +1329,74 @@ const renderedCode = (md) => {
   const ids = [...two.matchAll(/<Tabs groupId="([^"]*)">/g)].map((m) => m[1])
   assert.deepStrictEqual(ids, ['os', 'os'], 'both OS tabsets on the page must share one groupId')
   ok('tabs: convertBody emits the groupId, normalises values, and keeps labels + pane bodies intact')
+}
+
+// Nested block content converts the same way wherever it sits. `blockOrInline`
+// (table cells, admonition bodies, description-list <dd>s) has to decide whether
+// a container's children are blocks, and it used to answer from its OWN copy of
+// the block vocabulary -- which had drifted from the one convertBlock dispatches
+// on. `tabset` was missing, so a `[tabs]` block inside a table cell (hazelcast
+// storage/configuring-persistence) came out as the tab labels run together
+// followed by multi-line `code spans`: not merely wrong, but invalid MDX that
+// failed the build.
+//
+// Differential oracle, in the style of the link classifiers above: for EVERY name
+// in the shared vocabulary, converting a minimal block of that kind at top level
+// and inside a table cell must produce the same block -- the two paths cannot
+// disagree about what a block is. A name added to BLOCK_TAGS/BLOCK_CLASSES with
+// no fixture here fails, so the vocabulary cannot grow untested.
+{
+  const P = '<div class="paragraph"><p>hi</p></div>'
+  const fixtures = {
+    paragraph: P,
+    ulist: '<div class="ulist"><ul><li><p>a</p></li></ul></div>',
+    olist: '<div class="olist"><ol><li><p>a</p></li></ol></div>',
+    dlist: '<div class="dlist"><dl><dt>t</dt><dd><p>d</p></dd></dl></div>',
+    colist: '<div class="colist arabic"><table><tr><td>1</td><td>note</td></tr></table></div>',
+    listingblock: '<div class="listingblock"><div class="content"><pre class="highlight">' +
+      '<code class="language-xml">&lt;a&gt;</code></pre></div></div>',
+    literalblock: '<div class="literalblock"><div class="content"><pre>lit</pre></div></div>',
+    literal: '<div class="literal"><pre>lit</pre></div>',
+    admonitionblock: '<div class="admonitionblock note"><table><tr><td class="icon"></td>' +
+      '<td class="content">careful</td></tr></table></div>',
+    imageblock: '<div class="imageblock"><div class="content"><img src="_images/x.png" alt="x"></div></div>',
+    tabset: '<div class="tabset is-loading"><div class="ulist tabs"><ul><li><p>' +
+      '<a id="tabset1_xml"></a>XML</p></li></ul></div><div class="content">' +
+      '<div class="tab-pane" aria-labelledby="tabset1_xml">' + P + '</div></div></div>',
+    openblock: '<div class="openblock"><div class="content">' + P + '</div></div>',
+    exampleblock: '<div class="exampleblock"><div class="content">' + P + '</div></div>',
+    sidebarblock: '<div class="sidebarblock"><div class="content">' + P + '</div></div>',
+    quoteblock: '<div class="quoteblock"><blockquote>q</blockquote></div>',
+    verseblock: '<div class="verseblock"><pre class="content">v</pre></div>',
+    sect1: '<div class="sect1"><h2 id="s">S</h2><div class="sectionbody">' + P + '</div></div>',
+    sect2: '<div class="sect2"><h3 id="s2">S2</h3>' + P + '</div>',
+    sect3: '<div class="sect3"><h4 id="s3">S3</h4>' + P + '</div>',
+    sect4: '<div class="sect4"><h5 id="s4">S4</h5>' + P + '</div>',
+    sect5: '<div class="sect5"><h6 id="s5">S5</h6>' + P + '</div>',
+    ul: '<ul><li><p>a</p></li></ul>',
+    ol: '<ol><li><p>a</p></li></ol>',
+    table: '<table class="tableblock"><tbody><tr><td class="tableblock">' +
+      '<p class="tableblock">c</p></td></tr></tbody></table>',
+    pre: '<pre>raw</pre>',
+    details: '<details><summary class="title">S</summary><div class="content">' + P + '</div></details>',
+  }
+  // An AsciiDoc (`a|`) cell: its blocks sit in a `.content` wrapper, which is
+  // exactly the container blockOrInline is handed.
+  const inCell = (html) =>
+    '<table class="tableblock"><tbody><tr><td class="tableblock"><div class="content">' +
+    html + '</div></td></tr></tbody></table>'
+
+  for (const name of [...BLOCK_CLASSES, ...BLOCK_TAGS]) {
+    const html = fixtures[name]
+    assert(html, `no fixture for block vocabulary entry "${name}" -- add one`)
+    const direct = convertBody(html, { pageUrl: '/x' }).body.trim()
+    assert(direct !== '', `fixture for "${name}" converted to nothing`)
+    const celled = convertBody(inCell(html), { pageUrl: '/x' }).body.trim()
+    assert(celled.includes(direct),
+      `a ${name} block inside a table cell must convert as a BLOCK, as it does at top level.\n` +
+      `  top level: ${JSON.stringify(direct)}\n  in a cell: ${JSON.stringify(celled)}`)
+  }
+  ok('nested blocks: every block-vocabulary entry converts identically in a cell and at top level')
 }
 
 console.log(`\n[converter selftest] ${n} groups passed.`)

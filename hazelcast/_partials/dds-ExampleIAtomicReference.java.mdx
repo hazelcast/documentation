@@ -1,0 +1,11 @@
+```java
+        Config config = new Config();
+
+        HazelcastInstance hz = Hazelcast.newHazelcastInstance(config);
+
+        IAtomicReference<String> ref = hz.getCPSubsystem().getAtomicReference("reference");
+        ref.set("foo");
+        System.out.println(ref.get());
+        ref.destroy();
+        System.exit(0);
+```

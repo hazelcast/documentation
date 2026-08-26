@@ -35,6 +35,17 @@ const NAV_SOURCES = {
     file: 'docs/modules/ROOT/nav.adoc',
     refFor: (seg) => `v/${seg}`,
   },
+  // Platform (Antora component name `hazelcast`, hence the URL /hazelcast/... and
+  // the reason the plugin id is `hazelcast` while the navbar says "Platform").
+  // Its main is a NUMBERED snapshot like management-center's -- it declares
+  // version `5.8-snapshot`, display `5.8-SNAPSHOT` -- so its current seg is that
+  // number (VERSIONS.current) and main is the branch behind it. Multi-module and
+  // by far the largest component: 439 pages over 46 modules at 5.7.
+  hazelcast: {
+    repo: 'hz-docs.git',
+    file: 'docs/modules/ROOT/nav.adoc',
+    refFor: (seg) => (seg === currentSegFor('hazelcast') ? 'main' : `v/${seg}`),
+  },
   // management-center's main IS a snapshot line, but a NUMBERED one: it declares
   // version `5.12-snapshot` (display `5.12-SNAPSHOT`), not operator's undated
   // `latest-snapshot`. So its current seg is that number (VERSIONS.current) and
@@ -69,6 +80,13 @@ const VERSIONS = {
   operator: { releases: ['5.18', '5.17', '5.16', '5.15', '5.14', '5.13', '5.12'] },
   clc: { current: '5.5.1', releases: ['5.5.0'] },
   'management-center': { current: '5.12-snapshot', releases: ['5.11', '5.10', '5.9'] },
+  // Platform phase 1: the CURRENT (main) branch only, so the plugin is stood up
+  // and the whole 439-page corpus converted once before the release copies
+  // multiply it. The live release set is 5.7 down to 5.3 (5.2 and older are
+  // frozen, freeze plan); they go in `releases` newest first, and the dropdown's
+  // landing version flips to 'latest-release' in docusaurus.config.ts at the
+  // same time (main is an unreleased snapshot, as MC's is).
+  hazelcast: { current: '5.8-snapshot', releases: [] },
 }
 
 // Attributes whose references are MARKED in the golden (antora-extension/

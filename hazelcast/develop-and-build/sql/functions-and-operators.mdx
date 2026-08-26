@@ -1,0 +1,873 @@
+---
+title: "Expressions, Functions and Operators"
+sidebar_label: "Functions and expressions"
+sidebar_position: 15
+slug: /sql/functions-and-operators
+---
+
+Hazelcast supports a subset of standard SQL expressions, functions, and operators as well as non-standard functions for special cases such as windowed aggregation.
+
+For information about input and return data types, see [Data Types](./data-types.mdx).
+
+## Operators
+
+Operators are used to evaluate and/or compare one or more operands. For example, in the expression (X + Y), the `+` operator evaluates the addition of the `X` and `Y` operands.
+
+Hazelcast supports the following SQL operators.
+
+### Logical Operators
+
+Hazelcast supports the `AND`, `OR`, and `NOT` logical operators. Logical operators allow only `BOOL` or `NULL` data types as input. The result can be `TRUE`, `FALSE`, or `NULL`:
+
+| X | Y | X AND Y | X OR Y |
+| --- | --- | --- | --- |
+| `TRUE` | `TRUE` | `TRUE` | `TRUE` |
+| `TRUE` | `FALSE` | `FALSE` | `TRUE` |
+| `TRUE` | `NULL` | `NULL` | `TRUE` |
+| `FALSE` | `FALSE` | `FALSE` | `FALSE` |
+| `FALSE` | `NULL` | `FALSE` | `NULL` |
+| `NULL` | `NULL` | `NULL` | `NULL` |
+
+| X | NOT Y |
+| --- | --- |
+| `TRUE` | `FALSE` |
+| `FALSE` | `TRUE` |
+| `NULL` | `NULL` |
+
+### Comparison Operators
+
+Comparison operators compare two or more operands, and always return a `BOOL`. Comparisons require operands to be of comparable type.
+
+<table>
+<thead>
+<tr>
+<th>Operator name</th>
+<th>Syntax</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Less Than</td>
+<td>`X < Y`</td>
+<td>Returns `TRUE` if `X` is less than `Y`.</td>
+</tr>
+<tr>
+<td>Less Than or Equal To</td>
+<td>`X <= Y`</td>
+<td>Returns `TRUE` if `X` is less than or equal to `Y`.</td>
+</tr>
+<tr>
+<td>Greater Than</td>
+<td>`X > Y`</td>
+<td>Returns `TRUE` if `X` is greater than `Y`.</td>
+</tr>
+<tr>
+<td>Greater Than or Equal To</td>
+<td>`X >= Y`</td>
+<td>Returns `TRUE` if `X` is greater than or equal to `Y`.</td>
+</tr>
+<tr>
+<td>Equal</td>
+<td>`X = Y`</td>
+<td>Returns `TRUE` if `X` is equal to `Y`.</td>
+</tr>
+<tr>
+<td>Not Equal</td>
+<td>
+
+`X != Y`
+
+`X <> Y`
+
+</td>
+<td>Returns `TRUE` if `X` is not equal to `Y`.</td>
+</tr>
+<tr>
+<td><Anchor id="between"/>`BETWEEN`</td>
+<td>`X [NOT] BETWEEN [SYMMETRIC] Y AND Z`</td>
+<td>Returns `TRUE` if `X` is within the given range of `Y` and `Z`. The `SYMMETRIC` keyword allows `Y` and `Z` to be in any order, rather than `Y` being the lower bound and `Z` being the upper bound.</td>
+</tr>
+<tr>
+<td>`LIKE`</td>
+<td>`X [NOT] LIKE Y [ESCAPE Z]`</td>
+<td>
+
+Returns `TRUE` if the string in the `X` operand matches the pattern specified by the `Y` operand. Expressions can contain the following special characters:
+
+- A percent sign (`%`): Matches any number of characters.
+- An underscore (`_`): Matches a single character.
+
+To escape a special character, use the `ESCAPE` keyword followed by the escape character to use. For example `'text' LIKE '!_ext' ESCAPE '!'` returns `FALSE` because the `_` character is escaped by the exclamation mark (`!`).
+
+</td>
+</tr>
+<tr>
+<td>`IN`</td>
+<td></td>
+<td>See [`IN` Operator](#in-operator)</td>
+</tr>
+</tbody>
+</table>
+
+### `EXISTS` Operator
+
+The `EXISTS` operator returns `TRUE` if a given subquery returns one or more records.
+
+The `NOT` keyword inverts the result.
+
+**Syntax**
+
+The `EXISTS` operator supports the following syntax:
+
+```sql
+[NOT] EXISTS (<query>)
+```
+
+### `IS` Operator
+
+The `IS` operator returns `TRUE` or `FALSE` for a given condition. This operator never returns `NULL`.
+
+The `NOT` keyword inverts the result.
+
+| Syntax | Description |
+| --- | --- |
+| `X IS [NOT] NULL` | Returns `TRUE` if the `X` operand evaluates to `NULL`, and returns `FALSE` otherwise. |
+| `X IS [NOT] TRUE` | Returns `TRUE` if the `X` operand evaluates to `TRUE`. Returns `FALSE` otherwise. |
+| `X IS [NOT] FALSE` | Returns `TRUE` if the `X` operand evaluates to `FALSE`. Returns `FALSE` otherwise. |
+
+### `IN` Operator
+
+The `IN` operator allows you to check for a certain value in a given set of values, and returns `TRUE` if an equal value is found.
+
+The `NOT` keyword inverts the result.
+
+:::note
+
+At the moment, Hazelcast does not support subqueries in `IN` clauses. For example, you cannot do `SELECT column_names FROM table_name
+WHERE column_name IN (SELECT STATEMENT);`
+
+:::
+
+**Syntax**
+
+The `IN` operator supports the following syntax:
+
+```sql
+<search_value> [NOT] IN (<value_set>)
+```
+
+### `UNION` and `UNION ALL` Operators
+
+The `UNION` operator is used to combine the result set of two or more `SELECT` statements, **excluding any duplicate values**.
+
+The `UNION ALL` operator is used to combine the result set of two or more `SELECT` statements, **including any duplicate values**.
+
+:::note
+
+`UNION ALL` typically performs much better, because duplicate elimination is an expensive operation. Use `UNION` only if you actually need to remove duplicates.
+
+:::
+
+**Syntax**
+
+The `UNION` and `UNION ALL` Operators support the following syntax:
+
+```sql
+<query> UNION [ALL] <query>
+```
+
+### Mathematical Operators
+
+Mathematical operators perform operations on numbers.
+
+| Operator Name | Syntax |
+| --- | --- |
+| Addition | `X + Y` |
+| Subtraction | `X - Y` |
+| Multiplication | `X * Y` |
+| Division | `X / Y` |
+| Remainder | `X % Y` |
+
+## Conditional Expressions
+
+Conditional expressions allow you to evaluate only certain output values, depending on given conditions.
+
+### CASE
+
+The `CASE` expression evaluates the condition of each `WHEN` clause and returns the first result where the condition is `TRUE`. If all conditions are `FALSE` or `NULL`, the result of the `ELSE` clause is returned.
+
+Each `condition` must be a boolean expression.
+
+**Syntax**
+
+The `CASE` expression has two forms:
+
+```sql
+CASE value
+  WHEN value1 THEN result1
+  WHEN value2 THEN result2
+  ...
+  ELSE elseResult
+END
+```
+
+This form for returns `result1`, when `value = value1`, `result2` when `value = value2` and `elseResult`, if `value` isn't equal to any of the values in the `WHEN` clause.
+
+```sql
+CASE
+  WHEN condition1 THEN result1
+  WHEN condition2 THEN result2
+  ...
+  ELSE elseResult
+END
+```
+
+This form returns `result1` when `condition1` is `TRUE`, `result2` when `condition2` is `TRUE` and `elseResult`, if no condition evaluated to `TRUE`.
+
+### NULLIF
+
+The `NULLIF` expression returns `NULL` if the two operands are equal and returns the first operand, if operands are not equal. The data type of the returned `NULL` value is the same as the `X` expression.
+
+**Syntax**
+
+```sql
+NULLIF(X, Y)
+```
+
+**Examples**
+
+```sql
+sql> SELECT NULLIF('foo', 'bar');
++--------------------+
+|EXPR$0              |
++--------------------+
+|foo                 |
++--------------------+
+1 row(s) selected
+sql> SELECT NULLIF('foo', 'foo');
++--------------------+
+|EXPR$0              |
++--------------------+
+|NULL                |
++--------------------+
+```
+
+### COALESCE
+
+The `COALESCE` function returns the first non-null operand. If all operands are null, it returns `NULL`. Arguments to the right of the first non-null argument are not evaluated.
+
+**Syntax**
+
+```sql
+COALESCE(X, Y, Z, ...)
+```
+
+## Aggregate Functions
+
+Aggregate functions perform calculations such as returning the mean of all data in a particular row.
+
+| Function :: Returns | Description |
+| --- | --- |
+| `COUNT(*) :: BIGINT` | Calculates the number of input rows. |
+| `COUNT(field) :: BIGINT` | Calculates the number of input rows in which the field is not null. |
+| `COUNT(DISTINCT field) :: BIGINT` | Calculates the number of distinct values of the given field (ignores the `NULL` value). |
+| `SUM(TINYINT | SMALLINT | INT) :: BIGINT, SUM(BIGINT | DECIMAL) :: DECIMAL, SUM(REAL) :: REAL, SUM(DOUBLE) :: DOUBLE` | Calculates the sum of the non-null input values. |
+| `AVG(DECIMAL) :: DECIMAL, AVG(DOUBLE) :: DOUBLE` | Calculates the mean of all the non-null input values. |
+| `MIN(any) :: same type as the input` | Calculates the minimum of the non-null input values. Applicable also to `OBJECT` type, if the underlying value is `java.lang.Comparable`. |
+| `MAX(any) :: same type as the input` | Calculates the maximum of the non-null input values. Applicable also to `OBJECT` type, if the underlying value is `java.lang.Comparable`. |
+
+:::note
+
+You can use `DISTINCT` keyword with all aggregate functions. It causes that before calculating the aggregate, duplicates are removed from the set of input values. For example, `SUM(DISTINCT)` applied to input values `1, 1, 2` will produce `3`, because it will add the `1` only once.
+
+:::
+
+For examples of how to use aggregate functions, see the [`SELECT` statement documentation](./statements/select.mdx).
+
+## Conversion Functions
+
+Conversion functions allow you to convert the result type of one expression to another explicit type.
+
+### CAST
+
+| Function | Description | Example | Result |
+| --- | --- | --- | --- |
+| `CAST(expression AS data_type)` | Converts the result type of `expression` to `data_type`. | `SELECT CAST('2020-06-02 17:00:53.110' AS TIMESTAMP)` | `2020-06-03T00:00:53.11` |
+
+### TO\_CHAR
+
+<table>
+<tbody>
+<tr>
+<td>`TO_CHAR(expression [, format model] [, NLS parameter])`</td>
+<td>Converts a number or date to a string.</td>
+<td>
+
+`SELECT ... TO_CHAR(1210.73, '9999.9')`
+
+`SELECT ... TO_CHAR(sysdate, 'MON DDth, YYYY')`
+
+</td>
+<td>
+
+`1210.7`
+
+`APR 6th 2023`
+
+</td>
+</tr>
+</tbody>
+</table>
+
+The following are the detailed specifications for the formatting and modifiers of the `TO_CHAR` function.
+
+| Pattern | Description |
+| --- | --- |
+| `HH`, `HH12` | Hours of the day (1–12) |
+| `HH24` | Hours of the day (0-23) |
+| `MI` | Minutes of the hour (0-59) |
+| `SS` | Seconds of the minute (0-59) |
+| `MS`, `FF3` | Milliseconds (0-999) |
+| `US`, `FF6` | Microseconds (0-999999) |
+| `FF1` | Tenth of a second (0-9) |
+| `FF2` | Hundredth of a second (0-99) |
+| `FF4` | Tenth of a millisecond (0-9999) |
+| `FF5` | Hundredth of a millisecond (0-9999) |
+| `SSSS`, `SSSSS` | Seconds past midnight (0-86399) |
+| `AM`, `am`, `PM`, `pm` | Meridiem indicator (without periods) |
+| `A.M.`, `a.m.`, `P.M.`, `p.m.` | Meridiem indicator (with periods) |
+| `Y,YYY` | Year of the era (four or more digits) with comma |
+| `YYYY` | Year of the era (four or more digits) |
+| `YYY` | Last three digits of the year of the era |
+| `YY` | Last two digits of the year of the era |
+| `Y` | Last digit of the year of the era |
+| `IYYY` | ISO 8601 week-numbering year (4 or more digits) |
+| `IYY` | Last three digits of the ISO 8601 week-numbering year |
+| `IY` | Last two digits of the ISO 8601 week-numbering year |
+| `I` | Last digit of the ISO 8601 week-numbering year |
+| `BC`, `bc`, `AD`, `ad` | Era indicator (without periods) |
+| `B.C.`, `b.c.`, `A.D.`, `a.d.` | Era indicator (with periods) |
+| `MONTH` | Full uppercase month name (space-padded to nine chars) |
+| `Month` | Full capitalized month name (space-padded to nine chars) |
+| `month` | Full lowercase month name (space-padded to nine chars) |
+| `MON` | Abbreviated uppercase month name (three chars in English, localized lengths vary) |
+| `Mon` | Abbreviated capitalized month name (three chars in English, localized lengths vary) |
+| `mon` | Abbreviated lowercase month name (three chars in English, localized lengths vary) |
+| `MM` | Month number (1–12) |
+| `DAY` | Full uppercase day name (space-padded to nine chars) |
+| `Day` | Full capitalized day name (space-padded to nine chars) |
+| `day` | Full lowercase day name (space-padded to nine chars) |
+| `DY` | Abbreviated uppercase day name (three chars in English, localized lengths vary) |
+| `Dy` | Abbreviated capitalized day name (three chars in English, localized lengths vary) |
+| `dy` | Abbreviated lowercase day name (three chars in English, localized lengths vary) |
+| `DDD` | Day of the year (1–366) |
+| `IDDD` | Day of the ISO 8601 week-numbering year (1–371; day one of the year is Monday of the first ISO week) |
+| `DD` | Day of the month (1–31) |
+| `D` | Day of the week, Monday (1) to Sunday (7) |
+| `ID` | ISO 8601 day of the week, Monday (1) to Sunday (7) |
+| `W` | Week of the month (1–5) (the first week starts on the first day of the month) |
+| `WW` | Week number of the year (1–53) (the first week starts on the first day of the year) |
+| `IW` | Week number of the ISO 8601 week-numbering year (1–53; the first Thursday of the year is in week one) |
+| `CC` | Century of the era (two digits) (the 21st century starts on 2001-01-01) |
+| `J` | Julian Date (integer days since November 24, 4714 BC at local midnight) |
+| `Q` | Quarter of the year (1-4) |
+| `RY` | Year of the era in uppercase Roman numerals |
+| `ry` | Year of the era in lowercase Roman numerals |
+| `RM` | Month number in uppercase Roman numerals (I–XII) |
+| `rm` | Month number in lowercase Roman numerals (i–xii) |
+| `RD` | Day of the month in uppercase Roman numerals (I–XXXI) |
+| `rd` | Day of the month in lowercase Roman numerals (i–xxxi) |
+| `TZ` | Uppercase time-zone abbreviation, for example, GMT, UTC |
+| `tz` | Lowercase time-zone abbreviation, for example, gmt, utc |
+| `TZH` | Time-zoned hours, for example, +3 |
+| `TZM` | Time-zones minutes (0-59) |
+| `OF` | Time-zoned offset from UTC, for example, +03:00 |
+
+| Modifier | Description |
+| --- | --- |
+| `FM` prefix | Enable the fill mode (suppress padding) |
+| `TH` suffix | Uppercase ordinal number suffix (English only) |
+| `th` suffix | Lowercase ordinal number suffix (English only) |
+
+| Pattern | Description |
+| --- | --- |
+| `9` | Digit position (can be dropped if insignificant) |
+| `0` | Digit position (will not be dropped, even if insignificant) |
+| `.` (period) | Decimal separator |
+| `D` | Localized decimal separator |
+| `,` (comma) | Grouping separator |
+| `G` | Localized grouping separator |
+| `V` | Shift specified number of digits, for example, V99 = x10<sup>2</sup> |
+| `TH` | Uppercase ordinal suffix for the integer part (English only) |
+| `th` | Lowercase ordinal suffix for the integer part (English only) |
+| `EEEE` | Exponent for scientific notation, for example, E+03, x10^+03 |
+| `eeee` | Lowercase exponent for scientific notation, for example, e+03, x10^+03 |
+| `RN` | Uppercase Roman numeral for the integer part |
+| `rn` | Lowercase Roman numeral for the integer part |
+
+| Fixed | Anchored | Description |
+| --- | --- | --- |
+| `BR` | `B` | Negative value in angle brackets |
+| `SG` | `S` | Sign |
+| `MI` | `M` | Minus sign if number is negative |
+| `PL` | `P` | Plus sign if number is non-negative |
+| `CR` | `C` | Currency symbol or ISO 4217 currency code |
+
+The format string consists of the integer and fraction parts, which are split at the first decimal separator, or just after the last digit position, or the end of the format string depending on availability. The order of processing is right to left in the integer part and left to right in the fraction part.
+
+If the format string contains the `EEEE` or `eeee` patterns, it is said to be in the exponential form, in which no overflow is possible unless the number is infinite. If it contains the `RN` or `rn` patterns and no digit positions, it is in the Roman form, in which there is an overflow unless the number is between 1 (inclusive) and 4000 (exclusive). Otherwise, the format string is in the normal form, in which the number overflows only if it requires more digit positions than specified for the integer part. In this form, the `RN` and `rn` patterns format the integer part if the absolute value of the number is less than 4000; otherwise, they switch to the overflow mode.
+
+In an overflow:
+
+- the digit positions print a single hash (`#`)
+- the `EEEE` and `eeee` patterns print `+##` as the exponent
+- the `RN` and `rn` patterns print 15 hashes
+- the `TH` and `th` patterns print two spaces if the number is infinite.
+
+  The other patterns print what they print when there is no overflow. Note that NaN (not-a-number) is considered positive.
+
+In the normal and exponential forms, if there is no negative sign provision and there is at least one digit position, an `M` pattern is prepended to the integer part. Similarly, if only one part has the `BR` and/or `B` patterns, the latest bracket in the order of processing is inserted to the opposite part. The inferred sign is inserted so that it encloses all non-fixed patterns in the part to which it is inserted.
+
+Lowercase variants of patterns are also accepted. If there is no special meaning of the lowercase variant, it has the same effect as its uppercase version.
+
+The `FM` pattern enables *the fill mode*, which suppresses padding.
+
+- In date formats:
+
+  - If padding is enabled, numeric fields are left-padded with zeros and textual fields are left-padded with spaces.
+  - The padding space is printed immediately, that is, it is not possible to float the fields to one side.
+- In numeric formats:
+
+  - If padding is enabled; the `9` pattern prints a single space if it corresponds to a leading/trailing zero, decimal/grouping separators print a single space if they are not in between digits, the `TH` pattern prints two spaces if the number is infinite, the `RN` pattern pads the Roman numeral to meet 15 characters, the `BR` pattern prints two spaces if the number is non-negative, and the `MI`/`PL` patterns print a single space if the number is non-negative/negative respectively.
+  - The padding space is not printed until a fixed pattern or the end of the format string is encountered. As a result, unfixed, or anchored, patterns float right within the extra space in the integer part and float left in the fraction part. Digit positions and decimal/grouping separators cannot float for obvious reasons, but they are considered "transparent" while anchoring other patterns.
+  - Zero-padding and space-padding are completely orthogonal, which makes it possible to have zero-padded fractions, which are aligned at the decimal separator. However, this requires the last digit of the fraction part to be `0` if the Postgres convention is desired.
+
+Consecutive unrecognized characters are interpreted as a literal. It is also possible to specify a literal by enclosing zero or more characters within double quotes. If the format string ends before an opening quote is paired, a closing quote is assumed just after the last character. If a double quote is to be printed, it must be escaped with a leading backslash. In general, escaping a character causes it to lose its special meaning if any. In numeric formats, literals are anchored by default. To fix its position, a literal should be prepended with an `F` pattern, for example, `F$`, `F"USD"`.
+
+## Date and Time Functions
+
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+<th>Example</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+<dl>
+<dt>\`+EXTRACT(\<element\> FROM \<temporal\_value\>)</dt>
+<dd>DOUBLE+\`</dd>
+</dl>
+
+</td>
+<td>
+
+Returns the `element` date part from the `date` expression.
+
+Supported elements: `MILLENNIUM`, `CENTURY`, `DECADE`, `YEAR`, `ISOYEAR`, `QUARTER`, `MONTH`, `WEEK`, `DAY`, `DOW`, `ISODOW`, `DOY`, `HOUR`, `MINUTE`, `SECOND`, `MILLISECOND`, `MICROSECOND`, `EPOCH`
+
+Supported temporal types: `DATE`, `TIME`, `TIMESTAMP`, `TIMESTAMP WITH TIME ZONE`
+
+</td>
+<td>`EXTRACT(WEEK FROM date'2017-06-15')`</td>
+<td>24</td>
+</tr>
+<tr>
+<td>
+
+<dl>
+<dt>\`+TO\_TIMESTAMP\_TZ(BIGINT)</dt>
+<dd>TIMESTAMP WITH TIME ZONE+\`</dd>
+</dl>
+
+</td>
+<td>
+
+Converts a `BIGINT` value to `TIMESTAMP_WITH_TIMEZONE`. The value is interpreted as number of seconds, milliseconds, microseconds or nanoseconds since the *epoch*, that is since 1970-01-01 00:00 UTC.
+
+The actual time unit of the conversion is determined by the magnitude of the input value:
+
+- less than the number of milliseconds in a year: seconds
+- less than the number of microseconds in a year: milliseconds
+- less than the number of nanoseconds in a year: microseconds
+- otherwise: nanoseconds
+
+This logic causes that any time value between years 1971 up to year 2968 is converted using the correct time unit. Negative values are always converted as seconds.
+
+</td>
+<td>`SELECT TO_TIMESTAMP_TZ(v) FROM TABLE (generate_series(1,3))`</td>
+<td>
+
+1970-01-01T03:00:01+03:00
+
+1970-01-01T03:00:02+03:00
+
+1970-01-01T03:00:03+03:00
+
+</td>
+</tr>
+<tr>
+<td>`TO_EPOCH_MILLIS(TIMESTAMP_WITH_TIMEZONE)`</td>
+<td>Converts `TIMESTAMP_WITH_TIMEZONE` values to an `EPOCH` value in milliseconds.</td>
+<td>`SELECT TO_EPOCH_MILLIS(date'2022-02-22')`</td>
+<td>1645484400000</td>
+</tr>
+<tr>
+<td>`TO_CHAR(datetime, format_mask [, nls_language])`</td>
+<td>Converts a number or date to a string</td>
+<td>`TO_CHAR(DATE '2022-09-26', 'FMDD FMMonth FMYYYY', 'American_America.UTF8')`</td>
+<td>`26 Sep 2022`</td>
+</tr>
+</tbody>
+</table>
+
+## File Table Functions
+
+To execute an ad-hoc query against data in files you can use one of the following table functions:
+
+- `csv_file`
+- `json_flat_file`
+- `avro_file`
+- `parquet_file`
+
+File table functions create a temporary mapping to a file, which is valid for the duration of the query. These functions accept the same options as those available for the [file connector](./sql-over-file-systems/mapping-to-a-file-system.mdx).
+
+To configure the temporary mapping, you can use either positional arguments or named arguments:
+
+```sql title="Positional arguments in a file table function"
+SELECT * FROM TABLE(
+  CSV_FILE('/path/to/directory', '*.csv', MAP['key', 'value'])
+);
+```
+
+```sql title="Named arguments in a file table function"
+SELECT * FROM TABLE(
+  CSV_FILE(path => '/path/to/directory', options => MAP['key', 'value'])
+);
+```
+
+## JSON Functions
+
+Hazelcast supports the following functions, which can retrieve JSON data.
+
+### JSON\_QUERY
+
+The `JSON_QUERY()` function extracts a JSON value from a JSON document or a JSON-formatted string that matches a given JsonPath expression.
+
+**Syntax**
+
+```none
+JSON_QUERY(jsonArg:{VARCHAR | JSON}, jsonPath:VARCHAR [<wrapperBehavior>] [<onClauseArg> ON ERROR] [<onClauseArg> ON EMPTY])` :: JSON
+```
+
+- `jsonArg`: JSON value or a JSON-formatted string.
+- `jsonPath`: A [JsonPath](./working-with-json.mdx#jsonpath) expression that identifies the data that you want to get from the `jsonArg` parameter.
+- `wrapperBehavior`: What to do with return results.
+
+  - `WITHOUT [ARRAY] WRAPPER` (default): Up to one matched value is returned without wrapping in an array. Fails, if multiple values match.
+  - `WITH [CONDITIONAL] [ARRAY] WRAPPER`: Returns a single match directly without wrapping. If there are multiple matches, they are returned as a JSON array.
+  - `WITH UNCONDITIONAL [ARRAY] WRAPPER`: Always wrap matched values in a JSON array.
+- `onClauseArg`: A value to return in case of the given `ON` condition:
+
+  - `EMPTY ARRAY`
+  - `EMPTY OBJECT`
+  - `ERROR`
+  - `NULL`
+
+**Examples**
+
+```sql title="JSON-formatted string"
+SELECT
+  JSON_QUERY('{"company" : {"employees" : [{"id" : "1"}]}}', '$.company.employees[0]');
+
+-- Result
+-- {"id":"1"}
+```
+
+```sql title="WITH CONDITIONAL WRAPPER"
+SELECT
+  JSON_QUERY('[1,2,3]', '$[*]?(@ > 1)' WITH CONDITIONAL ARRAY WRAPPER);
+
+-- Result
+-- [2,3]
+```
+
+```sql title="WITHOUT WRAPPER"
+SELECT
+  JSON_QUERY('[1,2,3]', '$[*]?(@ > 1)' WITHOUT ARRAY WRAPPER);
+
+-- Result
+-- This example throws an error because you cannot return multiple values without an array wrapper.
+```
+
+```sql title="WITH UNCONDITIONAL WRAPPER"
+SELECT
+  JSON_QUERY('[1,"rainbow",3]', '$[1]' WITH UNCONDITIONAL ARRAY WRAPPER);
+
+-- Result
+-- ["rainbow"]
+```
+
+### JSON\_VALUE
+
+The `JSON_VALUE()` function extracts a primitive value, such as a string, number, or boolean that matches a given JsonPath expression. This function returns `NULL` if a non-primitive value is matched, unless the `ON ERROR` behavior is changed.
+
+**Syntax**
+
+```none
+JSON_VALUE(jsonArg:{VARCHAR | JSON}, jsonPath:VARCHAR [RETURNING dataType] [<onClauseArg> ON ERROR] [<onClauseArg> ON EMPTY])` :: VARCHAR
+```
+
+- `jsonArg`: JSON value or a JSON-formatted string
+- `jsonPath`: A [JsonPath](./working-with-json.mdx#jsonpath) expression that identifies the data that you want to get from the `jsonArg` parameter.
+- `RETURNING`: Converts the result to the `dataType` (`VARCHAR` by default). If the value cannot be converted to the target type, throws an error.
+- `onClauseArg`: What to return in case of the `ON` condition:
+
+  - `DEFAULT <literal | column | parameter>`
+  - `ERROR`
+  - `NULL`
+
+**Examples**
+
+```sql title="JSON-formatted string"
+SELECT
+  JSON_VALUE('{"company" : {"employees" : [{"id" : "1","name":"jake"}]}}', '$.company.employees[0].id');
+
+-- Returns
+-- 1 (as a VARCHAR)
+```
+
+### JSON\_ARRAY
+
+The `JSON_ARRAY()` function returns a JSON array from a list of input data.
+
+**Syntax**
+
+```none
+JSON_ARRAY([columnOrParameterOrLiteral:ANY], [...more columns/parameters/literals:ANY] [{ABSENT|NULL} ON NULL]) :: JSON
+```
+
+- `columnOrParameterOrLiteral`: A list of input data.
+- `ON NULL`: What to do with null values:
+
+  - `ABSENT ON NULL` (default): Do not include `NULL` values in the array.
+  - `NULL ON NULL`: Include `NULL` values in the array.
+
+**Examples**
+
+```sql
+SELECT
+  JSON_ARRAY(1, null, 3);
+
+-- Result
+-- [1,3]
+```
+
+### JSON\_OBJECT
+
+The `JSON_OBJECT()` function returns a JSON object from the given key/value pairs.
+
+**Syntax**
+
+```none
+JSON_OBJECT([key : value] [, ...] [{ABSENT|NULL} ON NULL]) :: JSON
+```
+
+Or
+
+```none
+JSON_OBJECT([[KEY] key VALUE value] [{ABSENT|NULL} ON NULL]) :: JSON
+```
+
+- `key`: A name for the key, must be a VARCHAR
+- `value`: A value for the key, can be any type.
+- `ON NULL`: What to do with `NULL` values.
+
+  - ``NULL ON NULL (default): Include `NULL`` values in the array.
+  - `ABSENT ON NULL`: Do not include `NULL` values in the array.
+
+**Examples**
+
+```sql
+SELECT JSON_OBJECT(KEY 'id' VALUE 1, 'name' VALUE null ABSENT ON NULL)
+
+-- Result
+-- {"id": 1}
+```
+
+```sql
+SELECT JSON_OBJECT('id': 1, 'name': 'jake')
+
+-- Result
+-- {"id": 1, "name":"jake"}
+```
+
+### JSON\_ARRAYAGG
+
+The `JSON_ARRAYAGG()` returns a JSON array containing an element for each value in a given set of SQL values. It takes as its input a column of SQL expressions, converts each expression to a JSON value, and returns a single JSON array that contains those JSON values.
+
+**Syntax**
+
+```none
+JSON_ARRAY(value [ORDER BY value {ASC|DESC}] [{ABSENT|NULL} ON NULL]) :: JSON
+```
+
+- `value`: A value for the key, can be any type.
+- `ON NULL`: What to do with null values:
+
+  - `ABSENT ON NULL` (default): Do not include `NULL` values in the array.
+  - `NULL ON NULL`: Include `NULL` values in the array.
+
+**Examples**
+
+Assuming you have the following table:
+
+```none
+name, number
+--------
+Alice, 1
+Bob, 2
+Alice, 3
+Bob, 6
+null, 7
+```
+
+```sql
+SELECT name,  JSON_ARRAYAGG(number ORDER BY number ASC) arr_no
+FROM test GROUP BY name
+
+-- Result
+-- name, arr_no
+-- ------------
+-- Alice, [1, 3]
+-- Bob, [2, 6]
+-- null, [7]
+```
+
+### JSON\_OBJECTAGG
+
+The `JSON_OBJECTAGG()` function constructs an object member for each key-value pair and returns a single JSON object that contains those object members. It takes as its input a property key-value pair. Typically, the property key, the property value, or both are columns of SQL expressions.
+
+**Syntax**
+
+```none
+JSON_OBJECTAGG([key : value] [, ...] [{ABSENT|NULL} ON NULL]) :: JSON
+```
+
+Or
+
+```none
+JSON_OBJECTAGG([[KEY] key VALUE value] [{ABSENT|NULL} ON NULL]) :: JSON
+```
+
+- `key`: A name for the key, must be a VARCHAR
+- `value`: A value for the key, can be any type.
+- `ON NULL`: What to do with `NULL` values.
+
+  - ``NULL ON NULL (default): Include `NULL`` values in the array.
+  - `ABSENT ON NULL`: Do not include `NULL` values in the array.
+
+**Examples**
+
+```sql
+SELECT JSON_OBJECTAGG(KEY 'name' VALUE age) "Names"
+  FROM employees
+  WHERE age <= 30;
+
+--Result
+--{"Mary":28,"John":29,"Jake":27}
+```
+
+## Mathematical Functions
+
+| Function | Description | Example | Result |
+| --- | --- | --- | --- |
+| `ABS(number)` | Absolute value of the argument | `ABS(-5)` | `5` |
+| `CBRT(number)` | Returns the cube root of the input | `CBRT(343)` | `7` |
+| `CEIL(number)` | Returns the nearest integer greater than or equal to argument | `CEIL(25.3)` | `26` |
+| `DEGREES(DOUBLE)` | Converts radians to degrees | `DEGREES(0.67)` | `38.38817227376516` |
+| `EXP(number)` | Exponential | `EXP(2.5)` | `12.182493960703473` |
+| `FLOOR(number)` | Returns the nearest integer less than or equal to argument | `FLOOR(25.3)` | `25` |
+| `LN(number)` | Natural logarithm | `LN(2.5)` | `0.9162907318741551` |
+| `LOG10(number)` | Base 10 logarithm | `LOG(2.5)` | `0.3979400086720376` |
+| `MOD(x:number, y:number)` | Returns the remainder of x / y | `MOD(20,3)` | `2` |
+| `POWER(x:number, y:number)` | Returns x to the power of y | `POWER(20,3)` | `8000` |
+| `RADIANS(DOUBLE)` | Converts degrees to radians | `RADIANS(38.39)` | `0.6700318998406232` |
+| `RAND` | Random value in the range \[0.0; 1.0) | `RAND()` | `0.6324099982812553` |
+| `RAND(number)` | Random value in the range \[0.0; 1.0) using the given seed | `RAND(10)` | `0.7304302967434272` |
+| `ROUND(number)` | Rounds to an integer | `ROUND(34.5678)` | `35` |
+| `ROUND(number, s:integer)` | Rounds to `s` decimal places | `ROUND(34.5678, 2)` | `34.57` |
+| `SIGN(number)` | Returns -1, 0 or 1 for negative, zero or positive argument, respectively | `SIGN(-25)` | `-1` |
+| `SQUARE(number)` | Squares the input | `SQUARE(2)` | `4` |
+| `SQRT(number)` | Returns the square root of the input | `SQRT(4)` | `2` |
+| `TRUNCATE(number)` | Truncates to an integer | `TRUNC(34.5678)` | `34` |
+| `TRUNCATE(number, s:integer)` | Truncates to `s` decimal places | `TRUNC(34.5678, 2)` | `34.56` |
+| `TO_CHAR(number, format_mask)` | Converts a number or date to a string | `TO_CHAR(1210.73, '9,999.99')` | `1,210.73` |
+
+## String Functions
+
+| Function | Description | Example | Result |
+| --- | --- | --- | --- |
+| `string || string` | Concatenates two strings | `'John' || ' ' || 'Doe'` | `John Doe` |
+| `ASCII(string)` | Returns the ASCII code of the first character of the argument | `ASCII('a')` | `97` |
+| `BTRIM(string)` | Equivalent to `TRIM(BOTH ' ' FROM string)` |  |  |
+| `CONCAT_WS(separator_string, string1, string2, …​)` | Returns a string that consists of the arguments `string1` `separator_string` `string2` | `CONCAT_WS('-', 'John', 'Doe')` | John-Doe |
+| `INITCAP(string)` | Converts the first letter of each word to upper case, and the rest to lower case | `INITCAP('john DOE')` | `John Doe` |
+| `LENGTH(string)` | Length of the string | `LENGTH('John Doe')` | `8` |
+| `LOWER(string)` | Converts the string to lower case | `LOWER('John Doe')` | `john doe` |
+| `LTRIM(string)` | Removes the empty spaces from the left-hand side of `string`. This function is equivalent to `TRIM(LEADING ' ' FROM string)` | `RTRIM( John Doe')` | `John Doe` |
+| `POSITION(substring IN string [FROM position])` | Returns the position of the first occurrence of `substring` in `string` | `POSITION('Doe' IN 'John Doe')` | `5` |
+| `REPLACE(substring, old_string, new_string)` | Replaces all occurrences of `substring` in `old_string` with `new_string` | `REPLACE('John', 'John Doe', 'Jane')` | `Jane Doe` |
+| `RTRIM(string)` | Removes the empty spaces from the right-hand side of `string`. This function is equivalent to `TRIM(TRAILING ' ' FROM string)` | `RTRIM(John Doe ')` | `John Doe` |
+| `SUBSTRING(string FROM integer)` | Extracts a substring starting with the given position | `SUBSTRING('John Doe' FROM 6)` | `Doe` |
+| `SUBSTRING(string FROM integer FOR integer)` | Extracts a substring starting with the given position for the given length | `SUBSTRING('John Doe' FROM 1 FOR 4)` | `John` |
+| `TRIM([LEADING|TRAILING|BOTH] [characters FROM] string)` | Removes `characters` (a space by default) from the start/end/both ends of the string | `TRIM(BOTH '[]' FROM '[John Doe]')` | `John Doe` |
+| `TRIM(characters FROM string)` | Equivalent to `TRIM(BOTH characters FROM string)` | `TRIM('[]' FROM '[John Doe]')` | `John Doe` |
+| `TRIM(string)` | Equivalent to `TRIM(BOTH ' ' FROM string)` | `TRIM(' John Doe ')` | `John Doe` |
+| `UPPER(string)` | Converts a string to upper case | `UPPER('John Doe')` | `JOHN DOE` |
+
+## Table-Valued Functions
+
+Table-valued functions return tables of batch or streaming sources that you can use in SQL statements.
+
+| Function | Description |
+| --- | --- |
+| `generate_series(start_number, end_number)` | Returns a table that contains a series of numbers, starting from the `start_number` argument and ending with the `stop_number` arguments. |
+| `generate_stream(numbers_per_second)` | Returns a table that contains a stream of numbers, starting from 0 at a rate of `numbers_per_second` every second, without an upper bound |
+
+To use a table-valued function in FROM clause, you must wrap it in a `TABLE` keyword. For example:
+
+```sql
+SELECT *
+FROM TABLE(generate_series(1, 3));
+```
+
+## Trigonometric Functions
+
+| Function | Description |
+| --- | --- |
+| `ACOS(double)` | Inverse cosine |
+| `ASIN(double)` | Inverse sine |
+| `ATAN(double)` | Inverse tangent |
+| `ATAN2(x:number, y:number)` | Arc tangent |
+| `COS(double)` | Cosine |
+| `COT(double)` | Cotangent |
+| `SIN(double)` | Sine |
+| `TAN(double)` | Tangent |
+
+## Windowing Table-Valued Functions
+
+Windowing functions assign input records from the input table into windows. Their output contains all the input columns, with two added columns: `window_start` and `window_end`. You can use the added columns in the `GROUP BY` expression when doing streaming aggregation.
+
+For a guide about streaming windowed aggregations in SQL, see [Stream Processing in SQL](./querying-streams.mdx).
+
+| Function | Description |
+| --- | --- |
+| `TUMBLE(TABLE(input),DESCRIPTOR(time_col),window_size)` | Assigns input records to tumbling windows. |
+| `HOP(TABLE(input),DESCRIPTOR(time_col),window_size, slide_step)` | Assigns input records to hopping windows. |

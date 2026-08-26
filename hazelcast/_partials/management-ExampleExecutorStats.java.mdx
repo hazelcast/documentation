@@ -1,0 +1,7 @@
+```java
+        HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance();
+        IExecutorService orderProcessor = hazelcastInstance.getExecutorService( "orderProcessor" );
+        LocalExecutorStats executorStatistics = orderProcessor.getLocalExecutorStats();
+        System.out.println( "completed task count = "
+                + executorStatistics.getCompletedTaskCount() );
+```

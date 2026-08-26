@@ -1,0 +1,11 @@
+```java
+public class TopicPublisher {
+
+    public static void main(String[] args) {
+
+        HazelcastInstance hz = Hazelcast.newHazelcastInstance();
+        ITopic<Date> topic = hz.getTopic("topic");
+        topic.publish(new Date());
+    }
+}
+```

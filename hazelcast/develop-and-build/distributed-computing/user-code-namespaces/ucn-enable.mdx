@@ -1,0 +1,76 @@
+---
+title: "Enable User Code Namespaces"
+sidebar_position: 1
+slug: /clusters/ucn-enable
+enterprise: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+For security reasons, you must enable User Code Namespaces using static configuration. You can do this programmatically, or using the Hazelcast configuration file.
+
+:::note
+
+If using dynamic persistence, this must be enabled in the Hazelcast configuration file. For further information persisting changes, see the [Dynamic Configuration](../../../operate-and-manage/configuration/dynamic-configuration/dynamic-config.mdx#manual) Overview topic under the Configure and Manage Clusters section.
+
+:::
+
+## Enable Programmatically
+
+To enable User Code Namespaces programmatically, create a *Member.java* file, add the following, then save the file to your configuration folder:
+
+```jave
+package com.hazelcast.namespace.staticconfig.classconfig;
+
+import com.hazelcast.config.Config;
+import com.hazelcast.config.UserCodeNamespaceConfig;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+HazelcastInstance hz = Hazelcast.newHazelcastInstance(config);
+
+public class Member {
+
+    public static void main(String[] args) {
+        Config config = new Config();
+        config.getNamespacesConfig().setEnabled(true);
+    }
+}
+```
+
+## Enable in Configuration File
+
+To enable User Code Namespaces using the *hazelcast* configuration file, complete the following steps:
+
+1. Open the *hazelcast* configuration file in your preferred editor
+
+   The *hazelcast* configuration file can be either an XML or YAML file.
+2. Scroll to the bottom of the file
+3. Add the following:
+
+   <Tabs groupId="config-format">
+   <TabItem value="xml" label="XML">
+
+   ```xml
+   <user-code-namespaces enabled="true">
+   </user-code-namespaces>
+   ```
+
+   </TabItem>
+   <TabItem value="yaml" label="YAML">
+
+   ```yaml
+   user-code-namespaces:
+     enabled: true
+   ```
+
+   </TabItem>
+   </Tabs>
+
+## Complete the Configuration
+
+You can continue your configuration as follows:
+
+- In the *hazelcast* configuration file, as described in the [Static Configuration](./ucn-static-config/overview.mdx) section
+- Using static programmatic configuration, as described in the [Programmatic Configuration](./ucn-static-config/ucn-static-programmatic.mdx) topic
+- Using dynamic configuration, as described in the [Dynamic Configuration API](./ucn-dynamic-config/overview.mdx) section

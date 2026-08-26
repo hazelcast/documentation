@@ -1,0 +1,29 @@
+```java
+    private static class MySecurityInterceptor implements SecurityInterceptor {
+
+        @Override
+        public void before(Credentials credentials, String objectType, String objectName, String methodName,
+                           Parameters parameters) throws AccessControlException {
+            if (objectName.equals(DENIED_MAP_NAME)) {
+                throw new RuntimeException("Denied Map!!!");
+            }
+            if (methodName.equals(DENIED_METHOD)) {
+                throw new RuntimeException("Denied Method!!!");
+            }
+            Object firstParam = parameters.get(0);
+            Object secondParam = parameters.get(1);
+            if (firstParam.equals(DENIED_KEY)) {
+                throw new RuntimeException("Denied Key!!!");
+            }
+            if (secondParam.equals(DENIED_VALUE)) {
+                throw new RuntimeException("Denied Value!!!");
+            }
+        }
+
+        @Override
+        public void after(Credentials credentials, String objectType, String objectName, String methodName,
+                          Parameters parameters) {
+            System.err.println("qwe c: " + credentials + "\t\tt: " + objectType + "\t\tn: " + objectName
+                    + "\t\tm: " + methodName + "\t\tp1: " + parameters.get(0) + "\t\tp2: " + parameters.get(1));
+        }
+```

@@ -1,0 +1,375 @@
+---
+title: "Configure Hazelcast in Spring"
+sidebar_position: 1
+slug: /spring/configuration
+---
+
+This section describes how to set up Hazelcast in a new or existing Spring application.
+
+## Enable Spring integration
+
+These instructions assume you are using Apache Maven. If you use another build system, you will need to adjust the definition of dependencies as required.
+
+To enable Spring integration:
+
+1. Add `hazelcast-spring-5.8.0-SNAPSHOT.jar` to your Java classpath.
+2. Add the following lines to your `pom.xml` file:
+
+   ```xml
+   <dependency>
+       <groupId>com.hazelcast</groupId>
+       <artifactId>hazelcast-spring</artifactId>
+       <version>5.8.0-SNAPSHOT</version>
+   </dependency>
+   ```
+3. If you are an Enterprise customer and you want to use `hazelcast-spring` with `hazelcast-enterprise`, you also need to exclude the transitive `hazelcast` dependency:
+
+   ```xml
+   <dependency>
+       <groupId>com.hazelcast</groupId>
+       <artifactId>hazelcast-enterprise</artifactId>
+       <version>5.8.0-SNAPSHOT</version>
+   </dependency>
+   <dependency>
+       <groupId>com.hazelcast</groupId>
+       <artifactId>hazelcast-spring</artifactId>
+       <version>5.8.0-SNAPSHOT</version>
+       <exclusions>
+           <exclusion>
+             <groupId>com.hazelcast</groupId>
+             <artifactId>hazelcast</artifactId>
+           </exclusion>
+       </exclusions>
+   </dependency>
+   ```
+
+### Troubleshooting
+
+When the Spring integration JARs are not correctly installed in the Java classpath, you may see one of the following exceptions:
+
+```shell
+org.xml.sax.SAXParseException; systemId: http://hazelcast.com/schema/spring/hazelcast-spring.xsd; lineNumber: 2; columnNumber: 35; s4s-elt-character: Non-whitespace characters are not allowed in schema elements other than 'xs:appinfo' and 'xs:documentation'. Saw '301 Moved Permanently'.
+```
+
+```shell
+org.springframework.beans.factory.parsing.BeanDefinitionParsingException: Configuration problem: Unable to locate Spring NamespaceHandler for XML schema namespace [http://www.hazelcast.com/schema/spring]
+```
+
+```shell
+org.xml.sax.SAXParseException; lineNumber: 25; columnNumber: 33; schema_reference.4: Failed to read schema document 'http://www.hazelcast.com/schema/spring/hazelcast-spring.xsd', because 1) could not find the document; 2) the document could not be read; 3) the root element of the document is not <xsd:schema>.
+```
+
+If you see one of these exceptions, check that the required classes are in the classpath.
+
+## Declare beans using Java configuration
+
+Spring recommend using Java-based configuration. The following example provides basic configuration for using Hazelcast in a Spring application:
+
+```java
+@Configuration(proxyBeanMethods = false)
+public class SpringHazelcastConfiguration {
+
+    @Bean
+    public HazelcastInstance hazelcastInstance() { // (1)
+        Config config = new Config();
+        config.setClusterName("spring-hazelcast-cluster-from-java");
+
+        NetworkConfig networkConfig = config.getNetworkConfig();
+        networkConfig.getInterfaces().addInterface("127.0.0.1");
+
+        config.addMapConfig(new MapConfig("testMap").setBackupCount(2));
+        config.addMapConfig(new MapConfig("otherTestMap"));
+        return Hazelcast.newHazelcastInstance(config);
+    }
+
+    @Bean
+    public IMap<String, String> testMap(HazelcastInstance instance) { // (2)
+        return instance.getMap("testMap");
+    }
+
+    @Bean
+    public IMap<String, String> otherTestMap(HazelcastInstance instance) {
+        return instance.getMap("otherTestMap");
+    }
+}
+```
+
+(1) The `HazelcastInstance` bean declaration is a standard way of declaring beans in Spring. It uses a plain old Java method. (2) Declaration of bean for `testMap` IMap, so that you will be able to inject IMap directly into a field.
+
+You can then use Spring's `@Autowired` dependency injection annotation to automatically configure objects such as `HazelcastInstance` and `IMap`. For example:
+
+```java
+/// (...)
+@SpringBootApplication
+public class SpringApplication {
+
+    @Autowired
+    private HazelcastInstance instance;
+```
+
+As `@SpringBootApplication` is also a `@Configuration` class, you could instead move the `hazelcastInstance` bean declaration to `SpringApplication` and remove `SpringHazelcastConfiguration`. However, splitting configuration and usage provides more flexibility. For example, you can use application context creation directly from Java with `AnnotationConfigApplicationContext`.
+
+### Hazelcast data structures as beans
+
+From Hazelcast Platform version 5.6, all Hazelcast data structures declared in configuration are automatically registered as beans when using Spring Boot. For example, when using `addMapConfig` for an IMap.
+
+You can configure this behavior using the `@ExposeHazelcastObjects` annotation. For example, to include only IMaps as beans:
+
+```java
+/// (...)
+@SpringBootApplication
+@ExposeHazelcastObjects(includeByType = IMap.class)
+public class SpringApplication {
+
+    @Bean
+    public HazelcastInstance hazelcastInstance() {
+        Config config = new Config();
+        config.setClusterName("spring-hazelcast-cluster-from-java");
+
+        NetworkConfig networkConfig = config.getNetworkConfig();
+        networkConfig.getInterfaces().addInterface("127.0.0.1");
+
+        // testMap and otherTestMap will be registered as beans
+        config.addMapConfig(new MapConfig("testMap").setBackupCount(2));
+        config.addMapConfig(new MapConfig("otherTestMap"));
+        return Hazelcast.newHazelcastInstance(config);
+    }
+}
+```
+
+All beans registered in this way have the same names as the associated data structures. If you manually created a bean with a conflicting name, Hazelcast will not create the new bean with the same name.
+
+You can also use `@ExposeHazelcastObjects` to enable this feature on Spring applications that do not use Spring Boot.
+
+`ExposeHazelcastObjects` has 4 properties:
+
+- includeByType - include only objects of given type (e.g. IMap, Ringbuffer, JetService, SqlService)
+- includeByName - include only objects with given name
+- excludeByType - exclude all objects of given type
+- excludeByName - exclude all objects with given name
+
+Please note, that there is an `AND` relation between those properties. For example: if user used code sample above and added `excludeByName = "testMap"`, then only `otherTestMap` would be registered as a bean.
+
+:::note
+
+JetService is registered with name `jetService`, SqlService as `sqlService`. You can use those names to include or exclude those services from being registered as beans.
+
+:::
+
+#### Disable automatic bean creation
+
+To disable automatic bean creation, use the `exclude` property of the `@SpringBootApplication` annotation:
+
+```java
+/// (...)
+@SpringBootApplication (exclude = HazelcastObjectExtractionConfiguration.class)
+public class SpringApplication {
+
+    @Autowired
+    private HazelcastInstance instance;
+```
+
+## Declare beans using XML configuration
+
+While Java-based configuration is now widely used and recommended, you may prefer to use XML-based configuration. You can easily configure Hazelcast using a dedicated `hazelcast` XML namespace or the common Spring `beans` XML namespace.
+
+### Declare beans using the beans namespace
+
+The following example declares a Hazelcast cluster and IMap using the default Spring `beans` namespace:
+
+```xml
+<bean id="instance" class="com.hazelcast.core.Hazelcast" factory-method="newHazelcastInstance">
+    <constructor-arg>
+        <bean class="com.hazelcast.config.Config">
+            <property name="clusterName" value="dev"/>
+            <!-- ... -->
+        </bean>
+    </constructor-arg>
+</bean>
+
+<bean id="map" factory-bean="instance" factory-method="getMap">
+    <constructor-arg value="map"/>
+</bean>
+```
+
+### Declare beans using the Hazelcast namespace {/* #hazelcast-namespace */}
+
+Hazelcast has its own namespace `hazelcast` for bean definitions. You can add the namespace declaration `xmlns:hz="http://www.hazelcast.com/schema/spring"` to the `beans` element in the context file so that the `hz` namespace shortcut can be used as a bean declaration.
+
+Here is an example schema definition:
+
+```xml
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:hz="http://www.hazelcast.com/schema/spring"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                http://www.springframework.org/schema/beans/spring-beans-5.8-SNAPSHOT.xsd
+                http://www.hazelcast.com/schema/spring
+                http://www.hazelcast.com/schema/spring/hazelcast-spring.xsd">
+```
+
+The following example declares a Hazelcast instance with two cluster members using the `hazelcast` namespace:
+
+```xml
+<hz:hazelcast id="instance">
+    <hz:config>
+        <hz:cluster-name name="dev"/>
+        <hz:network port="5701" port-auto-increment="false">
+            <hz:join>
+                <hz:multicast enabled="false"/>
+                <hz:tcp-ip enabled="true">
+                    <hz:members>10.10.1.2, 10.10.1.3</hz:members>
+                </hz:tcp-ip>
+            </hz:join>
+        </hz:network>
+    </hz:config>
+</hz:hazelcast>
+```
+
+### Spring property placeholders
+
+You can also pass values using Spring property placeholders. The following example declares a Hazelcast instance and sets a cluster name and Kubernetes service name:
+
+```xml
+<hz:hazelcast id="instance">
+    <hz:config>
+        <hz:cluster-name>${my.cluster.name}</hz:cluster-name>
+        <!-- ... -->
+        <hz:network>
+            <hz:join>
+                <hz:kubernetes service-name="${my.kubernetes.service.name}" />
+            </hz:join>
+        </hz:network>
+    </hz:config>
+</hz:hazelcast>
+```
+
+### Supported configuration in the Hazelcast namespace
+
+The `hazelcast` XML namespace supports the following configuration:
+
+- Configure a Hazelcast instance
+
+  ```xml
+  <hz:hazelcast id="instance">
+      <hz:config>
+          <hz:cluster-name name="dev"/>
+          <hz:network port="5701" port-auto-increment="false">
+              <hz:join>
+                  <hz:multicast enabled="false"
+                      multicast-group="224.2.2.3"
+                      multicast-port="54327"/>
+                  <hz:tcp-ip enabled="true">
+                      <hz:members>10.10.1.2, 10.10.1.3</hz:members>
+                  </hz:tcp-ip>
+              </hz:join>
+          </hz:network>
+          <hz:map name="map"
+              backup-count="2"
+              read-backup-data="true"
+              merge-policy="com.hazelcast.spi.merge.PassThroughMergePolicy">
+              <hz:eviction eviction-policy="NONE" size="0"/>
+          </hz:map>
+      </hz:config>
+  </hz:hazelcast>
+  ```
+- Configure a Hazelcast client
+
+  ```xml
+  <hz:client id="client">
+      <hz:cluster-name name="${cluster.name}"/>
+      <hz:network connection-timeout="1000"
+                  redo-operation="true">
+          <hz:cluster-routing mode="ALL_MEMBERS"/>
+          <hz:member>10.10.1.2:5701</hz:member>
+          <hz:member>10.10.1.3:5701</hz:member>
+      </hz:network>
+  </hz:client>
+  ```
+
+  :::warning
+
+  If you connect to a cluster in a Spring Boot application via the Hazelcast client with security enabled, and you want to see the health of that cluster, you must enable permissions for transactions. For further information, see the following topics:
+
+  - [Authentication overview](../../operate-and-manage/securing-a-cluster/authentication/authentication-overview.mdx)
+  - [Java Client Security](../../clients-and-apis/clients/java.mdx#client-security-configuration)
+  - [Enabling health check for a cluster](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#health-check-and-monitoring)
+  - [Configuring transaction permissions on the members](../../operate-and-manage/securing-a-cluster/client-authorization.mdx#transaction-permission)
+
+  :::
+- Configure MapStore and NearCache
+
+  For `map-store`, you should set either the `class-name` or the `implementation` attribute.
+
+  ```xml
+  <hz:config id="config">
+      <hz:map name="map1">
+          <hz:map-store enabled="true" class-name="com.foo.DummyStore"
+              write-delay-seconds="0" />
+
+          <hz:near-cache time-to-live-seconds="0"
+              max-idle-seconds="60" invalidate-on-change="true" >
+              <hz:eviction eviction-policy="LRU" size="5000"/>
+          </hz:near-cache>
+      </hz:map>
+
+      <hz:map name="map2">
+          <hz:map-store enabled="true" implementation="dummyMapStore"
+              write-delay-seconds="0" />
+      </hz:map>
+  </hz:config>
+
+  <bean id="dummyMapStore" class="com.foo.DummyStore" />
+  ```
+
+## Supported data structures
+
+The following table lists all of the Hazelcast data structures you can use in your Spring application.
+
+| Data structure | Example Java configuration | Example XML configuration |
+| --- | --- | --- |
+| `map` | `config.addMapConfig(new MapConfig("aggr") .setInMemoryFormat(InMemoryFormat.OBJECT));` | `<hz:map id="map" instance-ref="client" name="map" lazy-init="true" />` |
+| `multiMap` | `config.addMultiMapConfig(new MultiMapConfig("aggr") .setBinary(false));` | `<hz:multiMap id="multiMap" instance-ref="instance" name="multiMap" lazy-init="false" />` |
+| `replicatedmap` | `config.addReplicatedMapConfig(new ReplicatedMapConfig("aggr") .setInMemoryFormat(InMemoryFormat.OBJECT));` | `<hz:replicatedMap id="replicatedmap" instance-ref="instance" name="replicatedmap" lazy-init="false" />` |
+| `queue` | `config.addQueueConfig(new QueueConfig("aggr") .setMaxSize(1024));` | `<hz:queue id="queue" instance-ref="client" name="queue" lazy-init="true" depends-on="instance"/>` |
+| `topic` | `config.addTopicConfig(new TopicConfig("aggr") .setMultiThreadingEnabled(true));` | `<hz:topic id="topic" instance-ref="instance" name="topic" depends-on="instance, client"/>` |
+| `reliableTopic` | `config.addReliableTopicConfig(new ReliableTopicConfig("aggr") .setTopicOverloadPolicy(TopicOverloadPolicy.BLOCK));` | `<hz:reliableTopic id="reliableTopic" instance-ref="instance" name="reliableTopic"/>` |
+| `set` | `config.addSetConfig(new SetConfig("aggr") .setBackupCount(2));` | `<hz:set id="set" instance-ref="instance" name="set" />` |
+| `list` | `config.addListConfig(new ListConfig("aggr") .setBackupCount(2));` | `<hz:list id="list" instance-ref="instance" name="list"/>` |
+| `ringbuffer` | `config.addRingBufferConfig(new RingbufferConfig("ringbuf") .setBackupCount(1);` | `<hz:ringbuffer id="ringbuffer" instance-ref="instance" name="ringbuffer"/>` |
+| `cardinalityEstimator` | `config.addCardinalityEstimatorConfig(new CardinalityEstimatorConfig("est") .setBackupCount(1);` | `<hz:cardinalityEstimator id="cardinalityEstimator" instance-ref="instance" name="cardinalityEstimator"/>` |
+| `flakeIdGenerator` | `config.addFlakeIdGeneratorConfig(new FlakeIdGeneratorConfig("est") .setBackupCount(1);` | `<hz:flakeIdGenerator id="flakeIdGenerator" instance-ref="instance" name="flakeIdGenerator"/>` |
+| `idGenerator` | `config.addCardinalityEstimatorConfig(new CardinalityEstimatorConfig("gen") .setNodeIdOffset(1);` | `<hz:idGenerator id="idGenerator" instance-ref="instance" name="idGenerator"/>` |
+| `atomicLong` | - (needs manual bean addition) | `<hz:atomicLong id="atomicLong" instance-ref="instance" name="atomicLong"/>` |
+| `atomicReference` | - (needs manual bean addition) | `<hz:atomicReference id="atomicReference" instance-ref="instance" name="atomicReference"/>` |
+| `semaphore` <sup>Enterprise Edition</sup> | `config.getCPSubsystemConfig().addSemaphoreConfig(new SemaphoreConfig("s1").setInitialPermits(5));` | `<hz:semaphore id="semaphore" instance-ref="instance" name="semaphore"/>` |
+| `countDownLatch` | - (needs manual bean addition) | `<hz:countDownLatch id="countDownLatch" instance-ref="instance" name="countDownLatch"/>` |
+| `lock` <sup>Enterprise Edition</sup> | `config.getCPSubsystemConfig().addLockConfig(new FencedLockConfig("lock1").setLockAcquireLimit(5));` | `<hz:lock id="lock" instance-ref="instance" name="lock"/>` |
+| `cpmap` <sup>Enterprise Edition</sup> | `config.getCPSubsystemConfig().addCPMapConfig(new CPMapConfig("cpMap1").setMaxSizeMb(150));` | `<hz:cpmap instance-ref="instance" name="cpmap" id="cpMap" />` |
+| `dataConnection` | + \[source,java,opts=novalidate\] ----- config.addDataConnectionConfig(new DataConnectionConfig() .setName("my-jdbc-data-connection") .setType("Jdbc") .setProperties(getProperties())); ----- + | `<hz:external-data-store name="externalStore"> <hz:class-name>com.hazelcast.datastore.JdbcDataStoreFactory</hz:class-name> <hz:properties> <hz:property name="jdbcUrl">jdbc:mysql://dummy:3306</hz:property> </hz:properties> </hz:external-data-store>` |
+| `executorService` | `config.addExecutorConfig(new ExecutorConfig("executor1").setPoolSize(100));` | `<hz:executorService id="executorService" instance-ref="client" name="executorService"/>` |
+| `durableExecutorService` | `config.addDurableExecutorConfig(new DurableExecutorConfig("executor1").setPoolSize(100));` | `<hz:durableExecutorService id="durableExec" instance-ref="instance" name="durableExec"/>` |
+| `scheduledExecutorService` | `config.addScheduledExecutorConfig(new ScheduledExecutorConfig("executor1").setPoolSize(100));` | `<hz:scheduledExecutorService id="scheduledExec" instance-ref="instance" name="scheduledExec"/>` |
+
+## Supported Spring bean attributes
+
+Hazelcast supports the `lazy-init`, `scope` and `depends-on` bean attributes.
+
+```xml
+<hz:hazelcast id="instance" lazy-init="true" scope="singleton">
+    ...
+</hz:hazelcast>
+<hz:client id="client" scope="prototype" depends-on="instance">
+    ...
+</hz:client>
+```
+
+## Next steps
+
+Once you've set up Hazelcast in your Spring application, you can refer to the following sections to configure Hazelcast for common use cases:
+
+- [Enable SpringAware data structures](./springaware.mdx)
+- [Add caching to Spring](./add-caching.mdx)
+- [Configure Hibernate second-level cache](./hibernate.mdx)
+
+For more configuration examples, review our [Spring sample application](https://github.com/hazelcast/hazelcast-code-samples/tree/master/spring/spring-configuration).

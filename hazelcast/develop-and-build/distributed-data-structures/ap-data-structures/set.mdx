@@ -1,0 +1,413 @@
+---
+title: "Set"
+sidebar_position: 9
+slug: /data-structures/set
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Hazelcast Set, also known as ISet, is a distributed collection that contains no duplicate elements and does not preserve the order of elements.
+
+Hazelcast Set is a non-partitioned data structure; all the data that belongs to a set lives on one single partition in that member.
+
+Hazelcast Set cannot be scaled beyond the capacity of a single machine. Since the whole set lives on a single partition, storing a large amount of data on a single set may cause memory pressure. Therefore, you should use multiple sets to store a large amount of data. This way, all the sets are spread across the cluster, sharing the load.
+
+A backup of set is stored on a partition of another member in the cluster so that data is not lost in the event of a primary member failure. All set items are copied to the local member and iteration occurs locally.
+
+## Creating a Set
+
+When you start a Hazelcast member with default configuration, it will have an empty set named `default`. See [Start a Local Cluster in Docker](../../../get-started/start-a-local-cluster/get-started-docker.mdx) for a quick cluster startup.
+
+You can either use this `default` set or create your own using the set's getter methods as shown in the below example. If you pass a name other than `default` as the set name in these methods, it creates a new set with the given name; otherwise, it will use this existing set.
+
+In this example, we create a set called `set`, add items to it, and print the items.
+
+<Tabs groupId="c-43-43--c-sharp--go--java--nodejs--python">
+<TabItem value="java" label="Java">
+
+1. [Install the Java client library](../../../install-and-upgrade/community-edition/install-hazelcast.mdx#using-java)
+2. Add the following to your file:
+
+   ```java conums
+   import com.hazelcast.client.HazelcastClient;
+   import com.hazelcast.core.HazelcastInstance;
+   import com.hazelcast.collection.ISet;
+
+   import java.util.Collection;
+
+   public class Client {
+
+       public static void main(String[] args) throws Exception {
+
+           HazelcastInstance client = HazelcastClient.newHazelcastClient();
+
+           ISet<String> set = client.getSet("set"); <1>
+           <2>
+           set.add("Tokyo");
+           set.add("Paris");
+           set.add("London");
+           set.add("New York");
+           System.out.println("Putting finished!");
+       }
+   }
+   ```
+
+</TabItem>
+<TabItem value="c-43-43" label="C++">
+
+1. [Install the latest C++ client library](https://github.com/hazelcast/hazelcast-cpp-client/blob/v5.0.0/Reference_Manual.md#11-installing)
+2. Add the following to your file:
+
+   ```cpp conums
+   #include <hazelcast/client/hazelcast_client.h>
+
+   int main() {
+       auto hz = hazelcast::new_client().get();
+
+       auto set = hz.get_set("set").get(); <1>
+
+       <2>
+       set->add("Tokyo").get();
+       set->add("Paris").get();
+       set->add("London").get();
+       set->add("New York").get();
+
+       std::cout << "Putting finished!" << std::endl;
+
+       std::cout << "Finished" << std::endl;
+
+       return 0;
+   }
+   ```
+
+</TabItem>
+<TabItem value="c-sharp" label="C Sharp">
+
+1. [Install the latest C Sharp client library](http://hazelcast.github.io/hazelcast-csharp-client/latest/doc/download-install.html)
+2. Add the following to your file:
+
+   ```cs conums
+   using System;
+   using System.Threading.Tasks;
+
+   namespace Hazelcast.Examples.DistributedObjects
+   {
+       public class SetExample
+       {
+           public static async Task Main(string[] args)
+           {
+               var options = new HazelcastOptionsBuilder()
+                   .With(args)
+                   .WithConsoleLogger()
+                   .Build();
+
+               await using var client = await HazelcastClientFactory.StartNewClientAsync(options);
+
+               await using var set = await client.GetSetAsync<string>("set"); <1>
+
+               <2>
+               await set.AddAsync("Tokyo");
+               await set.AddAsync("Paris");
+               await set.AddAsync("London");
+               await set.AddAsync("New York");
+
+               Console.WriteLine("All: " + string.Join(", ", await set.GetAllAsync()));
+
+               Console.WriteLine("Contains: " + await set.ContainsAsync("Paris"));
+
+               Console.WriteLine("Count: " + await set.GetSizeAsync());
+
+               await client.DestroyAsync(set);
+           }
+       }
+   }
+   ```
+
+</TabItem>
+<TabItem value="nodejs" label="Node.js">
+
+1. Install the Node.js client library.
+
+   ```shell
+   npm install hazelcast-client
+   ```
+2. Add the following to your file:
+
+   ```javascript conums
+   'use strict';
+
+   const { Client } = require('hazelcast-client');
+
+   (async () => {
+       try {
+           const client = await Client.newHazelcastClient();
+           const set = await client.getSet('my-distributed-set'); <1>
+
+           <2>
+           await set.add('Tokyo');
+           await set.add('Paris');
+           await set.add('London');
+           await set.add('New York');
+
+           const size = await set.size();
+           console.log('Set size:', size);
+
+           await client.shutdown();
+       } catch (err) {
+           console.error('Error occurred:', err);
+           process.exit(1);
+       }
+   })();
+   ```
+
+</TabItem>
+<TabItem value="python" label="Python">
+
+1. Install the Python client library.
+
+   ```shell
+   pip install hazelcast-python-client
+   ```
+2. Add the following to your file:
+
+   ```python conums
+   import hazelcast
+
+   client = hazelcast.HazelcastClient()
+
+   my_set = client.get_set("set") <1>
+
+   <2>
+   my_set.add("Tokyo")
+   my_set.add("Paris")
+   my_set.add("London")
+   my_set.add("New York")
+
+   found = my_set.contains("Paris").result()
+   print("Set contains Paris:", found)
+
+   items = my_set.get_all().result()
+   print("Size of set:", len(items))
+
+   print("\nAll Items:")
+   for item in items:
+       print(item)
+
+   client.shutdown()
+   ```
+
+</TabItem>
+<TabItem value="go" label="Go">
+
+1. Install the Go client library.
+
+   ```shell
+   go get github.com/hazelcast/hazelcast-go-client
+   ```
+2. Add the following to your file:
+
+   ```go conums
+   package main
+
+   import (
+   	"context"
+   	"fmt"
+   	"log"
+   	"math/rand"
+   	"time"
+
+   	"github.com/hazelcast/hazelcast-go-client"
+   )
+
+   func main() {
+   	setItems := 10
+
+   	ctx := context.TODO()
+   	client, err := hazelcast.StartNewClient(ctx)
+   	if err != nil {
+   		log.Fatal(err)
+   	}
+
+   	rand.Seed(time.Now().Unix())
+   	setName := fmt.Sprintf("sample-%d", rand.Int())
+   	set, err := client.GetSet(ctx, setName) <1>
+   	if err != nil {
+   		log.Fatal(err)
+   	}
+
+            <2>
+   	for i := 0; i < setItems; i++ {
+   		_, err = set.Add(ctx, fmt.Sprintf("Item %d", i))
+   		if err != nil {
+   			log.Fatal(err)
+   		}
+   	}
+   	// Print contents of the set
+   	items, err := set.GetAll(ctx)
+   	if err != nil {
+   		log.Fatal(err)
+   	}
+   	for _, val := range items {
+   		fmt.Println(val)
+   	}
+   	// Shutdown client
+   	client.Shutdown(ctx)
+   }
+   ```
+
+</TabItem>
+</Tabs>
+
+<CodeCallouts>
+
+1. Create the Set called `set`.
+2. Add items to `set`.
+
+</CodeCallouts>
+
+Hazelcast Set uses item listeners to listen to events that occur when items are added to and removed from set. See the [Listening for Item Events section](../../listening-to-events/object-events.mdx#listening-for-item-events) for information about how to create an item listener class and register it.
+
+## Configuring Set
+
+The following is an example set configuration.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <set name="default">
+        <statistics-enabled>false</statistics-enabled>
+        <backup-count>1</backup-count>
+        <async-backup-count>0</async-backup-count>
+        <max-size>10</max-size>
+        <item-listeners>
+            <item-listener>com.hazelcast.examples.ItemListener</item-listener>
+        </item-listeners>
+        <split-brain-protection-ref>splitbrainprotection-name</split-brain-protection-ref>
+    </set>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  set:
+    default:
+      statistics-enabled: false
+      backup-count: 1
+      async-backup-count: 0
+      max-size: 10
+      item-listeners:
+        - class-name: com.hazelcast.examples.ItemListener
+      split-brain-protection-ref: splitbrainprotection-name
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+        Config config = new Config();
+        CollectionConfig collectionSet = config.getSetConfig("MySet");
+        collectionSet.setBackupCount(1)
+                .setMaxSize(10)
+                .setSplitBrainProtectionName("splitbrainprotectionname");
+```
+
+</TabItem>
+</Tabs>
+
+The following are the configuration elements and their descriptions:
+
+- `backup-count`: Count of synchronous backups. Set is a non-partitioned data structure, so all entries of a set reside in one partition. For example, if this parameter is `1`, there is one backup of the set in one other member. If it is `2`, two members will have the backup.
+- `async-backup-count`: Count of asynchronous backups. See [Backup Types](./map/backing-up-maps.mdx#in-memory-backup-types) to learn more about synchronous and asynchronous backups.
+- `statistics-enabled`: Specifies whether the statistics gathering is enabled for your set. If set to `false`, you cannot collect statistics in your implementation. Its default value is `true`.
+- `max-size`: The maximum number of entries for this set. It can be any number between 0 and Integer.MAX\_VALUE. Its default value is 0, meaning there is no capacity constraint.
+- `item-listeners`: Lets you add listeners (listener classes) for the list items. You can also set the attributes `include-value` to `true` if you want the item event to contain the item values. You can set `local` to `true` if you want to listen to the items on the local member.
+- `split-brain-protection-ref`: Name of the split-brain protection configuration that you want this set to use. See the [Split-Brain Protection for ISet and TransactionalSet section](#split-brain-protection-for-iset-and-transactionalset).
+
+## Split-Brain Protection for ISet and TransactionalSet
+
+ISet & TransactionalSet can be configured to check for a minimum number of available members before applying set operations (see the [Split-Brain Protection section](../../../operate-and-manage/fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful set operations on all parts of a cluster during a network partition.
+
+The following is a list of methods, grouped by the protection types, that support split-brain protection checks:
+
+ISet:
+
+- WRITE, READ\_WRITE:
+
+  - `add`
+  - `addAll`
+  - `clear`
+  - `remove`
+  - `removeAll`
+- READ, READ\_WRITE:
+
+  - `contains`
+  - `containsAll`
+  - `isEmpty`
+  - `iterator`
+  - `size`
+  - `toArray`
+
+TransactionalSet:
+
+- WRITE, READ\_WRITE:
+
+  - `add`
+  - `remove`
+- READ, READ\_WRITE:
+
+  - `size`
+
+The configuration is done on the member side and the following is an example.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <set name="default">
+        <split-brain-protection-ref>splitBrainProtectionRuleWithFourMembers</split-brain-protection-ref>
+    </set>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  set:
+    default:
+      split-brain-protection-ref: splitBrainProtectionRuleWithFourMembers
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+SplitBrainProtectionConfig splitBrainProtectionConfig = new SplitBrainProtectionConfig();
+splitBrainProtectionConfig.setName("splitBrainProtectionRuleWithFourMembers")
+			 .setEnabled(true)
+			 .setMinimumClusterSize(4);
+
+SetConfig setConfig = new SetConfig();
+setConfig.setSplitBrainProtectionName("splitBrainProtectionRuleWithFourMembers");
+
+Config config = new Config();
+config.addSplitBrainProtectionConfig(splitBrainProtectionConfig);
+config.addSetConfig(setConfig);
+```
+
+</TabItem>
+</Tabs>
+
+The value of `split-brain-protection-ref` should be the split-brain protection configuration name which you configured under the `split-brain-protection` element as explained in the [Split-Brain Protection section](../../../operate-and-manage/fault-tolerance/handling-network-partitions/split-brain-protection.mdx).

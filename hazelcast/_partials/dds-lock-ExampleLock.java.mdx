@@ -1,0 +1,11 @@
+```java
+        HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance();
+
+        Lock lock = hazelcastInstance.getCPSubsystem().getLock("myLock");
+        lock.lock();
+        try {
+            // do something here
+        } finally {
+            lock.unlock();
+        }
+```

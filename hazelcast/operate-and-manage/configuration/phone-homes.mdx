@@ -1,0 +1,105 @@
+---
+title: "Phone Homes"
+sidebar_position: 4
+slug: /phone-homes
+---
+
+Hazelcast uses phone home data to learn about the usage of Hazelcast.
+
+Hazelcast member instances call our phone home server initially when they are started and then every 24 hours. This applies to all the instances joined to the cluster.
+
+**What is sent in?**
+
+The following information is sent in a phone home:
+
+- Hazelcast version
+- Local Hazelcast member UUID
+- Download ID
+- A hash value of the cluster ID
+- Cluster size; bands of 5, 10, 20, 40, 60, 100, 150, 300, 600 and \> 600
+- Partition count
+- Number of active client connections during the phone home ping; bands of 5, 10, 20, 40, 60, 100, 150, 300, 600 and \> 600
+- Number of clients connected since the last phone home ping
+- Number of clients disconnected since the last phone home ping
+- Number of active client connections with routing mode ALL\_MEMBERS, SINGLE\_MEMBER, and MULTI\_MEMBER
+- Total duration of client connections since the last phone home ping
+- Versions of the connected, disconnected or active clients since the last phone home ping
+- Cluster uptime
+- Member uptime
+- Whether the Jet engine and Jet resource uploading is enabled; if so, name of the Jet engine service and count of Jet jobs
+- Heap memory usage
+- Data memory cost
+- Count of submitted SQL queries
+- Environment Information:
+
+  - Name of operating system
+  - Kernel architecture (32-bit or 64-bit)
+  - Version of operating system
+  - Version of installed Java
+  - Name of Java Virtual Machine
+  - Classpath of Java Virtual Machine
+- REST API specific:
+
+  - Whether the REST API is enabled
+  - Total number of REST calls
+  - Number of map-related REST calls
+  - Number of queue-related REST calls
+  - Number of unique requests
+  - Number of successful map GET calls
+  - Number of failed map GET calls
+  - Number of successful map POST calls
+  - Number of failed map POST calls
+  - Number of successful map DELETE calls
+  - Number of failed map DELETE calls
+  - Number of maps accessed using the REST API
+  - Number of successful queue POST calls
+  - Number of failed queue POST calls
+  - Number of successful queue GET calls
+  - Number of failed queue GET calls
+  - Number of successful queue DELETE calls
+  - Number of failed queue DELETE calls
+  - Number of queues accessed using the REST API
+  - Number of successful configuration update calls
+  - Number of failed configuration update calls
+  - Number of successful configuration reload calls
+  - Number of failed configuration reload calls
+- CP Subsystem specific:
+
+  - Whether the CP Subsystem is enabled
+  - Whether CP leader auto step down is enabled
+  - CP Subsystem members count
+  - CP Subsystem groups count
+  - Semaphores count
+  - CountDownLatches count
+  - FencedLocks count
+  - AtomicLongs count
+  - AtomicRefs count
+- Hazelcast Enterprise Edition specific:
+
+  - Flag for Hazelcast Enterprise Edition
+  - Hash value of license key
+  - Native memory usage
+  - Whether dynamic configuration persistence is enabled
+  - Whether HD memory is enabled
+  - Whether User Code Namespaces is enabled; if so, count of registered user code namespaces
+  - Count of submitted placement controlled jobs
+
+**Disabling Phone Homes**
+
+Set the `hazelcast.phone.home.enabled` system property to false either in the config or on the Java command line. See the [System Properties appendix](../../reference/system-properties.mdx) for information about how to set a property.
+
+You can also disable the phone home using the environment variable `HZ_PHONE_HOME_ENABLED`.
+
+Simply add the following line to your `.bash_profile`:
+
+```none
+export HZ_PHONE_HOME_ENABLED=false
+```
+
+**Phone Home URLs**
+
+For versions 1.x and 2.x: [http://www.hazelcast.com/version.jsp](http://www.hazelcast.com/version.jsp).
+
+For versions 3.x up to 3.6: [http://versioncheck.hazelcast.com/version.jsp](http://versioncheck.hazelcast.com/version.jsp).
+
+For versions after 3.6: [http://phonehome.hazelcast.com/ping](http://phonehome.hazelcast.com/ping).
