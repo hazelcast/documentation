@@ -214,6 +214,58 @@ const renderedCode = (md) => {
   ok('healDocRef: heals link:*.adoc/.html to a real page, leaves genuine dead links alone')
 }
 
+// --- redirect retargeting: a link to a withheld page follows the redirect ----
+// SPEC: a page triaged `redirect` is never emitted, so a link to it would resolve
+// to a .mdx that does not exist -- and onBrokenLinks is 'warn' during the
+// migration, so nothing would stop it shipping. Links to it must be rewritten to
+// the redirect's TARGET, leaving the client redirect for the only job it can do:
+// old URLs held by bookmarks and by links from outside the site.
+{
+  const ctx = {
+    pageUrl: '/hazelcast/5.5/clients/hazelcast-clients',
+    component: 'hazelcast',
+    seg: '5.5',
+    relFile: 'clients-and-apis/clients/hazelcast-clients.mdx',
+    urlToRelFile: new Map([
+      // The withheld page still has an entry (it is a page of this version); the
+      // point of the retarget is that the link must NOT end up pointing at it.
+      ['/hazelcast/5.5/clients/clc', 'clients-and-apis/clients/clc.mdx'],
+      ['/hazelcast/5.5/maintain-cluster/rest-api', 'operate-and-manage/maintain-cluster/rest-api.mdx'],
+    ]),
+    redirectRetargets: new Map([
+      ['/hazelcast/5.5/clients/rest', '/hazelcast/5.5/maintain-cluster/rest-api'],
+      ['/hazelcast/5.5/clients/clc', '/clc/5.5.1/overview'],
+    ]),
+  }
+
+  // Same-component target: still a RELATIVE .mdx link, because that is what
+  // survives a `docusaurus docs:version` cut.
+  const sameComp = convertBody('<p>See the <a href="rest">REST client</a>.</p>', ctx).body
+  assert(sameComp.includes('(../../operate-and-manage/maintain-cluster/rest-api.mdx)'),
+    'a link to a redirected page resolves to the TARGET, as a relative .mdx link')
+  assert(!/clients\/rest/.test(sameComp), 'and no longer mentions the withheld page')
+
+  // Cross-component target: no relative form exists (a file link cannot cross a
+  // plugin instance), so the absolute route is emitted -- and emitted VERBATIM,
+  // never floated to /clc/latest/, which is not a route this site serves.
+  const crossComp = convertBody('<p>Use the <a href="clc">CLC</a>.</p>', ctx).body
+  assert(crossComp.includes('(/clc/5.5.1/overview)'),
+    'a cross-component redirect target is emitted as its absolute pinned route')
+  assert(!/clc\/latest/.test(crossComp), 'a pinned cross-component target is never floated to /latest/')
+  assert(!/clients-and-apis\/clients\/clc\.mdx/.test(crossComp),
+    'and never points at the withheld page\'s own file, which is not written')
+
+  // The fragment is the referrer's content, not the retarget's business.
+  const withHash = convertBody('<p>See <a href="rest#enabling">enabling it</a>.</p>', ctx).body
+  assert(withHash.includes('rest-api.mdx#enabling'), 'a #fragment rides along untouched')
+
+  // A page with no redirect decision is completely unaffected.
+  const untouched = convertBody('<p>The <a href="../maintain-cluster/rest-api">API</a>.</p>', ctx).body
+  assert(untouched.includes('(../../operate-and-manage/maintain-cluster/rest-api.mdx)'),
+    'a link to a normal page is resolved the ordinary way')
+  ok('retargetRedirect: links to withheld pages follow the redirect, same- and cross-component')
+}
+
 // --- partials: id parsing, slug + component naming ---------------------------
 {
   assert.deepStrictEqual(parseId('cloud:ROOT:partial$create-api-key.adoc'),

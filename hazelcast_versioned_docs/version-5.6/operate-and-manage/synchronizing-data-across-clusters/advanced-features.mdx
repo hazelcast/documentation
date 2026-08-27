@@ -7,6 +7,9 @@ enterprise: true
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_settingupclusters_AdvancedNetworkConfig_java_tag_wanActiveEndpoint from '../../examples/settingupclusters/AdvancedNetworkConfig.java?tag=wanActiveEndpoint';
+import Ex_settingupclusters_AdvancedNetworkConfig_java_tag_wanPassiveEndpoint from '../../examples/settingupclusters/AdvancedNetworkConfig.java?tag=wanPassiveEndpoint';
 
 This section provides information on how to do the following:
 
@@ -997,25 +1000,7 @@ Multiple WAN endpoint configurations can be defined to configure the outgoing co
 
 The members on the active cluster initiate connections to the target cluster members, so there is no need to create a server socket. A plain `EndpointConfig` is created that supplies the configuration for the client side of connections that the active members will create:
 
-```java
-        config.getAdvancedNetworkConfig().addWanEndpointConfig(
-                new EndpointConfig().setName("tokyo")
-                        .setSSLConfig(new SSLConfig()
-                                            .setEnabled(true)
-                                            .setFactoryClassName("com.hazelcast.examples.MySSLContextFactory")
-                                            .setProperty("foo", "bar"))
-        );
-        WanReplicationConfig wanReplicationConfig = new WanReplicationConfig();
-        WanBatchPublisherConfig publisherConfig = new WanBatchPublisherConfig()
-        			.setEndpoint("tokyo")
-        			.setTargetEndpoints("tokyo.hazelcast.com:8765");
-        wanReplicationConfig.addBatchReplicationPublisherConfig(publisherConfig);
-        config.addWanReplicationConfig(wanReplicationConfig);
-
-        config.getMapConfig("customers").setWanReplicationRef(
-                new WanReplicationRef("replicate-to-tokyo", "com.company.MergePolicy", emptyList(), false)
-        );
-```
+<CodeBlock language="java">{Ex_settingupclusters_AdvancedNetworkConfig_java_tag_wanActiveEndpoint}</CodeBlock>
 
 The following is the equivalent declarative configuration:
 
@@ -1089,18 +1074,7 @@ The `wan-endpoint-config` element contains the same sub-elements as the `member-
 
 On the passive cluster, a server socket is configured on the members to listen for the incoming WAN connections, matching the network configuration (SSL configuration, etc.) configured on the active side of the WAN replication.
 
-```java
-        config.getAdvancedNetworkConfig().addWanEndpointConfig(
-                new ServerSocketEndpointConfig()
-                        .setName("tokyo")
-                        .setPort(11010)
-                        .setPortAutoIncrement(false)
-                        .setSSLConfig(new SSLConfig()
-                                .setEnabled(true)
-                                .setFactoryClassName("com.hazelcast.examples.MySSLContextFactory")
-                                .setProperty("foo", "bar")
-                        ));
-```
+<CodeBlock language="java">{Ex_settingupclusters_AdvancedNetworkConfig_java_tag_wanPassiveEndpoint}</CodeBlock>
 
 The following is the equivalent declarative configuration:
 

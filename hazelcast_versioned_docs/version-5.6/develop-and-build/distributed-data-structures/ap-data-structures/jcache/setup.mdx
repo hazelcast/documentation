@@ -4,6 +4,8 @@ sidebar_position: 3
 slug: /jcache/setup
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_jcache_ExampleJCacheApplication_java_tag_jcacheapp from '../../../../examples/jcache/ExampleJCacheApplication.java?tag=jcacheapp';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
@@ -61,34 +63,7 @@ For other build systems, for instance, ANT, the users have to download these dep
 
 Before moving on to configuration, let's have a look at a basic introductory example. The following code shows how to use the Hazelcast JCache integration inside an application in an easy but typesafe way.
 
-```java
-        // Retrieve the CachingProvider which is automatically backed by
-        // the chosen Hazelcast member or client provider.
-        CachingProvider cachingProvider = Caching.getCachingProvider();
-
-        // Create a CacheManager.
-        CacheManager cacheManager = cachingProvider.getCacheManager();
-
-        // Create a simple but typesafe configuration for the cache.
-        CompleteConfiguration<String, String> config =
-                new MutableConfiguration<String, String>()
-                        .setTypes( String.class, String.class );
-
-        // Create and get the cache.
-        Cache<String, String> cache = cacheManager.createCache( "example", config );
-        // Alternatively to request an already existing cache:
-        // Cache<String, String> cache = cacheManager
-        //     .getCache( name, String.class, String.class );
-
-        // Put a value into the cache.
-        cache.put( "world", "Hello World" );
-
-        // Retrieve the value again from the cache.
-        String value = cache.get( "world" );
-
-        // Print the value 'Hello World'.
-        System.out.println( value );
-```
+<CodeBlock language="java">{Ex_jcache_ExampleJCacheApplication_java_tag_jcacheapp}</CodeBlock>
 
 Let's go through the code lines of the above example one by one from top to bottom.
 

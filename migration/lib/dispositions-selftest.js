@@ -12,7 +12,7 @@
 
 const assert = require('node:assert')
 
-const { isUnpublished, redirectTo, unpublishedUrls, urlBase, redirectPairs, publishedPageUrls } = require('./dispositions')
+const { isUnpublished, redirectDest, redirectRoute, unpublishedUrls, urlBase, redirectPairs, publishedPageUrls } = require('./dispositions')
 
 let n = 0
 const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
@@ -63,18 +63,66 @@ const live = () => true
   ok('withholding: drop-404 and redirect both stop publication; keep-* do not')
 }
 
-// --- redirectTo is not a general "to" reader ---------------------------------
-// A `to` is only meaningful on a redirect. Reading it off any other disposition
-// would let a stray key silently redirect a page nobody decided to redirect.
+// --- the destination is read ONLY from a redirect ----------------------------
+// A `to`/`toUrl` is only meaningful on a redirect. Reading it off any other
+// disposition would let a stray key silently redirect a page nobody decided to
+// redirect. (The schema rejects such a key -- validateAllowlist, orphancheck --
+// but these readers must not obey one either way: two independent guards, because
+// this one runs against a file a human edits.)
+const KEY = 'hazelcast:clients/rest'
 {
   assert.strictEqual(
-    redirectTo(new Map([['hazelcast:clients/rest', { disposition: 'redirect', to: '/maintain-cluster/rest-api' }]]), page()),
-    '/maintain-cluster/rest-api', 'a redirect yields its target')
-  assert.strictEqual(
-    redirectTo(new Map([['hazelcast:clients/rest', { disposition: 'drop-404', to: '/somewhere' }]]), page()),
+    redirectRoute(new Map([[KEY, { disposition: 'drop-404', to: '/somewhere' }]]), page()),
     null, 'a stray "to" on a non-redirect is ignored, not obeyed')
-  assert.strictEqual(redirectTo(new Map(), page()), null, 'an untriaged page has no target')
-  ok('redirectTo reads a target only from a redirect decision')
+  assert.strictEqual(
+    redirectRoute(new Map([[KEY, { disposition: 'drop-404', toUrl: '/clc/5.5.1/overview' }]]), page()),
+    null, 'a stray "toUrl" on a non-redirect is likewise ignored')
+  assert.strictEqual(redirectRoute(new Map(), page()), null, 'an untriaged page has no destination')
+  assert.strictEqual(redirectDest(new Map(), page()), null, 'and no destination record')
+  ok('a redirect destination is read only from a redirect decision')
+}
+
+// --- the two destination forms resolve differently, on purpose ---------------
+// This is the whole reason they are separate fields. `to` is relative to the
+// page's OWN component/version base, so one allowlist key redirects each version
+// within itself. `toUrl` is absolute and is used verbatim: it names a version in
+// ANOTHER component's line, where this page's base is not just unhelpful but
+// wrong. Deriving the expected value here from the page URL rather than
+// hardcoding it keeps this a spec check and not a transcription of the code.
+{
+  const p = page()
+  const relDisp = new Map([[KEY, { disposition: 'redirect', to: '/maintain-cluster/rest-api' }]])
+  assert.strictEqual(redirectRoute(relDisp, p), urlBase(p) + '/maintain-cluster/rest-api',
+    'a `to` is resolved against the page\'s own component/version base')
+  assert.strictEqual(redirectDest(relDisp, p).relative, true, 'and reports itself as relative')
+
+  const absDisp = new Map([[KEY, { disposition: 'redirect', toUrl: '/clc/5.5.1/overview' }]])
+  assert.strictEqual(redirectRoute(absDisp, p), '/clc/5.5.1/overview',
+    'a `toUrl` is used verbatim -- the page\'s base is never prepended')
+  assert.strictEqual(redirectDest(absDisp, p).relative, false, 'and reports itself as absolute')
+
+  // The distinction has to survive the page moving version, which is exactly
+  // what a versioned corpus does to it: the relative form follows the page, the
+  // absolute form does not budge.
+  const at57 = page({ version: '5.7', url: '/hazelcast/5.7/clients/rest' })
+  assert.strictEqual(redirectRoute(relDisp, at57), '/hazelcast/5.7/maintain-cluster/rest-api',
+    'the relative form tracks the page\'s version')
+  assert.strictEqual(redirectRoute(absDisp, at57), '/clc/5.5.1/overview',
+    'the absolute form is version-independent, as a cross-component pin must be')
+
+  // A trailing slash on either form normalises away (trailingSlash: false), so a
+  // destination cannot become a route that differs from the page it names.
+  assert.strictEqual(
+    redirectRoute(new Map([[KEY, { disposition: 'redirect', toUrl: '/clc/5.5.1/overview/' }]]), p),
+    '/clc/5.5.1/overview', 'a trailing slash on `toUrl` is normalised off')
+
+  // Only the relative form needs a base, so only it can fail for want of one.
+  const noBase = page({ url: '/hazelcast/5.8-snapshot/somewhere/else' })
+  assert.throws(() => redirectRoute(relDisp, noBase), /cannot derive/,
+    'a relative destination on a page with no derivable base throws rather than guessing')
+  assert.strictEqual(redirectRoute(absDisp, noBase), '/clc/5.5.1/overview',
+    'an absolute destination needs no base, so it still resolves')
+  ok('`to` resolves per version; `toUrl` is absolute and version-independent')
 }
 
 // --- urlBase: subtract the tail, never count segments ------------------------
@@ -143,6 +191,36 @@ const live = () => true
   // A page with no decision contributes nothing at all.
   assert.deepStrictEqual(redirectPairs(new Map(), manifest, live), [],
     'no redirect decisions => no pairs')
+
+  // A cross-component `toUrl` is held to the SAME published-target rule -- it is
+  // the form most able to rot (it pins a version in another component's line, and
+  // nothing in this component's corpus moves when that line does), so exempting
+  // it would put the check where it is least needed and drop it where it is most.
+  const clcPage = {
+    component: 'clc', version: '5.5.1', module: 'ROOT', family: 'page',
+    relative: 'overview.adoc', url: '/clc/5.5.1/overview',
+  }
+  const withClc = { resources: [...manifest.resources, clcPage] }
+  const crossOk = new Map([['hazelcast:clients/rest', { disposition: 'redirect', toUrl: '/clc/5.5.1/overview' }]])
+  assert.deepStrictEqual(
+    redirectPairs(crossOk, withClc, live).map((p) => p.to),
+    ['/clc/5.5.1/overview', '/clc/5.5.1/overview'],
+    'every version of the source page redirects to the one pinned cross-component route')
+
+  const crossStale = new Map([['hazelcast:clients/rest', { disposition: 'redirect', toUrl: '/clc/9.9.9/overview' }]])
+  assert.throws(() => redirectPairs(crossStale, withClc, live), /not a published page/,
+    'a `toUrl` naming a version that is not published throws -- the pin has gone stale')
+  // Same target, but its component/version is no longer live: the pin is fine and
+  // the page still exists, yet it is not a ROUTE, so it must still fail closed.
+  assert.throws(() => redirectPairs(crossOk, withClc, (r) => r.component === 'hazelcast'), /not a published page/,
+    'a `toUrl` into a component that is not live throws')
+
+  // The error has to say WHICH field to go fix, since the two are edited
+  // differently and only one of them is resolved against anything.
+  assert.throws(() => redirectPairs(crossStale, withClc, live), /toUrl/,
+    'the message names `toUrl` when that is the field at fault')
+  assert.throws(() => redirectPairs(missing, manifest, live), /"to"/,
+    'and names `to` when that is')
   ok('redirectPairs resolves within the version, gates on live, and fails closed')
 }
 

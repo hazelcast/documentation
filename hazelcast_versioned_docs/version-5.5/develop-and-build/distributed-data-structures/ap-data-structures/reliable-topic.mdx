@@ -4,6 +4,9 @@ sidebar_position: 4
 slug: /data-structures/reliable-topic
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_dds_reliabletopic_PublisherMember_java_tag_publisher from '../../../examples/dds/reliabletopic/PublisherMember.java?tag=publisher';
+import Ex_dds_reliabletopic_SubscribedMember_java_tag_sm from '../../../examples/dds/reliabletopic/SubscribedMember.java?tag=sm';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
@@ -15,51 +18,11 @@ Reliable Topic uses the same `ITopic` interface as a regular topic. The main dif
 
 Here is an example for a publisher using Reliable Topic:
 
-```java
-public class PublisherMember {
-    public static void main(String[] args) {
-        HazelcastInstance hz = Hazelcast.newHazelcastInstance();
-        Random random = new Random();
-        ITopic<Long> topic = hz.getReliableTopic("sometopic");
-        long messageId = 0;
-
-        while (true) {
-            topic.publish(messageId);
-            messageId++;
-            System.out.println("Written: " + messageId);
-            sleepMillis(random.nextInt(100));
-        }
-    }
-    public static boolean sleepMillis(int millis) {
-        try {
-            MILLISECONDS.sleep(millis);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return false;
-        }
-        return true;
-    }
-}
-```
+<CodeBlock language="java">{Ex_dds_reliabletopic_PublisherMember_java_tag_publisher}</CodeBlock>
 
 And the following is an example for the subscriber:
 
-```java
-public class SubscribedMember {
-
-    public static void main(String[] args) {
-        HazelcastInstance hz = Hazelcast.newHazelcastInstance();
-        ITopic<Long> topic = hz.getReliableTopic("sometopic");
-        topic.addMessageListener(new MessageListenerImpl());
-    }
-
-    private static class MessageListenerImpl implements MessageListener<Long> {
-        public void onMessage(Message<Long> m) {
-            System.out.println("Received: " + m.getMessageObject());
-        }
-    }
-}
-```
+<CodeBlock language="java">{Ex_dds_reliabletopic_SubscribedMember_java_tag_sm}</CodeBlock>
 
 When you create a Reliable Topic, Hazelcast automatically creates a Ringbuffer for it. You may configure this Ringbuffer by adding a Ringbuffer config with the same name as the Reliable Topic. For instance, if you have a Reliable Topic with the name "sometopic", you should add a Ringbuffer config with the name "sometopic" to configure the backing Ringbuffer. Some of the things that you may configure are the capacity, the time-to-live for the topic messages, and you can even add a Ringbuffer store which allows you to have a persistent topic. By default, a Ringbuffer does not have any TTL (time-to-live) and it has a limited capacity; you may want to change that configuration. The following is an example configuration for the "sometopic" given above.
 

@@ -5,37 +5,12 @@ slug: /security/security-interceptor
 enterprise: true
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_security_MapSecurityInterceptor_java_tag_mysi from '../../../examples/security/MapSecurityInterceptor.java?tag=mysi';
+
 Hazelcast allows you to intercept every remote operation executed by the client. This lets you add a very flexible custom security logic. To do this, implement `com.hazelcast.security.SecurityInterceptor`.
 
-```java
-    private static class MySecurityInterceptor implements SecurityInterceptor {
-
-        @Override
-        public void before(Credentials credentials, String objectType, String objectName, String methodName,
-                           Parameters parameters) throws AccessControlException {
-            if (objectName.equals(DENIED_MAP_NAME)) {
-                throw new RuntimeException("Denied Map!!!");
-            }
-            if (methodName.equals(DENIED_METHOD)) {
-                throw new RuntimeException("Denied Method!!!");
-            }
-            Object firstParam = parameters.get(0);
-            Object secondParam = parameters.get(1);
-            if (firstParam.equals(DENIED_KEY)) {
-                throw new RuntimeException("Denied Key!!!");
-            }
-            if (secondParam.equals(DENIED_VALUE)) {
-                throw new RuntimeException("Denied Value!!!");
-            }
-        }
-
-        @Override
-        public void after(Credentials credentials, String objectType, String objectName, String methodName,
-                          Parameters parameters) {
-            System.err.println("qwe c: " + credentials + "\t\tt: " + objectType + "\t\tn: " + objectName
-                    + "\t\tm: " + methodName + "\t\tp1: " + parameters.get(0) + "\t\tp2: " + parameters.get(1));
-        }
-```
+<CodeBlock language="java">{Ex_security_MapSecurityInterceptor_java_tag_mysi}</CodeBlock>
 
 The `before` method is called before processing the request on the remote server. The `after` method is called after the processing. Exceptions thrown while executing the `before` method are propagated to the client, but exceptions thrown while executing the `after` method are suppressed.
 

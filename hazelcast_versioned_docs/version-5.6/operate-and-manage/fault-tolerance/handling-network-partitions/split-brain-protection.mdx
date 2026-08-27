@@ -6,6 +6,12 @@ slug: /network-partitioning/split-brain-protection
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_networkpartitioning_MemberCountSplitBrainProtection_java_tag_mcq from '../../../examples/networkpartitioning/MemberCountSplitBrainProtection.java?tag=mcq';
+import Ex_networkpartitioning_ProbabilisticSplitBrainProtection_java_tag_pq from '../../../examples/networkpartitioning/ProbabilisticSplitBrainProtection.java?tag=pq';
+import Ex_networkpartitioning_RecentlyActiveSplitBrainProtection_java_tag_raq from '../../../examples/networkpartitioning/RecentlyActiveSplitBrainProtection.java?tag=raq';
+import Ex_networkpartitioning_SplitBrainProtectionListenerConfiguration_java_tag_qlc from '../../../examples/networkpartitioning/SplitBrainProtectionListenerConfiguration.java?tag=qlc';
+import Ex_networkpartitioning_SplitBrainProtectionQuery_java_tag_qq from '../../../examples/networkpartitioning/SplitBrainProtectionQuery.java?tag=qq';
 
 Split-brain protection mechanism provided in Hazelcast protects your cluster in case the number of cluster members drops below the specified one. How to respond to a split-brain scenario depends on whether consistency of data or availability of your application is of primary concern. In either case, because a split-brain scenario is caused by a network failure, you must initiate an effort to identify and correct the network failure. Your cluster cannot be brought back to steady state operation until the underlying network failure is fixed. If consistency is your primary concern, you can use Hazelcast's split-brain protection feature.
 
@@ -84,19 +90,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java
-        SplitBrainProtectionConfig splitBrainProtectionConfig = new SplitBrainProtectionConfig();
-        splitBrainProtectionConfig.setName("splitBrainProtectionRuleWithFourMembers")
-					    .setEnabled(true)
-					    .setMinimumClusterSize(4);
-
-        MapConfig mapConfig = new MapConfig();
-        mapConfig.setSplitBrainProtectionName("splitBrainProtectionRuleWithFourMembers");
-
-        Config config = new Config();
-        config.addSplitBrainProtectionConfig(splitBrainProtectionConfig);
-        config.addMapConfig(mapConfig);
-```
+<CodeBlock language="java">{Ex_networkpartitioning_MemberCountSplitBrainProtection_java_tag_mcq}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -154,20 +148,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java
-        SplitBrainProtectionConfig splitBrainProtectionConfig =
-                SplitBrainProtectionConfig.newProbabilisticSplitBrainProtectionConfigBuilder("probabilist-splitBrainProtection", 3)
-                        .withAcceptableHeartbeatPauseMillis(5000)
-                        .withMaxSampleSize(500)
-                        .withSuspicionThreshold(10)
-                        .build();
-        splitBrainProtectionConfig.setProtectOn(SplitBrainProtectionOn.READ_WRITE);
-        SetConfig setConfig = new SetConfig("split-brain-protected-set");
-        setConfig.setSplitBrainProtectionName("probabilist-splitBrainProtection");
-        Config config = new Config();
-        config.addSplitBrainProtectionConfig(splitBrainProtectionConfig);
-        config.addSetConfig(setConfig);
-```
+<CodeBlock language="java">{Ex_networkpartitioning_ProbabilisticSplitBrainProtection_java_tag_pq}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -214,17 +195,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java
-        SplitBrainProtectionConfig splitBrainProtectionConfig =
-                SplitBrainProtectionConfig.newRecentlyActiveSplitBrainProtectionConfigBuilder("recently-active-splitBrainProtection", 4, 60000)
-                        .build();
-        splitBrainProtectionConfig.setProtectOn(SplitBrainProtectionOn.READ_WRITE);
-        SetConfig setConfig = new SetConfig("split-brain-protected-set");
-        setConfig.setSplitBrainProtectionName("recently-active-splitBrainProtection");
-        Config config = new Config();
-        config.addSplitBrainProtectionConfig(splitBrainProtectionConfig);
-        config.addSetConfig(setConfig);
-```
+<CodeBlock language="java">{Ex_networkpartitioning_RecentlyActiveSplitBrainProtection_java_tag_raq}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -329,36 +300,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java
-        SplitBrainProtectionListenerConfig listenerConfig = new SplitBrainProtectionListenerConfig();
-        // You can either directly set SplitBrainProtection listener implementation of your own
-        listenerConfig.setImplementation(new SplitBrainProtectionListener() {
-            @Override
-            public void onChange(SplitBrainProtectionEvent splitBrainProtectionEvent) {
-                if (splitBrainProtectionEvent.isPresent()) {
-                    // handle SplitBrainProtection presence
-                } else {
-                    // handle SplitBrainProtection absence
-                }
-            }
-        });
-        // Or you can give the name of the class that implements SplitBrainProtectionListener interface.
-        listenerConfig.setClassName("com.company.splitBrainProtection.ThreeMemberSplitBrainProtectionListener");
-
-        SplitBrainProtectionConfig splitBrainProtectionConfig = new SplitBrainProtectionConfig();
-        splitBrainProtectionConfig.setName("splitBrainProtectionRuleWithFourMembers")
-        					    .setEnabled(true)
-        					    .setMinimumClusterSize(4)
-        					    .addListenerConfig(listenerConfig);
-
-
-        MapConfig mapConfig = new MapConfig();
-        mapConfig.setSplitBrainProtectionName("splitBrainProtectionRuleWithFourMembers");
-
-        Config config = new Config();
-        config.addSplitBrainProtectionConfig(splitBrainProtectionConfig);
-        config.addMapConfig(mapConfig);
-```
+<CodeBlock language="java">{Ex_networkpartitioning_SplitBrainProtectionListenerConfiguration_java_tag_qlc}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -385,22 +327,4 @@ public interface SplitBrainProtection {
 
 You can retrieve the `SplitBrainProtection` instance as in the following example.
 
-```java
-        String splitBrainProtectionName = "at-least-one-storage-member";
-        SplitBrainProtectionConfig splitBrainProtectionConfig = new SplitBrainProtectionConfig();
-        splitBrainProtectionConfig.setName(splitBrainProtectionName);
-        splitBrainProtectionConfig.setEnabled(true);
-
-        MapConfig mapConfig = new MapConfig();
-        mapConfig.setSplitBrainProtectionName(splitBrainProtectionName);
-
-        Config config = new Config();
-        config.addSplitBrainProtectionConfig(splitBrainProtectionConfig);
-        config.addMapConfig(mapConfig);
-
-        HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
-        SplitBrainProtectionService splitBrainProtectionService = hazelcastInstance.getSplitBrainProtectionService();
-        SplitBrainProtection splitBrainProtection = splitBrainProtectionService.getSplitBrainProtection(splitBrainProtectionName);
-
-        boolean splitBrainProtectionPresence = splitBrainProtection.hasMinimumSize();
-```
+<CodeBlock language="java">{Ex_networkpartitioning_SplitBrainProtectionQuery_java_tag_qq}</CodeBlock>

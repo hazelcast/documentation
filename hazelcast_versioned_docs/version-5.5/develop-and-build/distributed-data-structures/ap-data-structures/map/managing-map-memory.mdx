@@ -6,6 +6,8 @@ slug: /data-structures/managing-map-memory
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_dds_map_MapCustomEvictionPolicyComparator_java_tag_mcep from '../../../../examples/dds/map/MapCustomEvictionPolicyComparator.java?tag=mcep';
 
 Depending on how you use maps, they may become too large for your cluster's memory, or the data may become stale and useless to your applications. To handle these situations, you can set expiration and eviction policies.
 
@@ -267,74 +269,7 @@ Apart from the policies such as LRU and LFU, which Hazelcast provides out-of-the
 
 To achieve this, you need to provide an implementation of `MapEvictionPolicyComparator` as in the following `OddEvictor` example:
 
-```java
-public class MapCustomEvictionPolicyComparator {
-
-    public static void main(String[] args) {
-        Config config = new Config();
-        config.getMapConfig("test")
-                .getEvictionConfig()
-                .setComparator(new OddEvictor())
-                .setMaxSizePolicy(PER_NODE)
-                .setSize(10000);
-
-        HazelcastInstance instance = Hazelcast.newHazelcastInstance(config);
-        IMap<Integer, Integer> map = instance.getMap("test");
-
-        final Queue<Integer> oddKeys = new ConcurrentLinkedQueue<Integer>();
-        final Queue<Integer> evenKeys = new ConcurrentLinkedQueue<Integer>();
-
-        map.addEntryListener((EntryEvictedListener<Integer, Integer>) event -> {
-            Integer key = event.getKey();
-            if (key % 2 == 0) {
-                evenKeys.add(key);
-            } else {
-                oddKeys.add(key);
-            }
-        }, false);
-
-        // wait some more time to receive evicted-events
-        parkNanos(SECONDS.toNanos(5));
-
-        for (int i = 0; i < 15000; i++) {
-            map.put(i, i);
-        }
-
-        String msg = "IMap uses sampling based eviction. After eviction"
-                + " is completed, we are expecting number of evicted-odd-keys"
-                + " should be greater than number of evicted-even-keys. \nNumber"
-                + " of evicted-odd-keys = %d, number of evicted-even-keys = %d";
-        out.println(format(msg, oddKeys.size(), evenKeys.size()));
-
-        instance.shutdown();
-    }
-
-    /**
-     * Odd evictor tries to evict odd keys first.
-     */
-    private static class OddEvictor
-            implements MapEvictionPolicyComparator<Integer, Integer> {
-
-        @Override
-        public int compare(EntryView<Integer, Integer> e1,
-                           EntryView<Integer, Integer> e2) {
-
-            Integer key1 = e1.getKey();
-            if (key1 % 2 != 0) {
-                return -1;
-            }
-
-            Integer key2 = e2.getKey();
-            if (key2 % 2 != 0) {
-                return 1;
-            }
-
-            return 0;
-        }
-
-    }
-}
-```
+<CodeBlock language="java">{Ex_dds_map_MapCustomEvictionPolicyComparator_java_tag_mcep}</CodeBlock>
 
 Then you can enable your policy by setting it via the method `MapConfig.getEvictionConfig().setComparatorClassName()` programmatically or via XML declaratively. Following is the example declarative configuration for the eviction policy `OddEvictor` implemented above:
 

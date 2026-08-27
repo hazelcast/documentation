@@ -4,6 +4,8 @@ sidebar_position: 1
 slug: /data-structures/cardinality-estimator-service
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_dds_ExampleCardinalityEstimator_java_tag_ces from '../../../examples/dds/ExampleCardinalityEstimator.java?tag=ces';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
@@ -39,29 +41,7 @@ See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com
 
 The following is an example code.
 
-```java
-        HazelcastInstance hz = Hazelcast.newHazelcastInstance();
-        CardinalityEstimator visitorsEstimator = hz.getCardinalityEstimator("visitors");
-
-        InputStreamReader isr = new InputStreamReader(ExampleCardinalityEstimator.class.getResourceAsStream("visitors.txt"));
-        BufferedReader br = new BufferedReader(isr);
-        try {
-            String visitor = br.readLine();
-            while (visitor != null) {
-                visitorsEstimator.add(visitor);
-                visitor = br.readLine();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            closeResource(br);
-            closeResource(isr);
-        }
-
-        System.out.printf("Estimated unique visitors seen so far: %d%n", visitorsEstimator.estimate());
-
-        Hazelcast.shutdownAll();
-```
+<CodeBlock language="java">{Ex_dds_ExampleCardinalityEstimator_java_tag_ces}</CodeBlock>
 
 ## Split-Brain Protection for Cardinality Estimator
 

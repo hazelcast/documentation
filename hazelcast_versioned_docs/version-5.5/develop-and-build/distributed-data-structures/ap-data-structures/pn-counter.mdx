@@ -4,8 +4,12 @@ sidebar_position: 13
 slug: /data-structures/pn-counter
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_dds_ExamplePNCounter_java_tag_pnc from '../../../examples/dds/ExamplePNCounter.java?tag=pnc';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import Ex_dds_ExamplePNCounter_java_tag_pncc from '../../../examples/dds/ExamplePNCounter.java?tag=pncc';
+import Ex_dds_CRDTReplication_java_tag_crdt from '../../../examples/dds/CRDTReplication.java?tag=crdt';
 
 A Conflict-free Replicated Data Type (CRDT) is a distributed data structure that achieves high availability by relaxing consistency constraints. There may be several replicas for the same data and these replicas can be modified concurrently without coordination. This means that you may achieve high throughput and low latency when updating a CRDT data structure. On the other hand, all the updates are replicated asynchronously. Each replica then receives updates made on other replicas eventually and if no new updates are done, all replicas which can communicate to each other return the same state (converge) after some time.
 
@@ -37,12 +41,7 @@ The CRDT state is kept entirely on non-lite (data) members. If there aren't any 
 
 The following is an example code.
 
-```java
-        final HazelcastInstance instance = Hazelcast.newHazelcastInstance();
-        final PNCounter counter = instance.getPNCounter("counter");
-        counter.addAndGet(5);
-        final long value = counter.get();
-```
+<CodeBlock language="java">{Ex_dds_ExamplePNCounter_java_tag_pnc}</CodeBlock>
 
 This code snippet creates an instance of a PN counter, increments it by 5 and retrieves the value.
 
@@ -86,13 +85,7 @@ PN Counter has the following configuration elements:
 
 Following is an equivalent snippet of Java configuration:
 
-```java
-        PNCounterConfig pnCounterConfig = new PNCounterConfig("default")
-                .setReplicaCount(10)
-                .setStatisticsEnabled(true);
-        Config hazelcastConfig = new Config()
-                .addPNCounterConfig(pnCounterConfig);
-```
+<CodeBlock language="java">{Ex_dds_ExamplePNCounter_java_tag_pncc}</CodeBlock>
 
 ## Configuring the CRDT Replication Mechanism
 
@@ -138,10 +131,4 @@ CRDT replication has the following configuration elements:
 
 Following is an equivalent snippet of Java configuration:
 
-```java
-        final CRDTReplicationConfig crdtReplicationConfig = new CRDTReplicationConfig()
-                .setMaxConcurrentReplicationTargets(1)
-                .setReplicationPeriodMillis(1000);
-        Config hazelcastConfig = new Config()
-                .setCRDTReplicationConfig(crdtReplicationConfig);
-```
+<CodeBlock language="java">{Ex_dds_CRDTReplication_java_tag_crdt}</CodeBlock>

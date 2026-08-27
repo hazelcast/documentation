@@ -6,6 +6,10 @@ slug: /data-structures/listening-for-map-entries
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_dds_map_Employee_java_tag_emp from '../../../../examples/dds/map/Employee.java?tag=emp';
+import Ex_dds_map_ListenerWithPredicate_java_tag_lwp from '../../../../examples/dds/map/ListenerWithPredicate.java?tag=lwp';
+import Ex_dds_map_MapInterceptorMember_java_tag_mim from '../../../../examples/dds/map/MapInterceptorMember.java?tag=mim';
 
 You can set up monitoring of a map to look for specific events, such as adding an entry, updating a specific entry, or deleting an entry. You can use these events to trigger execution of code, or even intercept the event and change it before it affects the data in memory.
 
@@ -26,13 +30,7 @@ The easiest way to explain this is through an example. We are going to listen fo
 <Tabs groupId="c--go--java--nodejs--python">
 <TabItem value="java" label="Java">
 
-```java
-public class Employee {
-    public static HazelcastJsonValue asJson(String surname) {
-        return new HazelcastJsonValue("{ \"surname\": \"" + surname + "\" }");
-    }
-}
-```
+<CodeBlock language="java">{Ex_dds_map_Employee_java_tag_emp}</CodeBlock>
 
 </TabItem>
 <TabItem value="c" label="C++">
@@ -86,40 +84,7 @@ Then, let's create a listener that tracks the `ADDED`, `UPDATED` and `REMOVED` e
 <Tabs groupId="c--go--java--nodejs--python">
 <TabItem value="java" label="Java">
 
-```java
-public class ListenerWithPredicate {
-
-    public static void main(String[] args) {
-        Config config = new Config();
-        config.setProperty("hazelcast.map.entry.filtering.natural.event.types", "true");
-        HazelcastInstance hz = Hazelcast.newHazelcastInstance(config);
-        IMap<String, HazelcastJsonValue> map = hz.getMap("map");
-        map.addEntryListener(new MyEntryListener(),
-                Predicates.sql("surname=smith"), true);
-        System.out.println("Entry Listener registered");
-    }
-
-    static class MyEntryListener
-            implements EntryAddedListener<String, HazelcastJsonValue>,
-            EntryUpdatedListener<String, HazelcastJsonValue>,
-            EntryRemovedListener<String, HazelcastJsonValue> {
-        @Override
-        public void entryAdded(EntryEvent<String, HazelcastJsonValue> event) {
-            System.out.println("Entry Added:" + event);
-        }
-
-        @Override
-        public void entryRemoved(EntryEvent<String, HazelcastJsonValue> event) {
-            System.out.println("Entry Removed:" + event);
-        }
-
-        @Override
-        public void entryUpdated(EntryEvent<String, HazelcastJsonValue> event) {
-            System.out.println("Entry Updated:" + event);
-        }
-    }
-}
-```
+<CodeBlock language="java">{Ex_dds_map_ListenerWithPredicate_java_tag_lwp}</CodeBlock>
 
 </TabItem>
 <TabItem value="c" label="C++">
@@ -339,46 +304,4 @@ Methods available within the `MapInterceptor` interface:
 
 The following is an example usage.
 
-```java
-public class MapInterceptorMember {
-
-    public static void main(String[] args) {
-        HazelcastInstance hz = Hazelcast.newHazelcastInstance();
-        IMap<String, String> map = hz.getMap("themap");
-        map.addInterceptor(new MyMapInterceptor());
-
-        map.put("1", "1");
-        System.out.println(map.get("1"));
-    }
-
-    private static class MyMapInterceptor implements MapInterceptor {
-
-        @Override
-        public Object interceptGet(Object value) {
-            return value + "-foo";
-        }
-
-        @Override
-        public void afterGet(Object value) {
-        }
-
-        @Override
-        public Object interceptPut(Object oldValue, Object newValue) {
-            return null;
-        }
-
-        @Override
-        public void afterPut(Object value) {
-        }
-
-        @Override
-        public Object interceptRemove(Object removedValue) {
-            return null;
-        }
-
-        @Override
-        public void afterRemove(Object value) {
-        }
-    }
-}
-```
+<CodeBlock language="java">{Ex_dds_map_MapInterceptorMember_java_tag_mim}</CodeBlock>

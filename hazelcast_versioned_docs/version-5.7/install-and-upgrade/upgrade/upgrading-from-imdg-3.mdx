@@ -4,6 +4,10 @@ sidebar_position: 5
 slug: /migrate/upgrading-from-imdg-3
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_distributedevents_ClusterMigrationListener_java_indent_0 from '../../examples/distributedevents/ClusterMigrationListener.java?indent=0';
+import Ex_hazelcast_security_realms_xml_tag_realms_indent_0 from '../../examples/hazelcast-security-realms.xml?tag=realms&indent=0';
+
 This section lists the distribution, documentation and API changes for you to be aware when you have been using IMDG 3.12.x and want to use Hazelcast Platform.
 
 :::note
@@ -569,34 +573,7 @@ public class ClusterMigrationListener implements MigrationListener {
 </td>
 <td>
 
-```java
-import com.hazelcast.partition.MigrationListener;
-import com.hazelcast.partition.MigrationState;
-import com.hazelcast.partition.ReplicaMigrationEvent;
-
-public class ClusterMigrationListener implements MigrationListener {
-
-    @Override
-    public void migrationStarted(MigrationState state) {
-        System.out.println("Migration Started: " + state);
-    }
-
-    @Override
-    public void migrationFinished(MigrationState state) {
-        System.out.println("Migration Finished: " + state);
-    }
-
-    @Override
-    public void replicaMigrationCompleted(ReplicaMigrationEvent event) {
-        System.out.println("Replica Migration Completed: " + event);
-    }
-
-    @Override
-    public void replicaMigrationFailed(ReplicaMigrationEvent event) {
-        System.out.println("Replica Migration Failed: " + event);
-    }
-}
-```
+<CodeBlock language="java">{Ex_distributedevents_ClusterMigrationListener_java_indent_0}</CodeBlock>
 
 </td>
 </tr>
@@ -732,32 +709,7 @@ See the following table for the before/after sample configurations.
 </td>
 <td>
 
-```xml
-<security enabled="true">
-    <realms>
-        <realm name="realm1">
-            <authentication>
-                <jaas>
-                    <login-module class-name="com.hazelcast.examples.MyRequiredLoginModule" usage="REQUIRED">
-                        <properties>
-                            <property name="property">value</property>
-                        </properties>
-                    </login-module>
-                </jaas>
-            </authentication>
-            <identity>
-                <credentials-factory class-name="com.hazelcast.examples.MyCredentialsFactory">
-                    <properties>
-                        <property name="property">value</property>
-                    </properties>
-                </credentials-factory>
-            </identity>
-        </realm>
-    </realms>
-    <member-authentication realm="realm1"/>
-    <client-authentication realm="realm1"/>
-</security>
-```
+<CodeBlock language="xml">{Ex_hazelcast_security_realms_xml_tag_realms_indent_0}</CodeBlock>
 
 </td>
 </tr>

@@ -105,11 +105,36 @@ function validateAllowlist (allow) {
     if (!DISPOSITIONS.has(entry.disposition)) {
       errors.push(`${key}: disposition must be one of ${[...DISPOSITIONS].join(', ')} (got ${JSON.stringify(entry.disposition)})`)
     }
-    if (entry.disposition === 'redirect' && !(typeof entry.to === 'string' && entry.to)) {
-      errors.push(`${key}: disposition "redirect" requires a non-empty "to" target URL`)
-    }
-    if (entry.disposition !== 'redirect' && entry.to != null) {
-      errors.push(`${key}: "to" is only meaningful for disposition "redirect"`)
+    // A redirect needs EXACTLY ONE destination, in one of two forms.
+    //
+    // `to` is the common case and is COMPONENT/VERSION-RELATIVE ("/maintain-cluster/
+    // rest-api"): one allowlist key covers the page in every version it exists in,
+    // so the destination has to be resolved against each version's own URL base.
+    //
+    // `toUrl` is the cross-component case, and is an ABSOLUTE site route
+    // ("/clc/5.5.1/overview"). A page whose only sensible destination lives in
+    // ANOTHER component cannot use `to`: the other component has its own version
+    // line, so there is no base to resolve against. It is a separate field rather
+    // than an absolute value in `to` because both forms start with "/" and nothing
+    // in the string distinguishes them -- "/clc/…" is a component-relative path as
+    // readily as an absolute one -- so inferring the form would silently
+    // misresolve. Being a distinct key also keeps the two visibly different in the
+    // file, which is the point: `toUrl` pins a version in another component and so
+    // has to be revisited when that component's live set moves, where `to` never
+    // does.
+    const dests = ['to', 'toUrl'].filter((f) => entry[f] != null)
+    if (entry.disposition === 'redirect') {
+      if (!dests.length) {
+        errors.push(`${key}: disposition "redirect" requires a destination: "to" (component/version-relative) or "toUrl" (absolute, cross-component)`)
+      } else if (dests.length > 1) {
+        errors.push(`${key}: "to" and "toUrl" are alternatives -- give exactly one`)
+      } else if (!(typeof entry[dests[0]] === 'string' && entry[dests[0]])) {
+        errors.push(`${key}: "${dests[0]}" must be a non-empty string`)
+      } else if (dests[0] === 'toUrl' && !entry.toUrl.startsWith('/')) {
+        errors.push(`${key}: "toUrl" must be an absolute site route starting with "/" (got ${JSON.stringify(entry.toUrl)})`)
+      }
+    } else if (dests.length) {
+      errors.push(`${key}: "${dests.join('"/"')}" is only meaningful for disposition "redirect"`)
     }
     // `nav` is the placement the converter injects for a keep-in-nav page (see
     // lib/dispositions + converter/lib/nav injectNavEntries). It must name the

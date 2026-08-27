@@ -124,6 +124,8 @@ function convertBody (html, ctx) {
     // URL -> output .mdx file (this component+version), for emitting
     // same-version internal links as relative file links (see relativeDocLink).
     urlToRelFile: ctx.urlToRelFile || null,
+    // sourceUrl -> the absolute route it redirects to (see retargetRedirect).
+    redirectRetargets: ctx.redirectRetargets || null,
     // Image URL -> tree-relative destination, computed by convert.js from the
     // reference graph (lib/image-placement.js). Absent in a bare convertBody
     // call (the selftest), which falls back to the site-absolute src — the site
@@ -1127,6 +1129,33 @@ function relativeDocLink (linkPath, hash, st) {
   return rel + (hash || '')
 }
 
+// A link to a page the migration REDIRECTS away (an orphan triaged `redirect` in
+// orphancheck/allowlist.json): point it at the redirect's TARGET, not at the page
+// itself, which is never emitted. Without this the link resolves to a .mdx that
+// does not exist -- broken, and only a WARNING (onBrokenLinks: 'warn') -- so
+// in-site navigation would silently rot while the client redirect sat there
+// unused. Retargeting leaves that redirect doing the job only it can: keeping the
+// old URL alive for bookmarks and links from outside the site.
+//
+// TERMINAL, and deliberately so: the target is a pinned human decision, emitted
+// as written. It is NOT floated to `/<comp>/latest/` the way an unpinned
+// versionless cross-component xref is -- a cross-component target names a version
+// in the other component's line on purpose.
+//
+// Same-component targets still become relative .mdx links (they survive a version
+// cut); a cross-component one has no relative form -- a file link cannot cross a
+// plugin instance -- so it stays the absolute route. Any `#frag` rides along
+// untouched: retargeting is mechanical, and the fragment is the referrer's
+// content, not ours to edit.
+function retargetRedirect (resolved, st) {
+  if (resolved.kind !== 'internal' || !st.redirectRetargets) return null
+  const to = st.redirectRetargets.get(resolved.path) ||
+    st.redirectRetargets.get(resolved.path.replace(/\/$/, '')) ||
+    st.redirectRetargets.get(resolved.path + '/')
+  if (!to) return null
+  return relativeDocLink(to, resolved.hash, st) || (to + (resolved.hash || ''))
+}
+
 // Heal a `link:`-macro doc reference. Antora only resolves `xref:` to a page URL;
 // `link:clc-script.adoc[…]` is treated as a literal link, so the golden carries a
 // raw `foo.adoc` (or `.html`) href that 404s in prod AND here. If dropping the
@@ -1626,7 +1655,9 @@ function inlineTag ($, node, st, opt) {
       // component+version (survives version cuts); otherwise keep the absolute
       // path, floating a versionless cross-component xref to `/<comp>/latest/`.
       const href = kind === 'internal'
-        ? (relativeDocLink(resolved.path, resolved.hash, st) || floatCrossComponentLatest(resolved.href, st))
+        ? (retargetRedirect(resolved, st) ||
+           relativeDocLink(resolved.path, resolved.hash, st) ||
+           floatCrossComponentLatest(resolved.href, st))
         : resolved.href
       if (kind === 'empty' || label === '') return anchorEl + label
       // Single-sourced destination: emit the globally-registered <Variable> in

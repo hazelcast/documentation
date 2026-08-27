@@ -6,6 +6,8 @@ slug: /data-structures/event-journal
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_dds_EventJournalConfiguration_java_tag_ejc from '../../../examples/dds/EventJournalConfiguration.java?tag=ejc';
 
 The event journal is a distributed data structure that stores the history of mutation actions on map or cache. Each action on the map or cache which modifies its contents (such as `put`, `remove` or scheduled tasks which are not triggered by using the public API) creates an event which is stored in the event journal. The event stores the event type as well as the key, old value and updated value for the entry (when applicable). As a user, you can only append to the journal indirectly by using the map and cache methods or configuring the expiration and eviction. By reading from the event journal you can recreate the state of the map or cache at any point in time.
 
@@ -76,21 +78,7 @@ hazelcast:
 
 You can also configure an event journal programmatically. The following is a programmatic version of the above declarative configuration:
 
-```java
-        EventJournalConfig eventJournalMapConfig = new EventJournalConfig()
-                .setEnabled(true)
-                .setCapacity(5000)
-                .setTimeToLiveSeconds(20);
-
-        EventJournalConfig eventJournalCacheConfig = new EventJournalConfig()
-                .setEnabled(true)
-                .setCapacity(10000)
-                .setTimeToLiveSeconds(0);
-
-        Config config = new Config();
-        config.getMapConfig("myMap").setEventJournalConfig(eventJournalMapConfig);
-        config.getCacheConfig("myCache").setEventJournalConfig(eventJournalCacheConfig);
-```
+<CodeBlock language="java">{Ex_dds_EventJournalConfiguration_java_tag_ejc}</CodeBlock>
 
 The `mapName` and `cacheName` attributes define the map or cache to which this event journal configuration applies. You can use pattern-matching and the `default` keyword when doing so. For instance, by using a `mapName` of `journaled*`, the journal configuration applies to all maps whose names start with "journaled" and don't have other journal configurations that match (e.g., if you would have a more specific journal configuration with an exact name match). If you specify the `mapName` or `cacheName` as `default`, the journal configuration applies to all maps and caches that don't have any other journal configuration. This means that potentially all maps and/or caches have one single event journal configuration.
 

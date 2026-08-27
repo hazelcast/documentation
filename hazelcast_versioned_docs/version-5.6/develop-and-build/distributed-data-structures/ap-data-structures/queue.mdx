@@ -6,6 +6,11 @@ slug: /data-structures/queue
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_dds_queue_ProducerMember_java_tag_producer from '../../../examples/dds/queue/ProducerMember.java?tag=producer';
+import Ex_dds_queue_ConsumerMember_java_tag_consumer from '../../../examples/dds/queue/ConsumerMember.java?tag=consumer';
+import Ex_dds_queue_QueueConfiguration_java_tag_queueconf from '../../../examples/dds/queue/QueueConfiguration.java?tag=queueconf';
+import Ex_dds_queue_TheQueueStore_java_tag_qs from '../../../examples/dds/queue/TheQueueStore.java?tag=qs';
 
 Hazelcast distributed queue enables all cluster members and clients to interact with it; you can add an item in one cluster member and remove it from another member or a client.
 
@@ -31,24 +36,7 @@ The following creates a queue producer which adds one integer on the queue every
 1. [Install the Java client library](../../../install-and-upgrade/community-edition/install-hazelcast.mdx#using-java)
 2. Add the following to your file:
 
-   ```java conums
-   public class ProducerMember {
-
-       public static void main( String[] args ) throws Exception {
-           HazelcastInstance hz = Hazelcast.newHazelcastInstance();
-           IQueue<Integer> queue = hz.getQueue( "queue" ); <1>
-           
-           <2>
-           for ( int k = 1; k < 100; k++ ) {
-               queue.put( k );
-               System.out.println( "Producing: " + k );
-               Thread.sleep(1000);
-           }
-           queue.put( -1 );
-           System.out.println( "Producer Finished!" );
-       }
-   }
-   ```
+   <CodeBlock language="java" metastring="conums">{Ex_dds_queue_ProducerMember_java_tag_producer}</CodeBlock>
 
 </TabItem>
 <TabItem value="c-43-43" label="C++">
@@ -247,25 +235,7 @@ The following creates a queue consumer to take messages from this queue.
 1. [Install the Java client library](../../../install-and-upgrade/community-edition/install-hazelcast.mdx#using-java)
 2. Add the following to your file:
 
-   ```java conums
-   public class ConsumerMember {
-
-       public static void main( String[] args ) throws Exception {
-           HazelcastInstance hz = Hazelcast.newHazelcastInstance();
-           IQueue<Integer> queue = hz.getQueue( "queue" ); <1>
-           while ( true ) {
-               int item = queue.take(); <2>
-               System.out.println( "Consumed: " + item );
-               if ( item == -1 ) {
-                   queue.put( -1 );
-                   break;
-               }
-               Thread.sleep( 5000 ); <3>
-           }
-           System.out.println( "Consumer Finished!" );
-       }
-   }
-   ```
+   <CodeBlock language="java" metastring="conums">{Ex_dds_queue_ConsumerMember_java_tag_consumer}</CodeBlock>
 
    <CodeCallouts>
 
@@ -601,20 +571,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java
-        Config config = new Config();
-        QueueConfig queueConfig = config.getQueueConfig("default");
-        queueConfig.setName("MyQueue")
-                .setBackupCount(1)
-                .setMaxSize(0)
-                .setStatisticsEnabled(true)
-                .setSplitBrainProtectionName("splitbrainprotectionname");
-        queueConfig.getQueueStoreConfig()
-                .setEnabled(true)
-                .setClassName("com.hazelcast.QueueStoreImpl")
-                .setProperty("binary", "false");
-        config.addQueueConfig(queueConfig);
-```
+<CodeBlock language="java">{Ex_dds_queue_QueueConfiguration_java_tag_queueconf}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -688,49 +645,7 @@ A queue with a persistent datastore can be defined and configured only on the me
 
 The `QueueStore` interface enables you to store, load and delete queue items with methods like `store`, `storeAll`, `load` and `delete`. The following example class includes all the `QueueStore` methods.
 
-```java conums
-public class TheQueueStore implements QueueStore<Item> {
-
-    @Override
-    public void delete(Long key) {
-        System.out.println("delete");
-    }
-
-    @Override
-    public void store(Long key, Item value) {
-        System.out.println("store");
-    }
-
-    @Override
-    public void storeAll(Map<Long, Item> map) {
-        System.out.println("store all");
-    }
-
-    @Override
-    public void deleteAll(Collection<Long> keys) {
-        System.out.println("deleteAll");
-    }
-
-    @Override
-    <1>
-    public Item load(Long key) {
-        System.out.println("load");
-        return null;
-    }
-
-    @Override
-    public Map<Long, Item> loadAll(Collection<Long> keys) {
-        System.out.println("loadALl");
-        return null;
-    }
-
-    @Override
-    public Set<Long> loadAllKeys() {
-        System.out.println("loadAllKeys");
-        return null;
-    }
-}
-```
+<CodeBlock language="java" metastring="conums">{Ex_dds_queue_TheQueueStore_java_tag_qs}</CodeBlock>
 
 <CodeCallouts>
 

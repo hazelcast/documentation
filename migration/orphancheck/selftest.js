@@ -138,13 +138,36 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
     validateAllowlist({ 'cloud:x': { disposition: 'redirect', to: '/cloud/get-started' } }), [],
     'a redirect with a `to` is valid')
 
+  assert.deepStrictEqual(
+    validateAllowlist({ 'hazelcast:clients/clc': { disposition: 'redirect', toUrl: '/clc/5.5.1/overview' } }), [],
+    'a redirect with an absolute cross-component `toUrl` is valid')
+
   assert.strictEqual(validateAllowlist({ 'c:x': { disposition: 'redirect' } }).length, 1,
-    'redirect without `to` is rejected')
+    'redirect with neither `to` nor `toUrl` is rejected')
   assert.strictEqual(validateAllowlist({ 'c:x': { disposition: 'delete-it' } }).length, 1,
     'unknown disposition is rejected')
   assert.strictEqual(validateAllowlist({ 'c:x': { disposition: 'drop-404', to: '/y' } }).length, 1,
     '`to` on a non-redirect is rejected (decision would be ambiguous)')
+  assert.strictEqual(validateAllowlist({ 'c:x': { disposition: 'drop-404', toUrl: '/y/z' } }).length, 1,
+    '`toUrl` on a non-redirect is rejected, for the same reason as `to`')
   assert.strictEqual(validateAllowlist({ 'c:x': 'keep' }).length, 1, 'a non-object entry is rejected')
+
+  // The two destination forms are ALTERNATIVES, not a pair. Accepting both would
+  // leave which one wins to implementation order, and they resolve differently
+  // (one against the page's own version base, one not), so the recorded decision
+  // would not be a decision at all.
+  assert.strictEqual(
+    validateAllowlist({ 'c:x': { disposition: 'redirect', to: '/a', toUrl: '/b/c' } }).length, 1,
+    'giving both `to` and `toUrl` is rejected')
+  // `toUrl` is absolute BY DEFINITION -- it is the form used precisely when there
+  // is no base to resolve against, so a relative-looking value is a mistake that
+  // would otherwise ship as a route missing its leading segment.
+  assert.strictEqual(
+    validateAllowlist({ 'c:x': { disposition: 'redirect', toUrl: 'clc/5.5.1/overview' } }).length, 1,
+    '`toUrl` without a leading slash is rejected')
+  assert.strictEqual(
+    validateAllowlist({ 'c:x': { disposition: 'redirect', to: '' } }).length, 1,
+    'an empty destination is rejected, not treated as absent')
   // The vocabulary is exactly the four documented dispositions.
   assert.deepStrictEqual([...DISPOSITIONS].sort(), ['drop-404', 'keep-in-nav', 'keep-referenced', 'redirect'],
     'disposition vocabulary is the four documented values')

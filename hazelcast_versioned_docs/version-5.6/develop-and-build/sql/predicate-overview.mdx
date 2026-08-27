@@ -6,6 +6,10 @@ slug: /query/predicate-overview
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_distributedquery_SimpleFastAggregationsDemo_java_tag_fademo from '../../examples/distributedquery/SimpleFastAggregationsDemo.java?tag=fademo';
+import Ex_distributedquery_CQC_java_tag_cqc from '../../examples/distributedquery/CQC.java?tag=cqc';
+import Ex_distributedquery_CQCClient_java_tag_cqcclient from '../../examples/distributedquery/CQCClient.java?tag=cqcclient';
 
 The Predicates API is a programming interface for querying data in Hazelcast, which is similar to the Java Persistence Query Language (JPQL).
 
@@ -798,42 +802,7 @@ In case of the `DoubleAverage` aggregation, the Aggregator would just divide the
 
 Here's an example implementation of the Aggregator:
 
-```java
-    private static void simpleCustomAverageAggregation(IMap<String, FAEmployee> employees) {
-        System.out.println("Calculating salary average");
-
-        double avgSalary = employees.aggregate(new Aggregator<Map.Entry<String, FAEmployee>, Double>() {
-
-            protected long sum;
-            protected long count;
-
-            @Override
-            public void accumulate(Map.Entry<String, FAEmployee> entry) {
-                count++;
-                sum += entry.getValue().getSalaryPerMonth();
-            }
-
-            @Override
-            public void combine(Aggregator aggregator) {
-
-                this.sum += this.getClass().cast(aggregator).sum;
-                this.count += this.getClass().cast(aggregator).count;
-            }
-
-            @Override
-            public Double aggregate() {
-                if (count == 0) {
-                    return null;
-                }
-                return ((double) sum / (double) count);
-            }
-
-        });
-
-        System.out.println("Overall average salary: " + avgSalary);
-        System.out.println("\n");
-    }
-```
+<CodeBlock language="java">{Ex_distributedquery_SimpleFastAggregationsDemo_java_tag_fademo}</CodeBlock>
 
 As you can see:
 
@@ -945,36 +914,13 @@ You cannot create a CQC from any client other than Java.
 
 The following code snippet shows how you can access a continuous query cache from a member.
 
-```java
-        QueryCacheConfig queryCacheConfig = new QueryCacheConfig("cache-name");
-        queryCacheConfig.getPredicateConfig().setImplementation(new OddKeysPredicate());
-
-        MapConfig mapConfig = new MapConfig("map-name");
-        mapConfig.addQueryCacheConfig(queryCacheConfig);
-
-        Config config = new Config();
-        config.addMapConfig(mapConfig);
-
-        HazelcastInstance node = Hazelcast.newHazelcastInstance(config);
-        IMap<Integer, String> map = (IMap) node.getMap("map-name");
-```
+<CodeBlock language="java">{Ex_distributedquery_CQC_java_tag_cqc}</CodeBlock>
 
 ### Accessing a Continuous Query Cache from a Java Client
 
 The following code snippet shows how you can access a continuous query cache from the client side. The difference in this code from the member side code is that you configure and instantiate a client instance instead of a member instance.
 
-```java
-        QueryCacheConfig queryCacheConfig = new QueryCacheConfig("cache-name");
-        queryCacheConfig.getPredicateConfig().setImplementation(new OddKeysPredicate());
-
-        ClientConfig clientConfig = new ClientConfig();
-        clientConfig.addQueryCacheConfig("map-name", queryCacheConfig);
-
-        HazelcastInstance client = HazelcastClient.newHazelcastClient(clientConfig);
-        IMap<Integer, Integer> clientMap = (IMap) client.getMap("map-name");
-
-        QueryCache<Integer, Integer> cache = clientMap.getQueryCache("cache-name");
-```
+<CodeBlock language="java">{Ex_distributedquery_CQCClient_java_tag_cqcclient}</CodeBlock>
 
 ### Features of Continuous Query Cache
 

@@ -5,6 +5,9 @@ sidebar_position: 0
 slug: /spring/spring-session-guide
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_spring_HazelcastHttpSessionConfig_java_tag_config from '../../../examples/spring/HazelcastHttpSessionConfig.java?tag=config';
+
 This guide describes how to use Spring Session along with Spring Security when you use Hazelcast as your data store. It assumes that you have already applied Spring Security to your application.
 
 :::note
@@ -45,23 +48,7 @@ If you use Maven, you must add the following dependencies:
 
 After adding the required dependencies, we can create our Spring configuration. The Spring configuration is responsible for creating a servlet filter that replaces the `HttpSession` implementation with an implementation backed by Spring Session. To do so, add the following Spring Configuration:
 
-```java conums
-@EnableHazelcastHttpSession <1>
-@Configuration
-public class HazelcastHttpSessionConfig {
-
-	@Bean
-	public HazelcastInstance hazelcastInstance() {
-		Config config = new Config();
-		HazelcastSessionConfiguration.applySerializationConfig(config); <2>
-		config.getMapConfig(HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME) <3>
-			.addIndexConfig(
-					new IndexConfig(IndexType.HASH, HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE));
-		return Hazelcast.newHazelcastInstance(config); <4>
-	}
-
-}
-```
+<CodeBlock language="java" metastring="conums">{Ex_spring_HazelcastHttpSessionConfig_java_tag_config}</CodeBlock>
 
 <CodeCallouts>
 

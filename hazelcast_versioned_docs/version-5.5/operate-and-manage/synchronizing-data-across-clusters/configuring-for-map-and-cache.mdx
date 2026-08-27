@@ -7,6 +7,9 @@ enterprise: true
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_wan_EnablingWRforMap_java_tag_wrmap from '../../examples/wan/EnablingWRforMap.java?tag=wrmap';
+import Ex_wan_EnablingWRforCache_java_tag_wrcache from '../../examples/wan/EnablingWRforCache.java?tag=wrcache';
 
 As mentioned before, for now Hazelcast's map (`IMap`) and cache (`ICache`) data structures support WAN Replication. After you define and configure the WAN Replication as explained in previous sections above, you need to bind it to your maps and/or caches.
 
@@ -54,20 +57,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java-member-api" label="Java Member API">
 
-```java
-        Config config = new Config();
-
-        WanReplicationConfig wrConfig = new WanReplicationConfig();
-        wrConfig.setName("my-wan-cluster");
-
-        config.addWanReplicationConfig(wrConfig);
-
-        WanReplicationRef wanRef = new WanReplicationRef();
-        wanRef.setName("my-wan-cluster");
-        wanRef.setMergePolicyClassName(PassThroughMergePolicy.class.getName());
-        wanRef.setRepublishingEnabled(false);
-        config.getMapConfig("my-shared-map").setWanReplicationRef(wanRef);
-```
+<CodeBlock language="java">{Ex_wan_EnablingWRforMap_java_tag_wrmap}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -151,20 +141,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java-member-api" label="Java Member API">
 
-```java
-        Config config = new Config();
-
-        WanReplicationConfig wrConfig = new WanReplicationConfig();
-        wrConfig.setName("my-wan-cluster");
-
-        config.addWanReplicationConfig(wrConfig);
-
-        WanReplicationRef cacheWanRef = new WanReplicationRef();
-        cacheWanRef.setName("my-wan-cluster");
-        cacheWanRef.setMergePolicyClassName(PassThroughMergePolicy.class.getName());
-        cacheWanRef.setRepublishingEnabled(true);
-        config.getCacheConfig("my-shared-cache").setWanReplicationRef(cacheWanRef);
-```
+<CodeBlock language="java">{Ex_wan_EnablingWRforCache_java_tag_wrcache}</CodeBlock>
 
 </TabItem>
 </Tabs>

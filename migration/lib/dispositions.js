@@ -46,16 +46,48 @@ function isUnpublished (dispositions, resource) {
   return !!(e && UNPUBLISHED.has(e.disposition))
 }
 
-// The redirect target recorded for a page, or null. The stored `to` is
-// COMPONENT/VERSION-RELATIVE (e.g. "/maintain-cluster/rest-api"): one allowlist
-// key covers the page in EVERY version it exists in, so a fully-qualified URL
-// could only ever be correct for one of them. Resolving it against the page's
-// own URL base -- and refusing a target that is not itself a published page --
-// is the converter's job (collectRedirects), which is where the URL space and
-// the live-version set are known.
-function redirectTo (dispositions, resource) {
+// The redirect destination recorded for a page, as { url, relative } -- or null
+// if the page is not a `redirect`. Two forms, and the caller must not care which
+// it got beyond whether it still needs resolving:
+//
+//   relative: true   `to` is COMPONENT/VERSION-RELATIVE ("/maintain-cluster/
+//                    rest-api"). One allowlist key covers the page in EVERY
+//                    version it exists in, so a fully-qualified URL could only
+//                    ever be correct for one of them; it is resolved against the
+//                    page's own URL base so each version redirects within itself.
+//
+//   relative: false  `toUrl` is an ABSOLUTE site route ("/clc/5.5.1/overview"),
+//                    for a page whose destination is in ANOTHER component. There
+//                    is no base to resolve against: the other component has its
+//                    own version line, so the target version is a decision, not a
+//                    derivation, and it is pinned in the allowlist where it can be
+//                    read and revisited.
+//
+// Either way, refusing a target that is not itself a published page is the
+// converter's job (collectRedirects), which is where the URL space and the
+// live-version set are known.
+function redirectDest (dispositions, resource) {
   const e = dispositions.get(keyOf(resource))
-  return e && e.disposition === 'redirect' ? e.to : null
+  if (!e || e.disposition !== 'redirect') return null
+  if (e.toUrl) return { url: e.toUrl, relative: false }
+  return e.to ? { url: e.to, relative: true } : null
+}
+
+// The absolute route a page redirects to, or null -- the one question every
+// consumer actually has. Resolves a component/version-relative `to` against the
+// page's own base; an absolute `toUrl` is already the answer. Throws on a
+// relative target whose base cannot be derived, because guessing at the URL of a
+// page whose URL was not built from its coordinate is exactly the silent
+// mis-redirect this is meant to prevent.
+function redirectRoute (dispositions, resource) {
+  const dest = redirectDest(dispositions, resource)
+  if (!dest) return null
+  if (!dest.relative) return normalizeRoute(dest.url)
+  const base = urlBase(resource)
+  if (base == null) {
+    throw new Error(`redirect for ${resource.url}: cannot derive its component/version base from module=${resource.module} relative=${resource.relative}`)
+  }
+  return normalizeRoute(base + dest.url)
 }
 
 // The URLs of every page the migration does not publish, for gates that see
@@ -120,15 +152,11 @@ function redirectPairs (dispositions, manifest, isLive) {
   const pairs = []
   for (const r of resources) {
     if (r.family !== 'page' || !r.url || !isLive(r)) continue
-    const rel = redirectTo(dispositions, r)
-    if (!rel) continue
-    const base = urlBase(r)
-    if (base == null) {
-      throw new Error(`redirect for ${r.url}: cannot derive its component/version base from module=${r.module} relative=${r.relative}`)
-    }
-    const to = normalizeRoute(base + rel)
+    const to = redirectRoute(dispositions, r)
+    if (!to) continue
     if (!published.has(to)) {
-      throw new Error(`redirect for ${r.url}: target ${to} is not a published page -- check the "to" in orphancheck/allowlist.json, which is relative to the component/version (e.g. "/maintain-cluster/rest-api")`)
+      const field = redirectDest(dispositions, r).relative ? '"to" (relative to the component/version, e.g. "/maintain-cluster/rest-api")' : '"toUrl" (an absolute site route, e.g. "/clc/5.5.1/overview")'
+      throw new Error(`redirect for ${r.url}: target ${to} is not a published page -- check the ${field} in orphancheck/allowlist.json`)
     }
     const from = normalizeRoute(r.url)
     if (from !== to) pairs.push({ from, to })
@@ -164,6 +192,6 @@ const navKey = (rest) => {
 }
 
 module.exports = {
-  loadDispositions, keyOf, isUnpublished, redirectTo, unpublishedUrls,
+  loadDispositions, keyOf, isUnpublished, redirectDest, redirectRoute, unpublishedUrls,
   urlBase, redirectPairs, publishedPageUrls, normalizeRoute, navInjectionsFor, ALLOWLIST,
 }

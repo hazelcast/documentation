@@ -6,6 +6,8 @@ slug: /spring/hazelcast-spring-session
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_spring_HazelcastHttpSessionConfig_java_tag_config from '../../examples/spring/HazelcastHttpSessionConfig.java?tag=config';
 
 Hazelcast Spring Session is a library that allows you to store session information from your Spring Boot application in Hazelcast's [IMap](../../develop-and-build/distributed-data-structures/ap-data-structures/map/map.mdx). This allows you to enhance your application with the benefits of Hazelcast: resilence, high availability and high performance.
 
@@ -239,23 +241,7 @@ serialization:
 
 Configure Spring to create a servlet filter that replaces the `HttpSession` implementation with an implementation backed by Spring Session. Add the following Spring Configuration:
 
-```java conums
-@EnableHazelcastHttpSession <1>
-@Configuration
-public class HazelcastHttpSessionConfig {
-
-	@Bean
-	public HazelcastInstance hazelcastInstance() {
-		Config config = new Config();
-		HazelcastSessionConfiguration.applySerializationConfig(config); <2>
-		config.getMapConfig(HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME) <3>
-			.addIndexConfig(
-					new IndexConfig(IndexType.HASH, HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE));
-		return Hazelcast.newHazelcastInstance(config); <4>
-	}
-
-}
-```
+<CodeBlock language="java" metastring="conums">{Ex_spring_HazelcastHttpSessionConfig_java_tag_config}</CodeBlock>
 
 <CodeCallouts>
 

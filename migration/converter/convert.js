@@ -47,7 +47,7 @@ const { attrCodeTemplates, buildCodeTemplates, resolveTemplates } = require('./l
 const { collectPageTexts, collectPageExamples } = require('../refcheck/lib/source-refs')
 const { parseNav, buildPlan, injectNavEntries, pageKey } = require('./lib/nav')
 const { decodeHTML } = require('entities')
-const { loadDispositions, isUnpublished, redirectTo, urlBase, redirectPairs, publishedPageUrls, navInjectionsFor } = require('../lib/dispositions')
+const { loadDispositions, isUnpublished, redirectRoute, urlBase, redirectPairs, publishedPageUrls, navInjectionsFor } = require('../lib/dispositions')
 // Co-located image placement, computed from the reference graph. The converter
 // is the only thing that knows every page's OUTPUT FILE (the nav plan decides
 // it, not the URL), so it owns the plan and writes it out for extract-images.js.
@@ -959,25 +959,24 @@ function convertVersion (ver, ctx) {
   }
   if (seg != null) {
     for (const p of allPages) setRelFile(p.url, relFileForPage(p, byUrl, plan).relFile)
-    // A `redirect` page is not emitted, so an inbound link to it would resolve
-    // to a file that no longer exists -- a broken link that only WARNS
-    // (onBrokenLinks: 'warn') rather than taking the redirect. Point those links
-    // at the redirect TARGET instead, so navigation inside the site goes
-    // straight there and the client redirect is left to do the job only it can:
-    // keeping the old URL alive for bookmarks and links from outside the site.
-    // Any "#frag" on the link is carried over untouched, since retargeting is
-    // mechanical and the fragment is the referrer's content, not ours to edit.
-    for (const p of allPages) {
-      const { rec } = relFileForPage(p, byUrl, plan)
-      const rel = rec && redirectTo(ctx.dispositions, rec)
-      if (!rel) continue
-      const base = urlBase(rec)
-      const target = base == null ? null : urlToRelFile.get(normalizeRoute(base + rel))
-      // A target the converter cannot see is a bad `to`; collectRedirects fails
-      // the run on it with the actionable message, so say nothing here and let
-      // the link fall back to an absolute URL (which the redirect still serves).
-      if (target) setRelFile(p.url, target)
-    }
+  }
+
+  // sourceUrl -> the absolute route it redirects to, for every `redirect` orphan
+  // in this version. A redirected page is NOT emitted, so an inbound link to it
+  // would otherwise resolve to a file that no longer exists -- broken, and only a
+  // WARNING (onBrokenLinks: 'warn'). The converter rewrites those links to the
+  // target instead (html-to-mdx retargetRedirect), so navigation inside the site
+  // goes straight there and the client redirect is left doing the job only it can:
+  // keeping the old URL alive for bookmarks and links from outside the site.
+  //
+  // Built for UNVERSIONED components too (outside the `seg != null` guard above):
+  // relative .mdx links are a versioned-instance concern, but a dead inbound link
+  // is not.
+  const redirectRetargets = new Map()
+  for (const p of allPages) {
+    const { rec } = relFileForPage(p, byUrl, plan)
+    const route = rec && redirectRoute(ctx.dispositions, rec)
+    if (route) redirectRetargets.set(p.url, route)
   }
 
   // Pass 1: read each page's golden ONCE (cached) and collect its partial-
@@ -1090,6 +1089,7 @@ function convertVersion (ver, ctx) {
         })(),
         latestVersions: ctx.latestVersions,
         urlToRelFile,
+        redirectRetargets,
         imagePlacement,
       })
       if (!fragment.trim()) { spliceSkips.push({ url: page.url, donor, reason: 'empty' }); continue }
@@ -1151,7 +1151,7 @@ function convertVersion (ver, ctx) {
 
     let body, imports
     try {
-      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageExampleFiles, pageVars, proseVars, hrefVars, codeVars, codeValueVars, latestVersions: ctx.latestVersions, urlToRelFile, imagePlacement }))
+      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageExampleFiles, pageVars, proseVars, hrefVars, codeVars, codeValueVars, latestVersions: ctx.latestVersions, urlToRelFile, redirectRetargets, imagePlacement }))
       body = withBothConditionalBranches(body, { page: p, rec, relFile, pageVars, proseVars, hrefVars, codeVars, codeValueVars })
     } catch (err) {
       problems.push({ url: p.url, error: err.message })
@@ -1232,7 +1232,7 @@ function convertVersion (ver, ctx) {
       // different depths would resolve the same xref to different relative hrefs
       // — so such a partial is declined as content-varies before it reaches here.
       const partialPageUrl = (d.pages && d.pages[0]) || pages[0].url
-      const { body, imports } = convertBody(d.representative, { pageUrl: partialPageUrl, relFile: path.join('_partials', d.slug + '.mdx'), component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, hrefVars, codeVars, codeValueVars, latestVersions: ctx.latestVersions, urlToRelFile, imagePlacement })
+      const { body, imports } = convertBody(d.representative, { pageUrl: partialPageUrl, relFile: path.join('_partials', d.slug + '.mdx'), component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, hrefVars, codeVars, codeValueVars, latestVersions: ctx.latestVersions, urlToRelFile, redirectRetargets, imagePlacement })
       const importBlock = imports.size ? [...imports].join('\n') + '\n\n' : ''
       d.mdx = importBlock + body + '\n'
     } catch (err) {

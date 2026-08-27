@@ -4,6 +4,15 @@ sidebar_position: 5
 slug: /jcache/api
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_jcache_User_java_tag_user from '../../../../examples/jcache/User.java?tag=user';
+import Ex_jcache_UserDao_java_tag_userdao from '../../../../examples/jcache/UserDao.java?tag=userdao';
+import Ex_jcache_UserCacheEntryListenerFactory_java_tag_ucelf from '../../../../examples/jcache/UserCacheEntryListenerFactory.java?tag=ucelf';
+import Ex_jcache_UserCacheLoader_java_tag_ucl from '../../../../examples/jcache/UserCacheLoader.java?tag=ucl';
+import Ex_jcache_UserCacheWriter_java_tag_ucw from '../../../../examples/jcache/UserCacheWriter.java?tag=ucw';
+import Ex_jcache_UserUpdateEntryProcessor_java_tag_uuep from '../../../../examples/jcache/UserUpdateEntryProcessor.java?tag=uuep';
+import Ex_jcache_UserCacheEntryListener_java_tag_ucel from '../../../../examples/jcache/UserCacheEntryListener.java?tag=ucel';
+
 This section explains the JCache API by providing simple examples and use cases. While walking through the examples, we will have a look at a couple of the standard API classes and see how these classes are used.
 
 ## JCache API Application Example
@@ -16,29 +25,13 @@ Before we implement the JCache caching layer, let's have a quick look at some ba
 
 The `User` class is the representation of a user table in the database. To keep it simple, it has just two properties: `userId` and `username`.
 
-```java
-public class User implements Serializable {
-
-    private int userId;
-    private String username;
-
-    public User() {
-    }
-```
+<CodeBlock language="java">{Ex_jcache_User_java_tag_user}</CodeBlock>
 
 ### Creating DAO Interface Example
 
 The DAO interface is also kept easy in this example. It provides a simple method to retrieve (find) a user by its `userId`.
 
-```java
-public interface UserDao {
-
-    User findUserById(int userId);
-    boolean storeUser(int userId, User user);
-    boolean removeUser(int userId);
-    Collection<Integer> allUserIds();
-}
-```
+<CodeBlock language="java">{Ex_jcache_UserDao_java_tag_userdao}</CodeBlock>
 
 ### Configuring JCache Example
 
@@ -141,16 +134,7 @@ The `javax.cache.configuration.Factory` implementations configure features like 
 
 `Factory` implementations are easy to do, as they follow the default Provider- or Factory-Pattern. The example class `UserCacheEntryListenerFactory` shown below implements a custom JCache `Factory`.
 
-```java
-public class UserCacheEntryListenerFactory implements Factory<CacheEntryListener<Integer, User>> {
-
-    @Override
-    public CacheEntryListener<Integer, User> create() {
-        // just create a new listener instance
-        return new UserCacheEntryListener();
-    }
-}
-```
+<CodeBlock language="java">{Ex_jcache_UserCacheEntryListenerFactory_java_tag_ucelf}</CodeBlock>
 
 To simplify the process for the users, JCache API offers a set of helper methods collected in `javax.cache.
 configuration.FactoryBuilder`. In the above configuration example, `FactoryBuilder.factoryOf()` creates a singleton factory for the given instance.
@@ -177,39 +161,7 @@ Let's look at the `UserCacheLoader` implementation. This implementation is quite
 
 An important note is that any kind of exception has to be wrapped into `javax.cache.integration.CacheLoaderException`.
 
-```java
-public class UserCacheLoader implements CacheLoader<Integer, User>, Serializable {
-
-    private final UserDao userDao;
-
-    public UserCacheLoader(UserDao userDao) {
-        // store the dao instance created externally
-        this.userDao = userDao;
-    }
-
-    @Override
-    public User load(Integer key) throws CacheLoaderException {
-        // just call through into the dao
-        return userDao.findUserById(key);
-    }
-
-    @Override
-    public Map<Integer, User> loadAll(Iterable<? extends Integer> keys) throws CacheLoaderException {
-        // create the resulting map
-        Map<Integer, User> loaded = new HashMap<Integer, User>();
-        // for every key in the given set of keys
-        for (Integer key : keys) {
-            // try to retrieve the user
-            User user = userDao.findUserById(key);
-            // if user is not found do not add the key to the result set
-            if (user != null) {
-                loaded.put(key, user);
-            }
-        }
-        return loaded;
-    }
-}
-```
+<CodeBlock language="java">{Ex_jcache_UserCacheLoader_java_tag_ucl}</CodeBlock>
 
 ## CacheWriter
 
@@ -225,57 +177,7 @@ The following example performs the following tasks:
 - It overrides the `delete` method to delete the key entry from the store.
 - It overrides the `deleteAll` method to delete the data and keys from the underlying store for the given collection of keys, if present.
 
-```java
-public class UserCacheWriter implements CacheWriter<Integer, User>, Serializable {
-
-    private final UserDao userDao;
-
-    public UserCacheWriter(UserDao userDao) {
-        // store the dao instance created externally
-        this.userDao = userDao;
-    }
-
-    @Override
-    public void write(Cache.Entry<? extends Integer, ? extends User> entry) throws CacheWriterException {
-        // store the user using the dao
-        userDao.storeUser(entry.getKey(), entry.getValue());
-    }
-
-    @Override
-    public void writeAll(Collection<Cache.Entry<? extends Integer, ? extends User>> entries) throws CacheWriterException {
-        // retrieve the iterator to clean up the collection from written keys in case of an exception
-        Iterator<Cache.Entry<? extends Integer, ? extends User>> iterator = entries.iterator();
-        while (iterator.hasNext()) {
-            // write entry using dao
-            write(iterator.next());
-            // remove from collection of keys
-            iterator.remove();
-        }
-    }
-
-    @Override
-    public void delete(Object key) throws CacheWriterException {
-        // test for key type
-        if (!(key instanceof Integer)) {
-            throw new CacheWriterException("Illegal key type");
-        }
-        // remove user using dao
-        userDao.removeUser((Integer) key);
-    }
-
-    @Override
-    public void deleteAll(Collection<?> keys) throws CacheWriterException {
-        // retrieve the iterator to clean up the collection from written keys in case of an exception
-        Iterator<?> iterator = keys.iterator();
-        while (iterator.hasNext()) {
-            // write entry using dao
-            delete(iterator.next());
-            // remove from collection of keys
-            iterator.remove();
-        }
-    }
-}
-```
+<CodeBlock language="java">{Ex_jcache_UserCacheWriter_java_tag_ucw}</CodeBlock>
 
 Again, the implementation is pretty straightforward and also as above all exceptions thrown by the external resource, like `java.sql.SQLException` has to be wrapped into a `javax.cache.integration.CacheWriterException`. Note this is a different exception from the one thrown by `CacheLoader`.
 
@@ -292,39 +194,7 @@ The following example performs the following tasks.
 - It implements `EntryProcessor`.
 - It overrides the `process` method to process an entry.
 
-```java
-public class UserUpdateEntryProcessor implements EntryProcessor<Integer, User, User> {
-
-    @Override
-    public User process(MutableEntry<Integer, User> entry, Object... arguments) throws EntryProcessorException {
-        // test arguments length
-        if (arguments.length < 1) {
-            throw new EntryProcessorException("One argument needed: username");
-        }
-
-        // get first argument and test for String type
-        Object argument = arguments[0];
-        if (!(argument instanceof String)) {
-            throw new EntryProcessorException("First argument has wrong type, required java.lang.String");
-        }
-
-        // retrieve the value from the MutableEntry
-        User user = entry.getValue();
-
-        // retrieve the new username from the first argument
-        String newUsername = (String) arguments[0];
-
-        // set the new username
-        user.setUsername(newUsername);
-
-        // set the changed user to mark the entry as dirty
-        entry.setValue(user);
-
-        // return the changed user to return it to the caller
-        return user;
-    }
-}
-```
+<CodeBlock language="java">{Ex_jcache_UserUpdateEntryProcessor_java_tag_uuep}</CodeBlock>
 
 :::note
 
@@ -359,47 +229,7 @@ In this example application, the listener is implemented to print event informat
 - It implements the `CacheEntryExpiredListener.onExpired` method to call after an entry expires.
 - It implements `printEvents` to print event information about the console.
 
-```java
-class UserCacheEntryListener implements CacheEntryCreatedListener<Integer, User>,
-        CacheEntryUpdatedListener<Integer, User>,
-        CacheEntryRemovedListener<Integer, User>,
-        CacheEntryExpiredListener<Integer, User> {
-
-    @Override
-    public void onCreated(Iterable<CacheEntryEvent<? extends Integer, ? extends User>> cacheEntryEvents)
-            throws CacheEntryListenerException {
-
-        printEvents(cacheEntryEvents);
-    }
-
-    @Override
-    public void onUpdated(Iterable<CacheEntryEvent<? extends Integer, ? extends User>> cacheEntryEvents)
-            throws CacheEntryListenerException {
-
-        printEvents(cacheEntryEvents);
-    }
-
-    @Override
-    public void onRemoved(Iterable<CacheEntryEvent<? extends Integer, ? extends User>> cacheEntryEvents)
-            throws CacheEntryListenerException {
-
-        printEvents(cacheEntryEvents);
-    }
-
-    @Override
-    public void onExpired(Iterable<CacheEntryEvent<? extends Integer, ? extends User>> cacheEntryEvents)
-            throws CacheEntryListenerException {
-
-        printEvents(cacheEntryEvents);
-    }
-
-    private void printEvents(Iterable<CacheEntryEvent<? extends Integer, ? extends User>> cacheEntryEvents) {
-        for (CacheEntryEvent<? extends Integer, ? extends User> event : cacheEntryEvents) {
-            System.out.println(event.getEventType());
-        }
-    }
-}
-```
+<CodeBlock language="java">{Ex_jcache_UserCacheEntryListener_java_tag_ucel}</CodeBlock>
 
 ## ExpiryPolicy
 

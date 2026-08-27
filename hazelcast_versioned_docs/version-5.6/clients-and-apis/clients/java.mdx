@@ -6,6 +6,11 @@ slug: /clients/java
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_clients_ExampleClientConfiguration_java_tag_scc from '../../examples/clients/ExampleClientConfiguration.java?tag=scc';
+import Ex_clients_ExampleClientAwsConfig_java_tag_clientaws from '../../examples/clients/ExampleClientAwsConfig.java?tag=clientaws';
+import Ex_clients_ListeningClients_java_tag_lc from '../../examples/clients/ListeningClients.java?tag=lc';
+import Ex_clients_ExampleRTClient_java_tag_rtclient from '../../examples/clients/ExampleRTClient.java?tag=rtclient';
 
 ## Overview
 
@@ -959,29 +964,7 @@ hazelcast-client:
 
 The following example programmatic `network` configuration includes all the parent configuration attributes:
 
-```java
-        ClientConfig clientConfig = new ClientConfig();
-        clientConfig.getConnectionStrategyConfig().getConnectionRetryConfig().setMaxBackoffMillis(5000);
-        ClientNetworkConfig networkConfig = clientConfig.getNetworkConfig();
-        networkConfig.addAddress("10.1.1.21", "10.1.1.22:5703")
-                .setClusterRoutingConfig(new ClusterRoutingConfig().setRoutingMode(RoutingMode.ALL_MEMBERS))
-                .addOutboundPortDefinition("34700-34710")
-                .setRedoOperation(true)
-                .setConnectionTimeout(5000);
-
-        AwsConfig clientAwsConfig = new AwsConfig();
-        clientAwsConfig.setProperty("access-key", "my-access-key")
-                .setProperty("secret-key", "my-secret-key")
-                .setProperty("region", "us-west-1")
-                .setProperty("host-header", "ec2.amazonaws.com")
-                .setProperty("security-group-name", ">hazelcast-sg")
-                .setProperty("tag-key", "type")
-                .setProperty("tag-value", "hz-members")
-                .setProperty("iam-role", "s3access")
-                .setEnabled(true);
-        clientConfig.getNetworkConfig().setAwsConfig(clientAwsConfig);
-        HazelcastInstance client = HazelcastClient.newHazelcastClient(clientConfig);
-```
+<CodeBlock language="java">{Ex_clients_ExampleClientConfiguration_java_tag_scc}</CodeBlock>
 
 The following sections include details and usage examples for sub-elements and attributes.
 
@@ -1620,21 +1603,7 @@ hazelcast-client:
 
 #### Programmatic Configuration {/* #programmatic-configuration-6 */}
 
-```java
-        ClientConfig clientConfig = new ClientConfig();
-        AwsConfig clientAwsConfig = new AwsConfig();
-        clientAwsConfig.setProperty("access-key", "my-access-key")
-                .setProperty("secret-key", "my-secret-key")
-                .setProperty("region", "us-west-1")
-                .setProperty("host-header", "ec2.amazonaws.com")
-                .setProperty("security-group-name", ">hazelcast-sg")
-                .setProperty("tag-key", "type")
-                .setProperty("tag-value", "hz-members")
-                .setProperty("iam-role", "s3access")
-                .setEnabled(true);
-        clientConfig.getNetworkConfig().setAwsConfig(clientAwsConfig);
-        HazelcastInstance client = HazelcastClient.newHazelcastClient(clientConfig);
-```
+<CodeBlock language="java">{Ex_clients_ExampleClientAwsConfig_java_tag_clientaws}</CodeBlock>
 
 For more information on AWS configuration elements (except `use-public-ip`), see [AWS Element section on network configuration](../../operate-and-manage/partition-groups-and-networking/network-configuration.mdx#aws-element).
 
@@ -1664,35 +1633,7 @@ After getting an instance of `IExecutorService`, you can use the instance as the
 
 If you need to track clients and want to listen to their connection events, you can use the `clientConnected()` and `clientDisconnected()` methods of the `ClientService` class. This class must be run on the **member** side. The following code shows an example of how to do this:
 
-```java
-        ClientConfig clientConfig = new ClientConfig();
-        //clientConfig.setClusterName("dev");
-        clientConfig.getNetworkConfig().addAddress("10.90.0.1", "10.90.0.2:5702");
-
-        HazelcastInstance instance = Hazelcast.newHazelcastInstance();
-
-        final ClientService clientService = instance.getClientService();
-
-        clientService.addClientListener(new ClientListener() {
-            @Override
-            public void clientConnected(Client client) {
-                //Handle client connected event
-            }
-
-            @Override
-            public void clientDisconnected(Client client) {
-                //Handle client disconnected event
-            }
-        });
-
-        //this will trigger `clientConnected` event
-        HazelcastInstance client = HazelcastClient.newHazelcastClient();
-
-        final Collection<Client> connectedClients = clientService.getConnectedClients();
-
-        //this will trigger `clientDisconnected` event
-        client.shutdown();
-```
+<CodeBlock language="java">{Ex_clients_ListeningClients_java_tag_lc}</CodeBlock>
 
 ### Find the partition of a key
 
@@ -1935,23 +1876,7 @@ Normally when a client uses a Hazelcast data structure, that structure is config
 
 Here is an example programmatic configuration:
 
-```java
-        Config config = new Config();
-        RingbufferConfig ringbufferConfig = new RingbufferConfig("default");
-        ringbufferConfig.setCapacity(10000000)
-                .setTimeToLiveSeconds(5);
-        config.addRingBufferConfig(ringbufferConfig);
-
-        ClientConfig clientConfig = new ClientConfig();
-        ClientReliableTopicConfig topicConfig = new ClientReliableTopicConfig("default");
-        topicConfig.setTopicOverloadPolicy( TopicOverloadPolicy.BLOCK )
-                            .setReadBatchSize( 10 );
-        clientConfig.addReliableTopicConfig(topicConfig);
-
-        HazelcastInstance hz = Hazelcast.newHazelcastInstance(config);
-        HazelcastInstance client = HazelcastClient.newHazelcastClient(clientConfig);
-        ITopic topic = client.getReliableTopic(topicConfig.getName());
-```
+<CodeBlock language="java">{Ex_clients_ExampleRTClient_java_tag_rtclient}</CodeBlock>
 
 When you create a Reliable Topic structure on your client, a Ringbuffer (with the same name as the Reliable Topic) is automatically created on the member side, with the default configuration. See the [Configuring Ringbuffer section](../../develop-and-build/distributed-data-structures/ap-data-structures/ringbuffer.mdx) for the defaults. You can edit that configuration according to your needs.
 
