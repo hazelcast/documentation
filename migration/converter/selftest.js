@@ -826,7 +826,26 @@ const renderedCode = (md) => {
     'a reference inside an unlabelled autolink is left bare')
   assert.ok(markedUnlabelled !== unlabelled,
     'while the list-item label on the same line is still marked')
-  ok('prose-eligibility: verbatim blocks and link targets are excluded, flow text is not')
+  // An `include::` DIRECTIVE is machinery, not flow text: it renders nothing, and a
+  // sentinel in its target breaks the resolve outright (9 "target of include not
+  // found" errors when {page-latest-supported-mc} was first marked).
+  const inc = 'include::{page-latest-supported-mc}@management-center:getting-started:install.adoc[tag=cli]'
+  assert.strictEqual(wrapRefs(inc, ['page-latest-supported-mc']), inc,
+    'an include directive is left completely untouched')
+  assert.ok(!wrappableRefs(inc, ['page-latest-supported-mc']).has('page-latest-supported-mc'),
+    'and an attribute reached only through an include target is not prose-eligible')
+  // ANY macro target, not just a link's: an `xref:` coordinate is machine-readable
+  // and marking it left Antora unable to resolve the xref at all, so the golden kept
+  // the macro as literal text on 46 pages. Same for an image's target.
+  const xref = 'See xref:{page-latest-supported-mc}@management-center:monitor-imdg:monitor-dds.adoc#x[MC] for {page-latest-supported-mc}.'
+  const markedXref = wrapRefs(xref, ['page-latest-supported-mc'])
+  assert.ok(markedXref.includes('xref:{page-latest-supported-mc}@management-center'),
+    'an xref TARGET is left bare')
+  assert.ok(markedXref !== xref, 'while the prose reference on the same line is still marked')
+  const img = 'image:pic-{version}.png[alt] then prose {version}.'
+  assert.ok(wrapRefs(img, ['version']).includes('image:pic-{version}.png['),
+    "an image's target is left bare too")
+  ok('prose-eligibility: verbatim blocks and macro targets are excluded, flow text is not')
 }
 
 // --- the two ways a marker can malform the golden ----------------------------

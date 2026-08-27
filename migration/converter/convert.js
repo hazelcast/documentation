@@ -32,12 +32,12 @@ const { goldenPages } = require('../fidelity/lib/pairing')
 const { convertBody } = require('./lib/html-to-mdx')
 const { collectOccurrences, decide, consumerAttrs } = require('./lib/partials')
 // Link targets written with an `{attribute}` in them — the exact-match href path
-// (see buildHrefVars); shared with the selftest so the grammar has one definition.
+// (see buildTemplates); shared with the selftest so the grammar has one definition.
 const { attrHrefTemplates, resolveHref } = require('./lib/links')
 // The verbatim-block counterpart: the source's own code LINES carrying an
 // `{attribute}`, so a fence keeps the right NAME where several attributes share
 // one value (hazelcast's os-/ee-/full-version are all `5.8.0-SNAPSHOT`).
-const { attrCodeTemplates, buildCodeTemplates } = require('./lib/code-templates')
+const { attrCodeTemplates, buildCodeTemplates, resolveTemplates } = require('./lib/code-templates')
 // The source-side include walker, shared with refcheck so the converter and the
 // gate agree on which files a page reaches. Needed here because a partial's code
 // lines have to be templated against the page that includes them: get-started-cli
@@ -650,53 +650,60 @@ function sourcePathFor (component, rec) {
 // (`all`): emitting a `{name}` the site has no variable for would put literal
 // braces in an href. Templates that substitute to themselves (nothing known)
 // are dropped for the same reason.
-function buildHrefVars (attrsHere, lookup) {
-  const m = new Map()
-  if (!attrsHere || !attrsHere.hrefs) return m
-  for (const tpl of attrsHere.hrefs) {
-    const names = [...tpl.matchAll(/\{([A-Za-z0-9_][A-Za-z0-9_-]*)\}/g)].map((x) => x[1])
-    if (!names.length || !names.every((n) => attrsHere.all.has(n))) continue
-    const resolved = substitute(tpl, lookup)
-    if (resolved !== tpl) m.set(resolved, tpl)
-  }
-  return m
-}
 
-// The same exact-match idea for a VERBATIM LINE: resolved line -> the source line
-// that produced it. See lib/code-templates.js for why a line is the unit and why
-// the value map cannot do this job.
+// Both exact template maps, built from the pages' whole INCLUDE CLOSURE:
 //
-// Collected over the page's whole INCLUDE CLOSURE, not just its own file, so a
-// code line reaching the page through a partial is templated too. `known` is the
-// component's single-sourced set rather than scanPageAttrs' per-page `all`, for the
-// same reason: an attribute a page only touches via an include is not in `all`, and
-// gating on it would drop exactly the templates the closure was walked for.
-function buildCodeVars (component, resource, seg, sourcesDir, lookup) {
+//   code   { blocks, lines } — a verbatim line/block, resolved-text -> source text.
+//   hrefs  a link macro's target, resolved URL -> source target.
+//
+// The closure rather than the page file alone, because a reference reaching a page
+// through an `include::` is invisible otherwise -- and that is not a corner case:
+// install-enterprise's `setLicenseKey()` javadoc link arrives via
+// `include::deploy:enterprise-licenses.adoc[tag=install-license]`, and the two
+// `{ee-version}` fences on get-started-enterprise arrive via
+// `include::install-enterprise.adoc[tag=docker]`. Both baked while collection
+// stopped at the page file.
+//
+// `known` is the component's single-sourced set rather than a per-page one, for the
+// same reason: an attribute a page only touches through an include is not in that
+// page's own list, and gating on it would drop exactly the templates the closure was
+// walked for.
+//
+// `resources` is a list so a FACTORED PARTIAL can be built from the union of its
+// consuming pages' closures -- a partial is converted once, on its own, and had no
+// template maps at all until now.
+function buildTemplates (component, resources, seg, sourcesDir, lookup) {
   const known = new Set(SINGLE_SOURCE_ATTRS[component] || [])
-  if (!known.size || !resource) return { templates: new Map(), named: new Set() }
+  const code = { blocks: new Map(), lines: new Map() }
+  if (!known.size) return { code, hrefs: new Map(), named: new Set() }
   const lines = new Set()
   const blocks = new Set()
-  for (const text of collectPageTexts(resource, seg, sourcesDir)) {
-    const t = attrCodeTemplates(text)
-    for (const line of t.lines) lines.add(line)
-    for (const block of t.blocks) blocks.add(block)
+  const hrefs = new Set()
+  for (const resource of resources) {
+    if (!resource) continue
+    for (const text of collectPageTexts(resource, seg, sourcesDir, lookup)) {
+      const t = attrCodeTemplates(text)
+      for (const line of t.lines) lines.add(line)
+      for (const block of t.blocks) blocks.add(block)
+      for (const href of attrHrefTemplates(text)) hrefs.add(href)
+    }
   }
-  const templates = buildCodeTemplates({ lines, blocks }, known, lookup, substitute)
-  // The names the templates account for. Where a name is templated, the value map
-  // must NOT also hunt for its value in the rest of the page's code: the source has
-  // just said exactly which code lines reference it, so any other line matching the
-  // value is a coincidence. `{minimum-java-version}` is why this matters — it
+  const resolvedCode = buildCodeTemplates({ lines, blocks }, known, lookup, substitute)
+  // The names the code templates account for. Where a name is templated, the value
+  // map must NOT also hunt for its value in the rest of the page's code: the source
+  // has just said exactly which code lines reference it, so any other line matching
+  // the value is a coincidence. `{minimum-java-version}` is why this matters -- it
   // resolves to the bare `17`, and on two pages the map turned a literal 17 in
   // sample OUTPUT ("Kinesis got 17 tweets per second") into a reference. A missed
   // reference bakes and the gate says so; a coincidental one silently changes with
   // the attribute.
   const named = new Set()
-  for (const map of [templates.blocks, templates.lines]) {
+  for (const map of [resolvedCode.blocks, resolvedCode.lines]) {
     for (const tpl of map.values()) {
       for (const m of tpl.matchAll(/\{([A-Za-z0-9_][A-Za-z0-9_-]*)\}/g)) named.add(m[1])
     }
   }
-  return { templates, named }
+  return { code: resolvedCode, hrefs: resolveTemplates(hrefs, known, lookup, substitute), named }
 }
 
 // `pageVars` minus the names the code templates already account for — the value
@@ -1005,10 +1012,13 @@ function convertVersion (ver, ctx) {
         pageUrl: page.url, relFile, component, seg, partials: new Map(), linkVars: ctx.linkVars, examples,
         pageVars: dPageVars,
         proseVars: proseVarsFor(dPageVars, (donorAttrs && donorAttrs.prose) || new Set(), markedAttrsFor(component)),
-        hrefVars: buildHrefVars(donorAttrs, donorLookup),
         ...(() => {
-          const d = buildCodeVars(component, rec, donor, opts.sourcesDir, donorLookup)
-          return { codeVars: d.templates, codeValueVars: codeValueVarsFor(dPageVars, d.named) }
+          const t = buildTemplates(component, [rec], donor, opts.sourcesDir, donorLookup)
+          return {
+            hrefVars: t.hrefs,
+            codeVars: t.code,
+            codeValueVars: codeValueVarsFor(dPageVars, t.named),
+          }
         })(),
         latestVersions: ctx.latestVersions,
         urlToRelFile,
@@ -1057,10 +1067,10 @@ function convertVersion (ver, ctx) {
     const attrsHere = attrsByKey.get(key)
     const pageVars = buildPageVars(attrsHere && attrsHere.all, exampleLookup)
     const proseVars = proseVarsFor(pageVars, (attrsHere && attrsHere.prose) || new Set(), markedAttrsFor(component))
-    const hrefVars = buildHrefVars(attrsHere, exampleLookup)
-    const code = buildCodeVars(component, rec, seg, opts.sourcesDir, exampleLookup)
-    const codeVars = code.templates
-    const codeValueVars = codeValueVarsFor(pageVars, code.named)
+    const tpl = buildTemplates(component, [rec], seg, opts.sourcesDir, exampleLookup)
+    const hrefVars = tpl.hrefs
+    const codeVars = tpl.code
+    const codeValueVars = codeValueVarsFor(pageVars, tpl.named)
 
     let body, imports
     try {
@@ -1111,15 +1121,28 @@ function convertVersion (ver, ctx) {
   // baked: scanPageAttrs cannot see it either, since that records PAGE files in
   // the component's OWN repo and this one is a tagged include of an hz-docs page.
   const keyForUrl = (url) => { const rec = byUrl.get(url); return rec ? keyOf(rec) : null }
+  // A partial's vars come from the UNION of its consuming pages: it is converted
+  // once, on its own, so it has no page of its own to scope by. That includes the
+  // exact template maps — without them a reference inside a partial bakes whenever
+  // its value is one the reverse-map refuses (a same-value collision, a bare
+  // number), which is what left getting-started-install-enterprise.mdx carrying two
+  // literal `5.8.0-SNAPSHOT` docker/version lines.
   const partialVarsFor = (d) => {
     const { all, prose } = consumerAttrs(d.pages, keyForUrl, attrsByKey)
     const pageVars = buildPageVars(all, exampleLookup)
-    return { pageVars, proseVars: proseVarsFor(pageVars, prose, markedAttrsFor(component)) }
+    const tpl = buildTemplates(component, (d.pages || []).map((u) => byUrl.get(u)), seg, opts.sourcesDir, exampleLookup)
+    return {
+      pageVars,
+      proseVars: proseVarsFor(pageVars, prose, markedAttrsFor(component)),
+      hrefVars: tpl.hrefs,
+      codeVars: tpl.code,
+      codeValueVars: codeValueVarsFor(pageVars, tpl.named),
+    }
   }
   for (const [id, d] of decisions) {
     try {
-      const { pageVars, proseVars } = partialVarsFor(d)
-      const { body, imports } = convertBody(d.representative, { pageUrl: pages[0].url, relFile: path.join('_partials', d.slug + '.mdx'), component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, latestVersions: ctx.latestVersions, urlToRelFile, imagePlacement })
+      const { pageVars, proseVars, hrefVars, codeVars, codeValueVars } = partialVarsFor(d)
+      const { body, imports } = convertBody(d.representative, { pageUrl: pages[0].url, relFile: path.join('_partials', d.slug + '.mdx'), component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, hrefVars, codeVars, codeValueVars, latestVersions: ctx.latestVersions, urlToRelFile, imagePlacement })
       const importBlock = imports.size ? [...imports].join('\n') + '\n\n' : ''
       d.mdx = importBlock + body + '\n'
     } catch (err) {

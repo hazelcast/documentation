@@ -25,6 +25,9 @@ const {
 } = require('./mdx')
 const { resolveHref, repairApiDeepLink } = require('./links')
 const { normalizeValues, groupIdFor } = require('./tabs')
+// Trailing-whitespace normalisation for code-template keys: Asciidoctor strips it
+// from a rendered verbatim line, so both sides of the match have to.
+const { rtrimLines } = require('./code-templates')
 
 const ADMONITION_TYPES = ['note', 'tip', 'warning', 'caution', 'important']
 // `<strong class="…">` classes that are inline badges (from Asciidoctor
@@ -818,15 +821,18 @@ function reverseProseVars (text, pageVars) {
 function applyCodeTemplates (code, codeVars) {
   const none = { code, replaced: false, done: new Set() }
   if (!codeVars) return none
+  // Both sides are keyed with trailing whitespace stripped, because Asciidoctor
+  // strips it from the render and a source line may still carry it (rtrimLines).
+  const key = rtrimLines(code)
   // Whole-block first: a line can be ambiguous on its own where the block is not.
-  const whole = codeVars.blocks && codeVars.blocks.get(code)
+  const whole = codeVars.blocks && codeVars.blocks.get(key)
   if (whole !== undefined) {
     const done = new Set(whole.split('\n').map((_l, i) => i))
     return { code: whole, replaced: true, done }
   }
   if (!codeVars.lines || !codeVars.lines.size) return none
   const done = new Set()
-  const lines = code.split('\n').map((line, i) => {
+  const lines = key.split('\n').map((line, i) => {
     const tpl = codeVars.lines.get(line)
     if (tpl === undefined) return line
     done.add(i)

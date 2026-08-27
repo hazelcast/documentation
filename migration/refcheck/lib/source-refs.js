@@ -27,6 +27,9 @@ const { execFileSync } = require('node:child_process')
 const path = require('node:path')
 
 const { NAV_SOURCES, refFor } = require('../../lib/layout')
+// The same substituter the converter and <Variable> use, for `{attr}`s in an
+// include target (Antora substitutes them there).
+const substitute = require('../../../plugins/lib/substitute-attributes')
 
 const FAMILY_DIR = { page: 'pages', partial: 'partials', example: 'examples' }
 
@@ -101,17 +104,40 @@ function includesIn (text) {
 // Returns null for targets we do not resolve (unknown family, or a component
 // with no source mirror -- e.g. a cross-component imdg include).
 function resolveTarget (target, from) {
-  // Drop a leading `version@` (we always read `from`'s branch).
+  // A leading `version@`. Recorded rather than dropped: a cross-component include
+  // names the version it wants (`{page-latest-supported-mc}@management-center:…`),
+  // and reading `from`'s branch instead finds nothing at all.
   const at = target.indexOf('@')
   let t = target
-  if (at !== -1 && target.slice(0, at).match(/^[\w.-]+$/) && target.indexOf('$') > at) t = target.slice(at + 1)
+  let version = null
+  if (at !== -1 && /^[\w.{}-]+$/.test(target.slice(0, at))) {
+    version = target.slice(0, at)
+    t = target.slice(at + 1)
+  }
 
   const dollar = t.indexOf('$')
   if (dollar === -1) {
-    // Bare relative include -> including file's family, resolved against its dir.
     if (!t.endsWith('.adoc')) return null
-    const relative = path.posix.join(path.posix.dirname(from.relative), t)
-    return { component: from.component, module: from.module, family: from.family, relative }
+    const parts = t.split(':')
+    if (parts.length === 1) {
+      // Bare relative include -> including file's family, resolved against its dir.
+      const relative = path.posix.join(path.posix.dirname(from.relative), t)
+      return { component: from.component, module: from.module, family: from.family, version, relative }
+    }
+    // MODULE- (and optionally component-) qualified with NO family, e.g.
+    // `include::deploy:enterprise-licenses.adoc[tag=install-license]`. Antora's
+    // resource-id rules default the family to the INCLUDING file's, and resolve
+    // `relative` against that family's dir rather than the including file's dir --
+    // so this cannot go through the bare-relative branch above, which is what it
+    // used to do. Reading it as a sibling path meant the file was never opened, and
+    // every reference it carried was invisible: install-enterprise's
+    // `setLicenseKey()` javadoc link, clients/java's maven `<version>`, and
+    // get-started-enterprise's docker tags all reach their pages this way.
+    const relative = parts[parts.length - 1]
+    const module = parts[parts.length - 2] || from.module || 'ROOT'
+    const component = parts.length >= 3 ? (parts[parts.length - 3] || from.component) : from.component
+    if (!NAV_SOURCES[component]) return null
+    return { component, module, family: from.family, version, relative }
   }
   const coord = t.slice(0, dollar)
   const relative = t.slice(dollar + 1)
@@ -123,7 +149,7 @@ function resolveTarget (target, from) {
   if (parts.length === 2) module = parts[0] || module
   else if (parts.length >= 3) { component = parts[parts.length - 3] || component; module = parts[parts.length - 2] || module }
   if (!NAV_SOURCES[component]) return null // no mirror for this component (resolution-only)
-  return { component, module, family, relative }
+  return { component, module, family, version, relative }
 }
 
 // The mirror repo dir + branch + in-repo path for a resolved coord at `seg`.
@@ -132,7 +158,11 @@ function locate (coord, seg, sourcesDir) {
   if (!src) return null
   const modulesRoot = path.posix.dirname(path.posix.dirname(src.file)) // docs/modules
   const repoPath = path.posix.join(modulesRoot, coord.module || 'ROOT', FAMILY_DIR[coord.family], coord.relative)
-  return { repoDir: path.join(sourcesDir, src.repo), ref: refFor(coord.component, seg), repoPath }
+  // A coord carrying its own version wins: `seg` is the INCLUDING page's version,
+  // which is meaningless for a cross-component include. An unresolved `{attr}`
+  // version is no use either, so those fall back to `seg` and simply find nothing.
+  const wanted = coord.version && !coord.version.includes('{') ? coord.version : seg
+  return { repoDir: path.join(sourcesDir, src.repo), ref: refFor(coord.component, wanted), repoPath }
 }
 
 // Read-through cache for the source files the walk touches: a shared partial is
@@ -149,7 +179,12 @@ function cachedText (loc) {
 // and for every file it reaches, with that file's text already comment-stripped
 // and tag-sliced exactly as Antora slices it. `seg` scopes which branch is read;
 // `resource` is the manifest page resource (component, module, relative).
-function walkPageSources (resource, seg, sourcesDir, visit) {
+// `attrs` (optional) resolves `{name}` in an include TARGET before it is parsed --
+// Antora substitutes attributes there, and hazelcast's get-started-cli relies on it:
+// `include::{page-latest-supported-mc}@management-center:getting-started:install.adoc[tag=cli]`
+// names the MC version it wants. Without the substitution the version stays a brace
+// expression, locate falls back to the including page's seg, and the file is missed.
+function walkPageSources (resource, seg, sourcesDir, visit, attrs = null) {
   const start = { component: resource.component, module: resource.module || 'ROOT', family: 'page', relative: resource.relative }
   const visited = new Set()
 
@@ -164,7 +199,7 @@ function walkPageSources (resource, seg, sourcesDir, visit) {
     const text = stripComments(sliceByTags(raw, tag))
     visit(coord, text)
     for (const inc of includesIn(text)) {
-      const child = resolveTarget(inc.target, coord)
+      const child = resolveTarget(attrs ? substitute(inc.target, attrs) : inc.target, coord)
       if (!child) continue
       walk(child, inc.tag)
     }
@@ -185,9 +220,9 @@ function collectPageExamples (resource, seg, sourcesDir) {
 // Every source text a page reaches, page first. The converter feeds this to
 // attrCodeTemplates so a partial's code lines are templated against the page that
 // includes them.
-function collectPageTexts (resource, seg, sourcesDir) {
+function collectPageTexts (resource, seg, sourcesDir, attrs = null) {
   const texts = []
-  walkPageSources(resource, seg, sourcesDir, (_coord, text) => texts.push(text))
+  walkPageSources(resource, seg, sourcesDir, (_coord, text) => texts.push(text), attrs)
   return texts
 }
 

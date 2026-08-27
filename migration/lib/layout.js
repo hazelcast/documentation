@@ -161,6 +161,19 @@ const MARKED_ATTRS = {
     'page-latest-supported-cplusplus-client',
     'page-latest-supported-csharp-client',
     'page-latest-supported-python-client',
+    // 3. The whole-token boundary REFUSES the value where the source put it, so a
+    //    value match structurally cannot find it and marking is the only route:
+    //      {java-client} = "Java Client and Embedded Server", written at the end of
+    //        a sentence, so the `(?![\w.-])` lookahead rejects the following full
+    //        stop. That guard has to stay -- it is what stops `5.6.0` matching
+    //        inside `0.3.5.6.0` -- and it was written for version numbers, where a
+    //        trailing `.` really is ambiguous; for a prose phrase it never is.
+    //      {version} = "5.8-SNAPSHOT", glued into a longer token
+    //        (`hazelcast-config-{version}.xsd`) -- the same case as clc's
+    //        full-version inside `hazelcast-clc-setup-v{full-version}.exe`.
+    //      {page-latest-supported-mc} = "5.12-snapshot", again sentence-final
+    //        ("versions of Management Center before {page-latest-supported-mc}.").
+    'java-client', 'version', 'page-latest-supported-mc',
   ],
 }
 

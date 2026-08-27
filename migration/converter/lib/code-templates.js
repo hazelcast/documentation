@@ -37,11 +37,21 @@
 // inside, for the same reason: these are the contexts a marker cannot reach, so
 // they are exactly the ones needing a template instead.
 const DELIMITERS = new Set(['----', '....', '++++'])
+// Asciidoctor STRIPS trailing whitespace from a verbatim line, so a source line
+// written `… [blue] [{ee-version}] ` renders as `… [blue] [5.8.0-SNAPSHOT]` and an
+// untrimmed template can never match it -- 6 occurrences over 3 hazelcast pages
+// (the console-output blocks in deploy-blue-green-tutorial, wan-replication-tutorial
+// and validating-secrets, all of which end a log line with a stray space).
+// Normalising both sides is safe and symmetric: the render has already lost that
+// whitespace, so trimming the template cannot lose anything the reader would see,
+// and the template we emit then matches the golden byte for byte.
+const rtrimLines = (text) => text.split('\n').map((l) => l.replace(/[ \t]+$/, '')).join('\n')
 const BACKTICK_FENCE = /^\s*```/
 const ATTR_REF = /\{([A-Za-z0-9_][A-Za-z0-9_-]*)\}/
 
 // Every line inside a verbatim block of `text` that carries an `{attribute}`
-// reference, verbatim (leading whitespace included — the rendered line keeps it).
+// reference, with LEADING whitespace kept (the rendered line keeps it) and trailing
+// whitespace dropped (the rendered line does not -- see rtrimLines).
 // Deliberately NOT filtered by `subs="attributes+"`: a block without it renders
 // the braces literally, so its "resolved" form never matches anything and the
 // entry is inert. Filtering would mean re-implementing Asciidoctor's subs rules
@@ -64,8 +74,9 @@ function attrCodeTemplates (text) {
         verbatim = null
         continue
       }
-      current.push(line)
-      if (ATTR_REF.test(line)) lines.add(line)
+      const trimmedEnd = line.replace(/[ \t]+$/, '')
+      current.push(trimmedEnd)
+      if (ATTR_REF.test(trimmedEnd)) lines.add(trimmedEnd)
       continue
     }
     if (DELIMITERS.has(trimmed)) { verbatim = trimmed; current = [] } else if (BACKTICK_FENCE.test(line)) { verbatim = '```'; current = [] }
@@ -110,4 +121,4 @@ function buildCodeTemplates ({ blocks, lines }, known, lookup, substitute) {
   }
 }
 
-module.exports = { attrCodeTemplates, buildCodeTemplates, resolveTemplates, DELIMITERS }
+module.exports = { attrCodeTemplates, buildCodeTemplates, resolveTemplates, rtrimLines, DELIMITERS }

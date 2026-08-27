@@ -82,9 +82,35 @@ const { LINK_TARGET } = require('../converter/lib/links')
 // need not be a URL at all.
 const BARE_URL = /(?<![\w:])https?:\/\/[^\s[\]]+/g
 
+// Every OTHER inline macro's target. LINK_TARGET only knows `link:` and an
+// autolink, so an `xref:` target went unprotected until an attribute turned up in
+// one: hazelcast writes
+// `xref:{page-latest-supported-mc}@management-center:monitor-imdg:monitor-dds.adoc#…[…]`,
+// and marking that attribute left Antora unable to resolve the xref at all -- the
+// golden kept the macro as literal text on 46 pages, which the census guard caught
+// (the census, which does not mark, resolved it correctly).
+//
+// The rule generalises the two special cases: a reference in ANY macro target
+// reaches a machine-readable coordinate, never flow text, so it is never markable.
+const MACRO_TARGET = /(?<![\w:])(?:xref|link|image|video|audio):{1,2}([^\s[\]]*)\[/g
+
+// A capture group's start offset within the match. Computed from the END of the
+// match (every one of these grammars ends at the `[`) rather than by searching for
+// the captured text, which goes wrong whenever the target's first character also
+// occurs in the macro name -- `xref:x[` would have located the `x` of `xref`.
+const captureStart = (m) => m.index + m[0].length - m[1].length - 1
+
 const TITLE = /^\s*=\s/
 const SECTION = /^\s*==+\s/
 const BLOCK_IMAGE = /^\s*image::/
+// An `include::` directive is machinery, not flow text: it renders nothing itself,
+// and its TARGET takes attribute substitution. A sentinel there breaks the resolve
+// outright -- hazelcast's get-started-cli/quickstart write
+// `include::{page-latest-supported-mc}@management-center:getting-started:install.adoc[tag=cli]`,
+// and marking that attribute produced 9 "target of include not found" render
+// errors across the corpus. Same family as the link-target skip above: a reference
+// that reaches a MACRO TARGET is never markable.
+const INCLUDE = /^\s*include::/
 const ATTR_ENTRY = /^\s*:([^:\s]+):/
 const DELIMITERS = new Set(['----', '....', '++++', '////'])
 const INLINE_IMAGE = /image:[^[\s]*\[([^\]]*)\]/g
@@ -113,7 +139,7 @@ function transform (text, names, onRef) {
     const trimmed = line.trim()
     if (verbatim) { if (trimmed === verbatim) verbatim = null; continue }
     if (DELIMITERS.has(trimmed)) { verbatim = trimmed; continue }
-    if (TITLE.test(line) || BLOCK_IMAGE.test(line)) continue
+    if (TITLE.test(line) || BLOCK_IMAGE.test(line) || INCLUDE.test(line)) continue
     const attr = line.match(ATTR_ENTRY)
     if (attr && !(attr[1] === 'description' && descUsed)) continue
     if (!RE.test(line)) continue
@@ -128,9 +154,11 @@ function transform (text, names, onRef) {
       const altStart = im.index + im[0].indexOf('[') + 1
       skipRanges.push([altStart, altStart + im[1].length])
     }
-    for (const lm of line.matchAll(LINK_TARGET)) {
-      const start = lm.index + lm[0].indexOf(lm[1])
-      skipRanges.push([start, start + lm[1].length])
+    for (const re of [LINK_TARGET, MACRO_TARGET]) {
+      for (const lm of line.matchAll(re)) {
+        const start = captureStart(lm)
+        skipRanges.push([start, start + lm[1].length])
+      }
     }
     for (const um of line.matchAll(BARE_URL)) skipRanges.push([um.index, um.index + um[0].length])
     lines[i] = line.replace(RE, (whole, esc, name, offset, str) => {
