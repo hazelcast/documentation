@@ -96,29 +96,37 @@ function tocItemsFor(store: AppStore): TOCItem[] {
   return items;
 }
 
-// A LEGACY deep link into an operation, written as the JSON pointer of its spec
-// node rather than as Redoc's own anchor:
+// The anchor this page ADVERTISES for whatever a deep link asked for, when the
+// link asked by one of the older names the same operation also answers to.
+//
+// There are two such names, and the corpus links by both:
 //
 //   #/paths/~1rest~1clusters~1%7Bcluster%7D~1clientfiltering~1lists/post
+//     the JSON POINTER of the operation's spec node — the form the old site
+//     published where a spec gave no operationId, so it is what got copy-pasted
+//     into the AsciiDoc sources and what any inbound link out there carries;
+//   #tag/Data-Controller/operation/clearMap
+//     Redoc's own id, which is what it anchors an operation by when the spec DOES
+//     give an operationId (Platform's gives one for all 50).
 //
-// That is the form the AsciiDoc pages use (and the form the old site published,
-// so it is also what any inbound link out there carries), while Redoc anchors an
-// operation by its id — `#operation/createFilteringRules` where the spec gives an
-// operationId. Redoc keeps the spec pointer on the menu item, so the two are
-// matched directly instead of rebuilding the pointer from path + verb here; that
-// also covers an operation with no operationId, whose id IS pointer-shaped (the
-// WAN spec), where the lookup simply resolves to itself.
+// Both are matched off the menu item rather than rebuilt from path + verb, so
+// Redoc's id-making rules stay Redoc's business — and an operation whose id is
+// itself pointer-shaped is covered by the same lookup.
 //
-// Returns null for anything that is not a paths pointer, which is every ordinary
-// anchor on the page.
-function anchorForLegacyPointer(store: AppStore, pointer: string): string | null {
-  if (!pointer.startsWith('/paths/')) {
+// Returns null when the hash is already the advertised anchor, which is every
+// ordinary link into this page.
+function advertisedAnchorFor(store: AppStore, hash: string): string | null {
+  if (!hash) {
     return null;
   }
   const match = (store.menu.flatItems as readonly any[]).find(
-    (item) => item.type === 'operation' && String(item.pointer ?? '').replace(/^#/, '') === pointer,
+    (item) => item.id === hash || String(item.pointer ?? '').replace(/^#/, '') === hash,
   );
-  return match ? anchorFor(match) : null;
+  if (!match) {
+    return null;
+  }
+  const anchor = anchorFor(match);
+  return anchor === hash ? null : anchor;
 }
 
 const currentHash = (): string => {
@@ -139,9 +147,11 @@ function ApiContent({store, specUrl}: {store: AppStore; specUrl: string}): React
   // does not scroll on load.
   //
   //
-  // A legacy pointer hash is rewritten to the operation's real anchor, so the
-  // reader is left on a URL they can copy. `replace`, not a push: the old hash is
-  // a synonym for this one, not a place to go back to. Through the ROUTER's
+  // A hash written as one of the older names is rewritten to the anchor the page
+  // advertises, so the reader is left on a URL they can copy. `replace`, not a
+  // push: the old hash is a synonym for this one, not a place to go back to. The
+  // element itself carries BOTH ids, so the scroll below works either way — this
+  // is about what the reader ends up with in the address bar. Through the ROUTER's
   // history rather than window.history — the raw DOM call changes the address bar
   // without telling React Router, which still holds the location it navigated to
   // and puts the old hash back at its next render.
@@ -156,7 +166,7 @@ function ApiContent({store, specUrl}: {store: AppStore; specUrl: string}): React
   useEffect(() => {
     store.onDidMount();
     const hash = currentHash();
-    const anchor = anchorForLegacyPointer(store, hash) ?? hash;
+    const anchor = advertisedAnchorFor(store, hash) ?? hash;
     if (anchor !== hash) {
       history.replace({...location, hash: anchor});
     }

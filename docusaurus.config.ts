@@ -23,6 +23,16 @@ const managementCenter = {
   defaultVersion: 'latest-release',
 } as const;
 
+// Platform's, declared here for the same reason: it is the second component with
+// an API-reference page (maintain-cluster/rest-api-swagger), so openapi-specs
+// needs its current version's URL segment too.
+const platform = {
+  id: 'hazelcast',
+  currentSeg: '5.8-snapshot',
+  currentLabel: '5.8-SNAPSHOT',
+  defaultVersion: 'current',
+} as const;
+
 const config: Config = {
   title: 'Hazelcast Documentation',
   tagline: 'Hazelcast product documentation',
@@ -125,12 +135,7 @@ const config: Config = {
     // and `defaultVersion` flips to 'latest-release' when the first one lands —
     // main is an unreleased snapshot, so the dropdown must land on a release, as
     // production does. Until then 'current' is the only version there is.
-    versionedDocs({
-      id: 'hazelcast',
-      currentSeg: '5.8-snapshot',
-      currentLabel: '5.8-SNAPSHOT',
-      defaultVersion: 'current',
-    }),
+    versionedDocs(platform),
     // Cloud docs — migration target #1. Unversioned: the only version is served
     // at the base path with no version segment, and routeBasePath === the Antora
     // component name, so URLs match production exactly (/cloud/<page>).
@@ -173,7 +178,7 @@ const config: Config = {
     // Stages the OpenAPI specs the <ApiReference/> pages render, fetching each
     // from the product repo that owns it at the branch that version's
     // {…-swagger-branch} attribute names. See plugins/openapi-specs.
-    ['./plugins/openapi-specs', {variables, versionedVariables, docs: [managementCenter]}],
+    ['./plugins/openapi-specs', {variables, versionedVariables, docs: [managementCenter, platform]}],
   ],
 
   themeConfig: {

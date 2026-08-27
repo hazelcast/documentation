@@ -58,9 +58,11 @@
  * Infima's h3 and land bold at a different size from the h3 next to them, so the
  * same level is typeset two ways on one screen.
  *
- * So the headings are mapped onto the PAGE's scale rather than tuned: an
- * operation is an h2 and everything under it an h3, exactly as they would be if
- * this content were written in Markdown.
+ * So the headings are mapped onto the PAGE's scale rather than tuned: the
+ * levels come from the spec's own structure (Operation.tsx) and are typeset here
+ * exactly as they would be if this content were written in Markdown — a tag
+ * group h2, an operation h3, what an operation is made of h4, and one level up
+ * for all of them in a spec with no tags.
  *
  * Getting that scale is not just `var(--ifm-h2-font-size)`: Infima applies the
  * DOCS heading sizes only to direct children of `.markdown` (`.markdown > h2 {
@@ -73,9 +75,9 @@
  * with a bare element selector, which loses to the generated class Redoc puts on
  * the element itself. The doubled class is for that same reason.
  *
- * Note Redoc's H3 COMPONENT renders an <h2> element, so a spec with tag groups
- * would render its subsections at h2 size. None of the Management Center specs
- * use tags; revisit if one ever does. */
+ * The one heading level NOT taken from the page scale is h5, which is Redoc's
+ * own field labels ("PATH PARAMETERS") — sized separately below, and the reason
+ * Operation.tsx stops handing out levels at h4. */
 .apiReference.apiReference h2 {
   --ifm-h2-font-size: 2rem;
 
@@ -92,6 +94,18 @@
   margin-top: calc(var(--ifm-h3-vertical-rhythm-top) * var(--ifm-leading));
   margin-bottom: calc(var(--ifm-heading-vertical-rhythm-bottom) * var(--ifm-leading));
   font-size: var(--ifm-h3-font-size);
+  font-weight: var(--ifm-heading-font-weight);
+  line-height: var(--ifm-heading-line-height);
+}
+
+/* Infima gives h4 no docs-specific size or rhythm of its own -- it groups h4/h5/h6
+ * under the shared heading rhythm and lets the root font size stand -- so this
+ * mirrors that rather than inventing a step. The declarations are still needed:
+ * what they beat is Redoc's own scale, not Infima's. */
+.apiReference.apiReference h4 {
+  margin-top: calc(var(--ifm-heading-vertical-rhythm-top) * var(--ifm-leading));
+  margin-bottom: calc(var(--ifm-heading-vertical-rhythm-bottom) * var(--ifm-leading));
+  font-size: var(--ifm-h4-font-size);
   font-weight: var(--ifm-heading-font-weight);
   line-height: var(--ifm-heading-line-height);
 }

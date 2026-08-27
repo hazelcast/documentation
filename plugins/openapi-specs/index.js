@@ -7,7 +7,7 @@ const { Globby } = require('@docusaurus/utils')
 
 const substitute = require('../lib/substitute-attributes')
 const { specFileName, specUrlFor } = require('../lib/api-spec-url')
-const { specAnchors } = require('../lib/api-anchors')
+const { menuAnchors, anchorCollisions } = require('../lib/api-anchors')
 
 // Stages the OpenAPI specs the API-reference pages render. Permanent replacement
 // for the Antora swagger_ui block macro (hazelcast-docs-tools), and the reason
@@ -305,29 +305,16 @@ module.exports = function openapiSpecsPlugin (context, options) {
       staged.add(cachePath)
       fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2) + '\n')
 
-      // The operation anchors each page publishes, so Docusaurus can VALIDATE a
-      // link into an API page the same way it validates a link to a heading
-      // (onBrokenAnchors). Nothing else in the build can see them: the page
-      // renders in the browser, and Docusaurus only knows an anchor exists if
-      // something calls collectAnchor while rendering on the server -- which is
-      // what src/components/ApiReference does with this data.
-      //
-      // Read back off the STAGED file, not the fetch response, so what is
-      // registered is what is actually published. Redoc's own loader does the
-      // parse ($refs resolved), so the plugin and the page cannot disagree about
-      // which operations a spec contains -- and it needs no YAML dependency of
-      // its own. Required lazily: it pulls in a large module, and a site with no
-      // API pages returns above without ever reaching this.
       // Each spec is PARSED HERE, once, at build time -- $refs resolved, OpenAPI
       // 2.0 upconverted -- and the result is handed to the page in two forms:
       //
-      //   anchorsByUrl  the operation anchors, so Docusaurus can VALIDATE a link
-      //                 into an API page the way it validates a link to a heading
-      //                 (onBrokenAnchors). Nothing else in the build can see them:
-      //                 the operations render in the browser, and an anchor only
-      //                 exists to Docusaurus if something calls collectAnchor
-      //                 during the SSR pass -- which src/components/ApiReference
-      //                 does with this data.
+      //   anchorsByUrl  every anchor the page publishes, so Docusaurus can
+      //                 VALIDATE a link into an API page the way it validates a
+      //                 link to a heading (onBrokenAnchors). Nothing else in the
+      //                 build can see them: the operations render in the browser,
+      //                 and an anchor only exists to Docusaurus if something calls
+      //                 collectAnchor during the SSR pass -- which
+      //                 src/components/ApiReference does with this data.
       //   specsByUrl    the BUNDLED spec itself, so the page does not fetch and
       //                 parse YAML in the browser. That parse (@redocly/openapi-
       //                 core, in the browser, on every visit) was the bulk of the
@@ -342,7 +329,7 @@ module.exports = function openapiSpecsPlugin (context, options) {
       // spec contains -- and it needs no YAML dependency of its own. Required
       // lazily: it pulls in a large module, and a site with no API pages returns
       // above without ever reaching this.
-      const { loadAndBundleSpec } = require('redoc')
+      const { loadAndBundleSpec, AppStore } = require('redoc')
       const anchorsByUrl = {}
       const parsedByFile = new Map()
       // Content-addressed, because the SAME spec is published at up to one URL
@@ -359,12 +346,24 @@ module.exports = function openapiSpecsPlugin (context, options) {
             const spec = await loadAndBundleSpec(target)
             const serialized = JSON.stringify(spec)
             const hash = crypto.createHash('sha256').update(serialized).digest('hex').slice(0, 16)
-            parsedByFile.set(target, { spec, hash, anchors: specAnchors(spec) })
+            // The anchors come off Redoc's MENU, not the `paths` object, so what
+            // is registered is exactly what renders -- tag groups included, which
+            // Platform's spec is the first to have. Building the store here is
+            // also what makes that list agree with the page's: the page builds the
+            // same store from the same document, and both walk it with the same
+            // helper (plugins/lib/api-anchors).
+            const store = new AppStore(spec, target, { disableSearch: true }, false)
+            parsedByFile.set(target, {
+              spec,
+              hash,
+              anchors: menuAnchors(store),
+              collisions: anchorCollisions(store),
+            })
           } catch (error) {
             // Not fatal HERE: an unreadable spec is already a broken page, and the
             // fetch/publish path above is what reports that. The page falls back
             // to telling the reader where the spec is published.
-            parsedByFile.set(target, { spec: null, hash: null, anchors: [] })
+            parsedByFile.set(target, { spec: null, hash: null, anchors: [], collisions: [] })
             console.warn(`[openapi-specs] could not parse ${request.url}: ${error.message}`)
           }
         }
@@ -375,6 +374,22 @@ module.exports = function openapiSpecsPlugin (context, options) {
           specHashByUrl[request.url] = parsed.hash
         }
       }
+      // A spec whose operations do not all get DISTINCT anchors, which would send
+      // some of the links into them to the wrong operation with nothing on the
+      // page or in the build to show it. Reported after the loop so one run names
+      // every clash rather than stopping at the first, and fatal on a build for the
+      // same reason an unfetchable spec is: what it breaks is published.
+      const collisions = [...parsedByFile.entries()].flatMap(([target, parsed]) =>
+        (parsed.collisions || []).map(
+          ({ anchor, items }) => `${path.basename(target)}: "#${anchor}" is published by ${items.join(' and ')}`,
+        ),
+      )
+      if (collisions.length) {
+        const message = `[openapi-specs] ${collisions.length} colliding operation anchor(s):\n  ${collisions.join('\n  ')}`
+        if (isBuild) throw new Error(message)
+        console.warn(message)
+      }
+
       // Only a run that fetched everything it meant to knows what is stale. After
       // a failure the unwritten targets are indistinguishable from withdrawn
       // ones, and pruning would throw away copies that are still serving.
@@ -406,10 +421,10 @@ module.exports = function openapiSpecsPlugin (context, options) {
         if (isBuild) throw new Error(message)
         console.warn(message)
       }
-      const operationCount = Object.values(anchorsByUrl).reduce((n, a) => n + a.length, 0)
+      const anchorCount = Object.values(anchorsByUrl).reduce((n, a) => n + a.length, 0)
       console.log(
         `[openapi-specs] ${requests.length} spec reference(s) staged from ${byUpstream.size} upstream file(s)` +
-          ` (${updated} updated, ${unchanged} unchanged); ${operationCount} operation anchor(s) registered;` +
+          ` (${updated} updated, ${unchanged} unchanged); ${anchorCount} anchor(s) registered;` +
           ` ${Object.keys(specs).length} distinct spec(s) embedded`,
       )
       return { anchorsByUrl, specs, specHashByUrl }
