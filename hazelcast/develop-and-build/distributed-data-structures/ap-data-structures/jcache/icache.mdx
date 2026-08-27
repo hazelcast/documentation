@@ -6,7 +6,8 @@ slug: /jcache/icache
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import PartialJcachePartitionLostListenerUsageJava from '@site/hazelcast/_partials/jcache-PartitionLostListenerUsage.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_jcache_PartitionLostListenerUsage_java_tag_pllu from '../../../../examples/jcache/PartitionLostListenerUsage.java?tag=pllu';
 
 Hazelcast provides extension methods to the Cache API through the interface `com.hazelcast.cache.ICache`.
 
@@ -868,7 +869,7 @@ You can listen to `CachePartitionLostEvent` instances by registering an implemen
 
 Let's consider the following example code:
 
-<PartialJcachePartitionLostListenerUsageJava/>
+<CodeBlock language="java">{Ex_jcache_PartitionLostListenerUsage_java_tag_pllu}</CodeBlock>
 
 Within this example code, a `CachePartitionLostListener` implementation is registered to a cache and assumes that this cache is configured with one backup. For this particular cache and any of the partitions in the system, if the partition owner member and its first backup member crash simultaneously, the given `CachePartitionLostListener` receives a corresponding `CachePartitionLostEvent`. If only a single member crashes in the cluster, a `CachePartitionLostEvent` is not fired for this cache since backups for the partitions owned by the crashed member are kept on other members.
 

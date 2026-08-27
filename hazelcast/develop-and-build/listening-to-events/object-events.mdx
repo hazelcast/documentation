@@ -4,12 +4,13 @@ sidebar_position: 5
 slug: /events/object-events
 ---
 
-import PartialDistributedeventsListenJava from '@site/hazelcast/_partials/distributedevents-Listen.java.mdx';
-import PartialDistributedeventsModifyMapJava from '@site/hazelcast/_partials/distributedevents-ModifyMap.java.mdx';
-import PartialDistributedeventsListenMapPartitionLostEventsJava from '@site/hazelcast/_partials/distributedevents-ListenMapPartitionLostEvents.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_distributedevents_Listen_java_tag_listen from '../../examples/distributedevents/Listen.java?tag=listen';
+import Ex_distributedevents_ModifyMap_java_tag_modify from '../../examples/distributedevents/ModifyMap.java?tag=modify';
+import Ex_distributedevents_ListenMapPartitionLostEvents_java_tag_lmple from '../../examples/distributedevents/ListenMapPartitionLostEvents.java?tag=lmple';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import PartialDistributedeventsExampleEntryListenerJava from '@site/hazelcast/_partials/distributedevents-ExampleEntryListener.java.mdx';
+import Ex_distributedevents_ExampleEntryListener_java_tag_mm from '../../examples/distributedevents/ExampleEntryListener.java?tag=mm';
 
 ## Listening for Map Events
 
@@ -44,11 +45,11 @@ The `EntryListener` interface still can be implemented (we kept it for backward 
 
 Let's take a look at the following class example.
 
-<PartialDistributedeventsListenJava/>
+<CodeBlock language="java">{Ex_distributedevents_Listen_java_tag_listen}</CodeBlock>
 
 Now, let's perform some modifications on the map entries using the following example code.
 
-<PartialDistributedeventsModifyMapJava/>
+<CodeBlock language="java">{Ex_distributedevents_ModifyMap_java_tag_modify}</CodeBlock>
 
 If you execute the `Listen` class and then the `Modify` class, you get the following output produced by the `Listen` class.
 
@@ -84,7 +85,7 @@ You can listen to `MapPartitionLostEvent` instances by registering an implementa
 
 Let's consider the following example code:
 
-<PartialDistributedeventsListenMapPartitionLostEventsJava/>
+<CodeBlock language="java">{Ex_distributedevents_ListenMapPartitionLostEvents_java_tag_lmple}</CodeBlock>
 
 Within this example code, a `MapPartitionLostListener` implementation is registered to a map that is configured with one backup. For this particular map and any of the partitions in the system, if the partition owner member and its first backup member crash simultaneously, the given `MapPartitionLostListener` receives a corresponding `MapPartitionLostEvent`. If only a single member crashes in the cluster, there is no `MapPartitionLostEvent` fired for this map since backups for the partitions owned by the crashed member are kept on other members.
 
@@ -174,7 +175,7 @@ The entry listener for MultiMap supports only `entryAdded`, `entryRemoved` and `
 
 :::
 
-<PartialDistributedeventsExampleEntryListenerJava/>
+<CodeBlock language="java">{Ex_distributedevents_ExampleEntryListener_java_tag_mm}</CodeBlock>
 
 ### Registering MultiMap Listeners
 

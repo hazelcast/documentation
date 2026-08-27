@@ -4,9 +4,10 @@ sidebar_position: 2
 slug: /extending-hazelcast/discovery-spi
 ---
 
-import PartialExtendinghazelcastHostsDiscoveryConfigurationJava from '@site/hazelcast/_partials/extendinghazelcast-HostsDiscoveryConfiguration.java.mdx';
-import PartialExtendinghazelcastHostsDiscoveryStrategyFactoryJava from '@site/hazelcast/_partials/extendinghazelcast-HostsDiscoveryStrategyFactory.java.mdx';
-import PartialExtendinghazelcastHostsDiscoveryStrategyJava from '@site/hazelcast/_partials/extendinghazelcast-HostsDiscoveryStrategy.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_extendinghazelcast_HostsDiscoveryConfiguration_java_tag_hdc from '../../examples/extendinghazelcast/HostsDiscoveryConfiguration.java?tag=hdc';
+import Ex_extendinghazelcast_HostsDiscoveryStrategyFactory_java_tag_hdsf from '../../examples/extendinghazelcast/HostsDiscoveryStrategyFactory.java?tag=hdsf';
+import Ex_extendinghazelcast_HostsDiscoveryStrategy_java_tag_hds from '../../examples/extendinghazelcast/HostsDiscoveryStrategy.java?tag=hds';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
@@ -84,7 +85,7 @@ As a first step we do some basic configuration setup. We want the user to be abl
 
 It is recommended that you keep all defined properties in a separate configuration class as public constants (`public static final`) with sufficient documentation. This allows users to easily look up possible configuration values.
 
-<PartialExtendinghazelcastHostsDiscoveryConfigurationJava/>
+<CodeBlock language="java">{Ex_extendinghazelcast_HostsDiscoveryConfiguration_java_tag_hdc}</CodeBlock>
 
 An additional `ValueValidator` could be passed to the definition to make sure the configured value looks like a domain or has a special format.
 
@@ -92,7 +93,7 @@ An additional `ValueValidator` could be passed to the definition to make sure th
 
 As the second step we create the very simple `DiscoveryStrategyFactory` implementation class. To keep things clear we are going to name the discovery strategy after its purpose: looking into the hosts file.
 
-<PartialExtendinghazelcastHostsDiscoveryStrategyFactoryJava/>
+<CodeBlock language="java">{Ex_extendinghazelcast_HostsDiscoveryStrategyFactory_java_tag_hdsf}</CodeBlock>
 
 This factory now defines properties known to the discovery strategy implementation and provides a clean way to instantiate it. While creating the `HostsDiscoveryStrategy` we ignore the passed `DiscoveryNode` since this strategy does not support automatic registration of new members. In cases where the strategy does not support registration, the environment has to handle this in some provided way.
 
@@ -118,7 +119,7 @@ Now comes the interesting part. We are going to implement the discovery itself. 
 
 For ease of implementation, we back our implementation by extending the `AbstractDiscoveryStrategy` and only implementing the absolute minimum ourselves.
 
-<PartialExtendinghazelcastHostsDiscoveryStrategyJava/>
+<CodeBlock language="java">{Ex_extendinghazelcast_HostsDiscoveryStrategy_java_tag_hds}</CodeBlock>
 
 ### Overriding Discovery Configuration
 

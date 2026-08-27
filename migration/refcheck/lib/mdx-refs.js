@@ -25,6 +25,8 @@ const fs = require('node:fs')
 const path = require('node:path')
 
 const { urlToSlug } = require('../../lib/layout')
+// The ONE slicer, shared with the converter and the build-time loader.
+const { sliceRegion } = require('../../../plugins/lib/slice-region')
 
 const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
@@ -72,11 +74,17 @@ function importsOf (text, file, siteRoot) {
     if (spec.startsWith('@site/') && spec.includes('/_partials/') && spec.endsWith('.mdx')) {
       partials.push({ id, file: path.join(siteRoot, spec.slice('@site/'.length)) })
     } else if (/(^|\/)examples\//.test(spec) && (spec.startsWith('.') || spec.startsWith('@site/'))) {
+      // An example import may carry a region selector (`?tag=…`, `?lines=…`,
+      // `&indent=0`), read at build by plugins/tag-slice-loader.js. Split it off
+      // the path — what the page renders is that SLICE, not the whole file.
+      const q = spec.indexOf('?')
+      const bare = q === -1 ? spec : spec.slice(0, q)
       examples.push({
         id,
-        file: spec.startsWith('@site/')
-          ? path.join(siteRoot, spec.slice('@site/'.length))
-          : path.resolve(path.dirname(file), spec),
+        query: q === -1 ? '' : spec.slice(q),
+        file: bare.startsWith('@site/')
+          ? path.join(siteRoot, bare.slice('@site/'.length))
+          : path.resolve(path.dirname(file), bare),
       })
     }
   }
@@ -219,10 +227,13 @@ function refCounts (pageFile, siteRoot, names, { hiddenBranches = [] } = {}) {
   const counts = new Map(names.map((n) => [n, 0]))
   const bump = (name, n) => counts.set(name, (counts.get(name) || 0) + n)
 
-  const visit = (file, multiplier, kind, stack) => {
-    if (multiplier <= 0 || stack.has(file) || !fs.existsSync(file)) return
-    const text = fs.readFileSync(file, 'utf8')
+  const visit = (file, multiplier, kind, stack, query) => {
+    if (multiplier <= 0 || stack.has(file + (query || '')) || !fs.existsSync(file)) return
+    let text = fs.readFileSync(file, 'utf8')
     if (kind === 'example') {
+      // Count against the SLICE the page shows, not the whole file: a tag region
+      // may carry no {attribute} while another region of the same file does.
+      text = sliceForQuery(text, query, file)
       for (const name of names) {
         const c = countExampleRefs(text, name)
         if (c) bump(name, c * multiplier)
@@ -237,7 +248,7 @@ function refCounts (pageFile, siteRoot, names, { hiddenBranches = [] } = {}) {
     const { partials, examples } = importsOf(text, file, siteRoot)
     const next = new Set([...stack, file])
     for (const p of partials) visit(p.file, multiplier * usageCount(body, p.id, 'partial'), 'partial', next)
-    for (const e of examples) visit(e.file, multiplier * usageCount(body, e.id, 'example'), 'example', next)
+    for (const e of examples) visit(e.file, multiplier * usageCount(body, e.id, 'example'), 'example', next, e.query)
   }
 
   visit(pageFile, 1, 'page', new Set())
@@ -246,22 +257,54 @@ function refCounts (pageFile, siteRoot, names, { hiddenBranches = [] } = {}) {
 
 // The example imports a page reaches (absolute paths), for the
 // example-preservation check.
+// Resolve an example import's query through the SHARED slicer -- the same module
+// the build-time loader uses -- so the gate reads exactly the text the site will
+// render. An unresolvable selector falls back to the whole file rather than
+// throwing: a broken region is the build's error to report, not this gate's.
+function sliceForQuery (text, query, where) {
+  if (!query) return text
+  const q = new URLSearchParams(query)
+  const selector = {}
+  const tag = q.get('tag') || q.get('tags')
+  if (tag != null) selector.tag = tag
+  if (q.get('lines') != null) selector.lines = q.get('lines')
+  if (q.get('indent') != null) selector.indent = q.get('indent')
+  try { return sliceRegion(text, selector, where) } catch { return text }
+}
+
+// The example SLICES a page imports (following partials), as
+// `<path under examples/>` plus the region selector, and how many times each is
+// USED in the body. The path is relative to the examples tree so it is directly
+// comparable with the `example$/…` target a source page names.
 function exampleImports (pageFile, siteRoot) {
   const seen = new Set()
-  const out = new Set()
+  const out = new Map()
   const add = (file) => {
     if (seen.has(file) || !fs.existsSync(file)) return
     seen.add(file)
-    const { partials, examples } = importsOf(fs.readFileSync(file, 'utf8'), file, siteRoot)
-    for (const ex of examples) out.add(ex.file)
+    const text = fs.readFileSync(file, 'utf8')
+    const body = stripImports(stripFrontmatter(text))
+    const { partials, examples } = importsOf(text, file, siteRoot)
+    for (const ex of examples) {
+      const rel = exampleRel(ex.file)
+      const prev = out.get(rel + ex.query) || { rel, query: ex.query, uses: 0 }
+      prev.uses += usageCount(body, ex.id, 'example')
+      out.set(rel + ex.query, prev)
+    }
     for (const p of partials) add(p.file)
   }
   add(pageFile)
   return out
 }
 
+// `…/hazelcast/examples/cp/CpSubsystemAPI.java` -> `cp/CpSubsystemAPI.java`.
+function exampleRel (file) {
+  const parts = file.split(path.sep).join('/').split('/examples/')
+  return parts.length > 1 ? parts[parts.length - 1] : file
+}
+
 module.exports = {
   indexOutput, refCounts, exampleImports, importsOf, slugOf, urlToSlug,
-  countMdxRefs, countExampleRefs, usageCount, dropLiteralFences, dropHiddenBranches,
+  countMdxRefs, countExampleRefs, usageCount, exampleRel, sliceForQuery, dropLiteralFences, dropHiddenBranches,
   stripImports, stripFrontmatter, frontmatterTokens,
 }

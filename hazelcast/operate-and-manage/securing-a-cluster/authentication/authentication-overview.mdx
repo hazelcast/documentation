@@ -7,6 +7,10 @@ enterprise: true
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_security_EnablingSecurity_java_tag_authn from '../../../examples/security/EnablingSecurity.java?tag=authn';
+import Ex_security_EnablingSecurity_java_tag_identity from '../../../examples/security/EnablingSecurity.java?tag=identity';
+import Ex_security_EnablingSecurity_java_tag_authz from '../../../examples/security/EnablingSecurity.java?tag=authz';
 
 :::note
 
@@ -80,15 +84,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java
-Config cfg = new Config();
-SimpleAuthenticationConfig sac = new SimpleAuthenticationConfig()
-        .addUser("test", "V3ryS3cr3tString", "monitor", "hazelcast")
-        .addUser("man-center", "HardToGuess", "root");
-cfg.getSecurityConfig().setEnabled(true)
-        .setClientRealmConfig("simpleRealm",
-                new RealmConfig().setSimpleAuthenticationConfig(sac));
-```
+<CodeBlock language="java">{Ex_security_EnablingSecurity_java_tag_authn}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -184,16 +180,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java
-Config cfg = new Config();
-cfg.getSecurityConfig()
-    .setEnabled(true)
-    .addRealmConfig("aRealm", 
-        new RealmConfig().setLdapAuthenticationConfig(new LdapAuthenticationConfig()/* ... */)
-            .setUsernamePasswordIdentityConfig("uid=hazelcast,ou=Services,dc=hazelcast,dc=com", "theSecret"))
-    .setClientRealm("aRealm")
-    .setMemberRealm("aRealm");
-```
+<CodeBlock language="java">{Ex_security_EnablingSecurity_java_tag_identity}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -253,14 +240,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java
-Config cfg = new Config();
-cfg.getSecurityConfig()
-    .setEnabled(true)
-    .setClientRealmConfig("aRealm", new RealmConfig()/* ... */)
-    .addClientPermissionConfig(new PermissionConfig(PermissionType.ALL, null, "man-center"))
-    .addClientPermissionConfig(new PermissionConfig(PermissionType.MAP, "playground", "*").addAction("all"));
-```
+<CodeBlock language="java">{Ex_security_EnablingSecurity_java_tag_authz}</CodeBlock>
 
 </TabItem>
 </Tabs>

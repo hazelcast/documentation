@@ -5,10 +5,11 @@ sidebar_position: 4
 slug: /serialization/implementing-portable-serialization
 ---
 
-import PartialSerializationFooJava from '@site/hazelcast/_partials/serialization-Foo.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_serialization_Foo_java_tag_fooportable from '../../../examples/serialization/Foo.java?tag=fooportable';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import PartialSerializationEmployeePortableJava from '@site/hazelcast/_partials/serialization-EmployeePortable.java.mdx';
+import Ex_serialization_EmployeePortable_java_tag_empportable from '../../../examples/serialization/EmployeePortable.java?tag=empportable';
 
 :::caution[Deprecation Notice for Portable Serialization]
 
@@ -32,7 +33,7 @@ Portable serialization is totally language independent and is used as the binary
 
 Here is example code for Portable implementation of a Foo class.
 
-<PartialSerializationFooJava/>
+<CodeBlock language="java">{Ex_serialization_Foo_java_tag_fooportable}</CodeBlock>
 
 Similar to `IdentifiedDataSerializable`, a Portable Class must provide `classId` and `factoryId`. The Factory object creates the Portable object given the `classId`.
 
@@ -172,7 +173,7 @@ Independent of the member-member or member-client communications, the method `wr
 
 Let's consider the following `Employee` class:
 
-<PartialSerializationEmployeePortableJava/>
+<CodeBlock language="java">{Ex_serialization_EmployeePortable_java_tag_empportable}</CodeBlock>
 
 As you see in the above example, first the `name` and then the `age` is written. This order should be preserved in other members or clients.
 

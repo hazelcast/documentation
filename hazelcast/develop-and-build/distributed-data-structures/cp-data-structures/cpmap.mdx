@@ -5,7 +5,8 @@ slug: /data-structures/cpmap
 enterprise: true
 ---
 
-import PartialDdsCpmapExampleCPMapJava from '@site/hazelcast/_partials/dds-cpmap-ExampleCPMap.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_dds_cpmap_ExampleCPMap_java_tag_cpm from '../../../examples/dds/cpmap/ExampleCPMap.java?tag=cpm';
 
 Hazelcast `CPMap` is a distributed implementation of a minimal key-value interface. It is a CP data structure, so unlike the traditional maps built for availability (AP), `CPMap` guarantees data consistency even during network partitions, ensuring that every cluster member always sees the same data. This reliability makes it ideal for storing sensitive information such as user bank balances and system configurations, or managing mission-critical workflows.
 
@@ -31,7 +32,7 @@ There is no unsafe variant of `CPMap`, unlike other CP data structures. Therefor
 
 The following example creates an instance of a `CPMap` in the `default` CP group, then updates its contents using the operations listed previously.
 
-<PartialDdsCpmapExampleCPMapJava/>
+<CodeBlock language="java">{Ex_dds_cpmap_ExampleCPMap_java_tag_cpm}</CodeBlock>
 
 The mutations over the `CPMap` `capitalCities` in the above example are replicated across each of the members of the `default` CP Group.
 

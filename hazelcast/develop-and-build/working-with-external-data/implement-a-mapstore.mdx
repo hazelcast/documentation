@@ -6,10 +6,11 @@ slug: /mapstore/implement-a-mapstore
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import PartialDdsMapYourMapStoreImplementationJava from '@site/hazelcast/_partials/dds-map-YourMapStoreImplementation.java.mdx';
-import PartialDdsMapLoadAllJava from '@site/hazelcast/_partials/dds-map-LoadAll.java.mdx';
-import PartialDdsMapPersonEntryStoreJava from '@site/hazelcast/_partials/dds-map-PersonEntryStore.java.mdx';
-import PartialDdsMapPersonMapStoreJava from '@site/hazelcast/_partials/dds-map-PersonMapStore.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_dds_map_YourMapStoreImplementation_java_tag_ymsi from '../../examples/dds/map/YourMapStoreImplementation.java?tag=ymsi';
+import Ex_dds_map_LoadAll_java_tag_loadall_indent_0 from '../../examples/dds/map/LoadAll.java?tag=loadall&indent=0';
+import Ex_dds_map_PersonEntryStore_java_tag_personms from '../../examples/dds/map/PersonEntryStore.java?tag=personms';
+import Ex_dds_map_PersonMapStore_java_tag_personms from '../../examples/dds/map/PersonMapStore.java?tag=personms';
 
 You can use the Java `MapStore` and `MapLoader` interfaces to implement a custom MapStore with your own logic, such as for database connections, loading data from an external system, and writing data back to the external system.
 
@@ -82,7 +83,7 @@ hazelcast:
 </TabItem>
 </Tabs>
 
-<PartialDdsMapYourMapStoreImplementationJava/>
+<CodeBlock language="java">{Ex_dds_map_YourMapStoreImplementation_java_tag_ymsi}</CodeBlock>
 
 ## Populating a New Map {/* #init */}
 
@@ -142,7 +143,7 @@ If you edit entries in combination with [Entry Processors](../distributed-data-s
 
 The `MapLoader.loadAll()` method loads some or all keys into a data store in order to optimize multiple load operations. This method has two signatures. One signature loads the given keys and the other loads all keys. See the example code below.
 
-<PartialDdsMapLoadAllJava/>
+<CodeBlock language="java">{Ex_dds_map_LoadAll_java_tag_loadall_indent_0}</CodeBlock>
 
 ## Setting Expiration Times on Loaded and Stored Data Entries
 
@@ -166,7 +167,7 @@ Although the expiration date is expressed in milliseconds, expiration dates are 
 
 The following example shows you how to implement the `EntryStore` interface.
 
-<PartialDdsMapPersonEntryStoreJava/>
+<CodeBlock language="java">{Ex_dds_map_PersonEntryStore_java_tag_personms}</CodeBlock>
 
 :::tip
 
@@ -178,7 +179,7 @@ The following example shows you how to implement the `EntryStore` interface.
 
 The following example shows you a complete `MapStore` implementation.
 
-<PartialDdsMapPersonMapStoreJava/>
+<CodeBlock language="java">{Ex_dds_map_PersonMapStore_java_tag_personms}</CodeBlock>
 
 If you are using Hazelcast in client/server mode, you must add the MapStore and any dependencies to the classpath of your members.
 

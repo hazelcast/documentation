@@ -87,6 +87,9 @@ function convertBody (html, ctx) {
     // Single-sourced examples: content -> co-located file path (from convert.js
     // loadExamples). exampleVars/usedVarNames dedupe imports within one page.
     examples: ctx.examples || new Map(),
+    // The example files this page's source actually includes; disambiguates a
+    // content match when several files hold identical text (chooseExample).
+    pageExampleFiles: ctx.pageExampleFiles || new Set(),
     exampleVars: new Map(),
     usedVarNames: new Set(),
     // Single-sourced doc variables to put BACK (value -> name), scoped to the
@@ -735,8 +738,8 @@ function convertListing ($, node, st) {
   // instead of baking the fence -- keeps the example file the single source.
   if (st.examples && st.examples.size) {
     const codeEl = $(pre).find('code')[0]
-    const hit = st.examples.get(normalizeCode($(codeEl || pre).text()))
-    if (hit) return emitExampleCodeBlock($, pre, hit.file, title, st, hit.conums)
+    const hit = chooseExample(st.examples.get(normalizeCode($(codeEl || pre).text())), st.pageExampleFiles)
+    if (hit) return emitExampleCodeBlock($, pre, hit, title, st)
   }
   return preToFence($, pre, title, st)
 }
@@ -745,15 +748,39 @@ function convertListing ($, node, st) {
 // convert.js normalizeCode and preToFence's trailing-newline trim).
 const normalizeCode = (s) => s.replace(/\n+$/, '')
 
-// A stable, unique JS identifier for a page's import of an example file.
-function exampleVar (file, st) {
-  if (st.exampleVars.has(file)) return st.exampleVars.get(file)
-  let base = 'Ex_' + file.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+// Choose which example file a matched code block imports.
+//
+// Content alone cannot always tell: two files can hold byte-identical regions
+// (GroupingClusters.java and GroupingClusters2.java both define an identical
+// `groupingclusters` tag), and picking the wrong one severs the doc<->source
+// link this whole mechanism exists to preserve -- the page would keep rendering
+// another file's copy after someone edits the one it actually names. So content
+// finds the candidates and the page's OWN include list picks between them.
+//
+// Falls back to the previous rule (last file in walk order) when the page names
+// none of them, which is the operator whole-file behaviour unchanged.
+function chooseExample (candidates, pageExampleFiles) {
+  if (!candidates || !candidates.length) return null
+  const named = pageExampleFiles && pageExampleFiles.size
+    ? candidates.filter((c) => pageExampleFiles.has(c.file))
+    : []
+  const pool = named.length ? named : candidates
+  const file = pool[pool.length - 1].file
+  return pool.find((c) => c.file === file)
+}
+
+// A stable, unique JS identifier for a page's import of one example SLICE. Keyed
+// on file + query, not file alone: a page may show several regions of the same
+// file (cp-subsystem/management pulls ten tags of CpSubsystemAPI.java), and each
+// needs its own binding.
+function exampleVar (spec, st) {
+  if (st.exampleVars.has(spec)) return st.exampleVars.get(spec)
+  let base = 'Ex_' + spec.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
   let name = base
   let n = 2
   while (st.usedVarNames.has(name)) name = `${base}_${n++}`
   st.usedVarNames.add(name)
-  st.exampleVars.set(file, name)
+  st.exampleVars.set(spec, name)
   return name
 }
 
@@ -781,7 +808,8 @@ function normalizeLang (lang) {
   return PRISM_ALIASES[l] || l
 }
 
-function emitExampleCodeBlock ($, pre, file, title, st, conums) {
+function emitExampleCodeBlock ($, pre, hit, title, st) {
+  const { file, query, conums } = hit
   const codeEl = $(pre).find('code')[0]
   let lang = ''
   const langSrc = codeEl || pre
@@ -792,13 +820,15 @@ function emitExampleCodeBlock ($, pre, file, title, st, conums) {
     if (m) lang = m.slice('language-'.length)
   }
   lang = normalizeLang(lang)
-  const varName = exampleVar(file, st)
+  const spec = file + (query || '')
+  const varName = exampleVar(spec, st)
   st.imports.add("import CodeBlock from '@theme/CodeBlock';")
   // Plain import: a scoped webpack rule (example-attributes-plugin) runs the
-  // example-attributes loader + raw-loader on files under examples/, so any
-  // Antora {attribute} placeholders in the byte-faithful file are substituted
-  // per version at build (no-op for files without placeholders).
-  st.imports.add(`import ${varName} from '${examplesRelPath(st.relFile)}/${file}';`)
+  // tag-slice loader, the example-attributes loader and raw-loader on files
+  // under examples/. The query selects the region (absent = the whole file, the
+  // operator case); {attribute} placeholders in the byte-faithful file are then
+  // substituted per version at build (no-op for files without placeholders).
+  st.imports.add(`import ${varName} from '${examplesRelPath(st.relFile)}/${spec}';`)
   // Files carrying native `<N>` conum markers get the `conums` metastring so the
   // swizzled CodeBlock strips the markers and renders callout badges.
   const info = (lang ? ` language=${jsxAttr(lang)}` : '') + (title ? ` title=${jsxAttr(title)}` : '') +

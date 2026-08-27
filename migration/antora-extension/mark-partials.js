@@ -123,10 +123,24 @@ function createPartialMarker () {
           }
           // The included-file id for a block, or null if it is page-authored (or
           // has no usable source location).
+          //
+          // Restricted to the families this extension exists to factor. Without
+          // the check it is family-blind -- it just asks which file a block came
+          // from -- so a listing block whose whole content is an `example$`
+          // include got sentinel-wrapped and factored into an MDX partial like a
+          // prose fragment. That was wrong twice over: the slug carries no tag,
+          // so a multi-tag file could only ever be represented once (10 of
+          // CpSubsystemAPI.java's 11 include sites were silently left inline),
+          // and the partial held a COPY of rendered output rather than a live
+          // slice of the file. example$ has its own mechanism now -- co-located
+          // source files sliced at build (plugins/tag-slice-loader.js).
           const includeIdOf = (block) => {
             const f = fileOf(block)
             if (f == null || (pageFile != null && String(f) === pageFile)) return null
-            return resourceId(f)
+            const id = resourceId(f)
+            const m = /:([a-z]+)\$/.exec(id)
+            const family = m && m[1]
+            return family === 'partial' || family === 'page' ? id : null
           }
           // A block is PURE (safely liftable as its partial) only if none of its
           // descendants are page-authored. Asciidoctor attributes a whole block

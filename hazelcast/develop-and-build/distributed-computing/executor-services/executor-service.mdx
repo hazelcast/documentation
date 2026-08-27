@@ -4,16 +4,19 @@ sidebar_position: 1
 slug: /computing/executor-service
 ---
 
-import PartialDistributedcomputingSumTaskJava from '@site/hazelcast/_partials/distributedcomputing-SumTask.java.mdx';
-import PartialDistributedcomputingEchoJava from '@site/hazelcast/_partials/distributedcomputing-Echo.java.mdx';
-import PartialDistributedcomputingMasterMemberJava from '@site/hazelcast/_partials/distributedcomputing-MasterMember.java.mdx';
-import PartialDistributedcomputingEchoTaskJava from '@site/hazelcast/_partials/distributedcomputing-EchoTask.java.mdx';
-import PartialDistributedcomputingRunnableMasterMemberJava from '@site/hazelcast/_partials/distributedcomputing-RunnableMasterMember.java.mdx';
-import PartialDistributedcomputingFibonacci2Java from '@site/hazelcast/_partials/distributedcomputing-Fibonacci2.java.mdx';
-import PartialDistributedcomputingMasterMemberCallbackJava from '@site/hazelcast/_partials/distributedcomputing-MasterMemberCallback.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_distributedcomputing_SumTask_java_tag_st from '../../../examples/distributedcomputing/SumTask.java?tag=st';
+import Ex_distributedcomputing_Echo_java_tag_echo from '../../../examples/distributedcomputing/Echo.java?tag=echo';
+import Ex_distributedcomputing_MasterMember_java_tag_mm from '../../../examples/distributedcomputing/MasterMember.java?tag=mm';
+import Ex_distributedcomputing_EchoTask_java_tag_et from '../../../examples/distributedcomputing/EchoTask.java?tag=et';
+import Ex_distributedcomputing_RunnableMasterMember_java_tag_rmm from '../../../examples/distributedcomputing/RunnableMasterMember.java?tag=rmm';
+import Ex_distributedcomputing_FibonacciCallable_java_tag_fc from '../../../examples/distributedcomputing/FibonacciCallable.java?tag=fc';
+import Ex_distributedcomputing_FibonacciCallable_java_tag_fib from '../../../examples/distributedcomputing/FibonacciCallable.java?tag=fib';
+import Ex_distributedcomputing_Fibonacci2_java_tag_ec from '../../../examples/distributedcomputing/Fibonacci2.java?tag=ec';
+import Ex_distributedcomputing_MasterMemberCallback_java_tag_mmc from '../../../examples/distributedcomputing/MasterMemberCallback.java?tag=mmc';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import PartialDistributedcomputingExecutorConfigurationJava from '@site/hazelcast/_partials/distributedcomputing-ExecutorConfiguration.java.mdx';
+import Ex_distributedcomputing_ExecutorConfiguration_java_tag_execconf from '../../../examples/distributedcomputing/ExecutorConfiguration.java?tag=execconf';
 
 One of the coolest features of Java is the Executor framework, which allows you to asynchronously execute your tasks (logical units of work), such as database queries, complex calculations and image rendering.
 
@@ -40,11 +43,11 @@ In Hazelcast, when you implement a task as `java.util.concurrent.Callable` (a ta
 
 Below is an example of a Callable task. SumTask prints out map keys and returns the summed map values.
 
-<PartialDistributedcomputingSumTaskJava/>
+<CodeBlock language="java">{Ex_distributedcomputing_SumTask_java_tag_st}</CodeBlock>
 
 Another example is the Echo callable below. In its call() method, it returns the local member and the input passed in. Remember that `instance.getCluster().getLocalMember()` returns the local member and `toString()` returns the member's address (IP + port) in String form, just to see which member actually executed the code for our example. Of course, the `call()` method can do and return anything you like.
 
-<PartialDistributedcomputingEchoJava/>
+<CodeBlock language="java">{Ex_distributedcomputing_Echo_java_tag_echo}</CodeBlock>
 
 ### Executing a Callable Task
 
@@ -57,7 +60,7 @@ To execute a callable task:
 
 Below, the Echo task is executed.
 
-<PartialDistributedcomputingMasterMemberJava/>
+<CodeBlock language="java">{Ex_distributedcomputing_MasterMember_java_tag_mm}</CodeBlock>
 
 Please note that the `Echo` callable in the above example also implements a Serializable interface, since it may be sent to another member to be processed.
 
@@ -73,7 +76,7 @@ In Hazelcast, when you implement a task as `java.util.concurrent.runnable` (a ta
 
 Below is Runnable example code. It is a task that waits for some time and echoes a message.
 
-<PartialDistributedcomputingEchoTaskJava/>
+<CodeBlock language="java">{Ex_distributedcomputing_EchoTask_java_tag_et}</CodeBlock>
 
 ### Executing a Runnable Task
 
@@ -84,7 +87,7 @@ To execute the runnable task:
 
 Now let's write a class that submits and executes these echo messages. Executor is retrieved from `HazelcastInstance` and 1000 echo tasks are submitted.
 
-<PartialDistributedcomputingRunnableMasterMemberJava/>
+<CodeBlock language="java">{Ex_distributedcomputing_RunnableMasterMember_java_tag_rmm}</CodeBlock>
 
 ## Scaling The Executor Service
 
@@ -170,47 +173,13 @@ To cancel a task, you can use the standard Java executor framework's `cancel()` 
 
 The Fibonacci callable class below calculates the Fibonacci number for a given number. In the `calculate` method, we check if the current thread is interrupted so that the code can respond to cancellations once the execution is started.
 
-```java
-    int input = 0;
-
-    public FibonacciCallable( int input ) {
-        this.input = input;
-    }
-
-    public Long call() {
-        return calculate( input );
-    }
-
-    private long calculate( int n ) {
-        if ( Thread.currentThread().isInterrupted() ) {
-            return 0;
-        }
-        if ( n <= 1 ) {
-            return n;
-        } else {
-            return calculate( n - 1 ) + calculate( n - 2 );
-        }
-    }
-```
+<CodeBlock language="java">{Ex_distributedcomputing_FibonacciCallable_java_tag_fc}</CodeBlock>
 
 ### Example Method to Execute and Cancel the Task
 
 The `fib()` method below submits the Fibonacci calculation task above for number 'n' and waits a maximum of 3 seconds for the result. If the execution does not complete in three seconds, the `future.get()` method throws a `TimeoutException` and upon catching it, we cancel the execution, saving some CPU cycles.
 
-```java
-    long fib( int n ) throws Exception {
-        HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance();
-        IExecutorService es = hazelcastInstance.getExecutorService("es");
-        Future<Long> future = es.submit( new FibonacciCallable( n ) );
-        try {
-            long result = future.get( 3, TimeUnit.SECONDS );
-            System.out.println(result);
-        } catch ( TimeoutException e ) {
-            future.cancel( true );
-        }
-        return -1;
-    }
-```
+<CodeBlock language="java">{Ex_distributedcomputing_FibonacciCallable_java_tag_fib}</CodeBlock>
 
 `fib(20)` probably takes less than 3 seconds. However, `fib(50)` takes much longer. (This is not an example for writing better Fibonacci calculation code, but for showing how to cancel a running execution that takes too long.) The method `future.cancel(false)` can only cancel execution before it is running (executing), but `future.cancel(true)` can interrupt running executions provided that your code is able to handle the interruption. If you are willing to cancel an already running task, then your task should be designed to handle interruptions. If the `calculate (int n)` method did not have the `(Thread.currentThread().isInterrupted())` line, then you would not be able to cancel the execution after it is started.
 
@@ -222,13 +191,13 @@ You can use the `ExecutionCallback` offered by Hazelcast to asynchronously be no
 
 Let's use the Fibonacci series to explain this. The example code below is the calculation that is executed. Note that it is Callable and Serializable.
 
-<PartialDistributedcomputingFibonacci2Java/>
+<CodeBlock language="java">{Ex_distributedcomputing_Fibonacci2_java_tag_ec}</CodeBlock>
 
 ### Example Method to Callback the Task
 
 The example code below submits the Fibonacci calculation to `ExecutionCallback` and prints the result asynchronously. `ExecutionCallback` has the methods `onResponse` and `onFailure`. In this example code, `onResponse` is called upon a valid response and prints the calculation result, whereas `onFailure` is called upon a failure and prints the stacktrace.
 
-<PartialDistributedcomputingMasterMemberCallbackJava/>
+<CodeBlock language="java">{Ex_distributedcomputing_MasterMemberCallback_java_tag_mmc}</CodeBlock>
 
 ## Selecting Members for Task Execution
 
@@ -291,7 +260,7 @@ hazelcast:
 
 **Programmatic Configuration:**
 
-<PartialDistributedcomputingExecutorConfigurationJava/>
+<CodeBlock language="java">{Ex_distributedcomputing_ExecutorConfiguration_java_tag_execconf}</CodeBlock>
 
 Executor service configuration has the following elements:
 

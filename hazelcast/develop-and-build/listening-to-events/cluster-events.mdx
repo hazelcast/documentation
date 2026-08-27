@@ -4,11 +4,12 @@ sidebar_position: 2
 slug: /events/cluster-events
 ---
 
-import PartialDistributedeventsClusterMembershipListenerJava from '@site/hazelcast/_partials/distributedevents-ClusterMembershipListener.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_distributedevents_ClusterMembershipListener_java_tag_cml from '../../examples/distributedevents/ClusterMembershipListener.java?tag=cml';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import PartialDistributedeventsExampleDistObjListenerJava from '@site/hazelcast/_partials/distributedevents-ExampleDistObjListener.java.mdx';
-import PartialDistributedeventsClusterMigrationListenerJava from '@site/hazelcast/_partials/distributedevents-ClusterMigrationListener.java.mdx';
+import Ex_distributedevents_ExampleDistObjListener_java_tag_distobjlistener from '../../examples/distributedevents/ExampleDistObjListener.java?tag=distobjlistener';
+import Ex_distributedevents_ClusterMigrationListener_java_tag_clstrmigrationlistener from '../../examples/distributedevents/ClusterMigrationListener.java?tag=clstrmigrationlistener';
 
 ## Listening for Member Events
 
@@ -21,7 +22,7 @@ To write a Membership Listener class, you implement the MembershipListener inter
 
 The following is an example Membership Listener class.
 
-<PartialDistributedeventsClusterMembershipListenerJava/>
+<CodeBlock language="java">{Ex_distributedevents_ClusterMembershipListener_java_tag_cml}</CodeBlock>
 
 When a respective event is fired, the membership listener outputs the addresses of the members that joined and left, and also which attribute changed on which member.
 
@@ -89,7 +90,7 @@ The Distributed Object Listener methods `distributedObjectCreated` and `distribu
 
 The following is an example Distributed Object Listener class.
 
-<PartialDistributedeventsExampleDistObjListenerJava/>
+<CodeBlock language="java">{Ex_distributedevents_ExampleDistObjListener_java_tag_distobjlistener}</CodeBlock>
 
 When a respective event is fired, the distributed object listener outputs the event type, the object name and a service name (for example, for a Map object the service name is `"hz:impl:mapService"`).
 
@@ -165,7 +166,7 @@ To write a Migration Listener class, you implement the `MigrationListener` inter
 
 The following is an example Migration Listener class.
 
-<PartialDistributedeventsClusterMigrationListenerJava/>
+<CodeBlock language="java">{Ex_distributedevents_ClusterMigrationListener_java_tag_clstrmigrationlistener}</CodeBlock>
 
 ### Registering Migration Listeners
 

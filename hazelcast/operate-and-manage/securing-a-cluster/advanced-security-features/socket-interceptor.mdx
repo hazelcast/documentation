@@ -5,10 +5,11 @@ slug: /security/socket-interceptor
 enterprise: true
 ---
 
-import PartialSecuritySocketInterceptorMemberJava from '@site/hazelcast/_partials/security-SocketInterceptorMember.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_security_SocketInterceptorMember_java_tag_msi from '../../../examples/security/SocketInterceptorMember.java?tag=msi';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import PartialSecuritySocketInterceptorClientJava from '@site/hazelcast/_partials/security-SocketInterceptorClient.java.mdx';
+import Ex_security_SocketInterceptorClient_java_tag_sic from '../../../examples/security/SocketInterceptorClient.java?tag=sic';
 
 Hazelcast allows you to intercept socket connections before a member joins a cluster or a client connects to a member of a cluster. This allows you to add custom hooks to join and perform connection procedures (like identity checking using a custom network authentication protocol, etc.).
 
@@ -16,7 +17,7 @@ To use the socket interceptor, implement `com.hazelcast.nio.MemberSocketIntercep
 
 The following is an example socket interceptor implementation for the member side.
 
-<PartialSecuritySocketInterceptorMemberJava/>
+<CodeBlock language="java">{Ex_security_SocketInterceptorMember_java_tag_msi}</CodeBlock>
 
 You can declaratively configure this socket interceptor as follows:
 
@@ -60,4 +61,4 @@ hazelcast:
 
 The following is an example configuration of the above socket interceptor for the client side.
 
-<PartialSecuritySocketInterceptorClientJava/>
+<CodeBlock language="java">{Ex_security_SocketInterceptorClient_java_tag_sic}</CodeBlock>

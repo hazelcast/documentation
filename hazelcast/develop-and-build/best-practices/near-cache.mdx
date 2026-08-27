@@ -6,6 +6,8 @@ slug: /cluster-performance/near-cache
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_performance_ExampleNearCacheConfiguration_java_tag_nearcacheconfig from '../../examples/performance/ExampleNearCacheConfiguration.java?tag=nearcacheconfig';
 
 Access to small-to-medium, read-mostly data sets may be sped up by creating a Near Cache. This cache maintains copies of distributed data in local memory for very fast access.
 
@@ -125,30 +127,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java-member-api" label="Java Member API">
 
-```java
-        EvictionConfig evictionConfig = new EvictionConfig()
-                .setMaxSizePolicy(MaxSizePolicy.ENTRY_COUNT)
-                .setEvictionPolicy(EvictionPolicy.LRU)
-                .setSize( 1 );
-
-        NearCachePreloaderConfig preloaderConfig = new NearCachePreloaderConfig()
-                .setEnabled(true)
-                .setDirectory("nearcache-example")
-                .setStoreInitialDelaySeconds( 1 )
-                .setStoreIntervalSeconds( 2 );
-
-        NearCacheConfig nearCacheConfig = new NearCacheConfig()
-                .setName("myDataStructure")
-                .setInMemoryFormat(InMemoryFormat.BINARY)
-                .setSerializeKeys(true)
-                .setInvalidateOnChange(false)
-                .setTimeToLiveSeconds( 1 )
-                .setMaxIdleSeconds( 5 )
-                .setEvictionConfig(evictionConfig)
-                .setCacheLocalEntries(true)
-                .setLocalUpdatePolicy(NearCacheConfig.LocalUpdatePolicy.CACHE_ON_UPDATE)
-                .setPreloaderConfig(preloaderConfig);
-```
+<CodeBlock language="java">{Ex_performance_ExampleNearCacheConfiguration_java_tag_nearcacheconfig}</CodeBlock>
 
 </TabItem>
 </Tabs>

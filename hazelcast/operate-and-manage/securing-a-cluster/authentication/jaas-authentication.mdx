@@ -7,6 +7,9 @@ enterprise: true
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_authentication_types_xml_tag_jaas from '../../../examples/hazelcast-authentication-types.xml?tag=jaas';
+import Ex_security_CustomLoginModuleTest_java_tag_callback_sample from '../../../examples/security/CustomLoginModuleTest.java?tag=callback-sample';
 
 The `jaas` authentication setting is the most flexible form of authentication, but requires knowledge of JAAS login modules and related concepts. You can use custom login modules and order them in a login module stack.
 
@@ -15,26 +18,7 @@ The following is a sample configuration which authenticates against an LDAP serv
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
 
-```xml
-            <realm name="jaasRealm">
-                <authentication>
-                    <jaas>
-                        <login-module class-name="com.examples.LdapLoginModule" usage="SUFFICIENT">
-                            <properties>
-                                <property name="url">ldap://corp-ldap/</property>
-                            </properties>
-                        </login-module>
-                        <login-module class-name="com.examples.DatabaseLoginModule" usage="SUFFICIENT">
-                            <properties>
-                                <property name="type">ora18</property>
-                                <property name="host">corp-db</property>
-                                <property name="table">USERS</property>
-                            </properties>
-                        </login-module>
-                    </jaas>
-                </authentication>
-            </realm>
-```
+<CodeBlock language="xml">{Ex_hazelcast_authentication_types_xml_tag_jaas}</CodeBlock>
 
 </TabItem>
 <TabItem value="yaml" label="YAML">
@@ -89,19 +73,7 @@ JAAS [Callback](https://docs.oracle.com/javase/8/docs/api/javax/security/auth/ca
 
 The callbacks are usually used in the `login()` method of a login module:
 
-```java
-        CredentialsCallback credcb = new CredentialsCallback();
-        ConfigCallback ccb = new ConfigCallback();
-        ClusterNameCallback cncb = new ClusterNameCallback();
-        try {
-            callbackHandler.handle(new Callback[] { credcb, ccb, cncb });
-        } catch (IOException | UnsupportedCallbackException e) {
-            throw new LoginException("Unable to retrieve necessary data");
-        }
-        Credentials remoteCredentials = credcb.getCredentials();
-        String remoteClusterName = cncb.getClusterName();
-        Config hazelcastConfig = ccb.getConfig();
-```
+<CodeBlock language="java">{Ex_security_CustomLoginModuleTest_java_tag_callback_sample}</CodeBlock>
 
 ## ClusterLoginModule
 

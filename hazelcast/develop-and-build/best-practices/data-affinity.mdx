@@ -4,7 +4,8 @@ sidebar_position: 9
 slug: /cluster-performance/data-affinity
 ---
 
-import PartialPerformanceOrderKeyJava from '@site/hazelcast/_partials/performance-OrderKey.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_performance_OrderKey_java_tag_orderkey from '../../examples/performance/OrderKey.java?tag=orderkey';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
@@ -40,7 +41,7 @@ hazelcastInstance.getExecutorService().executeOnKeyOwner( runnable, "key1" );
 
 When the keys are the same, entries are stored on the same member. But we sometimes want to have related entries stored on the same member, such as a customer and their order entries. We would have a customers map with customerId as the key and an orders map with orderId as the key. Since customerId and orderId are different keys, a customer and their orders may fall into different members in your cluster. So how can we have them stored on the same member? We create an affinity between customer and orders. If we make them part of the same partition then these entries will be co-located. We achieve this by making `orderKey` s `PartitionAware`.
 
-<PartialPerformanceOrderKeyJava/>
+<CodeBlock language="java">{Ex_performance_OrderKey_java_tag_orderkey}</CodeBlock>
 
 Notice that OrderKey implements `PartitionAware` and that `getPartitionKey()` returns the `customerId`. These make sure that the `Customer` entry and its `Order`s are stored on the same member.
 

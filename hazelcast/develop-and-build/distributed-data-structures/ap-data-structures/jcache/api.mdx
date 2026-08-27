@@ -4,13 +4,14 @@ sidebar_position: 5
 slug: /jcache/api
 ---
 
-import PartialJcacheUserJava from '@site/hazelcast/_partials/jcache-User.java.mdx';
-import PartialJcacheUserDaoJava from '@site/hazelcast/_partials/jcache-UserDao.java.mdx';
-import PartialJcacheUserCacheEntryListenerFactoryJava from '@site/hazelcast/_partials/jcache-UserCacheEntryListenerFactory.java.mdx';
-import PartialJcacheUserCacheLoaderJava from '@site/hazelcast/_partials/jcache-UserCacheLoader.java.mdx';
-import PartialJcacheUserCacheWriterJava from '@site/hazelcast/_partials/jcache-UserCacheWriter.java.mdx';
-import PartialJcacheUserUpdateEntryProcessorJava from '@site/hazelcast/_partials/jcache-UserUpdateEntryProcessor.java.mdx';
-import PartialJcacheUserCacheEntryListenerJava from '@site/hazelcast/_partials/jcache-UserCacheEntryListener.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_jcache_User_java_tag_user from '../../../../examples/jcache/User.java?tag=user';
+import Ex_jcache_UserDao_java_tag_userdao from '../../../../examples/jcache/UserDao.java?tag=userdao';
+import Ex_jcache_UserCacheEntryListenerFactory_java_tag_ucelf from '../../../../examples/jcache/UserCacheEntryListenerFactory.java?tag=ucelf';
+import Ex_jcache_UserCacheLoader_java_tag_ucl from '../../../../examples/jcache/UserCacheLoader.java?tag=ucl';
+import Ex_jcache_UserCacheWriter_java_tag_ucw from '../../../../examples/jcache/UserCacheWriter.java?tag=ucw';
+import Ex_jcache_UserUpdateEntryProcessor_java_tag_uuep from '../../../../examples/jcache/UserUpdateEntryProcessor.java?tag=uuep';
+import Ex_jcache_UserCacheEntryListener_java_tag_ucel from '../../../../examples/jcache/UserCacheEntryListener.java?tag=ucel';
 
 This section explains the JCache API by providing simple examples and use cases. While walking through the examples, we will have a look at a couple of the standard API classes and see how these classes are used.
 
@@ -24,13 +25,13 @@ Before we implement the JCache caching layer, let's have a quick look at some ba
 
 The `User` class is the representation of a user table in the database. To keep it simple, it has just two properties: `userId` and `username`.
 
-<PartialJcacheUserJava/>
+<CodeBlock language="java">{Ex_jcache_User_java_tag_user}</CodeBlock>
 
 ### Creating DAO Interface Example
 
 The DAO interface is also kept easy in this example. It provides a simple method to retrieve (find) a user by its `userId`.
 
-<PartialJcacheUserDaoJava/>
+<CodeBlock language="java">{Ex_jcache_UserDao_java_tag_userdao}</CodeBlock>
 
 ### Configuring JCache Example
 
@@ -133,7 +134,7 @@ The `javax.cache.configuration.Factory` implementations configure features like 
 
 `Factory` implementations are easy to do, as they follow the default Provider- or Factory-Pattern. The example class `UserCacheEntryListenerFactory` shown below implements a custom JCache `Factory`.
 
-<PartialJcacheUserCacheEntryListenerFactoryJava/>
+<CodeBlock language="java">{Ex_jcache_UserCacheEntryListenerFactory_java_tag_ucelf}</CodeBlock>
 
 To simplify the process for the users, JCache API offers a set of helper methods collected in `javax.cache.
 configuration.FactoryBuilder`. In the above configuration example, `FactoryBuilder.factoryOf()` creates a singleton factory for the given instance.
@@ -160,7 +161,7 @@ Let's look at the `UserCacheLoader` implementation. This implementation is quite
 
 An important note is that any kind of exception has to be wrapped into `javax.cache.integration.CacheLoaderException`.
 
-<PartialJcacheUserCacheLoaderJava/>
+<CodeBlock language="java">{Ex_jcache_UserCacheLoader_java_tag_ucl}</CodeBlock>
 
 ## CacheWriter
 
@@ -176,7 +177,7 @@ The following example performs the following tasks:
 - It overrides the `delete` method to delete the key entry from the store.
 - It overrides the `deleteAll` method to delete the data and keys from the underlying store for the given collection of keys, if present.
 
-<PartialJcacheUserCacheWriterJava/>
+<CodeBlock language="java">{Ex_jcache_UserCacheWriter_java_tag_ucw}</CodeBlock>
 
 Again, the implementation is pretty straightforward and also as above all exceptions thrown by the external resource, like `java.sql.SQLException` has to be wrapped into a `javax.cache.integration.CacheWriterException`. Note this is a different exception from the one thrown by `CacheLoader`.
 
@@ -193,7 +194,7 @@ The following example performs the following tasks.
 - It implements `EntryProcessor`.
 - It overrides the `process` method to process an entry.
 
-<PartialJcacheUserUpdateEntryProcessorJava/>
+<CodeBlock language="java">{Ex_jcache_UserUpdateEntryProcessor_java_tag_uuep}</CodeBlock>
 
 :::note
 
@@ -228,7 +229,7 @@ In this example application, the listener is implemented to print event informat
 - It implements the `CacheEntryExpiredListener.onExpired` method to call after an entry expires.
 - It implements `printEvents` to print event information about the console.
 
-<PartialJcacheUserCacheEntryListenerJava/>
+<CodeBlock language="java">{Ex_jcache_UserCacheEntryListener_java_tag_ucel}</CodeBlock>
 
 ## ExpiryPolicy
 

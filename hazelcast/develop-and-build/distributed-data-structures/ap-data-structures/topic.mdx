@@ -4,12 +4,13 @@ sidebar_position: 3
 slug: /data-structures/topic
 ---
 
-import PartialDdsTopicTopicPublisherJava from '@site/hazelcast/_partials/dds-topic-TopicPublisher.java.mdx';
-import PartialDdsTopicTopicSubscriberJava from '@site/hazelcast/_partials/dds-topic-TopicSubscriber.java.mdx';
-import PartialDdsTopicTopicStatsJava from '@site/hazelcast/_partials/dds-topic-TopicStats.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_dds_topic_TopicPublisher_java_tag_tp from '../../../examples/dds/topic/TopicPublisher.java?tag=tp';
+import Ex_dds_topic_TopicSubscriber_java_tag_tsub from '../../../examples/dds/topic/TopicSubscriber.java?tag=tsub';
+import Ex_dds_topic_TopicStats_java_tag_ts from '../../../examples/dds/topic/TopicStats.java?tag=ts';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import PartialDdsTopicTopicConfigurationJava from '@site/hazelcast/_partials/dds-topic-TopicConfiguration.java.mdx';
+import Ex_dds_topic_TopicConfiguration_java_tag_tc from '../../../examples/dds/topic/TopicConfiguration.java?tag=tc';
 
 Hazelcast provides a distribution mechanism for publishing messages that are delivered to multiple subscribers. This is also known as a publish/subscribe (pub/sub) messaging model. Publishing and subscribing operations are cluster wide. When a member or client subscribes to a topic, it is actually registering for messages published by any member and clients in the cluster, including the new ones that joined after you add the listener.
 
@@ -23,11 +24,11 @@ Publish operation is async. It does not wait for operations to run in remote mem
 
 Use the HazelcastInstance's `getTopic` method to get the topic, then use the topic's `publish` method to publish your messages. The following is an example publisher:
 
-<PartialDdsTopicTopicPublisherJava/>
+<CodeBlock language="java">{Ex_dds_topic_TopicPublisher_java_tag_tp}</CodeBlock>
 
 And here is an example subscriber:
 
-<PartialDdsTopicTopicSubscriberJava/>
+<CodeBlock language="java">{Ex_dds_topic_TopicSubscriber_java_tag_tsub}</CodeBlock>
 
 Hazelcast Topic uses the `MessageListener` interface to listen for events that occur when a message is received. See the [Listening for Topic Messages section](../../listening-to-events/object-events.mdx#listening-for-topic-messages) for information about how to create a message listener class and register it.
 
@@ -35,7 +36,7 @@ Hazelcast Topic uses the `MessageListener` interface to listen for events that o
 
 Topic has two statistic variables that you can query. These values are incremental and local to the member.
 
-<PartialDdsTopicTopicStatsJava/>
+<CodeBlock language="java">{Ex_dds_topic_TopicStats_java_tag_ts}</CodeBlock>
 
 `getPublishOperationCount` and `getReceiveOperationCount` returns the total number of published and received messages since the start of this member, respectively. Note that these values are not backed up, so if the member goes down, these values will be lost.
 
@@ -135,7 +136,7 @@ hazelcast:
 
 **Programmatic Configuration:**
 
-<PartialDdsTopicTopicConfigurationJava/>
+<CodeBlock language="java">{Ex_dds_topic_TopicConfiguration_java_tag_tc}</CodeBlock>
 
 Topic configuration has the following elements:
 

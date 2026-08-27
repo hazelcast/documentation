@@ -6,6 +6,8 @@ slug: /configuration/dynamic-config-programmatic-api
 ---
 
 import PartialConfigurationPrereqsDynamicConfig from '@site/hazelcast/_partials/configuration-prereqs-dynamic-config.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_DynamicConfiguration_java_tag_dynconf_indent_0 from '../../../examples/DynamicConfiguration.java?tag=dynconf&indent=0';
 import PartialConfigurationDynConfigPartialPropagation from '@site/hazelcast/_partials/configuration-dyn-config-partial-propagation.mdx';
 
 You can use the Java member or client APIs to add [dynamic configuration](./dynamic-config.mdx) for some [supported features](./dynamic-config.mdx#options) at runtime.
@@ -25,14 +27,7 @@ To add new configuration to a member at runtime, use the `add*Config()` method o
 <details>
 <summary>Example of adding properties to the `Config` object</summary>
 
-```java title="Member API"
-Config config = new Config();
-MapConfig mapConfig = new MapConfig("sessions");
-config.addMapConfig(mapConfig);
-HazelcastInstance instance = Hazelcast.newHazelcastInstance(config);
-MapConfig noBackupsMap = new MapConfig("dont-backup").setBackupCount(0);
-instance.getConfig().addMapConfig(noBackupsMap);
-```
+<CodeBlock language="java" title="Member API">{Ex_DynamicConfiguration_java_tag_dynconf_indent_0}</CodeBlock>
 
 ```java title="Java Client"
 HazelcastInstance client = HazelcastClient.newHazelcastClient();

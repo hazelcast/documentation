@@ -7,7 +7,8 @@ slug: /clusters/creating-clusters
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import PartialGroupingClustersJava from '@site/hazelcast/_partials/GroupingClusters.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_GroupingClusters_java_tag_groupingclusters from '../../examples/GroupingClusters.java?tag=groupingclusters';
 
 You can create clusters using the `cluster-name` configuration element.
 
@@ -35,4 +36,4 @@ hazelcast:
 
 You can also define the cluster configuration programmatically. A JVM can host multiple Hazelcast instances. Each Hazelcast instance can only participate in one group. Each Hazelcast instance only joins to its own group and does not interact with other groups. The following code example creates three separate Hazelcast instances--`h1` belongs to the `production` cluster, while `h2` and `h3` belong to the `development` cluster.
 
-<PartialGroupingClustersJava/>
+<CodeBlock language="java">{Ex_GroupingClusters_java_tag_groupingclusters}</CodeBlock>

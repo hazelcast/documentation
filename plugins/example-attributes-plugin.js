@@ -28,12 +28,16 @@ module.exports = function exampleAttributesPlugin (context, options) {
           rules: [
             {
               test: EXAMPLES_RE,
+              // Applied right-to-left: slice the region out of the file, then
+              // substitute {attribute} placeholders in the slice, then let
+              // raw-loader turn the result into a string module.
               use: [
                 'raw-loader',
                 {
                   loader: path.resolve(__dirname, 'example-attributes-loader.js'),
                   options: { variables, versionedVariables },
                 },
+                path.resolve(__dirname, 'tag-slice-loader.js'),
               ],
             },
           ],

@@ -4,10 +4,11 @@ sidebar_position: 12
 slug: /data-structures/entry-processor
 ---
 
-import PartialDistributedcomputingIncrementingEntryProcessorJava from '@site/hazelcast/_partials/distributedcomputing-IncrementingEntryProcessor.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_distributedcomputing_IncrementingEntryProcessor_java_tag_iep from '../../../../examples/distributedcomputing/IncrementingEntryProcessor.java?tag=iep';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import PartialDistributedcomputingOffloadableReadOnlyEntryProcessorJava from '@site/hazelcast/_partials/distributedcomputing-OffloadableReadOnlyEntryProcessor.java.mdx';
+import Ex_distributedcomputing_OffloadableReadOnlyEntryProcessor_java_tag_oroep from '../../../../examples/distributedcomputing/OffloadableReadOnlyEntryProcessor.java?tag=oroep';
 
 An entry processor is a function that executes your code on a map entry in an atomic way.
 
@@ -118,7 +119,7 @@ The interface also provides the ability to update the entry value without changi
 
 The class `IncrementingEntryProcessor` creates an entry processor to process the map entries. It implements the `EntryProcessor` interface. The `process()` method will be called for both primary and backup entries.
 
-<PartialDistributedcomputingIncrementingEntryProcessorJava/>
+<CodeBlock language="java">{Ex_distributedcomputing_IncrementingEntryProcessor_java_tag_iep}</CodeBlock>
 
 An example usage is shown below:
 
@@ -272,4 +273,4 @@ If the entry processor implements `ReadOnly` and modifies the entry, an `Unsuppo
 
 Putting it all together:
 
-<PartialDistributedcomputingOffloadableReadOnlyEntryProcessorJava/>
+<CodeBlock language="java">{Ex_distributedcomputing_OffloadableReadOnlyEntryProcessor_java_tag_oroep}</CodeBlock>

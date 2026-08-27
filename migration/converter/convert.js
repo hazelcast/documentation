@@ -44,7 +44,7 @@ const { attrCodeTemplates, buildCodeTemplates, resolveTemplates } = require('./l
 // pulls its brew/apt/yum commands from install-hazelcast, and those name
 // {os-version} where the page itself names {full-version} -- same value, so only
 // the source line can tell them apart.
-const { collectPageTexts } = require('../refcheck/lib/source-refs')
+const { collectPageTexts, collectPageExamples } = require('../refcheck/lib/source-refs')
 const { parseNav, buildPlan, injectNavEntries, pageKey } = require('./lib/nav')
 const { decodeHTML } = require('entities')
 const { loadDispositions, isUnpublished, redirectTo, urlBase, redirectPairs, publishedPageUrls, navInjectionsFor } = require('../lib/dispositions')
@@ -58,6 +58,9 @@ const { wrappableRefs } = require('../antora-extension/mark-attributes')
 // Shared with the build-time example-attributes loader so the match key the
 // converter computes reproduces exactly what the loader renders (no drift).
 const substitute = require('../../plugins/lib/substitute-attributes')
+// The ONE slicer, shared with the build-time tag-slice loader (see
+// plugins/lib/slice-region.js) so the index and the build agree on every region.
+const { allRegions } = require('../../plugins/lib/slice-region')
 // The marking pass's branch grammar, reused so the converter's idea of an
 // `ifdef`/`ifndef` snapshot branch cannot drift from the marker's.
 const { branchesAt } = require('../antora-extension/mark-conditionals')
@@ -429,17 +432,25 @@ function indexManifest (manifest, component, seg) {
 const keyOf = (r) => pageKey(r.module, String(r.relative || '').replace(/\.adoc$/, ''))
 
 // Co-located example files -> a content-addressed index for the converter:
-// canonical file content -> { file, conums }. The converter matches a golden
-// code block's text against this to decide whether to import the file
+// canonical slice content -> { file, query, conums }. The converter matches a
+// golden code block's text against this to decide whether to import the file
 // (single-sourced) instead of baking a fence. Empty when the component has no
 // examples or extract-examples has not run.
+//
+// One entry per SLICE, not per file. Operator includes whole files, but
+// Platform's Java is tag-sliced: one file feeds many pages at many regions
+// (cp/CpSubsystemAPI.java alone is included 11 times at 10 tags). Each slice is
+// indexed with the import query that reproduces it (`?tag=…`, `?lines=…`,
+// `&indent=0`), which the build-time tag-slice loader re-derives from the same
+// shared slicer -- so what the converter matched and what webpack emits cannot
+// diverge.
 //
 // The co-located files are BYTE-FAITHFUL (Antora {attribute} placeholders and
 // native `<N>` conum markers intact), but the golden shows Antora's resolved
 // value and renders conums as `(N)`. So the match key reproduces the golden:
 // substitute attributes with this version's values (`lookup`), then rewrite a
-// trailing `<N>` conum marker to `(N)`. `conums` records whether the raw file
-// carries markers, so the emitted <CodeBlock> gets the `conums` metastring.
+// trailing `<N>` conum marker to `(N)`. `conums` is read off the SLICE, not the
+// file: a file may carry callouts in one region and none in another.
 function loadExamples (examplesDir, lookup) {
   const byContent = new Map()
   if (!fs.existsSync(examplesDir)) return byContent
@@ -449,10 +460,18 @@ function loadExamples (examplesDir, lookup) {
       if (e.isDirectory()) { walk(p); continue }
       const raw = fs.readFileSync(p, 'utf8')
       const rel = path.relative(examplesDir, p).split(path.sep).join('/')
-      byContent.set(exampleKey(raw, lookup), { file: rel, conums: CONUM_LINE.test(raw) })
+      for (const { query, content } of allRegions(raw)) {
+        const key = exampleKey(content, lookup)
+        if (!byContent.has(key)) byContent.set(key, [])
+        byContent.get(key).push({ file: rel, query, conums: CONUM_LINE.test(content) })
+      }
     }
   }
   walk(examplesDir)
+  // Shortest query first WITHIN a file: two queries only ever land on the same
+  // key when they yield identical text, and then the simpler selector is the
+  // honest one (a whole-file include should not be recorded as `?indent=0`).
+  for (const list of byContent.values()) list.sort((a, b) => a.query.length - b.query.length)
   return byContent
 }
 
@@ -1119,13 +1138,20 @@ function convertVersion (ver, ctx) {
     const pageVars = buildPageVars(attrsHere && attrsHere.all, exampleLookup)
     const proseVars = proseVarsFor(pageVars, (attrsHere && attrsHere.prose) || new Set(), markedAttrsFor(component))
     const tpl = buildTemplates(component, [rec], seg, opts.sourcesDir, exampleLookup)
+    // The example files this page's own source includes -- the tie-breaker when
+    // several files hold identical content (see chooseExample).
+    // `example$/foo.java` (the corpus writes the leading slash) resolves to a
+    // coord whose relative keeps it; the co-located tree is keyed without.
+    const pageExampleFiles = rec
+      ? new Set(collectPageExamples(rec, seg, opts.sourcesDir).map((c) => String(c.relative).replace(/^\/+/, '')))
+      : new Set()
     const hrefVars = tpl.hrefs
     const codeVars = tpl.code
     const codeValueVars = codeValueVarsFor(pageVars, tpl.named)
 
     let body, imports
     try {
-      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, hrefVars, codeVars, codeValueVars, latestVersions: ctx.latestVersions, urlToRelFile, imagePlacement }))
+      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageExampleFiles, pageVars, proseVars, hrefVars, codeVars, codeValueVars, latestVersions: ctx.latestVersions, urlToRelFile, imagePlacement }))
       body = withBothConditionalBranches(body, { page: p, rec, relFile, pageVars, proseVars, hrefVars, codeVars, codeValueVars })
     } catch (err) {
       problems.push({ url: p.url, error: err.message })

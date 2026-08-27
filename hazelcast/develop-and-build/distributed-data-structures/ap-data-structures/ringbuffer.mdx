@@ -4,12 +4,13 @@ sidebar_position: 11
 slug: /data-structures/ringbuffer
 ---
 
-import PartialDdsRingbufferExampleRBJava from '@site/hazelcast/_partials/dds-ringbuffer-ExampleRB.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_dds_ringbuffer_ExampleRB_java_tag_rb from '../../../examples/dds/ringbuffer/ExampleRB.java?tag=rb';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import PartialDdsRingbufferWriterJava from '@site/hazelcast/_partials/dds-ringbuffer-Writer.java.mdx';
-import PartialDdsRingbufferTheRingbufferObjectStoreJava from '@site/hazelcast/_partials/dds-ringbuffer-TheRingbufferObjectStore.java.mdx';
-import PartialDdsRingbufferRBConfigurationJava from '@site/hazelcast/_partials/dds-ringbuffer-RBConfiguration.java.mdx';
+import Ex_dds_ringbuffer_Writer_java_tag_writer from '../../../examples/dds/ringbuffer/Writer.java?tag=writer';
+import Ex_dds_ringbuffer_TheRingbufferObjectStore_java_tag_rbstore from '../../../examples/dds/ringbuffer/TheRingbufferObjectStore.java?tag=rbstore';
+import Ex_dds_ringbuffer_RBConfiguration_java_tag_rbc from '../../../examples/dds/ringbuffer/RBConfiguration.java?tag=rbc';
 
 Hazelcast Ringbuffer is a replicated but not partitioned data structure that stores its data in a ring-like structure. You can think of it as a circular array with a given capacity. Each Ringbuffer has a tail and a head. The tail is where the items are added and the head is where the items are overwritten or expired. You can reach each element in a Ringbuffer using a sequence ID, which is mapped to the elements between the head and tail (inclusive) of the Ringbuffer.
 
@@ -17,7 +18,7 @@ Hazelcast Ringbuffer is a replicated but not partitioned data structure that sto
 
 Reading from Ringbuffer is simple: get the Ringbuffer with the HazelcastInstance `getRingbuffer` method, get its current head with the `headSequence` method and start reading. Use the method `readOne` to return the item at the given sequence; `readOne` blocks if no item is available. To read the next item, increment the sequence by one.
 
-<PartialDdsRingbufferExampleRBJava/>
+<CodeBlock language="java">{Ex_dds_ringbuffer_ExampleRB_java_tag_rb}</CodeBlock>
 
 By exposing the sequence, you can now move the item from the Ringbuffer as long as the item is still available. If the item is not available any longer, `StaleSequenceException` is thrown.
 
@@ -150,7 +151,7 @@ Using the overflow policy, you can determine what to do if the oldest item in th
 
 Overflow policy gives you fine control on what to do if the Ringbuffer is full. You can also use the overflow policy to apply a back pressure mechanism. The following example code shows the usage of an exponential backoff.
 
-<PartialDdsRingbufferWriterJava/>
+<CodeBlock language="java">{Ex_dds_ringbuffer_Writer_java_tag_writer}</CodeBlock>
 
 ## Ringbuffer with Persistent Datastore
 
@@ -166,7 +167,7 @@ When adding items to the Ringbuffer, the method `storeAll` allows you to store i
 
 The following example class includes all the `RingbufferStore` methods.
 
-<PartialDdsRingbufferTheRingbufferObjectStoreJava/>
+<CodeBlock language="java">{Ex_dds_ringbuffer_TheRingbufferObjectStore_java_tag_rbstore}</CodeBlock>
 
 `Item` must be serializable. The following is an example of a Ringbuffer with the Ringbuffer store configured and enabled.
 
@@ -454,4 +455,4 @@ hazelcast:
 
 You can also configure a Ringbuffer programmatically. The following is a programmatic version of the above declarative configuration.
 
-<PartialDdsRingbufferRBConfigurationJava/>
+<CodeBlock language="java">{Ex_dds_ringbuffer_RBConfiguration_java_tag_rbc}</CodeBlock>

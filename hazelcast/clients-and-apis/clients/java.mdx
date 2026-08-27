@@ -6,10 +6,11 @@ slug: /clients/java
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import PartialClientsExampleClientConfigurationJava from '@site/hazelcast/_partials/clients-ExampleClientConfiguration.java.mdx';
-import PartialClientsExampleClientAwsConfigJava from '@site/hazelcast/_partials/clients-ExampleClientAwsConfig.java.mdx';
-import PartialClientsListeningClientsJava from '@site/hazelcast/_partials/clients-ListeningClients.java.mdx';
-import PartialClientsExampleRTClientJava from '@site/hazelcast/_partials/clients-ExampleRTClient.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_clients_ExampleClientConfiguration_java_tag_scc from '../../examples/clients/ExampleClientConfiguration.java?tag=scc';
+import Ex_clients_ExampleClientAwsConfig_java_tag_clientaws from '../../examples/clients/ExampleClientAwsConfig.java?tag=clientaws';
+import Ex_clients_ListeningClients_java_tag_lc from '../../examples/clients/ListeningClients.java?tag=lc';
+import Ex_clients_ExampleRTClient_java_tag_rtclient from '../../examples/clients/ExampleRTClient.java?tag=rtclient';
 
 ## Overview
 
@@ -963,7 +964,7 @@ hazelcast-client:
 
 The following example programmatic `network` configuration includes all the parent configuration attributes:
 
-<PartialClientsExampleClientConfigurationJava/>
+<CodeBlock language="java">{Ex_clients_ExampleClientConfiguration_java_tag_scc}</CodeBlock>
 
 The following sections include details and usage examples for sub-elements and attributes.
 
@@ -1602,7 +1603,7 @@ hazelcast-client:
 
 #### Programmatic Configuration {/* #programmatic-configuration-6 */}
 
-<PartialClientsExampleClientAwsConfigJava/>
+<CodeBlock language="java">{Ex_clients_ExampleClientAwsConfig_java_tag_clientaws}</CodeBlock>
 
 For more information on AWS configuration elements (except `use-public-ip`), see [AWS Element section on network configuration](../../operate-and-manage/partition-groups-and-networking/network-configuration.mdx#aws-element).
 
@@ -1632,7 +1633,7 @@ After getting an instance of `IExecutorService`, you can use the instance as the
 
 If you need to track clients and want to listen to their connection events, you can use the `clientConnected()` and `clientDisconnected()` methods of the `ClientService` class. This class must be run on the **member** side. The following code shows an example of how to do this:
 
-<PartialClientsListeningClientsJava/>
+<CodeBlock language="java">{Ex_clients_ListeningClients_java_tag_lc}</CodeBlock>
 
 ### Find the partition of a key
 
@@ -1875,7 +1876,7 @@ Normally when a client uses a Hazelcast data structure, that structure is config
 
 Here is an example programmatic configuration:
 
-<PartialClientsExampleRTClientJava/>
+<CodeBlock language="java">{Ex_clients_ExampleRTClient_java_tag_rtclient}</CodeBlock>
 
 When you create a Reliable Topic structure on your client, a Ringbuffer (with the same name as the Reliable Topic) is automatically created on the member side, with the default configuration. See the [Configuring Ringbuffer section](../../develop-and-build/distributed-data-structures/ap-data-structures/ringbuffer.mdx) for the defaults. You can edit that configuration according to your needs.
 

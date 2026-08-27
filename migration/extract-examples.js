@@ -1,44 +1,70 @@
 'use strict'
 
-// Co-locate a versioned component's `example$` include files so the migration
-// keeps them SINGLE-SOURCED (imported at build) instead of baking each into the
-// prose. See the docusaurus-example-includes-decision note.
+// Co-locate a component's `example$` include files so the migration keeps them
+// SINGLE-SOURCED (imported at build) instead of baking each into the prose. See
+// the docusaurus-example-includes-decision note.
 //
 //   node extract-examples.js --component operator [--versions latest-snapshot,5.18]
 //                            [--sources .sources] [--out-root ..] [--dry]
 //
-// For each version it reads that branch's pages, finds every `include::…example$/
-// FILE[]`, pulls the referenced file from the branch, resolves any `{attribute}`
-// placeholders from the manifest's per-version attributes (Antora does this via
-// `subs="attributes+"`; a raw import would otherwise leave `{…}` literal), and
-// writes the resolved file into that version's co-located `examples/` folder:
-//   latest-snapshot -> ../<component>/examples/
-//   release X       -> ../<component>_versioned_docs/version-X/examples/
-// The converter then content-matches a golden code block to one of these files
-// and emits a raw-loader import + <CodeBlock> instead of a fence.
+// Two placement modes, per component (REPOS[*].mode):
 //
-// Whole-file includes only (operator uses no tag/line slicing); tagged includes
-// (Platform's Java) are a later extension.
+//   usage  (operator) -- copy only the files the branch's pages actually
+//     include. Right for standalone samples: one file, one page, nothing else
+//     depends on it.
+//
+//   tree   (hazelcast/Platform) -- copy the WHOLE examples tree, structure
+//     preserved. Platform's examples are a Maven source root: `pom.xml` sets
+//     sourceDirectory to this tree and CI compiles all of it against the real
+//     hazelcast-enterprise artifact. The unit that has to compile is the tree,
+//     not the referenced subset -- 26 of the 173 .java files are referenced by
+//     no page, and helper classes the referenced ones depend on live among
+//     them. A usage-based copy would not compile. Tree mode also prunes: it
+//     owns the whole directory, so a file deleted upstream must not linger.
+//
+// Files are written BYTE-FAITHFUL -- Antora {attribute} placeholders stay
+// intact, resolved per version at BUILD by the example-attributes webpack
+// loader (no baking here; see docusaurus-attributes-no-baking). Tag/line
+// slicing likewise happens at build, in tag-slice-loader, from the ?tag= /
+// ?lines= query the converter puts on the import.
 
 const fs = require('node:fs')
 const path = require('node:path')
 const { execFileSync } = require('node:child_process')
 
-// Branch model per versioned component (mirror of convert.js NAV_SOURCES).
+const { currentSegFor, refFor, versionsToProcess, outDirFor } = require('./lib/layout')
+
+// Example-file source per component: which mirror holds them, where the tree
+// lives in that repo, and how to place them here. `pagesGlob` is only read in
+// usage mode (tree mode never scans pages).
 const REPOS = {
-  operator: { repo: 'hazelcast-platform-operator-docs.git', examplesDir: 'docs/modules/ROOT/examples', pagesGlob: 'docs/modules/ROOT/pages' },
+  operator: {
+    repo: 'hazelcast-platform-operator-docs.git',
+    examplesDir: 'docs/modules/ROOT/examples',
+    pagesGlob: 'docs/modules/ROOT/pages',
+    mode: 'usage',
+  },
+  hazelcast: {
+    repo: 'hz-docs.git',
+    examplesDir: 'docs/modules/ROOT/examples',
+    mode: 'tree',
+  },
 }
-const CURRENT_SEG = 'latest-snapshot'
-const DEFAULT_VERSIONS = { operator: [CURRENT_SEG, '5.18', '5.17', '5.16', '5.15', '5.14', '5.13', '5.12'] }
 
 function parseArgs (argv) {
   const args = argv.slice(2)
   const val = (f, d) => { const i = args.indexOf(f); return i === -1 ? d : args[i + 1] }
   const component = val('--component', 'operator')
   const versionsArg = val('--versions', null)
+  // An explicit --versions list carries no kind; derive it the way
+  // versionsToProcess does, so outDirFor lands the tree in the right place.
+  const versions = versionsArg
+    ? versionsArg.split(',').map((s) => s.trim()).filter(Boolean)
+      .map((seg) => ({ seg, kind: seg === currentSegFor(component) ? 'current' : 'release' }))
+    : versionsToProcess(component)
   return {
     component,
-    versions: versionsArg ? versionsArg.split(',').map((s) => s.trim()).filter(Boolean) : (DEFAULT_VERSIONS[component] || []),
+    versions,
     sourcesDir: path.resolve(val('--sources', '.sources')),
     manifestDir: path.resolve(val('--manifest', 'build/manifest')),
     outRoot: path.resolve(val('--out-root', '..')),
@@ -46,13 +72,7 @@ function parseArgs (argv) {
   }
 }
 
-const branchFor = (seg) => (seg === CURRENT_SEG ? 'main' : `v/${seg}`)
-
-function outExamplesDir (outRoot, component, seg) {
-  return seg === CURRENT_SEG
-    ? path.join(outRoot, component, 'examples')
-    : path.join(outRoot, `${component}_versioned_docs`, `version-${seg}`, 'examples')
-}
+const outExamplesDir = (outRoot, component, ver) => path.join(outDirFor(outRoot, component, ver), 'examples')
 
 function gitShow (repoDir, ref, file) {
   try {
@@ -62,7 +82,7 @@ function gitShow (repoDir, ref, file) {
   }
 }
 
-// Every distinct `example$/…` file referenced by the branch's pages.
+// Every distinct `example$/…` file referenced by the branch's pages (usage mode).
 function referencedExampleFiles (repoDir, ref, pagesGlob) {
   let out
   try {
@@ -80,28 +100,44 @@ function referencedExampleFiles (repoDir, ref, pagesGlob) {
   return [...rels]
 }
 
+// Every file in the branch's examples tree (tree mode), as paths under it.
+function allExampleFiles (repoDir, ref, examplesDir) {
+  let out
+  try {
+    out = execFileSync('git', ['-C', repoDir, 'ls-tree', '-r', '--name-only', ref, '--', examplesDir], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
+  } catch {
+    return []
+  }
+  return out.split('\n')
+    .filter(Boolean)
+    .map((p) => p.slice(examplesDir.length).replace(/^\//, ''))
+    .filter(Boolean)
+}
+
 function main () {
   const opts = parseArgs(process.argv)
   const cfg = REPOS[opts.component]
   if (!cfg) { console.error(`[extract-examples] no example config for component=${opts.component}`); process.exit(1) }
   const repoDir = path.join(opts.sourcesDir, cfg.repo)
+  const tree = cfg.mode === 'tree'
 
   let total = 0
-  for (const seg of opts.versions) {
-    const ref = branchFor(seg)
-    const rels = referencedExampleFiles(repoDir, ref, cfg.pagesGlob)
-    const dir = outExamplesDir(opts.outRoot, opts.component, seg)
+  for (const ver of opts.versions) {
+    const ref = refFor(opts.component, ver.seg)
+    const rels = tree
+      ? allExampleFiles(repoDir, ref, cfg.examplesDir)
+      : referencedExampleFiles(repoDir, ref, cfg.pagesGlob)
+    const dir = outExamplesDir(opts.outRoot, opts.component, ver)
+
+    // Tree mode owns the directory: clear it so an upstream deletion is not
+    // preserved here as a stale file the converter could still content-match.
+    if (tree && !opts.dry) fs.rmSync(dir, { recursive: true, force: true })
 
     let written = 0
     const missing = []
     for (const rel of rels) {
       const raw = gitShow(repoDir, ref, `${cfg.examplesDir}/${rel}`)
       if (raw == null) { missing.push(rel); continue }
-      // Write the file BYTE-FAITHFUL — keep Antora {attribute} placeholders
-      // intact so the co-located copy stays a true single source of the
-      // engineers' file. The placeholders are resolved per version at BUILD by
-      // the example-attributes webpack loader (no baking here). See the
-      // docusaurus-attributes-no-baking decision.
       if (!opts.dry) {
         const f = path.join(dir, rel)
         fs.mkdirSync(path.dirname(f), { recursive: true })
@@ -110,7 +146,7 @@ function main () {
       written++
     }
     total += written
-    console.log(`[extract-examples] ${opts.component}@${seg}: ${written} example file(s) -> ${path.relative(process.cwd(), dir)}` +
+    console.log(`[extract-examples] ${opts.component}@${ver.seg}: ${written} example file(s) (${cfg.mode}) -> ${path.relative(process.cwd(), dir)}` +
       (missing.length ? `  (${missing.length} not found: ${missing.slice(0, 5).join(', ')}${missing.length > 5 ? '…' : ''})` : ''))
   }
   console.log(`[extract-examples] ${total} file(s) across ${opts.versions.length} version(s)`)

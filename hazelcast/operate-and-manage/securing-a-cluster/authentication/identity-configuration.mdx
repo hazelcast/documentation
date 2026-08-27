@@ -7,6 +7,13 @@ enterprise: true
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_password_realm_xml_tag_password from '../../../examples/hazelcast-password-realm.xml?tag=password';
+import Ex_SecurityXmlTest_java_tag_password_realm from '../../../examples/SecurityXmlTest.java?tag=password-realm';
+import Ex_hazelcast_authentication_types_xml_tag_token from '../../../examples/hazelcast-authentication-types.xml?tag=token';
+import Ex_SecurityXmlTest_java_tag_token_realm from '../../../examples/SecurityXmlTest.java?tag=token-realm';
+import Ex_hazelcast_authentication_types_xml_tag_credentialsFactoryRealm from '../../../examples/hazelcast-authentication-types.xml?tag=credentialsFactoryRealm';
+import Ex_security_CustomLoginModuleTest_java_tag_credentials_callback from '../../../examples/security/CustomLoginModuleTest.java?tag=credentials-callback';
 
 Identity configuration enables you to define your own [credentials](#credentials), which are used to authenticate to other systems.
 
@@ -24,16 +31,7 @@ The username with password is the most typical type of credentials. This is conf
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
 
-```xml
-        <realms>
-            <realm name="passwordRealm">
-                <identity>
-                    <username-password username="member1" password="s3crEt" />
-                </identity>
-            </realm>
-        </realms>
-        <member-authentication realm="passwordRealm" />
-```
+<CodeBlock language="xml">{Ex_hazelcast_password_realm_xml_tag_password}</CodeBlock>
 
 </TabItem>
 <TabItem value="yaml" label="YAML">
@@ -52,11 +50,7 @@ member-authentication:
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java
-        RealmConfig realmConfig = new RealmConfig()
-                .setUsernamePasswordIdentityConfig("member1", "s3crEt");
-        config.getSecurityConfig().setMemberRealmConfig("passwordRealm", realmConfig);
-```
+<CodeBlock language="java">{Ex_SecurityXmlTest_java_tag_password_realm}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -70,18 +64,7 @@ The following two realms define the same token value - bytes of the "Hazelcast" 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
 
-```xml
-            <realm name="tokenRealm1">
-                <identity>
-                    <token>Hazelcast</token>
-                </identity>
-            </realm>
-            <realm name="tokenRealm2">
-                <identity>
-                    <token encoding="base64">SGF6ZWxjYXN0</token>
-                </identity>
-            </realm>
-```
+<CodeBlock language="xml">{Ex_hazelcast_authentication_types_xml_tag_token}</CodeBlock>
 
 </TabItem>
 <TabItem value="yaml" label="YAML">
@@ -102,10 +85,7 @@ realms:
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java
-        TokenIdentityConfig tokenConfig = new TokenIdentityConfig("Hazelcast".getBytes(StandardCharsets.US_ASCII));
-        RealmConfig realmConfig = new RealmConfig().setTokenIdentityConfig(tokenConfig);
-```
+<CodeBlock language="java">{Ex_SecurityXmlTest_java_tag_token_realm}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -129,17 +109,7 @@ See the following sample configuration:
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
 
-```xml
-            <realm name="credentialsFactoryRealm">
-                <identity>
-                    <credentials-factory class-name="com.examples.TOTPCredentialsFactory">
-                        <properties>
-                            <property name="seed">3132333435363738393031323334353637383930</property>
-                        </properties>
-                    </credentials-factory>
-                </identity>
-            </realm>
-```
+<CodeBlock language="xml">{Ex_hazelcast_authentication_types_xml_tag_credentialsFactoryRealm}</CodeBlock>
 
 </TabItem>
 <TabItem value="yaml" label="YAML">
@@ -192,22 +162,4 @@ public interface TokenCredentials extends Credentials {
 
 The `Credentials` instance can be retrieved in the login modules by handling a `CredentialsCallback`, as shown below:
 
-```java
-            CredentialsCallback credcb = new CredentialsCallback();
-            try {
-                callbackHandler.handle(new Callback[] { credcb });
-            } catch (IOException | UnsupportedCallbackException e) {
-                throw new LoginException("Unable to retrieve credentials");
-            }
-            Credentials credentials = credcb.getCredentials();
-            if (credentials instanceof PasswordCredentials) {
-                PasswordCredentials passwordCredentials = (PasswordCredentials) credentials;
-                if (expectedName.equals(credentials.getName())
-                        && expectedPassword.equals(passwordCredentials.getPassword())) {
-                    name = credentials.getName();
-                    addRole(name);
-                    return true;
-                }
-            }
-            throw new FailedLoginException("Credentials verification failed.");
-```
+<CodeBlock language="java">{Ex_security_CustomLoginModuleTest_java_tag_credentials_callback}</CodeBlock>

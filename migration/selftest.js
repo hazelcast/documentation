@@ -14,6 +14,7 @@ const { runScripts } = require('./lib/run-scripts')
 const SUITES = [
   { name: 'layout', script: 'lib/selftest.js' },
   { name: 'image-placement', script: 'lib/image-placement-selftest.js' },
+  { name: 'slice-region', script: 'lib/slice-region-selftest.js' },
   { name: 'accepted', script: 'lib/accepted-selftest.js' },
   { name: 'dispositions', script: 'lib/dispositions-selftest.js' },
   { name: 'converter', script: 'converter/selftest.js' },

@@ -6,13 +6,14 @@ slug: /maintain-cluster/monitoring
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import PartialManagementExampleLocalMapStatsJava from '@site/hazelcast/_partials/management-ExampleLocalMapStats.java.mdx';
-import PartialManagementExampleLocalIndexStatsJava from '@site/hazelcast/_partials/management-ExampleLocalIndexStats.java.mdx';
-import PartialManagementExampleNearCacheStatsJava from '@site/hazelcast/_partials/management-ExampleNearCacheStats.java.mdx';
-import PartialManagementExampleMultiMapStatsJava from '@site/hazelcast/_partials/management-ExampleMultiMapStats.java.mdx';
-import PartialManagementExampleQueueStatsJava from '@site/hazelcast/_partials/management-ExampleQueueStats.java.mdx';
-import PartialManagementExampleTopicStatsJava from '@site/hazelcast/_partials/management-ExampleTopicStats.java.mdx';
-import PartialManagementExampleExecutorStatsJava from '@site/hazelcast/_partials/management-ExampleExecutorStats.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_management_ExampleLocalMapStats_java_tag_lms from '../../examples/management/ExampleLocalMapStats.java?tag=lms';
+import Ex_management_ExampleLocalIndexStats_java_tag_lis from '../../examples/management/ExampleLocalIndexStats.java?tag=lis';
+import Ex_management_ExampleNearCacheStats_java_tag_ncs from '../../examples/management/ExampleNearCacheStats.java?tag=ncs';
+import Ex_management_ExampleMultiMapStats_java_tag_mms from '../../examples/management/ExampleMultiMapStats.java?tag=mms';
+import Ex_management_ExampleQueueStats_java_tag_qs from '../../examples/management/ExampleQueueStats.java?tag=qs';
+import Ex_management_ExampleTopicStats_java_tag_ts from '../../examples/management/ExampleTopicStats.java?tag=ts';
+import Ex_management_ExampleExecutorStats_java_tag_es from '../../examples/management/ExampleExecutorStats.java?tag=es';
 
 ## Best practices {/* #monitoring-best-practices */}
 
@@ -548,7 +549,7 @@ To get local map statistics, use the `getLocalMapStats()` method from the `IMap`
 
 Below is an example code where the `getLocalMapStats()` method and the `getOwnedEntryCount()` method get the number of entries owned by this member.
 
-<PartialManagementExampleLocalMapStatsJava/>
+<CodeBlock language="java">{Ex_management_ExampleLocalMapStats_java_tag_lms}</CodeBlock>
 
 :::note
 
@@ -575,7 +576,7 @@ To access map index statistics, if you are using indexes to speed up map queries
 
 Below is an example where the `getIndexStats()` method is used to examine an average selectivity of index hits:
 
-<PartialManagementExampleLocalIndexStatsJava/>
+<CodeBlock language="java">{Ex_management_ExampleLocalIndexStats_java_tag_lis}</CodeBlock>
 
 The following are some of the metrics that you can obtain via the `LocalIndexStats` interface:
 
@@ -616,7 +617,7 @@ To get Near Cache statistics, use the `getNearCacheStats()` method from the `Loc
 
 Below is an example code where the `getNearCacheStats()` method and the `getRatio` method from `NearCacheStats` get a Near Cache hit/miss ratio.
 
-<PartialManagementExampleNearCacheStatsJava/>
+<CodeBlock language="java">{Ex_management_ExampleNearCacheStats_java_tag_ncs}</CodeBlock>
 
 The following are some of the metrics that you can access via the `NearCacheStats` object (applies to both client and member Near Caches):
 
@@ -633,7 +634,7 @@ To get MultiMap statistics, use the `getLocalMultiMapStats()` method from the `M
 
 Below is an example code where the `getLocalMultiMapStats()` method and the `getLastUpdateTime` method from `LocalMultiMapStats` get the last update time.
 
-<PartialManagementExampleMultiMapStatsJava/>
+<CodeBlock language="java">{Ex_management_ExampleMultiMapStats_java_tag_mms}</CodeBlock>
 
 The following are some of the metrics that you can access via the `LocalMultiMapStats` object:
 
@@ -653,7 +654,7 @@ To get local queue statistics, use the `getLocalQueueStats()` method from the `I
 
 Below is an example code where the `getLocalQueueStats()` method and the `getAverageAge` method from `LocalQueueStats` get the average age of items.
 
-<PartialManagementExampleQueueStatsJava/>
+<CodeBlock language="java">{Ex_management_ExampleQueueStats_java_tag_qs}</CodeBlock>
 
 The following are some of the metrics that you can access via the \`LocalQueueStats \` object:
 
@@ -670,7 +671,7 @@ To get local topic statistics, use the `getLocalTopicStats()` method from the `I
 
 Below is an example code where the `getLocalTopicStats()` method and the `getPublishOperationCount` method from `LocalTopicStats` get the number of publish operations.
 
-<PartialManagementExampleTopicStatsJava/>
+<CodeBlock language="java">{Ex_management_ExampleTopicStats_java_tag_ts}</CodeBlock>
 
 The following are the metrics that you can access via the \`LocalTopicStats \` object:
 
@@ -692,7 +693,7 @@ To get local executor statistics, use the `getLocalExecutorStats()` method from 
 
 Below is an example code where the `getLocalExecutorStats()` method and the `getCompletedTaskCount` method from `LocalExecutorStats` get the number of completed operations of the executor service.
 
-<PartialManagementExampleExecutorStatsJava/>
+<CodeBlock language="java">{Ex_management_ExampleExecutorStats_java_tag_es}</CodeBlock>
 
 The following are some of the metrics that you can access via the \`LocalExecutorStats \` object:
 

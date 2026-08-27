@@ -6,14 +6,15 @@ slug: /network-partitioning/split-brain-recovery
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import PartialNetworkpartitioningMergePolicyJava from '@site/hazelcast/_partials/networkpartitioning-MergePolicy.java.mdx';
-import PartialNetworkpartitioningMergeIntegerValuesMergePolicyJava from '@site/hazelcast/_partials/networkpartitioning-MergeIntegerValuesMergePolicy.java.mdx';
-import PartialNetworkpartitioningMergeCollectionOfIntegerValuesMergePolicyJava from '@site/hazelcast/_partials/networkpartitioning-MergeCollectionOfIntegerValuesMergePolicy.java.mdx';
-import PartialNetworkpartitioningMergeIntegerValuesMergePolicy2Java from '@site/hazelcast/_partials/networkpartitioning-MergeIntegerValuesMergePolicy2.java.mdx';
-import PartialNetworkpartitioningUserContextMergePolicyJava from '@site/hazelcast/_partials/networkpartitioning-UserContextMergePolicy.java.mdx';
-import PartialNetworkpartitioningComposedHitsAndCreationTimeMergePolicyJava from '@site/hazelcast/_partials/networkpartitioning-ComposedHitsAndCreationTimeMergePolicy.java.mdx';
-import PartialNetworkpartitioningMapEntryCostsMergePolicyJava from '@site/hazelcast/_partials/networkpartitioning-MapEntryCostsMergePolicy.java.mdx';
-import PartialNetworkpartitioningAtomicReferenceMergeIntegerValuesMergePolicyJava from '@site/hazelcast/_partials/networkpartitioning-AtomicReferenceMergeIntegerValuesMergePolicy.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_networkpartitioning_MergePolicy_java_tag_mp from '../../../examples/networkpartitioning/MergePolicy.java?tag=mp';
+import Ex_networkpartitioning_MergeIntegerValuesMergePolicy_java_tag_mivmp from '../../../examples/networkpartitioning/MergeIntegerValuesMergePolicy.java?tag=mivmp';
+import Ex_networkpartitioning_MergeCollectionOfIntegerValuesMergePolicy_java_tag_mc from '../../../examples/networkpartitioning/MergeCollectionOfIntegerValuesMergePolicy.java?tag=mc';
+import Ex_networkpartitioning_MergeIntegerValuesMergePolicy2_java_tag_mivmp2 from '../../../examples/networkpartitioning/MergeIntegerValuesMergePolicy2.java?tag=mivmp2';
+import Ex_networkpartitioning_UserContextMergePolicy_java_tag_ucmp from '../../../examples/networkpartitioning/UserContextMergePolicy.java?tag=ucmp';
+import Ex_networkpartitioning_ComposedHitsAndCreationTimeMergePolicy_java_tag_ch from '../../../examples/networkpartitioning/ComposedHitsAndCreationTimeMergePolicy.java?tag=ch';
+import Ex_networkpartitioning_MapEntryCostsMergePolicy_java_tag_me from '../../../examples/networkpartitioning/MapEntryCostsMergePolicy.java?tag=me';
+import Ex_networkpartitioning_AtomicReferenceMergeIntegerValuesMergePolicy_java_tag_ar from '../../../examples/networkpartitioning/AtomicReferenceMergeIntegerValuesMergePolicy.java?tag=ar';
 
 Hazelcast deploys a background task that periodically searches for split clusters. When a split is detected, the side that will initiate the merge process is decided. This decision is based on the cluster size; the smaller cluster, by member count, merges into the bigger one. If they have an equal number of members, then a hashing algorithm determines the merging cluster. When deciding the merging side, both sides ensure that there's no overlap in their member lists. In some cases, recovery from split-brain may be problematic due to discovery issues; see [Eliminating Unsuccessful Cluster Merges](#eliminating-unsuccessful-cluster-merges) on how to overcome these issues.
 
@@ -212,7 +213,7 @@ hazelcast:
 
 Here are examples how merge policies can be specified for various data structures:
 
-<PartialNetworkpartitioningMergePolicyJava/>
+<CodeBlock language="java">{Ex_networkpartitioning_MergePolicy_java_tag_mp}</CodeBlock>
 
 Here is how merge policies are specified for `ICache` (you can only set the merge policy classname):
 
@@ -442,15 +443,15 @@ If you need the deserialized key or value, you have to call `MergingValue.getVal
 
 This is an example which checks if the (deserialized) value of the `mergingValue` or `existingValue` is an `Integer`. If so it is merged, otherwise `null` is returned (which removes the entry):
 
-<PartialNetworkpartitioningMergeIntegerValuesMergePolicyJava/>
+<CodeBlock language="java">{Ex_networkpartitioning_MergeIntegerValuesMergePolicy_java_tag_mivmp}</CodeBlock>
 
 For data structures like `ISet` or `ICollection` you need a merge policy, which supports collections:
 
-<PartialNetworkpartitioningMergeCollectionOfIntegerValuesMergePolicyJava/>
+<CodeBlock language="java">{Ex_networkpartitioning_MergeCollectionOfIntegerValuesMergePolicy_java_tag_mc}</CodeBlock>
 
 You can also combine both merge policies to support single values and collections. This merge policy is a bit more complex and less type safe, but can be configured on all data structures:
 
-<PartialNetworkpartitioningMergeIntegerValuesMergePolicy2Java/>
+<CodeBlock language="java">{Ex_networkpartitioning_MergeIntegerValuesMergePolicy2_java_tag_mivmp2}</CodeBlock>
 
 :::note
 
@@ -468,7 +469,7 @@ If you return `null` on a collection based data structure, the whole data struct
 
 If you need access to external references in your merge policy, you can use the Hazelcast `UserContext` to get them injected. An example would be a database connection to check which value is stored in your database. To achieve this your merge policy needs to implement `HazelcastInstanceAware` and call `HazelcastInstance.getUserContext()`:
 
-<PartialNetworkpartitioningUserContextMergePolicyJava/>
+<CodeBlock language="java">{Ex_networkpartitioning_UserContextMergePolicy_java_tag_ucmp}</CodeBlock>
 
 The `UserContext` can be setup like this:
 
@@ -501,7 +502,7 @@ Also, the `com.hazelcast.core.LifeCycleEvent.MERGED` is thrown after a timeout (
 
 You can also write a merge policy, which requires multiple merge types. This merge policy is supported by all data structures, which provide `MergingHits` and `MergingCreationTime`:
 
-<PartialNetworkpartitioningComposedHitsAndCreationTimeMergePolicyJava/>
+<CodeBlock language="java">{Ex_networkpartitioning_ComposedHitsAndCreationTimeMergePolicy_java_tag_ch}</CodeBlock>
 
 If you configure this merge policy on a data structures, which does not provide these merge types, you get an `InvalidConfigurationException` with a message like:
 
@@ -516,7 +517,7 @@ See SplitBrainMergingTypes for supported merging types.
 
 It's also possible to restrict a merge policy to a specific data structure. This merge policy, for example, only works on `IMap`:
 
-<PartialNetworkpartitioningMapEntryCostsMergePolicyJava/>
+<CodeBlock language="java">{Ex_networkpartitioning_MapEntryCostsMergePolicy_java_tag_me}</CodeBlock>
 
 If you configure it on other data structures, you get an `InvalidConfigurationException` with a message like:
 
@@ -529,7 +530,7 @@ See SplitBrainMergingTypes for supported merging types.
 
 This is another example for a merge policy, which only works on the `IAtomicReference`:
 
-<PartialNetworkpartitioningAtomicReferenceMergeIntegerValuesMergePolicyJava/>
+<CodeBlock language="java">{Ex_networkpartitioning_AtomicReferenceMergeIntegerValuesMergePolicy_java_tag_ar}</CodeBlock>
 
 Although every data structure supports `MergingValue`, which is the only merge type of `AtomicReferenceMergeTypes`, this merge policy is restricted to `IAtomicReference` data structures:
 

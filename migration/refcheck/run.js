@@ -81,7 +81,7 @@ const byUrl = (dir) => new Map(goldenPages(dir).map((p) => [p.url, p.file]))
 // — a second baked occurrence on the same page changes the key and fails.
 function acceptKey (f) {
   const where = `refs:${f.cls}:${f.component}@${f.seg || ''} ${f.url} `
-  if (f.cls === 'examples') return `${where}${f.count} example include(s)`
+  if (f.cls === 'examples') return `${where}${f.reason || f.count + ' example include(s)'}`
   if (f.cls === 'inert') return `${where}{${f.name}} ×${f.count}`
   return `${where}{${f.name}} ${f.expected}->${f.actual}`
 }
@@ -125,7 +125,7 @@ function main () {
   const guardFails = []     // unmasking the census did not reproduce the golden
   const exampleFindings = []
   const dispositionTally = new Map()
-  const counts = { pages: 0, checked: 0, pending: 0, noCensus: 0, anchorDerived: 0 }
+  const counts = { pages: 0, checked: 0, pending: 0, noCensus: 0, anchorDerived: 0, exPages: 0, exSites: 0, exUses: 0, exOver: 0 }
   const dispositions = loadDispositions()
   const { accept, errors: acceptErrors } = loadAccepted(path.join(__dirname, 'accepted.json'))
 
@@ -190,14 +190,53 @@ function main () {
 
         // --- (3) examples ----------------------------------------------------
         // A page that pulls example$ includes must single-source them as imports,
-        // not bake them as literal fences. Still a FLOOR, not an accounting: the
-        // converter matches examples by CONTENT and dedupes identical ones, so
-        // per-include matching would false-positive on every dedup. Extending the
-        // partial-boundary marker to the example family is what would make this
-        // exact; until then a page importing >= 1 example passes.
+        // not bake them as literal fences. This is an ACCOUNTING, not a floor:
+        // one import used once per include site, drawn from a file the page
+        // actually names.
+        //
+        // Two independent facts are checked, because they fail differently:
+        //
+        //   count  -- USES of example imports must equal include sites. Uses, not
+        //     imports: a page showing ten regions of one file has ten include
+        //     sites and ten imports, but a page showing one region twice has two
+        //     sites and one (deduped) import used twice. The old floor passed a
+        //     page that imported 1 of its 10 slices and baked the rest, which is
+        //     exactly what the accidental partial-factoring used to do.
+        //
+        //   file   -- every imported example must be one the page's own source
+        //     includes. Content matching alone cannot tell two byte-identical
+        //     files apart (GroupingClusters.java / GroupingClusters2.java), and
+        //     importing the wrong one severs the doc<->source link silently: the
+        //     page keeps rendering the other file's copy for ever.
+        //
+        // Selectors are deliberately NOT compared. `lines=36..47` and `tag=fib`
+        // can name the same region (executor-service does exactly this), and the
+        // converter is right to prefer the tag; the count and the file are what
+        // carry the guarantee.
         const examples = collectPageExamples(resource, seg, opts.sourcesDir)
-        if (examples.length && exampleImports(pageFile, opts.outRoot).size === 0) {
-          exampleFindings.push({ ...scope, count: examples.length })
+        if (examples.length) {
+          const wanted = new Set(examples.map((c) => String(c.relative).replace(/^\/+/, '')))
+          const imported = exampleImports(pageFile, opts.outRoot)
+          let uses = 0
+          const foreign = []
+          counts.exPages++
+          counts.exSites += examples.length
+          for (const im of imported.values()) {
+            uses += im.uses
+            if (!wanted.has(im.rel)) foreign.push(im.rel + im.query)
+          }
+          counts.exUses += uses
+          // Over-use is surfaced, not failed. A page can legitimately render an
+          // example more often than its source includes it -- both halves of a
+          // spliced `snapshot` conditional are present in the MDX though only one
+          // reaches the reader. But it is worth SEEING, because an over-count on
+          // one example could otherwise net out a genuine bake of another.
+          if (uses > examples.length) counts.exOver++
+          if (uses < examples.length) {
+            exampleFindings.push({ ...scope, count: examples.length, uses, reason: `${examples.length - uses} of ${examples.length} example include(s) baked` })
+          } else if (foreign.length) {
+            exampleFindings.push({ ...scope, count: examples.length, uses, reason: `imports example(s) the page does not include: ${foreign.slice(0, 3).join(', ')}` })
+          }
         }
       }
     }
@@ -275,6 +314,13 @@ function report (opts, counts, f, dispositionTally) {
   }
   if (counts.anchorDerived) {
     console.log(`[refcheck] census guard: ${counts.anchorDerived} page(s) differ from golden only in derived anchor ids (expected)`)
+  }
+  if (counts.exSites) {
+    // Say the accounting out loud. A gate that only speaks when it fails cannot
+    // be told apart from a gate that is not running -- and this one silently
+    // passed a 110-of-179 shortfall while it was only a floor.
+    console.log(`[refcheck] examples: ${counts.exUses}/${counts.exSites} example$ include site(s) single-sourced across ${counts.exPages} page(s)` +
+      (counts.exOver ? `  (${counts.exOver} page(s) render an example more often than the source includes it — expected where a conditional branch is spliced)` : ''))
   }
 
   // Accepted: reported EVERY run, deliberately above the pass/fail line. The
@@ -361,9 +407,9 @@ function report (opts, counts, f, dispositionTally) {
   }
 
   if (f.examples.length) {
-    console.log(`\n[refcheck] ✗ ${f.examples.length} page(s) bake ALL their example$ includes (no import at all):`)
+    console.log(`\n[refcheck] ✗ ${f.examples.length} page(s) do not single-source their example$ includes:`)
     for (const e of f.examples.sort((a, b) => a.url.localeCompare(b.url))) {
-      console.log(`      ${e.component}${e.seg ? '@' + e.seg : ''}  ${e.url}  (${e.count} example include(s))`)
+      console.log(`      ${e.component}${e.seg ? '@' + e.seg : ''}  ${e.url}  ${e.reason || `(${e.count} example include(s))`}`)
     }
   }
   console.log(`\n[refcheck] report -> ${path.relative(process.cwd(), outFile)}`)

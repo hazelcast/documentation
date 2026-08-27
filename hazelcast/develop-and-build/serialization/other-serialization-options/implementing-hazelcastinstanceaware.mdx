@@ -5,13 +5,14 @@ sidebar_position: 6
 slug: /serialization/implementing-hazelcastinstanceaware
 ---
 
-import PartialSerializationPersonAwrJava from '@site/hazelcast/_partials/serialization-PersonAwr.java.mdx';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_serialization_PersonAwr_java_tag_personawr from '../../../examples/serialization/PersonAwr.java?tag=personawr';
 
 You can implement the `HazelcastInstanceAware` interface to access distributed objects for cases where an object is deserialized and needs access to HazelcastInstance.
 
 Let's implement it for the `Employee` class mentioned in the [Custom Serialization section](../custom-serialization.mdx).
 
-<PartialSerializationPersonAwrJava/>
+<CodeBlock language="java">{Ex_serialization_PersonAwr_java_tag_personawr}</CodeBlock>
 
 After deserialization, the object is checked to see if it implements `HazelcastInstanceAware` and the method `setHazelcastInstance` is called. Notice the `hazelcastInstance` is `transient`. This is because this field should not be serialized.
 
