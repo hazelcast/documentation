@@ -90,6 +90,9 @@ function convertBody (html, ctx) {
     // The example files this page's source actually includes; disambiguates a
     // content match when several files hold identical text (chooseExample).
     pageExampleFiles: ctx.pageExampleFiles || new Set(),
+    // Block ids already emitted as <Anchor> on this page (convertBlock), so a
+    // nested re-visit cannot register the same id twice.
+    blockAnchors: new Set(),
     exampleVars: new Map(),
     usedVarNames: new Set(),
     // Single-sourced doc variables to put BACK (value -> name), scoped to the
@@ -375,7 +378,32 @@ function anchorsIn ($, node) {
   return $(node).find('a[id]:not([href])').toArray().map((a) => anchorJsx(a.attribs.id)).join('')
 }
 
+// Carry a BLOCK's own `id` across as a registered anchor.
+//
+// AsciiDoc `[[id]]` above a paragraph, table or listing block is a link target
+// that is NOT a heading: Asciidoctor puts the id on the block element itself
+// (`<div id=… class="paragraph">`, `<table id=…>`, `<div id=… class="listingblock">`),
+// and every converter branch below reads the block's CONTENT, so the id was
+// dropped and every `<<id>>` pointing at it became a dead anchor -- 12 of them
+// across 8 Platform pages, invisible to Layer 1 and 2 (an anchor has no text and
+// is not a counted element) and caught only by Layer 3.
+//
+// Emitted as <Anchor>, not a bare `<span id>`, for the reason that component
+// exists: only a registered anchor is visible to Docusaurus's broken-anchor
+// validation. Deduped per page -- the same id emitted twice would be a duplicate
+// DOM id and a duplicate registration.
 function convertBlock ($, node, st, depth) {
+  const out = convertBlockInner($, node, st, depth)
+  const id = node.attribs && node.attribs.id
+  // Headings register their own id, and `preamble` is Asciidoctor's structural
+  // wrapper rather than an authored target.
+  if (!id || !out.trim() || /^h[1-6]$/.test(node.name) || id === 'preamble') return out
+  if (st.blockAnchors.has(id) || out.includes(`<Anchor id="${id}"`)) return out
+  st.blockAnchors.add(id)
+  return `${anchorJsx(id)}\n\n${out}`
+}
+
+function convertBlockInner ($, node, st, depth) {
   const name = node.name
   const cls = classes(node)
 

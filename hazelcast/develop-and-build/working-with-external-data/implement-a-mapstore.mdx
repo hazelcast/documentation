@@ -41,6 +41,8 @@ By default, MapStores are loaded as soon as the first cluster member starts. If 
 
 The `destroy()` method is called during the graceful shutdown of a Hazelcast member. You can override this method to clean up the resources held by the MapStore, such as closing the database connections.
 
+<Anchor id="configuring-a-connection-using-properties"/>
+
 You can declaratively specify the database properties in your configuration file and then implement the `init()` method to receive those properties. For example, you can define the database URL and name, using the `properties` configuration element. The following is a configuration example for MongoDB:
 
 <Tabs groupId="config-format">
@@ -90,6 +92,8 @@ hazelcast:
 The first time you create a map that is configured with a MapStore, the map is empty. As a result, the Hazelcast cluster must request data from the external system. Depending on the amount of data Hazelcast needs to request, the map may take a long time to be populated with entries from the external system. The fastest way to retrieve entries from the external system is to use the `MapLoader.loadAllKeys()` method. When you implement this method, each Hazelcast member connects to the database in parallel to request entries in its owned partitions.
 
 The `MapLoader.loadAllKeys()` method can return all, some, or none of the keys. For example, you can specify a range of keys to be loaded, then rely on read-through to load the remaining keys on demand. Or, you can return a `null` value so that no data is loaded from the external system.
+
+<Anchor id="loading-keys-incrementally"/>
 
 If the number of keys to load is large, it is more efficient to load them incrementally rather than loading them all at once. To support incremental loading, the `MapLoader.loadAllKeys()` method returns an `Iterable` which can be lazily populated with the results of a database query. Hazelcast iterates over the returned data and, while doing so, sends the keys to their respective owner members. The iterator that was returned from the `MapLoader.loadAllKeys()` method may also implement the `Closeable` interface, in which case the iterator is closed when the iteration is over. This is intended for releasing resources such as closing a JDBC result set.
 
