@@ -46,6 +46,7 @@ const { attrCodeTemplates, buildCodeTemplates, resolveTemplates } = require('./l
 // the source line can tell them apart.
 const { collectPageTexts } = require('../refcheck/lib/source-refs')
 const { parseNav, buildPlan, injectNavEntries, pageKey } = require('./lib/nav')
+const { decodeHTML } = require('entities')
 const { loadDispositions, isUnpublished, redirectTo, urlBase, redirectPairs, publishedPageUrls, navInjectionsFor } = require('../lib/dispositions')
 // Co-located image placement, computed from the reference graph. The converter
 // is the only thing that knows every page's OUTPUT FILE (the nav plan decides
@@ -416,7 +417,9 @@ function indexManifest (manifest, component, seg) {
     if (r.family !== 'page' || !r.url || r.component !== component) continue
     if (seg && r.version !== seg) continue
     byUrl.set(r.url, r)
-    if (r.title) titleByKey.set(keyOf(r), r.title)
+    // Decoded here, not at the frontmatter: this map also supplies nav LABELS and
+    // category folder names, so a raw entity would reach the sidebar and the paths.
+    if (r.title) titleByKey.set(keyOf(r), titleText(r.title))
   }
   return { byUrl, titleByKey }
 }
@@ -790,10 +793,20 @@ function frontmatter (title, { derived, slug, sidebarLabel, sidebarPosition, unl
 
 const yaml = (s) => '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'
 
+// A page title as a READER sees it, not as HTML. Both sources of a title are
+// already-converted HTML and so carry entities: Antora's manifest stores
+// Asciidoctor's `doctitle` (`C&#43;&#43; Client`, `What&#8217;s New in ...`), and
+// deriveTitle scrapes an <h1>. Frontmatter is YAML, not HTML, so an entity left
+// in there reaches the browser tab, the sidebar and the search index literally.
+// Decoded in ONE place, through the same entity table cheerio uses, rather than
+// the hand-rolled two-entity replace this used to carry -- which covered the
+// curly apostrophe and silently missed `&#43;` and `&amp;`.
+const titleText = (s) => decodeHTML(String(s)).replace(/\s+/g, ' ').trim()
+
 function deriveTitle (html) {
   const m = html.match(/<h[1-6][^>]*>(?:<a[^>]*><\/a>)?([\s\S]*?)<\/h[1-6]>/i)
   if (!m) return null
-  return m[1].replace(/<[^>]+>/g, '').replace(/&#8217;|&#x2019;/g, "'").replace(/\s+/g, ' ').trim()
+  return titleText(m[1].replace(/<[^>]+>/g, ''))
 }
 
 // Convert ONE (component, version) into its own docs tree. Returns a small
@@ -1097,7 +1110,7 @@ function convertVersion (ver, ctx) {
     if (!entry) orphans.push(p.url)
 
     const html = readGoldenRaw(p)
-    let title = rec && rec.title
+    let title = rec && rec.title ? titleText(rec.title) : null
     let derived = false
     if (!title) { title = deriveTitle(html); derived = true }
     if (!title) { title = (stem || 'index').replace(/-/g, ' '); derived = true }
