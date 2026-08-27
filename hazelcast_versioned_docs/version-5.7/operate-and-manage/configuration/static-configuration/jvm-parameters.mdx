@@ -1,0 +1,41 @@
+---
+title: "Configuring JVM Parameters"
+sidebar_label: "JVM Parameters"
+sidebar_position: 4
+slug: /configuration/jvm-parameters
+---
+
+You can configure the required JVM parameters such as the heap size in the `jvm.options` file in the `config/` directory of your Hazelcast distribution. Use one option per line. You can also use `#` at the beginning of the line for comments.
+
+For example, to start Hazelcast with a 8GB heap use the following content in the `jvm.options` file:
+
+```plain
+# JVM Configuration
+-Xmx8G
+```
+
+You can also use the `JAVA_OPTS` environment variable for ad-hoc configuration option. For example, to start Hazelcast with a 8GB heap, you can use the following command:
+
+```bash
+JAVA_OPTS=-Xmx8G bin/jet-start
+```
+
+You can use the `JAVA_OPTS` also to pass additional properties to Hazelcast:
+
+```plain
+JAVA_OPTS=-Dhazelcast.operation.thread.count=4 bin/jet-start
+```
+
+To mask sensitive data in logs passed via `JAVA_OPTS`, use the `maskOpts` parameter. `maskOpts` should contain a comma-separated list of option keys to mask. This parameter must be included within `JAVA_OPTS`.
+
+Usage example:
+
+```bash
+JAVA_OPTS="-Djavax.net.ssl.keyStorePassword=keypassword -Djavax.net.ssl.trustStorePassword=trustpassword -DmaskOpts=javax.net.ssl.keyStorePassword,javax.net.ssl.trustStorePassword"
+```
+
+This will produce logs like:
+
+```bash
+... -Djavax.net.ssl.keyStorePassword=**** -Djavax.net.ssl.trustStorePassword=***
+```

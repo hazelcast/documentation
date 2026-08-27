@@ -1,0 +1,89 @@
+---
+title: "FIPS 140-2"
+sidebar_position: 3
+slug: /security/fips-140-2
+enterprise: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+The Federal Information Processing Standard (FIPS) 140-2 is a US government computer security standard published by National Institute of Standards and Technology (NIST). It specifies the security requirements for cryptographic modules. FIPS 140-2 compliance is often a requirement of the software systems used by the US government agencies.
+
+The NIST manages a list of FIPS certified cryptographic modules. These modules are certified under the Cryptographic Module Validation Program. The list can be searched online at the [NIST website](https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search).
+
+Hazelcast uses external modules for cryptographic tasks, and it can be configured to use a FIPS 140-2 validated module. It means, most of the configuration required for FIPS is outside the Hazelcast configuration. To run Hazelcast in the FIPS compliant mode, you have to set the underlying Java runtime into FIPS mode. It may also require switching the underlying Operating System into the FIPS mode. We consider using a FIPS enabled OS as a recommended approach even in cases when it's not asked for explicitly.
+
+Hazelcast is not an authority which should document switching different Java runtimes into the FIPS mode. Please consult the documentation of your Java version to learn how to enable the FIPS mode. Usually it means changing the list of security providers in the `java.security` JRE configuration file.
+
+Hazelcast is only responsible for enabling the OpenSSL native library into the FIPS mode (see the [Integrating OpenSSL section](../tls/integrating-openssl.mdx)). If the Hazelcast cluster configuration enables TLS communication using the native OpenSSL library, you have to enable its FIPS mode in the Hazelcast `OpenSSLEngineFactory` configuration. The FIPS mode is controlled by an optional boolean property called `fipsMode`. It is disabled by default (`false`).
+
+The following is an example OpenSSL configuration in the FIPS mode.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <network>
+        <ssl enabled="true">
+            <factory-class-name>com.hazelcast.nio.ssl.OpenSSLEngineFactory</factory-class-name>
+
+            <properties>
+                <property name="fipsMode">true</property>
+                <property name="protocol">TLSv1.2</property>
+                <property name="trustCertCollectionFile">trusted-certs.pem</property>
+                <property name="keyFile">privkey.pem</property>
+                <property name="keyCertChainFile">chain.pem</property>
+            </properties>
+        </ssl>
+    </network>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  network:
+    ssl:
+      enabled: true
+      factory-class-name: com.hazelcast.nio.ssl.OpenSSLEngineFactory
+      properties:
+        fipsMode: true
+        protocol: TLSv1.2
+        trustCertCollectionFile: trusted-certs.pem
+        keyFile: privkey.pem
+        keyCertChainFile: chain.pem
+```
+
+</TabItem>
+</Tabs>
+
+When the `fipsMode` property is set to `true`, the native OpenSSL engine is either set to the FIPS mode, or an exception is thrown, e.g., in the cases when OpenSSL is compiled without the FIPS support.
+
+If there are more Hazelcast instances (members or clients) with TLS enabled employing the OpenSSL, then all of them must have the `fipsMode` property configured in the same way, either enabled or disabled.
+
+When the FIPS mode is successfully enabled, you will see the following `INFO` level message in the log files.
+
+```none
+OpenSSL is enabled in FIPS mode.
+```
+
+:::note
+
+BoringSSL libraries don't support the FIPS mode.
+
+:::
+
+## Example FIPS 140-2 environment
+
+The FIPS environment configuration steps depend on the used operating system and Java version. You should consult with their documentation for the specific configurations. The following are links to such configuration for various environments.
+
+- [Red Hat Enterprise Linux](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/security_hardening/assembly_installing-a-rhel-8-system-with-fips-mode-enabled_security-hardening)
+- [OpenJDK on Red Hat Enterprise Linux](https://access.redhat.com/documentation/en-us/red_hat_build_of_openjdk/17)
+- [Ubuntu](https://ubuntu.com/security/certifications/docs/fips-enablement)
+- [IBM Semeru Runtimes](https://www.ibm.com/support/pages/fips-certified-cryptography-ibm-semeru-runtimes)

@@ -1,0 +1,216 @@
+---
+title: "Managing Jobs"
+sidebar_position: 12
+slug: /pipelines/job-management
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Once a job is submitted, it has its own lifecycle on the cluster which is distinct from the submitter. To manage the lifecycle of jobs, you can use either SQL or CLI commands to list, cancel, suspend, resume, and restart them.
+
+## Listing Jobs
+
+Use the `list-jobs` command to get a list of all jobs running in the cluster:
+
+<Tabs groupId="cli--sql">
+<TabItem value="cli" label="CLI">
+
+```shell
+bin/hz-cli list-jobs
+```
+
+Example result:
+
+```none
+ID                  STATUS             SUBMISSION TIME         NAME
+0401-9f77-b9c0-0001 RUNNING            2020-03-07T15:59:49.234 hello-world
+```
+
+You can also list completed jobs by adding the `-a` parameter:
+
+```shell
+bin/hz-cli list-jobs -a
+```
+
+Example result:
+
+```none
+ID                  STATUS             SUBMISSION TIME         NAME
+0402-de9d-35c0-0001 RUNNING            2020-03-08T15:14:11.439 hello-world-v2
+0402-de21-7f00-0001 FAILED             2020-03-08T15:12:04.893 hello-world
+```
+
+</TabItem>
+<TabItem value="sql" label="SQL">
+
+```sql
+SHOW JOBS;
+```
+
+Example result:
+
+```none
++--------------------+
+|name                |
++--------------------+
+|hello-world         |
++--------------------+
+```
+
+For more details about this statement, see the [SQL reference documentation](../sql/statements/show-jobs.mdx).
+
+</TabItem>
+</Tabs>
+
+## Canceling Jobs
+
+Streaming jobs run indefinitely until canceled. To stop a job, you must cancel it.
+
+<Tabs groupId="cli--sql">
+<TabItem value="cli" label="CLI">
+
+```shell
+bin/hz-cli cancel hello-world
+```
+
+Example result:
+
+```none
+Canceling job id=0402-de21-7f00-0001, name=hello-world, submissionTime=2020-03-08T15:12:04.893
+Job canceled.
+```
+
+When a job is canceled, the snapshot for the job is lost and the job can't be resumed. Canceled jobs have a `failed` status.
+
+</TabItem>
+<TabItem value="sql" label="SQL">
+
+```sql
+DROP JOB IF EXISTS hello-world;
+```
+
+Result:
+
+```none
+OK
+```
+
+When a job is canceled, the snapshot for the job is lost and the job can't be resumed. Canceled jobs have a `failed` status.
+
+To save a snapshot of the job, use the `WITH SNAPSHOT` clause.
+
+For more details about this statement, see the [SQL reference documentation](../sql/statements/drop-job.mdx).
+
+</TabItem>
+</Tabs>
+
+## Suspending and Resuming Jobs
+
+Suspending and resuming jobs can be useful for example when you need to perform maintenance on a data source or sink without disrupting a running job.
+
+In SQL, you can also update the configuration of a suspended job and resume it.
+
+When a job is suspended, all the metadata about the job is kept in the cluster. A snapshot of the job's computational state is taken during a suspend operation and then once resumed, the job is gracefully started from the same snapshot.
+
+:::note
+
+To suspend and resume a job, it must be configured with a processing guarantee. To learn more about setting a processing guarantee, see [Configuring Jobs](./configuring-jobs.mdx#setting-processing-guarantees).
+
+:::
+
+<Tabs groupId="cli--sql">
+<TabItem value="cli" label="CLI">
+
+Use the `suspend <job_name_or_id>` and `resume <job_name_or_id>` commands to suspend and resume jobs:
+
+```shell
+bin/hz-cli suspend hello-world
+```
+
+Example result:
+
+```none
+Suspending job id=0401-9f77-b9c0-0001, name=hello-world, submissionTime=2020-03-07T15:59:49.234...
+Job suspended.
+```
+
+```shell
+bin/hz-cli resume hello-world
+```
+
+Example result:
+
+```none
+Resuming job id=0401-9f77-b9c0-0001, name=hello-world, submissionTime=2020-03-07T15:59:49.234...
+Job resumed.
+```
+
+For fault tolerance, streaming jobs are automatically suspended on failure. For more details, see [Processing Guarantees](../troubleshooting/error-handling.mdx#processing-guarantees).
+
+</TabItem>
+<TabItem value="sql" label="SQL">
+
+With the ALTER JOB statement, you can suspend and resume a job that is running on a cluster.
+
+```sql
+ALTER JOB hello-world SUSPEND;
+```
+
+Result:
+
+```none
+OK
+```
+
+```sql
+ALTER JOB hello-world RESUME;
+```
+
+Currently, Jet processors implement basic memory management by limiting the number of objects individual processors store. When this number is exceeded, the job fails. To recover the failed job, try updating the job configuration to increase the processor limit, and resume the job.
+
+```sql
+ALTER JOB hello-world OPTIONS ('maxProcessorAccumulatedRecords'='100') RESUME;
+```
+
+You might also consider increasing the number of records that each processor can accumulate, if SQL operations such as grouping, sorting, or joining end in errors.
+
+For more details about this statement, see the [SQL reference documentation](../sql/statements/alter-job.mdx).
+
+</TabItem>
+</Tabs>
+
+## Restarting Jobs
+
+Restarting a job allows you to suspend and resume it in one step. This can be useful when you want to have control over when the job should be scaled. For example, if a job's [`auto-scaling` option](./configuring-jobs.mdx) is disabled and you add 3 nodes to a cluster you can manually restart the job at the desired point to make sure that all the new nodes can run it.
+
+<Tabs groupId="cli--sql">
+<TabItem value="cli" label="CLI">
+
+```shell
+bin/hz-cli restart hello-world
+```
+
+Example result:
+
+```none
+Restarting job id=0401-9f77-b9c0-0001, name=hello-world, submissionTime=2020-03-07T15:59:49.234...
+```
+
+</TabItem>
+<TabItem value="sql" label="SQL">
+
+```sql
+ALTER JOB hello-world RESTART;
+```
+
+Result:
+
+```none
+OK
+```
+
+For more details about this statement, see the [SQL reference documentation](../sql/statements/alter-job.mdx).
+
+</TabItem>
+</Tabs>

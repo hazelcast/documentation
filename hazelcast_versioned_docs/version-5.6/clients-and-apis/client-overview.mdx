@@ -1,0 +1,105 @@
+---
+title: "Overview"
+sidebar_position: 1
+slug: /clients/client-overview
+---
+
+Hazelcast clients and programming language APIs allow you to extend the benefits of operational in-memory computing to applications in these languages.
+
+This topic explains how we use these terms and discusses the pros and cons of using clients or APIs.
+
+:::note
+
+Not all features are available in every client. For an overview of what each client offers, see the [clients page](https://hazelcast.com/developers/clients/?utm_source=docs-website).
+
+:::
+
+## Use a Client or API?
+
+Hazelcast provides clients and programming language APIs to interact with Hazelcast clusters and leverage their distributed computing capabilities. The choice between using a client or an API depends on your specific use case, performance requirements, and the programming languages you're using in your project. The following examines the key differences and considerations.
+
+:::note
+
+**Clients** refer to the Hazelcast *libraries* used to connect to a Hazelcast cluster and exchange data. Clients use a binary protocol for communication with the cluster and encode the data in various formats such as Compact, JSON, etc. Clients are available in various programming languages. **APIs**, by comparison, are the *interfaces* with the Hazelcast platform. These do not require the use of specific libraries to connect and are generally text based — for example, the REST interface.
+
+:::
+
+### Clients
+
+Hazelcast clients must be installed locally to communicate with the server.
+
+:::note
+
+For detailed information about the client protocol, see the [client protocol repository](https://github.com/hazelcast/hazelcast-client-protocol).
+
+:::
+
+#### Benefits of using Hazelcast clients
+
+- Language flexibility: Hazelcast offers clients in multiple programming languages, allowing you to use Hazelcast in various environments. Clients are available for [Java](./clients/java.mdx), [.NET](./clients/dotnet.mdx), [Python](./clients/python.mdx), [C++](./clients/cplusplus.mdx), [Go](./clients/go.mdx), and [Node.js](./clients/nodejs.mdx)
+- Independent scaling: in client/server mode, you can scale the Hazelcast cluster independently from your application. For details, see: [Choosing an Application Topology](../install-and-upgrade/overview/choosing-a-deployment-option.mdx).
+- Polyglot applications: client/server mode allows you to write polyglot applications that can all connect to the same cache cluster
+- Decoupling application from data: the application and cached data are separated, which can be beneficial for management and security purposes
+
+#### Disadvantages
+
+- More complex setup: client/server mode requires setting up and managing a separate Hazelcast cluster, which can be more complex than embedding Hazelcast directly in your application
+
+#### Maximum number of client connections per member
+
+The maximum recommended number of clients per member is 100. Members use different executors, each with a different thread count, for handling different types of client message tasks:
+
+- Query tasks: `core count` threads
+- Blocking tasks: `core count * 20` threads
+- All other tasks: `core count` threads
+
+These values, as well as each member's [I/O Thread](../develop-and-build/best-practices/threading.mdx#io-threading) counts, need to be taken into consideration when determining the appropriate client connection limits for clusters.
+
+#### Serialization in client/server mode
+
+In [client/server topologies](../install-and-upgrade/overview/choosing-a-deployment-option.mdx), you can serialize your data on the client side before sending it to a member. For example, you can serialize data in Kryo and add it to a map. This option is useful if you plan on using Hazelcast to store your data in binary. The serialization can be handled on the client-side without the members needing to know how to do so.
+
+For details about why you need to serialize data and the options for doing so, see [Serialization](../develop-and-build/serialization/serialization.mdx).
+
+### APIs
+
+If you do not want to use a client, you can use APIs to configure Hazelcast in embedded mode, where Hazelcast members run in the same Java process as your application.
+
+APIs are server-side and do not require to be installed. Instead, you simply enable the API on the cluster, and this allows you to be serverless.
+
+#### Benefits of using APIs
+
+- Lower latency: for data kept in the embedded member, embedded mode offers faster data access because applications do not need to send requests to the cache cluster over the network
+- Simplicity: for Java applications, embedded mode is simpler to set up and use, because you only need to add the Hazelcast JAR to your classpath
+
+#### Disadvantages {/* #disadvantages-2 */}
+
+- Permissions (such as for IMap read/write) cannot be enforced so the embedded member has access to everything
+- Limited to Java: embedded mode is only available for Java applications, limiting its use in other programming environments
+- Coupled scaling: in embedded mode, the application and the cluster must be scaled together, which may not be ideal for all use cases
+- Less flexibility: each instance of your application starts a Hazelcast member, which may lead to unnecessary cluster members if you don't need them. However, you can avoid this by creating a member only when necessary
+
+:::note
+
+Hazelcast offers a [Near Cache](./clients/java.mdx#configuring-client-near-cache) feature for clients which can reduce latency in client/server mode by storing frequently used data in the client's local memory.
+
+:::
+
+## Next steps
+
+For detailed information and code samples for each client, see:
+
+- [Java](./clients/java.mdx)
+- [.NET](./clients/dotnet.mdx)
+- [Python](./clients/python.mdx)
+- [C++](./clients/cplusplus.mdx)
+- [Go](./clients/go.mdx)
+- [Node.js](./clients/nodejs.mdx)
+
+For help getting started with the Hazelcast clients, see the client tutorials in [Get started with a Hazelcast Client](../get-started/hazelcast-clients/overview.mdx).
+
+For details about using Memcache to communicate directly with a Hazelcast cluster, see [Memcache](./apis/memcache.mdx).
+
+For information about using the REST API for simple operations, see: [REST](./apis/enterprise-rest-api/rest-api.mdx).
+
+For networking information, see [Network Configurations](../operate-and-manage/partition-groups-and-networking/network-configuration.mdx).

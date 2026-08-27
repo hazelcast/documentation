@@ -1,0 +1,92 @@
+---
+title: "Discovery Mechanisms"
+sidebar_position: 1
+slug: /clusters/discovery-mechanisms
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+A Hazelcast cluster is a network of cluster members that run Hazelcast. Cluster members automatically join together to form a cluster. This automatic joining takes place with various discovery mechanisms that the cluster members use to find each other.
+
+Please note that, after a cluster is formed, communication between cluster members is always via TCP/IP, regardless of the discovery mechanism used.
+
+Hazelcast uses the following discovery mechanisms.
+
+## Auto Detection
+
+By default, Hazelcast tries to automatically detect a member's runtime environment and apply rules to help members discover each other in those environments.
+
+:::note
+
+Auto Detection is not recommended for production.
+
+:::
+
+Hazelcast can detect the following environments:
+
+- [AWS](../../install-and-upgrade/overview/deploying-in-cloud/deploying-on-aws.mdx)
+- [Azure](../../install-and-upgrade/overview/deploying-in-cloud/deploying-on-azure.mdx)
+- [GCP](../../install-and-upgrade/overview/deploying-in-cloud/deploying-on-gcp.mdx)
+- [Kubernetes](../kubernetes/deploying-in-kubernetes.mdx)
+
+You do not need to explicitly enable the discovery for the above environments since the auto-detection, which is enabled by default, takes care of it. It can be configured using the `auto-detection` element as shown below.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <network>
+        <join>
+            <auto-detection enabled="true" />
+            <multicast enabled="false">
+            ...
+        </join>
+    </network>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  network:
+    join:
+      auto-detection:
+        enabled: true
+      multicast:
+          ...
+```
+
+</TabItem>
+</Tabs>
+
+If Hazelcast does not detect any of the aforementioned environments, it falls back to discovery using [multicast](./discovering-by-multicast.mdx).
+
+## TCP
+
+You can configure Hazelcast to be a full TCP/IP cluster. See [Discovering Members by TCP](./discovering-by-tcp.mdx) for configuration details.
+
+## Multicast
+
+With this mechanism, Hazelcast allows cluster members to find each other using the multicast communication. See [Discovering Members by Multicast](./discovering-by-multicast.mdx).
+
+If you prefer to use this mechanism, make sure that your network is secure. Since multicast packets are being broadcasted, any member from anywhere can join the cluster with the appropriate cluster name, so you have less control on the cluster.
+
+Note also that if *User Datagram Protocol (UDP) Multicast* is blocked, as it is for most of the production environments, discovering with multicast does not work.
+
+## Hazelcast for Kubernetes
+
+You can deploy a Hazelcast cluster to Kubernetes using Helm or <a href="#deploy:deploying-with-operator">Hazelcast <Variable name="enterprise-product-name"/> Operator</a>. See the [Deploying in Kubernetes section](../kubernetes/deploying-in-kubernetes.mdx).
+
+## Eureka Cloud Discovery
+
+Hazelcast supports the Eureka V1 discovery. See the [Cloud Discovery Plugins: Hazelcast Eureka section](../../frameworks-and-plugins/hazelcast-plugins/cloud-discovery.mdx#hazelcast-cloud-discovery-plugins-eureka).
+
+## Zookeeper Cloud Discovery
+
+This discovery mechanism provides a service based discovery strategy by using Apache Curator to communicate with your Zookeeper server. See the [Cloud Discovery Plugins: Hazelcast Zookeeper section](../../frameworks-and-plugins/hazelcast-plugins/cloud-discovery.mdx#hazelcast-cloud-discovery-plugins-zookeeper).

@@ -1,0 +1,156 @@
+---
+title: "Deploying Hazelcast Enterprise Edition on Kubernetes with Helm"
+sidebar_label: "Hazelcast Enterprise Edition chart"
+sidebar_position: 2
+slug: /kubernetes/helm-hazelcast-enterprise-chart
+enterprise: true
+---
+
+This chart bootstraps a <a href="https://github.com/hazelcast/hazelcast-docker/tree/master/hazelcast-enterprise">Hazelcast <Variable name="enterprise-product-name"/></a> and [Management Center](https://github.com/hazelcast/management-center-docker) deployments on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+
+| Prerequisites | Useful resources |
+| --- | --- |
+| Kubernetes 1.14+ | [Kubernetes Version](https://kubernetes.io/releases/) |
+
+## Quickstart
+
+Hazelcast Platform <Variable name="enterprise-product-name"/> requires a license key. If you don't have a license key, you can request one at the [Hazelcast website](http://trialrequest.hazelcast.com/).
+
+```shell
+helm repo add hazelcast https://hazelcast-charts.s3.amazonaws.com/
+helm repo update
+helm install my-release hazelcast/hazelcast-enterprise --set hazelcast.licenseKey=<license_key>
+```
+
+For users who already added `hazelcast` repo to their local helm client before; you need to run `helm repo add` command again to use latest charts at the new chart repo.
+
+```shell
+helm repo list
+```
+
+```shell
+NAME            URL
+hazelcast       https://hazelcast.github.io/charts/
+...
+```
+
+```shell
+helm repo add hazelcast https://hazelcast-charts.s3.amazonaws.com/
+```
+
+```shell
+NAME            URL
+hazelcast       https://hazelcast-charts.s3.amazonaws.com/
+...
+```
+
+## Installing the Chart
+
+To install the chart with the release name `my-release`:
+
+```shell
+helm install my-release hazelcast/hazelcast-enterprise --set hazelcast.licenseKey=<license_key>
+```
+
+The command deploys Hazelcast on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
+
+:::tip
+
+List all releases using `helm list` command.
+
+:::
+
+## Uninstalling the Chart
+
+To uninstall/delete the `my-release` deployment:
+
+```shell
+helm uninstall my-release
+```
+
+The command removes all the Kubernetes components associated with the chart and deletes the release.
+
+## Configuration
+
+For available configuration properties see [enterprise values](https://github.com/hazelcast/charts/blob/master/stable/hazelcast-enterprise/values.yaml) file.
+
+Specify each parameter using the `--set key=value,key=value` argument to `helm install`. For example,
+
+```shell
+helm install my-release hazelcast/hazelcast-enterprise \
+    --set hazelcast.licenseKey=<license_key>,cluster.memberCount=3
+```
+
+The above command sets number of Hazelcast members to 3.
+
+Alternatively, a YAML file that specifies the values for the parameters can be provided while installing the chart. For example,
+
+```shell
+helm install my-release hazelcast/hazelcast-enterprise -f values.yaml
+```
+
+:::tip
+
+You can use the default `values.yaml` with the `hazelcast.license` filled in.
+
+:::
+
+:::note
+
+Some of the Hazelcast <Variable name="enterprise-product-name"/> features requires setting `securityContext.readOnlyRootFilesystem` parameter to `false`. This is the case for the Hot Restart feature or enabling security with OpenSSL. In such cases where `readOnlyRootFilesystem` needs to be set to `true` (i.e. a Pod Security Policy requirement), for Hot Restart to work the JVM parameter `-Djava.io.tmpdir` should be set to a writable location (for example a [custom volume](./helm-adding-custom-jar.mdx)).
+
+:::
+
+## Notable changes
+
+### 2.8.0 {/* #2-8-0 */}
+
+Hazelcast REST Endpoints are no longer enabled by default and the parameter `hazelcast.rest` is no longer available. If you want to enable REST, please add the related `endpoint-groups` to the Hazelcast Configuration. For example:
+
+```yaml
+rest-api:
+  enabled: true
+  endpoint-groups:
+    HEALTH_CHECK:
+      enabled: true
+    CLUSTER_READ:
+      enabled: true
+    CLUSTER_WRITE:
+      enabled: true
+```
+
+### 5.8.0 {/* #5-8-0 */}
+
+The parameter `hotRestart` has been renamed to `persistence`. To use the persistence feature make sure that your `values.yaml` is updated. For example:
+
+```yaml
+persistence:
+  enabled: true
+  base-dir: /data/persistence
+  validation-timeout-seconds: 1200
+  data-load-timeout-seconds: 900
+  auto-remove-stale-data: true
+```
+
+### 5.9.0 {/* #5-9-0 */}
+
+The section `mcm` are no longer available so the chart will not create required resources to list Hazelcast Platform <Variable name="enterprise-product-name"/> at IBM CP4MCM(Cloud Pak for Multicloud Management).
+
+### 5.10.x {/* #5-10-x */}
+
+Due to a [bug in the Helm Project](https://github.com/helm/charts/issues/7803), the `helm upgrade` command does not allow modifications to the `spec.volumeClaimTemplates` property in stateful sets. This means that upgrades cannot be completed. This issue affect versions between 5.10.7 and 5.10.12.
+
+To avoid this issue, Hazelcast recommends that you upgrade to version 5.10.13 if you are upgrading from a version before 5.10.7.
+
+To upgrade, complete the following steps:
+
+1. Export your existing values:
+
+   ```bash
+   helm get values <release-name> -o yaml > values.yaml
+   ```
+2. Enter the upgrade command with the exported values as follows:
+
+   ```bash
+   helm upgrade <release-name> hazelcast/hazelcast-enterprise --version=5.10.13 -f values.yaml
+   ```

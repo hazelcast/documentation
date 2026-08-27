@@ -1,0 +1,134 @@
+---
+title: "Configuring Hazelcast in Embedded Mode"
+sidebar_position: 2
+slug: /configuration/configuring-programmatically
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+You can use a configuration object (config object) to configure members with the Java member API. To create new instances of members, pass the config object to those instances.
+
+You can create a `Config` object, set/change its properties and attributes, and use it to create new instances of members and clients. The following example configures some network and map properties for a member.
+
+```java
+        Config config = new Config();
+        config.getNetworkConfig().setPort( 5900 )
+                .setPortAutoIncrement( false );
+
+        MapConfig mapConfig = new MapConfig();
+        mapConfig.setName( "testMap" )
+                .setBackupCount( 2 )
+                .setTimeToLiveSeconds( 300 );
+```
+
+To create a Hazelcast member with the configuration object, pass it to a new `HazelcastInstance`:
+
+```none
+HazelcastInstance hazelcast = Hazelcast.newHazelcastInstance(config);
+```
+
+:::note
+
+All configuration must be completed before creating the `HazelcastInstance`. The `Config` object cannot be modified after the instance is started.
+
+:::
+
+## Using a Member Configuration File in Java {/* #config-file */}
+
+[Configuration files](./configuring-declaratively.mdx) allow you to store member configuration in YAML or XML format.
+
+To use a configuration file to configure members, you can use one of the following:
+
+- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/Config.html#setConfigurationFile-java.io.File-" text="Config.setConfigurationFile()"/>
+- [A configuration loader](#loaders)
+- [A configuration builder](#builders)
+
+### Configuration Loaders {/* #loaders */}
+
+Use one of the following methods to load a configuration file into a config object:
+
+| Method | Description |
+| --- | --- |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/Config.html#loadFromFile-java.io.File-java.util.Properties-" text="Config.loadFromFile()"/> | Creates a configuration object based on a Hazelcast configuration file (XML or YAML). |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/Config.html#loadDefault-java.util.Properties-" text="Config.loadDefault()"/> | Loads `Config` using the default lookup mechanism to locate the configuration file. Loads the nested Hazelcast configuration also by using its default lookup mechanism. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/Config.html#loadFromClasspath-java.lang.ClassLoader-java.lang.String-java.util.Properties-" text="Config.loadFromClasspath()"/> | Creates `Config` which is loaded from a classpath resource. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/Config.html#loadFromString-java.lang.String-java.util.Properties-" text="Config.loadFromString()"/> | Creates `Config` from the provided XML or YAML string content. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/Config.html#loadFromStream-java.io.InputStream-java.util.Properties-" text="Config.loadFromStream()"/> | Creates `Config` from the provided XML or YAML stream content. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/XmlConfigBuilder.html#<init>0" text="XMLConfigBuilder()"/> | Builds a `Config` that does not apply overrides in environment variables or system properties. |
+
+### Configuration Builders {/* #builders */}
+
+Use one of the following classes to build a config object.
+
+:::note
+
+If you use configuration builders or the `new Config()` constructor with the Java member API, you cannot [override existing configuration with system properties and environment variables](./configuring-with-system-properties.mdx). To override existing configuration, you must use [configuration loaders](#loaders).
+
+:::
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/XmlConfigBuilder.html" text="xmlConfigBuilder"/>
+- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/ClasspathXmlConfig.html" text="ClasspathXmlConfig"/>
+- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/FileSystemXmlConfig.html" text="FileSystemXmlConfig"/>
+- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/UrlXmlConfig.html" text="UrlXmlConfig"/>
+- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/InMemoryXmlConfig.html" text="InMemoryXmlConfig"/>
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/YamlConfigBuilder.html" text="yamlConfigBuilder"/>
+- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/ClasspathYamlConfig.html" text="ClasspathYamlConfig"/>
+- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/FileSystemYamlConfig.html" text="FileSystemYamlConfig"/>
+- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/UrlYamlConfig.html" text="UrlYamlConfig"/>
+- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/InMemoryYamlConfig.html" text="InMemoryYamlConfig"/>
+
+</TabItem>
+</Tabs>
+
+By default, Hazelcast searches for `hazelcast.yaml` or `hazelcast.xml` files in the classpath and working directory. You can control the name of the files that Hazelcast searches for, using the relevant system properties such as `hazelcast.config`.
+
+This sample code creates a new Jet engine configuration using the configuration loader:
+
+```java
+String yaml = ""
+   + "hazelcast:\n"
+   + "  instance:\n"
+   + "    cooperative-thread-count: 64\n"
+   + "    flow-control-period: 50\n"
+   + "    backup-count: 2\n"
+   + "    scale-up-delay-millis: 5000\n"
+   + "    lossless-restart-enabled: true\n";
+
+Config config = Config.loadFromString(yaml);
+HazelcastInstance hz = Hazelcast.newHazelcastInstance(config);
+```
+
+All configuration loaders take an optional `properties` parameter. The default behavior uses the `System.getProperties()` method to resolve the configuration file:
+
+```java
+String yaml = ""
+   + "hazelcast:\n"
+   + "  instance:\n"
+   + "    backup-count: ${backup-count}\n"
+   + "    scale-up-delay-millis: ${scale-up-delay-millis}\n";
+
+Properties properties = new Properties();
+properties.setProperty("backup-count", "2");
+properties.setProperty("scale-up-delay-millis", "5000");
+
+Config config = Config.loadFromString(yaml, properties);
+HazelcastInstance hz = Hazelcast.newHazelcastInstance(config);
+```
+
+## Updating Member Configuration at Runtime
+
+You can use [dynamic configuration](../dynamic-configuration/dynamic-config.mdx) to add configuration for some supported features at runtime.
+
+:::tip
+
+If you want to persist dynamic configuration changes, you need to use a [configuration file method](#config-file) that sets the `configurationFile` field of the `Config` object such as `Config.setConfigurationFile()` or `Config.loadFromFile()`.
+
+:::

@@ -1,0 +1,39 @@
+---
+title: "Security Hardening Recommendations"
+sidebar_position: 8
+slug: /secure-cluster/hardening-recommendations
+enterprise: true
+---
+
+Hazelcast does not encrypt data stored in memory since it is "data in use" not "data at rest".
+
+If you choose to persist data on disk, that data is not encrypted by default. If you want to store sensitive data on disk, see [Configuring Persistence](../fault-tolerance/persistence/configuring-persistence.mdx).
+
+Encryption passwords or Java keystore passwords are stored in `hazelcast.xml/yaml` and `hazelcast-client.xml/yaml`, which are on the member's file system. Management Center passwords are also stored on the Management Center host. Therefore, an attacker with host access to either a Hazelcast member host or a Hazelcast client host with sufficient permission could read data held either in the memory or disk and be in a position to obtain the key repository, though perhaps not the keys themselves.
+
+Memory contents should be secured by securing the host. Hazelcast assumes the host is already secured. If there is concern about dumping a process then the value can be encrypted before it is placed in the cache.
+
+In addition to the above, we recommend the following hardening recommendations for enhanced security:
+
+- Hazelcast members, clients or Management Center should not be deployed on internet-facing non-secure networks or non-secure hosts.
+
+  - If clients need to access the cluster from an untrusted network, use the [advanced networking](../partition-groups-and-networking/network-configuration.mdx) feature to only provide access to the client protocol.
+- You should close any unused port, except the Hazelcast port (default is 5701).
+- If Memcache is not used, ensure Memcache is not enabled (disabled by default); see the [Memcache section](../../clients-and-apis/apis/memcache.mdx) to learn how to disable it.
+- If REST is not used, ensure REST is not enabled (disabled by default); ; see the [REST Client section](../../clients-and-apis/apis/enterprise-rest-api/rest-api.mdx) to learn how to disable it.
+- You can use configuration variables in declarative mode to access the values of the system properties you set; see the [Using Variables section](../configuration/static-configuration/configuring-declaratively.mdx) on how to do it.
+- You can use the variable replacers to replace custom strings during loading the configuration.
+
+  - For example, they can be used to mask sensitive information such as usernames and passwords. However, their usage is not limited to security related information.
+  - See the [Variable Replacers section](../configuration/static-configuration/configuring-declaratively.mdx) for more information about their usages and examples.
+- You can restrict the users and their roles in Management Center. The "Administrator role" in particular is a super user role that can access the "Scripting" and "Console" features of Management Center where they can reach and/or modify cluster data; this may be restricted. The "Read-Write User role" also provides "Scripting" access which can be used to read or modify values in the cluster See the [Managing Users section](/management-center/latest/deploy-manage/user-management) for more information.
+- By default, Hazelcast lets the system pick up an ephemeral port during a socket bind operation, but security policies/firewalls may require you to restrict outbound ports to be used by Hazelcast-enabled applications, including Management Center. To fulfill this requirement, you can configure Hazelcast to use only defined outbound ports. See the [Outbound Ports section](../partition-groups-and-networking/network-configuration.mdx#outbound-ports) for different configuration methods.
+- TCP/IP discovery is recommended where possible. See the [Discovery Mechanisms section](../../develop-and-build/member-and-client-discovery/discovery-mechanisms.mdx) for other options.
+- Hazelcast allows you to intercept every remote operation executed by the client. This lets you add a very flexible custom security logic. See the [Security Interceptor section](./advanced-security-features/security-interceptor.mdx) for more information.
+- Hazelcast by default transmits data between clients and members, and members and members in plain text. This configuration is not secure; you should enable TLS. See the [TLS section](./tls/tls-ssl.mdx).
+- With TLS Security, the keystore is used. The keystore password is in the `hazelcast.xml/yaml` configuration file, and, if clients are used, also in the `hazelcast-client.xml/yaml`. Access to these files should be restricted.
+- You can use a custom trust store by setting the trust store path in the TLS/SSL configuration, which then avoids using the default trust store.
+- We recommend that [mutual TLS authentication](./tls/tls-ssl.mdx#mutual-authentication) be enabled on a Hazelcast production cluster.
+- Hazelcast uses Java serialization for some objects transferred over the network. To avoid deserialization of objects from untrusted sources, Hazelcast offers some protection mechanisms; we recommend enabling [mutual TLS authentication](./tls/tls-ssl.mdx#mutual-authentication) and disabling [multicast join](../partition-groups-and-networking/network-configuration.mdx#multicast-element) configuration. We recommend using Java serialization filter configuration for whitelisting the set of trusted classes or packages which are allowed for deserialization.
+- Hazelcast uses Java reflection during SQL execution when the object format is set to `java`. We recommend using [Java reflection filter configuration](../../develop-and-build/sql/sql-reflection-configuration.mdx#configuring-reflection) to whitelist the set of trusted classes or packages that are allowed to create through reflection.
+- You can disable script executions on the Hazelcast members. Scripts executed from Management center have access to system resources (files, etc.) with privileges of user running Hazelcast. We recommend that scripting be [disabled](../maintaining-a-cluster/monitoring.mdx#toggle-scripting-support) on members.

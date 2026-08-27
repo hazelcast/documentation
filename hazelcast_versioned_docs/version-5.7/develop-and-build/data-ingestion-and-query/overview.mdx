@@ -1,0 +1,165 @@
+---
+title: "Ingesting Data from External Sources"
+sidebar_position: 1
+slug: /ingest/overview
+---
+
+Explore the Hazelcast components for ingesting data from both on-premise systems and cloud deployments.
+
+## What is Data Ingestion
+
+Data ingestion is the process of importing data from external systems, such as databases, files, or messaging systems.
+
+With Hazelcast, you can ingest data in a variety of formats from on-premise systems as well as cloud deployments.
+
+## Available Components
+
+Choose from the following components for ingesting data, depending on your use case:
+
+- [Pipeline](../building-data-pipelines/overview.mdx): Import data from external systems using their native protocols and use Hazelcast data structures as a sink. [Built-in Hazelcast connectors](../../connectors/connectors.mdx) and [pre-built Kafka Connect Source connectors](../../connectors/kafka-connect-connectors.mdx) make this task easier.
+
+  You can also use the [`SINK INTO` or `INSERT INTO` SQL statements](../sql/statements/sink-into.mdx) to ingest data straight into Hazelcast maps.
+- [MapStore](../working-with-external-data/overview.mdx): Import a subset of a larger dataset into memory with the option to write it back to the data source later. Writing back to the data source allows you to keep your original dataset synchronized with data changes made on the cluster.
+
+<table>
+<colgroup>
+<col style={{width:'33.3333%'}}/>
+<col style={{width:'33.3333%'}}/>
+<col style={{width:'33.3334%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th></th>
+<th>Pipeline</th>
+<th>MapStore</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>Can import data from multiple data sources</th>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<th>Can export data into multiple data sinks</th>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<th>Ingestion can be canceled or restarted</th>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<th>Supported Hazelcast data structures</th>
+<td>
+
+- `IMap`
+- `ReplicatedMap`
+- `IList`
+- `ISet`
+- `ICache`
+- `CP Subsystem`
+
+</td>
+<td>`IMap`</td>
+</tr>
+<tr>
+<th>Can keep data synchronized with the data source</th>
+<td>No</td>
+<td>Yes</td>
+</tr>
+<tr>
+<th>Supports streaming real-time data</th>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<th>Connectivity</th>
+<td>[Built-in](../../connectors/connectors.mdx) and [pre-built](../../connectors/kafka-connect-connectors.mdx) connectors. Or, build your own custom connector.</td>
+<td>Either use the pre-built generic MapLoader/Mapstore or implement Java interfaces to build your own custom connector</td>
+</tr>
+<tr>
+<th>Supported format of data sources</th>
+<td>Any data format that is supported by the available connectors</td>
+<td>Key-value pairs or you can map the data formats to key-value pairs, using custom Java code</td>
+</tr>
+<tr>
+<th>Method for pre-processing or enriching data</th>
+<td>Out-of-the box APIs such as `aggregate()` for transforming data</td>
+<td>Java interface for writing your own custom implementations</td>
+</tr>
+</tbody>
+</table>
+
+## When to Use a Pipeline
+
+This section discusses the scenarios in which you might want to use a [pipeline to ingest data](../building-data-pipelines/ingesting-data-from-sources/ingesting-from-sources.mdx) into Hazelcast.
+
+### Out-Of-The-Box Connectivity
+
+You can [compose pipelines](../building-data-pipelines/overview.mdx) from the provided building blocks using either SQL or Java SDK.
+
+Hazelcast comes with many [built-in connectors](../../connectors/connectors.mdx), including:
+
+- Apache Kafka
+- Amazon Kinesis
+- Amazon S3
+- Azure Blob Storage
+- Filesystem
+- Google Cloud Storage
+- HDFS
+- JMS
+- JDBC data sources
+
+You can also use pre-built [Kafka Connect Source connectors](../../connectors/kafka-connect-connectors.mdx) to import a stream of data into a pipeline from a non-Kafka external system. [Kafka Connect Source connectors](https://www.confluent.io/hub/) are available for many popular platforms, including Neo4j and Couchbase. There is also a Kafka Connect Source connector for integrating JDBC data sources.
+
+See the [full list of available connectors](../../connectors/connectors.mdx). If a connector is not available for your data source or data sink, you can [write your own](../building-data-pipelines/ingesting-data-from-sources/custom-stream-source.mdx).
+
+### Composable ETL
+
+With pipelines, you can extract, transform, load, and combine data from multiple data sources without the need for third-party tools or middleware. Hazelcast executes pipelines in a robust, and highly performant manner.
+
+For examples of how to use ETL pipelines, see [Extract Transform Load (ETL)](../building-data-pipelines/stream-processing/etl-overview/overview.mdx).
+
+### Multiple Data Sources
+
+If your data is stored in one or multiple data sources that are often updated, it's best to [stream that data into Hazelcast using a pipeline](../building-data-pipelines/stream-processing/building-pipelines.mdx). This way, you can always be sure that you're processing recent data.
+
+## When to use a MapStore
+
+This section discusses the scenarios in which you might want to use a [MapStore](../working-with-external-data/overview.mdx) to ingest data into Hazelcast.
+
+### Read and Write-Through Caching
+
+If your data is stored in a data source that is too slow to query, it's best to cache that data in Hazelcast. Such a data source is usually some kind of database or other kind of key-value storage. [MapStore](../working-with-external-data/overview.mdx) is a tool for keeping a Hazelcast cache in sync with the data source.
+
+With MapStore, you can do the following:
+
+- Fetch missing records from the data source in reaction to cache misses.
+- Push cache changes back to the original data store.
+- Hydrate the cache upon startup to prevent poor performance caused by many cache misses.
+- Pre-process or enrich data in real time before ingesting it by writing custom Java code.
+
+### Read-Through Caching Only
+
+If you only need to fetch missing records from the data source in reaction to cache misses, consider using the [generic MapLoader](../working-with-external-data/configuring-a-generic-maploader.mdx).
+
+:::note
+
+To ingest and cache data in Hazelcast as part of a one-time operation, use a [pipeline](../building-data-pipelines/overview.mdx), [`SINK INTO` or `INSERT INTO` SQL statements](../sql/statements/sink-into.mdx) instead.
+
+:::
+
+## Related Resources
+
+To learn more about pipelines, see the following resources:
+
+- [Cloud Storage ingestion example](https://github.com/hazelcast/hazelcast-code-samples/tree/master/jet/files-cloud/src/main/java/com/hazelcast/samples/jet/files/cloud)
+- [MySQL ingestion example](https://github.com/hazelcast/hazelcast-code-samples/blob/master/jet/jdbc/src/main/java/com/hazelcast/samples/jet/jdbc/JdbcSource.java)
+
+To learn more about MapStore, see the following resources:
+
+- [Building a Cache with MapStore](../working-with-external-data/overview.mdx)
+- [MapLoader/MapStore reference example](https://github.com/hazelcast/hazelcast-code-samples/blob/master/distributed-map/mapstore/src/main/java/LoadAll.java)
+- [MongoDB example](https://github.com/thejasbabu/hazelcast-mongo-mapstore) (community)

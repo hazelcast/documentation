@@ -1,0 +1,86 @@
+---
+title: "Enabling Lite Members"
+sidebar_label: "Lite Members"
+sidebar_position: 6
+slug: /maintain-cluster/lite-members
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Lite members are the Hazelcast cluster members that do not store data. These members are used mainly to execute tasks and register listeners, and they do not have partitions.
+
+You can form your cluster to include the regular Hazelcast members to store data and lite members to run heavy computations. The presence of lite members does not affect the operations performed on the other members in the cluster. You can directly submit your tasks to the lite members, register listeners on them, and invoke operations for the Hazelcast data structures on them such as `map.put()` and `map.get()`.
+
+:::important
+
+If you want to use lite members in a Hazelcast <Variable name="enterprise-product-name"/> cluster, they are also subjected to the <Variable name="enterprise-product-name"/> license.
+
+:::
+
+## Configuring Lite Members
+
+You can enable a cluster member to be a lite member using the following configuration.
+
+<Tabs groupId="java-member-api--xml--yaml">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <lite-member enabled="true"/>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  lite-member:
+    enabled: true
+```
+
+</TabItem>
+<TabItem value="java-member-api" label="Java Member API">
+
+```yaml
+Config config = new Config();
+config.setLiteMember(true);
+```
+
+</TabItem>
+</Tabs>
+
+## Promoting Lite Members to Data Members
+
+You can promote lite members to data members. This promotion rebalances the cluster partitions and reassigns the ownerships of partition portions to the newly promoted data members.
+
+You can promote a lite member programmatically using the `Cluster` interface as follows:
+
+```java
+Config config = new Config();
+config.setLiteMember(true);
+
+HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
+Cluster cluster = hazelcastInstance.getCluster();
+cluster.promoteLocalLiteMember();
+```
+
+## Demoting Data Members to Lite Members
+
+You can demote data members to lite ones. Similar to the promotions, the demotion leads to performing the rebalancing and reassignment of partitions.
+
+You can demote a data member programmatically using the `Cluster` interface as follows:
+
+```java
+Config config = new Config();
+config.setLiteMember(true);
+
+HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
+Cluster cluster = hazelcastInstance.getCluster();
+cluster.demoteLocalDataMember();
+```
+
+You can specify a timeout value for waiting during the data member demotion, using the `hazelcast.member.demote.max.wait` property. Default timeout value is 600 seconds. The default duration is long enough to allow for partition migrations to complete for most use cases. You can increase or decrease this value depending on the size of your cluster.

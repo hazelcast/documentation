@@ -1,0 +1,268 @@
+---
+title: "Authentication overview"
+sidebar_position: 1
+slug: /security/authentication-overview
+enterprise: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+:::note
+
+Authentication is the process of verifying the identity of a user, system, or entity before granting access to resources or services. It ensures that the person or system requesting access is who they claim to be, typically through credentials like passwords, biometrics, tokens, or multi-factor methods. Authentication is a critical security step in protecting data and systems from unauthorized access.
+
+:::
+
+In Hazelcast, Authentication is used to verify the incoming connection has valid credentials configured. Hazelcast supports several authentication types that can be configured for member-to-member, and client-to-member communication:
+
+- [Simple](./simple-authentication.mdx) - users and roles are configured directly within the member configuration
+- [LDAP](./ldap-authentication.mdx) - LDAP server is used to verify credentials and load roles
+- [Kerberos](./kerberos-authentication.mdx) - service tickets are used for authentication
+- [TLS](./tls-authentication.mdx) - information from client-side TLS certificates (when TLS mutual authentication is enabled) are used for role assignment
+- [Custom JAAS login modules](./jaas-authentication.mdx) - if other Hazelcast provided authentication mechanisms don't fully cover user needs
+
+During the authentication roles can be also assigned to the connecting clients, which are later used for the [Authorization](#authorization).
+
+## Security realms
+
+Named security configurations called security realms are used to map an authentication mechanism to a Hazelcast protocol (client or member). Security realms enable you to define security configurations on the module which consumes it.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <security enabled="true">
+        <realms>
+            <realm name="simpleRealm">
+                <authentication>
+                    <simple>
+                        <user username="test" password="V3ryS3cr3tString">
+                            <role>monitor</role>
+                            <role>hazelcast</role>
+                        </user>
+                        <user username="man-center" password="HardToGuess">
+                            <role>root</role>
+                        </user>
+                    </simple>
+                </authentication>
+            </realm>
+        </realms>
+        <client-authentication realm="simpleRealm"/>
+    </security>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  security:
+    enabled: true
+    realms:
+      - name: simpleRealm
+        authentication:
+          simple:
+            users:
+              - username: test
+                password: 'V3ryS3cr3tString'
+                roles:
+                  - monitor
+                  - hazelcast
+              - username: man-center
+                password: 'HardToGuess'
+                roles:
+                  - root
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+Config cfg = new Config();
+SimpleAuthenticationConfig sac = new SimpleAuthenticationConfig()
+        .addUser("test", "V3ryS3cr3tString", "monitor", "hazelcast")
+        .addUser("man-center", "HardToGuess", "root");
+cfg.getSecurityConfig().setEnabled(true)
+        .setClientRealmConfig("simpleRealm",
+                new RealmConfig().setSimpleAuthenticationConfig(sac));
+```
+
+</TabItem>
+</Tabs>
+
+Besides authentication, security realms can also contain [Identity](./identity-configuration.mdx) and access-control-service configurations.
+
+## Common authentication options
+
+All Hazelcast provided authentication types support some common configuration parameters.
+
+<table>
+<colgroup>
+<col style={{width:'20%'}}/>
+<col style={{width:'20%'}}/>
+<col style={{width:'60%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Option Name</td>
+<td>Default Value</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`skip-role`</td>
+<td>`false`</td>
+<td>When set to `true`, the authentication mechanism won't assign roles during authentication but will only verify the credentials.</td>
+</tr>
+<tr>
+<td>`skip-identity`</td>
+<td>`false`</td>
+<td>When set to `true`, the authentication mechanism won't use the remote party name after the authentication.</td>
+</tr>
+<tr>
+<td>`skip-endpoint`</td>
+<td>`false`</td>
+<td>When set to `true`, the authentication mechanism won't use the remote party IP address name after authentication.</td>
+</tr>
+</tbody>
+</table>
+
+For more advanced configuration options, see following sections.
+
+## Identity
+
+A security configuration element where members and clients have their own credentials configured is called an identity. This identity can be a username-password pair, a token, or a Kerberos ticket. For more information, see [Identity configuration](./identity-configuration.mdx).
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <security enabled="true">
+        <realms>
+            <realm name="aRealm">
+                <authentication>
+                    <ldap>
+                        <!-- ... -->
+                    </ldap>
+                </authentication>
+                <identity>
+                    <username-password username="uid=hazelcast,ou=Services,dc=hazelcast,dc=com" password="theSecret"/>
+                </identity>
+            </realm>
+        </realms>
+        <member-authentication realm="aRealm"/>
+        <client-authentication realm="aRealm"/>
+    </security>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  security:
+    enabled: true
+    realms:
+      - name: aRealm
+        authentication:
+          ldap:
+#           ...
+        identity:
+          username-password:
+            username: uid=hazelcast,ou=Services,dc=hazelcast,dc=com
+            password: theSecret
+    member-authentication:
+      realm: aRealm
+    client-authentication:
+      realm: aRealm
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+Config cfg = new Config();
+cfg.getSecurityConfig()
+    .setEnabled(true)
+    .addRealmConfig("aRealm", 
+        new RealmConfig().setLdapAuthenticationConfig(new LdapAuthenticationConfig()/* ... */)
+            .setUsernamePasswordIdentityConfig("uid=hazelcast,ou=Services,dc=hazelcast,dc=com", "theSecret"))
+    .setClientRealm("aRealm")
+    .setMemberRealm("aRealm");
+```
+
+</TabItem>
+</Tabs>
+
+## Authorization
+
+Authorization is supported by the Client protocol. Clients are assigned roles during authentication. Access is then controlled by permissions assigned to the roles.
+
+Authorization isn't supported in member-to-member communications. All members have unlimited access to the cluster data once they are authenticated.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <security enabled="true">
+        <realms>
+            <realm name="aRealm">
+                <!-- ... -->
+            </realm>
+        </realms>
+        <client-authentication realm="aRealm"/>
+        <client-permissions>
+            <all-permissions principal="man-center"/>
+            <map-permission name="playground" principal="*">
+                <actions>
+                    <action>all</action>
+                </actions>
+            </map-permission>
+        </client-permissions>
+    </security>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  security:
+    enabled: true
+    realms:
+      - name: aRealm
+#       ...
+    client-authentication:
+      realm: aRealm
+    client-permissions:
+      all:
+        principal: man-center
+      map:
+        - name: playground
+          principal: *
+          actions:
+            - all
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+Config cfg = new Config();
+cfg.getSecurityConfig()
+    .setEnabled(true)
+    .setClientRealmConfig("aRealm", new RealmConfig()/* ... */)
+    .addClientPermissionConfig(new PermissionConfig(PermissionType.ALL, null, "man-center"))
+    .addClientPermissionConfig(new PermissionConfig(PermissionType.MAP, "playground", "*").addAction("all"));
+```
+
+</TabItem>
+</Tabs>
+
+For more information, see [Client Authorization](../client-authorization.mdx).

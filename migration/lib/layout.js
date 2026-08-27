@@ -80,13 +80,14 @@ const VERSIONS = {
   operator: { releases: ['5.18', '5.17', '5.16', '5.15', '5.14', '5.13', '5.12'] },
   clc: { current: '5.5.1', releases: ['5.5.0'] },
   'management-center': { current: '5.12-snapshot', releases: ['5.11', '5.10', '5.9'] },
-  // Platform phase 1: the CURRENT (main) branch only, so the plugin is stood up
+  // Platform's main declares `5.8-snapshot` (an unreleased snapshot, as MC's is),
+  // so its current seg is a NUMBER and the dropdown lands on the newest release
+  // ('latest-release' in docusaurus.config.ts). The five releases below are the
+  // live set; 5.2 and older are frozen (freeze plan), which is why they stop at
+  // 5.3. Phase 1 converted the current branch alone so the plugin was stood up
   // and the whole 439-page corpus converted once before the release copies
-  // multiply it. The live release set is 5.7 down to 5.3 (5.2 and older are
-  // frozen, freeze plan); they go in `releases` newest first, and the dropdown's
-  // landing version flips to 'latest-release' in docusaurus.config.ts at the
-  // same time (main is an unreleased snapshot, as MC's is).
-  hazelcast: { current: '5.8-snapshot', releases: [] },
+  // multiplied it; phase 2 (this list) adds them.
+  hazelcast: { current: '5.8-snapshot', releases: ['5.7', '5.6', '5.5', '5.4', '5.3'] },
 }
 
 // Attributes whose references are MARKED in the golden (antora-extension/

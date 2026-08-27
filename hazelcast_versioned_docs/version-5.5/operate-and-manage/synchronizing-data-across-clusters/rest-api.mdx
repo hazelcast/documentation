@@ -1,0 +1,297 @@
+---
+title: "REST API for WAN Wrap-Up"
+sidebar_position: 10
+slug: /wan/rest-api
+enterprise: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+:::caution[Deprecation Notice for the Community Edition REST API]
+
+The Community Edition REST API has been deprecated and will be removed as of Hazelcast version 7.0. An improved Enterprise version of this feature is available and actively being developed. For more information, see [Enterprise REST API](../../clients-and-apis/apis/enterprise-rest-api/overview.mdx).
+
+:::
+
+:::note
+
+To be able to use the REST calls related to WAN Replication mentioned in this section, you need to enable the `WAN` REST endpoint group. See the [REST Endpoint Groups section](../../clients-and-apis/apis/enterprise-rest-api/rest-api.mdx#using-the-rest-endpoint-groups) on how to enable it.
+
+:::
+
+## Parameters
+
+Here is the list of parameters used in the WAN Replication REST calls, which are shown as placeholders in the REST calls:
+
+- member IP address and port: IP address and port number of the member on which you run the REST calls.
+- `clusterOnSource`: Name of your local (source) cluster.
+- `clusterPassword`: Password, if set, of your source cluster. Note that you need to enable the [security](../securing-a-cluster/enable-security.mdx) when you need a cluster password. If not set, the parameter is empty.
+- `wanRepName`: Name of the WAN Replication configuration.
+- `publisherId`: WAN replication publisher ID. If not set, `cluster-name` under the `batch-publisher` element is used.
+- `mapName`: Name of the map to be synchronized.
+- `wanConfig`: WAN publisher configuration file, as a JSON string, to be added dynamically.
+- `uuid`: The UUID of the WAN sync operation.
+
+The parameters in the below curl commands need to be provided in the given order, separated by `&`.
+
+Let's use the following declarative configuration as the example to be used in the curl commands described in the sections below, and let's assume that our source cluster does not have a password:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <cluster-name>tokyo</cluster-name>
+    <wan-replication name="london-wan-rep">
+        <batch-publisher>
+            <cluster-name>london</cluster-name>
+            <target-endpoints>10.3.5.1:5701, 10.3.5.2:5701</target-endpoints>
+        </batch-publisher>
+    </wan-replication>
+
+    <map name="myMap">
+        <wan-replication-ref name="london-wan-rep"/>
+    </map>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  cluster-name: tokyo
+  wan-replication:
+    london-wan-rep:
+      batch-publisher:
+        cluster-name: london
+        target-endpoints: 10.3.5.1:5701, 10.3.5.2:5701
+  map:
+    myMap:
+      wan-replication-ref:
+        london-wan-rep:
+          ...
+```
+
+</TabItem>
+</Tabs>
+
+## Clearing the Queues
+
+The URL for clearing the WAN event queues is as follows:
+
+```none
+http://{member IP address:port}/hazelcast/rest/wan/clearWanQueues
+```
+
+The following is the curl command:
+
+```none
+curl -X POST -d "{clusteronSourceName}&{clusterPassword}&{wanRepName}&{publisherId}" --URL http://{member IP address:port}/hazelcast/rest/wan/clearWanQueues
+```
+
+The command according to the above example configuration is as follows:
+
+```none
+curl -X POST -d "tokyo&&london-wan-rep&london" --URL http://127.0.0.1:5701/hazelcast/rest/wan/clearWanQueues
+```
+
+:::important
+
+This endpoint only clears the specified WAN queues of the member it is sent to, it does not clear WAN queues for all members of the cluster.
+
+:::
+
+## Pausing the Publisher
+
+The URL for pausing the WAN publisher is as follows:
+
+```none
+http://{member IP address:port}/hazelcast/rest/wan/pausePublisher
+```
+
+The following is the curl command:
+
+```none
+curl -X POST -d "{clusterOnSource}&{clusterPassword}&{wanRepName}&{publisherId}" --URL http://{member IP address:port}/hazelcast/rest/wan/pausePublisher
+```
+
+The command according to the above example configuration is as follows:
+
+```none
+curl -X POST -d "tokyo&&london-wan-rep&london" --URL http://127.0.0.1:5701/hazelcast/rest/wan/pausePublisher
+```
+
+:::important
+
+This endpoint only pauses the specified WAN publisher on the member it is sent to, it does not pause WAN publishers for any other members of the cluster.
+
+:::
+
+## Resuming the Publisher
+
+The URL for resuming the WAN publisher is as follows:
+
+```none
+http://{member IP address:port}/hazelcast/rest/wan/resumePublisher
+```
+
+The following is the curl command:
+
+```none
+curl -X POST -d "{clusterOnSource}&{clusterPassword}&{wanRepName}&{publisherId}" --URL http://{member IP address:port}/hazelcast/rest/wan/resumePublisher
+```
+
+The command according to the above example configuration is as follows:
+
+```none
+curl -X POST -d "tokyo&&london-wan-rep&london" --URL http://127.0.0.1:5701/hazelcast/rest/wan/resumePublisher
+```
+
+:::important
+
+This endpoint only resumes the specified WAN publisher on the member it is sent to, it does not resume WAN publishers for any other members of the cluster.
+
+:::
+
+## Stopping the Publisher
+
+The URL for stopping the WAN publisher is as follows:
+
+```none
+http://{member IP address:port}/hazelcast/rest/wan/stopPublisher
+```
+
+The following is the curl command:
+
+```none
+curl -X POST -d "{clusterOnSource}&{clusterPassword}&{wanRepName}&{publisherId}" --URL http://{member IP address:port}/hazelcast/rest/wan/stopPublisher
+```
+
+The command according to the above example configuration is as follows:
+
+```none
+curl -X POST -d "tokyo&&london-wan-rep&london" --URL http://127.0.0.1:5701/hazelcast/rest/wan/stopPublisher
+```
+
+:::important
+
+This endpoint only stops the specified WAN publisher on the member it is sent to, it does not stop WAN publishers for any other members of the cluster.
+
+:::
+
+## Synchronizing the Clusters
+
+### Full Synchronization
+
+For the full synchronization, the URLs for synchronizing a single map and all maps are as follows:
+
+```none
+http://{member IP address:port}/hazelcast/rest/wan/sync/map
+http://{member IP address:port}/hazelcast/rest/wan/sync/allmaps
+```
+
+The following are the respective curl commands:
+
+```none
+curl -X POST -d "{clusterOnSource}&{clusterPassword}&{wanRepName}&{publisherId}&{mapName}" --URL http://{member IP address:port}/hazelcast/rest/wan/sync/map
+
+curl -X POST -d "{clusterOnSource}&{clusterPassword}&{wanRepName}&{publisherId}" --URL http://{member IP address:port}/hazelcast/rest/wan/sync/allmaps
+```
+
+The command according to the above example configuration is as follows (for that single map):
+
+```none
+curl -X POST -d "tokyo&&london-wan-rep&london&myMap" --URL http://{member IP address:port}/hazelcast/rest/wan/sync/map
+```
+
+The following is an example output:
+
+```none
+{"status":"success","message":"Sync initiated","uuid":"22e1e3d6-1c96-4757-baee-4cd77f1d214e"}
+```
+
+:::important
+
+This endpoint initiates WAN synchronization across the entire cluster, with the receiving member designated as the coordinator for the synchronization process.
+
+:::
+
+### Delta Synchronization
+
+For the delta synchronization, you need to first perform a consistency check, using the following REST call URL:
+
+```none
+http://{member IP address:port}/hazelcast/rest/wan/consistencyCheck/map
+```
+
+Here is the respective curl command:
+
+```none
+curl -X POST -d "{clusterOnSource}&{clusterPassword}&{wanRepName}&{publisherId}&{mapName}" --URL http://{member IP address:port}/hazelcast/rest/wan/consistencyCheck/map
+```
+
+After the consistency check, you can use the same REST calls used in full synchronization in the same way to synchronize a single map or all the maps.
+
+:::note
+
+Consistency check can be triggered only for one map.
+
+:::
+
+:::important
+
+This endpoint initiates WAN synchronization across the entire cluster, with the receiving member designated as the coordinator for the synchronization process.
+
+:::
+
+## Tracking the WAN Sync Progress
+
+You can track the progress of a WAN sync operation. The URL is as follows:
+
+```none
+http://{member IP address:port}/hazelcast/rest/wan/sync/progress/uuid
+```
+
+The `uuid` can be seen in the output of WAN sync commands as shown in the [previous section](#full-synchronization). Here is the respective curl command for tracking the progress:
+
+```none
+curl -X GET --URL http://{member IP address:port}/hazelcast/rest/wan/sync/progress/uuid
+```
+
+The following is an example output:
+
+```none
+{"status":"success","result":{"stage":"FINISHED","progress":100,"wanReplicationName":"wanRepName","wanPublisherId":"publisherId","creationTime":1677839202422}}
+```
+
+The output includes the sync progress as a percentage and the stage: `STARTED`, `IN_PROGRESS`, `FINISHED` or `FAILED`.
+
+:::important
+
+As WAN synchronization is an operation that occurs across the cluster, this response represents the WAN sync progress for the entire cluster.
+
+:::
+
+## Dynamically Adding WAN Publishers {/* #wr-dynamically-adding */}
+
+The URL for dynamically adding a WAN publisher configuration is as follows:
+
+```none
+http://{member IP address:port}/hazelcast/rest/wan/addWanConfig
+```
+
+The following is the curl command:
+
+```none
+curl -X POST -d "{clusterOnSource}&{clusterPassword}&{wanConfig}" --URL http://127.0.0.1:5701/hazelcast/rest/wan/addWanConfig
+```
+
+The `wanConfig` parameter should be the full configuration as a JSON string. See [here](./advanced-features.mdx#dynamically-adding-wan-publishers) for configuration examples.
+
+:::important
+
+This endpoint deploys the provided config across all members of the cluster, following the same principles as other dynamic configuration mechanisms.
+
+:::

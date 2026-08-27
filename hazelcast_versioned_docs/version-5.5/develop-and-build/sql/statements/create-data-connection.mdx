@@ -1,0 +1,151 @@
+---
+title: "CREATE DATA CONNECTION"
+sidebar_label: "`CREATE DATA CONNECTION`"
+sidebar_position: 3
+slug: /sql/create-data-connection
+---
+
+The `CREATE DATA CONNECTION` statement creates the metadata required to connect to an external system for later use.
+
+Include data connections in mapping statements to allow the SQL service to connect to, read from, write to, or query data from your external systems. To simplify setup, you can use the same data connection in multiple SQL mappings.
+
+:::note
+
+You can also configure data connections [programmatically or in the configuration files of Hazelcast members](../../data-connections/data-connections-configuration.mdx).
+
+:::
+
+## Syntax Summary
+
+This code block is a quick reference with all the [parameters](#parameters) that you can use with the `CREATE DATA CONNECTION` statement.
+
+See some [practical examples](#examples).
+
+```sql
+CREATE [OR REPLACE] DATA CONNECTION [IF NOT EXISTS] data_connection_name
+TYPE connection_type
+[[NOT] SHARED]
+OPTIONS ('option_name' = 'option_value' [, ...] );
+```
+
+## Parameters
+
+The `CREATE DATA CONNECTION` statement accepts the following parameters.
+
+You must provide the following:
+
+- `data_connection_name`
+- `connection_type`
+
+<table>
+<colgroup>
+<col style={{width:'33.3333%'}}/>
+<col style={{width:'66.6667%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`OR REPLACE`</td>
+<td>
+
+Overwrite an existing data connection of the same name, if it exists.<br/>
+
+If a data connection of the same name has been configured programmatically or in the configuration files of Hazelcast members, then the data connection will not be overwritten. Configured data connections always take precedence.
+
+</td>
+</tr>
+<tr>
+<td>`IF NOT EXISTS`</td>
+<td>Create a new data connection only if a connection of the same name does not already exist.</td>
+</tr>
+<tr>
+<td>`data_connection_name`</td>
+<td>Unique name for the data connection.</td>
+</tr>
+<tr>
+<td>`TYPE` `connection_type`</td>
+<td>The type of data connection required to connect to the external system. The following types of connection are supported: `JDBC`, `Kafka`, `Mongo`, `HZ`. All connection types are case-insensitive.</td>
+</tr>
+<tr>
+<td>`NOT SHARED`</td>
+<td>Every time you issue a query against a SQL mapping, a new physical connection to the external system is created.</td>
+</tr>
+<tr>
+<td>`SHARED` (default)</td>
+<td>A reusable data connection. See the implementation of each data connection type for full details of reusability: <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/dataconnection/HazelcastDataConnection.html" text="HazelcastDataConnection"/>, <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/kafka/KafkaDataConnection.html" text="KafkaDataConnection"/>, <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/mongodb/dataconnection/MongoDataConnection.html" text="MongoDataConnection"/>.</td>
+</tr>
+<tr>
+<td>`OPTIONS`</td>
+<td>Configuration options for the chosen `connection_type`. See [examples](#examples) and [Configuring Data Connections to External Systems](../../data-connections/data-connections-configuration.mdx) for valid parameters for specific connections.</td>
+</tr>
+</tbody>
+</table>
+
+## Dependency Management
+
+Replacing a data connection will not affect any queries that are already running. Only the following queries or jobs are affected by the changes:
+
+- New queries on existing mappings
+- Queries or jobs that are restarted after a data connection is updated
+
+## Permissions
+
+<Badge type="enterprise"/>
+
+If [security](../../../operate-and-manage/securing-a-cluster/enable-security.mdx) is enabled, you can grant or deny permission for certain clients to use this statement. See [SQL Permissions](../../../operate-and-manage/securing-a-cluster/client-authorization.mdx#sql-permission).
+
+## Examples
+
+### Create a Kafka Data Connection {/* #Kafka */}
+
+```sql
+CREATE DATA CONNECTION IF NOT EXISTS myKafkaSource
+TYPE Kafka
+SHARED
+OPTIONS (
+    'bootstrap.servers' = '127.0.0.1:9092');
+```
+
+### Create a JDBC Data Connection {/* #JDBC */}
+
+```sql
+CREATE DATA CONNECTION IF NOT EXISTS myDatabase
+TYPE JDBC
+SHARED
+OPTIONS (
+  'jdbcUrl'='jdbc:mysql://dummy:3306',
+  'user'='xyz',
+  'password'='xyz');
+```
+
+For a full list of configuration options, see [HikariCP configuration](https://github.com/brettwooldridge/HikariCP#gear-configuration-knobs-baby).
+
+### Create a MongoDB Data Connection {/* #MongoDB */}
+
+```sql
+CREATE DATA CONNECTION myMongoDBSource
+TYPE Mongo
+SHARED
+OPTIONS (
+    'connectionString'='mongodb://mongodb0.example.com:27017',
+    'database'='myDatabaseName');
+```
+
+### Update a Data Connection
+
+If you want to overwrite an existing data connection, use the `CREATE OR REPLACE DATA CONNECTION` statement.
+
+```sql
+CREATE OR REPLACE DATA CONNECTION myDatabase
+TYPE JDBC
+SHARED
+OPTIONS (
+  'jdbcUrl'='jdbc:mysql://dummy:3306',
+  'user'='xyz',
+  'password'='xyz');
+```

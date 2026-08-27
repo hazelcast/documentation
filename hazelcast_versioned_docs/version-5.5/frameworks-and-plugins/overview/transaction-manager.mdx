@@ -1,0 +1,54 @@
+---
+title: "Configure Hazelcast Transaction Manager"
+sidebar_position: 5
+slug: /spring/transaction-manager
+---
+
+:::warning
+
+Hazelcast Transaction Manager is deprecated. It is no longer maintained and may be removed in a future release of Hazelcast Platform.
+
+:::
+
+You can get rid of the boilerplate code to begin, commit or rollback transactions by using <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/spring/transaction/HazelcastTransactionManager.html" text="HazelcastTransactionManager"/> which is a `PlatformTransactionManager` implementation to be used with Spring Transaction API.
+
+## Example Configuration for Hazelcast Transaction Manager
+
+You need to register `HazelcastTransactionManager` as your transaction manager implementation and also you need to register <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/spring/transaction/ManagedTransactionalTaskContext.html" text="ManagedTransactionalTaskContext"/> to access transactional data structures within your service class.
+
+```xml
+...
+<hz:hazelcast id="instance">
+    ...
+</hz:hazelcast>
+...
+<tx:annotation-driven transaction-manager="transactionManager"/>
+<bean id="transactionManager" class="com.hazelcast.spring.transaction.HazelcastTransactionManager">
+    <constructor-arg ref="instance"/>
+</bean>
+<bean id="transactionalContext" class="com.hazelcast.spring.transaction.ManagedTransactionalTaskContext">
+    <constructor-arg ref="transactionManager"/>
+</bean>
+<bean id="YOUR_SERVICE" class="YOUR_SERVICE_CLASS">
+    <property name="transactionalTaskContext" ref="transactionalContext"/>
+</bean>
+...
+```
+
+## Example Transactional Method
+
+```java
+public class ServiceWithTransactionalMethod {
+
+    private TransactionalTaskContext transactionalTaskContext;
+
+    @Transactional
+    public void transactionalPut(String key, String value) {
+        transactionalTaskContext.getMap("testMap").put(key, value);
+    }
+
+    ...
+}
+```
+
+After marking your method as `Transactional` either declaratively or by annotation and accessing the data structure through the `TransactionalTaskContext`, `HazelcastTransactionManager` begins, commits or rollbacks the transaction for you.

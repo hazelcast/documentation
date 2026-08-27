@@ -1,0 +1,229 @@
+---
+title: "Distributed Data Structures"
+sidebar_label: "Overview"
+sidebar_position: 1
+slug: /data-structures/distributed-data-structures
+---
+
+Hazelcast offers distributed implementations of many common data structures. For each of the client languages, Hazelcast mimics as closely as possible the natural interface of the structure. For example in Java, the map follows `java.util.Map` semantics.
+
+## AP Data Structures
+
+| Data structure | Description | Partitioned/Non-partitioned | [AP/CP](../architecture/architecture.mdx#apcp) |
+| --- | --- | --- | --- |
+| [Map](./ap-data-structures/map/map.mdx) | Key-value pairs that are partitioned across a cluster. Maps offer a wide range of features such as SQL queries, WAN replication, and Near Cache. | [Partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
+| [Cache](./ap-data-structures/jcache/icache.mdx) | Hazelcast's specification-compliant JCache implementation. | [Partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
+| [MultiMap](./ap-data-structures/multimap.mdx) | A specialized Hazelcast map. It is a distributed data structure where you can store multiple values for a single key. | [Partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
+| [Replicated Map](./ap-data-structures/replicated-map.mdx) | Key-value pairs that are replicated across each member in the cluster. | [Non-partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
+| [Topic](./ap-data-structures/topic.mdx) | A distributed mechanism for publishing messages that are delivered to multiple subscribers, also known as the publish/subscribe (pub/sub) messaging model. | [Non-partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
+| [Reliable Topic](./ap-data-structures/reliable-topic.mdx) | Similar to Hazelcast topic, except reliable topics are backed up by the ringbuffer data structure. | [Non-partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
+| [Queue](./ap-data-structures/queue.mdx) | A data structure for adding an item in one member/client and removing it from another one, with FIFO ordering. | [Non-partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
+| [Priority Queue](./ap-data-structures/priority-queue.mdx) | A data structure for adding an item in one member/client and removing it from another one, with configurable ordering. | [Non-partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
+| [Set](./ap-data-structures/set.mdx) | A distributed and concurrent collection that contains no duplicate elements and does not preserve their order. | [Non-partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
+| [List](./ap-data-structures/list.mdx) | Similar to Hazelcast set, except a list allows duplicate elements and preserves their order. | [Non-partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
+| [Ringbuffer](./ap-data-structures/ringbuffer.mdx) | For building reliable eventing systems. | [Non-partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
+| [Flake ID Generator](./ap-data-structures/flake-id-generator.mdx) | A data structure for generating cluster-wide unique identifiers. | [Non-partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
+| [PN Counter](./ap-data-structures/pn-counter.mdx) | A data structure where each Hazelcast instance can increment and decrement the counter value and these updates are propagated to all replicas. | [Non-partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
+
+## CP Data Structures
+
+| Data structure | Description | Partitioned/Non-partitioned | [AP/CP](../architecture/architecture.mdx#apcp) |
+| --- | --- | --- | --- |
+| [CPMap](./cp-data-structures/cpmap.mdx)<br/> <Badge type="enterprise"/> | A data structure for storing key-value pairs with support for atomic read, write and conditional write operations within a distributed environment. | [Non-partitioned](#partitioned) | [Consistency and partition tolerance](#cp-data) |
+| [Fenced Lock](./cp-data-structures/fencedlock.mdx)<br/> <Badge type="enterprise"/> | A lock that provides exclusive access to a shared resource; only one thread at a time can acquire the lock and all access to the shared resource requires that the lock be acquired first. | [Non-partitioned](#partitioned) | [Consistency and partition tolerance](#cp-data) |
+| [Atomic Long](./cp-data-structures/iatomiclong.mdx)<br/> <Badge type="enterprise"/> | A data structure for dealing with `long` values that can be updated atomically in a distributed environment. | [Non-partitioned](#partitioned) | [Consistency and partition tolerance](#cp-data) |
+| [Atomic Reference](./cp-data-structures/iatomicreference.mdx)<br/> <Badge type="enterprise"/> | A data structure for dealing with a reference in a distributed environment. | [Non-partitioned](#partitioned) | [Consistency and partition tolerance](#cp-data) |
+| [Countdown Latch](./cp-data-structures/icountdownlatch.mdx)<br/> <Badge type="enterprise"/> | A distributed gatekeeper for concurrent activities; it enables the threads to wait for other threads to complete their operations. | [Non-partitioned](#partitioned) | [Consistency and partition tolerance](#cp-data) |
+| [Semaphore](./cp-data-structures/isemaphore.mdx)<br/> <Badge type="enterprise"/> | A data structure that creates permits that control the thread counts when performing concurrent activities. | [Non-partitioned](#partitioned) | [Consistency and partition tolerance](#cp-data) |
+
+## Streaming Data Structures
+
+| Data structure | Description | Partitioned/Non-partitioned | [AP/CP](../architecture/architecture.mdx#apcp) |
+| --- | --- | --- | --- |
+| [Event Journal](./streaming-data-structures/event-journal.mdx) | A data structure that stores the history of mutation actions on map or cache data structures. | [Partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
+
+## AI/ML Data Structures
+
+| Data structure | Description | Partitioned/Non-partitioned | [AP/CP](../architecture/architecture.mdx#apcp) |
+| --- | --- | --- | --- |
+| [Cardinality Estimator](./ai-ml-data-structures/cardinality-estimator-service.mdx) | A data structure that implements Flajolet's HyperLogLog algorithm. | [Non-partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
+| [Vector Collection](./ai-ml-data-structures/vector-collections/overview.mdx)<br/> <Badge type="enterprise"/> | A data structure for information about the vectors and associated metadata (user values). | [Partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
+
+## Partitioned vs Non-Partitioned {/* #partitioned */}
+
+Hazelcast data structures use one of the following partitioning strategies:
+
+- **Partitioned:** Each partition stores a part of the whole data structure.
+- **Non-partitioned:** A single partition stores the whole data structure.
+
+For details about how Hazelcast partitions data, see [Data Partitioning and Replication](../architecture/data-partitioning.mdx)
+
+### Controlling Partitions
+
+Hazelcast uses the name of a distributed object to determine in which partition it will be put.
+
+In this example, the queues have different names, so they will be placed into different partitions:
+
+```java
+HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance();
+IQueue q1 = hazelcastInstance.getQueue("q1");
+IQueue q2 = hazelcastInstance.getQueue("q2");
+```
+
+If you want to put these two into the same partition, you use the `@` symbol:
+
+```java
+HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance();
+IQueue q1 = hazelcastInstance.getQueue("q1@foo");
+IQueue q2 = hazelcastInstance.getQueue("q2@foo");
+```
+
+Now, these two queues will be put into the same partition whose partition key is `foo`. Note that you can use the `getPartitionKey()` method to learn the partition key of a distributed object. It may be useful when you want to create an object in the same partition as an existing object:
+
+```java
+String partitionKey = q1.getPartitionKey();
+IQueue q3 = hazelcastInstance.getQueue("q3@"+partitionKey);
+```
+
+## Loading Objects {/* #loading-and-destroying-a-distributed-object */}
+
+Hazelcast offers a `get()` method for most of its distributed objects. To load an object, first create a Hazelcast instance and then use the related `get()` method on this instance. The following code snippet creates a Hazelcast member and a map:
+
+```java
+HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance();
+Map<Integer, String> customers = hazelcastInstance.getMap( "customers" );
+```
+
+## Destroying Objects
+
+To destroy a Hazelcast distributed object, you can use the `destroy()` method, which clears and releases all resources of the object. Therefore, you must use it with care since a reload with the same object reference after the object is destroyed creates a new data structure without an error. See the following example code where one of the queues are destroyed and the other one is accessed.
+
+```java
+        HazelcastInstance hz1 = Hazelcast.newHazelcastInstance();
+        HazelcastInstance hz2 = Hazelcast.newHazelcastInstance();
+        IQueue<String> q1 = hz1.getQueue("q");
+        IQueue<String> q2 = hz2.getQueue("q");
+        q1.add("foo");
+        System.out.println("q1.size: "+q1.size()+ " q2.size:"+q2.size());
+        q1.destroy();
+        System.out.println("q1.size: " + q1.size() + " q2.size:" + q2.size());
+```
+
+If you start the member, you see the following output:
+
+```shell
+q1.size: 1 q2.size:1
+q1.size: 0 q2.size:0
+```
+
+As you see, no error is generated and a new queue resource is created.
+
+Hazelcast is designed to create any distributed data structure whenever it is accessed.
+
+Therefore, keep in mind that a data structure is recreated when you perform an operation on it even after you have destroyed it.
+
+:::note
+
+If you plan to use the distributed object later, clear the object using the `clear()` method or equivalent instead of destroying it.
+
+:::
+
+:::warning
+
+Do not use the distributed object concurrently with the `destroy()` invocation, as this can result in the object not being fully usable.
+
+:::
+
+:::warning
+
+If you want to use the destroyed distributed object again, do not hold any old references; instead, obtain a new reference using the `HazelcastInstance.getXXX` method, otherwise the object might not be fully usable.
+
+:::
+
+## Configuring Data Structures
+
+As to the configuration of distributed objects, Hazelcast uses the default settings from the `hazelcast.xml` file that comes with your Hazelcast member download. Of course, you can provide an explicit configuration in this file or programmatically according to your needs. See the [Understanding Configuration section](../../operate-and-manage/configuration/understanding-configuration.mdx).
+
+Note that, most of Hazelcast's distributed objects are created lazily: A distributed object is created once the first operation accesses it.
+
+If you want to use an object you loaded in other places, you can safely reload it using its reference without creating a new Hazelcast instance.
+
+## Availability and Partition Tolerance {/* #ap-data */}
+
+AP data structures prefer availability over consistency.
+
+When a partition occurs, all members remain available but some might return an older version of data than others. When the partition is resolved, the members resynchronize to repair any inconsistencies:
+
+<Anchor id="common-features-of-all-hazelcast-data-structures"/>
+
+- If a member goes down, its backup replica (which holds the same data) dynamically redistributes the data, including the ownership and locks on them, to the remaining live members. As a result, there will not be any data loss.
+- There is no single cluster master that can be a single point of failure. Every member in the cluster has equal rights and responsibilities. No single member is superior.
+
+### Example Code {/* #example-distributed-object-code */}
+
+Here is an example of how you can retrieve existing AP data structure instances and how you can listen for instance events, such as an instance being created or destroyed.
+
+```java
+public class ExampleDOL implements DistributedObjectListener {
+
+    public static void main(String[] args) {
+        ExampleDOL example = new ExampleDOL();
+        Config config = new Config();
+
+        HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
+        hazelcastInstance.addDistributedObjectListener(example);
+
+        Collection<DistributedObject> distributedObjects = hazelcastInstance.getDistributedObjects();
+        for (DistributedObject distributedObject : distributedObjects) {
+            System.out.println(distributedObject.getName());
+        }
+    }
+
+    @Override
+    public void distributedObjectCreated(DistributedObjectEvent event) {
+        DistributedObject instance = event.getDistributedObject();
+        System.out.println("Created " + instance.getName());
+    }
+
+    @Override
+    public void distributedObjectDestroyed(DistributedObjectEvent event) {
+        Object objectName = event.getObjectName();
+        System.out.println("Destroyed " + objectName);
+    }
+}
+```
+
+:::note
+
+The `getDistributedObjects()` method returns internal API objects with prefixes, including `\__sql` and `__jet`, such as `__sql.catalog`. You can ignore these objects.
+
+:::
+
+## Consistency and Partition Tolerance {/* #cp-data */}
+
+A CP data structure delivers consistency and partition tolerance at the expense of availability. When a partition occurs between any two CP members, the non-consistent CP member must halt until the partition is resolved.
+
+To learn about CP members and how Hazelcast delivers consistency and partition tolerance, see [CP Subsystem](../../operate-and-manage/cp-subsystem/cp-subsystem.mdx).
+
+The CP data structures differ from AP data structures in two aspects:
+
+- An internal commit is performed on the `METADATA` CP group every time you fetch a CP data structure object. Hence, the callers should cache the returned objects.
+- If you call the `destroy()` method on a CP data structure object, that data structure is terminated in the underlying CP group and cannot be reinitialized until the CP group is force-destroyed. For this reason, please make sure that you are completely done with a CP data structure before destroying it.
+
+### Example Code {/* #example-code */}
+
+```java
+        CPSubsystem cpSubsystem = hazelcastInstance.getCPSubsystem();
+
+        IAtomicLong atomicLong = cpSubsystem.getAtomicLong(name);
+
+        IAtomicReference atomicRef = cpSubsystem.getAtomicReference(name);
+
+        FencedLock lock = cpSubsystem.getLock(name);
+
+        ISemaphore semaphore = cpSubsystem.getSemaphore(name);
+
+        ICountDownLatch latch = cpSubsystem.getCountDownLatch(name);
+
+        CPMap map = cpSubsystem.getMap(name);
+```

@@ -1,0 +1,89 @@
+---
+title: "Framework Integration Plugins"
+sidebar_position: 3
+slug: /plugins/framework-integration
+---
+
+Hazelcast provides the following integration plugins that allow Hazelcast to integrate with other frameworks and applications.
+
+## Hazelcast Hibernate 2LC
+
+[Hibernate](http://hibernate.org/) is an object-relational mapping tool for the Java programming language. It provides a framework for mapping an object-oriented domain model to a relational database and enables developers to more easily write applications whose data outlives the application process.
+
+[Hazelcast Hibernate plugin](https://github.com/hazelcast/hazelcast-hibernate) provides Hazelcast's own distributed second level cache implementation for your Hibernate entities, collections and queries.
+
+To use this plugin, add the `hazelcast-hibernate*` dependency to your classpath.
+
+See the following for more details:
+
+- [Hazelcast Hibernate Plugin documentation](https://github.com/hazelcast/hazelcast-hibernate).
+- [Hazelcast Guides: Hibernate Second-Level Cache](https://guides.hazelcast.org/springboot-hibernate/)
+
+## Spring Boot
+
+Hazelcast is very well integrated with the whole [Spring Boot](https://spring.io/projects/spring-boot) ecosystem. See the following resources for the details:
+
+- [Spring Boot: Hazelcast](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#boot-features-hazelcast)
+- [Spring Boot: Caching with Hazelcast](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#boot-features-caching-provider-hazelcast)
+- [Hazelcast Guides: Hazelcast with Spring Boot](https://guides.hazelcast.org/hazelcast-embedded-springboot/)
+- [Hazelcast Guides: Caching in SpringBoot Microservices](https://guides.hazelcast.org/caching-springboot/)
+- [Hazelcast Guides: Session Replication with Spring Boot](https://guides.hazelcast.org/springboot-webfilter-session-replication/)
+
+## Spring Integration
+
+[Spring Integration](https://github.com/spring-projects/spring-integration) provides an extension for Hazelcast. It includes, but is not limited to, the following features:
+
+- Event-driven inbound channel adapter: Listens related Hazelcast data structure events and sends event messages to the defined channel.
+- Continuous query inbound channel adapter: Listens the modifications performed on specific map entries.
+- Cluster monitor inbound channel adapter: Listens the modifications performed on the cluster.
+- Distributed SQL inbound channel adapter: Runs the defined distributed SQL and returns the results in the light of iteration type.
+- Outbound channel adapter: Listens the defined channel and writes the incoming messages to the related distributed data structure.
+- Leader election: Elects a cluster member, for example, for highly available message consumer where only one member should receive messages.
+
+See the [Spring Integration Extension documentation](https://github.com/spring-projects/spring-integration-extensions/tree/master/spring-integration-hazelcast) and [Integrating with Spring](../overview/overview.mdx) for more details.
+
+## Spring Data Hazelcast
+
+[Spring Data](https://spring.io/projects/spring-data) provides a consistent, Spring-based programming model for data access while preserving the features of the underlying data store.
+
+[Spring Data Hazelcast plugin](https://github.com/hazelcast/spring-data-hazelcast) provides an implementation of the [Spring Data Key Value](https://github.com/spring-projects/spring-data-keyvalue) abstraction, which lets you use Hazelcast as the data store or a layer in between your application and the database.
+
+See the [Spring Data Hazelcast documentation](https://github.com/hazelcast/spring-data-hazelcast) for more details.
+
+## Quarkus
+
+Hazelcast integrates well with the [Quarkus framework](https://quarkus.io/). What's more is that, if you use the client/server topology, then Hazelcast client works in the GraalVM native executable mode. That means that you can use Hazelcast in your superfast native Docker images.
+
+See the following resources for more details:
+
+- [Hazelcast Client for Quarkus documentation](https://github.com/hazelcast/quarkus-hazelcast-client)
+- [Hazelcast Guides: Hazelcast Client with Quarkus](https://guides.hazelcast.org/hazelcast-client-quarkus/)
+
+## Micronaut
+
+Hazelcast can be used as a caching provider in the [Micronaut](https://micronaut.io/) framework. See the following resources for more details:
+
+- [Micronaut: Hazelcast Support](https://micronaut-projects.github.io/micronaut-cache/snapshot/guide/#hazelcast)
+- [Hazelcast Guides: Caching in Micronaut Microservices](https://guides.hazelcast.org/caching-micronaut/)
+
+## Hazelcast JCA Resource Adapter
+
+Hazelcast JCA Resource Adapter is a system-level software driver which can be used by a Java application to connect to the Hazelcast cluster. Using this adapter, you can integrate Hazelcast into Java EE containers. After a proper configuration, Hazelcast can participate in the standard Java EE transactions.
+
+See the [Hazelcast JCA Resource Adapter documentation](https://github.com/hazelcast/hazelcast-ra) for more details.
+
+## Hazelcast DynaCache
+
+[DynaCache](https://www.ibm.com/support/knowledgecenter/en/linuxonibm/liaag/cache/pubwasdynacachoverview.htm) by IBM is used to store objects, and later, based on some data matching rules, to retrieve those objects and serve them from its cache. This plugin is for Liberty Profile which is a lightweight profile of IBM WebSphere Application Server.
+
+In the Liberty Profile, you can use a dynamic cache engine in order to cache your data. With this plugin, you can use Hazelcast as a cache provider.
+
+See the [Hazelcast DynaCache documentation](https://github.com/hazelcast/hazelcast-dynacache) for more details.
+
+## MuleSoft
+
+Hazelcast is embedded within a MuleSoft container as an out-of-the-box offering. For a proper integration you should edit the `mule-deploy.properties` file to have the following entry:
+
+```none
+loader.override=com.hazelcast
+```

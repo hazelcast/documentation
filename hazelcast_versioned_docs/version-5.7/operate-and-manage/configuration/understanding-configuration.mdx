@@ -1,0 +1,61 @@
+---
+title: "Hazelcast Configuration"
+sidebar_label: "Overview"
+sidebar_position: 1
+slug: /configuration/understanding-configuration
+---
+
+To configure a Hazelcast cluster or client, you can choose either static or dynamic configuration. Explore the options and decide which one is best for your application.
+
+:::tip
+
+Before configuring Hazelcast, we recommend trying the defaults, which are set in the `hazelcast-default.xml` and `hazelcast-client-default.xml` file of your Hazelcast package.
+
+:::
+
+## Static Configuration
+
+Static configuration allows you to configure Hazelcast members and client before runtime by providing either configuration files or using the API.
+
+To use static configuration, you have the following options:
+
+- [Configuration Files](./static-configuration/configuring-declaratively.mdx): Use configuration files to configure a cluster or client before startup.
+- [Configuration Object](./static-configuration/configuring-programmatically.mdx): Use a client or member API to configure a cluster or client.
+- [System props and environment variables](./static-configuration/configuring-with-system-properties.mdx): Use system properties to configure some aspects of Hazelcast or override settings in a configuration file.
+- [Spring configuration](./static-configuration/configuring-within-spring.mdx): Configure Hazelcast for Spring integration.
+
+The following topics are also relevant to static configuration:
+
+- [Configuration Pattern Matcher](./static-configuration/pattern-matcher.mdx)
+- [Using Wildcards](./static-configuration/using-wildcards.mdx)
+
+:::note
+
+Hazelcast performs schema validation through the <code>{"hazelcast-config-"}<Variable name="version"/>{".xsd"}</code> file, which comes with Hazelcast libraries. If an error occurs in declarative or programmatic configuration, Hazelcast throws a meaningful exception.
+
+:::
+
+Static configuration cannot be changed at runtime. To update static configuration, you must [restart the cluster](../maintaining-a-cluster/restart-cluster.mdx). However, you can add [dynamic configuration](#dynamic-configuration) for some features.
+
+### Configuration Precedence
+
+<Anchor id="checking-configuration"/>
+
+Hazelcast members and clients looks for static configuration options in the following order:
+
+| Order | Member | Client |
+| --- | --- | --- |
+| 1 | `Config` object provided by programmatic configuration | `Config` object provided by programmatic configuration |
+| 2 | `hazelcast.config` system property | `hazelcast.client.config` system property |
+| 3 | `hazelcast.xml` declarative configuration file in the working directory | `hazelcast-client.xml` declarative configuration file in the working directory |
+| 4 | `hazelcast.xml` declarative configuration file on the classpath | `hazelcast-client.xml` declarative configuration file on the classpath (Java) |
+| 5 | `hazelcast.yaml` declarative configuration file in the working directory | `hazelcast-client.yaml` declarative configuration file in the working directory |
+| 6 | `hazelcast.yaml` declarative configuration file on the classpath | `hazelcast-client.yaml` declarative configuration file on the classpath (Java) |
+
+If Hazelcast does not find any of these configuration options, it loads the default configuration file (`hazelcast-default.xml`), which comes with your Hazelcast package.
+
+## Dynamic Configuration
+
+Dynamic configuration allows you to add configuration blocks for some features at runtime.
+
+For more information, see [Dynamic Configuration for Members](./dynamic-configuration/dynamic-config.mdx).

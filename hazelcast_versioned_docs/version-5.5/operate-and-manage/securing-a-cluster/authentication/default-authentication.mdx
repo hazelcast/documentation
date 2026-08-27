@@ -1,0 +1,21 @@
+---
+title: "Default authentication"
+sidebar_position: 8
+slug: /security/default-authentication
+enterprise: true
+---
+
+:::note
+
+When Hazelcast security is enabled, we recommended you explicitly specify [authentication types](./authentication-overview.mdx) for client-to-member and member-to-member authentication. The default authentication method described in this section is kept in Hazelcast for backward compatibility reasons.
+
+:::
+
+Default authentication is used when security is enabled and no explicit authentication configuration is provided. This can happen when:
+
+- `member-authentication` is not configured
+- the security realm referenced by `member-authentication` doesn't contain the `authentication` configuration
+- `client-authentication` is not configured
+- the security realm referenced by `client-authentication` doesn't contain the `authentication` configuration
+
+The behavior of the default authentication mechanism depends on the **member's identity configuration** (i.e. `identity` configuration in the security realm referenced from `member-authentication`). If the `identity` is configured as a `username-password`, then the authenticated username and password credentials are checked for equality with these configured ones. In all other cases, only the incoming cluster name is checked for equality with the one configured on the authenticating member.

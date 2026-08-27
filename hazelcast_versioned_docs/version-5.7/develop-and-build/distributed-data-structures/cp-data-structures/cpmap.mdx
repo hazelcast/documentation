@@ -1,0 +1,75 @@
+---
+title: "CPMap"
+sidebar_position: 1
+slug: /data-structures/cpmap
+enterprise: true
+---
+
+Hazelcast `CPMap` is a distributed implementation of a minimal key-value interface. It is a CP data structure, so unlike the traditional maps built for availability (AP), `CPMap` guarantees data consistency even during network partitions, ensuring that every cluster member always sees the same data. This reliability makes it ideal for storing sensitive information such as user bank balances and system configurations, or managing mission-critical workflows.
+
+`CPMap` data structure supports the following atomic operations:
+
+- `compareAndSet`
+- `delete`
+- `get`
+- `put`
+- `putIfAbsent`
+- `remove`
+- `set`
+
+Due to `CPMap`s distributed nature, above operations involve remote calls. This means that the calls might take longer to complete than non-distributed counterparts, such as `HashMap`s.
+
+:::note
+
+`CPMap` is only available in the <Variable name="enterprise-product-name"/>. Your license must include `ADVANCED_CP` to activate this feature and you must use the <Variable name="enterprise-product-name"/> client.
+
+:::
+
+There is no unsafe variant of `CPMap`, unlike other CP data structures. Therefore, CP must be [enabled](../../../operate-and-manage/cp-subsystem/configuration.mdx#quickstart-configuration) before using `CPMap`.
+
+The following example creates an instance of a `CPMap` in the `default` CP group, then updates its contents using the operations listed previously.
+
+```java
+        HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance();
+        // creates 'capitalCities' CPMap in the 'default' CP Group
+        CPMap<String, String> capitalCities = hazelcastInstance.getCPSubsystem().getMap("capitalCities");
+        // prefer 'set' over 'put' when the previous value associated with a key is not required
+        capitalCities.set("England", "London");
+        assert "London".equals(capitalCities.get("England"));
+        assert null == capitalCities.put("France", "Paris");
+        assert "London".equals(capitalCities.remove("England"));
+        // prefer 'delete' over 'remove' when the value associated with the key is not required
+        capitalCities.delete("France");
+        capitalCities.set("Germany", "Munich");
+        assert capitalCities.compareAndSet("Germany", "Munich", "Berlin");
+        assert "Berlin".equals(capitalCities.get("Germany"));
+        assert null == capitalCities.putIfAbsent("Ireland", "Dublin");
+        assert "Dublin".equals(capitalCities.putIfAbsent("Ireland", "Cork"));
+        assert "Dublin".equals(capitalCities.get("Ireland"));
+        capitalCities.destroy();
+```
+
+The mutations over the `CPMap` `capitalCities` in the above example are replicated across each of the members of the `default` CP Group.
+
+Use `set` to associate a key with a value instead of `put` when the previously-associated value with the respective key is not required. This is because the network cost of `set` is less than `put`. Use `delete` instead of `remove` for the same reason.
+
+:::warning
+
+`CPMap`s are not automatically removed. If an instance is not used anymore, Hazelcast does not automatically perform garbage collection on it. This can lead to an `OutOfMemoryError`. If you create `CPMap`s on the fly, ensure that they are destroyed. See [Destroying Objects](../distributed-data-structures.mdx#destroying-objects) and [CP Data Structures](../distributed-data-structures.mdx#cp-data).
+
+:::
+
+A `CPMap` has a default capacity of 100MB. This capacity can be adjusted for a `CPMap` through [CPMap Options](../../../operate-and-manage/cp-subsystem/configuration.mdx#cpmap-config). The backing data structure of a `CPMap` is stored on the JVM heap.
+
+:::note
+
+Since `CPMap` is a CP data structure, it takes part in a process called *snapshotting*. When defining the capacity of a `CPMap` you must consider the following memory requirements:
+
+- On-heap capacity for the `CPMap`
+- On-heap capacity for a `CPMap` snapshot for each follower within the respective CP Group
+
+Therefore, at a minimum, for a `CPMap` with a capacity of `5MB` within a 3-member CP Group, we must conservatively ensure that we have on-heap headroom for `15MB`. This capacity planning must be considered for all `CPMap` instances you intend to create.
+
+:::
+
+A `CPMap`, like other CP data structures, resides within a user specified CP Group. Each CP Group is an instance of Raft and consequently has its own Raft Log. Co-locating CP data structures within the same CP Group must be undertaken with care as the operations of the co-located CP data structures are totally ordered with respect to one another via Raft. Snapshotting also takes place at the granularity of a CP Group. Therefore, it is highly recommended that you carefully consider the envisaged access frequency and patterns of a `CPMap` when deciding the CP Group a `CPMap` will reside.

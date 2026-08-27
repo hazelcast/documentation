@@ -1,0 +1,3649 @@
+---
+title: "List of Hazelcast Metrics"
+sidebar_label: "Metrics"
+sidebar_position: 4
+slug: /list-of-metrics
+---
+
+The tables below list Hazelcast metrics and descriptions, grouped by subject. This page includes both member-side and client-side metrics.
+
+Unless noted otherwise, metrics are member-side and local to the instance that reports them. For members, distributed data structure metrics reflect the local statistics for the partition data held on that member.
+
+Some metrics represent cluster-wide agreed values obtained by communicating with other members in the cluster. In those cases, each value still reflects the local member's current view of the cluster (for example, in split-brain scenarios). The `clusterStartTime` metric is one example; on a local member, its value is obtained from the master member.
+
+Metric names on this page are canonical names. Some metrics are exposed with different prefixes depending on where they are collected (member, client, or subsystem). Sections that have prefix variants call them out explicitly.
+
+:::note
+
+If you use Management Center to export cluster-wide metrics to Prometheus, Management Center reformats the metrics to align with Prometheus best practice recommendations. See <Variable href="/management-center/{page-latest-supported-mc}/integrate/prometheus-monitoring" text="Prometheus Monitoring"/>.
+
+:::
+
+<details>
+<summary>Streaming Engine Cluster-Wide Metrics</summary>
+
+<table>
+<colgroup>
+<col style={{width:'33.3333%'}}/>
+<col style={{width:'33.3333%'}}/>
+<col style={{width:'33.3334%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>Tags</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>blockingWorkerCount</th>
+<td>Number of non-cooperative workers employed.</td>
+<td rowSpan={7}>
+
+*none*
+
+Each Hazelcast member will have one instance of each of these metrics.
+
+</td>
+</tr>
+<tr>
+<th>jobs.submitted</th>
+<td>Number of computational jobs submitted.</td>
+</tr>
+<tr>
+<th>jobs.completedSuccessfully</th>
+<td>Number of computational jobs successfully completed.</td>
+</tr>
+<tr>
+<th>jobs.completedWithFailure</th>
+<td>Number of computational jobs that have failed.</td>
+</tr>
+<tr>
+<th>jobs.executionStarted</th>
+<td>Number of computational job executions started. Each job can execute multiple times, for example when it's restarted or suspended and then resumed.</td>
+</tr>
+<tr>
+<th>jobs.executionTerminated</th>
+<td>Number of computational job executions finished. Each job can execute multiple times, for example when it's restarted or suspended and then resumed.</td>
+</tr>
+<tr>
+<th>jobs.executionCompleted</th>
+<td>Number of computational job executions completed (successfully or otherwise).</td>
+</tr>
+<tr>
+<th>iterationCount</th>
+<td>The total number of iterations the driver of tasklets in cooperative thread N made. It should increase by at least 250 iterations/s. Lower value means some of the cooperative processors blocks for too long. Somewhat lower value is normal if there are many tasklets assigned to the processor. Lower value affects the latency.</td>
+<td rowSpan={2}>
+
+*cooperativeWorker*
+
+Each Hazelcast member will have one instance of each of these metrics for each of its cooperative worker threads.
+
+</td>
+</tr>
+<tr>
+<th>taskletCount</th>
+<td>The number of assigned tasklets to cooperative thread N.</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Streaming Engine Job-specific Metrics</summary>
+
+<Anchor id="job-metrics"/>All job specific metrics have their `job` (name and ID of the job) and `exec`(job execution ID) tags set, and most also have the `vertex` (vertex name) tag set (with very few exceptions). This means that most of these metrics will have at least one instance for each vertex of each current job execution.
+
+Additionally, if the vertex sourcing them is a data source or data sink, then the `source` or `sink` tags will also be set to true.
+
+<table>
+<colgroup>
+<col style={{width:'33.3333%'}}/>
+<col style={{width:'33.3333%'}}/>
+<col style={{width:'33.3334%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>Tags</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>executionStartTime</th>
+<td>Start time of the current execution of the job (epoch time in milliseconds).</td>
+<td rowSpan={4}>
+
+*job, exec*
+
+There will be a single instance of these metrics for each job execution.
+
+</td>
+</tr>
+<tr>
+<th>executionCompletionTime</th>
+<td>Completion time of the current execution of the job (epoch time in milliseconds).</td>
+</tr>
+<tr>
+<th>status</th>
+<td>
+
+Information regarding the job's status. Potential values:
+
+- 0 - submitted
+- 1 - initialization phase
+- 2 - running
+- 3 - suspended
+- 4 - exporting snapshot
+- 5 - completing phase
+- 6 - failed
+- 7 - completed successfully
+
+</td>
+</tr>
+<tr>
+<th>userCancelled</th>
+<td>
+
+Details on whether the user canceled the job. Potential values:
+
+- 1 - canceled by the user
+- 0 - means the job is either running, completed successfully, or failed due to an error other than user cancellation
+
+Exposed via [Job API](../operate-and-manage/maintaining-a-cluster/monitoring.mdx#via-job-api) only.
+
+</td>
+</tr>
+<tr>
+<th>snapshotBytes</th>
+<td>Total number of bytes written out in the last snapshot.</td>
+<td rowSpan={2}>
+
+*job, exec, vertex*
+
+There will be a single instance of these metrics for each vertex.
+
+</td>
+</tr>
+<tr>
+<th>snapshotKeys</th>
+<td>Total number of keys written out in the last snapshot.</td>
+</tr>
+<tr>
+<th>distributedBytesIn</th>
+<td>Total number of bytes received from remote members.</td>
+<td rowSpan={4}>
+
+*job, exec, vertex, ordinal*
+
+Each Hazelcast member will have an instance of these metrics for each ordinal of each vertex of each job execution.
+
+Note: These metrics are only present for distributed edges, i.e., edges producing network traffic.
+
+</td>
+</tr>
+<tr>
+<th>distributedBytesOut</th>
+<td>Total number of bytes sent to remote members.</td>
+</tr>
+<tr>
+<th>distributedItemsIn</th>
+<td>Total number of items received from remote members.</td>
+</tr>
+<tr>
+<th>distributedItemsOut</th>
+<td>Total number of items sent to remote members.</td>
+</tr>
+<tr>
+<th>topObservedWm</th>
+<td>This value is equal to the highest coalescedWm on any input edge of this processor.</td>
+<td rowSpan={6}>
+
+*job, exec, vertex, proc*
+
+Each Hazelcast member will have one instances of these metrics for each processor instance N, the N denotes the global processor index. Processor is the parallel worker doing the work of the vertex.
+
+</td>
+</tr>
+<tr>
+<th>coalescedWm</th>
+<td>The highest watermark received from all inputs that was sent to the processor to handle.</td>
+</tr>
+<tr>
+<th>lastForwardedWm</th>
+<td>Last watermark emitted by the processor to output.</td>
+</tr>
+<tr>
+<th>lastForwardedWmLatency</th>
+<td>The difference between \<i\>lastForwardedWn\</i\> and the system time at the moment when metrics were collected.</td>
+</tr>
+<tr>
+<th>queuesCapacity</th>
+<td>The total capacity of input queues.</td>
+</tr>
+<tr>
+<th>queuesSize</th>
+<td>The total number of items waiting in input queues.</td>
+</tr>
+<tr>
+<th>topObservedWm</th>
+<td>The highest received watermark from any input on edge N.</td>
+<td rowSpan={5}>
+
+*job, exec, vertex, proc, ordinal*
+
+Each Hazelcast member will have one instance of these metrics for each edge M (input or output) of each processor N. N is the global processor index and M is either the ordinal of the edge or has the value snapshot for output items written to state snapshot.
+
+</td>
+</tr>
+<tr>
+<th>coalescedWm</th>
+<td>The highest watermark received from all upstream processors on edge N.</td>
+</tr>
+<tr>
+<th>emittedCount</th>
+<td>The number of emitted items. This number includes watermarks, snapshot barriers etc. Unlike *distributedItemsOut*, it includes items emitted items to local processors.</td>
+</tr>
+<tr>
+<th>receivedCount</th>
+<td>The number of received items. This number does not include watermarks, snapshot barriers etc. It's the number of items the Processor.process method will receive.</td>
+</tr>
+<tr>
+<th>receivedBatches</th>
+<td>The number of received batches. `Processor.process` receives a batch of items at a time, this is the number of such batches. By dividing *receivedCount* by *receivedBatches*, you get the average batch size. It will be 1 under low load.</td>
+</tr>
+<tr>
+<th>numInFlightOps</th>
+<td>The number of pending (in flight) operations when using asynchronous mapping processors. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#mapUsingServiceAsyncP-com.hazelcast.jet.pipeline.ServiceFactory-int-boolean-com.hazelcast.function.FunctionEx-com.hazelcast.function.BiFunctionEx-" text="Processors.mapUsingServiceAsyncP"/>.</td>
+<td rowSpan={6}>
+
+*job, exec, vertex, proc, procType*
+
+Processor specific metrics, only certain types of processors have them. The *procType* tag can be used to identify the exact type of processor sourcing them. Like all processor metrics, each Hazelcast member will have one instances of these metrics for each processor instance N, the N denotes the global processor index.
+
+</td>
+</tr>
+<tr>
+<th>totalKeys</th>
+<td>The number of active keys being tracked by a session window processor.</td>
+</tr>
+<tr>
+<th>totalWindows</th>
+<td>The number of active windows being tracked by a session window processor. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#aggregateToSessionWindowP-long-long-java.util.List-java.util.List-com.hazelcast.jet.aggregate.AggregateOperation-com.hazelcast.jet.core.function.KeyedWindowResultFunction-" text="Processors.aggregateToSessionWindowP"/>.</td>
+</tr>
+<tr>
+<th>totalFrames</th>
+<td>The number of active frames being tracked by a sliding window processor.</td>
+</tr>
+<tr>
+<th>totalKeysInFrames</th>
+<td>The number of grouping keys associated with the current active frames of a sliding window processor. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#aggregateToSlidingWindowP-java.util.List-java.util.List-com.hazelcast.jet.core.TimestampKind-com.hazelcast.jet.core.SlidingWindowPolicy-long-com.hazelcast.jet.aggregate.AggregateOperation-com.hazelcast.jet.core.function.KeyedWindowResultFunction-" text="Processors.aggregateToSlidingWindowP"/>.</td>
+</tr>
+<tr>
+<th>lateEventsDropped</th>
+<td>The number of late events dropped by various processor, due to the watermark already having passed their windows.</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Map</summary>
+
+<table>
+<colgroup>
+<col style={{width:'33.3333%'}}/>
+<col style={{width:'8.3333%'}}/>
+<col style={{width:'50%'}}/>
+<col style={{width:'8.3334%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+<td>Reset</td>
+</tr>
+<tr>
+<td>`map.backupCount`</td>
+<td>count</td>
+<td>Number of backups per entry</td>
+<td>C</td>
+</tr>
+<tr>
+<td>`map.backupEntryCount`</td>
+<td>count</td>
+<td>Number of backup entries held by the member</td>
+<td>C</td>
+</tr>
+<tr>
+<td>`map.backupEntryMemoryCost`</td>
+<td>bytes</td>
+<td>Memory cost of backup entries in this member</td>
+<td>C</td>
+</tr>
+<tr>
+<td>`map.creationTime`</td>
+<td>ms</td>
+<td>Creation time of the map on the member</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.dirtyEntryCount`</td>
+<td>count</td>
+<td>Number of updated but not persisted yet entries, dirty entries, that the member owns</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.entrySetCount`</td>
+<td>count</td>
+<td>Number of entry set operations on this member</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.evictionCount`</td>
+<td>count</td>
+<td>Number of evictions happened on locally owned entries, backups are not included</td>
+<td>C</td>
+</tr>
+<tr>
+<td>`map.expirationCount`</td>
+<td>count</td>
+<td>Number of expirations happened on locally owned entries, backups are not included</td>
+<td>C</td>
+</tr>
+<tr>
+<td>`map.getCount`</td>
+<td>count</td>
+<td>Number of local get operations on the map; it is incremented for every get operation even if the entries do not exist</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.heapCost`</td>
+<td>count</td>
+<td>Total heap cost for the map on this member</td>
+<td>C</td>
+</tr>
+<tr>
+<td>`map.hits`</td>
+<td>count</td>
+<td>Number of reads of the locally owned entries; it is incremented for every read by any type of operation (get, set, put). So the entries should exist</td>
+<td>C</td>
+</tr>
+<tr>
+<td>`map.indexedQueryCount`</td>
+<td>count</td>
+<td>Total number of indexed local queries performed on the map</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.indexesSkippedQueryCount`</td>
+<td>count</td>
+<td>Total number of local queries performed on the map which cannot use indexes</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.noMatchingIndexQueryCount`</td>
+<td>count</td>
+<td>Total number of local queries performed on the map which had no matching index</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.lastAccessTime`</td>
+<td>ms</td>
+<td>Last access (read) time of the locally owned entries</td>
+<td>C</td>
+</tr>
+<tr>
+<td>`map.lastUpdateTime`</td>
+<td>ms</td>
+<td>Last update time of the locally owned entries</td>
+<td>C</td>
+</tr>
+<tr>
+<td>`map.lockedEntryCount`</td>
+<td>count</td>
+<td>Number of locked entries that the member owns</td>
+<td>C</td>
+</tr>
+<tr>
+<td>`map.merkleTreesCost`</td>
+<td>count</td>
+<td>Total heap cost of the Merkle trees used</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.numberOfEvents`</td>
+<td>count</td>
+<td>Number of local events received on the map</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.numberOfOtherOperations`</td>
+<td>count</td>
+<td>Total number of other operations performed on this member</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.ownedEntryCount`</td>
+<td>count</td>
+<td>Number of map entries owned by the member</td>
+<td>C</td>
+</tr>
+<tr>
+<td>`map.ownedEntryMemoryCost`</td>
+<td>bytes</td>
+<td>Memory cost of owned map entries on this member</td>
+<td>C</td>
+</tr>
+<tr>
+<td>`map.putCount`</td>
+<td>count</td>
+<td>Number of local put operations on the map</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.queryCount`</td>
+<td>count</td>
+<td>Number of queries executed on the map (it may be imprecise for queries involving partition predicates (PartitionPredicate) on the off-heap storage)</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.queryLimiterHitCount`</td>
+<td>count</td>
+<td>Number of times the query result size limiter was hit on this member</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.removeCount`</td>
+<td>count</td>
+<td>Number of local remove operations on the map</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.setCount`</td>
+<td>count</td>
+<td>Number of local set operations on the map</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.totalGetLatency`</td>
+<td>ms</td>
+<td>Total latency of local get operations on the map</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.totalMaxGetLatency`</td>
+<td>ms</td>
+<td>Maximum latency of local get operations on the map</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.totalMaxPutLatency`</td>
+<td>ms</td>
+<td>Maximum latency of local put operations on the map</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.totalMaxRemoveLatency`</td>
+<td>ms</td>
+<td>Maximum latency of local remove operations on the map</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.totalMaxSetLatency`</td>
+<td>ms</td>
+<td>Maximum latency of local set operations on the map</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.totalPutLatency`</td>
+<td>ms</td>
+<td>Total latency of local put operations on the map</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.totalRemoveLatency`</td>
+<td>ms</td>
+<td>Total latency of local remove operations on the map</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.totalSetLatency`</td>
+<td>ms</td>
+<td>Total latency of local set operations on the map</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.valuesCount`</td>
+<td>count</td>
+<td>Number of values operations on this member</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.store.offloaded.operations.waitingToBeProcessedCount`</td>
+<td>count</td>
+<td>Number of offloaded map store operations waiting to be processed</td>
+<td>N</td>
+</tr>
+<tr>
+<td colSpan={4}>
+
+The above `*latency` metrics are only measured for the members and they do not represent the overall performance of the cluster. Hazelcast recommends monitoring the average latency for each operation, for example, `map.totalGetLatency` / `map.getCount` and `map.totalSetLatency` / `map.setCount`. Increased average latency is a sign that the cluster would experience performance problems, or there is a spike in the load. The following may be the reasons:
+
+- Increase in the load on the cluster: If the cluster is under heavy load, this can lead to increased latency for all operations, slowing down the overall performance.
+- Increasing member count in the cluster: As the number of cluster members increases, the total latency for operations can also increase. This is because the cluster has to communicate with more members, which can add to the overall latency. This might be a data architecture problem.
+- Increasing the data set size: This causes the cluster to search through more data to find the requested data, which can slow down the overall performance. Creating indexes may solve these kind of problems.
+- Increasing the number of concurrent operations: This causes the cluster to process more requests at the same time, which can slow down the overall performance. This is a potential bottleneck on resources (CPU, memory, network).
+
+</td>
+</tr>
+<tr>
+<td>`map.index.averageHitLatency`</td>
+<td>ns</td>
+<td>Average hit latency for the index on this member</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.index.averageHitSelectivity`</td>
+<td>percent</td>
+<td>Average selectivity of the hits served by the index on this member (the returned value is in the range from 0.0 to 1.0 - values close to 1.0 indicate a high selectivity meaning the index is efficient; values close to 0.0 indicate a low selectivity meaning the index efficiency is approaching an efficiency of a simple full scan)</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.index.creationTime`</td>
+<td>ms</td>
+<td>Creation time of the index on this member</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.index.hitCount`</td>
+<td>count</td>
+<td>Total number of index hits (the value of this metric may be greater than the `map.index.queryCount` since a single query may hit the same index more than once)</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.index.insertCount`</td>
+<td>count</td>
+<td>Number of insert operations performed on the index</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.index.memoryCost`</td>
+<td>bytes</td>
+<td>Local memory cost of the index (for on-heap indexes in OBJECT or BINARY formats, the returned value is just a best-effort approximation and doesn't indicate a precise on-heap memory usage of the index)</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.index.queryCount`</td>
+<td>count</td>
+<td>Total number of queries served by the index</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.index.removeCount`</td>
+<td>count</td>
+<td>Number of remove operations performed on the index</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.index.totalInsertLatency`</td>
+<td>ns</td>
+<td>Total latency of insert operations performed on the index</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.index.totalRemoveLatency`</td>
+<td>ns</td>
+<td>Total latency of remove operations performed on the index</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.index.totalUpdateLatency`</td>
+<td>ns</td>
+<td>Total latency of update operations performed on the index</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.index.updateCount`</td>
+<td>count</td>
+<td>Number of update operations performed on the index</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.index.partitionsIndexed`</td>
+<td>count</td>
+<td>Number of partitions the index is built for on the local member</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.index.partitionUpdatesStarted`</td>
+<td>count</td>
+<td>Number of times a partition set change started for the index</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.index.partitionUpdatesFinished`</td>
+<td>count</td>
+<td>Number of times a partition set change completed for the index</td>
+<td>N</td>
+</tr>
+<tr>
+<td>`map.index.notReadyQueryCount`</td>
+<td>count</td>
+<td>Number of queries which matched the index during a partition set change</td>
+<td>N</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Vector Collection (Beta)</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`vectorCollection.backupCount`</td>
+<td>count</td>
+<td>Number of backups per entry</td>
+</tr>
+<tr>
+<td>`vectorCollection.backupEntryCount`</td>
+<td>count</td>
+<td>Number of backup entries held by the member</td>
+</tr>
+<tr>
+<td>`vectorCollection.backupEntryHeapMemoryCost`</td>
+<td>bytes</td>
+<td>Heap memory cost of backup entries in this member</td>
+</tr>
+<tr>
+<td>`vectorCollection.clearCount`</td>
+<td>count</td>
+<td>Number of local clear operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.creationTime`</td>
+<td>ms</td>
+<td>Creation time of the vector collection on the member</td>
+</tr>
+<tr>
+<td>`vectorCollection.deleteCount`</td>
+<td>count</td>
+<td>Number of local delete operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.getCount`</td>
+<td>count</td>
+<td>Number of local get operations on the vector collection; it is incremented for every get operation even if the entries do not exist.</td>
+</tr>
+<tr>
+<td>`vectorCollection.heapCost`</td>
+<td>count</td>
+<td>Total heap cost of the vector collection on this member</td>
+</tr>
+<tr>
+<td>`vectorCollection.lastAccessTime`</td>
+<td>ms</td>
+<td>Last access time of the locally owned entries</td>
+</tr>
+<tr>
+<td>`vectorCollection.lastUpdateTime`</td>
+<td>ms</td>
+<td>Last update time of the locally owned entries</td>
+</tr>
+<tr>
+<td>`vectorCollection.maxClearLatency`</td>
+<td>ms</td>
+<td>Maximum latency of local clear operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.maxOptimizeLatency`</td>
+<td>ms</td>
+<td>Maximum latency of local optimize operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.maxSearchLatency`</td>
+<td>ms</td>
+<td>Maximum latency of search operations coordinated by this member on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.maxSizeLatency`</td>
+<td>ms</td>
+<td>Maximum latency of local size operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.optimizeCount`</td>
+<td>count</td>
+<td>Number of local optimize operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.ownedEntryCount`</td>
+<td>count</td>
+<td>Number of vector collection entries owned by the member</td>
+</tr>
+<tr>
+<td>`vectorCollection.ownedEntryHeapMemoryCost`</td>
+<td>bytes</td>
+<td>Heap memory cost of owned vector collection entries on this member</td>
+</tr>
+<tr>
+<td>`vectorCollection.putAllCount`</td>
+<td>count</td>
+<td>
+
+Number of local putAll operations on the vector collection.
+
+Note that for each `putAll` invocation on the client there can be multiple invocations of `putAll` on the members and some invocations may be translated to `set` if there is only 1 entry.
+
+</td>
+</tr>
+<tr>
+<td>`vectorCollection.putAllEntryCount`</td>
+<td>count</td>
+<td>Number of entries passed to local putAll operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.putCount`</td>
+<td>count</td>
+<td>Number of local put operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.removeCount`</td>
+<td>count</td>
+<td>Number of local remove operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.searchCount`</td>
+<td>count</td>
+<td>Number of search operations coordinated by this member on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.searchIndexQueryCount`</td>
+<td>count</td>
+<td>
+
+Number of actual searches on vector index instance (partition) in this vector collection, aggregated for all indexes on the collection.
+
+Includes search retries caused by concurrent modifications and other reasons. If retries were not needed it should be equal to `searchCount * non-empty partitions count`. In case of retries it will be larger.
+
+</td>
+</tr>
+<tr>
+<td>`vectorCollection.searchIndexVisitedNodes`</td>
+<td>count</td>
+<td>Number of graph nodes visited during searches. It is equal to the number of distance/score calculations during searches.</td>
+</tr>
+<tr>
+<td>`vectorCollection.searchResultsCount`</td>
+<td>count</td>
+<td>Number of results returned by search operations coordinated by this member on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.setCount`</td>
+<td>count</td>
+<td>Number of local set operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.sizeCount`</td>
+<td>count</td>
+<td>Number of local size operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.totalClearLatency`</td>
+<td>ms</td>
+<td>Total latency of local clear operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.totalDeleteLatency`</td>
+<td>ms</td>
+<td>Total latency of local delete operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.totalGetLatency`</td>
+<td>ms</td>
+<td>Total latency of local get operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.totalMaxDeleteLatency`</td>
+<td>ms</td>
+<td>Maximum latency of local delete operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.totalMaxGetLatency`</td>
+<td>ms</td>
+<td>Maximum latency of local get operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.totalMaxPutAllLatency`</td>
+<td>ms</td>
+<td>Maximum latency of local putAll operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.totalMaxPutLatency`</td>
+<td>ms</td>
+<td>Maximum latency of local put operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.totalMaxRemoveLatency`</td>
+<td>ms</td>
+<td>Maximum latency of local remove operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.totalMaxSetLatency`</td>
+<td>ms</td>
+<td>Maximum latency of local set operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.totalOptimizeLatency`</td>
+<td>ms</td>
+<td>Total latency of local optimize operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.totalPutAllLatency`</td>
+<td>ms</td>
+<td>Total latency of local putAll operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.totalPutLatency`</td>
+<td>ms</td>
+<td>Total latency of local put operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.totalRemoveLatency`</td>
+<td>ms</td>
+<td>Total latency of local remove operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.totalSearchLatency`</td>
+<td>ms</td>
+<td>Total latency of search operations coordinated by this member on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.totalSetLatency`</td>
+<td>ms</td>
+<td>Total latency of local set operations on the vector collection</td>
+</tr>
+<tr>
+<td>`vectorCollection.totalSizeLatency`</td>
+<td>ms</td>
+<td>Total latency of local size operations on the vector collection</td>
+</tr>
+<tr>
+<td colSpan={3}>
+
+The above `latency` metrics are only measured for the members and do not represent the overall performance of the cluster. We recommend monitoring the average latency for each operation, for example, `vectorCollection.totalGetLatency / vectorCollection.getCount` and `vectorCollection.totalSetLatency / vectorCollection.setCount`. Increased average latency is a sign that the cluster is experiencing performance problems, or there is a spike in the load. The following list details potential reasons:
+
+- Increase in the load on the cluster: if the cluster is under heavy load, this can lead to increased latency for all operations, slowing down the overall performance.
+- Increasing member count in the cluster: as the number of cluster members increases, the total latency for operations can also increase. This is because the cluster has to communicate with more members, which can add to the overall latency. This might be a data architecture problem.
+- Increasing the data set size: this causes the cluster to search through more data to find the requested data, which can slow down the overall performance.
+- Increasing the number of concurrent operations: this causes the cluster to process more requests at the same time, which can slow down the overall performance. This is a potential bottleneck on resources (CPU, memory, network).
+
+</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>MultiMap</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`multiMap.backupCount`</td>
+<td>count</td>
+<td>Number of backups per entry</td>
+</tr>
+<tr>
+<td>`multiMap.backupEntryCount`</td>
+<td>count</td>
+<td>Number of backup entries held by the member</td>
+</tr>
+<tr>
+<td>`multiMap.creationTime`</td>
+<td>ms</td>
+<td>Creation time of the multimap in the member</td>
+</tr>
+<tr>
+<td>`multiMap.dirtyEntryCount`</td>
+<td>count</td>
+<td>Number of dirty (updated but not persisted yet) entries that the member owns</td>
+</tr>
+<tr>
+<td>`multiMap.entrySetCount`</td>
+<td>count</td>
+<td>Number of entry set operations on this member</td>
+</tr>
+<tr>
+<td>`multiMap.evictionCount`</td>
+<td>count</td>
+<td>Number of evictions completed on locally owned entries, backups are not included</td>
+</tr>
+<tr>
+<td>`multiMap.expirationCount`</td>
+<td>count</td>
+<td>Number of expirations completed on locally owned entries, backups are not included</td>
+</tr>
+<tr>
+<td>`multiMap.getCount`</td>
+<td>count</td>
+<td>Number of local get operations on the multimap</td>
+</tr>
+<tr>
+<td>`multiMap.hits`</td>
+<td>count</td>
+<td>Number of hits (reads) of the locally owned entries</td>
+</tr>
+<tr>
+<td>`multiMap.indexedQueryCount`</td>
+<td>count</td>
+<td>Total number of indexed local queries performed on the multimap</td>
+</tr>
+<tr>
+<td>`multiMap.indexesSkippedQueryCount`</td>
+<td>count</td>
+<td>Total number of local queries performed on the multimap which cannot use indexes</td>
+</tr>
+<tr>
+<td>`multiMap.noMatchingIndexQueryCount`</td>
+<td>count</td>
+<td>Total number of local queries performed on the multimap which had no matching index</td>
+</tr>
+<tr>
+<td>`multiMap.lastAccessTime`</td>
+<td>ms</td>
+<td>Last access (read) time of the locally owned entries</td>
+</tr>
+<tr>
+<td>`multiMap.lastUpdateTime`</td>
+<td>ms</td>
+<td>Last update time of the locally owned entries</td>
+</tr>
+<tr>
+<td>`multiMap.lockedEntryCount`</td>
+<td>count</td>
+<td>Number of locked entries that the member owns</td>
+</tr>
+<tr>
+<td>`multiMap.merkleTreesCost`</td>
+<td>count</td>
+<td>Heap cost of the Merkle trees</td>
+</tr>
+<tr>
+<td>`multiMap.numberOfEvents`</td>
+<td>count</td>
+<td>Number of local events received</td>
+</tr>
+<tr>
+<td>`multiMap.numberOfOtherOperations`</td>
+<td>count</td>
+<td>Total number of other operations</td>
+</tr>
+<tr>
+<td>`multiMap.ownedEntryCount`</td>
+<td>count</td>
+<td>Number of multimap entries owned by the member</td>
+</tr>
+<tr>
+<td>`multiMap.putCount`</td>
+<td>count</td>
+<td>Number of local put operations on the multimap</td>
+</tr>
+<tr>
+<td>`multiMap.queryCount`</td>
+<td>count</td>
+<td>Number of local queries executed on the multimap (it may be imprecise for queries involving partition predicates (PartitionPredicate) on the off-heap storage)</td>
+</tr>
+<tr>
+<td>`multiMap.queryLimiterHitCount`</td>
+<td>count</td>
+<td>Number of times the query result size limiter was hit on this member</td>
+</tr>
+<tr>
+<td>`multiMap.removeCount`</td>
+<td>count</td>
+<td>Number of local remove operations on the multimap</td>
+</tr>
+<tr>
+<td>`multiMap.setCount`</td>
+<td>count</td>
+<td>Number of local set operations on the multimap</td>
+</tr>
+<tr>
+<td>`multiMap.totalGetLatency`</td>
+<td>ms</td>
+<td>Total latency of local get operations</td>
+</tr>
+<tr>
+<td>`multiMap.totalMaxGetLatency`</td>
+<td>ms</td>
+<td>Maximum latency of local get operations</td>
+</tr>
+<tr>
+<td>`multiMap.totalMaxPutLatency`</td>
+<td>ms</td>
+<td>Maximum latency of local put operations</td>
+</tr>
+<tr>
+<td>`multiMap.totalMaxRemoveLatency`</td>
+<td>ms</td>
+<td>Maximum latency of local remove operations</td>
+</tr>
+<tr>
+<td>`multiMap.totalMaxSetLatency`</td>
+<td>ms</td>
+<td>Maximum latency of local set operations</td>
+</tr>
+<tr>
+<td>`multiMap.totalPutLatency`</td>
+<td>ms</td>
+<td>Total latency of local put operations</td>
+</tr>
+<tr>
+<td>`multiMap.totalRemoveLatency`</td>
+<td>ms</td>
+<td>Total latency of local remove operations</td>
+</tr>
+<tr>
+<td>`multiMap.totalSetLatency`</td>
+<td>ms</td>
+<td>Total latency of local set operations</td>
+</tr>
+<tr>
+<td>`multiMap.valuesCount`</td>
+<td>count</td>
+<td>Number of values operations on this member</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Replicated Map</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`replicatedMap.creationTime`</td>
+<td>ms</td>
+<td>Creation time of this replicated map on this member</td>
+</tr>
+<tr>
+<td>`replicatedMap.entrySetCount`</td>
+<td>count</td>
+<td>Number of entry set operations on this member</td>
+</tr>
+<tr>
+<td>`replicatedMap.getCount`</td>
+<td>count</td>
+<td>Number of get operations on this member</td>
+</tr>
+<tr>
+<td>`replicatedMap.hits`</td>
+<td>count</td>
+<td>Number of hits (reads) of the locally owned entries</td>
+</tr>
+<tr>
+<td>`replicatedMap.lastAccessTime`</td>
+<td>ms</td>
+<td>Last access (read) time of the locally owned entries</td>
+</tr>
+<tr>
+<td>`replicatedMap.lastUpdateTime`</td>
+<td>ms</td>
+<td>Last update time of the locally owned entries</td>
+</tr>
+<tr>
+<td>`replicatedMap.maxGetLatency`</td>
+<td>ms</td>
+<td>Maximum latency of get operations</td>
+</tr>
+<tr>
+<td>`replicatedMap.maxPutLatency`</td>
+<td>ms</td>
+<td>Maximum latency of put operations</td>
+</tr>
+<tr>
+<td>`replicatedMap.maxRemoveLatency`</td>
+<td>ms</td>
+<td>Maximum latency of remove operations</td>
+</tr>
+<tr>
+<td>`replicatedMap.numberOfEvents`</td>
+<td>count</td>
+<td>Number of events received on this member</td>
+</tr>
+<tr>
+<td>`replicatedMap.numberOfOtherOperations`</td>
+<td>count</td>
+<td>Total number of other operations on this member</td>
+</tr>
+<tr>
+<td>`replicatedMap.ownedEntryCount`</td>
+<td>count</td>
+<td>Number of entries owned on this member</td>
+</tr>
+<tr>
+<td>`replicatedMap.ownedEntryMemoryCost`</td>
+<td>bytes</td>
+<td>Memory cost of owned entries on this member</td>
+</tr>
+<tr>
+<td>`replicatedMap.putCount`</td>
+<td>count</td>
+<td>Number of put operations on this member</td>
+</tr>
+<tr>
+<td>`replicatedMap.removeCount`</td>
+<td>count</td>
+<td>Number of remove operations on this member</td>
+</tr>
+<tr>
+<td>`replicatedMap.totalGetLatencies`</td>
+<td>ms</td>
+<td>Total latency of get operations</td>
+</tr>
+<tr>
+<td>`replicatedMap.totalPutLatencies`</td>
+<td>ms</td>
+<td>Total latency of put operations</td>
+</tr>
+<tr>
+<td>`replicatedMap.totalRemoveLatencies`</td>
+<td>ms</td>
+<td>Total latency of remove operations</td>
+</tr>
+<tr>
+<td>`replicatedMap.total`</td>
+<td>count</td>
+<td>Total number of operations on this member</td>
+</tr>
+<tr>
+<td>`replicatedMap.valuesCount`</td>
+<td>count</td>
+<td>Number of values operations on this member</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Cache</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`cache.averageGetTime`</td>
+<td>µs</td>
+<td>Mean time to execute gets on the cache</td>
+</tr>
+<tr>
+<td>`cache.averagePutTime`</td>
+<td>µs</td>
+<td>Mean time to execute puts on the cache</td>
+</tr>
+<tr>
+<td>`cache.averageRemovalTime`</td>
+<td>µs</td>
+<td>Mean time to execute removes on the cache</td>
+</tr>
+<tr>
+<td>`cache.cacheEvictions`</td>
+<td>count</td>
+<td>Number of evictions on the cache</td>
+</tr>
+<tr>
+<td>`cache.cacheGets`</td>
+<td>count</td>
+<td>Number of gets on the cache</td>
+</tr>
+<tr>
+<td>`cache.cacheHits`</td>
+<td>count</td>
+<td>Number of successful get operations, hits, on the cache</td>
+</tr>
+<tr>
+<td>`cache.cacheHitPercentage`</td>
+<td>percent</td>
+<td>Percentage of successful get operations, hits, out of all get operations on the cache</td>
+</tr>
+<tr>
+<td>`cache.cachePuts`</td>
+<td>count</td>
+<td>Number of puts to the cache</td>
+</tr>
+<tr>
+<td>`cache.cacheRemovals`</td>
+<td>count</td>
+<td>Number of removals from the cache</td>
+</tr>
+<tr>
+<td>`cache.cacheMisses`</td>
+<td>count</td>
+<td>Number of missed cache accesses on the cache</td>
+</tr>
+<tr>
+<td>`cache.cacheMissPercentage`</td>
+<td>percent</td>
+<td>Percentage of missed cache accesses out of all the cache accesses/access attempts</td>
+</tr>
+<tr>
+<td>`cache.creationTime`</td>
+<td>ms</td>
+<td>Creation time of the cache on the member</td>
+</tr>
+<tr>
+<td>`cache.lastAccessTime`</td>
+<td>ms</td>
+<td>Cache's last access time</td>
+</tr>
+<tr>
+<td>`cache.lastUpdateTime`</td>
+<td>ms</td>
+<td>Cache's last update time</td>
+</tr>
+<tr>
+<td>`cache.ownedEntryCount`</td>
+<td>count</td>
+<td>Locally owned entry count in the cache</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Queue</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`queue.averageAge`</td>
+<td>ms</td>
+<td>Average age of the items in this member</td>
+</tr>
+<tr>
+<td>`queue.backupItemCount`</td>
+<td>count</td>
+<td>Number of backup items held by the member</td>
+</tr>
+<tr>
+<td>`queue.creationTime`</td>
+<td>ms</td>
+<td>Creation time of the topic on the member</td>
+</tr>
+<tr>
+<td>`queue.eventOperationCount`</td>
+<td>count</td>
+<td>Number of event operations</td>
+</tr>
+<tr>
+<td>`queue.maxAge`</td>
+<td>ms</td>
+<td>Maximum age of the items in this member</td>
+</tr>
+<tr>
+<td>`queue.minAge`</td>
+<td>ms</td>
+<td>Minimum age of the items in this member</td>
+</tr>
+<tr>
+<td>`queue.numberOfEmptyPolls`</td>
+<td>count</td>
+<td>Number of null returning poll operations</td>
+</tr>
+<tr>
+<td>`queue.numberOfEvents`</td>
+<td>count</td>
+<td>Number of event operations (duplicate of eventOperationCount)</td>
+</tr>
+<tr>
+<td>`queue.numberOfOffers`</td>
+<td>count</td>
+<td>Number of offer/put/add operations</td>
+</tr>
+<tr>
+<td>`queue.numberOfOtherOperations`</td>
+<td>count</td>
+<td>Number of other operations</td>
+</tr>
+<tr>
+<td>`queue.numberOfPolls`</td>
+<td>count</td>
+<td>Number of poll/take/remove operations.</td>
+</tr>
+<tr>
+<td>`queue.numberOfRejectedOffers`</td>
+<td>count</td>
+<td>Number of rejected offers</td>
+</tr>
+<tr>
+<td>`queue.ownedItemCount`</td>
+<td>count</td>
+<td>Number of owned items in this member</td>
+</tr>
+<tr>
+<td>`queue.total`</td>
+<td>count</td>
+<td>Total number of operations (numberOfOffers + numberOfPolls + numberOfOtherOperations)</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Set</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`set.creationTime`</td>
+<td>ms</td>
+<td>Creation time of the set on the member</td>
+</tr>
+<tr>
+<td>`set.lastAccessTime`</td>
+<td>ms</td>
+<td>Last access (read) time of the locally owned items</td>
+</tr>
+<tr>
+<td>`set.lastUpdateTime`</td>
+<td>ms</td>
+<td>Last update time of the locally owned items</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>List</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`list.creationTime`</td>
+<td>ms</td>
+<td>Creation time of this list on the member</td>
+</tr>
+<tr>
+<td>`list.lastAccessTime`</td>
+<td>ms</td>
+<td>Last access (read) time of the locally owned items</td>
+</tr>
+<tr>
+<td>`list.lastUpdateTime`</td>
+<td>ms</td>
+<td>Last update time of the locally owned items</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Topic</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`topic.creationTime`</td>
+<td>ms</td>
+<td>Creation time of the topic on the member</td>
+</tr>
+<tr>
+<td>`topic.totalPublishes`</td>
+<td>count</td>
+<td>Total number of published messages of this topic on this member</td>
+</tr>
+<tr>
+<td>`topic.totalReceivedMessages`</td>
+<td>count</td>
+<td>Total number of received messages of this topic on this member</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Reliable Topic</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`reliableTopic.creationTime`</td>
+<td>ms</td>
+<td>Creation time of this reliable topic on the member</td>
+</tr>
+<tr>
+<td>`reliableTopic.totalPublishes`</td>
+<td>count</td>
+<td>Total number of published messages of this reliable topic on this member</td>
+</tr>
+<tr>
+<td>`reliableTopic.totalReceivedMessages`</td>
+<td>count</td>
+<td>Total number of received messages of this reliable topic on this member</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Flake ID Generator</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`flakeIdGenerator.batchCount`</td>
+<td>count</td>
+<td>Total number of times the Flake ID generator has been used to generate a new ID batch</td>
+</tr>
+<tr>
+<td>`flakeIdGenerator.creationTime`</td>
+<td>ms</td>
+<td>Creation time of this Flake ID Generator on the member</td>
+</tr>
+<tr>
+<td>`flakeIdGenerator.idCount`</td>
+<td>count</td>
+<td>Total number of IDs generated (the sum of IDs for all batches)</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>PN Counter</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`pnCounter.creationTime`</td>
+<td>ms</td>
+<td>Creation time of the PN counter on the member</td>
+</tr>
+<tr>
+<td>`pnCounter.totalDecrementOperationCount`</td>
+<td>count</td>
+<td>Number of subtract (including decrement) operations on this PN counter</td>
+</tr>
+<tr>
+<td>`pnCounter.totalIncrementOperationCount`</td>
+<td>count</td>
+<td>Number of add (including increment) operations on this PN counter</td>
+</tr>
+<tr>
+<td>`pnCounter.value`</td>
+<td>count</td>
+<td>Current value of the PN counter</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Executor Service</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`executor.cancelled`</td>
+<td>count</td>
+<td>Number of cancelled operations on the executor service</td>
+</tr>
+<tr>
+<td>`executor.completed`</td>
+<td>count</td>
+<td>Number of completed operations on the executor service</td>
+</tr>
+<tr>
+<td>`executor.creationTime`</td>
+<td>ms</td>
+<td>Creation time of this executor on the member</td>
+</tr>
+<tr>
+<td>`executor.pending`</td>
+<td>count</td>
+<td>Number of pending operations on the executor service</td>
+</tr>
+<tr>
+<td>`executor.started`</td>
+<td>count</td>
+<td>Number of started operations on the executor service</td>
+</tr>
+<tr>
+<td>`executor.totalExecutionTime`</td>
+<td>ms</td>
+<td>Total execution time of the finished operations</td>
+</tr>
+<tr>
+<td>`executor.totalStartLatency`</td>
+<td>ms</td>
+<td>Total start latency of operations started</td>
+</tr>
+<tr>
+<td>`executor.internal.completedTasks`</td>
+<td>count</td>
+<td>Number of completed tasks by this executor</td>
+</tr>
+<tr>
+<td>`executor.internal.maximumPoolSize`</td>
+<td>count</td>
+<td>Maximum number of threads in the executor's thread pool</td>
+</tr>
+<tr>
+<td>`executor.internal.poolSize`</td>
+<td>count</td>
+<td>Number of threads in the executor's thread pool</td>
+</tr>
+<tr>
+<td>`executor.internal.queueSize`</td>
+<td>count</td>
+<td>Number of pending tasks in this executor's task queue</td>
+</tr>
+<tr>
+<td>`executor.internal.remainingQueueCapacity`</td>
+<td>count</td>
+<td>Remaining capacity on the executor's task queue</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>User Code Deployment</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`classloading.loadedClassesCount`</td>
+<td>count</td>
+<td>Number of classes that are currently loaded</td>
+</tr>
+<tr>
+<td>`classloading.totalLoadedClassesCount`</td>
+<td>count</td>
+<td>Total number of classes that have been loaded since the instance has started execution.</td>
+</tr>
+<tr>
+<td>`classloading.unloadedClassesCount`</td>
+<td>count</td>
+<td>Total number of unloaded classes.</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Cluster</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`cluster.clock.clusterStartTime`</td>
+<td>ms</td>
+<td><Anchor id="clusterStartTime"/>Start time of the cluster (when the first member in cluster becomes master, its localClockTime value is saved as clusterStartTime)</td>
+</tr>
+<tr>
+<td>`cluster.clock.clusterTime`</td>
+<td>ms</td>
+<td>Elapsed time since the master member was created ([`cluster.clock.clusterStartTime`](#clusterStartTime))</td>
+</tr>
+<tr>
+<td>`cluster.clock.clusterTimeDiff`</td>
+<td>ms</td>
+<td>Difference between the local time (`cluster.clock.localClockTime`) of the local member and the master member</td>
+</tr>
+<tr>
+<td>`cluster.clock.clusterUpTime`</td>
+<td>ms</td>
+<td>Uptime of the cluster (current time - [`cluster.clock.clusterStartTime`](#clusterStartTime))</td>
+</tr>
+<tr>
+<td>`cluster.clock.localClockTime`</td>
+<td>ms</td>
+<td>Member's local clock timestamp</td>
+</tr>
+<tr>
+<td>`cluster.clock.maxClusterTimeDiff`</td>
+<td>ms</td>
+<td>Maximum observed cluster time difference</td>
+</tr>
+<tr>
+<td>`cluster.connection.closedTime`</td>
+<td>count</td>
+<td>Connection close time for this connection</td>
+</tr>
+<tr>
+<td>`cluster.connection.connectionId`</td>
+<td>count</td>
+<td>Connection ID for this client connection</td>
+</tr>
+<tr>
+<td>`cluster.connection.eventHandlerCount`</td>
+<td>count</td>
+<td>Number of event handlers for this client connection</td>
+</tr>
+<tr>
+<td>`cluster.heartbeat.lastHeartbeat`</td>
+<td>ms</td>
+<td>Last time that this member sent a heartbeat to other known cluster members</td>
+</tr>
+<tr>
+<td>`cluster.size`</td>
+<td>count</td>
+<td>Number of members in the cluster</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Clients</summary>
+
+Scope: member-side only. These metrics describe clients connected to the local member.
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`client.endpoint.count`</td>
+<td>count</td>
+<td>Number of active client endpoints for this member</td>
+</tr>
+<tr>
+<td>`client.endpoint.totalRegistrations`</td>
+<td>count</td>
+<td>Total number of client endpoint registrations</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Client Invocations</summary>
+
+Scope: client-side only.
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`invocations.maxCurrentInvocations`</td>
+<td>count</td>
+<td>Maximum number of concurrent client invocations</td>
+</tr>
+<tr>
+<td>`invocations.pendingCalls`</td>
+<td>count</td>
+<td>Number of pending client invocations on this client</td>
+</tr>
+<tr>
+<td>`invocations.startedInvocations`</td>
+<td>count</td>
+<td>Number of started client invocations on this client</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>CP Subsystem</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`cp.atomiclong.value`</td>
+<td>count</td>
+<td>Value of this `IAtomicLong`</td>
+</tr>
+<tr>
+<td>`cp.countdownlatch.count`</td>
+<td>count</td>
+<td>Initial count of `ICountDownLatch`</td>
+</tr>
+<tr>
+<td>`cp.countdownlatch.remaining`</td>
+<td>count</td>
+<td>Remaining number of expected countdowns</td>
+</tr>
+<tr>
+<td>`cp.countdownlatch.round`</td>
+<td>count</td>
+<td>Round number of the `ICountDownLatch`; each time `ICountDownLatch` is initialized with a new count after it downs to zero, a new round begins</td>
+</tr>
+<tr>
+<td>`cp.lock.acquireLimit`</td>
+<td>count</td>
+<td>Maximum number of reentrant acquires of this `FencedLock`</td>
+</tr>
+<tr>
+<td>`cp.lock.lockCount`</td>
+<td>count</td>
+<td>Total number of times this `FencedLock` has been acquired since its creation</td>
+</tr>
+<tr>
+<td>`cp.lock.owner`</td>
+<td>count</td>
+<td>Address of the `FencedLock` owner</td>
+</tr>
+<tr>
+<td>`cp.lock.ownerSessionId`</td>
+<td>count</td>
+<td>Session Id of the `FencedLock` owner</td>
+</tr>
+<tr>
+<td>`cp.semaphore.available`</td>
+<td>count</td>
+<td>Number of the remaining available permits</td>
+</tr>
+<tr>
+<td>`cp.semaphore.initialized`</td>
+<td>count</td>
+<td>State value which shows whether semaphore is initialized with a value or not; in exposed metrics, it shows 0 when semaphore is not initialized, a positive value otherwise</td>
+</tr>
+<tr>
+<td>`cp.map.size`</td>
+<td>count</td>
+<td>Number of keys in this `CPMap`</td>
+</tr>
+<tr>
+<td>`cp.map.sizeBytes`</td>
+<td>count</td>
+<td>Total number of bytes used by key-value pairs for this `CPMap`</td>
+</tr>
+<tr>
+<td>`cp.session.creationTime`</td>
+<td>ms</td>
+<td>Creation time of this session</td>
+</tr>
+<tr>
+<td>`cp.session.endpoint`</td>
+<td></td>
+<td>Address of the endpoint which the CP session belongs to</td>
+</tr>
+<tr>
+<td>`cp.session.endpointType`</td>
+<td></td>
+<td>Type of the endpoint; either SERVER or CLIENT</td>
+</tr>
+<tr>
+<td>`cp.session.expirationTime`</td>
+<td>ms</td>
+<td>Expiration time of the CP session</td>
+</tr>
+<tr>
+<td>`cp.session.version`</td>
+<td>count</td>
+<td>Version number of the CP session, basically it shows how many times the session heartbeat is received</td>
+</tr>
+</tbody>
+</table>
+
+:::note
+
+CP Subsystem metrics are <Variable name="enterprise-product-name"/> only.
+
+:::
+
+We also have a `summary` section per object type which provides live and destroyed object counts grouped by CP Group. These can be found under `cp.{atomiclong,atomicref,countdownlatch,lock,map,semaphore}.summary` and provide the following child attributes:
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`destroyed.count`</td>
+<td>count</td>
+<td>Number of objects for the parent object type that have been destroyed. Also referred to as the tombstoned object count.</td>
+</tr>
+<tr>
+<td>`live.count`</td>
+<td>count</td>
+<td>Number of objects for the parent object type that are in use.</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Events</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`event.eventQueueSize`</td>
+<td>count</td>
+<td>Total number of events pending to be processed</td>
+</tr>
+<tr>
+<td>`event.eventsProcessed`</td>
+<td>count</td>
+<td>Total number of processed events</td>
+</tr>
+<tr>
+<td>`event.listenerCount`</td>
+<td>count</td>
+<td>Number of subscribed listeners for the specified service</td>
+</tr>
+<tr>
+<td>`event.publicationCount`</td>
+<td>count</td>
+<td>Number of published events for the specified service</td>
+</tr>
+<tr>
+<td>`event.queueCapacity`</td>
+<td>count</td>
+<td>Queue capacity of the executor processing the events (this capacity is shared for all events)</td>
+</tr>
+<tr>
+<td>`event.rejectedCount`</td>
+<td>count</td>
+<td>Number of rejected events; if the event is not accepted to the executor in `hazelcast.event.queue.timeout.millis`(see [System Properties](./system-properties.mdx)), it will be rejected and not processed</td>
+</tr>
+<tr>
+<td>`event.syncDeliveryFailureCount`</td>
+<td>count</td>
+<td>Number of failures of sync event delivery</td>
+</tr>
+<tr>
+<td>`event.threadCount`</td>
+<td>count</td>
+<td>Number of threads for the event service executor (the event thread count)</td>
+</tr>
+<tr>
+<td>`event.totalFailureCount`</td>
+<td>count</td>
+<td>Number of events that fail to be published</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Listeners</summary>
+
+Scope: client-side only.
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`listeners.eventsProcessed`</td>
+<td>count</td>
+<td>Total number of processed events on the client listener service</td>
+</tr>
+<tr>
+<td>`listeners.eventQueueSize`</td>
+<td>count</td>
+<td>Total number of tasks pending to be processed on the client listener service</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Capacity</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`file.partition.freeSpace`</td>
+<td>bytes</td>
+<td>Amount of free space in the given directory, user.home</td>
+</tr>
+<tr>
+<td>`file.partition.totalSpace`</td>
+<td>bytes</td>
+<td>Amount of total space in the given directory, user.home</td>
+</tr>
+<tr>
+<td>`file.partition.usableSpace`</td>
+<td>bytes</td>
+<td>Amount of usable space in the given directory, user.home</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Garbage Collection</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`gc.majorCount`</td>
+<td>count</td>
+<td>Total number of major garbage collections (GCs) that have occurred</td>
+</tr>
+<tr>
+<td>`gc.majorTime`</td>
+<td>ms</td>
+<td>Accumulated elapsed time in major GCs</td>
+</tr>
+<tr>
+<td>`gc.minorCount`</td>
+<td>count</td>
+<td>Total number of minor GCs that have occurred</td>
+</tr>
+<tr>
+<td>`gc.minorTime`</td>
+<td>ms</td>
+<td>Accumulated elapsed time in minor GCs</td>
+</tr>
+<tr>
+<td>`gc.unknownCount`</td>
+<td>count</td>
+<td>Number of unknown GCs that cannot be determined as minor or major (this is usually due to the lack of support of the used garbage collector)</td>
+</tr>
+<tr>
+<td>`gc.unknownTime`</td>
+<td>ms</td>
+<td>Accumulated elapsed time in unknown GCs</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Memory</summary>
+
+The names in this table use canonical `memory.` metric names.
+
+Prefix and scope variants:
+
+- Open Source member and client instance memory metrics: `memory.`
+- Enterprise member aggregate HD memory metrics: `memory.` or `memorymanager.`
+- Enterprise member per-memory-manager metrics: `memorymanager.stats.`
+
+The same metric values can be exposed under multiple prefixes. Depending on the configured memory allocation type, `memorymanager.stats.` values can overlap with `memorymanager.` values.
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`memory.committedHeap`</td>
+<td>bytes</td>
+<td>Amount of heap memory that is committed for the JVM to use</td>
+</tr>
+<tr>
+<td>`memory.committedNative`</td>
+<td>bytes</td>
+<td>Amount of native memory that is committed for current instance (member or client) to use</td>
+</tr>
+<tr>
+<td>`memory.freeHeap`</td>
+<td>bytes</td>
+<td>Amount of free memory in the JVM of current instance (member or client)</td>
+</tr>
+<tr>
+<td>`memory.freeNative`</td>
+<td>bytes</td>
+<td>Amount of free native memory in the current instance (member or client)</td>
+</tr>
+<tr>
+<td>`memory.freePhysical`</td>
+<td>bytes</td>
+<td>Amount of free physical memory available in OS</td>
+</tr>
+<tr>
+<td>`memory.maxHeap`</td>
+<td>bytes</td>
+<td>Maximum amount of memory that the JVM will use for the heap</td>
+</tr>
+<tr>
+<td>`memory.maxMetadata`</td>
+<td>bytes</td>
+<td>The threshold for warning about metadata usage</td>
+</tr>
+<tr>
+<td>`memory.maxNative`</td>
+<td>bytes</td>
+<td>Maximum amount of native memory that current instance (member or client) will use. This value is ignored by Hazelcast for metadata allocation and can increase from the initial configured value</td>
+</tr>
+<tr>
+<td>`memory.totalPhysical`</td>
+<td>bytes</td>
+<td>Amount of total physical memory available in OS</td>
+</tr>
+<tr>
+<td>`memory.usedHeap`</td>
+<td>bytes</td>
+<td>Amount of used memory in the JVM of the current instance (member or client)</td>
+</tr>
+<tr>
+<td>`memory.usedMetadata`</td>
+<td>bytes</td>
+<td>Amount of used metadata memory by the current instance (member or client)</td>
+</tr>
+<tr>
+<td>`memory.usedNative`</td>
+<td>bytes</td>
+<td>Amount of used native memory by the current instance (member or client)</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>High-Density (HD) Memory Store</summary>
+
+Scope: member-side only. <Variable name="enterprise-product-name"/> only.
+
+These metrics are provided for data structures using HD memory. They will be prefixed with the relevant data structure prefix (e.g. `map.`).
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`usedMemory`</td>
+<td>bytes</td>
+<td>Cost of HD memory for the map to determine whether eviction of map entries is needed</td>
+</tr>
+<tr>
+<td>`forceEvictionCount`</td>
+<td>bytes</td>
+<td>Number of evictions performed for the HD memory store (when your eviction policy does not free enough native memory, operations that add entries to a map or cache such as `map.put()` trigger the forced eviction process.)</td>
+</tr>
+<tr>
+<td>`forceEvictedEntryCount`</td>
+<td>bytes</td>
+<td>Number of entries removed from the HD memory store</td>
+</tr>
+<tr>
+<td>`entryCount`</td>
+<td>bytes</td>
+<td>Number of entries in the HD memory store</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Near Cache</summary>
+
+Scope: member-side and client-side.
+
+The names in this table use the client prefix form (`nearcache.`). For member-side Near Cache metrics, use `map.nearcache.` with the same suffix. The same metric values and semantics apply on both sides.
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`nearcache.creationTime`</td>
+<td>ms</td>
+<td>Creation time of this Near Cache on this instance (member or client)</td>
+</tr>
+<tr>
+<td>`nearcache.evictions`</td>
+<td>count</td>
+<td>Number of evictions of Near Cache entries owned by this instance (member or client)</td>
+</tr>
+<tr>
+<td>`nearcache.expirations`</td>
+<td>count</td>
+<td>Number of TTL and max-idle expirations of Near Cache entries owned by this instance (member or client)</td>
+</tr>
+<tr>
+<td>`nearcache.hits`</td>
+<td>count</td>
+<td>Number of hits (reads) of Near Cache entries owned by this instance (member or client)</td>
+</tr>
+<tr>
+<td>`nearcache.invalidationRequests`</td>
+<td>count</td>
+<td>Number of invalidations of Near Cache entries owned by this instance (member or client).</td>
+</tr>
+<tr>
+<td>`nearcache.invalidations`</td>
+<td>count</td>
+<td>Number of invalidations of Near Cache entries owned by this instance (member or client).</td>
+</tr>
+<tr>
+<td>`nearcache.lastPersistenceDuration`</td>
+<td>ms</td>
+<td>Duration of the last Near Cache key persistence</td>
+</tr>
+<tr>
+<td>`nearcache.lastPersistenceKeyCount`</td>
+<td>count</td>
+<td>Number of persisted keys of the last Near Cache key persistence</td>
+</tr>
+<tr>
+<td>`nearcache.lastPersistenceTime`</td>
+<td>ms</td>
+<td>Timestamp of the last Near Cache key persistence</td>
+</tr>
+<tr>
+<td>`nearcache.lastPersistenceWrittenBytes`</td>
+<td>bytes</td>
+<td>Written bytes of the last Near Cache key persistence</td>
+</tr>
+<tr>
+<td>`nearcache.misses`</td>
+<td>count</td>
+<td>Number of misses of Near Cache entries owned by this instance (member or client).</td>
+</tr>
+<tr>
+<td>`nearcache.ownedEntryCount`</td>
+<td>count</td>
+<td>Number of Near Cache entries owned by this instance (member or client)</td>
+</tr>
+<tr>
+<td>`nearcache.ownedEntryMemoryCost`</td>
+<td>bytes</td>
+<td>Memory cost of Near Cache entries owned by this instance (member or client)</td>
+</tr>
+<tr>
+<td>`nearcache.persistenceCount`</td>
+<td>count</td>
+<td>Number of Near Cache key persistences (when the preload feature is enabled)</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Operations</summary>
+
+:::note
+
+Within Hazelcast context, the **priority** operations are the ones that are important for the stability of cluster, for example heartbeats and migration requests. The **normal** operations are the ones that manipulate the data, for example `map.get` and `map.put`.
+
+:::
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`operation.adhoc.executedOperationsCount`</td>
+<td>count</td>
+<td>Number of executed adhoc operations</td>
+</tr>
+<tr>
+<td>`operation.asyncOperations`</td>
+<td>count</td>
+<td>Number of current executing async operations on the operation service of the member</td>
+</tr>
+<tr>
+<td>`operation.completedCount`</td>
+<td>count</td>
+<td>Number of completed operations</td>
+</tr>
+<tr>
+<td>`operation.failedBackups`</td>
+<td>count</td>
+<td>Number of failed backup operations on the operation service of the member</td>
+</tr>
+<tr>
+<td>`operation.generic.executedOperationsCount`</td>
+<td>count</td>
+<td>Number of executed generic operations</td>
+</tr>
+<tr>
+<td>`operation.genericPriorityQueueSize`</td>
+<td>count</td>
+<td>Number of priority generic operations pending (waiting in the priority queue)</td>
+</tr>
+<tr>
+<td>`operation.genericQueueSize`</td>
+<td>count</td>
+<td>Number of normal generic operations pending (waiting in the queue)</td>
+</tr>
+<tr>
+<td>`operation.genericThreadCount`</td>
+<td>count</td>
+<td>Number of generic operation handler threads in the member</td>
+</tr>
+<tr>
+<td>`operation.invocations.backupTimeoutMillis`</td>
+<td>ms</td>
+<td>Operation backup timeout that specifies how long the invocation will wait for acknowledgements from the backup replicas (if acks are not received from some backups, there will not be any rollback on other successful replicas)</td>
+</tr>
+<tr>
+<td>`operation.invocations.backupTimeouts`</td>
+<td>count</td>
+<td>Number of operation invocations that acknowledgment from backups has timeout</td>
+</tr>
+<tr>
+<td>`operation.invocations.delayedExecutionCount`</td>
+<td>count</td>
+<td>Number of times that the operation invocations have delayed</td>
+</tr>
+<tr>
+<td>`operation.invocations.heartbeatBroadcastPeriodMillis`</td>
+<td>ms</td>
+<td>Broadcast period of operation heartbeats (this heartbeat packets sent to inform the other member about if the operation is still alive). The heartbeat period is configured to be 1/4 of the call timeout. So with default settings, every 15 seconds, every member in the cluster, will notify every other member in the cluster about all calls that are pending.</td>
+</tr>
+<tr>
+<td>`operation.invocations.heartbeatPacketsReceived`</td>
+<td>count</td>
+<td>Number of received heartbeat packets</td>
+</tr>
+<tr>
+<td>`operation.invocations.heartbeatPacketsSent`</td>
+<td>count</td>
+<td>Number of sent heartbeat packets</td>
+</tr>
+<tr>
+<td>`operation.invocations.invocationScanPeriodMillis`</td>
+<td>ms</td>
+<td>Period for scanning over pending invocations for getting rid of duplicates, checking for heartbeat timeout, and checking for backup timeout</td>
+</tr>
+<tr>
+<td>`operation.invocations.invocationTimeoutMillis`</td>
+<td>ms</td>
+<td>Timeout for operation invocations</td>
+</tr>
+<tr>
+<td>`operation.invocations.lastCallId`</td>
+<td>count</td>
+<td>Last issued invocation call ID</td>
+</tr>
+<tr>
+<td>`operation.invocations.normalTimeouts`</td>
+<td>count</td>
+<td>Number of times that the operation invocations have timed out</td>
+</tr>
+<tr>
+<td>`operation.invocations.pending`</td>
+<td>count</td>
+<td>Number of pending invocations</td>
+</tr>
+<tr>
+<td>`operation.invocations.usedPercentage`</td>
+<td>percent</td>
+<td>Usage percentage of the operation invocation capacity (pending invocations/ max concurrent invocations)</td>
+</tr>
+<tr>
+<td>`operation.parker.parkQueueCount`</td>
+<td>count</td>
+<td>Number of separate WaitSet (set of operations waiting for some condition)</td>
+</tr>
+<tr>
+<td>`operation.parker.totalParkedOperationCount`</td>
+<td>count</td>
+<td>Total number of parked operations</td>
+</tr>
+<tr>
+<td>`operation.partition.executedOperationsCount`</td>
+<td>count</td>
+<td>Number of executed partition operations on the specified partition</td>
+</tr>
+<tr>
+<td>`operation.partitionThreadCount`</td>
+<td>count</td>
+<td>Number of partition operation handler threads for given member</td>
+</tr>
+<tr>
+<td>`operation.priorityQueueSize`</td>
+<td>count</td>
+<td>Number of priority operations pending (priority partition ops. + priority generic ops.)</td>
+</tr>
+<tr>
+<td>`operation.queueSize`</td>
+<td>count</td>
+<td>
+
+Number of normal operations pending (normal partition operations + normal generic operations).
+
+It refers to the number of operations sent to the member that have yet to be consumed for processing by the partition operation threads. This is the most critical queue for partition aware operations such as `map.put` and `map.remove`. This value should be zero or very close to zero. Based on your latency tolerance in your business use case, you can define a threshold for alerts with your preferred alerting mechanism. For instance, triggering an alert if this value is above 100 for 15 seconds would be useful.
+
+</td>
+</tr>
+<tr>
+<td>`operation.responseQueueSize`</td>
+<td>count</td>
+<td>Total number of pending responses (work queue for the response threads) to be processed.</td>
+</tr>
+<tr>
+<td>`operation.responses.backupCount`</td>
+<td>count</td>
+<td>Number of backup acknowledgement responses</td>
+</tr>
+<tr>
+<td>`operation.responses.errorCount`</td>
+<td>count</td>
+<td>Number of error responses</td>
+</tr>
+<tr>
+<td>`operation.responses.missingCount`</td>
+<td>count</td>
+<td>Number of responses having missing invocations</td>
+</tr>
+<tr>
+<td>`operation.responses.normalCount`</td>
+<td>count</td>
+<td>Number of normal responses</td>
+</tr>
+<tr>
+<td>`operation.responses.timeoutCount`</td>
+<td>count</td>
+<td>Number of call timeout responses</td>
+</tr>
+<tr>
+<td>`operation.retryCount`</td>
+<td>count</td>
+<td>Number of retried operations</td>
+</tr>
+<tr>
+<td>`operation.runningCount`</td>
+<td>count</td>
+<td>Number of currently running operations (runningPartitionCount + runningGenericCount)</td>
+</tr>
+<tr>
+<td>`operation.runningGenericCount`</td>
+<td>count</td>
+<td>Number of currently running generic (non partition specific) operations</td>
+</tr>
+<tr>
+<td>`operation.runningPartitionCount`</td>
+<td>count</td>
+<td>Number of currently running partition operations</td>
+</tr>
+<tr>
+<td>`operation.thread.completedOperationCount`</td>
+<td>count</td>
+<td>Number of completed operations by this operation thread</td>
+</tr>
+<tr>
+<td>`operation.thread.completedOperationBatchCount`</td>
+<td>count</td>
+<td>Number of completed `TaskBatch` (a batch of tasks) by this operation thread</td>
+</tr>
+<tr>
+<td>`operation.thread.completedPacketCount`</td>
+<td>count</td>
+<td>Number of packets that executed by this operation thread</td>
+</tr>
+<tr>
+<td>`operation.thread.completedPartitionSpecificRunnableCount`</td>
+<td>count</td>
+<td>Number of `PartitionSpecificRunnable` tasks executed by this operation thread</td>
+</tr>
+<tr>
+<td>`operation.thread.completedRunnableCount`</td>
+<td>count</td>
+<td>Total number of runnables executed by this operation thread</td>
+</tr>
+<tr>
+<td>`operation.thread.completedTotalCount`</td>
+<td>count</td>
+<td>Total number of tasks (`Operation` + `PartitionSpecificRunnable` + `Runnable` + `TaskBatch`) completed on this operation thread</td>
+</tr>
+<tr>
+<td>`operation.thread.errorCount`</td>
+<td>count</td>
+<td>Total number of failed tasks on this operation thread</td>
+</tr>
+<tr>
+<td>`operation.thread.normalPendingCount`</td>
+<td>count</td>
+<td>Number of normal pending operations (tasks)</td>
+</tr>
+<tr>
+<td>`operation.thread.priorityPendingCount`</td>
+<td>count</td>
+<td>Number of priority pending operations (tasks)</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Operating System</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`os.committedVirtualMemorySize`</td>
+<td>bytes</td>
+<td>Amount of committed virtual memory (that is, the amount of virtual memory guaranteed to be available to the running process)</td>
+</tr>
+<tr>
+<td>`os.freePhysicalMemorySize`</td>
+<td>bytes</td>
+<td>Amount of free physical memory</td>
+</tr>
+<tr>
+<td>`os.freeSwapSpaceSize`</td>
+<td>bytes</td>
+<td>Amount of free swap space size</td>
+</tr>
+<tr>
+<td>`os.maxFileDescriptorCount`</td>
+<td>count</td>
+<td>Maximum number of open file descriptors (only for UNIX platforms)</td>
+</tr>
+<tr>
+<td>`os.openFileDescriptorCount`</td>
+<td>count</td>
+<td>Number of open file descriptors (only for UNIX platforms)</td>
+</tr>
+<tr>
+<td>`os.processCpuLoad`</td>
+<td>percent</td>
+<td>Recent CPU usage for the JVM process; a negative value if not available</td>
+</tr>
+<tr>
+<td>`os.processCpuTime`</td>
+<td>ms</td>
+<td>CPU time used by the process on which the JVM is running</td>
+</tr>
+<tr>
+<td>`os.systemCpuLoad`</td>
+<td>percent</td>
+<td>Recent CPU usage for the whole system; a negative value if not available</td>
+</tr>
+<tr>
+<td>`os.systemLoadAverage`</td>
+<td>percent</td>
+<td>System load average for the last minute, or a negative value if not available</td>
+</tr>
+<tr>
+<td>`os.totalPhysicalMemorySize`</td>
+<td>bytes</td>
+<td>Total amount of physical memory</td>
+</tr>
+<tr>
+<td>`os.totalSwapSpaceSize`</td>
+<td>bytes</td>
+<td>Total amount of swap space</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Partitions</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`partitions.activePartitionCount`</td>
+<td>count</td>
+<td>Number of partitions assigned to the member</td>
+</tr>
+<tr>
+<td>`partitions.completedMigrations`</td>
+<td>count</td>
+<td>Number of completed migrations on the latest repartitioning round</td>
+</tr>
+<tr>
+<td>`partitions.elapsedDestinationCommitTime`</td>
+<td>ns</td>
+<td>Total elapsed time of commit operations' executions to the destination endpoint on the latest repartitioning round</td>
+</tr>
+<tr>
+<td>`partitions.elapsedMigrationOperationTime`</td>
+<td>ns</td>
+<td>Total elapsed time of migration & replication operations' executions from source to destination endpoints on the latest repartitioning round</td>
+</tr>
+<tr>
+<td>`partitions.elapsedMigrationTime`</td>
+<td>ns</td>
+<td>Total elapsed time from the start of migration tasks to their completion (successful or otherwise) on the latest repartitioning round</td>
+</tr>
+<tr>
+<td>`partitions.lastRepartitionTime`</td>
+<td>ms</td>
+<td>Latest time that repartition took place</td>
+</tr>
+<tr>
+<td>`partitions.localPartitionCount`</td>
+<td>count</td>
+<td>Number of partitions currently owned by given member</td>
+</tr>
+<tr>
+<td>`partitions.maxBackupCount`</td>
+<td>count</td>
+<td>Maximum allowed backup count according to current cluster formation and partition group configuration</td>
+</tr>
+<tr>
+<td>`partitions.memberGroupsSize`</td>
+<td>count</td>
+<td>Number of the member groups to be used in partition assignments</td>
+</tr>
+<tr>
+<td>`partitions.migrationActive`</td>
+<td>boolean</td>
+<td>Whether there are any currently active migration tasks</td>
+</tr>
+<tr>
+<td>`partitions.migrationQueueSize`</td>
+<td>count</td>
+<td>Number of migration tasks in the migration queue</td>
+</tr>
+<tr>
+<td>`partitions.partitionCount`</td>
+<td>count</td>
+<td>Total partition count</td>
+</tr>
+<tr>
+<td>`partitions.plannedMigrations`</td>
+<td>count</td>
+<td>Number of planned migrations on the latest repartitioning round</td>
+</tr>
+<tr>
+<td>`partitions.replicaSyncRequestsCounter`</td>
+<td>count</td>
+<td>Number of replica sync requests</td>
+</tr>
+<tr>
+<td>`partitions.replicaSyncSemaphore`</td>
+<td>count</td>
+<td>Permits count of this replica sync semaphore</td>
+</tr>
+<tr>
+<td>`partitions.stateStamp`</td>
+<td>count</td>
+<td>Stamp value for the current partition table; stamp is calculated by hashing the individual partition versions using MurmurHash3 (if stamp has this initial value, 0L, then that means partition table is not initialized yet)</td>
+</tr>
+<tr>
+<td>`partitions.totalCompletedMigrations`</td>
+<td>count</td>
+<td>Total number of completed migrations</td>
+</tr>
+<tr>
+<td>`partitions.totalElapsedDestinationCommitTime`</td>
+<td>ns</td>
+<td>Total elapsed time of commit operations' executions to the destination endpoint since the beginning</td>
+</tr>
+<tr>
+<td>`partitions.totalElapsedMigrationOperationTime`</td>
+<td>ns</td>
+<td>Total elapsed time of migration & replication operations' executions from source to destination endpoints since the beginning</td>
+</tr>
+<tr>
+<td>`partitions.totalElapsedMigrationTime`</td>
+<td>ns</td>
+<td>Total elapsed time from the start of migration tasks to their completion (successful or otherwise) since the beginning</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Persistence</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`persistence.liveTombstones`</td>
+<td>count</td>
+<td>Number of live tombstones in the [persistent store](../operate-and-manage/fault-tolerance/persistence/persistence.mdx)</td>
+</tr>
+<tr>
+<td>`persistence.liveValues`</td>
+<td>count</td>
+<td>Number of live values in the [persistent store](../operate-and-manage/fault-tolerance/persistence/persistence.mdx)</td>
+</tr>
+<tr>
+<td>`persistence.tombGarbage`</td>
+<td>bytes</td>
+<td>Approximate size of the garbage within the tombstone chunks (it does not account for data in the active chunk, it is incremented when a record is retired or an active chunk is turned into a stable one)</td>
+</tr>
+<tr>
+<td>`persistence.tombOccupancy`</td>
+<td>bytes</td>
+<td>Approximate size of tombstone chunks (it does not account for data in the active chunk, it is incremented when the active chunk is turned into a stable one)</td>
+</tr>
+<tr>
+<td>`persistence.valGarbage`</td>
+<td>bytes</td>
+<td>Approximate size of the garbage within the value chunk (it does not account for data in the active chunk, it is incremented when a record is retired or an active chunk is turned into a stable one)</td>
+</tr>
+<tr>
+<td>`persistence.valOccupancy`</td>
+<td>bytes</td>
+<td>Approximate size of value chunks (it does not account for data in the active chunk, it is incremented when the active chunk is turned into a stable one)</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Proxies</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`proxy.createdCount`</td>
+<td>count</td>
+<td>Number of created proxies for a given service</td>
+</tr>
+<tr>
+<td>`proxy.destroyedCount`</td>
+<td>count</td>
+<td>Number of destroyed proxies for a given service</td>
+</tr>
+<tr>
+<td>`proxy.proxyCount`</td>
+<td>count</td>
+<td>Number of active proxies for a given service</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Raft Algorithm</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`raft.destroyedGroupIds`</td>
+<td>count</td>
+<td>Number of destroyed raft node group IDs</td>
+</tr>
+<tr>
+<td>`raft.group.availableLogCapacity`</td>
+<td>count</td>
+<td>Available log capacity for this CP group</td>
+</tr>
+<tr>
+<td>`raft.group.commitIndex`</td>
+<td>count</td>
+<td>Commit index of this CP group</td>
+</tr>
+<tr>
+<td>`raft.group.lastApplied`</td>
+<td>count</td>
+<td>Last applied index of this CP group</td>
+</tr>
+<tr>
+<td>`raft.group.lastLogIndex`</td>
+<td>count</td>
+<td>Last log index of this CP group</td>
+</tr>
+<tr>
+<td>`raft.group.lastLogTerm`</td>
+<td>count</td>
+<td>Last log term of this CP group</td>
+</tr>
+<tr>
+<td>`raft.group.memberCount`</td>
+<td>count</td>
+<td>Number of members in this CP group</td>
+</tr>
+<tr>
+<td>`raft.group.snapshotIndex`</td>
+<td>count</td>
+<td>Raft snapshot index of this CP group</td>
+</tr>
+<tr>
+<td>`raft.group.term`</td>
+<td>count</td>
+<td>Raft term of this CP group</td>
+</tr>
+<tr>
+<td>`raft.metadata.activeMembersCommitIndex`</td>
+<td>count</td>
+<td>Commit index of the active CP members</td>
+</tr>
+<tr>
+<td>`raft.metadata.activeMembers`</td>
+<td>count</td>
+<td>Number of active CP members</td>
+</tr>
+<tr>
+<td>`raft.metadata.groups`</td>
+<td>count</td>
+<td>Number of CP groups</td>
+</tr>
+<tr>
+<td>`raft.missingMembers`</td>
+<td>count</td>
+<td>Number of missing CP members</td>
+</tr>
+<tr>
+<td>`raft.nodes`</td>
+<td>count</td>
+<td>Number of local Raft nodes</td>
+</tr>
+<tr>
+<td>`raft.terminatedRaftNodeGroupIds`</td>
+<td>count</td>
+<td>Number of terminated raft node group IDs</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Runtime</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`runtime.availableProcessors`</td>
+<td>count</td>
+<td>Number of processors available to the JVM</td>
+</tr>
+<tr>
+<td>`runtime.freeMemory`</td>
+<td>bytes</td>
+<td>Amount of free memory in the JVM</td>
+</tr>
+<tr>
+<td>`runtime.maxMemory`</td>
+<td>bytes</td>
+<td>Maximum amount of memory that the JVM will attempt to use</td>
+</tr>
+<tr>
+<td>`runtime.totalMemory`</td>
+<td>bytes</td>
+<td>Total amount of memory in the JVM, the value of this metric may vary over time, depending on the host environment</td>
+</tr>
+<tr>
+<td>`runtime.upTime`</td>
+<td>ms</td>
+<td>Uptime of the JVM</td>
+</tr>
+<tr>
+<td>`runtime.usedMemory`</td>
+<td>bytes</td>
+<td>Approximation to the total amount of memory currently used</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>TCP</summary>
+
+Protocol-specific TCP byte metrics are available only when Advanced Networking is enabled. `{PROTOCOL}` is one of `MEMBER`, `CLIENT`, `WAN`, `REST`, or `MEMCACHE`; `WAN` includes all WAN protocol endpoints on the reporting member.
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`tcp.acceptor.eventCount`</td>
+<td>count</td>
+<td>Total number of the connections accepted by `TcpServerAcceptor`</td>
+</tr>
+<tr>
+<td>`tcp.acceptor.exceptionCount`</td>
+<td>count</td>
+<td>Number of thrown exceptions on this `TcpServerAcceptor`</td>
+</tr>
+<tr>
+<td>`tcp.acceptor.idleTimeMillis`</td>
+<td>ms</td>
+<td>Idle time that measures how long this TcpServerAcceptor has not received any events</td>
+</tr>
+<tr>
+<td>`tcp.acceptor.selectorRecreateCount`</td>
+<td>count</td>
+<td>Number of times the selector was recreated</td>
+</tr>
+<tr>
+<td>`tcp.balancer.imbalanceDetectedCount`</td>
+<td>count</td>
+<td>Number of times the `IOBalancer` detects the imbalance of loads on `NioThread` s</td>
+</tr>
+<tr>
+<td>`tcp.balancer.migrationCompletedCount`</td>
+<td>count</td>
+<td>Number of completed NioPipeline migrations by the IOBalancer (these migrations are performed to fix the load imbalance problem on the NioThreads)</td>
+</tr>
+<tr>
+<td>`tcp.bytesReceived`</td>
+<td>bytes</td>
+<td>Number of bytes received over all connections (active and closed)</td>
+</tr>
+<tr>
+<td>`tcp.bytesReceived.{PROTOCOL}`</td>
+<td>bytes</td>
+<td>Number of bytes received over all connections for the protocol (Advanced Networking only)</td>
+</tr>
+<tr>
+<td>`tcp.bytesSend`</td>
+<td>bytes</td>
+<td>Number of bytes sent over all connections (active and closed)</td>
+</tr>
+<tr>
+<td>`tcp.bytesSend.{PROTOCOL}`</td>
+<td>bytes</td>
+<td>Number of bytes sent over all connections for the protocol (Advanced Networking only)</td>
+</tr>
+<tr>
+<td>`tcp.connection.acceptedSocketCount`</td>
+<td>count</td>
+<td>Number of accepted socket channels</td>
+</tr>
+<tr>
+<td>`tcp.connection.activeCount`</td>
+<td>count</td>
+<td>Number of active connections</td>
+</tr>
+<tr>
+<td>`tcp.connection.clientCount`</td>
+<td>count</td>
+<td>Number of the active client connections</td>
+</tr>
+<tr>
+<td>`tcp.connection.closedCount`</td>
+<td>count</td>
+<td>Number of closed connections</td>
+</tr>
+<tr>
+<td>`tcp.connection.connectionListenerCount`</td>
+<td>count</td>
+<td>Number of active connection listeners</td>
+</tr>
+<tr>
+<td>`tcp.connection.count`</td>
+<td>count</td>
+<td>Number of `TcpServerConnection`</td>
+</tr>
+<tr>
+<td>`tcp.connection.inProgressCount`</td>
+<td>count</td>
+<td>Number of connection establishments in progress</td>
+</tr>
+<tr>
+<td>`tcp.connection.openedCount`</td>
+<td>count</td>
+<td>Number of opened connections</td>
+</tr>
+<tr>
+<td>`tcp.connection.textCount`</td>
+<td>count</td>
+<td>Number of connections used by text-based protocols (REST, Memcache)</td>
+</tr>
+<tr>
+<td>`tcp.connection.in/out.completedMigrations`</td>
+<td>count</td>
+<td>Number of completed migrations on this pipeline (migrates this pipeline to a different NioThread)</td>
+</tr>
+<tr>
+<td>`tcp.connection.in/out.opsInterested`</td>
+<td>count</td>
+<td></td>
+</tr>
+<tr>
+<td>`tcp.connection.in/out.opsReady`</td>
+<td>count</td>
+<td></td>
+</tr>
+<tr>
+<td>`tcp.connection.in/out.ownerId`</td>
+<td>count</td>
+<td>Owner ID of this `NioPipeline`, -1 if the pipeline is being migrated (owner is null)</td>
+</tr>
+<tr>
+<td>`tcp.connection.in/out.processCount`</td>
+<td>count</td>
+<td>Number of time the `NioPipeline.process()` method has been called</td>
+</tr>
+<tr>
+<td>`tcp.connection.in/out.startedMigrations`</td>
+<td>count</td>
+<td>Number of started migrations on this pipeline</td>
+</tr>
+<tr>
+<td>`tcp.connection.in.bytesRead`</td>
+<td>bytes</td>
+<td>Total size of frames read on this inbound pipeline</td>
+</tr>
+<tr>
+<td>`tcp.connection.in.idleTimeMs`</td>
+<td>ms</td>
+<td>Idle time that indicates how long since the last read on this inbound nio pipeline</td>
+</tr>
+<tr>
+<td>`tcp.connection.in.normalFramesRead`</td>
+<td>count</td>
+<td>Number of priority frames read on this inbound nio pipeline</td>
+</tr>
+<tr>
+<td>`tcp.connection.in.priorityFramesRead`</td>
+<td>count</td>
+<td>Number of priority frames read</td>
+</tr>
+<tr>
+<td>`tcp.connection.out.bytesWritten`</td>
+<td>bytes</td>
+<td>Total amount of written frames on this outbound pipeline</td>
+</tr>
+<tr>
+<td>`tcp.connection.out.idleTimeMillis`</td>
+<td>ms</td>
+<td>Idle time that indicates how long since the last write on this outbound nio pipeline</td>
+</tr>
+<tr>
+<td>`tcp.connection.out.normalFramesWritten`</td>
+<td>count</td>
+<td>Number of written normal frames on this outbound nio pipeline</td>
+</tr>
+<tr>
+<td>`tcp.connection.out.priorityFramesWritten`</td>
+<td>count</td>
+<td>Number of priority frames written into this nio pipeline</td>
+</tr>
+<tr>
+<td>`tcp.connection.out.priorityWriteQueuePendingBytes`</td>
+<td>bytes</td>
+<td>Total size of priority frames pending in the write queue</td>
+</tr>
+<tr>
+<td>`tcp.connection.out.priorityWriteQueueSize`</td>
+<td>count</td>
+<td>Number of priority frames pending in the write queue</td>
+</tr>
+<tr>
+<td>`tcp.connection.out.scheduled`</td>
+<td>count</td>
+<td>Ordinal of enum state of this outbound pipeline: 0 → UNSCHEDULED, 1 → SCHEDULED, 2 → BLOCKED, 3 → RESCHEDULE</td>
+</tr>
+<tr>
+<td>`tcp.connection.out.writeQueuePendingBytes`</td>
+<td>bytes</td>
+<td>Total size of normal frames pending in the write queue</td>
+</tr>
+<tr>
+<td>`tcp.connection.out.writeQueueSize`</td>
+<td>count</td>
+<td>Number of normal frames pending in the write queue</td>
+</tr>
+<tr>
+<td>`tcp.inputThread/outputThread.bytesTransceived`</td>
+<td>bytes</td>
+<td>Amount of transceived data on this NioThread</td>
+</tr>
+<tr>
+<td>`tcp.inputThread/outputThread.completedTaskCount`</td>
+<td>count</td>
+<td>Total number of completed tasks on this NioThread</td>
+</tr>
+<tr>
+<td>`tcp.inputThread/outputThread.eventCount`</td>
+<td>count</td>
+<td>Total number of the connections accepted by TcpServerAcceptor</td>
+</tr>
+<tr>
+<td>`tcp.inputThread/outputThread.framesTransceived`</td>
+<td>count</td>
+<td>Number of transceived frames on this NioThread</td>
+</tr>
+<tr>
+<td>`tcp.inputThread/outputThread.idleTimeMillis`</td>
+<td>ms</td>
+<td>Idle time that indicates the duration since the last read/write</td>
+</tr>
+<tr>
+<td>`tcp.inputThread/outputThread.ioThreadId`</td>
+<td>count</td>
+<td>Thread ID of this NioThread</td>
+</tr>
+<tr>
+<td>`tcp.inputThread/outputThread.priorityFramesTransceived`</td>
+<td>count</td>
+<td>Number of transceived priority frames</td>
+</tr>
+<tr>
+<td>`tcp.inputThread/outputThread.processCount`</td>
+<td>count</td>
+<td>Number of processed \`NioPipeline\`s on this NioThread</td>
+</tr>
+<tr>
+<td>`tcp.inputThread/outputThread.selectorIOExceptionCount`</td>
+<td>count</td>
+<td>Number of times that I/O exceptions are thrown during selection</td>
+</tr>
+<tr>
+<td>`tcp.inputThread/outputThread.selectorRebuildCount`</td>
+<td>count</td>
+<td>Number of times the selector was recreated on this NioThread</td>
+</tr>
+<tr>
+<td>`tcp.inputThread/outputThread.taskQueueSize`</td>
+<td>count</td>
+<td>Number of pending tasks on the queue of NioThread</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Threads</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`thread.daemonThreadCount`</td>
+<td>count</td>
+<td>Current number of live daemon thread in the JVM</td>
+</tr>
+<tr>
+<td>`thread.peakThreadCount`</td>
+<td>count</td>
+<td>Peak live thread count since the JVM started</td>
+</tr>
+<tr>
+<td>`thread.threadCount`</td>
+<td>count</td>
+<td>Current number of live threads including both daemon and non-daemon threads in the JVM</td>
+</tr>
+<tr>
+<td>`thread.totalStartedThreadCount`</td>
+<td>count</td>
+<td>Total number of threads started since the JVM started</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>Transactions</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`transactions.commitCount`</td>
+<td>count</td>
+<td>Number of committed transactions</td>
+</tr>
+<tr>
+<td>`transactions.rollbackCount`</td>
+<td>count</td>
+<td>Number of rollbacked transactions</td>
+</tr>
+<tr>
+<td>`transactions.startCount`</td>
+<td>count</td>
+<td>Number of started transactions</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>WAN Replication</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`wan.ackDelayCurrentMillis`</td>
+<td>ms</td>
+<td>Duration of ongoing delaying, -1 if there is no current delaying</td>
+</tr>
+<tr>
+<td>`wan.ackDelayLastEnd`</td>
+<td>ms</td>
+<td>Timestamp of the last end of delaying the acknowledgments; if this value is bigger than `wan.ackDelayLastStart`, then there is no delaying</td>
+</tr>
+<tr>
+<td>`wan.ackDelayLastStart`</td>
+<td>ms</td>
+<td>Timestamp of the last start of delaying the acknowledgments</td>
+</tr>
+<tr>
+<td>`wan.ackDelayTotalCount`</td>
+<td>count</td>
+<td>Total number of the triggering delaying the WAN acknowledgments (exceeding the invocation threshold)</td>
+</tr>
+<tr>
+<td>`wan.ackDelayTotalMillis`</td>
+<td>ms</td>
+<td>Total amount of time delaying the WAN acknowledgments was taking place</td>
+</tr>
+<tr>
+<td>`wan.consistencyCheck.lastCheckedPartitionCount`</td>
+<td>count</td>
+<td>Number of checked partitions on the last WAN consistency check</td>
+</tr>
+<tr>
+<td>`wan.consistencyCheck.lastCheckedLeafCount`</td>
+<td>count</td>
+<td>Number of checked partitions on the last WAN consistency check</td>
+</tr>
+<tr>
+<td>`wan.consistencyCheck.lastDiffLeafCount`</td>
+<td>count</td>
+<td>Number of different Merkle tree leaves on the last WAN consistency check</td>
+</tr>
+<tr>
+<td>`wan.consistencyCheck.lastDiffPartitionCount`</td>
+<td>count</td>
+<td>Number of partitions found to be inconsistent on the last WAN consistency check</td>
+</tr>
+<tr>
+<td>`wan.consistencyCheck.lastEntriesToSync`</td>
+<td>count</td>
+<td>Number of entries to synchronize to get the clusters into sync on the last WAN consistency check</td>
+</tr>
+<tr>
+<td>`wan.droppedCount`</td>
+<td>count</td>
+<td>Number of dropped entry events</td>
+</tr>
+<tr>
+<td>`wan.outboundQueueSize`</td>
+<td>count</td>
+<td>Total number of WAN events currently placed in the WAN queues of primary partitions on this member</td>
+</tr>
+<tr>
+<td>`wan.queueFillPercent`</td>
+<td>percent</td>
+<td>Percentage of the WAN replication queue that is filled</td>
+</tr>
+<tr>
+<td>`wan.removeCount`</td>
+<td>count</td>
+<td>Number of entry remove events</td>
+</tr>
+<tr>
+<td>`wan.syncCount`</td>
+<td>count</td>
+<td>Number of entry sync events</td>
+</tr>
+<tr>
+<td>`wan.sync.avgEntriesPerLeaf`</td>
+<td>count</td>
+<td>Average of the number of records belong the synchronized Merkle tree nodes have</td>
+</tr>
+<tr>
+<td>`wan.sync.maxLeafEntryCount`</td>
+<td>count</td>
+<td>Maximum of the number of records belong the synchronized Merkle tree nodes have</td>
+</tr>
+<tr>
+<td>`wan.sync.minLeafEntryCount`</td>
+<td>count</td>
+<td>Minimum of the number of records belong the synchronized Merkle tree nodes have</td>
+</tr>
+<tr>
+<td>`wan.sync.nodesSynced`</td>
+<td>count</td>
+<td>Number of the synchronized Merkle tree nodes</td>
+</tr>
+<tr>
+<td>`wan.sync.partitionsSynced`</td>
+<td>count</td>
+<td>Number of synchronized partitions</td>
+</tr>
+<tr>
+<td>`wan.sync.partitionsToSync`</td>
+<td>count</td>
+<td>Number of partitions to synchronize</td>
+</tr>
+<tr>
+<td>`wan.sync.recordsSynced`</td>
+<td>count</td>
+<td>Number of synchronized records</td>
+</tr>
+<tr>
+<td>`wan.sync.syncDurationNanos`</td>
+<td>ns</td>
+<td>Duration of the last synchronization</td>
+</tr>
+<tr>
+<td>`wan.sync.stdDevEntriesPerLeaf`</td>
+<td>count</td>
+<td>Standard deviation of the number of records belong the synchronized Merkle tree nodes have</td>
+</tr>
+<tr>
+<td>`wan.sync.syncStartNanos`</td>
+<td>ns</td>
+<td>Start time of this WAN synchronization</td>
+</tr>
+<tr>
+<td>`wan.totalPublishLatency`</td>
+<td>ms</td>
+<td>Total latency of published WAN events from this member</td>
+</tr>
+<tr>
+<td>`wan.totalPublishedEventCount`</td>
+<td>count</td>
+<td>Total number of published WAN events from this member</td>
+</tr>
+<tr>
+<td>`wan.updateCount`</td>
+<td>count</td>
+<td>Number of entry update events</td>
+</tr>
+<tr>
+<td>`wan.connectionHealth`</td>
+<td>boolean</td>
+<td>The health of an individual WAN target endpoint, where 1 is healthy and 0 is not</td>
+</tr>
+<tr>
+<td>`wan.failedTransmitCount`</td>
+<td>count</td>
+<td>Number of attempted WAN replication transmissions that have failed</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+<details>
+<summary>User Code Namespaces</summary>
+
+<table>
+<colgroup>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.0909%'}}/>
+<col style={{width:'54.5455%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Unit</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>`ucn.updateTime`</td>
+<td>ms</td>
+<td>Update time of a user code namespace configuration</td>
+</tr>
+<tr>
+<td>`ucn.resourceCount`</td>
+<td>count</td>
+<td>Number of resources contained in a namespace</td>
+</tr>
+<tr>
+<td>`ucn.resource.resourceType`</td>
+<td>enum</td>
+<td>The Ordinal of the enum type of the resource contained in a namespace</td>
+</tr>
+<tr>
+<td>`ucn.resource.resourceSizeBytes`</td>
+<td>bytes</td>
+<td>The size in bytes of a resource contained in a namespace</td>
+</tr>
+</tbody>
+</table>
+
+</details>

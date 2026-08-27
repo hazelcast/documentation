@@ -1,0 +1,174 @@
+---
+title: "Shutting Down Members and Clusters"
+sidebar_label: "Shutting Down"
+sidebar_position: 1
+slug: /maintain-cluster/shutdown
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Maintaining a cluster often requires shutting down clusters or individual members to make changes take effect. Hazelcast offers convenient methods for shutting down clusters as well as graceful and ungraceful options for specific members.
+
+## Shutting Down a Hazelcast Cluster
+
+To send a command to shut down the cluster, use one of the following options:
+
+<Tabs groupId="cli--java--management-center--rest-api">
+<TabItem value="cli" label="CLI">
+
+:::note
+
+To use the CLI to shut down a cluster, you must first [enable the REST API](../../clients-and-apis/apis/enterprise-rest-api/rest-api.mdx).
+
+:::
+
+```bash
+bin/hz-cluster-admin -a <address> -c <cluster-name> -o shutdown
+```
+
+</TabItem>
+<TabItem value="rest-api" label="REST API">
+
+:::caution
+
+The REST API has been deprecated and will be removed as of Hazelcast version 7.0. An improved version of this feature is under development.
+
+:::
+
+:::note
+
+To use the REST API to shut down a cluster, you must first [enable it](../../clients-and-apis/apis/enterprise-rest-api/rest-api.mdx).
+
+:::
+
+```shell
+curl --data "${CLUSTERNAME}&${PASSWORD}"  http://127.0.0.1:${PORT}/hazelcast/rest/management/cluster/clusterShutdown
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+HazelcastInstance.getCluster().shutdown()
+```
+
+</TabItem>
+<TabItem value="management-center" label="Management Center">
+
+Use Hazelcast Management Center to <Variable href="/management-center/{page-latest-supported-mc}/clusters/administration#cluster-state" text="shut down your whole Hazelcast cluster"/>.
+
+</TabItem>
+</Tabs>
+
+When you send the command to shut down a cluster, the members that are not in a `PASSIVE` state temporarily change their states to `PASSIVE`. Then, each member shuts itself down.
+
+When the cluster is restarted, the state of each member depends on whether [persistence](../fault-tolerance/persistence/persistence.mdx) is enabled:
+
+- If persistence is enabled, the state of each member is restored to whatever it was before the shutdown.
+- If persistence is disabled, each member is put in an `ACTIVE` state.
+
+For information about states and what they mean, see [Cluster States](./cluster-utilities.mdx#cluster-states).
+
+## Shutting Down a Hazelcast Member
+
+To shut down a specific member, use one of the following options:
+
+- [Graceful shutdown](#graceful-shutdown): To prevent data loss.
+- [Ungraceful shutdown](#ungraceful-shutdown): To shut down faster while risking data loss.
+
+### Graceful Shutdown
+
+When you gracefully shut down a member, it allows a Hazelcast cluster to migrate the member's partitions to the rest of the cluster, preventing data loss.
+
+During a graceful shutdown the oldest cluster member (master member) migrates all the replicas owned by the shutdown-requesting member to the other running cluster members.
+
+While the master member is migrating replicas, the rest of the cluster waits for a configured period of time until this process is finished. You can specify this period using the [`hazelcast.graceful.shutdown.max.wait` property](../../reference/system-properties.mdx#hazelcast.graceful.shutdown.max.wait). If migrations are not completed within this period, the shutdown process may continue ungracefully, which may lead to data loss.
+
+:::note
+
+When choosing a value for this period, consider the size of data in your cluster and how long it may take to migrate it.
+
+:::
+
+After these migrations are completed, the shutdown-requesting member will no longer be the owner of any partitions or backup partitions.
+
+To gracefully shut down a Hazelcast member (so that it waits the migration operations to be completed), you have the following options:
+
+- Call the `HazelcastInstance.shutdown()` method.
+- Use the JMX API's shutdown method. You can do this by implementing a JMX client application or using a JMX monitoring tool such as JConsole.
+- Use <Variable href="/management-center/{page-latest-supported-mc}/clusters/members" text="Management Center"/>.
+
+### Ungraceful Shutdown
+
+If you need to shut down a member quickly and you do not care about data loss, you can use one of the following options to force shutdown without waiting for migrations:
+
+<table>
+<colgroup>
+<col style={{width:'33.3333%'}}/>
+<col style={{width:'33.3333%'}}/>
+<col style={{width:'33.3334%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th>Shutdown option</th>
+<th>Methods</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Send a SIGKILL signal</td>
+<td>Use the `kill -9 <PID>` command in the terminal.</td>
+<td>This option does not release the member's used resources and is not recommended for production systems.</td>
+</tr>
+<tr>
+<td>Send a SIGTERM signal</td>
+<td>
+
+Use the `kill -15 <PID>` command in the terminal.
+
+Call the `HazelcastInstance.getLifecycleService().terminate()` method.
+
+Execute the `stop.sh` script in your member's `bin` directory.
+
+</td>
+<td>
+
+This option releases most of the member's used resources.
+
+If you set the [`hazelcast.shutdownhook.enabled` property](../../reference/system-properties.mdx#hazelcast.shutdownhook.enabled) to `false`, your member will ignore the `SIGTERM` signal and the process will terminate ungracefully like it had received a `SIGKILL` signal.
+
+If you set the [`hazelcast.shutdownhook.policy` property](../../reference/system-properties.mdx#hazelcast.shutdownhook.policy) to `GRACEFUL` your member will be gracefully shutdown.
+
+</td>
+</tr>
+</tbody>
+</table>
+
+If you use the [systemd](https://www.linux.com/learn/understanding-and-using-systemd) `systemctl` utility such as `systemctl stop service_name`, a SIGTERM signal is sent. After 90 seconds of waiting, this signal is followed by a SIGKILL signal by default. We do not recommend using this utility with its default settings.
+
+## Ensuring Members and Clusters are in a Safe State
+
+Before you shut down members or clusters, you can check that their backup partitions are synchronized with the primary ones.
+
+To check the state of partitions, use the following methods in the `PartitionService` interface:
+
+```java
+public interface PartitionService {
+   ...
+   ...
+    boolean isClusterSafe();
+    boolean isMemberSafe(Member member);
+    boolean isLocalMemberSafe();
+    boolean forceLocalMemberToBeSafe(long timeout, TimeUnit unit);
+}
+```
+
+The `isClusterSafe()` method checks whether the cluster is in a safe state. It returns `true` if there are no active partition migrations and all backups are in sync for each partition.
+
+The `isMemberSafe()` method checks whether a specific member is in a safe state. It checks if all backups of partitions of the given member are in sync with the primary ones. Once it returns `true`, the given member is safe and it can be shut down without data loss.
+
+Similarly, the `isLocalMemberSafe()` method does the same check for the local member. The `forceLocalMemberToBeSafe()` method forces the owned and backup partitions to be synchronized, making the local member safe.
+
+For code samples, see [GitHub](https://github.com/hazelcast/hazelcast-code-samples/tree/master/monitoring/cluster-safety).

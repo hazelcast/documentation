@@ -30,7 +30,7 @@ const platform = {
   id: 'hazelcast',
   currentSeg: '5.8-snapshot',
   currentLabel: '5.8-SNAPSHOT',
-  defaultVersion: 'current',
+  defaultVersion: 'latest-release',
 } as const;
 
 const config: Config = {
@@ -129,12 +129,10 @@ const config: Config = {
     // the product's name. Its main is a NUMBERED snapshot like MC's — published
     // under `5.8-snapshot`, displayed `5.8-SNAPSHOT`.
     //
-    // PHASE 1: the current (main) branch only, so the plugin is stood up and the
-    // whole corpus converted once before the release copies multiply it. The live
-    // release set (5.7 down to 5.3) goes into lib/layout.js VERSIONS.hazelcast,
-    // and `defaultVersion` flips to 'latest-release' when the first one lands —
-    // main is an unreleased snapshot, so the dropdown must land on a release, as
-    // production does. Until then 'current' is the only version there is.
+    // The live release set (5.7 down to 5.3; 5.2 and older frozen) lives in
+    // lib/layout.js VERSIONS.hazelcast, so it needs no edit here — and because
+    // main is an unreleased snapshot, the dropdown lands on the newest release,
+    // as production does.
     versionedDocs(platform),
     // Cloud docs — migration target #1. Unversioned: the only version is served
     // at the base path with no version segment, and routeBasePath === the Antora
@@ -229,9 +227,8 @@ const config: Config = {
           position: 'left',
           label: 'CLC',
         },
-        // Version dropdown for the hazelcast (Platform) instance. A single entry
-        // (5.8-SNAPSHOT) while phase 1 runs; the live releases join it as they
-        // are converted.
+        // Version dropdown for the hazelcast (Platform) instance: the
+        // 5.8-SNAPSHOT current version plus the live releases 5.7 down to 5.3.
         {
           type: 'docsVersionDropdown',
           docsPluginId: 'hazelcast',

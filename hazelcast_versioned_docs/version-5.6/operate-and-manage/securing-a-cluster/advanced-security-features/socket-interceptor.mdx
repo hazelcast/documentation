@@ -1,0 +1,125 @@
+---
+title: "Socket Interceptor"
+sidebar_position: 6
+slug: /security/socket-interceptor
+enterprise: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Hazelcast allows you to intercept socket connections before a member joins a cluster or a client connects to a member of a cluster. This allows you to add custom hooks to join and perform connection procedures (like identity checking using a custom network authentication protocol, etc.).
+
+To use the socket interceptor, implement `com.hazelcast.nio.MemberSocketInterceptor` for members and `com.hazelcast.nio.SocketInterceptor` for clients.
+
+The following is an example socket interceptor implementation for the member side.
+
+```java
+    public static class MySocketInterceptor implements MemberSocketInterceptor {
+
+        private String memberId;
+
+        public MySocketInterceptor() {
+        }
+
+        @Override
+        public void onAccept(Socket socket) throws IOException {
+            socket.getOutputStream().write(memberId.getBytes());
+            byte[] bytes = new byte[1024];
+            int len = socket.getInputStream().read(bytes);
+            String otherMemberId = new String(bytes, 0, len);
+            if (!otherMemberId.equals("secondMember")) {
+                throw new RuntimeException("Not a known member!!!");
+            }
+        }
+
+        @Override
+        public void init(Properties properties) {
+            memberId = properties.getProperty("member-id");
+        }
+
+        @Override
+        public void onConnect(Socket socket) throws IOException {
+            socket.getOutputStream().write(memberId.getBytes());
+            byte[] bytes = new byte[1024];
+            int len = socket.getInputStream().read(bytes);
+            String otherMemberId = new String(bytes, 0, len);
+            if (!otherMemberId.equals("firstMember")) {
+                throw new RuntimeException("Not a known member!!!");
+            }
+        }
+```
+
+You can declaratively configure this socket interceptor as follows:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <network>
+        <socket-interceptor enabled="true">
+            <class-name>com.hazelcast.examples.MySocketInterceptor</class-name>
+            <properties>
+                <property name="property1">value1</property>
+                <property name="property2">value2</property>
+                <property name=foo>bar</property>
+            </properties>
+        </socket-interceptor>
+    </network>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  network:
+    socket-interceptor:
+        enabled: true
+        class-name: com.hazelcast.examples.MySocketInterceptor
+        properties:
+          property1: value1
+          property2: value2
+          foo: bar
+```
+
+</TabItem>
+</Tabs>
+
+The following is an example configuration of the above socket interceptor for the client side.
+
+```java
+    public static void main(String[] args) {
+ 
+        Config config = createConfig();
+        Hazelcast.newHazelcastInstance(config);
+
+        ClientConfig clientConfig = createClientConfig();
+        HazelcastClient.newHazelcastClient(clientConfig);
+    }
+
+    private static Config createConfig() {
+        Config config = new Config();
+        //config.setLicenseKey(ENTERPRISE_LICENSE_KEY);
+        config.setProperty("hazelcast.wait.seconds.before.join", "0");
+
+        SocketInterceptorConfig interceptorConfig = new SocketInterceptorConfig();
+        interceptorConfig.setEnabled(true).setClassName(MySocketInterceptor.class.getName());
+        config.getNetworkConfig().setSocketInterceptorConfig(interceptorConfig);
+
+        return config;
+    }
+
+    private static ClientConfig createClientConfig() {
+        ClientConfig clientConfig = new ClientConfig();
+        //clientConfig.setLicenseKey(ENTERPRISE_LICENSE_KEY);
+        SocketInterceptorConfig interceptorConfig = new SocketInterceptorConfig();
+        interceptorConfig.setEnabled(true).setClassName(MySocketInterceptor.class.getName());
+        clientConfig.getNetworkConfig().setSocketInterceptorConfig(interceptorConfig);
+        return clientConfig;
+    }
+```

@@ -1,0 +1,88 @@
+---
+title: "Data Structures"
+sidebar_position: 2
+slug: /clusters/ucn-data-structures
+enterprise: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+To allow your data structures to resolve your user code, you must reference the required namespace in the data structure configuration. You can configure the same namespace for multiple data structures.
+
+Any data structure without a specific <Variable name="ucn"/> definition in its configuration uses the `default` namespace, if it has been configured. For further information on defining a `default` namespace, see the [Non-associated Namespaces](../ucn-non-associated.mdx) topic.
+
+:::warning
+
+If your data structure configuration specifies a namespace that has not been configured, a fatal error is returned when an operation is performed on that data structure.
+
+:::
+
+To configure <Variable name="ucn"/> for your data structure using static configuration, complete the following steps:
+
+1. If not already open, open the *hazelcast* configuration file in your preferred editor and scroll to your data structure configuration section
+2. Add the following to the end of your data structure configuration:
+
+   <Tabs groupId="config-format">
+   <TabItem value="xml" label="XML">
+
+   ```xml
+       <user-code-namespace>myNameSpace</user-code-namespace>
+   ```
+
+   </TabItem>
+   <TabItem value="yaml" label="YAML">
+
+   ```yaml
+      user-code-namespace: "myNameSpace"
+   ```
+
+   </TabItem>
+   </Tabs>
+3. Save the file
+
+## Example Multimap Configuration Section
+
+The following extract shows the full configuration, including the <Variable name="ucn"/> definition, for a Multimap data structure:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<multimap name="default">
+    <backup-count>1</backup-count>
+    <async-backup-count>0</async-backup-count>
+    <binary>true</binary>
+    <value-collection-type>SET</value-collection-type>
+    <entry-listeners>
+        <entry-listener include-value="true" local="true">com.hazelcast.examples.EntryListener</entry-listener>
+    </entry-listeners>
+    <split-brain-protection-ref>splitBrainProtectionRuleWithThreeNodes</split-brain-protection-ref>
+    <merge-policy batch-size="100">PutIfAbsentMergePolicy</merge-policy>
+    <user-code-namespace>myNameSpace</user-code-namespace>
+</multimap>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+multimap:
+    default:
+      backup-count: 1
+      async-backup-count: 0
+      binary: true
+      value-collection-type: SET
+      entry-listeners:
+        - class-name: com.hazelcast.examples.EntryListener
+          include-value: true
+          local: true
+      split-brain-protection-ref: splitBrainProtectionRuleWithThreeNodes
+      merge-policy:
+        batch-size: 100
+        class-name: PutIfAbsentMergePolicy
+      user-code-namespace: "myNameSpace"
+```
+
+</TabItem>
+</Tabs>

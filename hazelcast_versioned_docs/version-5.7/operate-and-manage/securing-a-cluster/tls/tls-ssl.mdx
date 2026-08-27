@@ -1,0 +1,296 @@
+---
+title: "TLS/SSL Basics"
+sidebar_position: 1
+slug: /security/tls-ssl
+enterprise: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+You can use the Transport Layer Security (TLS) protocol to establish an encrypted communication across your Hazelcast cluster with key stores and trust stores.
+
+Hazelcast allows you to encrypt socket level communication between Hazelcast members and between Hazelcast clients and members, for end-to-end encryption. To use it, you need configure the `ssl` section in the network configuration.
+
+:::note
+
+SSL (Secure Sockets Layer) is the predecessor protocol to TLS (Transport Layer Security). Both protocols are designed to encrypt and secure data transmitted over networks, but SSL is now considered outdated and has been replaced by TLS for improved security. Hazelcast uses `ssl` naming for keeping backward compatibility in the configuration.
+
+:::
+
+## TLS for Hazelcast Members
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <!-- ... -->
+    <network>
+        <ssl enabled="true">
+            <properties>
+                <property name="protocol">TLSv1.2</property>
+                <property name="mutualAuthentication">REQUIRED</property>
+                <property name="keyStore">/opt/hazelcast-keystore.p12</property>
+                <property name="keyStorePassword">secret.123</property>
+                <property name="keyStoreType">PKCS12</property>
+                <property name="trustStore">/opt/hazelcast-truststore.p12</property>
+                <property name="trustStorePassword">changeit</property>
+                <property name="trustStoreType">PKCS12</property>
+                <property name="keyMaterialDuration">PT10M</property>
+            </properties>
+        </ssl>
+    </network>
+    <!-- ... -->
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  network:
+    ssl:
+      enabled: true
+      properties:
+        protocol: TLSv1.2
+        mutualAuthentication: REQUIRED
+        keyStore: /opt/hazelcast-keystore.p12
+        keyStorePassword: secret.123
+        keyStoreType: PKCS12
+        trustStore: /opt/hazelcast-truststore.p12
+        trustStorePassword: changeit
+        trustStoreType: PKCS12
+        keyMaterialDuration: PT10M
+```
+
+</TabItem>
+</Tabs>
+
+The following are the descriptions of the properties:
+
+- `keyStore`: Path of your keystore file.
+- `keyStorePassword`: Password to access the key from your keystore file.
+- `keyManagerAlgorithm`: Name of the algorithm based on which the authentication keys are provided.
+- `keyStoreType`: Type of the keystore. Its default value is `JKS`. Another commonly used type is the `PKCS12`. Available keystore/truststore types depend on your Operating system and the Java runtime.
+- `trustStore`: Path of your truststore file. The file truststore is a keystore file that contains a collection of certificates trusted by your application.
+- `trustStorePassword`: Password to unlock the truststore file.
+- `trustManagerAlgorithm`: Name of the algorithm based on which the trust managers are provided.
+- `trustStoreType`: Type of the truststore. Its default value is `JKS`. Another commonly used type is the `PKCS12`. Available keystore/truststore types depend on your Operating system and the Java runtime.
+- `mutualAuthentication`: Mutual authentication configuration. It's empty by default which means the client side of connection is not authenticated. Available values are:
+
+  - `REQUIRED` - server forces usage of a trusted client certificate
+  - `OPTIONAL` - server asks for a client certificate, but it doesn't require it
+
+    See the [Mutual Authentication section](#mutual-authentication).
+- `ciphersuites`: Comma-separated list of cipher suite names allowed to be used. Its default value are all supported suites in your Java runtime.
+- `protocol`: Name of the algorithm used by TLS. Its default value is `TLS`. Available values are:
+
+  - `TLS`
+  - `TLSv1` (deprecated)
+  - `TLSv1.1` (deprecated)
+  - `TLSv1.2`
+  - `TLSv1.3`
+
+    :::note
+
+    The Internet Engineering Task Force has [deprecated versions 1 and 1.1](https://therecord.media/ietf-officially-deprecates-tls-1-0-and-tls-1-1/) of the TLS protocol.
+
+    :::
+
+    For the `protocol` property, we recommend you to provide TLS with its version information, e.g., `TLSv1.2`. Note that if you write only `TLS`, your application chooses the TLS version according to your Java version.
+- `validateIdentity`: Flag which allows enabling endpoint identity validation. It means, during the TLS handshake client verifies if the server's hostname (or IP address) matches the information in X.509 certificate (Subject Alternative Name extension). Possible values are `"true"` and `"false"` (default).
+- `keyMaterialDuration`: Duration expression in ISO 8601 format (a string such as `PnDTnHnMn.nS`) used for defining the cache timeout for keystore and truststore content. A positive value such as `PT1H` says for how long should be the key material cached before it's newly loaded. A negative value such as `PT-1s` means the key material will be cached indefinitely. A zero-value duration expression such as `PT0s` means the key material will not be cached and will always be newly loaded for each TLS-protected connection. The key material is cached indefinitely if the new property is not specified (default value).
+
+## TLS for Hazelcast Clients
+
+The TLS configuration in Hazelcast clients is very similar to member configuration.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast-client>
+    ...
+    <network>
+        <ssl enabled="true">
+            <properties>
+                <property name="protocol">TLSv1.2</property>
+                <property name="trustStore">/opt/client-truststore.p12</property>
+                <property name="trustStorePassword">changeit</property>
+                <property name="trustStoreType">PKCS12</property>
+
+                <!-- Following properties are only needed when the mutual authentication is used. -->
+                <property name="keyStore">/opt/client-keystore.p12</property>
+                <property name="keyStorePassword">secret.123</property>
+                <property name="keyStoreType">PKCS12</property>
+            </properties>
+        </ssl>
+    </network>
+    ...
+</hazelcast-client>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast-client:
+  network:
+    ssl:
+      enabled: true
+      properties:
+        protocol: TLSv1.2
+
+        trustStore: /opt/client-truststore.p12
+        trustStorePassword: changeit
+        trustStoreType: PKCS12
+
+        # Following properties are only needed when the mutual authentication is used.
+        keyStore: /opt/client-keystore.p12
+        keyStorePassword: clientsSecret
+        keyStoreType: PKCS12
+```
+
+</TabItem>
+</Tabs>
+
+Clients don't need to set `mutualAuthentication` property as it's used in configuring the server side of TLS connections.
+
+## Mutual Authentication
+
+TLS connections have two sides: the one opening the connection (TLS client) and the one accepting the connection (TLS server). By default, only the TLS server proves its identity by presenting a certificate to the TLS client. The mutual authentication means that also the TLS clients prove their identity to the TLS servers.
+
+Hazelcast members can be on both sides of TLS connection - TLS servers and TLS clients. Hazelcast clients are always on the client side of a TLS connection.
+
+By default, Hazelcast members have keystore used to identify themselves to the clients and other members. Both Hazelcast members and Hazelcast clients have truststore used to define which members they can trust.
+
+When the mutual authentication feature is enabled, Hazelcast clients need to provide keystore. A client proves its identity by providing its certificate to the Hazelcast member it's connecting to. The member only accepts the connection if the client's certificate is present in the member's truststore.
+
+To enable the mutual authentication, set the `mutualAuthentication` property value to `REQUIRED` on the member side, as shown below:
+
+```java
+Config cfg = new Config();
+Properties props = new Properties();
+
+props.setProperty("mutualAuthentication", "REQUIRED");
+props.setProperty("keyStore", "/opt/hazelcast.keystore");
+props.setProperty("keyStorePassword", "123456");
+props.setProperty("trustStore", "/opt/hazelcast.truststore");
+props.setProperty("trustStorePassword", "123456");
+
+cfg.getNetworkConfig().setSSLConfig(new SSLConfig().setEnabled(true).setProperties(props));
+Hazelcast.newHazelcastInstance(cfg);
+```
+
+And on the client side, you need to set client identity by providing the keystore:
+
+```java
+clientSslProps.setProperty("keyStore", "/opt/client.keystore");
+clientSslProps.setProperty("keyStorePassword", "123456");
+```
+
+The property `mutualAuthentication` has the following options:
+
+- `REQUIRED`: Server asks for client certificate. If the client does not provide a keystore or the provided keystore is not verified against member's truststore, the client is not authenticated.
+- `OPTIONAL`: Server asks for client certificate, but client is not required to provide any valid certificate.
+
+:::note
+
+When a new client is introduced with an untrusted certificate (e.g. a self-signed one), the truststore on the member side should be updated accordingly to include new clients' information to be able to accept it.
+
+:::
+
+See the below example snippet to see the full configuration on the client side:
+
+```java
+ClientConfig config = new ClientConfig();
+Properties clientSslProps = new Properties();
+clientSslProps.setProperty("keyStore", "/opt/client.keystore");
+clientSslProps.setProperty("keyStorePassword", "123456");
+clientSslProps.setProperty("trustStore", "/opt/client.truststore");
+clientSslProps.setProperty("trustStorePassword", "123456");
+
+config.getNetworkConfig().setSSLConfig(new SSLConfig().setEnabled(true).setProperties(clientSslProps));
+HazelcastClient.newHazelcastClient(config);
+```
+
+If the mutual authentication is not required, the Hazelcast members accept all incoming TLS connections without verifying if the connecting side is trusted. Therefore, it's recommended to require the mutual authentication in Hazelcast members configuration.
+
+## TLS for WAN Replication
+
+Hazelcast allows you to secure the communications between WAN replicated clusters using TLS. WAN connections, cluster members and clients can have their own unique TLS certificates. You can also choose to have TLS configured on some of the members/clients and not on the others.
+
+You can configure TLS for WAN replication using the advanced network configuration. See the [Securing the Connections for WAN Replication section](../../synchronizing-data-across-clusters/advanced-features.mdx#securing-wan-connections.adoc) for the details.
+
+## Customize TLS
+
+You can customize TLS behavior by implementing your own `com.hazelcast.nio.ssl.SSLContextFactory` which allows building a custom `javax.net.ssl.SSLContext` object.
+
+The following is an example code snippet for this:
+
+```java
+public class MySSLContextFactory implements SSLContextFactory {
+    public void init( Properties properties ) throws Exception {
+    }
+
+    public SSLContext getSSLContext() {
+        // ...
+        SSLContext sslCtx = SSLContext.getInstance( "the protocol to be used" );
+        return sslCtx;
+    }
+}
+```
+
+The following example shows the base declarative configuration for the implemented `SSLContextFactory`:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <network>
+        <ssl enabled="true">
+            <factory-class-name>
+                com.hazelcast.examples.MySSLContextFactory
+            </factory-class-name>
+            <properties>
+                <property name="foo">bar</property>
+            </properties>
+        </ssl>
+    </network>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  network:
+    ssl:
+      enabled: true
+      factory-class-name: com.hazelcast.examples.MySSLContextFactory
+      properties:
+        foo: bar
+```
+
+</TabItem>
+</Tabs>
+
+Hazelcast provides a default `SSLContextFactory`, `com.hazelcast.nio.ssl.BasicSSLContextFactory`, which uses the configured keystore to initialize `SSLContext`.
+
+:::note
+
+Using TLS may have an impact on the cluster performance. For more information, see [TLS tuning](../../../develop-and-build/best-practices/performance-tips.mdx#tls-ssl-perf)
+
+:::
+
+:::important
+
+We do not recommended reusing key stores and trust stores for external applications. In addition, [Symmetric Encryption](../advanced-security-features/encryption.mdx), which has been deprecated, can't be used with TLS.
+
+:::

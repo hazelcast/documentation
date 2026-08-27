@@ -1,0 +1,134 @@
+---
+title: "SQL"
+sidebar_label: "Overview"
+sidebar_position: 1
+slug: /sql/sql-overview
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+You can use SQL to query data in maps, Kafka topics, or a variety of file systems. Results can be sent directly to the client or inserted into maps or Kafka topics.
+
+:::tip
+
+For a hands-on introduction to SQL, see [Get started with SQL over maps](../../get-started/get-started-with-sql/get-started-sql.mdx).
+
+:::
+
+## Before you Begin
+
+To use the SQL service, the Jet engine must be enabled on the cluster. For information about how to enable the Jet engine, see [Securing Jobs](../building-data-pipelines/job-security.mdx).
+
+## Connecting to the SQL Service
+
+You can connect to the SQL service of a Hazelcast member using one of the following options:
+
+- [SQL shell](#using-the-sql-shell) or [Management Center](/management-center/latest/tools/sql-browser): For fast prototyping.
+- [JDBC driver](https://github.com/hazelcast/hazelcast-jdbc/blob/main/README.md) or the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/sql/SqlService.html" text="Java client"/>: For Java applications.
+- <Variable href="http://hazelcast.github.io/hazelcast-nodejs-client/api/{page-latest-supported-nodejs-client}/docs/modules/sql_SqlService.html" text="Node.js client"/>.
+- <Variable href="https://hazelcast.readthedocs.io/en/v{page-latest-supported-python-client}/api/sql.html" text="Python client"/>.
+- [Go client](https://pkg.go.dev/github.com/hazelcast/hazelcast-go-client#hdr-Running_SQL_Queries).
+- <Variable href="https://hazelcast.github.io/hazelcast-csharp-client/{page-latest-supported-csharp-client}/doc/sql.html" text="C# client"/>.
+
+:::note
+
+You cannot run SQL queries on [lite members](../../reference/glossary.mdx#lite-member). This limitation will be removed in future releases.
+
+:::
+
+### Using the SQL Shell
+
+The easiest way to run SQL queries on a cluster is to connect to the SQL shell.
+
+To connect to the SQL shell, run the `hz-cli sql` command of your member's built-in CLI.
+
+<Tabs groupId="binary--docker">
+<TabItem value="binary" label="Binary">
+
+```shell title="Mac and Linux"
+bin/hz-cli sql
+```
+
+```shell title="Windows"
+bin\hz-cli.bat sql
+```
+
+</TabItem>
+<TabItem value="docker" label="Docker">
+
+Replace the `<cluster-name>` placeholder with the name of your cluster and the `<address>` placeholder with your member's IP address.
+
+```shell vars
+docker run --network hazelcast-network -it --rm hazelcast/hazelcast:{os-version} hz-cli --targets <cluster-name>@<address> sql
+```
+
+</TabItem>
+</Tabs>
+
+## Mappings
+
+Before you can query data in SQL, you need to create a *mapping* to the data source. Mappings store essential metadata about the source's data model, data access patterns, and serialization formats so that the SQL service can connect to the data source and query it.
+
+Currently, you can create mappings for the following data sources:
+
+- [Hazelcast maps](./sql-over-maps/mapping-to-maps.mdx)
+- [Kafka topics](./sql-over-kafka/mapping-to-kafka.mdx)
+- [File systems](./sql-over-file-systems/mapping-to-a-file-system.mdx)
+
+## SQL Metadata
+
+To avoid the loss of SQL mappings, data connections, or views after a cluster restart, you can [enable the persistence of SQL metadata](../../operate-and-manage/fault-tolerance/persistence/configuring-persistence.mdx#sql).
+
+## Case Sensitivity
+
+Mapping names and field names are case-sensitive.
+
+For example, you can access an `employee` map as `employee` but not as `Employee`.
+
+Keywords or built-in function names are case-insensitive.
+
+## Permissions and Security
+
+<Badge type="enterprise"/>
+
+If [security](../../operate-and-manage/securing-a-cluster/enable-security.mdx) is enabled, you can set [permissions](../../operate-and-manage/securing-a-cluster/client-authorization.mdx) for the following:
+
+- [Connectors](../../operate-and-manage/securing-a-cluster/client-authorization.mdx#connector-permission) (mappings)
+- Some [SQL statements](../../operate-and-manage/securing-a-cluster/client-authorization.mdx#sql-permission)
+
+:::note
+
+When you run a query, Hazelcast runs it as a job. As a result, clients with the `read` permission for jobs can see the SQL query text and the arguments. See [Job Permissions](../../operate-and-manage/securing-a-cluster/client-authorization.mdx#job-permission).
+
+:::
+
+## Supported Statements
+
+Hazelcast supports a subset of standard ANSI SQL statements as well as some custom ones for creating jobs, mappings, and streaming queries.
+
+For a list of supported statements, see [SQL Statements](./statements/sql-statements.mdx).
+
+## Limitations
+
+SQL has the following limitations. We plan to remove these limitations in future releases.
+
+- The only supported Hazelcast data structure is map.
+
+  You cannot query other data structures such as replicated maps.
+- Although you can [create bitmap indexes](./statements/create-index.mdx) in SQL, SQL queries do not leverage those indexes to improve query performance.
+- You cannot run SQL queries on lite members. This limitation will be removed in future releases.
+
+## SQL Jobs
+
+When a SQL statement is submitted for execution, the SQL service parses and optimizes it. The result is an execution plan in the form of a job that is cached and reused by subsequent executions of the same statement.
+
+For details about how Hazelcast models and executes jobs, see [Jet: How Hazelcast Models and Executes Jobs](../architecture/distributed-computing.mdx).
+
+## Next Steps
+
+- [Get started with SQL over maps](../../get-started/get-started-with-sql/get-started-sql.mdx).
+- [Get started with SQL over Kafka](../../get-started/get-started-with-sql/learn-sql.mdx).
+- [Get started with SQL over files](../../get-started/get-started-with-sql/get-started-sql-files.mdx).
+
+Explore the [SQL reference docs](./statements/select.mdx).

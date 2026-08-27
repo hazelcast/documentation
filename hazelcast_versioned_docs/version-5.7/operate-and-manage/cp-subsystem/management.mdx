@@ -1,0 +1,728 @@
+---
+title: "Manage and monitor the CP subsystem"
+sidebar_label: "Management"
+sidebar_position: 3
+slug: /cp-subsystem/management
+enterprise: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+The CP Subsystem requires manual intervention while expanding or shrinking its size, or when a CP member crashes or becomes unreachable. When a CP member becomes unreachable, it is not immediately removed from the CP Subsystem because it could still be active behind a partition. By default, missing CP members are automatically removed after four hours and are replaced by other CP members if any are available.
+
+## Tools
+
+You can manage and monitor the CP Subsystem using the following tools:
+
+- [Management Center](/management-center/latest/cp-subsystem/dashboard)
+- <Variable href="https://docs.hazelcast.org/docs/{ee-version}/javadoc/com/hazelcast/cp/CPSubsystemManagementService.html" text="Java member API"/>
+- [REST API](../../clients-and-apis/apis/enterprise-rest-api/overview.mdx)
+
+  - REST endpoint URL
+  - `hz-cluster-cp-admin` shell script, which comes with the Hazelcast package (requires `curl`).
+
+    :::caution[Deprecation Notice for the Community Edition REST API]
+
+    The Community Edition REST API has been deprecated and will be removed as of Hazelcast version 7.0. An improved Enterprise version of this feature is available and actively being developed. For more information, see [Enterprise REST API](../../clients-and-apis/apis/enterprise-rest-api/overview.mdx).
+
+    :::
+
+## Shut down CP members
+
+CP member shutdown behavior varies depending on whether CP Subsystem Persistence is enabled or not.
+
+### Persistence disabled
+
+When CP Subsystem Persistence is disabled (the default mode in which the CP Subsystem works only in memory), a shutting down CP member is replaced with other available CP members in all of its CP groups to avoid decreasing group size or losing majorities. Because CP members keep their local state only in memory, a shut-down CP member cannot join back with its CP identity and state, so it is better to remove it from the CP Subsystem and avoid harming the availability of CP groups. If there is no other available CP member to replace a shutting down CP member in a CP group, that CP group's size is reduced by one and its majority value is recalculated.
+
+When CP Subsystem Persistence is disabled, if there are `N` CP members in the CP Subsystem, you can shut down `N-2` CP members concurrently. Once these `N-2` CP members complete their shutdown, the remaining CP members must be shut down one at a time. Even though the shutdown API can be called concurrently on multiple members, *the METADATA CP* group handles shutdown requests serially. Therefore, it is simpler to shut down CP members one by one by calling `HazelcastInstance.shutdown()` on the next CP member once the current CP member completes its shutdown.
+
+### Persistence enabled
+
+When CP Subsystem Persistence is enabled, a shut-down CP member can come back by restoring its CP state. Therefore, it is not automatically removed from the CP Subsystem. It is up to you to remove shut-down CP members via `CPSubsystemManagementService.removeCPMember(String)` if they will not come back. Shutting down CP members are still kept in the CP Subsystem, so they will be a part of the CP group majority calculations. You can shut down any number of CP members at the same time.
+
+:::note
+
+The reasoning behind this behavior is as follows. Each shutdown request internally requires a Raft commit to the METADATA CP group when CP Subsystem Persistence is disabled. A CP member proceeds to shutdown after it receives a response to this commit. To be able to perform a Raft commit, the METADATA CP group must have its majority up and running. When only 2 CP members are left after graceful shutdowns, the majority of the METADATA CP group becomes 2. If the last 2 CP members shut down concurrently, one of them is likely to perform its Raft commit faster than the other one and leave the cluster before the other CP member completes its Raft commit. In this case, the last CP member waits for a response to its commit attempt on the METADATA CP group, and times out eventually. This situation causes an unnecessary delay on the shutdown process of the last CP member. If the last 2 CP members instead shut down serially, the `N-1`th member receives the response to its commit after its shutdown request is committed also on the last CP member. The last CP member then checks its local data and notices that it is the last CP member alive, and proceeds to shut down without attempting a Raft commit on the METADATA CP group.
+
+:::
+
+See [CP Membership Listeners](#cp-membership-listeners) to get notified about the CP member additions and removals. See also [Shutting Down a Hazelcast Member](../maintaining-a-cluster/shutdown.mdx#shutting-down-a-hazelcast-member) for general information on shutting down specific members and considerations to take into account.
+
+## Handle a lost majority
+
+When the majority of a CP group is lost, that CP group cannot make further progress. New CP members cannot join a CP group that has lost majority because membership changes must also go through the Raft consensus algorithm.
+
+- If the group is not the `METADATA` CP group, you must [force-destroy](#destroy-group) the group immediately because it can block the `METADATA` CP group from performing membership changes on the CP Subsystem.
+- If the majority of the `METADATA` CP group permanently crashes, it is equivalent to the permanent crash of the whole CP Subsystem, even if other CP groups are running fine. In this case, you must [reset the CP Subsystem](#reset).
+
+## Listen for events
+
+The CP Subsystem provides the following listeners:
+
+- CP membership listeners
+- CP group availability listeners
+
+### CP membership listeners
+
+`CPMembershipListener` is notified when a CP member is added to or removed from the CP Subsystem.
+
+The listener interface has methods that are invoked for the following events:
+
+- `memberAdded`: A new CP member is added to the CP subsystem.
+- `memberRemoved`: An existing CP member is removed from the CP subsystem.
+
+To get notified for CP membership events, implement the `CPMembershipListener` interface.
+
+This is an example `CPMembershipListener` class:
+
+```java
+public class CPMembershipListenerImpl implements CPMembershipListener {
+
+    /**
+     * Called when a new CP member is added to the CP Subsystem.
+     */
+    public void memberAdded(CPMembershipEvent event) {
+        System.out.println("Added: " + event);
+    }
+
+    /**
+     * Called when a CP member is removed from the CP Subsystem.
+     */
+    public void memberRemoved(CPMembershipEvent event) {
+        System.out.println("Removed: " + event);
+    }
+}
+```
+
+`CPMembershipListener` can be defined in the configuration or can be registered at runtime with the `CPSubsystem` API.
+
+The following example registers the listener at runtime using the `CPSubsystem.addMembershipListener()` method:
+
+```java
+// Either server or client
+HazelcastInstance hazelcastInstance = ...;
+hazelcastInstance.getCPSubsystem().addMembershipListener(new CPMembershipListenerImpl());
+```
+
+<Tabs groupId="client-xml--client-yaml--java-client-api--java-member-api--member-xml--member-yaml">
+<TabItem value="java-member-api" label="Java member API">
+
+```java
+Config config = new Config();
+config.addListenerConfig(new ListenerConfig("com.yourpackage.CPMembershipListenerImpl"));
+```
+
+</TabItem>
+<TabItem value="java-client-api" label="Java client API">
+
+```java
+ClientConfig config = new ClientConfig();
+config.addListenerConfig(new ListenerConfig("com.yourpackage.CPMembershipListenerImpl"));
+```
+
+</TabItem>
+<TabItem value="member-xml" label="Member XML">
+
+```xml
+<hazelcast>
+    ...
+    <listeners>
+        <listener>
+            com.yourpackage.CPMembershipListenerImpl
+        </listener>
+    </listeners>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="member-yaml" label="Member YAML">
+
+```yaml
+hazelcast:
+  ...
+  listeners:
+    - com.yourpackage.CPMembershipListenerImpl
+```
+
+</TabItem>
+<TabItem value="client-xml" label="Client XML">
+
+```xml
+<hazelcast-client>
+    ...
+    <listeners>
+        <listener>
+            com.yourpackage.CPMembershipListenerImpl
+        </listener>
+    </listeners>
+    ...
+</hazelcast-client>
+```
+
+</TabItem>
+<TabItem value="client-yaml" label="Client YAML">
+
+```yaml
+hazelcast-client:
+  ...
+  listeners:
+    - com.yourpackage.CPMembershipListenerImpl
+```
+
+</TabItem>
+</Tabs>
+
+### CP group availability listeners
+
+`CPGroupAvailabilityListener` is notified when the availability of a CP group decreases or it loses the majority completely.
+
+In general, the availability decreases when a CP member becomes unreachable because of a process crash, network partition, out-of-memory error or upon a graceful shutdown. Once a member is declared unavailable by the failure detector, that member is removed from the cluster. If it is also a CP member, a `CPGroupAvailabilityEvent` is fired for each CP group that member belongs to.
+
+`CPGroupAvailabilityListener` has a separate method to report the loss of majority.
+
+The listener interface has methods that are invoked for the following events:
+
+- `availabilityDecreased`: A CP group's availability decreases, but still has the majority of members available.
+- `majorityLost`: A CP group has lost its majority.
+
+This is an example `CPGroupAvailabilityListener` class:
+
+```java
+public class CPGroupAvailabilityListenerImpl implements CPGroupAvailabilityListener {
+
+    /**
+     * Called when a CP group's availability decreases,
+     * but still has the majority of members available.
+     */
+    public void availabilityDecreased(CPGroupAvailabilityEvent event) {
+        System.out.println("Availability decreased: " + event);
+    }
+
+    /**
+     * Called when a CP group has lost its majority.
+     */
+    public void majorityLost(CPGroupAvailabilityEvent event) {
+        System.out.println("Majority Lost: " + event);
+    }
+}
+```
+
+A `CPGroupAvailabilityListener` can be defined in the configuration or can be registered at runtime with the `CPSubsystem` API:
+
+<Tabs groupId="client-xml--client-yaml--java-client-api--java-member-api--member-xml--member-yaml">
+<TabItem value="java-member-api" label="Java member API">
+
+```java
+Config config = new Config();
+config.addListenerConfig(new ListenerConfig("com.yourpackage.CPGroupAvailabilityListenerImpl"));
+```
+
+</TabItem>
+<TabItem value="java-client-api" label="Java client API">
+
+```java
+ClientConfig config = new ClientConfig();
+config.addListenerConfig(new ListenerConfig("com.yourpackage.CPGroupAvailabilityListenerImpl"));
+```
+
+</TabItem>
+<TabItem value="member-xml" label="Member XML">
+
+```xml
+<hazelcast>
+    ...
+    <listeners>
+        <listener>
+            com.yourpackage.CPGroupAvailabilityListenerImpl
+        </listener>
+    </listeners>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="member-yaml" label="Member YAML">
+
+```yaml
+hazelcast:
+  ...
+  listeners:
+    - com.yourpackage.CPGroupAvailabilityListenerImpl
+```
+
+</TabItem>
+<TabItem value="client-xml" label="Client XML">
+
+```xml
+<hazelcast-client>
+    ...
+    <listeners>
+        <listener>
+            com.yourpackage.CPGroupAvailabilityListenerImpl
+        </listener>
+    </listeners>
+    ...
+</hazelcast-client>
+```
+
+</TabItem>
+<TabItem value="client-yaml" label="Client YAML">
+
+```yaml
+hazelcast-client:
+  ...
+  listeners:
+    - com.yourpackage.CPGroupAvailabilityListenerImpl
+```
+
+</TabItem>
+</Tabs>
+
+## Get a local CP member
+
+Get the local CP member if this Hazelcast member is a part of the CP Subsystem.
+
+<Tabs groupId="java-member-api--management-center--rest-api">
+<TabItem value="management-center" label="Management Center">
+
+See [CP Subsystem](/management-center/latest/cp-subsystem/dashboard) in the Management Center documentation.
+
+</TabItem>
+<TabItem value="java-member-api" label="Java member API">
+
+```java
+        CPMember localMember = cpSubsystem.getLocalCPMember();
+```
+
+</TabItem>
+<TabItem value="rest-api" label="REST API">
+
+```bash
+curl http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/members/local
+
+# OR
+
+hz-cluster-cp-admin -o get-local-member --address 127.0.0.1 --port 5701
+```
+
+```json title="Sample response"
+{
+    "uuid": "6428d7fd-6079-48b2-902c-bdf6a376051e",
+    "address": "[127.0.0.1]:5701"
+}
+```
+
+</TabItem>
+</Tabs>
+
+## Get CP members
+
+Get a list of all active CP members in the cluster.
+
+<Tabs groupId="java-member-api--management-center--rest-api">
+<TabItem value="management-center" label="Management Center">
+
+See [CP Subsystem](/management-center/latest/cp-subsystem/dashboard) in the Management Center documentation.
+
+</TabItem>
+<TabItem value="java-member-api" label="Java member API">
+
+```java
+        CPSubsystemManagementService managementService = cpSubsystem.getCPSubsystemManagementService();
+        CompletionStage<Collection<CPMember>> future = managementService.getCPMembers();
+        Collection<CPMember> members = future.toCompletableFuture().get();
+```
+
+</TabItem>
+<TabItem value="rest-api" label="REST API">
+
+```sh
+curl http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/members
+
+# OR
+
+hz-cluster-cp-admin -o get-members --address 127.0.0.1 --port 5701
+```
+
+```json title="Sample response"
+[{
+    "uuid": "33f84b0f-46ba-4a41-9e0a-29ee284c1c2a",
+    "address": "[127.0.0.1]:5703"
+}, {
+    "uuid": "59ca804c-312c-4cd6-95ff-906b2db13acb",
+    "address": "[127.0.0.1]:5704"
+}, {
+    "uuid": "777ff6ea-b8a3-478d-9642-47d1db019b37",
+    "address": "[127.0.0.1]:5705"
+}, {
+    "uuid": "c6229b44-8976-4602-bb57-d13cf743ccef",
+    "address": "[127.0.0.1]:5701"
+}, {
+    "uuid": "c7856e0f-25d2-4717-9919-88fb3ecb3384",
+    "address": "[127.0.0.1]:5702"
+}]
+```
+
+</TabItem>
+</Tabs>
+
+## Create CP groups
+
+To create a custom CP group, add an `@` symbol to the end of the data structure's name followed by the name of the group that you want to create and store the data structure in. For example, a new CP group is created with the name `myGroup` and then an atomic long called `myAtomicLong` is initialized in this custom CP group: `.getAtomicLong("myAtomicLong@myGroup")`.
+
+For most use cases, the `DEFAULT` CP group should be sufficient to maintain all CP data structure instances. See [CP Subsystem best practices](./best-practices.mdx).
+
+## Get CP groups
+
+See the list of active CP groups.
+
+<Tabs groupId="java-member-api--management-center--rest-api">
+<TabItem value="management-center" label="Management Center">
+
+See [CP Subsystem](/management-center/latest/cp-subsystem/dashboard) in the Management Center documentation.
+
+</TabItem>
+<TabItem value="java-member-api" label="Java member API">
+
+```java
+        CPSubsystemManagementService managementService = cpSubsystem.getCPSubsystemManagementService();
+        CompletionStage<Collection<CPGroupId>> future = managementService.getCPGroupIds();
+        Collection<CPGroupId> groups = future.toCompletableFuture().get();
+```
+
+</TabItem>
+<TabItem value="rest-api" label="REST API">
+
+```sh
+curl http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/groups
+
+# OR
+
+hz-cluster-cp-admin -o get-groups --address 127.0.0.1 --port 5701
+```
+
+```json title="Sample response"
+[{
+    "name": "METADATA",
+    "id": 0
+}, {
+    "name": "atomics",
+    "id": 8
+}, {
+    "name": "locks",
+    "id": 14
+}]
+```
+
+</TabItem>
+</Tabs>
+
+## Get a single CP group
+
+Find information about an active CP group with a given name.
+
+<Tabs groupId="java-member-api--management-center--rest-api">
+<TabItem value="management-center" label="Management Center">
+
+See [CP Subsystem](/management-center/latest/cp-subsystem/dashboard) in the Management Center documentation.
+
+</TabItem>
+<TabItem value="java-member-api" label="Java member API">
+
+```java
+        CPSubsystemManagementService managementService = cpSubsystem.getCPSubsystemManagementService();
+        CompletionStage<CPGroup> future = managementService.getCPGroup(groupName);
+        CPGroup group = future.toCompletableFuture().get();
+```
+
+</TabItem>
+<TabItem value="rest-api" label="REST API">
+
+```sh
+curl http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/groups/${CPGROUP_NAME}
+
+# OR
+
+hz-cluster-cp-admin -o get-group --group ${CPGROUP_NAME} --address 127.0.0.1 --port 5701
+```
+
+```json title="Sample response"
+{
+    "id": {
+        "name": "locks",
+        "id": 14
+    },
+    "status": "ACTIVE",
+    "members": [{
+        "uuid": "33f84b0f-46ba-4a41-9e0a-29ee284c1c2a",
+        "address": "[127.0.0.1]:5703"
+    }, {
+        "uuid": "59ca804c-312c-4cd6-95ff-906b2db13acb",
+        "address": "[127.0.0.1]:5704"
+    }, {
+        "uuid": "777ff6ea-b8a3-478d-9642-47d1db019b37",
+        "address": "[127.0.0.1]:5705"
+    }, {
+        "uuid": "c7856e0f-25d2-4717-9919-88fb3ecb3384",
+        "address": "[127.0.0.1]:5702"
+    }, {
+        "uuid": "c6229b44-8976-4602-bb57-d13cf743ccef",
+        "address": "[127.0.0.1]:5701"
+    }]
+}
+```
+
+</TabItem>
+</Tabs>
+
+## Get CP group sessions
+
+Get all CP sessions that are currently active in a given CP group.
+
+<Tabs groupId="java-member-api--management-center--rest-api">
+<TabItem value="management-center" label="Management Center">
+
+See [CP Subsystem](/management-center/latest/cp-subsystem/dashboard) in the Management Center documentation.
+
+</TabItem>
+<TabItem value="java-member-api" label="Java member API">
+
+```java
+        CPSessionManagementService sessionManagementService = cpSubsystem.getCPSessionManagementService();
+        CompletionStage<Collection<CPSession>> future = sessionManagementService.getAllSessions(groupName);
+        Collection<CPSession> sessions = future.toCompletableFuture().get();
+```
+
+</TabItem>
+<TabItem value="rest-api" label="REST API">
+
+```sh
+curl http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/groups/${CPGROUP_NAME}/sessions
+
+#OR
+
+hz-cluster-cp-admin -o get-sessions --group ${CPGROUP_NAME} --address 127.0.0.1 --port 5701
+```
+
+```json title="Sample response"
+[{
+    "id": 1,
+    "creationTime": 1549008095530,
+    "expirationTime": 1549008766630,
+    "version": 73,
+    "endpoint": "[127.0.0.1]:5701",
+    "endpointType": "SERVER",
+    "endpointName": "hz-member-1"
+}, {
+    "id": 2,
+    "creationTime": 1549008115419,
+    "expirationTime": 1549008765425,
+    "version": 71,
+    "endpoint": "[127.0.0.1]:5702",
+    "endpointType": "SERVER",
+    "endpointName": "hz-member-2"
+}]
+```
+
+</TabItem>
+</Tabs>
+
+## Destroy a CP group by force
+
+You can destroy a specified active CP group without using the Raft algorithm mechanics. This method must be used only when a CP group loses its majority and cannot make progress anymore. Membership changes in CP groups, such as CP member promotion or removal, are usually done via the Raft consensus algorithm. However, when a CP group permanently loses its majority, it will not be able to commit any new operation. You can therefore use this method to ungracefully terminate the remaining members of the specified CP group. This method also performs a Raft commit to the `METADATA` CP group to update the status of the destroyed group. Once a CP group is destroyed, all CP data structure proxies created before the destroy fails with `CPGroupDestroyedException`. However, if a new proxy is created afterwards, this CP group is re-created from scratch with a new set of CP members.
+
+This method is idempotent. It has no effect if the given CP group is already destroyed.
+
+<Tabs groupId="java-member-api--management-center--rest-api">
+<TabItem value="management-center" label="Management Center">
+
+You cannot destroy a CP group using Management Center.
+
+</TabItem>
+<TabItem value="java-member-api" label="Java member API">
+
+```java
+        CPSubsystemManagementService managementService = cpSubsystem.getCPSubsystemManagementService();
+        CompletionStage<Void> future = managementService.forceDestroyCPGroup(groupName);
+        future.toCompletableFuture().get();
+```
+
+</TabItem>
+<TabItem value="rest-api" label="REST API">
+
+```sh
+curl -X POST --data "${GROUPNAME}&${PASSWORD}" http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/groups/${CPGROUP_NAME}/remove
+
+# OR
+
+hz-cluster-cp-admin -o force-destroy-group --group ${CPGROUP_NAME} --address 127.0.0.1 --port 5701 --groupname ${GROUPNAME} --password ${PASSWORD}
+```
+
+</TabItem>
+</Tabs>
+
+## Remove a CP member
+
+You can remove a specified CP member from the active CP members list and all CP groups it belongs to. If any other active CP member is available, it replaces the removed CP member in its CP groups. Otherwise, the affected CP groups shrink and their majority values are recalculated.
+
+:::warning
+
+Before removing a CP member from the CP Subsystem, make sure that it is declared as unreachable by the [failure detector](../fault-tolerance/detecting-failures/failure-detector-configuration.mdx) and removed from the member list. The behavior is undefined when a running CP member is removed from the CP Subsystem.
+
+:::
+
+<Tabs groupId="java-member-api--management-center--rest-api">
+<TabItem value="management-center" label="Management Center">
+
+See [CP Subsystem](/management-center/latest/cp-subsystem/dashboard) in the Management Center documentation.
+
+</TabItem>
+<TabItem value="java-member-api" label="Java member API">
+
+```java
+        CPSubsystemManagementService managementService = cpSubsystem.getCPSubsystemManagementService();
+        CompletionStage<Void> future = managementService.removeCPMember(memberUUID);
+        future.toCompletableFuture().get();
+```
+
+</TabItem>
+<TabItem value="rest-api" label="REST API">
+
+```sh
+curl -X POST --data "${GROUPNAME}&${PASSWORD}" http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/members/${CPMEMBER_UUID}/remove
+
+# OR
+
+hz-cluster-cp-admin -o remove-member --member ${CPMEMBER_UUID} --address 127.0.0.1 --port 5701 --groupname ${GROUPNAME} --password ${PASSWORD}
+```
+
+</TabItem>
+</Tabs>
+
+## Promote a local member to a CP member
+
+A new CP member can be added to the CP Subsystem to either increase the number of available CP members for new CP groups or to fill the missing slots in existing CP groups. After the initial Hazelcast cluster startup is done, an existing Hazelcast member can be promoted to the CP member role. This new CP member automatically joins to CP groups that have missing members, and majority values of these CP groups are recalculated.
+
+If the local member is already a CP member, this method has no effect.
+
+The promoted CP member will be added to the CP groups that have missing members. A group that is missing members is one where the current size of the group is smaller than the configured [`group-size`](./configuration.mdx#group-size).
+
+:::note
+
+When a member becomes a CP member, it generates an additional UUID that other CP members can use to identify it. You will see this CP UUID in the following places:
+
+- Requests to REST endpoints in the CP group
+- Responses from REST endpoints in the CP group
+- Member logs
+- Management Center
+
+:::
+
+<Tabs groupId="java-member-api--management-center--rest-api">
+<TabItem value="management-center" label="Management Center">
+
+See [CP Subsystem](/management-center/latest/cp-subsystem/dashboard) in the Management Center documentation.
+
+</TabItem>
+<TabItem value="java-member-api" label="Java member API">
+
+```java
+        CPSubsystemManagementService managementService = cpSubsystem.getCPSubsystemManagementService();
+        CompletionStage<Void> future = managementService.promoteToCPMember();
+        future.toCompletableFuture().get();
+```
+
+</TabItem>
+<TabItem value="rest-api" label="REST API">
+
+```sh
+curl -X POST --data "${GROUPNAME}&${PASSWORD}" http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/members
+
+# OR
+
+hz-cluster-cp-admin -o promote-member --address 127.0.0.1 --port 5701 --groupname ${GROUPNAME} --password ${PASSWORD}
+```
+
+</TabItem>
+</Tabs>
+
+## Wipe and reset the CP Subsystem
+
+You must wipe and reset the whole CP Subsystem state only when the `METADATA` CP group loses its majority and cannot make progress anymore.
+
+After this method is called, all CP state and data is wiped, including data written by CP Subsystem Persistence, and CP members start with no state.
+
+This method can be invoked only from the Hazelcast master member, which is the first member in the Hazelcast cluster member list. Moreover, the Hazelcast cluster must have at least the number of members configured in the [`cp-member-count`](./configuration.mdx#cp-member-count) option.
+
+This method must not be called while there are membership changes in the Hazelcast cluster. Before calling this method, make sure that there is no new member joining and all existing Hazelcast members have seen the same member list.
+
+This method triggers a new CP discovery process round. However, if the new CP discovery round fails for any reason, Hazelcast members are not terminated, because Hazelcast members are likely to contain data for AP data structures and their termination can cause data loss. Hence, you need to observe the cluster and check if the CP discovery process completes successfully.
+
+:::warning
+
+This method is **NOT** idempotent and multiple invocations can break the whole system. After calling this API, you must observe the system to see if the reset process is successfully completed or failed before making another call.
+
+:::
+
+<Tabs groupId="java-member-api--management-center--rest-api">
+<TabItem value="management-center" label="Management Center">
+
+See [CP Subsystem](/management-center/latest/cp-subsystem/dashboard) in the Management Center documentation.
+
+</TabItem>
+<TabItem value="java-member-api" label="Java member API">
+
+```java
+        CPSubsystemManagementService managementService = cpSubsystem.getCPSubsystemManagementService();
+        CompletionStage<Void> future = managementService.reset();
+        future.toCompletableFuture().get();
+```
+
+</TabItem>
+<TabItem value="rest-api" label="REST API">
+
+```sh
+curl -X POST --data "${GROUPNAME}&${PASSWORD}" http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/reset
+
+# OR
+
+hz-cluster-cp-admin -o reset --address 127.0.0.1 --port 5701 --groupname ${GROUPNAME} --password ${PASSWORD}
+```
+
+</TabItem>
+</Tabs>
+
+## Force a session to close
+
+If a Hazelcast instance that owns a CP session crashes, its CP session is not terminated immediately. Instead, the session is closed after the configured [`session-time-to-live-seconds`](./configuration.mdx#session-time-to-live-seconds) passes. If you are certain that the session owner has crashed and is not just partitioned, this method can be used for closing the session and releasing its resources immediately.
+
+<Tabs groupId="java-member-api--management-center--rest-api">
+<TabItem value="management-center" label="Management Center">
+
+See [CP Subsystem](/management-center/latest/cp-subsystem/dashboard) in the Management Center documentation.
+
+</TabItem>
+<TabItem value="java-member-api" label="Java member API">
+
+```java
+        CPSessionManagementService sessionManagementService = cpSubsystem.getCPSessionManagementService();
+        CompletionStage<Boolean> future = sessionManagementService.forceCloseSession(groupName, sessionId);
+        future.toCompletableFuture().get();
+```
+
+</TabItem>
+<TabItem value="rest-api" label="REST API">
+
+```sh
+curl -X POST --data "${GROUPNAME}&${PASSWORD}" http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/groups/${CPGROUP_NAME}/sessions/${CP_SESSION_ID}/remove
+
+# OR
+
+hz-cluster-cp-admin -o force-close-session --group ${CPGROUP_NAME} --session-id ${CP_SESSION_ID} --address 127.0.0.1 --port 5701 --groupname ${GROUPNAME} --password ${PASSWORD}
+```
+
+</TabItem>
+</Tabs>

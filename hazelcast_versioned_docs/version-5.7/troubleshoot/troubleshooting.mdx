@@ -1,0 +1,38 @@
+---
+title: "Troubleshooting overview"
+sidebar_label: "Overview"
+sidebar_position: 1
+slug: /troubleshoot/troubleshooting
+---
+
+This section contains troubleshooting resources and guidance to help you resolve issues with your Hazelcast deployment.
+
+:::note
+
+You might need to review troubleshooting content for more than one component or topic area. Most Hazelcast deployments use multiple components such as Management Center or Operator so check all topics relevant to your infrastructure.
+
+:::
+
+If you can't find your issue here, see our page on [getting support](../get-started/support.mdx).
+
+## Check the logs
+
+If you encounter issues with Hazelcast, first check the logs for errors or warnings related to your issue. The logs include information such as health monitoring, client connections, slow operations, stack traces, and cluster health messages.
+
+Logs are generated for every member in the cluster, so either identify the one from which the issue occurred or collect the logs from all members in your cluster.
+
+For information about collecting essential data and taking appropriate action when an alert fires on a Hazelcast cluster member, see [Actions and remedies for alerts](./remedies-for-alerts.mdx). This section also provides links to additional resources for handling out-of-memory errors, unbalanced partitions, and queue store memory limits.
+
+:::tip
+
+Understanding the exceptions thrown by Hazelcast is crucial for diagnosing issues. See [Common exception types](./common-exception-types.mdx) for a list of common messages, such as `HazelcastInstanceNotActiveException`, `HazelcastOverloadException`, and `MemberLeftException`. This section explains when they occur, and helps you interpret these messages in your logs to identify root causes.
+
+:::
+
+## Troubleshooting resources
+
+- If your error is related to data pipelines, see [Error handling strategies for jobs](./error-handling.mdx).
+- If you're using a client and you think your error is to do with an unreachable member, see [Java Client Failure Detectors](../clients-and-apis/clients/java.mdx#java-client-failure-detectors). If a client loses connection to the cluster, see [Recovery from client connection failures](./recovery-clients.mdx). This describes how Hazelcast clients attempt to reconnect automatically and outlines configuration options for controlling client behavior during disconnections.
+- If a member fails, see [Recovery from a partial or total failure](./recovery-members.mdx) for information about how Hazelcast members recover from failures, including automatic split-brain resolution and the process for handling unreachable or stuck members. This section details steps for collecting logs, taking heap and thread dumps, and safely restarting affected members to allow Hazelcast to rebalance data after recovery.
+- If you experience errors while running SQL queries, see [Troubleshooting SQL](../develop-and-build/sql/troubleshooting.mdx) for solutions to common issues such as mapping errors, JSON processing problems, and out-of-memory exceptions during query execution.
+- If your error is related to Kubernetes deployment, refer to [Troubleshooting and Limitations in Kubernetes Environments](../develop-and-build/kubernetes/troubleshooting-and-limitations.mdx). This provides guidance on resolving common issues you might encounter while deploying Hazelcast via Helm, such as RBAC configuration problems, Management Center connectivity issues, persistent volume challenges, and client connectivity problems when accessing clusters outside Kubernetes.

@@ -1,0 +1,273 @@
+---
+title: "Install Hazelcast Enterprise Edition"
+sidebar_label: "Install Enterprise Edition"
+sidebar_position: 2
+slug: /getting-started/install-enterprise
+enterprise: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+To install Hazelcast <Variable name="enterprise-product-name"/>, you can use Docker, the binary, or Java. To unlock the <Variable name="enterprise-product-name"/> features, you must install your <Variable name="enterprise-product-name"/> license key.
+
+:::note
+
+These instructions apply only to the licensed <Variable name="enterprise-product-name"/>. If you have the <Variable name="open-source-product-name"/> edition, follow the instructions in the [Install Hazelcast Community Edition](../community-edition/install-hazelcast.mdx) topic.
+
+If you are moving members from an <Variable name="open-source-product-name"/> cluster to an <Variable name="enterprise-product-name"/> cluster of the same version, you can use rolling restarts to move each member without downtime. See [Upgrade to Enterprise Edition](../upgrade/rolling-restart/overview.mdx).
+
+:::
+
+For further information on the available editions and distributions, see the [Hazelcast editions and distributions](../../get-started/editions.mdx) topic.
+
+## Use <Variable name="enterprise-product-name"/> Docker image {/* #use-enterprise-edition-docker-image */}
+
+1. [Install Docker](https://docs.docker.com/get-docker/).
+2. Check that Docker is correctly installed, using the following command:
+
+   ```bash
+   docker version
+   ```
+
+   If you don't see a version number, see the [Docker docs](https://docs.docker.com/config/daemon/) for troubleshooting information.
+3. Pull the latest Docker image
+
+   ```bash vars
+   docker pull hazelcast/hazelcast-enterprise:{ee-version}
+   ```
+4. Check that Hazelcast Platform is correctly installed, using the following command:
+
+   ```bash
+   hz -V
+   ```
+
+   You should see something like:
+
+   ```bash vars
+   Version: {ee-version}
+   ```
+
+## Use <Variable name="enterprise-product-name"/> binary {/* #use-enterprise-edition-binary */}
+
+Download and extract the binaries.
+
+<Tabs groupId="os">
+<TabItem value="mac" label="Mac">
+
+```bash vars
+curl -L 'https://repository.hazelcast.com/download/hazelcast-enterprise/hazelcast-enterprise-{ee-version}.tar.gz' | tar xvzf -
+```
+
+</TabItem>
+<TabItem value="linux" label="Linux">
+
+```bash vars
+wget -O - 'https://repository.hazelcast.com/download/hazelcast-enterprise/hazelcast-enterprise-{ee-version}.tar.gz' | tar xvzf -
+```
+
+</TabItem>
+<TabItem value="windows" label="Windows">
+
+Download and extract the <Variable href="https://repository.hazelcast.com/download/hazelcast-enterprise/hazelcast-enterprise-{ee-version}.zip" text="{ee-version} zip file"/>.
+
+</TabItem>
+</Tabs>
+
+1. Check that Hazelcast Platform is correctly installed, using the following command:
+
+   ```bash
+   hz -V
+   ```
+
+   You should see something like:
+
+   ```bash vars
+   Version: {ee-version}
+   ```
+
+## Use <Variable name="enterprise-product-name"/> with Java {/* #use-enterprise-edition-with-java */}
+
+To install Hazelcast with Java, you can use one of the following:
+
+- Maven
+- JAR file
+- Modular Java
+
+### Using Maven
+
+Hazelcast runs on Java, which means you can add it as a dependency in your Java project.
+
+The Java package includes both a member API and a Java client API. The member API is for [embedded topologies](../overview/choosing-a-deployment-option.mdx) where you want to deploy and manage a cluster in the same Java Virtual Machine (JVM) as your applications. The Java client is for connecting to an existing member in a client/server topology, such as <a href="/cloud/overview">Hazelcast <Variable name="hazelcast-cloud"/></a>.
+
+1. Download and install a [supported JDK](../overview/versioning-compatibility.mdx#supported-java-virtual-machines).
+2. Add the following to your `pom.xml` file.
+
+   ```xml conums vars
+   <repositories>
+       <repository>
+           <id>private-repository</id>
+           <name>Hazelcast Private Release Repository</name>
+           <url>https://repository.hazelcast.com/release/</url> <1>
+           <snapshots>
+               <enabled>false</enabled>
+           </snapshots>
+       </repository>
+   </repositories>
+
+   <dependencies>
+       <dependency>
+           <groupId>com.hazelcast</groupId>
+           <artifactId>hazelcast-enterprise</artifactId> <2>
+           <version>{ee-version}</version> <3>
+       </dependency>
+   </dependencies>
+   ```
+
+   <CodeCallouts>
+
+   1. Location for Maven to access Hazelcast artifacts.
+   2. Hazelcast <Variable name="enterprise-product-name"/> dependency.
+   3. Hazelcast <Variable name="enterprise-product-name"/> version.
+
+   </CodeCallouts>
+3. Check that Hazelcast Platform is correctly installed, using the following command:
+
+   ```bash
+   hz -V
+   ```
+
+   You should see something like:
+
+   ```shell vars
+   Version: {ee-version}
+   ```
+
+### Use modular Java
+
+You can use Hazelcast as a module in the [Java Platform Module System](http://openjdk.java.net/projects/jigsaw/) (JPMS).
+
+To run your application with Hazelcast libraries on the module path, use `com.hazelcast.core` for the <code>{"hazelcast-"}<Variable name="os-version"/>{".jar"}</code> module name.
+
+If you use JPMS, it enforces stricter visibility rules and Hazelcast uses the internal Java API to reach the best performance results.
+
+Hazelcast needs the `java.se` module and access to the following Java packages:
+
+- `java.base/jdk.internal.ref`
+- `java.base/java.nio` *(reflective access)*
+- `java.base/sun.nio.ch` *(reflective access)*
+- `java.base/java.lang` *(reflective access)*
+- `jdk.management/com.ibm.lang.management.internal` *(reflective access)*
+- `jdk.management/com.sun.management.internal` *(reflective access)*
+- `java.management/sun.management` *(reflective access)*
+
+You can provide access to these packages by using simple `--add-exports` and `--add-opens` (for reflective access) Java arguments.
+
+```bash title="Run a member on the classpath" vars
+java --add-modules java.se \
+  --add-exports java.base/jdk.internal.ref=ALL-UNNAMED \
+  --add-opens java.base/java.lang=ALL-UNNAMED \
+  --add-opens java.base/java.nio=ALL-UNNAMED \
+  --add-opens java.base/sun.nio.ch=ALL-UNNAMED \
+  --add-opens java.management/sun.management=ALL-UNNAMED \
+  --add-opens jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED \
+  --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
+  -jar hazelcast-{os-version}.jar
+```
+
+```bash title="Run a member on the module path" conums
+java --add-modules java.se \
+  --add-exports java.base/jdk.internal.ref=com.hazelcast.core \
+  --add-opens java.base/java.lang=com.hazelcast.core \
+  --add-opens java.base/java.nio=com.hazelcast.core \
+  --add-opens java.base/sun.nio.ch=com.hazelcast.core \
+  --add-opens java.management/sun.management=com.hazelcast.core \
+  --add-opens jdk.management/com.ibm.lang.management.internal=com.hazelcast.core \
+  --add-opens jdk.management/com.sun.management.internal=com.hazelcast.core \
+  --module-path lib \ <1>
+  --module com.hazelcast.core/com.hazelcast.core.server.HazelcastMemberStarter
+```
+
+<CodeCallouts>
+
+1. This example expects the <code>{"hazelcast-"}<Variable name="ee-version"/>{".jar"}</code> file in the `lib` directory.
+
+</CodeCallouts>
+
+## Get an <Variable name="enterprise-product-name"/> license key {/* #get-an-enterprise-edition-license-key */}
+
+Hazelcast <Variable name="enterprise-product-name"/> requires a license key. You can get a trial license from the [Hazelcast website](https://hazelcast.com/get-started?utm_source=docs-website).
+
+1. Complete the form on the [Hazelcast website](https://hazelcast.com/get-started?utm_source=docs-website)
+2. Check your email for an automated email from [info@hazelcast.com](mailto:info@hazelcast.com)
+3. You should have a license key that looks like:
+
+   ```shell
+   TrialLicense#10Nodes#eyJhbGxvd2VkTmF0aXZlTWVtb3J5U2l6ZSI6MTAwLCJhbGxvd2VkTnVtYmVyT2ZOb2RlcyI6MTAsImFsbG93ZWRUaWVyZWRTdG9yZVNpemUiOjAsImFsbG93ZWRUcGNDb3JlcyI6MCwiY3JlYXRpb25EYXRlIjoxNzUyMTU0ODYzLjMxODUyNzg2MSwiZXhwaXJ5RGF0ZSI6MTc1NDY5NzU5OS45OTk5OTk5OTksImZlYXR1cmVzIjpbMCwyLDMsNCw1LDYsNyw4LDEwLDExLDEzLDE0LDE1LDE3LDIxLDIyXSwiZ3JhY2VQZXJpb2QiOjAsImhhemVsY2FzdFZlcnNpb24iOjk5LCJvZW0iOmZhbHNlLCJ0cmlhbCI6dHJ1ZSwidmVyc2lvbiI6IlY3In0=.enSTWffnYK_rBdTC7LOVISPYYaEfwdM7giv8ZBH4iq2b5vHuA5U-OswteJUmF8jHXyyo9j0oKBWkvgxe6PBKAQ==
+   ```
+
+   In any provided code examples in this documentation, you should replace any instances of \<YOUR\_LICENSE\_KEY\> with your specific license key.
+
+## Install an <Variable name="enterprise-product-name"/> license key {/* #install-an-enterprise-edition-license-key */}
+
+To use Hazelcast <Variable name="enterprise-product-name"/>, you need to add a license key for all members in a cluster.
+
+:::note
+
+Hazelcast <Variable name="enterprise-product-name"/> license keys are only required for members. You don't need to set a license key for Java clients that are connected to members.
+
+:::
+
+<Tabs groupId="environment-variable--java--system-property--xml--yaml">
+<TabItem value="xml" label="XML">
+
+Replace `<YOUR_LICENSE_KEY>` with your official license key.
+
+```xml
+<hazelcast>
+    <license-key><YOUR_LICENSE_KEY></license-key>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+Replace `<YOUR_LICENSE_KEY>` with your official license key.
+
+```yaml
+hazelcast:
+  license-key: <YOUR_LICENSE_KEY>
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+Replace `<YOUR_LICENSE_KEY>` with your official license key. Add your license using the <Variable href="https://docs.hazelcast.org/docs/{ee-version}/javadoc/com/hazelcast/config/Config.html#setLicenseKey-java.lang.String-" text="setLicenseKey()"/> method:
+
+```java
+Config config = new Config();
+config.setLicenseKey( "<YOUR_LICENSE_KEY>" );
+```
+
+</TabItem>
+<TabItem value="environment-variable" label="Environment Variable">
+
+```shell
+HZ_LICENSEKEY=<YOUR_LICENSE_KEY>
+```
+
+</TabItem>
+<TabItem value="system-property" label="System Property">
+
+```shell
+-Dhazelcast.enterprise.license.key=<YOUR_LICENSE_KEY>
+```
+
+</TabItem>
+</Tabs>
+
+## Next steps
+
+Learn more about <a href="/hazelcast/5.6/deploy/enterprise-licenses"><Variable name="enterprise-product-name"/> license keys</a>.
+
+Get started with the Hazelcast <Variable name="enterprise-product-name"/> features with a series of [tutorials](../../get-started/get-started-enterprise/overview.mdx).

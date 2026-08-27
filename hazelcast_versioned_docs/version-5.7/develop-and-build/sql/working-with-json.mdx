@@ -1,0 +1,388 @@
+---
+title: "Working with JSON Data in SQL"
+sidebar_label: "Working with JSON"
+sidebar_position: 7
+slug: /sql/working-with-json
+---
+
+JSON is a semi-structured data type used for holding JSON (JavaScript Object Notation) data. In Hazelcast, the SQL service supports the following ways of working with JSON data:
+
+- `json`: Maps JSON data to a single column of `JSON` type where you can use [JsonPath](#json) syntax to query and filter it, including nested levels.
+- `json-flat`: Maps JSON top-level fields to columns with non-JSON types where you can query only top-level keys.
+
+## `json`
+
+The `JSON` data type comes with full support for querying JSON in maps and Kafka topics.
+
+:::note
+
+The JSON data type is currently not supported for [file mappings](./sql-over-file-systems/mapping-to-a-file-system.mdx). Files support the [`json-flat` data type](#json-flat).
+
+:::
+
+### Mapping to the `json` Type
+
+You can map JSON data to a single column, by creating a mapping to one of the following data sources:
+
+- [Map](./sql-over-maps/mapping-to-maps.mdx)
+- [Kafka](./sql-over-kafka/mapping-to-kafka.mdx)
+
+For example, to map the JSON data type to a value in a map:
+
+```sql
+CREATE MAPPING countries
+TYPE IMap OPTIONS('keyFormat'='int', 'valueFormat'='json');
+```
+
+This statement creates a mapping to a map with two columns where the key is an `INTEGER` and the value is `JSON`:
+
+- `__key`: A key as an integer
+- `this`: JSON data
+
+### Creating JSON Data
+
+You can create new JSON data using a JSON-formatted string, or using one of the following JSON functions:
+
+- [JSON\_ARRAY](./functions-and-operators.mdx#json-functions)
+- [JSON\_OBJECT](./functions-and-operators.mdx#json-functions)
+
+**Example 1. Example JSON-formatted string**
+
+```json
+'{"country": "United Kingdom", "cities": [{"city": "London"}]}'
+```
+
+**Example 2. Example JSON function**
+
+```sql
+INSERT INTO countries VALUES (1, JSON_OBJECT('country':'United Kingdom', 'cities': JSON_ARRAY(JSON_OBJECT('city':'London'))))
+```
+
+### Querying JSON
+
+To query and/or filter JSON, use the [JsonPath](#jsonpath) syntax in the following JSON functions:
+
+- [JSON\_QUERY](./functions-and-operators.mdx#json_query)
+- [JSON\_VALUE](./functions-and-operators.mdx#json_value)
+- [JSON\_OBJECTAGG](./functions-and-operators.mdx#json_objectagg)
+- [JSON\_ARRAYAGG](./functions-and-operators.mdx#json_arrayagg)
+
+The `JSON_QUERY` function returns a JSON value, whereas the `JSON_VALUE` function returns a non-JSON value, which is a `VARCHAR` by default. If you use these functions to extract a string field, `JSON_VALUE` will return the value directly, while `JSON_QUERY` will return it as JSON, in single quotes, and with special characters escaped. `JSON_VALUE` can't be used to extract arrays or objects; instead, you can use `JSON_OBJECTAGG` and `JSON_ARRAYAGG` functions for this purpose. `JSON_ARRAYAGG` combines the values of a table column from multiple rows into a JSON array of element values. `JSON_OBJECTAGG` constructs an object member for key-value pairs and returns a single JSON object that contains these object members.
+
+JsonPath is a query language for JSON. The JsonPath format starts with a dollar (`$`) operator that refers to the root level of the JSON. From there, you can add other operators to traverse the data and filter the results.
+
+For example, consider the following JSON data:
+
+```json
+{
+  "countries": [
+    {
+      "country":"United Kingdom",
+      "cities": [{"city": "London"}]
+    },
+    {
+      "country":"France",
+      "cities": [{"city": "Lyon"}]
+    },
+    {
+      "country":"Turkey",
+      "cities": [{"city": "Istanbul"}]
+    }
+  ]
+}
+```
+
+The following examples show you how to use JsonPath to query this document.
+
+<table>
+<colgroup>
+<col style={{width:'50%'}}/>
+<col style={{width:'50%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th>JsonPath</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+```sql
+SELECT
+   JSON_QUERY(this, '$')
+   FROM countries;
+```
+
+</td>
+<td>
+
+Returns the whole document.
+
+```json
+{"countries":[{"country":"United Kingdom","cities":[{"city":"London"}]},{"country":"France","cities":[{"city":"Lyon"}]},{"country":"Turkey","cities":[{"city":"Istanbul"}]}]}
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+```sql
+SELECT
+   JSON_QUERY(this, '$..cities' WITH WRAPPER)
+   FROM countries;
+```
+
+</td>
+<td>
+
+Returns the `cities` property at any depth.
+
+```json
+[{"city": "London"},{"city": "Lyon"},{"city": "Istanbul"}]
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+```sql
+SELECT
+   JSON_QUERY(this, '$.countries.*' WITH WRAPPER)
+   FROM countries;
+```
+
+</td>
+<td>
+
+Returns all fields of the `countries` property in an array. The `countries` property must be in the root object.
+
+```json
+["United Kingdom",{"city": "London"},"France",{"city": "Lyon"},"Turkey",{"city": "Istanbul"}]
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+```sql
+SELECT
+   JSON_QUERY(this, '$.countries..city' WITH WRAPPER)
+   FROM countries;
+```
+
+</td>
+<td>
+
+Returns the `city` properties under the `countries` property in the root document as an array.
+
+```json
+["London","Lyon","Istanbul"]
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+```sql
+SELECT
+   JSON_QUERY(this, '$.countries[2]')
+   FROM countries;
+```
+
+</td>
+<td>
+
+Returns the third element of the `countries` array.
+
+```json
+{"country":"Turkey","cities":[{"city":"Istanbul"}]}
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+```sql
+SELECT
+   JSON_QUERY(this, '$.countries[0,2]' WITH WRAPPER)
+   FROM countries;
+```
+
+</td>
+<td>
+
+Returns the first and third elements of the `countries` array.
+
+```json
+[{"country":"United Kingdom","cities":[{"city":"London"}]},{"country":"Turkey","cities":[{"city":"Istanbul"}]}]]
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+```sql
+SELECT
+   JSON_QUERY(this, '$.countries[0 to 2]' WITH WRAPPER)
+   FROM countries;
+```
+
+</td>
+<td>
+
+Returns elements one through three of the `countries` array, including the third element.
+
+```json
+[{"country":"United Kingdom","cities":[{"city":"London"}]},{"country":"France","cities":[{"city":"Lyon"}]},{"country":"Turkey","cities":[{"city":"Istanbul"}]}]
+```
+
+</td>
+</tr>
+</tbody>
+</table>
+
+If the JsonPath does not match a value, `NULL` is returned.
+
+### Supported JsonPath Operators {/* #jsonpath-synax */}
+
+These are the supported operators from the JsonPath standard.
+
+| Operator | Description |
+| --- | --- |
+| `$` | Root |
+| `*` | Wildcard |
+| `.<name>` | Child property |
+| `..` | Child property at any level deeper |
+| `['<name>' (, '<name>')]` | List of child properties |
+| `[<number> (, <number>)]` | List of array indexes |
+| `[<number> to <number>]` | Array range |
+| `?(<expression>)` | Filter expression |
+| `@` | Current node in filter expression |
+
+## `json-flat`
+
+The `json-flat` format comes with partial support for querying JSON in maps, Kafka topics, and files.
+
+### Mapping to the `json-flat` Type
+
+You can map JSON data to a multiple columns, by creating a mapping to one of the following data sources:
+
+- [Map](./sql-over-maps/mapping-to-maps.mdx)
+- [Kafka](./sql-over-kafka/mapping-to-kafka.mdx)
+- [File](./sql-over-file-systems/mapping-to-a-file-system.mdx)
+
+For example, consider the following JSON data:
+
+```json
+{
+  "countries": "United Kingdom",
+  "cities": "London"
+}
+```
+
+To map the JSON data using the `json-flat` format in a map, you need to provide the JSON keys as column names:
+
+```sql
+CREATE MAPPING cities (
+__key INT,
+countries VARCHAR,
+cities VARCHAR)
+type IMap OPTIONS('keyFormat'='int', 'valueFormat'='json-flat');
+```
+
+This statement creates a mapping to a map that expects three columns:
+
+- `__key`: A key as an integer
+- `countries`: A string
+- `cities`: A string
+
+```sql
+INSERT INTO cities VALUES
+(1, 'United Kingdom','London');
+```
+
+### Querying `json-flat`
+
+To query the JSON values, select the column names.
+
+```sql
+SELECT cities AS City, countries AS Country
+FROM cities;
+```
+
+```none
++--------------------+--------------------+
+|City                |Country             |
++--------------------+--------------------+
+|London              |United Kingdom      |
++--------------------+--------------------+
+```
+
+## JSON Type Conversion
+
+SQL integer and floating-point types are converted into JSON numbers. The `DECIMAL` type and all temporal types are converted into JSON strings.
+
+<table>
+<colgroup>
+<col style={{width:'50%'}}/>
+<col style={{width:'50%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th>JSON type</th>
+<th>SQL Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`BOOLEAN`</td>
+<td>`BOOLEAN`</td>
+</tr>
+<tr>
+<td>`NUMBER`</td>
+<td>
+
+`DOUBLE`
+
+`INTEGER`
+
+`REAL`
+
+`BIGINT`
+
+`SMALLINT`
+
+`TINYINT`
+
+</td>
+</tr>
+<tr>
+<td>`STRING`</td>
+<td>
+
+`VARCHAR`
+
+`DECIMAL`
+
+`DATE`
+
+`TIME`
+
+`TIMESTAMP`
+
+`TIMESTAMP WITH TIME ZONE`
+
+`OBJECT`
+
+</td>
+</tr>
+</tbody>
+</table>

@@ -1,0 +1,97 @@
+---
+title: "Community Edition Release Notes"
+sidebar_label: "Release Notes"
+sidebar_position: 1
+slug: /release-notes/community
+---
+
+These release notes list any new features, enhancements, fixes and breaking changes that were made for Hazelcast Platform <Variable name="open-source-product-name"/>.
+
+:::note
+
+Hazelcast Platform <Variable name="open-source-product-name"/> is available in major and minor releases only (e.g. x.0, x.1, x.2, etc.). From release 5.4, patch releases are only available for <Variable name="enterprise-product-name"/> i.e. no patch releases (e.g. 5.4.1, 5.5.2) will be made available for <Variable name="open-source-product-name"/>.
+
+:::
+
+For help downloading Hazelcast <Variable name="open-source-product-name"/>, see [Install Hazelcast Community Edition](./install-hazelcast.mdx).
+
+## 5.5.0 {/* #5-5-0 */}
+
+**Release date**: 2024-07-30
+
+For help downloading Hazelcast <Variable name="open-source-product-name"/>, see [Install Hazelcast Community Edition](./install-hazelcast.mdx).
+
+### New features
+
+- Vector collection data structure
+- Multi-member routing for Java clients
+- Jet job placement control
+- Feast feature store integration
+- Dynamic configuration using REST API
+
+For more details on new features, see [What's new in 5.5](../../get-started/whats-new.mdx).
+
+### Breaking changes
+
+- For <Variable name="open-source-product-name"/> users only - CP Subsystem is now an <Variable name="enterprise-product-name"/> only feature
+- Thread-per-core (TPC) requires `ALL_MEMBERS` cluster routing (previously known as smart routing) to function on clients
+
+### Known issues
+
+- There is currently a known issue that has potential for causing a memory leak in Vector collections in some scenarios. For more info, including a workaround, see [Vector Collection Known Issue](../../develop-and-build/distributed-data-structures/ai-ml-data-structures/vector-collections/overview.mdx#known-issue).
+
+### Enhancements
+
+- Replace smart-routing with cluster-routing options
+- Update cluster routing mode compatibility for TPC
+- Introduce queue cap props for persistence
+- Allow EE member to join OS cluster
+- Client connectivity logging
+- Add needsFsync to Clear task
+- Shade vector JAR in main enterprise JAR
+- Manual index cleanup operation
+- Re-introduce RU code for 5.2 → 5.5 upgrade
+- Configuration for number of neighbours fetched from partitions
+- Fail-fast if specify CP config in a Community version
+- Allow 5.5 member join clusters with version 5.0-5.4
+- Add JobBuilder to JetService
+- Introduce a common parent POM for hazelcast and hazelcast-enterprise
+- Improve float array serialization performance
+- Add CP direct-to-leader operation sending for `ADVANCED_CP` licensed clients
+- Add ZGC bean names to support GC stats [\#26329](https://github.com/hazelcast/hazelcast/pull/26329)
+
+### Fixes
+
+- Fix Jet vulnerabilities: CVE-2022-3171, CVE-2023-2976, CVE-2024-36114
+- Delete Jet job resources immediately after job finishes
+- Fix completed op count metric in OperationThread
+- Fix incorrect results of parallel SQL queries with reusable processor meta-suppliers
+- Restore previous ExecutionService graceful shutdown timeout value
+- Improve float array serialization performance in client protocol
+- Explicitly release netty release counted netty ssl engine
+- Exclude non-WAN address aliases during WAN MemberHandshake
+- JobConfig\#add() not using derived id for some resources
+- GCS connection issue workaround
+- Correct UserCodeNamespaceService\#reset behaviour
+- Prevent SystemPropertiesConfigParser throwing ClassCastException on startup with non-String properties
+- Don't use the default password from the SymmetricEncryptionConfig
+- Make AddIndexBackupOperation allowed in passive state
+- Execute PostJoin operations if member hot restart start is forced
+- Fix partition migrating lock during concurrent migration and replication
+- Fix known CP issue that caused OOMs due to leadership races
+- Fix partitions initial offsets in Kafka connector [\#25769](https://github.com/hazelcast/hazelcast/pull/25769)
+- IMap.delete operations don't update the LocalMapStats [\#26212](https://github.com/hazelcast/hazelcast/issues/26212)
+- Updated StringUtil::trim() to consider all type of white space [\#25804](https://github.com/hazelcast/hazelcast/pull/25804)
+
+### Removed/Deprecated features
+
+- The `smart-routing` client configuration option has been deprecated in favor of the new `cluster-routing` options
+
+### Contributors
+
+We would like to thank the contributors from our open source community who worked on this release:
+
+- [Robert Höglund](https://github.com/RobbanHoglund)
+- [Ricky Memphis](https://github.com/rickymemphis)
+- [Andrzej Nestoruk](https://github.com/anestoruk)
+- [Gaurav Salunke](https://github.com/Gauravsalunke5)

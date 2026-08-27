@@ -1,0 +1,392 @@
+---
+title: "Member Configuration Files"
+sidebar_position: 1
+slug: /configuration/configuring-declaratively
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+You can declare settings for Hazelcast members, using a YAML or XML configuration file. Although Hazelcast members read from a single configuration file, you can store settings in multiple files and import them into a single root file to enable reuse.
+
+## Configuration Files
+
+Hazelcast comes with the following configuration files in the `/config` directory:
+
+<table>
+<colgroup>
+<col style={{width:'20%'}}/>
+<col style={{width:'80%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th>Configuration File</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+<Variable href="https://github.com/hazelcast/hazelcast/tree/v{os-version}/hazelcast/src/main/resources/hazelcast-default.xml" text="hazelcast-default.xml" code/>
+
+<Variable href="https://github.com/hazelcast/hazelcast/tree/v{os-version}/hazelcast/src/main/resources/hazelcast-default.yaml" text="hazelcast-default.yaml" code/>
+
+</td>
+<td>Default configuration file for Hazelcast. The configuration for Hazelcast's storage and streaming engines in this file should be fine for most users. If not, you can tailor this file according to your needs by adding/removing/modifying properties. You can browse through the Clustering Configurations section to learn about configuring Hazelcast's several aspects including [networking](../../partition-groups-and-networking/network-configuration.mdx) and [Jet engine](../../../develop-and-build/building-data-pipelines/configuring-jobs.mdx).</td>
+</tr>
+<tr>
+<td>
+
+<Variable href="https://github.com/hazelcast/hazelcast/tree/v{os-version}/hazelcast/src/main/resources/hazelcast-full-example.xml" text="hazelcast-full-example.xml" code/>
+
+<Variable href="https://github.com/hazelcast/hazelcast/tree/v{os-version}/hazelcast/src/main/resources/hazelcast-full-example.yaml" text="hazelcast-full-example.yaml" code/>
+
+</td>
+<td>Configuration files which include all Hazelcast configuration elements and attributes with their descriptions. You can use these files as a reference document to learn about any element or attribute.</td>
+</tr>
+<tr>
+<td>
+
+<Variable href="https://github.com/hazelcast/hazelcast/tree/v{os-version}/hazelcast/src/main/resources/hazelcast-client-full-example.xml" text="hazelcast-client-full-example.xml" code/>
+
+<Variable href="https://github.com/hazelcast/hazelcast/tree/v{os-version}/hazelcast/src/main/resources/hazelcast-client-full-example.yaml" text="hazelcast-client-full-example.yaml" code/>
+
+</td>
+<td>Complete Hazelcast client example configuration file which includes all configuration elements and attributes with their descriptions.</td>
+</tr>
+<tr>
+<td>
+
+<Variable href="https://github.com/hazelcast/hazelcast/tree/v{os-version}/hazelcast/src/main/resources/hazelcast-client-failover-full-example.xml" text="hazelcast-client-failover-full-example.xml" code/>
+
+<Variable href="https://github.com/hazelcast/hazelcast/tree/v{os-version}/hazelcast/src/main/resources/hazelcast-client-failover-full-example.yaml" text="hazelcast-client-failover-full-example.yaml" code/>
+
+</td>
+<td>Complete Hazelcast client failover example configuration file which includes all Hazelcast client failover configuration elements and attributes with their descriptions. Read about Blue-Green Deployment and Disaster Recovery in the [Java client docs](../../../clients-and-apis/clients/java.mdx#blue-green-deployment-and-disaster-recovery).</td>
+</tr>
+</tbody>
+</table>
+
+## Setting the Path to a Configuration File
+
+Before looking for configuration files either in your working directory or in the classpath, Hazelcast checks the `hazelcast.config` system property.
+
+You may want to set this property if you have configuration files for different environments and you want to start members with different configurations. For example, you may have a test configuration file and a production configuration file.
+
+```none
+-Dhazelcast.config=`+*+`<path to the hazelcast.xml or hazelcast.yaml>
+```
+
+The path can be a regular one or a classpath reference with the prefix `classpath:`.
+
+:::note
+
+The suffix of the filename is used to determine the language of the configuration. If the suffix is `.xml` the configuration file is parsed as an XML configuration file. If it is `.yaml`, the configuration file is parsed as a YAML configuration file.
+
+:::
+
+For details about precedence, see [Configuration Precedence](../understanding-configuration.mdx#configuration-precedence).
+
+If you use the Java member API, you can also [use a configuration file](./configuring-programmatically.mdx#config-file).
+
+## Importing Configuration Snippets into Files {/* #composing-declarative-configuration */}
+
+If you want to reuse the same configuration settings in multiple files, you can store sections of XML and YAML configuration in separate files and import those into a single *root configuration file*. For example, you may want all development clusters to be called `test`. In this case, the `cluster-name` configuration can be stored in one file and imported into the root configuration file:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml title="development-cluster-config.xml"
+<hazelcast>
+    <cluster-name>test</cluster-name>
+</hazelcast>
+```
+
+To import a file into another, use the `<import/>` element.
+
+```xml title="Root configuration file"
+<hazelcast>
+    <import resource="development-cluster-config.xml"/>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml title="development-cluster-config.yaml"
+hazelcast:
+  cluster-name: test
+```
+
+To import a file into another, use the `import` key.
+
+```yaml title="Root configuration file"
+hazelcast:
+  import:
+    - development-cluster-config.yaml
+```
+
+</TabItem>
+</Tabs>
+
+You can also import files from the classpath and file system into a root configuration file:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <import resource="file:///etc/hazelcast/development-cluster-config.xml"/> <!-- loaded from filesystem -->
+    <import resource="classpath:development-network-config.xml"/>  <!-- loaded from classpath -->
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  import:
+    # loaded from filesystem
+    - file:///etc/hazelcast/development-cluster-config.yaml
+    # loaded from classpath
+    - classpath:development-network-config.yaml
+```
+
+</TabItem>
+</Tabs>
+
+Importing resources with [variables](#variables) in their names is also supported:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <import resource="${environment}-cluster-config.xml"/>
+    <import resource="${environment}-network-config.xml"/>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  import:
+    - ${environment}-cluster-config.yaml
+    - ${environment}-network-config.yaml
+```
+
+</TabItem>
+</Tabs>
+
+## Overriding Configuration with System Properties and Environment Variables
+
+<Anchor id="overriding-configuration"/>
+
+You can override the settings in a configuration file without having to modify it. For example, you may want to make some configuration changes for a specific environment. In this case, you can use system properties or environment variables to override the settings in the file.
+
+:::important
+
+If you override a value in a configuration file, the other values in the same block are reset to their defaults. For example, if you override the `hazelcast.map.backup-count` value, all other settings within the `map` block are reset to their defaults. To avoid the other values being reset to their defaults, you must override all values in the block.
+
+:::
+
+See [Configuring with System Properties and Environment Variables](./configuring-with-system-properties.mdx).
+
+## Using Variables {/* #variables */}
+
+In configuration files, you can use variables to set configuration settings.
+
+To set the variable's value, you can use a system property either in your code or in the command line interface.
+
+To use a variable in a configuration file to access the values of the system properties you set, use the `${variable-name}` syntax.
+
+For example, the following command sets the `cluster.name` variable to `test`, using a system property.
+
+```none
+-Dcluster.name=test
+```
+
+You can reference this variable in your configuration file. When the cluster starts, this variable is replaced with the value that is set in the system property.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <cluster-name>${cluster.name}</cluster-name>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  cluster-name: ${cluster.name}
+```
+
+</TabItem>
+</Tabs>
+
+If you do not want to rely on the system properties, you can use the `XmlConfigBuilder` or `YamlConfigBuilder` and explicitly set a `Properties` instance, as shown below.
+
+```java
+Properties properties = new Properties();
+
+// fill the properties, e.g., from database/LDAP, etc.
+
+XmlConfigBuilder builder = new XmlConfigBuilder();
+builder.setProperties(properties);
+Config config = builder.build();
+HazelcastInstance hz = Hazelcast.newHazelcastInstance(config);
+```
+
+## Variable Replacers
+
+Variable replacers are used to replace custom strings during startup when a cluster first loads a configuration file. For example, you can use a variable replacer to mask sensitive information such as usernames and passwords.
+
+Variable replacers implement the interface `com.hazelcast.config.replacer.spi.ConfigReplacer`. For basic information about how a replacer works, see the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/replacer/spi/ConfigReplacer.html" text="Javadoc"/>.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <config-replacers fail-if-value-missing="false">
+        <replacer class-name="com.acme.MyReplacer">
+            <properties>
+                <property name="propName">value</property>
+                ...
+            </properties>
+        </replacer>
+        <replacer class-name="example.AnotherReplacer"/>
+    </config-replacers>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+    ...
+    config-replacers:
+      fail-if-value-missing: false
+      replacers:
+        - class-name: com.acme.MyReplacer
+          properties:
+            propName: value
+            ...
+        - class-name: example.AnotherReplacer
+    ...
+```
+
+</TabItem>
+</Tabs>
+
+The `config-replacers` setting contains all the configuration options for replacers. You can define one or more replacers in the same file:
+
+- `fail-if-value-missing`: Specifies whether the loading configuration process stops when a replacement value is missing. It is an optional attribute and its default value is true.
+- `class-name`: Full class name of the replacer.
+- `<properties>`: Contains names and values of the properties used to configure a replacer. Each property is defined using the `<property>` sub-element. All the properties are explained in the upcoming sections.
+
+The following replacer classes are provided by Hazelcast as example implementations of the `ConfigReplacer` interface. Note that you can also implement your own replacers.
+
+- `EncryptionReplacer`
+- `PropertyReplacer`
+
+:::note
+
+There is also a `ExecReplacer` which runs an external command and uses its standard output as the value for the variable. See its [code sample](https://github.com/hazelcast/hazelcast-code-samples/blob/master/variable-replacers/src/main/java/com/hazelcast/sample/replacer/ExecReplacer.java).
+
+:::
+
+### EncryptionReplacer
+
+This example `EncryptionReplacer` replaces encrypted variables by its plain form. The secret key for encryption/decryption is generated from a password which can be a value in a file and/or environment specific values, such as MAC address and actual user data.
+
+Its full class name is `com.hazelcast.config.replacer.EncryptionReplacer` and the replacer prefix is `ENC`. The following are the properties used to configure this example replacer:
+
+- `cipherAlgorithm`: Cipher algorithm used for the encryption/decryption. Its default value is AES.
+- `keyLengthBits`: Length of the secret key to be generated in bits. Its default value is 128 bits.
+- `passwordFile`: Path to a file whose content should be used as a part of the encryption password. When the property is not provided, no file is used as a part of the password. Its default value is null.
+- `passwordNetworkInterface`: Name of network interface whose MAC address should be used as a part of the encryption password. When the property is not provided, no network interface property is used as a part of the password. Its default value is null.
+- `passwordUserProperties`: Specifies whether the current user properties (`user.name` and `user.home`) should be used as a part of the encryption password. Its default value is true.
+- `saltLengthBytes`: Length of a random password salt in bytes. Its default value is 8 bytes.
+- `secretKeyAlgorithm`: Name of the secret-key algorithm to be associated with the generated secret key. Its default value is AES.
+- `secretKeyFactoryAlgorithm`: Algorithm used to generate a secret key from a password. Its default value is PBKDF2WithHmacSHA256.
+- `securityProvider`: Name of a Java Security Provider to be used for retrieving the configured secret key factory and the cipher. Its default value is null.
+
+:::note
+
+Older Java versions may not support all the algorithms used as defaults. Please use the property values supported your Java version.
+
+:::
+
+As a usage example, let's create a password file and generate the encrypted string out of this file as instructed below:
+
+1. Create the password file: `echo '/Za-uG3dDfpd,5.-' > /opt/master-password`
+2. Define the encrypted variables:
+
+   ```none
+   java -cp hazelcast-*.jar \
+       -DpasswordFile=/opt/master-password \
+       -DpasswordUserProperties=false \
+       com.hazelcast.config.replacer.EncryptionReplacer \
+       "aCluster"
+   $ENC{Gw45stIlan0=:531:yVN9/xQpJ/Ww3EYkAPvHdA==}
+   ```
+3. Configure the replacer and put the encrypted variables into the configuration:
+
+   ```xml
+   <hazelcast>
+       <config-replacers>
+           <replacer class-name="com.hazelcast.config.replacer.EncryptionReplacer">
+               <properties>
+                   <property name="passwordFile">/opt/master-password</property>
+                   <property name="passwordUserProperties">false</property>
+               </properties>
+           </replacer>
+       </config-replacers>
+       <cluster-name>$ENC{Gw45stIlan0=:531:yVN9/xQpJ/Ww3EYkAPvHdA==}</cluster-name>
+   </hazelcast>
+   ```
+4. Check if the decryption works:
+
+   ```none
+   java -jar hazelcast-*.jar
+   Apr 06, 2018 10:15:43 AM com.hazelcast.config.XmlConfigLocator
+   INFO: Loading 'hazelcast.xml' from working directory.
+   Apr 06, 2018 10:15:44 AM com.hazelcast.instance.AddressPicker
+   INFO: [LOCAL] [aCluster] [3.10-SNAPSHOT] Prefer IPv4 stack is true.
+   ```
+
+As you can see in the logs, the correctly decrypted cluster name value ("aCluster") is used.
+
+### PropertyReplacer
+
+The `PropertyReplacer` replaces variables by properties with the given name. Usually the system properties are used, e.g., `${user.name}`. There is no need to define it in the configuration files.
+
+Its full class name is `com.hazelcast.config.replacer.PropertyReplacer` and the replacer prefix is empty string ("").
+
+### Implementing Custom Replacers
+
+You can also provide your own replacer implementations. All replacers have to implement the interface `com.hazelcast.config.replacer.spi.ConfigReplacer`. A simple snippet is shown below.
+
+```java
+public interface ConfigReplacer {
+    void init(Properties properties);
+    String getPrefix();
+    String getReplacement(String maskedValue);
+}
+```
+
+## Updating Member Configuration Files at Runtime
+
+When a member is running, you can use dynamic configuration to add some supported configuration to a configuration file at runtime. See [Dynamic Configuration for Members](../dynamic-configuration/dynamic-config.mdx).
