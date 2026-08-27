@@ -46,7 +46,19 @@ export const BADGES: Record<string, BadgeDef> = {
     hiveType: 'neutral',
   },
   enterprise: {
-    label: 'Enterprise',
+    // "Enterprise Edition", not "Enterprise": this is the value of both Platform's
+    // and Management Center's `enterprise-product-name` Antora attribute, and what
+    // Platform's 37 badge occurrences render today (`[.enterprise]*{enterprise-product-name}*`).
+    // MC's single occurrence writes the literal `Enterprise` instead — a source
+    // inconsistency, not a different value — so that one sentence ("a feature ... is
+    // labelled <Badge/>") now reads "Enterprise Edition", which is what the badge
+    // beside it actually says. User decision 2026-08-27.
+    //
+    // The label is a literal here rather than a doc variable, so it does not follow
+    // `enterprise-product-name` automatically; refcheck records that trade as
+    // `bake:badge-label` (see refcheck/lib/bake-contexts.js). If the attribute ever
+    // changes, this string has to change with it.
+    label: 'Enterprise Edition',
     // Link deferred until platform (hz-docs) migrates and the Enterprise
     // explainer page has a stable URL.
     tooltip:

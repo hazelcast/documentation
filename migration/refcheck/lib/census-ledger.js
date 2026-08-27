@@ -26,6 +26,9 @@ const fs = require('node:fs')
 const cheerio = require('cheerio')
 
 const { unmask, residualTokens, TOKEN_RE } = require('../../antora-extension/poison-attributes')
+// The converter's own badge-role vocabulary, so the gate recognises a badge label
+// as exactly what the converter turns into <Badge/> (see bake-contexts 'badge').
+const { BADGE_CLASSES } = require('../../converter/lib/html-to-mdx')
 const { stripConditionalSentinels } = require('../../antora-extension/mark-conditionals')
 const { readGolden } = require('../../fidelity/lib/pairing')
 const { dispositionForText, dispositionForAttr, isPreserve } = require('./bake-contexts')
@@ -75,12 +78,30 @@ function scanCensusPage (html, { tokens }) {
     if (node.type !== 'tag') return
 
     const tag = node.name
-    // Inside code/pre stays code even through nested spans (highlight.js markup).
+    const cls = node.attribs && node.attribs.class ? node.attribs.class.split(/\s+/) : []
+    // Two positions the converter replaces WHOLESALE, so they win over any
+    // container they sit in -- a badge inside a table cell's `<code>` is still a
+    // badge, and the converter emits `<Badge/>` there just the same:
+    //
+    //   - a `<strong>`/`<b>` carrying a badge ROLE class. Matched on the element,
+    //     the way the converter matches it, so a badge label and a prose
+    //     occurrence of the same attribute on one page get different dispositions.
+    //   - anything inside `div.ulist.tabs`, which is the tab TITLE list of a
+    //     `[tabs]` block (the panes live in a sibling `div.content`, so this
+    //     cannot catch pane content).
+    //
+    // Both come before the code/heading tests deliberately: those describe where
+    // text sits, while these describe what the text IS.
+    const badge = (tag === 'strong' || tag === 'b') && cls.some((c) => BADGE_CLASSES.has(c))
+    const inTabs = ctx.inTabs || (cls.includes('ulist') && cls.includes('tabs'))
     const next = {
       tag,
-      textContext: ctx.textContext === 'code' || tag === 'code' || tag === 'pre' ? 'code'
-        : /^h[1-6]$/.test(tag) ? 'heading'
-          : ctx.textContext,
+      inTabs,
+      textContext: badge ? 'badge'
+        : inTabs ? 'tab-label'
+          : ctx.textContext === 'code' || tag === 'code' || tag === 'pre' ? 'code'
+            : /^h[1-6]$/.test(tag) ? 'heading'
+              : ctx.textContext,
     }
 
     for (const [attr, value] of Object.entries(node.attribs || {})) {
@@ -97,7 +118,7 @@ function scanCensusPage (html, { tokens }) {
     for (const child of node.children || []) walk(child, next)
   }
 
-  for (const node of $.root()[0].children || []) walk(node, { tag: null, textContext: 'text' })
+  for (const node of $.root()[0].children || []) walk(node, { tag: null, textContext: 'text', inTabs: false })
   return { preserve, bakes, unknown }
 }
 

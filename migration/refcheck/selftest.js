@@ -131,6 +131,72 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
   ok('bake-contexts: a tab label\'s id and its pane reference are classified as derived ids')
 }
 
+// --- positions the converter replaces WHOLESALE --------------------------------
+// A badge and a tab label are not places a reference can live: the converter emits
+// `<Badge type="enterprise"/>` and `<TabItem label="…">`, a self-closing component
+// and a plain string prop, neither with a slot for a `{name}`. They must therefore
+// be classified as bakes -- and, critically, they must WIN over the container they
+// sit in, because the converter replaces them regardless of nesting. A badge inside
+// a table cell's `<code>` is still a badge (hazelcast integrate/connectors has
+// three), and reading it as `code` made the gate demand a reference that cannot
+// exist there.
+{
+  for (const context of ['badge', 'tab-label']) {
+    const d = dispositionForText(context)
+    assert(d, `${context} must have a disposition, not fall through to deny-by-default`)
+    assert(!isPreserve(d), `${context} has no slot for a reference, so it must bake`)
+    assert.match(d, /^bake:/, `${context}'s disposition must record a reason`)
+  }
+  // The ordinary flow contexts still preserve: exempting the badge must not exempt
+  // a prose occurrence of the same attribute on the same page.
+  for (const context of ['text', 'heading', 'code']) {
+    assert(isPreserve(dispositionForText(context)),
+      `${context} must still preserve -- that is the whole point of keying on position`)
+  }
+  assert.strictEqual(dispositionForText('aside'), null,
+    'an unrecognised text context must stay unclassified so the gate fails on it')
+  ok('bake-contexts: a badge and a tab label bake; prose, headings and code still preserve')
+}
+
+// The census walker's classification, against the shapes Asciidoctor really emits.
+// Precedence is the substance here: `what the text IS` beats `where it sits`.
+{
+  const tokens = [{ name: 'enterprise-product-name', token: tokenFor(1), value: 'Enterprise Edition', rendered: tokenFor(1), unmaskSafe: true }]
+  const scan = (html) => scanCensusPage(html, { tokens })
+
+  // Prose: preserved, so it is expected in the MDX.
+  assert.strictEqual(scan(`<p>Hazelcast ${tokenFor(1)} is licensed.</p>`).preserve.get('enterprise-product-name'), 1,
+    'a prose occurrence is a reference the MDX must carry')
+
+  // A badge, bare and nested in <code> inside a table cell -- the connectors shape.
+  for (const html of [
+    `<p><strong class="enterprise">${tokenFor(1)}</strong></p>`,
+    `<td class="tableblock"><p class="tableblock"><code><a href="/x">y</a>\n<strong class="enterprise">${tokenFor(1)}</strong></code></p></td>`,
+  ]) {
+    const r = scan(html)
+    assert.strictEqual(r.preserve.size, 0, 'a badge label is never expected as a reference')
+    assert.deepStrictEqual(r.bakes.map((b) => b.disposition), ['bake:badge-label'],
+      'a badge is recorded as a badge wherever it sits -- <code> must not reclassify it')
+    assert.deepStrictEqual(r.unknown, [], 'and it is classified, not left to fail the gate')
+  }
+
+  // A tab TITLE list, and the pane content beside it. The label bakes; anything in
+  // the pane is ordinary content and still preserves.
+  const tabset =
+    `<div class="tabset is-loading"><div class="ulist tabs"><ul><li><p>` +
+    `<a id="tabset1_${tokenFor(1).toLowerCase()}"></a>${tokenFor(1)}</p></li></ul></div>` +
+    `<div class="content"><div class="tab-pane" aria-labelledby="tabset1_${tokenFor(1).toLowerCase()}">` +
+    `<div class="paragraph"><p>Only in ${tokenFor(1)}.</p></div></div></div></div>`
+  const t = scan(tabset)
+  assert.strictEqual(t.preserve.get('enterprise-product-name'), 1,
+    "the PANE's prose is still a reference -- only the label bakes")
+  assert.deepStrictEqual(t.bakes.map((b) => b.disposition).sort(),
+    ['bake:anchor-id', 'bake:anchor-id', 'bake:tab-label'],
+    'one source occurrence, three baked positions: the label, its derived id, and the pane reference')
+  assert.deepStrictEqual(t.unknown, [], 'no position in a tabset is left unclassified')
+  ok('census walker: badge and tab-label beat their container; pane content and prose are unaffected')
+}
+
 // --- the census guard is read DE-INSTRUMENTED ---------------------------------
 // The census render carries mark-conditionals' sentinels (it has to: that pass can
 // promote a swallowed block title, so an unmarked census cannot reproduce the

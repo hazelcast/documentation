@@ -1595,4 +1595,10 @@ function serAttrs (node, st) {
   return out
 }
 
-module.exports = { convertBody, serializeJsx, ADMONITION_TYPES, BLOCK_TAGS, BLOCK_CLASSES }
+module.exports = {
+  convertBody, serializeJsx, ADMONITION_TYPES, BLOCK_TAGS, BLOCK_CLASSES,
+  // BADGE_CLASSES is exported for refcheck/lib/census-ledger.js: the gate has to
+  // recognise a badge label as the same thing the converter turns into <Badge/>,
+  // or the two disagree about whether a reference was lost. One definition.
+  BADGE_CLASSES,
+}

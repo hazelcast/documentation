@@ -20,13 +20,42 @@
 
 const PRESERVE = 'preserve'
 
-// Text-node positions. All preserve: the converter has a form for each one --
-// <Variable/> in prose and headings (with the golden anchor id pinned), and a
-// `vars` code fence / the example-attributes webpack loader inside code.
+// Text-node positions.
 const TEXT_CONTEXTS = {
+  // The converter has a form for each of these: <Variable/> in prose and headings
+  // (with the golden anchor id pinned), and a `vars` code fence / the
+  // example-attributes webpack loader inside code.
   text: PRESERVE,
   heading: PRESERVE,
   code: PRESERVE,
+  // A BADGE's label. `[.enterprise]*{enterprise-product-name}*` renders as
+  // `<strong class="enterprise">Enterprise Edition</strong>`, and the converter
+  // replaces the whole thing with `<Badge type="enterprise"/>` -- deliberately
+  // dropping the authored text, because the label belongs to the front-end badge
+  // registry (src/components/Badge) so that every badge on the site reads the same
+  // regardless of which repo's source produced it. Platform writes the attribute
+  // and MC writes the literal `Enterprise`; one component cannot honour both.
+  //
+  // So the reference does not survive IN THE PAGE -- 62 occurrences over 45
+  // hazelcast pages -- and it cannot: a self-closing component has nowhere to carry
+  // a `{name}`. It is still single-sourced, just somewhere else: the registry holds
+  // ONE definition for the whole site, which is the point of the no-baking rule
+  // even though this gate cannot see it.
+  //
+  // The residual risk is real and worth naming: the registry's label is a literal,
+  // so it does not follow `enterprise-product-name` automatically. Making
+  // BadgeDef.label an optional doc-variable name would close that; until then the
+  // two are kept in step by hand, and this disposition is the record of that
+  // decision rather than a claim that nothing was given up.
+  badge: 'bake:badge-label',
+  // A TAB's label. `{enterprise-product-name}::` as a tab title becomes
+  // `<TabItem label="Enterprise Edition">`, and `label` is a plain STRING prop --
+  // a `{name}` there is inert in exactly the way a `{name}` in frontmatter is
+  // (nothing interpolates it), so it would reach the reader as literal braces.
+  // Baked for the same reason a nav label is. The tab ID derived from that label,
+  // and the pane's `aria-labelledby` pointing at it, are recorded separately as
+  // `bake:anchor-id` above -- one source occurrence, three positions.
+  'tab-label': 'bake:tab-label',
 }
 
 // Element-attribute positions. `href` preserves (the converter emits a link-mode
