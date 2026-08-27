@@ -76,6 +76,26 @@ const FENCE = {
   '!===': 'nested-table', '--': 'open',
 }
 
+// The delimited blocks whose CONTENT is verbatim: Asciidoctor does no block
+// -attribute, macro or style parsing inside them, so a bracketed line in there is
+// text, not markup. Without this the scan reports a SQL synopsis line
+// (`[ WHERE condition ]`), a JSON array (`["London","Lyon"]`) or a log-format
+// sample (`[Date and time] [Log level] ...`) as block attributes -- constructs
+// that do not exist, which a coverage gate must not ask a human to "verify".
+// Tables and example/open/sidebar/quote blocks are NOT verbatim: their content is
+// parsed AsciiDoc and must keep being scanned. Comment blocks never reach here
+// (stripComments removes them before detection).
+const VERBATIM = new Set(['listing', 'literal', 'passthrough'])
+
+// The kind of delimited block a fence line opens, and the exact line that will
+// close it (Asciidoctor closes on the identical delimiter).
+function fenceKind (trimmed) {
+  const key = trimmed.startsWith('|===')
+    ? '|==='
+    : trimmed.startsWith('!===') ? '!===' : trimmed === '--' ? '--' : trimmed.slice(0, 4)
+  return FENCE[key] || key
+}
+
 function includeFamily (target) {
   const t = target.trim()
   if (t.includes('$')) {
@@ -90,9 +110,41 @@ function includeFamily (target) {
 function detectLexical (text) {
   const out = []
   const lines = text.split('\n')
+  // The delimiter line that will close the verbatim block we are inside, or null
+  // at block level. `md` marks a Markdown ``` fence, which hz-docs uses as well as
+  // `----`; it is tracked but never REPORTED as a delimited-block, because the
+  // lexical scan has never counted those and inventing the category here would
+  // read as a new construct appearing rather than a detector fix.
+  let verbatim = null
   for (let i = 0; i < lines.length; i++) {
     const s = lines[i]
+    const t = s.trim()
     const push = (category, token) => out.push({ category, token, line: i + 1, raw: s.trim().slice(0, 100) })
+
+    if (verbatim !== null) {
+      // Inside verbatim content. Only the PREPROCESSOR directives are still live
+      // in here -- `include::` is how code samples are pulled into a listing, and
+      // `ifdef::` gates lines anywhere -- so those keep being detected and every
+      // markup-level construct is skipped until the block closes.
+      if (t === verbatim.close) {
+        if (!verbatim.md) push('delimited-block', verbatim.kind)
+        verbatim = null
+        continue
+      }
+      let mv = s.match(RE_COND)
+      if (mv) { push('conditional', `${mv[1]}::${mv[2]}`); continue }
+      if (RE_ENDIF.test(s)) { push('conditional', 'endif::'); continue }
+      mv = s.match(RE_INCLUDE)
+      if (mv) push('include', includeFamily(mv[1]))
+      continue
+    }
+
+    const md = t.match(/^(`{3,})/)
+    if (md) {
+      // The opening line still carries its own info string, so fall through to
+      // the normal scan first and only then enter the block.
+      verbatim = { close: md[1], kind: 'listing', md: true }
+    }
 
     let m = s.match(RE_COND)
     if (m) { push('conditional', `${m[1]}::${m[2]}`); continue }
@@ -111,9 +163,9 @@ function detectLexical (text) {
 
     const fm = s.match(RE_FENCE)
     if (fm) {
-      const t = s.trim()
-      const key = t.startsWith('|===') ? '|===' : t.startsWith('!===') ? '!===' : t === '--' ? '--' : t.slice(0, 4)
-      push('delimited-block', FENCE[key] || key)
+      const kind = fenceKind(t)
+      push('delimited-block', kind)
+      if (VERBATIM.has(kind)) verbatim = { close: t, kind, md: false }
     }
 
     const mb = s.match(RE_BRACKET)
