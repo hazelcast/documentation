@@ -447,6 +447,26 @@ function convertBlock ($, node, st, depth) {
   if (cls.includes('quoteblock') || cls.includes('verseblock')) return convertQuote($, node, st, depth)
 
   // Structural wrappers with no output of their own: recurse into their content.
+  // Footnote DEFINITION. Asciidoctor emits the block Antora renders at the foot of
+  // the page as
+  //   <div id="footnotes"><hr><div class="footnote" id="_footnotedef_1">
+  //     <a href="#_footnoteref_1">1</a>. text with <a>links</a></div></div>
+  // Its content is INLINE, but `.footnote` matches no block class, so the generic
+  // div catch-all below used to send it through convertChildren -- which joins
+  // children with a blank line and split one footnote into three paragraphs (the
+  // back-link, then a paragraph starting ". The backup count…", which is not a
+  // Markdown list marker and so rendered with the stray leading dot, then each
+  // link). Render it as the single inline paragraph it is.
+  //
+  // The id carries the reference target: the footnote REF emits [1](#_footnotedef_1),
+  // so without an anchor here that link points at nothing. It is a div, not a
+  // heading, so Docusaurus's collectAnchor never sees it -- hence <Anchor>, the
+  // same component the ref side already uses for _footnoteref_N.
+  if (cls.includes('footnote')) {
+    const id = node.attribs && node.attribs.id
+    return (id ? anchorJsx(id) : '') + inline($, node, st).trim()
+  }
+
   if (node.attribs && node.attribs.id === 'preamble') return convertChildren($, node, st, depth)
   if (cls.includes('sectionbody') || cls.includes('openblock') || cls.includes('exampleblock') ||
       cls.includes('content') || cls.includes('sidebarblock') || name === 'div') {
@@ -1493,6 +1513,28 @@ function inlineTag ($, node, st, opt) {
     }
     case 'img': return imageMd($, node, st)
     case 'sup': case 'sub': case 'kbd': case 'mark': case 'u': case 'small': case 'del': case 'ins':
+      // Footnote REFERENCE. Asciidoctor emits
+      //   <sup class="footnote" id="_footnote_NAME">[<a id="_footnoteref_N"
+      //     href="#_footnotedef_N">N</a>]</sup>
+      // The square brackets are literal TEXT either side of the link, so running
+      // the children through the Markdown inline path made them `\[`/`\]` and
+      // split the link off as a separate Markdown link plus a bare <Anchor> --
+      // correct, but unreadable in the source. Everything here is already JSX, so
+      // emit the whole thing as JSX and no escaping is needed. Both ids become
+      // <Anchor>s: `_footnoteref_N` is what the definition links back to, and the
+      // sup's own `_footnote_NAME` is the anchor Asciidoctor derives from the
+      // footnote's name -- neither is a heading, so collectAnchor never sees them.
+      // `footnote` is the first reference (it carries the ids); `footnoteref` is a
+      // RE-reference to the same footnote, from Asciidoctor's `footnote:name[]`
+      // shorthand -- same shape, no ids, and it must not be left behind escaped.
+      if (name === 'sup' && (cls.includes('footnote') || cls.includes('footnoteref'))) {
+        const a = $(node).find('a[href]')[0]
+        if (a) {
+          const supId = node.attribs && node.attribs.id
+          return `<sup>${supId ? anchorJsx(supId) : ''}${a.attribs.id ? anchorJsx(a.attribs.id) : ''}` +
+            `[<a href=${jsxAttr(a.attribs.href)}>${mdEscape($(a).text().trim())}</a>]</sup>`
+        }
+      }
       return `<${name}>${kids()}</${name}>`
     default:
       return kids()
