@@ -1,7 +1,7 @@
 ---
 title: "Community Edition REST API"
+sidebar_position: 4
 slug: /maintain-cluster/rest-api
-unlisted: true
 ---
 
 import Tabs from '@theme/Tabs';
@@ -9,7 +9,7 @@ import TabItem from '@theme/TabItem';
 
 :::caution[Deprecation Notice for the Community Edition REST API]
 
-The Community Edition REST API has been deprecated and will be removed as of Hazelcast version 7.0. An improved Enterprise version of this feature is available and actively being developed. For more information, see [Enterprise REST API](../clients-and-apis/apis/enterprise-rest-api/overview.mdx).
+The Community Edition REST API has been deprecated and will be removed as of Hazelcast version 7.0. An improved Enterprise version of this feature is available and actively being developed. For more information, see [Enterprise REST API](./overview.mdx).
 
 :::
 
@@ -84,9 +84,9 @@ hazelcast:
 </TabItem>
 </Tabs>
 
-See the [REST Server Socket Endpoint Configuration section](../operate-and-manage/partition-groups-and-networking/network-configuration.mdx#setting-up-rest-server-socket-endpoint-configuration) for more details including the programmatic configuration option.
+See the [REST Server Socket Endpoint Configuration section](../../../operate-and-manage/partition-groups-and-networking/network-configuration.mdx#setting-up-rest-server-socket-endpoint-configuration) for more details including the programmatic configuration option.
 
-You can also use the [Port configuration element](../operate-and-manage/partition-groups-and-networking/network-configuration.mdx#port) to change the default port for REST API.
+You can also use the [Port configuration element](../../../operate-and-manage/partition-groups-and-networking/network-configuration.mdx#port) to change the default port for REST API.
 
 ## Enabling Endpoint Groups
 
@@ -375,7 +375,7 @@ You need to handle the failures on REST polls as there is no transactional guara
 
 ## Managing Cluster's State
 
-Besides the Management Center's <Variable href="/management-center/{page-latest-supported-mc}/clusters/administration#persistence" text="Persistence tab"/> and the script [hz-cluster-admin](../operate-and-manage/maintaining-a-cluster/cluster-utilities.mdx#using-the-hz-cluster-admin-script), you can also use the REST API to manage your cluster's state. The following are the operations you can perform.
+Besides the Management Center's <Variable href="/management-center/{page-latest-supported-mc}/clusters/administration#persistence" text="Persistence tab"/> and the script [hz-cluster-admin](../../../operate-and-manage/maintaining-a-cluster/cluster-utilities.mdx#using-the-hz-cluster-admin-script), you can also use the REST API to manage your cluster's state. The following are the operations you can perform.
 
 :::note
 
@@ -383,7 +383,7 @@ Some of the REST calls listed below need their REST endpoint groups to be enable
 
 :::
 
-Also note that the value of `${PASSWORD}` in the following calls is checked only if the security is [enabled](../operate-and-manage/securing-a-cluster/enable-security.mdx) in Hazelcast, i.e., if you have Hazelcast <Variable name="enterprise-product-name"/>. If the security is disabled, the `${PASSWORD}` can be left empty.
+Also note that the value of `${PASSWORD}` in the following calls is checked only if the security is [enabled](../../../operate-and-manage/securing-a-cluster/enable-security.mdx) in Hazelcast, i.e., if you have Hazelcast <Variable name="enterprise-product-name"/>. If the security is disabled, the `${PASSWORD}` can be left empty.
 
 <table>
 <tbody>
@@ -453,7 +453,7 @@ Also note that the value of `${PASSWORD}` in the following calls is checked only
 
   :::note
 
-  You can also perform the above operations (partialStart and forceStart) using the **Persistence** tab of Hazelcast Management Center or using the script `hz-cluster-admin`. See the <Variable href="/management-center/{page-latest-supported-mc}/clusters/administration#persistence" text="Persistence"/> and [hz-cluster-admin](../operate-and-manage/maintaining-a-cluster/cluster-utilities.mdx#using-the-hz-cluster-admin-script) sections.
+  You can also perform the above operations (partialStart and forceStart) using the **Persistence** tab of Hazelcast Management Center or using the script `hz-cluster-admin`. See the <Variable href="/management-center/{page-latest-supported-mc}/clusters/administration#persistence" text="Persistence"/> and [hz-cluster-admin](../../../operate-and-manage/maintaining-a-cluster/cluster-utilities.mdx#using-the-hz-cluster-admin-script) sections.
 
   :::
 - *Initiating a Backup:*
@@ -480,7 +480,7 @@ Also note that the value of `${PASSWORD}` in the following calls is checked only
 
   :::note
 
-  You can also perform the above cluster version operations using Hazelcast Management Center or using the script `hz-cluster-admin`. See the <Variable href="/management-center/{page-latest-supported-mc}/clusters/administration#rolling-upgrade" text="Rolling Member Upgrades"/> and [hz-cluster-admin](../operate-and-manage/maintaining-a-cluster/cluster-utilities.mdx#using-the-hz-cluster-admin-script) sections.
+  You can also perform the above cluster version operations using Hazelcast Management Center or using the script `hz-cluster-admin`. See the <Variable href="/management-center/{page-latest-supported-mc}/clusters/administration#rolling-upgrade" text="Rolling Member Upgrades"/> and [hz-cluster-admin](../../../operate-and-manage/maintaining-a-cluster/cluster-utilities.mdx#using-the-hz-cluster-admin-script) sections.
 
   :::
 
@@ -753,7 +753,7 @@ config.getAdvancedNetworkConfig()
 
 :::note
 
-See the [Advanced Network Configuration section](../operate-and-manage/partition-groups-and-networking/network-configuration.mdx) for more information about the `advanced-network` element.
+See the [Advanced Network Configuration section](../../../operate-and-manage/partition-groups-and-networking/network-configuration.mdx) for more information about the `advanced-network` element.
 
 :::
 
@@ -763,7 +763,7 @@ When you enable or disable a REST endpoint group, all the endpoints in that grou
 
 As mentioned previously in this section, REST API is disabled by default and this is for security reasons. Once it is enabled for a given endpoint group, some endpoints belonging to that group can be called by any application.
 
-REST API does not check [permissions](../operate-and-manage/securing-a-cluster/client-authorization.mdx#permissions), that you may configure for the other clients. If you set permissions for the REST API, keep in mind that they will not be enforced.
+REST API does not check [permissions](../../../operate-and-manage/securing-a-cluster/client-authorization.mdx#permissions), that you may configure for the other clients. If you set permissions for the REST API, keep in mind that they will not be enforced.
 
 On the other hand, you can request authentications for various REST endpoints. These are the following:
 

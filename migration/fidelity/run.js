@@ -22,7 +22,7 @@ const path = require('node:path')
 
 const { goldenPages, resolveConverted, readGolden } = require('./lib/pairing')
 const { buildIndex } = require('./lib/manifest-index')
-const { loadDispositions, droppedUrls } = require('../lib/dispositions')
+const { loadDispositions, unpublishedUrls } = require('../lib/dispositions')
 const { loadAccepted } = require('../lib/accepted')
 const { loadAnchorIndex } = require('./lib/anchor-index')
 const { loadInventoryIndex } = require('./lib/inventory-index')
@@ -84,11 +84,12 @@ function main () {
 
   // --- scope ---------------------------------------------------------------
   let pages = goldenPages(opts.goldenDir)
-  // A drop-404 page is deliberately not converted, so it is out of scope rather
-  // than "not yet converted" -- counting it as pending would overstate the work
-  // still left to do, and it can never go green.
-  const dropped = droppedUrls(loadDispositions(), manifest)
-  pages = pages.filter((p) => !dropped.has(p.url))
+  // A page an orphan triage decision does not publish (drop-404 or redirect) is
+  // deliberately not converted, so it is out of scope rather than "not yet
+  // converted" -- counting it as pending would overstate the work still left to
+  // do, and it can never go green.
+  const unpublished = unpublishedUrls(loadDispositions(), manifest)
+  pages = pages.filter((p) => !unpublished.has(p.url))
   if (opts.component) pages = pages.filter((p) => p.component === opts.component)
   if (opts.id) pages = pages.filter((p) => p.url === opts.id)
 

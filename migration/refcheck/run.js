@@ -41,7 +41,7 @@ const { NAV_SOURCES, versionsToProcess, outDirFor } = require('../lib/layout')
 const { collectPageExamples } = require('./lib/source-refs')
 const { indexOutput, refCounts, exampleImports, frontmatterTokens, urlToSlug } = require('./lib/mdx-refs')
 const { scanCensusPage, unmaskGuard, hiddenBranchComponents } = require('./lib/census-ledger')
-const { loadDispositions, isDropped } = require('../lib/dispositions')
+const { loadDispositions, isUnpublished } = require('../lib/dispositions')
 const { loadAccepted, applyAccepted } = require('../lib/accepted')
 const { goldenPages } = require('../fidelity/lib/pairing')
 const { lockfileKeyFromFile } = require('../fidelity/lockfile-key')
@@ -63,13 +63,14 @@ function parseArgs (argv) {
 }
 
 // The migrated page resources for (component, seg).
-// Pages dropped by an orphan triage decision (drop-404) are excluded: nothing is
-// emitted for them, so they are out of scope rather than "not yet converted".
+// Pages an orphan triage decision does not publish (drop-404 or redirect) are
+// excluded: nothing is emitted for them, so they are out of scope rather than
+// "not yet converted".
 function pagesFor (manifest, component, seg, dispositions) {
   const key = seg == null ? '' : seg
   return (manifest.resources || []).filter((r) =>
     r.family === 'page' && r.component === component && (r.version || '') === key && r.url &&
-    !(dispositions && isDropped(dispositions, r)))
+    !(dispositions && isUnpublished(dispositions, r)))
 }
 
 // url -> HTML file, for a census or golden pages tree.

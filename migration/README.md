@@ -174,10 +174,15 @@ The allowlist (`orphancheck/allowlist.json`) is **deny-by-default**, like `const
 |---|---|
 | `keep-in-nav` | will be added to the nav during migration, so it stops being an orphan |
 | `keep-referenced` | intentionally not in nav; reachable only via inline xref |
-| `redirect` | drop the page and 301 its old URL to `to` (a required sibling URL) |
+| `redirect` | stop publishing the page and redirect its URL to `to` (required; **relative to the component/version**, e.g. `/maintain-cluster/rest-api`, since one key covers every version) |
 | `drop-404` | drop the page; a 404 is acceptable — nothing external should rely on it |
 
-The gate validates that schema (bad disposition, or a `redirect` with no `to`, fails the run) so the decision is captured honestly rather than living in someone's head; the eventual redirect-generation step reads these dispositions. An allow key matching no current orphan is reported as **stale** (surface-only, non-fatal — a page ceasing to be an orphan is success). Shares `lib/catalog.js` with `index-pass` so the two never disagree about which pages/xrefs exist.
+The gate validates that schema (bad disposition, or a `redirect` with no `to`, fails the run) so the decision is captured honestly rather than living in someone's head. The dispositions are **instructions to the build**, not just notes, read through `lib/dispositions.js` so the gate and the converter cannot drift apart:
+
+- `drop-404` and `redirect` both **withhold the page** — no `.mdx` is emitted, and all three other gates drop it from scope rather than counting it as not-yet-converted. For `redirect` the withholding is the point: a real page at the URL would take precedence over the redirect.
+- `redirect` additionally emits a `{from, to}` into `src/redirects.ts` (alongside the page-alias redirects), resolved **per version** against the page's own URL base so a version never redirects across a version boundary. A `to` naming a page that is not published — a typo, or another withheld page — **fails the run** rather than shipping a redirect into a 404.
+- Inbound xrefs to a redirected page are **retargeted at conversion time** to point straight at the target, so internal navigation does not take a redirect hop. (`onBrokenLinks` is `warn`, so without this those links would silently ship broken.) The client redirect then does the job only it can: keeping the old URL alive for bookmarks and links from outside the site.
+- `keep-in-nav` injects the page into the nav at `nav.after` (see `converter/lib/nav.js` `injectNavEntries`). An allow key matching no current orphan is reported as **stale** (surface-only, non-fatal — a page ceasing to be an orphan is success). Shares `lib/catalog.js` with `index-pass` so the two never disagree about which pages/xrefs exist.
 
 Baseline at wire-up: **73 logical orphan pages** across the migrated set (50 unreachable + 23 referenced; 237 version-instances) — clc 8, cloud 2, hazelcast 58, management-center 4, operator 1. GA shows these are low-traffic (single-digit 2026 views on the ones sampled), which makes `drop-404` defensible for most; reserve redirects for pages with real external traffic or (for referenced orphans) live internal referrers.
 

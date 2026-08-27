@@ -25,7 +25,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 
 const { NAV_SOURCES, versionsToProcess, outDirFor } = require('../lib/layout')
-const { loadDispositions, isDropped } = require('../lib/dispositions')
+const { loadDispositions, isUnpublished } = require('../lib/dispositions')
 const { indexOutput, urlToSlug } = require('../refcheck/lib/mdx-refs')
 const { locate, includesIn, resolveTarget, sliceByTags, stripComments } = require('../refcheck/lib/source-refs')
 const { detectLexical, detectAst, gitShow } = require('./lib/detect')
@@ -44,13 +44,14 @@ function parseArgs (argv) {
   }
 }
 
-// Pages dropped by an orphan triage decision (drop-404) are excluded: nothing is
-// emitted for them, so they are out of scope rather than "not yet converted".
+// Pages an orphan triage decision does not publish (drop-404 or redirect) are
+// excluded: nothing is emitted for them, so they are out of scope rather than
+// "not yet converted".
 function pagesFor (manifest, component, seg, dispositions) {
   const key = seg == null ? '' : seg
   return (manifest.resources || []).filter((r) =>
     r.family === 'page' && r.component === component && (r.version || '') === key && r.url &&
-    !(dispositions && isDropped(dispositions, r)))
+    !(dispositions && isUnpublished(dispositions, r)))
 }
 
 function loadAllowlist () {
