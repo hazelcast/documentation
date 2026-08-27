@@ -501,8 +501,22 @@ function convertBlockInner ($, node, st, depth) {
   if (node.attribs && node.attribs.id === 'preamble') return convertChildren($, node, st, depth)
   if (cls.includes('sectionbody') || cls.includes('openblock') || cls.includes('exampleblock') ||
       cls.includes('content') || cls.includes('sidebarblock') || name === 'div') {
+    // A block title on an example/open/sidebar block (`.Example JSON-formatted
+    // string`). Asciidoctor renders it BESIDE the .content wrapper, so reading
+    // only .content dropped it -- sql/working-with-json lost both its captions.
+    //
+    // The text is taken as rendered, which includes Asciidoctor's own counter
+    // ("Example 1. "). That bakes a number the source does not carry, but it is
+    // what the page shows and what Layer 1 compares; the alternative is inventing
+    // a counter in MDX. Emitted bold rather than plain because the Antora UI DOES
+    // style example-block captions (unlike `.paragraph > .title`, which it leaves
+    // as body text), so bold is the closer reading -- 2 occurrences corpus-wide.
+    const titleEl = $(node).children('.title').first()
+    const title = titleEl.length ? `**${escapeBlockStart(inline($, titleEl[0], st).trim())}**` : ''
+    titleEl.remove()
     const inner = $(node).children('.content')[0] || node
-    return convertChildren($, inner, st, depth)
+    const body = convertChildren($, inner, st, depth)
+    return title ? `${title}\n\n${body}` : body
   }
 
   // Unknown element: fall back to a faithful raw-HTML rendering.
@@ -665,7 +679,15 @@ function convertDlist ($, dl, st, depth) {
 // (number cell + description cell joined). The description uses the same
 // block/inline handling as cells, so a rare multi-block annotation still holds.
 function convertColist ($, node, st, depth) {
-  const rows = $(node).find('tr').toArray()
+  // DIRECT rows of the colist's own table only -- the same guard convertTable
+  // needs. A callout description may CONTAIN an admonition, which Asciidoctor
+  // renders as a nested <table> whose single row also has two <td>s (icon +
+  // content), so a descendant `find('tr')` counted it as another callout and
+  // emitted the warning twice: once nested in its real callout, once as a
+  // phantom trailing item (maintain-cluster/rolling-upgrades,
+  // clusters/phi-accrual-detector).
+  const tbl = $(node).children('table').first()
+  const rows = [...tbl.children('tbody').children('tr').toArray(), ...tbl.children('tr').toArray()]
   if (!rows.length) return serializeJsx($, node, st)
   const out = []
   let n = 0
@@ -728,9 +750,34 @@ const isBlockChild = (c) =>
 
 // A container whose content may be block-level (wrapped in .paragraph/.ulist/...)
 // or bare inline text (Asciidoctor emits admonition/cell text without a <p>).
+//
+// The awkward case is MIXED: loose inline content sitting directly beside block
+// children, which Asciidoctor produces for a callout description that starts with
+// a sentence and then carries a block —
+//   <td>Set to <code>true</code> if the connection is reusable.<div class="paragraph">…
+// Handing that to convertChildren converts every child SEPARATELY and joins with
+// blank lines, so one sentence became three paragraphs ("Set to" / "true" / "if
+// the connection is reusable.") — sql/mapping-to-mongo. Each run of consecutive
+// inline nodes is therefore gathered into ONE paragraph first.
 function blockOrInline ($, container, st, depth) {
-  if ((container.children || []).some(isBlockChild)) return convertChildren($, container, st, depth)
-  return inline($, container, st)
+  const kids = container.children || []
+  if (!kids.some(isBlockChild)) return inline($, container, st)
+  const out = []
+  let run = []
+  const flush = () => {
+    if (!run.length) return
+    const text = inlineFrom($, run, st).replace(/\s+/g, ' ').trim()
+    if (text) out.push(escapeBlockStart(text))
+    run = []
+  }
+  for (const node of kids) {
+    if (!isBlockChild(node)) { run.push(node); continue }
+    flush()
+    const block = convertBlock($, node, st, depth)
+    if (block && block.trim()) out.push(block.trim())
+  }
+  flush()
+  return out.join('\n\n')
 }
 
 // --- collapsible ------------------------------------------------------------
@@ -1288,14 +1335,21 @@ function columnAlign ($, headCell, bodyRows, i) {
 const alignSep = (align) =>
   align === 'center' ? ':---:' : align === 'right' ? '---:' : '---'
 
+// A literal `|` in a GFM cell ends the cell. It has to be escaped even inside a
+// code span: the table row is split on unescaped pipes BEFORE inline parsing, so
+// `` `SUM(TINYINT | SMALLINT)` `` silently becomes three columns and the row's
+// remaining cells shift left. Layer 2 counts rows, not columns, so only Layer 1
+// sees it -- as mangled prose (sql/functions-and-operators had three such cells).
+const escapeCellPipes = (s) => s.replace(/(?<!\\)\|/g, '\\|')
+
 function cellInline ($, cell, st) {
   // A single-line literal (`[cols="l"]`) cell is inline monospace.
   const lit = literalInlineCell($, cell)
-  if (lit != null) return inlineCode(lit)
+  if (lit != null) return escapeCellPipes(inlineCode(lit))
   // Simple cell: unwrap the .content/.paragraph/<p> and render inline; pipes and
   // newlines must not break the row.
   const inner = $(cell).find('p').first()[0] || cell
-  return inline($, inner, st, { cell: true }).replace(/\s*\n\s*/g, ' ').trim()
+  return escapeCellPipes(inline($, inner, st, { cell: true }).replace(/\s*\n\s*/g, ' ').trim())
 }
 
 // A clean semantic <table> with Markdown cell bodies. Structural tags sit at
@@ -1368,7 +1422,12 @@ function cellMarkdown ($, cell, st) {
   const content = $(cell).children('.content')[0]
   if (content) return blockOrInline($, content, st, 0).trim()
   const ps = $(cell).children('p').toArray()
-  if (ps.length > 1) return ps.map((p) => inline($, p, st).trim()).filter(Boolean).join('\n\n')
+  // escapeBlockStart, or a cell paragraph the author began with ` - ` becomes a
+  // real Markdown list: the hyphen turns into a bullet and stops being TEXT, so
+  // the row reads differently and the page gains a list item that the golden does
+  // not have (spring/hazelcast-spring-session's flushMode and saveMode cells,
+  // where the author hand-typed a two-line pseudo-list inside one paragraph).
+  if (ps.length > 1) return ps.map((p) => escapeBlockStart(inline($, p, st).trim())).filter(Boolean).join('\n\n')
   // Block/inline decision for the remaining cases: a cell may hold a block with
   // no `.content` wrapper (e.g. a `<div class="literal">` code block), which must
   // go through the block converters rather than be flattened to inline text.
@@ -1428,6 +1487,17 @@ function escapeInlineText (data, opt, st) {
   return out + prose(collapsed.slice(last))
 }
 
+// Wrap emphasis, moving any leading/trailing whitespace OUTSIDE the delimiters.
+// CommonMark requires the closing run to be preceded by a non-space character, so
+// `**BETWEEN: **` -- exactly what `<strong>BETWEEN: </strong>` produces, and
+// query/predicate-overview has several -- is not emphasis at all: the asterisks
+// render literally. Same text and spacing, but it actually parses.
+function emphasis (text, mark) {
+  const [, lead, core, trail] = String(text).match(/^(\s*)([\s\S]*?)(\s*)$/)
+  if (!core) return ''
+  return `${lead}${mark}${core}${mark}${trail}`
+}
+
 function inlineTag ($, node, st, opt) {
   const name = node.name
   const cls = classes(node)
@@ -1447,9 +1517,9 @@ function inlineTag ($, node, st, opt) {
       // Self-closing: the label is single-sourced in the front-end registry, so
       // the authored text (e.g. "Enterprise Edition") is intentionally dropped.
       if (badge) return `<Badge type=${jsxAttr(badge)}/>`
-      return `**${kids()}**`
+      return emphasis(kids(), '**')
     }
-    case 'em': return `*${kids()}*`
+    case 'em': return emphasis(kids(), '*')
     case 'i':
       // Asciidoctor renders emphasis as <em>; an <i> is a font ICON. Most are
       // chrome -- the admonition glyph, the external-link marker -- and are
@@ -1461,13 +1531,37 @@ function inlineTag ($, node, st, opt) {
       // `<span class="icon y">`, and nothing else here wears that class. So by
       // the time we reach a bare <i>, the icon really is decoration.
       if (cls.some((c) => c === 'fa' || c.startsWith('fa-') || c.startsWith('icon-'))) return ''
-      return kids().trim() ? `*${kids()}*` : ''
+      return emphasis(kids(), '*')
     case 'code': {
       // A monospaced cross-reference renders as `<code><a href>Type</a></code>`
       // (api-ref's field-type columns). Markdown cannot hold a link INSIDE inline
       // code, but it can hold code inside a link LABEL, which is visually
       // identical and keeps the link. Only the single-link case (the CRD pattern)
       // is handled; anything else stays plain inline code.
+      // SEVERAL links inside one <code> -- `<code><a>Sources.cache</a>, <a>Sources
+      // .remoteCache</a></code>`, which integrate/connectors uses throughout its
+      // connector tables. Taking the first link and labelling it with the whole
+      // code text merged two destinations into one and silently dropped the
+      // second (9 links lost on that page alone). Convert each child instead:
+      // every link keeps its own href with a code label, and the text between
+      // them (the `, `) stays as text.
+      const anchors = $(node).find('a[href]').toArray()
+      if (anchors.length > 1 && anchors.every((el) => {
+        const { kind, href } = resolveHref(el.attribs.href, st.pageUrl)
+        return kind !== 'empty' && kind !== 'malformed' && !/[<>]/.test(href) && !isPlaceholderUrl(el.attribs.href)
+      })) {
+        return (node.children || []).map((c) => {
+          if (c.type === 'text') return mdEscape(c.data)
+          if (c.type !== 'tag') return ''
+          if (c.name === 'a' && c.attribs && c.attribs.href) {
+            const { href } = resolveHref(c.attribs.href, st.pageUrl)
+            const single = singleSourcedLink(c.attribs.href, href, markerText($, c), st, { code: true })
+            if (single) return single
+            return `[${inlineCode($(c).text())}](${/[()\s]/.test(href) ? `<${href}>` : href})`
+          }
+          return inlineCode($(c).text())
+        }).join('')
+      }
       const a = $(node).find('a[href]')[0]
       if (a && a.attribs && a.attribs.href) {
         const { kind, href } = resolveHref(a.attribs.href, st.pageUrl)

@@ -277,7 +277,7 @@ Aggregate functions perform calculations such as returning the mean of all data 
 | `COUNT(*) :: BIGINT` | Calculates the number of input rows. |
 | `COUNT(field) :: BIGINT` | Calculates the number of input rows in which the field is not null. |
 | `COUNT(DISTINCT field) :: BIGINT` | Calculates the number of distinct values of the given field (ignores the `NULL` value). |
-| `SUM(TINYINT | SMALLINT | INT) :: BIGINT, SUM(BIGINT | DECIMAL) :: DECIMAL, SUM(REAL) :: REAL, SUM(DOUBLE) :: DOUBLE` | Calculates the sum of the non-null input values. |
+| `SUM(TINYINT \| SMALLINT \| INT) :: BIGINT, SUM(BIGINT \| DECIMAL) :: DECIMAL, SUM(REAL) :: REAL, SUM(DOUBLE) :: DOUBLE` | Calculates the sum of the non-null input values. |
 | `AVG(DECIMAL) :: DECIMAL, AVG(DOUBLE) :: DOUBLE` | Calculates the mean of all the non-null input values. |
 | `MIN(any) :: same type as the input` | Calculates the minimum of the non-null input values. Applicable also to `OBJECT` type, if the underlying value is `java.lang.Comparable`. |
 | `MAX(any) :: same type as the input` | Calculates the maximum of the non-null input values. Applicable also to `OBJECT` type, if the underlying value is `java.lang.Comparable`. |
@@ -831,7 +831,7 @@ SELECT JSON_OBJECTAGG(KEY 'name' VALUE age) "Names"
 
 | Function | Description | Example | Result |
 | --- | --- | --- | --- |
-| `string || string` | Concatenates two strings | `'John' || ' ' || 'Doe'` | `John Doe` |
+| `string \|\| string` | Concatenates two strings | `'John' \|\| ' ' \|\| 'Doe'` | `John Doe` |
 | `ASCII(string)` | Returns the ASCII code of the first character of the argument | `ASCII('a')` | `97` |
 | `BTRIM(string)` | Equivalent to `TRIM(BOTH ' ' FROM string)` |  |  |
 | `CONCAT_WS(separator_string, string1, string2, …​)` | Returns a string that consists of the arguments `string1` `separator_string` `string2` | `CONCAT_WS('-', 'John', 'Doe')` | John-Doe |
@@ -844,7 +844,7 @@ SELECT JSON_OBJECTAGG(KEY 'name' VALUE age) "Names"
 | `RTRIM(string)` | Removes the empty spaces from the right-hand side of `string`. This function is equivalent to `TRIM(TRAILING ' ' FROM string)` | `RTRIM(John Doe ')` | `John Doe` |
 | `SUBSTRING(string FROM integer)` | Extracts a substring starting with the given position | `SUBSTRING('John Doe' FROM 6)` | `Doe` |
 | `SUBSTRING(string FROM integer FOR integer)` | Extracts a substring starting with the given position for the given length | `SUBSTRING('John Doe' FROM 1 FOR 4)` | `John` |
-| `TRIM([LEADING|TRAILING|BOTH] [characters FROM] string)` | Removes `characters` (a space by default) from the start/end/both ends of the string | `TRIM(BOTH '[]' FROM '[John Doe]')` | `John Doe` |
+| `TRIM([LEADING\|TRAILING\|BOTH] [characters FROM] string)` | Removes `characters` (a space by default) from the start/end/both ends of the string | `TRIM(BOTH '[]' FROM '[John Doe]')` | `John Doe` |
 | `TRIM(characters FROM string)` | Equivalent to `TRIM(BOTH characters FROM string)` | `TRIM('[]' FROM '[John Doe]')` | `John Doe` |
 | `TRIM(string)` | Equivalent to `TRIM(BOTH ' ' FROM string)` | `TRIM(' John Doe ')` | `John Doe` |
 | `UPPER(string)` | Converts a string to upper case | `UPPER('John Doe')` | `JOHN DOE` |

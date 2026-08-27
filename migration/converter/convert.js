@@ -1219,7 +1219,20 @@ function convertVersion (ver, ctx) {
   for (const [id, d] of decisions) {
     try {
       const { pageVars, proseVars, hrefVars, codeVars, codeValueVars } = partialVarsFor(d)
-      const { body, imports } = convertBody(d.representative, { pageUrl: pages[0].url, relFile: path.join('_partials', d.slug + '.mdx'), component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, hrefVars, codeVars, codeValueVars, latestVersions: ctx.latestVersions, urlToRelFile, imagePlacement })
+      // Resolve against a page that ACTUALLY INCLUDES this partial, not `pages[0]`
+      // — the component's first page, which is what this used to pass. The golden
+      // stores a partial's links as hrefs RELATIVE to the including page
+      // (`dynamic-config#options`, `../maintain-cluster/restart-cluster`), so
+      // resolving them against an unrelated page's depth silently produced URLs
+      // one segment short: 5 dead links across 4 Platform pages, each pointing at
+      // a plausible-looking route that does not exist.
+      //
+      // Any of the partial's own pages will do: factoring requires every
+      // occurrence to render IDENTICAL inner HTML, and two including pages at
+      // different depths would resolve the same xref to different relative hrefs
+      // — so such a partial is declined as content-varies before it reaches here.
+      const partialPageUrl = (d.pages && d.pages[0]) || pages[0].url
+      const { body, imports } = convertBody(d.representative, { pageUrl: partialPageUrl, relFile: path.join('_partials', d.slug + '.mdx'), component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, hrefVars, codeVars, codeValueVars, latestVersions: ctx.latestVersions, urlToRelFile, imagePlacement })
       const importBlock = imports.size ? [...imports].join('\n') + '\n\n' : ''
       d.mdx = importBlock + body + '\n'
     } catch (err) {
