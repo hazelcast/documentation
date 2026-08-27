@@ -60,7 +60,7 @@ const RE_SUBS = /^\[.*\bsubs=/
 //        — without `@` listed, the component name reads as a macro called
 //        `hazelcast:` (found on management-center getting-started/overview);
 //   alphanumerics, which keep `foo bar:baz[` from matching mid-word.
-const RE_INLINEMAC = /(?<![A-Za-z0-9:@])([a-z][a-z0-9_-]*):(?!:)([^\s[]*)\[/g
+const RE_INLINEMAC = /(?<![A-Za-z0-9:@-])([a-z][a-z0-9_-]*):(?!:)([^\s[]*)\[/g
 const RE_PASS = /pass:\w*\[/
 // A block delimiter line. Two forms: a run of the same delimiter char (`----`,
 // `====`, `****`, `____`, `....`, `++++`, `////`) or the open block `--`; PLUS a

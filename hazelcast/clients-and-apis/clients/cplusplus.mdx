@@ -56,7 +56,7 @@ git clone https://github.com/microsoft/vcpkg
 
 If you use Windows:
 
-```bat
+```batch
 git clone https://github.com/microsoft/vcpkg
 .\vcpkg\bootstrap-vcpkg.bat
 .\vcpkg\vcpkg install "hazelcast-cpp-client[openssl]:x64-windows" --recurse
@@ -66,7 +66,7 @@ The above code snippet installs `hazelcast-cpp-client` with its `boost` and `ope
 
 After installation, the library is available to use. For example, if you are using CMake for your builds, you can use the following CMake build command with the `CMAKE_TOOLCHAIN_FILE` CMake option to be the `vcpkg.cmake`.
 
-```bat
+```batch
 cmake -B [build directory] -S . -DCMAKE_TOOLCHAIN_FILE=[path to vcpkg]/scripts/buildsystems/vcpkg.cmake
 cmake --build [build directory]
 ```
@@ -174,7 +174,7 @@ Download and extract the release archive from the [releases](https://github.com/
 
 Open a `cmd` window and switch to the folder where you extracted the contents of the release archive. Then create and change to a new directory:
 
-```bat vars
+```batch vars
 cd hazelcast-cpp-client-{page-latest-supported-cplusplus-client}
 mkdir build
 cd build
@@ -182,7 +182,7 @@ cd build
 
 Run `cmake` to configure:
 
-```bat
+```batch
 cmake ..
 ```
 
@@ -190,7 +190,7 @@ See the [advanced installation](#advanced-installation) section for configuratio
 
 Build and install:
 
-```bat
+```batch
 cmake --build . --config Release
 cmake --build . --target install --config Release
 ```
@@ -387,7 +387,7 @@ You also need to pass the preprocessor definition `BOOST_THREAD_VERSION=5` for n
 
 You can use the following command to compile an example from the examples directory:
 
-```bat
+```batch
 cl.exe path\to\example.cpp ^
     C:\path\to\hazelcast\lib\hazelcast-cpp-client.lib ^
     C:\path\to\boost\lib\boost_thread.lib C:\path\to\boost\lib\boost_chrono.lib ^
@@ -464,7 +464,7 @@ You must configure the Hazelcast C++ client programmatically as config files of 
 
 You can start the client with no custom configuration like this:
 
-```c++
+```cpp
     auto hz = hazelcast::new_client().get(); // Connects to the cluster
 ```
 
@@ -472,7 +472,7 @@ This section describes some network configuration settings to cover common use c
 
 An easy way to configure your Hazelcast C++ client is to create a `client_config` object and set the appropriate options. Then you need to pass this object to the client when starting it, as shown below:
 
-```c++
+```cpp
     hazelcast::client::client_config config;
     config.set_cluster_name("my-cluster"); // the server is configured to use the `+my_cluster+` as the cluster name hence we need to match it to be able to connect to the server.
     config.get_network_config().add_address(address("192.168.1.10", 5701));
@@ -485,7 +485,7 @@ If you run Hazelcast members in a different server than the client, you most pro
 
 You only need to provide the name of the cluster if it is explicitly configured on the server side (otherwise the default value of `dev` is used).
 
-```c++
+```cpp
 hazelcast::client::client_config config;
 config.set_cluster_name("my-cluster"); // the server is configured to use the `+my_cluster+` as the cluster name hence we need to match it to be able to connect to the server.
 ```
@@ -494,7 +494,7 @@ config.set_cluster_name("my-cluster"); // the server is configured to use the `+
 
 You need to provide the IP address and port of at least one member in your cluster so the client can find it.
 
-```c++
+```cpp
 hazelcast::client::client_config config;
 config.get_network_config().add_address(hazelcast::client::address("your server ip", 5701 /* your server port*/));
 ```
@@ -511,13 +511,13 @@ See the following for an example client system property configuration:
 
 **Programmatically:**
 
-```c++
+```cpp
 config.set_property(hazelcast::client::client_properties::INVOCATION_TIMEOUT_SECONDS, "2") // Sets invocation timeout as 2 seconds
 ```
 
 or
 
-```c++
+```cpp
 config.set_property("hazelcast.client.invocation.timeout.seconds", "2") // Sets invocation timeout as 2 seconds
 ```
 
@@ -537,7 +537,7 @@ Now that we have a working cluster and we know how to configure both our cluster
 
 The following example first creates a programmatic configuration object. Then, it starts a client.
 
-```c++
+```cpp
 #include <hazelcast/client/hazelcast_client.h>
 int main() {
     auto hz = hazelcast::new_client().get(); // Connects to the cluster
@@ -573,7 +573,7 @@ Next, manipulate a distributed map on a cluster using the client.
 
 Save the following file as `IT.cpp` and compile it using a command similar to the following (Linux g++ compilation is used for demonstration):
 
-```c++
+```cpp
 g++ IT.cpp -o IT -lhazelcast-cpp-client -lboost_thread -lboost_chrono -DBOOST_THREAD_VERSION=5 -lssl -lcrypto --std=c++11
 ```
 
@@ -585,7 +585,7 @@ Then, you can run the application using the following command:
 
 **IT.cpp**
 
-```c++
+```cpp
 #include <hazelcast/client/hazelcast_client.h>
 int main() {
     auto hz = hazelcast::new_client().get(); // Connects to the cluster
@@ -629,7 +629,7 @@ Now create a `Sales.cpp` file, compile and run it as shown below:
 
 **Compile:**
 
-```c++
+```cpp
 g++ Sales.cpp -o Sales -lhazelcast-cpp-client -lboost_thread -lboost_chrono -DBOOST_THREAD_VERSION=5 -lssl -lcrypto --std=c++11
 ```
 
@@ -643,7 +643,7 @@ Then, run the application using the following command:
 
 **Sales.cpp**
 
-```c++
+```cpp
 #include <hazelcast/client/hazelcast_client.h>
 int main() {
 auto hz = hazelcast::new_client().get(); // Connects to the cluster
@@ -701,7 +701,7 @@ cmake --build build
 
 If you use Windows:
 
-```bat
+```batch
 cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=[path to vcpkg]\scripts\buildsystems\vcpkg.cmake && ^
 cmake --build build && ^
 .\build\Debug\client
@@ -709,7 +709,7 @@ cmake --build build && ^
 
 The sample code creates a client, and the client automatically connects to the cluster. It creates a map named `personnel_map` and puts the records inside it. It then gets all the entries from the cluster and prints them.
 
-```c++
+```cpp
 #include <hazelcast/client/hazelcast_client.h>
 int main() {
     auto hz = hazelcast::new_client().get(); // Connects to the cluster

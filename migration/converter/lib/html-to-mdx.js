@@ -746,6 +746,21 @@ function examplesRelPath (relFile) {
   return rel.startsWith('.') ? rel : './' + rel
 }
 
+// The fence language Prism will actually look up. Prism's registry is
+// case-sensitive and knows only its own names, so an AsciiDoc `[source,SQL]` or
+// `[source,bat]` silently renders UNHIGHLIGHTED -- a regression the fidelity
+// harness cannot see, since it compares text and structure, not highlighting.
+// Lowercase, then map the two spellings AsciiDoc uses that Prism does not know.
+// Deliberately NOT a place to correct source typos (`jave`) or to invent a
+// language for a non-language (`output`, `pseudocode`): those render plain, which
+// is what they should do, and a silent correction here would hide the next one.
+const PRISM_ALIASES = { bat: 'batch', 'c++': 'cpp' }
+
+function normalizeLang (lang) {
+  const l = String(lang || '').toLowerCase()
+  return PRISM_ALIASES[l] || l
+}
+
 function emitExampleCodeBlock ($, pre, file, title, st, conums) {
   const codeEl = $(pre).find('code')[0]
   let lang = ''
@@ -756,6 +771,7 @@ function emitExampleCodeBlock ($, pre, file, title, st, conums) {
     const m = classes(langSrc).find((c) => c.startsWith('language-'))
     if (m) lang = m.slice('language-'.length)
   }
+  lang = normalizeLang(lang)
   const varName = exampleVar(file, st)
   st.imports.add("import CodeBlock from '@theme/CodeBlock';")
   // Plain import: a scoped webpack rule (example-attributes-plugin) runs the
@@ -882,6 +898,7 @@ function preToFence ($, pre, title, st) {
     const m = classes(langSrc).find((c) => c.startsWith('language-'))
     if (m) lang = m.slice('language-'.length)
   }
+  lang = normalizeLang(lang)
   // Asciidoctor callout numbers (conums) render inside the code as
   // `<i class="conum" data-value="N"></i><b>(N)</b>`. Put the native Asciidoctor
   // `<N>` marker back INLINE on its own line (so it stays glued to that line when

@@ -281,7 +281,16 @@ const config: Config = {
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
-      additionalLanguages: ['bash', 'java', 'properties', 'csharp'],
+      // prism-react-renderer bundles ~50 languages; anything else the docs use
+      // must be named here or its code blocks render UNHIGHLIGHTED (silently --
+      // the fidelity harness compares text and structure, not highlighting).
+      // Each entry below is a language some page actually uses, checked against
+      // the migrated set by constructcheck's source-language census.
+      // `docker` also registers the `dockerfile` alias; `batch` covers `[source,bat]`.
+      additionalLanguages: [
+        'bash', 'java', 'properties', 'csharp',
+        'batch', 'cmake', 'docker', 'dot', 'groovy', 'php', 'protobuf',
+      ],
     },
   } satisfies Preset.ThemeConfig,
 };

@@ -110,6 +110,18 @@ const astKeys = (text) => new Set(detectAst(text).map((c) => `${c.category}:${c.
   const pinnedXref = keys('See xref:5.7@hazelcast:sql:create-index.adoc[CREATE INDEX] for details.')
   assert(pinnedXref.has('inline-macro:xref:'), 'a version-pinned xref is still an xref macro')
   assert(!pinnedXref.has('inline-macro:hazelcast:'), 'but its component is not a second macro')
+
+  // A HYPHENATED coordinate segment is the same bug once more: the lookbehind
+  // has to reject `-` too, or the tail of `management-center:` reads as a
+  // `center:` macro. Real case: getting-started/get-started-cli:64 reported
+  // non-existent `center:` and `started:` macros from one include coordinate.
+  const hyphen = keys('include::{page-latest-supported-mc}@management-center:getting-started:install.adoc[tag=cli]')
+  assert(!hyphen.has('inline-macro:center:'), 'the tail of a hyphenated component is not a macro')
+  assert(!hyphen.has('inline-macro:started:'), 'nor the tail of a hyphenated module')
+  assert(hyphen.has('include:relative [x-comp]'), 'and the include itself is still classified')
+  // The guard must not swallow a REAL macro that merely follows a hyphen.
+  assert(keys('- xref:query:foo[]').has('inline-macro:xref:'),
+    'a macro after a list-marker hyphen is still a macro')
   ok('macros: block :: vs inline :, URL schemes and coordinate segments excluded')
 }
 
