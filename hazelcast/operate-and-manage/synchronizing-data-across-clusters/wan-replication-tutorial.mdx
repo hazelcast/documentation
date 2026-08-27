@@ -35,11 +35,11 @@ Before you start this tutorial, ensure you have completed the following:
 
 ## Step 1: Start the passive cluster
 
-In this step, you'll start an Enterprise Edition cluster called `London` with a single member. This will be the **passive** cluster, which means it doesn't need WAN Replication to be enabled.
+In this step, you'll start an <Variable name="enterprise-product-name"/> cluster called `London` with a single member. This will be the **passive** cluster, which means it doesn't need WAN Replication to be enabled.
 
 1. Run the following Docker command in a terminal, replacing the \<YOUR\_LICENSE\_KEY\> placeholder with your Hazelcast Enterprise Edition license key:
 
-   ```shell conums
+   ```shell conums vars
    docker run \
        -p 5701:5701 \
        --network hazelcast-network \
@@ -47,13 +47,13 @@ In this step, you'll start an Enterprise Edition cluster called `London` with a 
        -e HZ_LICENSEKEY=<YOUR_LICENSE_KEY> \ <2>
        -e HZ_MANAGEMENTCENTER_CONSOLEENABLED=true \
        -e HZ_CLUSTERNAME=London \
-       hazelcast/hazelcast-enterprise:5.8.0-SNAPSHOT
+       hazelcast/hazelcast-enterprise:{ee-version}
    ```
 
    <CodeCallouts>
 
    1. You can replace `host.docker.internal` with the IP address of your Docker host. Either method will work but you will need to know the IP address for the later step connecting, for example, a SQL client to a specific member.
-   2. Replace the `<YOUR_LICENSE_KEY>` placeholder with the Hazelcast Enterprise Edition license key.
+   2. Replace the `<YOUR_LICENSE_KEY>` placeholder with the Hazelcast <Variable name="enterprise-product-name"/> license key.
 
    </CodeCallouts>
 
@@ -69,7 +69,7 @@ Members {size:1, ver:1} [
 
 ## Step 2: Start the active cluster
 
-In this step, you'll start another Enterprise Edition cluster called `Tokyo` with a single member. This will be the **active** cluster which means it needs WAN Replication to be configured.
+In this step, you'll start another <Variable name="enterprise-product-name"/> cluster called `Tokyo` with a single member. This will be the **active** cluster which means it needs WAN Replication to be configured.
 
 :::note
 
@@ -140,10 +140,10 @@ This section shows you how to create a Hazelcast configuration file and use Dock
    </Tabs>
 2. Open a new terminal and start the active cluster as follows:
 
-   ```shell
+   ```shell vars
    docker run \
         --network hazelcast-network \
-        -e JAVA_OPTS="-Dhazelcast.config=/opt/hazelcast/config_ext/hazelcast.yaml" -v ~/config-tokyo:/opt/hazelcast/config_ext hazelcast/hazelcast-enterprise:5.8.0-SNAPSHOT
+        -e JAVA_OPTS="-Dhazelcast.config=/opt/hazelcast/config_ext/hazelcast.yaml" -v ~/config-tokyo:/opt/hazelcast/config_ext hazelcast/hazelcast-enterprise:{ee-version}
    ```
 
    :::note
@@ -169,10 +169,10 @@ The next step is connecting to the clusters using Management Center and adding t
 
 1. Open a new terminal and start Management Center using the following code:
 
-   ```shell
+   ```shell vars
    docker run \
        --network hazelcast-network \
-       -p 8080:8080 hazelcast/management-center:latest-snapshot
+       -p 8080:8080 hazelcast/management-center:{page-latest-supported-mc-installer}
    ```
 2. Open a web browser and go to `localhost:8080`.
 3. Enable **Dev Mode** and click **Connect**.
@@ -197,8 +197,8 @@ In this step you'll use the SQL shell to create a map called `cities` for the To
 
 1. In a new terminal, start the SQL shell for the Tokyo cluster, replacing the IP address if needed i.e. this example assumes Tokyo is running on `172.18.0.3:5701`:
 
-   ```shell
-   docker run --network hazelcast-network -it --rm hazelcast/hazelcast-enterprise:5.8.0-SNAPSHOT hz-cli --targets Tokyo@172.18.0.3:5701 sql
+   ```shell vars
+   docker run --network hazelcast-network -it --rm hazelcast/hazelcast-enterprise:{ee-version} hz-cli --targets Tokyo@172.18.0.3:5701 sql
    ```
 2. When you see the SQL shell prompt (`sql>`), type the following command and press <kbd>Enter</kbd> to create the map:
 
@@ -294,7 +294,7 @@ As an alternative to terminating the clusters via the terminal, you can use Mana
 
 In this tutorial, you learned how to:
 
-- Start a passive Enterprise Edition cluster.
+- Start a passive <Variable name="enterprise-product-name"/> cluster.
 - Start an active cluster with WAN Replication.
 - Create a map in the active cluster and confirm it's replicated.
 - Modify some map entries in the active cluster and see the changes replicated in the passive cluster.

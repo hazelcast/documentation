@@ -28,8 +28,8 @@ Although running multiple members on a single Docker host is useful for testing,
    If you do not see a version number, see the [Docker documentation](https://docs.docker.com/config/daemon/) for troubleshooting information.
 3. Pull the Hazelcast Docker image:
 
-   ```shell
-   docker pull hazelcast/hazelcast:5.8.0-SNAPSHOT
+   ```shell vars
+   docker pull hazelcast/hazelcast:{os-version}
    ```
 
 ## Step 2: Start a local member
@@ -55,14 +55,14 @@ In this step, you use the Hazelcast Docker image to start a local single-member 
 
    Replace the `<host_ip>` placeholder with the IP address of your Docker host.
 
-   ```shell
+   ```shell vars
    docker run \
        -it \
        --network hazelcast-network \
        --rm \
        -e HZ_NETWORK_PUBLICADDRESS=<host_ip>:5701 \
        -e HZ_CLUSTERNAME=hello-world \
-       -p 5701:5701 hazelcast/hazelcast:5.8.0-SNAPSHOT
+       -p 5701:5701 hazelcast/hazelcast:{os-version}
    ```
 
    Hazelcast environment variables:
@@ -91,8 +91,8 @@ Hazelcast has lots of distributed data structures available for writing data to 
 
    Replace the `<host_ip>` placeholder with the IP address of your Docker host.
 
-   ```shell
-   docker run --network hazelcast-network -it --rm hazelcast/hazelcast:5.8.0-SNAPSHOT hz-cli --targets hello-world@<host_ip> sql
+   ```shell vars
+   docker run --network hazelcast-network -it --rm hazelcast/hazelcast:{os-version} hz-cli --targets hello-world@<host_ip> sql
    ```
 
    The `--targets` parameter tells the SQL shell to connect to the member at the given IP address in a cluster called `hello-world`.
@@ -380,8 +380,8 @@ You can read the data that you just wrote to memory by connecting to the member 
 
    Replace the `<host_ip>` placeholder with the IP address of your Docker host.
 
-   ```shell
-   docker run --network hazelcast-network -it --rm hazelcast/hazelcast:5.8.0-SNAPSHOT hz-cli --targets hello-world@<host_ip> sql
+   ```shell vars
+   docker run --network hazelcast-network -it --rm hazelcast/hazelcast:{os-version} hz-cli --targets hello-world@<host_ip> sql
    ```
 2. Query all data in the map.
 
@@ -629,10 +629,10 @@ In this step, you start a local instance of Management Center and use it to view
 
 1. Start Management Center.
 
-   ```shell
+   ```shell vars
    docker run \
        --network hazelcast-network \
-       -p 8080:8080 hazelcast/management-center:latest-snapshot
+       -p 8080:8080 hazelcast/management-center:{page-latest-supported-mc-installer}
    ```
 2. In a web browser, go to localhost:8080 and enable dev mode.
 
@@ -673,23 +673,23 @@ In this step, you add two more members to your cluster.
 
    :::
 
-   ```shell
+   ```shell vars
    docker run \
        --name my-second-member --network hazelcast-network \
        -e HZ_NETWORK_PUBLICADDRESS=<host_ip>:5702 \
        -e HZ_CLUSTERNAME=hello-world \
-       -p 5702:5701 hazelcast/hazelcast:5.8.0-SNAPSHOT
+       -p 5702:5701 hazelcast/hazelcast:{os-version}
    ```
 2. Start another member.
 
    Replace the `<host_ip>` placeholder with the IP address of your Docker host.
 
-   ```shell
+   ```shell vars
    docker run \
        --name my-third-member --network hazelcast-network \
        -e HZ_NETWORK_PUBLICADDRESS=<host_ip>:5703 \
        -e HZ_CLUSTERNAME=hello-world \
-       -p 5703:5701 hazelcast/hazelcast:5.8.0-SNAPSHOT
+       -p 5703:5701 hazelcast/hazelcast:{os-version}
    ```
 
    You should see that your members find and connect to each other automatically to form your `hello-world` cluster. You can learn more about how members do this in [Discovery Mechanisms](../../develop-and-build/member-and-client-discovery/discovery-mechanisms.mdx).
@@ -743,5 +743,5 @@ If you're interested in learning more about topics introduced in this tutorial, 
 - [Clients](../hazelcast-clients/overview.mdx)
 - [Data partitioning](../../develop-and-build/architecture/data-partitioning.mdx)
 - [Maps and other data structures](../../develop-and-build/distributed-data-structures/distributed-data-structures.mdx)
-- [Management Center](/management-center/5.12-snapshot/getting-started/overview)
+- <Variable href="/management-center/{page-latest-supported-mc}/getting-started/overview" text="Management Center"/>
 - [Network partitioning](../../operate-and-manage/fault-tolerance/handling-network-partitions/network-partitioning.mdx)

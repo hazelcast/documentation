@@ -54,7 +54,7 @@ The Community Edition REST API has been deprecated and will be removed as of Haz
 
 ### Perform a rolling restart {/* #rolling */}
 
-You should check the cluster is healthy before and after making changes. The best way to do this is to run a [Healthcheck](/management-center/5.12-snapshot/clusters/healthcheck) in Management Center. For other options, see [Monitoring](./monitoring.mdx).
+You should check the cluster is healthy before and after making changes. The best way to do this is to run a <Variable href="/management-center/{page-latest-supported-mc}/clusters/healthcheck" text="Healthcheck"/> in Management Center. For other options, see [Monitoring](./monitoring.mdx).
 
 To perform a rolling restart:
 
@@ -88,7 +88,7 @@ To perform a rolling restart:
 
    </TabItem>
    </Tabs>
-3. Wait until all partition migrations are completed. You can monitor the progress of migrations on the [cluster dashboard](/management-center/5.12-snapshot/clusters/dashboard) in Management Center.
+3. Wait until all partition migrations are completed. You can monitor the progress of migrations on the <Variable href="/management-center/{page-latest-supported-mc}/clusters/dashboard" text="cluster dashboard"/> in Management Center.
 4. Start a new member.
 
    <Tabs groupId="cli--docker">
@@ -107,17 +107,17 @@ To perform a rolling restart:
 
    </TabItem>
    </Tabs>
-5. Wait until the new member joins the cluster and all partition migrations are completed. Again, you can monitor progress using the [cluster dashboard](/management-center/5.12-snapshot/clusters/dashboard) in Management Center.
+5. Wait until the new member joins the cluster and all partition migrations are completed. Again, you can monitor progress using the <Variable href="/management-center/{page-latest-supported-mc}/clusters/dashboard" text="cluster dashboard"/> in Management Center.
 6. Repeat this process until all members have been restarted with the updated configuration.
 
 ### Perform a whole cluster restart {/* #whole */}
 
-You should check the cluster is healthy before and after making changes. The best way to do this is to run a [Healthcheck](/management-center/5.12-snapshot/clusters/healthcheck) in Management Center. For other options, see [Monitoring](./monitoring.mdx).
+You should check the cluster is healthy before and after making changes. The best way to do this is to run a <Variable href="/management-center/{page-latest-supported-mc}/clusters/healthcheck" text="Healthcheck"/> in Management Center. For other options, see [Monitoring](./monitoring.mdx).
 
 To perform a whole cluster restart:
 
 1. Update the static configuration as required.
-2. Divert traffic to another Hazelcast cluster. How to do this depends on how your Hazelcast deployment is architected. Management Center provides an easy way to [manage client connections](/management-center/5.12-snapshot/clusters/client-filtering) using filtering rules.
+2. Divert traffic to another Hazelcast cluster. How to do this depends on how your Hazelcast deployment is architected. Management Center provides an easy way to <Variable href="/management-center/{page-latest-supported-mc}/clusters/client-filtering" text="manage client connections"/> using filtering rules.
 3. If you have enabled persistence, change the cluster state to `NO_MIGRATION` or `FROZEN`:
 
    <Tabs groupId="cli--management-center">
@@ -167,7 +167,7 @@ To perform a whole cluster restart:
 
    </TabItem>
    </Tabs>
-5. Check that all members are shut down. The [cluster dashboard](/management-center/5.12-snapshot/clusters/dashboard) in Management Center shows which members are in `SHUT_DOWN` state. If all members are shut down, Management Center will disconnect from the cluster.
+5. Check that all members are shut down. The <Variable href="/management-center/{page-latest-supported-mc}/clusters/dashboard" text="cluster dashboard"/> in Management Center shows which members are in `SHUT_DOWN` state. If all members are shut down, Management Center will disconnect from the cluster.
 6. Recreate the cluster:
 
    <Tabs groupId="cli--docker">
@@ -190,6 +190,6 @@ To perform a whole cluster restart:
 
    </TabItem>
    </Tabs>
-7. Check that all members are in `ACTIVE` state using the [cluster dashboard](/management-center/5.12-snapshot/clusters/dashboard) in Management Center or change state to `ACTIVE` if `NO_MIGRATION` or `FROZEN` was used for restart.
-8. Confirm the cluster is healthy, for example by running a [Healthcheck](/management-center/5.12-snapshot/clusters/healthcheck).
+7. Check that all members are in `ACTIVE` state using the <Variable href="/management-center/{page-latest-supported-mc}/clusters/dashboard" text="cluster dashboard"/> in Management Center or change state to `ACTIVE` if `NO_MIGRATION` or `FROZEN` was used for restart.
+8. Confirm the cluster is healthy, for example by running a <Variable href="/management-center/{page-latest-supported-mc}/clusters/healthcheck" text="Healthcheck"/>.
 9. Restore traffic to the cluster.

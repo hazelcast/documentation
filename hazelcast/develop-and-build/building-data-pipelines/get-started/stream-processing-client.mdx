@@ -36,7 +36,7 @@ To complete this tutorial, you need the following:
 </td>
 </tr>
 <tr>
-<td>Maven 3.9</td>
+<td>Maven <Variable name="minimum-maven-version"/></td>
 <td>[Download Maven](https://maven.apache.org/install.html)</td>
 </tr>
 </tbody>
@@ -76,7 +76,7 @@ First, you need to setup a Java project that you can later package and submit to
 
    Replace the `${jdk.version}` placeholder with your JDK version.
 
-   ```xml
+   ```xml vars
    <?xml version="1.0" encoding="UTF-8"?>
    <project xmlns="http://maven.apache.org/POM/4.0.0"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -102,7 +102,7 @@ First, you need to setup a Java project that you can later package and submit to
            <dependency>
                <groupId>com.hazelcast</groupId>
                <artifactId>hazelcast</artifactId>
-               <version>5.8.0-SNAPSHOT</version>
+               <version>{os-version}</version>
            </dependency>
        </dependencies>
 
@@ -184,12 +184,12 @@ In this step, you start a local single-member cluster to which you can submit yo
    Docker networks make it easier for you to connect to your cluster and add other services that need to communicate with your cluster.
 2. Execute the Docker `run` command to start a member.
 
-   ```shell
+   ```shell vars
    docker run \
        -it \
        --network hazelcast-network \
        --rm \
-       -p 5701:5701 hazelcast/hazelcast:5.8.0-SNAPSHOT
+       -p 5701:5701 hazelcast/hazelcast:{os-version}
    ```
 
    Docker parameters:
@@ -232,8 +232,8 @@ After building a pipeline, you can deploy it to your member by packaging the cod
    - $PATH\_TO\_TARGET: The absolute path to your `target` directory.
    - $MEMBER\_IP: The IP address of the member to which to submit the job.
 
-     ```bash
-     docker run -it --network hazelcast-network -v $PATH_TO_TARGET:/jars --rm hazelcast/hazelcast:5.8.0-SNAPSHOT hz-cli -t $MEMBER_IP submit -c org.example.EvenNumberStream /jars/hz-example-0.1.0.jar
+     ```bash vars
+     docker run -it --network hazelcast-network -v $PATH_TO_TARGET:/jars --rm hazelcast/hazelcast:{os-version} hz-cli -t $MEMBER_IP submit -c org.example.EvenNumberStream /jars/hz-example-0.1.0.jar
      ```
 
    In the console of your Hazelcast member, you should see that a new job has been submitted and it's running on your cluster.
@@ -306,10 +306,10 @@ With Management Center, you can monitor the status of your jobs and manage the l
    <Tabs groupId="binary--docker">
    <TabItem value="docker" label="Docker">
 
-   ```shell
+   ```shell vars
    docker run \
        --network hazelcast-network \
-       -p 8080:8080 hazelcast/management-center:latest-snapshot
+       -p 8080:8080 hazelcast/management-center:{page-latest-supported-mc-installer}
    ```
 
    </TabItem>
@@ -390,7 +390,7 @@ public class EvenNumberStream {
 
 ## Next Steps
 
-Learn more about how to [manage and monitor jobs in Management Center](/management-center/5.12-snapshot/monitor-streaming/dashboard).
+Learn more about how to <Variable href="/management-center/{page-latest-supported-mc}/monitor-streaming/dashboard" text="manage and monitor jobs in Management Center"/>.
 
 Explore all the [built-in sources and sinks](../../../connectors/connectors.mdx) that you can plug into your own pipelines.
 

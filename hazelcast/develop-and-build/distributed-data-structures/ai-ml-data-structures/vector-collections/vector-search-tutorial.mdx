@@ -6,7 +6,7 @@ enterprise: true
 beta: true
 ---
 
-This tutorial shows you how to use Enterprise Edition to build an image search system. This solution uses the [CLIP sentence transformer](https://huggingface.co/sentence-transformers/clip-ViT-B-32) to map images and text onto a shared, 512-dimensional vector space.
+This tutorial shows you how to use <Variable name="enterprise-product-name"/> to build an image search system. This solution uses the [CLIP sentence transformer](https://huggingface.co/sentence-transformers/clip-ViT-B-32) to map images and text onto a shared, 512-dimensional vector space.
 
 This tutorial uses:
 
@@ -27,7 +27,7 @@ The diagram below shows you how the components fit together and the processing s
 
 To complete this tutorial, you will need the following:
 
-- [Java Developer Kit](https://www.oracle.com/java/technologies/downloads/) 17 or later
+- [Java Developer Kit](https://www.oracle.com/java/technologies/downloads/) <Variable name="minimum-java-version"/> or later
 - A Java IDE (we suggest [IntelliJ IDEA](https://www.jetbrains.com/idea/))
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - A Hazelcast Enterprise license key with "Advanced AI" enabled
@@ -114,11 +114,11 @@ This tutorial makes use of the Hazelcast Pipeline API. If you are not familiar w
 
       Once you have deployed the pipeline, it will take a while for the status to change from **Starting** to **Running** (up to 5 minutes) because Hazelcast has to download and install many Python packages to support the embedding. You will see something like the following in the hazelcast logs when the Python stream stage has initialized.
 
-      ```bash
-      hazelcast-image-search-hz-1  | 2024-07-17 19:18:41,881 [ INFO] [hz.magical_joliot.cached.thread-7] [c.h.j.python]: [198.51.100.3]:5701 [dev] [5.8.0-SNAPSHOT] Started Python process: 246
-      hazelcast-image-search-hz-1  | 2024-07-17 19:18:41,881 [ INFO] [hz.magical_joliot.cached.thread-3] [c.h.j.python]: [198.51.100.3]:5701 [dev] [5.8.0-SNAPSHOT] Started Python process: 245
-      hazelcast-image-search-hz-1  | 2024-07-17 19:18:43,786 [ INFO] [hz.magical_joliot.cached.thread-7] [c.h.j.python]: [198.51.100.3]:5701 [dev] [5.8.0-SNAPSHOT] Python process 246 listening on port 39819
-      hazelcast-image-search-hz-1  | 2024-07-17 19:18:43,819 [ INFO] [hz.magical_joliot.cached.thread-3] [c.h.j.python]: [198.51.100.3]:5701 [dev] [5.8.0-SNAPSHOT] Python process 245 listening on port 39459
+      ```bash vars
+      hazelcast-image-search-hz-1  | 2024-07-17 19:18:41,881 [ INFO] [hz.magical_joliot.cached.thread-7] [c.h.j.python]: [198.51.100.3]:5701 [dev] [{full-version}] Started Python process: 246
+      hazelcast-image-search-hz-1  | 2024-07-17 19:18:41,881 [ INFO] [hz.magical_joliot.cached.thread-3] [c.h.j.python]: [198.51.100.3]:5701 [dev] [{full-version}] Started Python process: 245
+      hazelcast-image-search-hz-1  | 2024-07-17 19:18:43,786 [ INFO] [hz.magical_joliot.cached.thread-7] [c.h.j.python]: [198.51.100.3]:5701 [dev] [{full-version}] Python process 246 listening on port 39819
+      hazelcast-image-search-hz-1  | 2024-07-17 19:18:43,819 [ INFO] [hz.magical_joliot.cached.thread-3] [c.h.j.python]: [198.51.100.3]:5701 [dev] [{full-version}] Python process 245 listening on port 39459
       ```
 
       :::

@@ -8,7 +8,7 @@ enterprise: true
 
 import PartialGettingStartedInstallEnterprise from '@site/hazelcast/_partials/getting-started-install-enterprise.mdx';
 
-This quickstart tutorial will get you started with Hazelcast Platform Enterprise Edition and take you from installation all the way through to a working three member cluster with persistence enabled.
+This quickstart tutorial will get you started with Hazelcast Platform <Variable name="enterprise-product-name"/> and take you from installation all the way through to a working three member cluster with persistence enabled.
 
 ## Overview
 
@@ -21,13 +21,13 @@ In this tutorial, you'll do the following:
 
 The tutorial should take approximately 20 minutes to complete.
 
-## Step 1: Pull the Hazelcast Enterprise Edition Docker image
+## Step 1: Pull the Hazelcast <Variable name="enterprise-product-name"/> Docker image {/* #step-1-pull-the-hazelcast-enterprise-edition-docker-image */}
 
 <PartialGettingStartedInstallEnterprise/>
 
-## Step 2: Get your Enterprise Edition license
+## Step 2: Get your <Variable name="enterprise-product-name"/> license {/* #step-2-get-your-enterprise-edition-license */}
 
-Hazelcast Enterprise Edition requires a license key. You can get a trial license from the [Hazelcast website](https://hazelcast.com/get-started?utm_source=docs-website).
+Hazelcast <Variable name="enterprise-product-name"/> requires a license key. You can get a trial license from the [Hazelcast website](https://hazelcast.com/get-started?utm_source=docs-website).
 
 1. Complete the form on the [Hazelcast website](https://hazelcast.com/get-started?utm_source=docs-website)
 2. Check your email for an automated email from [info@hazelcast.com](mailto:info@hazelcast.com)
@@ -59,7 +59,7 @@ Hazelcast Enterprise Edition requires a license key. You can get a trial license
 
 1. To start the first member in a cluster called `hello-world`, replace the \<YOUR\_LICENSE\_KEY\> placeholder and run the following Docker command:
 
-   ```shell conums
+   ```shell conums vars
    docker run \
        --name first-member --network hazelcast-network \
        --rm \
@@ -69,13 +69,13 @@ Hazelcast Enterprise Edition requires a license key. You can get a trial license
        -e HZ_PERSISTENCE_ENABLED=true \
        -e HZ_MAP_MYDISTRIBUTEDMAP_DATAPERSISTENCE_ENABLED=true \
        -v ~/persist:/opt/hazelcast/persistence \ <3>
-       -p 5701:5701 hazelcast/hazelcast-enterprise:5.8.0-SNAPSHOT <4>
+       -p 5701:5701 hazelcast/hazelcast-enterprise:{ee-version} <4>
    ```
 
    <CodeCallouts>
 
    1. You can replace `host.docker.internal` with a specific IP address if you prefer but make sure you adjust the following code examples accordingly.
-   2. Replace the `<YOUR_LICENSE_KEY>` placeholder with the Hazelcast Enterprise Edition license key from step 2.
+   2. Replace the `<YOUR_LICENSE_KEY>` placeholder with the Hazelcast <Variable name="enterprise-product-name"/> license key from step 2.
    3. By default, Hazelcast creates the `/opt/hazelcast/persistence` directory to store the persisted data. However, using a Docker image, you cannot create any files inside the container. This line of the command mounts a directory on your local drive to the container, which in this case is `persist` under the home directory. This way, the container will use this local directory to save the persisted data. You need to define a separate persist mapping for each member e.g. the second member example below uses `~/persist2`.
    4. The first port number should match the port assigned in \<1\>. For subsequent members (e.g. second, third), you should increment the first port number but keep the second port number i.e. 5702:5701, 5703:5701.
 
@@ -83,19 +83,19 @@ Hazelcast Enterprise Edition requires a license key. You can get a trial license
 
 Your first member should started, and you should see from the terminal logs that persistence is enabled:
 
-```shell
+```shell vars
 [ INFO] [main] [c.h.i.c.o.ExternalConfigurationOverride]: Detected external configuration entries in environment variables: [hazelcast.persistence.enabled=true,hazelcast.clustername=hello-world,hazelcast.licensekey=,hazelcast.map.mydistributedmap.datapersistence.enabled=true]
-[ INFO] [main] [c.h.i.h.HotRestartIntegrationService]: [LOCAL] [hello-world] [5.8.0-SNAPSHOT] Created new empty hot-restart directory: /opt/hazelcast/persistence/611ffa80-b653-44b9-8cf1-f9ffa5bfa1cb
-[ INFO] [main] [c.h.s.logo]: [172.18.0.2]:5701 [hello-world] [5.8.0-SNAPSHOT]
+[ INFO] [main] [c.h.i.h.HotRestartIntegrationService]: [LOCAL] [hello-world] [{full-version}] Created new empty hot-restart directory: /opt/hazelcast/persistence/611ffa80-b653-44b9-8cf1-f9ffa5bfa1cb
+[ INFO] [main] [c.h.s.logo]: [172.18.0.2]:5701 [hello-world] [{ee-version}]
 ```
 
 ## Step 5: Start more members
 
-Run each of the following Docker commands in a separate terminal, replacing the `<YOUR_LICENSE_KEY>` placeholders with your Hazelcast Enterprise Edition license key:
+Run each of the following Docker commands in a separate terminal, replacing the `<YOUR_LICENSE_KEY>` placeholders with your Hazelcast <Variable name="enterprise-product-name"/> license key:
 
 1. Open a **new** terminal window and run the following command to start a second member:
 
-   ```shell
+   ```shell vars
    docker run \
        --name second-member --network hazelcast-network \
        --rm \
@@ -105,11 +105,11 @@ Run each of the following Docker commands in a separate terminal, replacing the 
        -e HZ_PERSISTENCE_ENABLED=true \
        -e HZ_MAP_MYDISTRIBUTEDMAP_DATAPERSISTENCE_ENABLED=true \
        -v ~/persist:/opt/hazelcast/persistence \
-       -p 5702:5701 hazelcast/hazelcast-enterprise:5.8.0-SNAPSHOT
+       -p 5702:5701 hazelcast/hazelcast-enterprise:{ee-version}
    ```
 2. Open another **new** terminal window and run the following command to start a third member:
 
-   ```shell
+   ```shell vars
    docker run \
        --name third-member --network hazelcast-network \
        --rm \
@@ -119,7 +119,7 @@ Run each of the following Docker commands in a separate terminal, replacing the 
        -e HZ_PERSISTENCE_ENABLED=true \
        -e HZ_MAP_MYDISTRIBUTEDMAP_DATAPERSISTENCE_ENABLED=true \
        -v ~/persist:/opt/hazelcast/persistence \
-       -p 5703:5701 hazelcast/hazelcast-enterprise:5.8.0-SNAPSHOT
+       -p 5703:5701 hazelcast/hazelcast-enterprise:{ee-version}
    ```
 
 You should see all three members forming a cluster, with confirmation that looks like:
@@ -144,8 +144,8 @@ In this step, you'll create a map called `mydistributedmap` with three entries.
 
 1. In a **new** terminal window, use the following code to start the SQL shell:
 
-   ```shell
-   docker run --network hazelcast-network -it --rm hazelcast/hazelcast-enterprise:5.8.0-SNAPSHOT hz-cli --targets hello-world@host.docker.internal sql
+   ```shell vars
+   docker run --network hazelcast-network -it --rm hazelcast/hazelcast-enterprise:{ee-version} hz-cli --targets hello-world@host.docker.internal sql
    ```
 2. Create the map:
 
@@ -166,10 +166,10 @@ In this step, you'll create a map called `mydistributedmap` with three entries.
 
 1. Open another **new** terminal and start Management Center using the following command:
 
-   ```shell
+   ```shell vars
    docker run \
        --network hazelcast-network \
-       -p 8080:8080 hazelcast/management-center:latest-snapshot
+       -p 8080:8080 hazelcast/management-center:{page-latest-supported-mc-installer}
    ```
 2. In a web browser, go to `localhost:8080` and enable Dev Mode.
 3. You should now see a **Cluster Connections** screen.
@@ -194,8 +194,8 @@ In this step, you'll create a map called `mydistributedmap` with three entries.
 
    Management Center should now show it is disconnected from the cluster, which you can confirm by checking your terminal windows, which will show the members exited to shell and similar output to:
 
-   ```shell
-   2025-07-18 15:21:50,538 [ INFO] [hz.eloquent_cannon..clusterShutdown] [c.h.i.i.Node]: [host.docker.internal]:5702 [hello-world] [5.8.0-SNAPSHOT] Hazelcast Shutdown is completed in 124 ms.
+   ```shell vars
+   2025-07-18 15:21:50,538 [ INFO] [hz.eloquent_cannon..clusterShutdown] [c.h.i.i.Node]: [host.docker.internal]:5702 [hello-world] [{full-version}] Hazelcast Shutdown is completed in 124 ms.
    ```
 3. Restart the cluster by starting the members up again, by rerunning the commands in steps 4 and 5 above.
 4. When the members have restarted, you can view your map data in Management Center and confirm the entries still exist. If persistence was not enabled, the data would be lost after cluster shutdown.
@@ -213,7 +213,7 @@ In this step, you'll create a map called `mydistributedmap` with three entries.
 
 In this tutorial, you learned how to:
 
-- Deploy Hazelcast Enterprise Edition with persistence enabled.
+- Deploy Hazelcast <Variable name="enterprise-product-name"/> with persistence enabled.
 - Create a simple Hazelcast map using SQL.
 - View the data in Management Center.
 - Restart the Hazelcast cluster and check the data persists.

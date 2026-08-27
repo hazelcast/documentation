@@ -24,7 +24,7 @@ A blue-green deployment is a client connection technique that reduces system dow
 
 In this tutorial, you'll do the following:
 
-1. Start separate blue and green Enterprise Edition clusters.
+1. Start separate blue and green <Variable name="enterprise-product-name"/> clusters.
 2. Configure a client to use the blue-green deployment as a failover.
 3. Connect the client to the blue cluster.
 4. Shut down the blue cluster and confirm that the client connects to the green one.
@@ -43,70 +43,70 @@ Before you begin, ensure you have completed the following:
 
 ## Step 1: Start the blue cluster
 
-In this step, you'll use the Hazelcast Enterprise Edition Docker image to start a local single member cluster called `blue`. This step also installs your Enterprise Edition license key.
+In this step, you'll use the Hazelcast <Variable name="enterprise-product-name"/> Docker image to start a local single member cluster called `blue`. This step also installs your <Variable name="enterprise-product-name"/> license key.
 
 1. Run the following command on the terminal, replacing the `<YOUR_LICENSE_KEY>` placeholder:
 
-   ```shell conums
+   ```shell conums vars
    docker run \
        --rm \
        -e HZ_NETWORK_PUBLICADDRESS=localhost:5701 \ <1>
        -e HZ_CLUSTERNAME=blue \
        -e HZ_LICENSEKEY=<YOUR_LICENSE_KEY> \ <2>
-       -p 5701:5701 hazelcast/hazelcast-enterprise:5.8.0-SNAPSHOT
+       -p 5701:5701 hazelcast/hazelcast-enterprise:{ee-version}
    ```
 
    <CodeCallouts>
 
    1. You can replace `host.docker.internal` with a specific IP address if you prefer but make sure you adjust the following code examples accordingly.
-   2. Replace the `<YOUR_LICENSE_KEY>` placeholder with your Hazelcast Enterprise Edition license key.
+   2. Replace the `<YOUR_LICENSE_KEY>` placeholder with your Hazelcast <Variable name="enterprise-product-name"/> license key.
 
    </CodeCallouts>
 
 You should see your cluster name in the console along with the IP address of the Docker host that's running the Hazelcast member.
 
-```shell
+```shell vars
 2024-12-01 18:26:42,369 [ INFO] [main] [c.h.i.c.ClusterService]: [localhost]:5701 [blue] [5.8.0-SNAPSHOT]
 
 Members {size:1, ver:1} [
 	Member [localhost]:5701 - c00213e1-da50-4b5f-a53b-ccfe4a1ebeea this
 ]
 
-2024-12-01 18:26:42,384 [ INFO] [main] [c.h.c.LifecycleService]: [localhost]:5701 [blue] [5.8.0-SNAPSHOT] [localhost]:5701 is STARTED
+2024-12-01 18:26:42,384 [ INFO] [main] [c.h.c.LifecycleService]: [localhost]:5701 [blue] [{ee-version}] [localhost]:5701 is STARTED
 ```
 
 ## Step 2: Start the green cluster
 
 1. Start another local single member cluster called `green`, replacing the `<YOUR_LICENSE_KEY>` placeholder:
 
-   ```shell conums
+   ```shell conums vars
    docker run \
        --rm \
        -e HZ_NETWORK_PUBLICADDRESS=localhost:5702 \
        -e HZ_CLUSTERNAME=green \
        -e HZ_LICENSEKEY=<YOUR_LICENSE_KEY> \ <1>
-       -p 5702:5701 hazelcast/hazelcast-enterprise:5.8.0-SNAPSHOT
+       -p 5702:5701 hazelcast/hazelcast-enterprise:{ee-version}
    ```
 
    <CodeCallouts>
 
-   1. Replace the `<YOUR_LICENSE_KEY>` placeholder with your Hazelcast Enterprise Edition license key.
+   1. Replace the `<YOUR_LICENSE_KEY>` placeholder with your Hazelcast <Variable name="enterprise-product-name"/> license key.
 
    </CodeCallouts>
 
 You should see the `green` cluster is formed, with confirmation that looks like:
 
-```shell
+```shell vars
 2021-12-01 18:28:46,299 [ INFO] [main] [c.h.i.c.ClusterService]: [localhost]:5701 [green] [5.8.0-SNAPSHOT]
 
 Members {size:1, ver:1} [
 	Member [localhost]:5701 - 72f5520c-8c27-4501-9199-a8da6b58c0b4 this
 ]
 
-2021-12-01 18:28:46,321 [ INFO] [main] [c.h.c.LifecycleService]: [localhost]:5701 [green] [5.8.0-SNAPSHOT] [localhost]:5701 is STARTED
+2021-12-01 18:28:46,321 [ INFO] [main] [c.h.c.LifecycleService]: [localhost]:5701 [green] [{ee-version}] [localhost]:5701 is STARTED
 ```
 
-Now you have two separate Hazelcast Enterprise Edition clusters running locally.
+Now you have two separate Hazelcast <Variable name="enterprise-product-name"/> clusters running locally.
 
 ## Step 3: Configure the client {/* #step-3 */}
 
@@ -344,16 +344,16 @@ This step provides the code for the next step for Java client and the full code 
 
 1. Run the code and, with the `blue` cluster live, you should see confirmation that the client is connected on the `blue` cluster's terminal:
 
-   ```shell
-   2024-12-01 18:11:33,928 [ INFO] [hz.wizardly_taussig.priority-generic-operation.thread-0] [c.h.c.i.p.t.AuthenticationMessageTask]: [localhost]:5701 [blue] [5.8.0-SNAPSHOT] Received auth from Connection[id=5, /172.17.0.3:5701->/192.168.65.1:61254, qualifier=null, endpoint=[localhost]:61254, alive=true, connectionType=JVM, planeIndex=-1], successfully authenticated, clientUuid: bf2ba9e2-d6f5-4a63-af43-e8d5ed8174b4, client name: hz.client_1, client version: 5.8.0-SNAPSHOT
+   ```shell vars
+   2024-12-01 18:11:33,928 [ INFO] [hz.wizardly_taussig.priority-generic-operation.thread-0] [c.h.c.i.p.t.AuthenticationMessageTask]: [localhost]:5701 [blue] [{ee-version}] Received auth from Connection[id=5, /172.17.0.3:5701->/192.168.65.1:61254, qualifier=null, endpoint=[localhost]:61254, alive=true, connectionType=JVM, planeIndex=-1], successfully authenticated, clientUuid: bf2ba9e2-d6f5-4a63-af43-e8d5ed8174b4, client name: hz.client_1, client version: {ee-version}
    ```
 
    You should also see confirmation the client is connected on the terminal you used to run the client:
 
-   ```shell
-   INFO: hz.client_1 [blue] [5.8.0-SNAPSHOT] Trying to connect to [localhost]:5701
+   ```shell vars
+   INFO: hz.client_1 [blue] [{ee-version}] Trying to connect to [localhost]:5701
    Dec 01, 2024 8:11:33 PM com.hazelcast.core.LifecycleService
-   INFO: hz.client_1 [blue] [5.8.0-SNAPSHOT] HazelcastClient 5.8.0-SNAPSHOT (20210922 - dbaeffe) is CLIENT_CONNECTED
+   INFO: hz.client_1 [blue] [{ee-version}] HazelcastClient {ee-version} (20210922 - dbaeffe) is CLIENT_CONNECTED
    ```
 
 ## Step 5: Trigger a failure on the blue cluster
@@ -363,19 +363,19 @@ In this step, you'll simulate a failure on the blue cluster and force the client
 1. Shut down the blue cluster on its terminal by pressing <kbd>Ctrl</kbd>+<kbd>C</kbd>.
 2. Verify that the client is connected to the green cluster on the cluster's and client's terminal.
 
-   ```shell
-   2024-12-01 18:11:33,928 [ INFO] [hz.wizardly_taussig.priority-generic-operation.thread-0] [c.h.c.i.p.t.AuthenticationMessageTask]: [172.18.0.3]:5701 [green] [5.8.0-SNAPSHOT] Received auth from Connection[id=5, /172.18.0.3:5701->/172.18.0.2:62432, qualifier=null, endpoint=[172.18.0.2]:62432, alive=true, connectionType=JVM, planeIndex=-1], successfully authenticated, clientUuid: bf2ba9e2-d6f5-4a63-af43-e8d5ed8174b4, client name: hz.client_1, client version: 5.8.0-SNAPSHOT
+   ```shell vars
+   2024-12-01 18:11:33,928 [ INFO] [hz.wizardly_taussig.priority-generic-operation.thread-0] [c.h.c.i.p.t.AuthenticationMessageTask]: [172.18.0.3]:5701 [green] [{full-version}] Received auth from Connection[id=5, /172.18.0.3:5701->/172.18.0.2:62432, qualifier=null, endpoint=[172.18.0.2]:62432, alive=true, connectionType=JVM, planeIndex=-1], successfully authenticated, clientUuid: bf2ba9e2-d6f5-4a63-af43-e8d5ed8174b4, client name: hz.client_1, client version: {full-version}
    ```
 
-   ```shell
-   INFO: hz.client_1 [green] [5.8.0-SNAPSHOT] Trying to connect to [localhost]:5701
+   ```shell vars
+   INFO: hz.client_1 [green] [{ee-version}] Trying to connect to [localhost]:5701
    Dec 01, 2024 8:16:45 PM com.hazelcast.core.LifecycleService
-   INFO: hz.client_1 [green] [5.8.0-SNAPSHOT] HazelcastClient 5.8.0-SNAPSHOT (20210922 - dbaeffe) is CLIENT_CONNECTED
+   INFO: hz.client_1 [green] [{ee-version}] HazelcastClient {ee-version} (20210922 - dbaeffe) is CLIENT_CONNECTED
    ```
 
 :::note
 
-In this type of failover scenario, the client does not automatically reconnect to the `blue` cluster when it is back online. Instead, you need to deploy a deny list using [client filtering](/management-center/5.12-snapshot/clusters/client-filtering) to block client connections to the `green` cluster. The client will then use the failover configuration (in [Step 3](#step-3)) to reconnect to the original cluster. When the client is reconnected, you can remove the client filter.
+In this type of failover scenario, the client does not automatically reconnect to the `blue` cluster when it is back online. Instead, you need to deploy a deny list using <Variable href="/management-center/{page-latest-supported-mc}/clusters/client-filtering" text="client filtering"/> to block client connections to the `green` cluster. The client will then use the failover configuration (in [Step 3](#step-3)) to reconnect to the original cluster. When the client is reconnected, you can remove the client filter.
 
 :::
 
@@ -387,7 +387,7 @@ To shut down the cluster, close the terminals in which the members are running o
 
 In this tutorial, you learned how to:
 
-1. Start separate blue and green Enterprise Edition clusters.
+1. Start separate blue and green <Variable name="enterprise-product-name"/> clusters.
 2. Configure a client to use the blue-green deployment as a failover.
 3. Simulate a cluster failure and successful failover from blue to green.
 
@@ -396,4 +396,4 @@ In this tutorial, you learned how to:
 If you're interested in learning more about the topics introduced in this tutorial, see:
 
 - [clients:java.adoc\#blue-green-deployment-and-disaster-recovery](../../clients-and-apis/clients/java.mdx#blue-green-deployment-and-disaster-recovery)
-- [Manage client connections](/management-center/5.12-snapshot/clusters/client-filtering)
+- <Variable href="/management-center/{page-latest-supported-mc}/clusters/client-filtering" text="Manage client connections"/>

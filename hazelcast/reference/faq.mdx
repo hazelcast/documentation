@@ -208,7 +208,7 @@ Yes. But note that Hazelcast's main design focus is multi-member clusters to be 
 
 ## How can I monitor Hazelcast?
 
-[Management Center](/management-center/5.12-snapshot/getting-started/overview) is what you use to monitor and manage the members running Hazelcast. In addition to monitoring the overall state of a cluster, you can analyze and browse data structures in detail, you can update map configurations and you can take thread dumps from members.
+<Variable href="/management-center/{page-latest-supported-mc}/getting-started/overview" text="Management Center"/> is what you use to monitor and manage the members running Hazelcast. In addition to monitoring the overall state of a cluster, you can analyze and browse data structures in detail, you can update map configurations and you can take thread dumps from members.
 
 You can also use Hazelcast's HTTP based health check implementation and health monitoring utility. See the [Health Check and Monitoring section](../operate-and-manage/maintaining-a-cluster/monitoring.mdx#health-check-and-monitoring). There is also a [diagnostics tool](../operate-and-manage/maintaining-a-cluster/monitoring.mdx#diagnostics) where you can see detailed logs enhanced with diagnostic plugins.
 
@@ -273,7 +273,7 @@ You can use the following ways to shut down a Hazelcast member:
   - Call the method `HazelcastInstance.shutdown()` programmatically.
   - Use JMX API's shutdown method. You can do this by implementing a JMX client application or using a JMX monitoring tool (like JConsole).
   - Set the property `hazelcast.shutdownhook.policy` to `GRACEFUL` and then shutdown by using `kill -15 <PID>`. Your member will be gracefully shutdown.
-  - Use the "Shutdown Member" button in the member view of [Management Center](/management-center/5.12-snapshot/clusters/members).
+  - Use the "Shutdown Member" button in the member view of <Variable href="/management-center/{page-latest-supported-mc}/clusters/members" text="Management Center"/>.
 
 If you use systemd's `systemctl` utility, i.e., `systemctl stop service_name`, a SIGTERM signal is sent. After 90 seconds of waiting it is followed by a SIGKILL signal by default. Thus, it calls terminate at first and kills the member directly after 90 seconds. We do not recommend using it with its defaults. But [systemd](https://www.linux.com/learn/understanding-and-using-systemd) is very customizable and well-documented — you can see its details using the command `man systemd.kill`. If you can customize it to shutdown your Hazelcast member gracefully (by using the methods above), then you can use it.
 

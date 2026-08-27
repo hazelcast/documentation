@@ -125,6 +125,43 @@ const MARKED_ATTRS = {
   // ambiguous prose word as in cloud (a page also says "Confluent Cloud"), so it
   // must be MARKED, not value-reverse-mapped.
   clc: ['hazelcast-cloud', 'full-version'],
+  // Platform marks two classes of attribute, both cases where a value reverse-map
+  // structurally cannot decide:
+  //
+  //   1. The value is ALSO written as a literal on a page that references the
+  //      attribute. `getting-started/editions` is the clear case: it says
+  //      "you can't turn a Community Edition into an Enterprise Edition by adding
+  //      a license key" in prose while also referencing both attributes, so a
+  //      value match would variableise the literal and rewrite that sentence on a
+  //      product rename. Same for {ucn}/{ucd}: "User Code Namespaces" appears as a
+  //      literal 9 times and "User Code Deployment" 23 times outside the
+  //      attribute. {hazelcast-cloud} is the usual "Cloud" ambiguity. And
+  //      {minimum-java-version} resolves to the BARE NUMBER `17`, which no
+  //      boundary rule can tell from any other 17 in prose.
+  //
+  //   2. SEVERAL ATTRIBUTES SHARE ONE VALUE, so value->name is not a function.
+  //      {os-version}, {ee-version} and {full-version} are all `5.8.0-SNAPSHOT`
+  //      (14 pages reference two of the three), and the C++, C# and Python client
+  //      versions are all `5.7.0` (2 pages reference two or more). Marking gives
+  //      the position, so the right NAME survives; without it the converter emits
+  //      whichever name won the map and refcheck reports the pair as one baked +
+  //      one over-variableised reference.
+  //
+  // Several of these are in SINGLE_SOURCE_ATTRS as well, for the same reason
+  // operator's page-latest-supported-hazelcast is: marking does not carry a
+  // reference through a CODE FENCE, so the value map is what restores those
+  // occurrences (e.g. {minimum-java-version} inside `<maven.compiler.release>`,
+  // {ee-version} inside a docker `hazelcast/hazelcast-enterprise:{ee-version}`
+  // command). Keeping both is not double-substitution: a marked occurrence becomes
+  // a <Variable> from its span, leaving no literal for the reverse-map to find.
+  hazelcast: [
+    'enterprise-product-name', 'open-source-product-name', 'hazelcast-cloud',
+    'ucn', 'ucd', 'minimum-java-version', 'minimum-maven-version',
+    'os-version', 'ee-version', 'full-version',
+    'page-latest-supported-cplusplus-client',
+    'page-latest-supported-csharp-client',
+    'page-latest-supported-python-client',
+  ],
 }
 
 // NOTE on `clc: full-version` — it is in BOTH this list and

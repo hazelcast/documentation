@@ -33,7 +33,7 @@ const { configureLogger, finalizeLogger } = require('@antora/logger')
 const { buildLockfile } = require('../antora-extension/emit-manifest')
 const { registerPageAliases } = require('../antora-extension/register-page-aliases')
 const { createPartialMarker } = require('../antora-extension/mark-partials')
-const { wrapRefs, spanify, hasSentinelResidue } = require('../antora-extension/mark-attributes')
+const { wrapRefs, spanify, hasSentinelResidue, hasAttrSpanLeak } = require('../antora-extension/mark-attributes')
 const { wrapConditionals } = require('../antora-extension/mark-conditionals')
 const { literalizeMonospace } = require('../antora-extension/normalize-monospace')
 const { poisonAttributes, preResolveTargets } = require('../antora-extension/poison-attributes')
@@ -418,13 +418,19 @@ async function main () {
         html += tutorialListHtml(contentCatalog, 'cloud')
       }
       // Turn attribute-reference sentinels into marker spans (mark-attributes.js).
-      // Byte-faithfulness guard: a residual sentinel character means a marker
-      // landed where spanify could not form a well-formed span (a broken run) --
-      // the strip would then not reproduce the un-instrumented golden, the
-      // invariant the whole approach rests on. Surface it loudly.
+      // Two guards, for the two ways marking can go wrong:
+      //   - a residual sentinel character: a marker landed where spanify could not
+      //     form a well-formed span (a broken run), so the strip would not
+      //     reproduce the un-instrumented golden -- the invariant the whole
+      //     approach rests on;
+      //   - a well-formed span INSIDE an attribute value: the strip is still
+      //     byte-faithful, so nothing else would ever notice, but the marked
+      //     golden is unparseable. See hasAttrSpanLeak.
+      // Both are the same fix -- skip that context in mark-attributes -- so they
+      // are reported together.
       if (markAttributes) {
         html = spanify(html)
-        if (hasSentinelResidue(html)) {
+        if (hasSentinelResidue(html) || hasAttrSpanLeak(html)) {
           attrLeaks.push(`${page.src.version}@${page.src.component}:${page.src.module}:${page.src.relative}`)
         }
       }
@@ -437,7 +443,7 @@ async function main () {
     }
   }
   if (attrLeaks.length) {
-    console.error(`[snapshot] WARNING: attribute-marker leak on ${attrLeaks.length} page(s) -- strip is NOT byte-faithful there:`)
+    console.error(`[snapshot] WARNING: attribute-marker leak on ${attrLeaks.length} page(s) -- a marker landed in a context it cannot be spanified into:`)
     for (const id of attrLeaks.slice(0, 20)) console.error(`             ${id}`)
     console.error('             Fix: add the leaking context to mark-attributes.js wrapRefs skips.')
   }

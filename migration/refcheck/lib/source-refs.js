@@ -1,7 +1,15 @@
 'use strict'
 
-// SOURCE-side include walker, used ONLY to find the `example$` includes a page
-// pulls in (for the example-preservation check).
+// SOURCE-side include walker. Two consumers, both needing the same thing -- the
+// set of source files a page actually reaches:
+//   - refcheck, for the `example$` includes a page pulls in (the
+//     example-preservation check);
+//   - the converter, for the verbatim-block LINES in that closure that carry an
+//     `{attribute}` (converter/lib/code-templates.js). A partial's code lines are
+//     why the closure matters rather than just the page file: hazelcast's
+//     get-started-cli pulls its brew/apt/yum commands in from install-hazelcast,
+//     and those name `{os-version}` -- indistinguishable, by value, from the
+//     `{full-version}` the page itself references.
 //
 // It used to collect attribute references too, and that was the checker's weak
 // point: reading AsciiDoc with regexes means approximating tag-slice wildcards,
@@ -127,12 +135,22 @@ function locate (coord, seg, sourcesDir) {
   return { repoDir: path.join(sourcesDir, src.repo), ref: refFor(coord.component, seg), repoPath }
 }
 
-// Collect the `example$` includes a page reaches, expanding partial$/page$
-// includes on the way. `seg` scopes which branch source is read from; `resource`
-// is the manifest page resource (component, module, relative).
-function collectPageExamples (resource, seg, sourcesDir) {
+// Read-through cache for the source files the walk touches: a shared partial is
+// included by dozens of pages, and every hit is otherwise a `git show` process.
+// Safe because the mirrors are frozen for the life of a run (see migration/README).
+const textCache = new Map()
+function cachedText (loc) {
+  const key = `${loc.repoDir}\u0000${loc.ref}\u0000${loc.repoPath}`
+  if (!textCache.has(key)) textCache.set(key, gitShow(loc.repoDir, loc.ref, loc.repoPath))
+  return textCache.get(key)
+}
+
+// Walk a page's include closure, calling `visit(coord, text)` for the page itself
+// and for every file it reaches, with that file's text already comment-stripped
+// and tag-sliced exactly as Antora slices it. `seg` scopes which branch is read;
+// `resource` is the manifest page resource (component, module, relative).
+function walkPageSources (resource, seg, sourcesDir, visit) {
   const start = { component: resource.component, module: resource.module || 'ROOT', family: 'page', relative: resource.relative }
-  const examples = []
   const visited = new Set()
 
   const walk = (coord, tag) => {
@@ -141,19 +159,39 @@ function collectPageExamples (resource, seg, sourcesDir) {
     const key = `${loc.ref}:${loc.repoPath}${tag ? '#' + tag : ''}`
     if (visited.has(key)) return
     visited.add(key)
-    let text = gitShow(loc.repoDir, loc.ref, loc.repoPath)
-    if (text == null) return
-    text = stripComments(sliceByTags(text, tag))
+    const raw = cachedText(loc)
+    if (raw == null) return
+    const text = stripComments(sliceByTags(raw, tag))
+    visit(coord, text)
     for (const inc of includesIn(text)) {
       const child = resolveTarget(inc.target, coord)
       if (!child) continue
-      if (child.family === 'example') { examples.push(child); walk(child, inc.tag); continue }
       walk(child, inc.tag)
     }
   }
 
   walk(start, null)
+}
+
+// The `example$` includes a page reaches.
+function collectPageExamples (resource, seg, sourcesDir) {
+  const examples = []
+  walkPageSources(resource, seg, sourcesDir, (coord) => {
+    if (coord.family === 'example') examples.push(coord)
+  })
   return examples
 }
 
-module.exports = { collectPageExamples, includesIn, resolveTarget, locate, sliceByTags, stripComments }
+// Every source text a page reaches, page first. The converter feeds this to
+// attrCodeTemplates so a partial's code lines are templated against the page that
+// includes them.
+function collectPageTexts (resource, seg, sourcesDir) {
+  const texts = []
+  walkPageSources(resource, seg, sourcesDir, (_coord, text) => texts.push(text))
+  return texts
+}
+
+module.exports = {
+  collectPageExamples, collectPageTexts, walkPageSources,
+  includesIn, resolveTarget, locate, sliceByTags, stripComments,
+}

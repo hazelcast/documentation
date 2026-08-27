@@ -5,7 +5,7 @@ slug: /clusters/ucn-static-programmatic
 enterprise: true
 ---
 
-You can configure your User Code Namespaces and data structures programmatically. You can specify JAR, JARS IN ZIP, and CLASS resources in programmatic configuration.
+You can configure your <Variable name="ucn"/> and data structures programmatically. You can specify JAR, JARS IN ZIP, and CLASS resources in programmatic configuration.
 
 You must create a *Member.java* file containing the required code and save it to your class configuration folder. The file will be similar to the following:
 
@@ -43,7 +43,7 @@ public class Member {
 <CodeCallouts>
 
 1. Creates a new `Config` as the base for configuring our Hazelcast member
-2. Enables User Code Namespaces in the `Config`
+2. Enables <Variable name="ucn"/> in the `Config`
 3. Creates a `UserCodeNamespaceConfig` with a name of `namespace_name`
 4. Adds resources to the namespace, in this case JARS IN ZIP from a local URL
 5. Adds the completed `UserCodeNamespaceConfig` to the parent `UserCodeNamespacesConfig` in `Config`
@@ -51,6 +51,6 @@ public class Member {
 7. Sets the namespace for the `imap_name` to `namespace_name`
 8. Adds the newly created `MapConfig` to the parent `Config`
 9. Starts a new Hazelcast member using our defined `Config`
-10. Accesses the `imap_name` and runs the `CustomEntryProcessor` from a client, leveraging the User Code Namespaces to provide the member with the classpath context it needs for execution
+10. Accesses the `imap_name` and runs the `CustomEntryProcessor` from a client, leveraging the <Variable name="ucn"/> to provide the member with the classpath context it needs for execution
 
 </CodeCallouts>

@@ -77,7 +77,7 @@ Snapshots use additional in-memory storage.
 
 Sets what happens when a job execution fails.
 
-- If enabled, the job will be suspended on failure. A snapshot of the job's computational state will be preserved. You can update the configuration of a suspended job and resume it [programmatically](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/jet/config/DeltaJobConfig.html) or [using SQL](../sql/statements/alter-job.mdx).
+- If enabled, the job will be suspended on failure. A snapshot of the job's computational state will be preserved. You can update the configuration of a suspended job and resume it <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/config/DeltaJobConfig.html" text="programmatically"/> or [using SQL](../sql/statements/alter-job.mdx).
 - If disabled, the job will be terminated and the job snapshots will be deleted.
 
 </td>
@@ -92,7 +92,7 @@ Sets what happens when a job execution fails.
 </tr>
 <tr>
 <td>userCodeNamespace</td>
-<td>The User Code Namespace to associate these jobs with for access to custom resources, or `null` if not associated with one. [User Code Namespaces](../distributed-computing/user-code-namespaces/overview.mdx) must be enabled and the provided namespace configured.</td>
+<td>The User Code Namespace to associate these jobs with for access to custom resources, or `null` if not associated with one. <a href="/hazelcast/5.8-snapshot/clusters/user-code-namespaces"><Variable name="ucn"/></a> must be enabled and the provided namespace configured.</td>
 <td>`string`</td>
 <td>`null`</td>
 </tr>
@@ -190,13 +190,13 @@ The exact behavior of what happens when a node joins or leaves depends on whethe
 
 ## Configure a User Code Namespace
 
-Normal Jet jobs can be configured to use a [User Code Namespace](../distributed-computing/user-code-namespaces/overview.mdx) (UCN), which provides them access to custom resources associated with that UCN. User Code Namespaces must be enabled and a namespace configured with the desired resources created before it can be used in jobs. Any data structures used in these jobs should also have their UCN configured to ensure operations for that data structure also have access to the necessary custom resources. Light jobs do not support UCN.
+Normal Jet jobs can be configured to use a [User Code Namespace](../distributed-computing/user-code-namespaces/overview.mdx) (UCN), which provides them access to custom resources associated with that UCN. <Variable name="ucn"/> must be enabled and a namespace configured with the desired resources created before it can be used in jobs. Any data structures used in these jobs should also have their UCN configured to ensure operations for that data structure also have access to the necessary custom resources. Light jobs do not support UCN.
 
-User Code Namespaces are managed separately to the Jet system, so these resources persist between individual jobs. This support allows for jobs to be submitted and updated while still being able to use the same custom resources within pipelines.
+<Variable name="ucn"/> are managed separately to the Jet system, so these resources persist between individual jobs. This support allows for jobs to be submitted and updated while still being able to use the same custom resources within pipelines.
 
 :::warning
 
-User Code Namespaces can be dynamically updated at runtime, but it is recommended that namespaces associated with Jet jobs are not changed while those jobs are running. Doing so may cause job execution inconsistency between member nodes if jobs restart during the namespace update. If all related jobs are suspended, then the associated namespace can be safely updated before resuming jobs.
+<Variable name="ucn"/> can be dynamically updated at runtime, but it is recommended that namespaces associated with Jet jobs are not changed while those jobs are running. Doing so may cause job execution inconsistency between member nodes if jobs restart during the namespace update. If all related jobs are suspended, then the associated namespace can be safely updated before resuming jobs.
 
 :::
 

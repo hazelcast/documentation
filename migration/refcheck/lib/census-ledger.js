@@ -102,12 +102,21 @@ function scanCensusPage (html, { tokens }) {
 }
 
 // Mask the positions poisoning legitimately changes beyond the substituted text:
-// an anchor id (and the fragment of the <a> that points at it) is DERIVED from
-// heading text and slugged, so a token in a heading changes the id too and the
-// case-sensitive unmask cannot restore it. Nothing else may differ.
+// an anchor id (and every reference to it) is DERIVED from the text it names and
+// slugged, so a token in that text changes the id too and the case-sensitive
+// unmask cannot restore it. Nothing else may differ.
+//
+// Three forms, all the same fact: the id itself; the fragment of the `<a>` that
+// points at it; and a tab pane's `aria-labelledby`, which names its TAB's id --
+// derived from the tab's LABEL, so hazelcast's `{enterprise-product-name}::` /
+// `{open-source-product-name}::` tabsets put a slugged token there. Masking only
+// the first two failed those four pages outright: every one of their eight diff
+// lines was a derived tab id, half of them in the reference rather than the id
+// (`aria-labelledby="tabset1_hzref0052x"` vs `..._enterprise-edition`).
 const maskDerivedIds = (html) => html
   .replace(/\bid="[^"]*"/g, 'id="~"')
   .replace(/\bhref="#[^"]*"/g, 'href="#~"')
+  .replace(/\baria-labelledby="[^"]*"/g, 'aria-labelledby="~"')
 
 // The guard that makes the census trustworthy: put the real values back and the
 // census page must reproduce the golden. Any difference beyond derived anchor ids

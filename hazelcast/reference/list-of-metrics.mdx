@@ -15,7 +15,7 @@ Metric names on this page are canonical names. Some metrics are exposed with dif
 
 :::note
 
-If you use Management Center to export cluster-wide metrics to Prometheus, Management Center reformats the metrics to align with Prometheus best practice recommendations. See [Prometheus Monitoring](/management-center/5.12-snapshot/integrate/prometheus-monitoring).
+If you use Management Center to export cluster-wide metrics to Prometheus, Management Center reformats the metrics to align with Prometheus best practice recommendations. See <Variable href="/management-center/{page-latest-supported-mc}/integrate/prometheus-monitoring" text="Prometheus Monitoring"/>.
 
 :::
 
@@ -247,7 +247,7 @@ Each Hazelcast member will have one instance of these metrics for each edge M (i
 </tr>
 <tr>
 <th>numInFlightOps</th>
-<td>The number of pending (in flight) operations when using asynchronous mapping processors. See [Processors.mapUsingServiceAsyncP](<https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/jet/core/processor/Processors.html#mapUsingServiceAsyncP(com.hazelcast.jet.pipeline.ServiceFactory,int,boolean,com.hazelcast.function.FunctionEx,com.hazelcast.function.BiFunctionEx)>).</td>
+<td>The number of pending (in flight) operations when using asynchronous mapping processors. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#mapUsingServiceAsyncP(com.hazelcast.jet.pipeline.ServiceFactory,int,boolean,com.hazelcast.function.FunctionEx,com.hazelcast.function.BiFunctionEx)" text="Processors.mapUsingServiceAsyncP"/>.</td>
 <td rowSpan={7}>
 
 *job, exec, vertex, proc, procType*
@@ -262,7 +262,7 @@ Processor specific metrics, only certain types of processors have them. The *pro
 </tr>
 <tr>
 <th>totalWindows</th>
-<td>The number of active windows being tracked by a session window processor. See [Processors.aggregateToSessionWindowP](<https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/jet/core/processor/Processors.html#aggregateToSessionWindowP(long,long,java.util.List,java.util.List,com.hazelcast.jet.aggregate.AggregateOperation,com.hazelcast.jet.core.function.KeyedWindowResultFunction)>).</td>
+<td>The number of active windows being tracked by a session window processor. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#aggregateToSessionWindowP(long,long,java.util.List,java.util.List,com.hazelcast.jet.aggregate.AggregateOperation,com.hazelcast.jet.core.function.KeyedWindowResultFunction)" text="Processors.aggregateToSessionWindowP"/>.</td>
 </tr>
 <tr>
 <th>totalFrames</th>
@@ -270,11 +270,11 @@ Processor specific metrics, only certain types of processors have them. The *pro
 </tr>
 <tr>
 <th>totalKeysInFrames</th>
-<td>The number of grouping keys associated with the current active frames of a sliding window processor. See [Processors.aggregateToSlidingWindowP](<https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/jet/core/processor/Processors.html#aggregateToSlidingWindowP(java.util.List,java.util.List,com.hazelcast.jet.core.TimestampKind,com.hazelcast.jet.core.SlidingWindowPolicy,long,com.hazelcast.jet.aggregate.AggregateOperation,com.hazelcast.jet.core.function.KeyedWindowResultFunction)>).</td>
+<td>The number of grouping keys associated with the current active frames of a sliding window processor. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#aggregateToSlidingWindowP(java.util.List,java.util.List,com.hazelcast.jet.core.TimestampKind,com.hazelcast.jet.core.SlidingWindowPolicy,long,com.hazelcast.jet.aggregate.AggregateOperation,com.hazelcast.jet.core.function.KeyedWindowResultFunction)" text="Processors.aggregateToSlidingWindowP"/>.</td>
 </tr>
 <tr>
 <th>totalStates</th>
-<td>Number of active state objects held by stateful processors in a running job. For keyed stages, the metric shows the number of per-key state objects currently allocated. For non-keyed stages, it reports 1 if the processor has processed at least one item, or 0 otherwise. See [Processors.mapStatefulP](<https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/jet/core/processor/Processors.html#mapStatefulP(long,com.hazelcast.function.FunctionEx,com.hazelcast.function.ToLongFunctionEx,java.util.function.Supplier,com.hazelcast.jet.function.TriFunction,com.hazelcast.jet.function.TriFunction)>) [Processor.flatMapStatefulP](<https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/jet/core/processor/Processors.html#flatMapStatefulP(long,com.hazelcast.function.FunctionEx,com.hazelcast.function.ToLongFunctionEx,java.util.function.Supplier,com.hazelcast.jet.function.TriFunction,com.hazelcast.jet.function.TriFunction)>)</td>
+<td>Number of active state objects held by stateful processors in a running job. For keyed stages, the metric shows the number of per-key state objects currently allocated. For non-keyed stages, it reports 1 if the processor has processed at least one item, or 0 otherwise. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#mapStatefulP(long,com.hazelcast.function.FunctionEx,com.hazelcast.function.ToLongFunctionEx,java.util.function.Supplier,com.hazelcast.jet.function.TriFunction,com.hazelcast.jet.function.TriFunction)" text="Processors.mapStatefulP"/> <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#flatMapStatefulP(long,com.hazelcast.function.FunctionEx,com.hazelcast.function.ToLongFunctionEx,java.util.function.Supplier,com.hazelcast.jet.function.TriFunction,com.hazelcast.jet.function.TriFunction)" text="Processor.flatMapStatefulP"/></td>
 </tr>
 <tr>
 <th>lateEventsDropped</th>
@@ -2148,7 +2148,7 @@ The same metric values can be exposed under multiple prefixes. Depending on the 
 <details>
 <summary>High-Density (HD) Memory Store</summary>
 
-Scope: member-side only. Enterprise Edition only.
+Scope: member-side only. <Variable name="enterprise-product-name"/> only.
 
 These metrics are provided for data structures using HD memory. They will be prefixed with the relevant data structure prefix (e.g. `map.`).
 

@@ -27,8 +27,12 @@ const { convertBody, BLOCK_TAGS, BLOCK_CLASSES } = require('./lib/html-to-mdx')
 const { classifyHref } = require('../fidelity/lib/links')
 const { collectOccurrences, decide, slugFor, componentNameFor, parseId, consumerAttrs } = require('./lib/partials')
 const { normalizeValues, groupIdFor } = require('./lib/tabs')
+const { attrCodeTemplates, buildCodeTemplates } = require('./lib/code-templates')
+const substituteAttrs = require('../../plugins/lib/substitute-attributes')
 const { parseNav, buildPlan, injectNavEntries, parseTarget, pageKey, folderName } = require('./lib/nav')
-const { wrapRefs, wrappableRefs } = require('../antora-extension/mark-attributes')
+const {
+  wrapRefs, wrappableRefs, hasSentinelResidue, hasAttrSpanLeak, stripAttrSpans,
+} = require('../antora-extension/mark-attributes')
 const substitute = require('../../plugins/lib/substitute-attributes')
 
 let n = 0
@@ -791,13 +795,65 @@ const renderedCode = (md) => {
   assert.ok(wrappableRefs(alsoProse, names).has('operator-chart-version'),
     'the same attribute IS prose-eligible once the page references it in flow text')
 
-  // A macro target sits on a flow line, so it stays eligible: cloud's
-  // page-cloud-platform-version is referenced only inside a `link:` URL, and
-  // treating it as prose is what preserves the existing link-mode behaviour.
+  // A LINK MACRO TARGET renders into the `href`, not into flow text, so a
+  // reference there is neither markable nor prose-eligible. Both halves matter:
+  // marking a target puts a <span> inside an attribute value (malformed HTML that
+  // cheerio reads as a truncated URL -- it mangled 226 hazelcast javadoc links),
+  // and a prose value match for an attribute the page only ever uses in a URL is
+  // the false positive this predicate exists to refuse. Nothing is lost either
+  // way: the link path reverse-maps `pageVars`, which this does not filter, and
+  // the href-template path (buildHrefVars) recovers the reference exactly.
   const macro = 'link:https://docs.hazelcast.com/hazelcast/{page-cloud-platform-version}/x[Platform] in use.'
-  assert.ok(wrappableRefs(macro, ['page-cloud-platform-version']).has('page-cloud-platform-version'),
-    'a reference inside a link macro target counts as prose-eligible (conservative: keeps link behaviour)')
-  ok('prose-eligibility: verbatim-only references are excluded, flow text and macro targets are not')
+  assert.ok(!wrappableRefs(macro, ['page-cloud-platform-version']).has('page-cloud-platform-version'),
+    'a reference inside a link macro target is not prose-eligible: it renders into an href')
+  assert.strictEqual(wrapRefs(macro, ['page-cloud-platform-version']), macro,
+    'and marking agrees: it leaves a link target completely untouched')
+
+  // Both bare-autolink and `link:` forms, and only the TARGET -- a reference in
+  // the same line's prose or in the link LABEL is still marked.
+  const bare = 'See https://docs.hazelcast.org/docs/{os-version}/javadoc/X.html[the API] for {os-version}.'
+  const markedBare = wrapRefs(bare, ['os-version'])
+  assert.ok(markedBare.includes('/docs/{os-version}/javadoc'),
+    'the reference in the autolink TARGET is left bare')
+  assert.ok(/for .*\{os-version\}.*\./.test(markedBare) && markedBare !== bare,
+    'the reference in the same line\'s PROSE is still marked')
+  // An UNLABELLED autolink is the same hazard with no `[` to find it by: one source
+  // occurrence renders into both the href and the visible text, so the whole thing
+  // is skipped. hazelcast's clients/java writes its javadoc links this way.
+  const unlabelled = '* {enterprise-product-name}: https://docs.hazelcast.org/hazelcast-ee-docs/{ee-version}/javadoc'
+  const markedUnlabelled = wrapRefs(unlabelled, ['ee-version', 'enterprise-product-name'])
+  assert.ok(markedUnlabelled.includes('hazelcast-ee-docs/{ee-version}/javadoc'),
+    'a reference inside an unlabelled autolink is left bare')
+  assert.ok(markedUnlabelled !== unlabelled,
+    'while the list-item label on the same line is still marked')
+  ok('prose-eligibility: verbatim blocks and link targets are excluded, flow text is not')
+}
+
+// --- the two ways a marker can malform the golden ----------------------------
+// A marker is only safe where it spanifies into flow content. The snapshot builder
+// guards both failure modes, and they need different detectors: a BROKEN sentinel
+// run leaves control characters behind (hasSentinelResidue), while a WELL-FORMED
+// span inside an attribute value leaves none -- and, because stripAttrSpans still
+// reproduces the clean golden byte-for-byte, every other faithfulness check passes
+// too. That is why the second one has to be checked structurally: a well-formed tag
+// never contains a `<` between its name and its `>`.
+{
+  const good = '<p>Version <span class="hz-attr-os-version">5.8.0-SNAPSHOT</span> is current.</p>'
+  assert.ok(!hasSentinelResidue(good) && !hasAttrSpanLeak(good),
+    'a span in flow content is exactly what marking is for')
+
+  const inHref = '<a href="https://docs.hazelcast.org/docs/<span class="hz-attr-os-version">5.8.0-SNAPSHOT</span>/javadoc/X.html">API</a>'
+  assert.ok(hasAttrSpanLeak(inHref), 'a span inside an attribute value must be detected')
+  assert.ok(!hasSentinelResidue(inHref),
+    'the residue check cannot see it -- the sentinels DID spanify, which is why a second detector exists')
+  assert.strictEqual(stripAttrSpans(inHref),
+    '<a href="https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/X.html">API</a>',
+    'and the strip is still byte-faithful, which is why nothing downstream noticed')
+
+  // Not fooled by an ordinary span that merely FOLLOWS a tag with attributes.
+  assert.ok(!hasAttrSpanLeak('<a href="/x" class="y">go</a> <span class="hz-attr-ucn">User Code Namespaces</span>'),
+    'a span after a closed tag is flow content, not an attribute leak')
+  ok('mark-attributes: a broken run and a span inside an attribute value are both caught')
 }
 
 // --- marked attrs: value reverse-map applies to CODE only, never PROSE -------
@@ -1397,6 +1453,157 @@ const renderedCode = (md) => {
       `  top level: ${JSON.stringify(direct)}\n  in a cell: ${JSON.stringify(celled)}`)
   }
   ok('nested blocks: every block-vocabulary entry converts identically in a cell and at top level')
+}
+
+// A single-sourced link destination must survive being WRAPPED IN CODE.
+// Asciidoctor renders a monospaced link as `<code><a href>label</a></code>`
+// (hazelcast's Maven-artifact table columns: `link:…/{os-version}/jar[artifact]`
+// in a `[cols="l"]` column), and that branch used to emit the RESOLVED url in a
+// Markdown link — baking the version, invisibly to fidelity because a baked value
+// renders identically to the reference it replaced.
+//
+// The requirement is that the two paths agree: whatever the plain `<a>` keeps as a
+// reference, the code-wrapped one keeps too. So the oracle is the plain form's own
+// output — same ladder, same href template, differing only by the `code` flag.
+{
+  const url = 'https://search.maven.org/artifact/com.hazelcast/hazelcast/5.8.0-SNAPSHOT/jar'
+  const tpl = 'https://search.maven.org/artifact/com.hazelcast/hazelcast/{os-version}/jar'
+  const st = { pageUrl: '/x', hrefVars: new Map([[url, tpl]]), pageVars: new Map() }
+  const plain = convertBody(`<p><a href="${url}">hazelcast</a></p>`, st).body.trim()
+  const coded = convertBody(`<p><code><a href="${url}">hazelcast</a></code></p>`, st).body.trim()
+
+  assert.strictEqual(plain, `<Variable href="${tpl}" text="hazelcast"/>`,
+    'the plain link keeps the source template as its href')
+  assert.strictEqual(coded, `<Variable href="${tpl}" text="hazelcast" code/>`,
+    'and so does the code-wrapped link, plus `code` so the label stays monospace')
+  assert.strictEqual(coded.replace(' code/>', '/>'), plain,
+    'the two forms differ ONLY by the code flag: neither may bake what the other keeps')
+
+  // Nothing single-sourced about it -> the Markdown link with a code label, as before.
+  assert.strictEqual(
+    convertBody('<p><code><a href="/hazelcast/5.8-snapshot/sql/select">SELECT</a></code></p>',
+      { pageUrl: '/x' }).body.trim(),
+    '[`SELECT`](/hazelcast/5.8-snapshot/sql/select)',
+    'an ordinary code-wrapped link is still a Markdown link with a code label')
+  ok('code-wrapped links: a single-sourced destination stays a reference, exactly as a plain link does')
+}
+
+// --- code templates: keeping the right NAME inside a fence ---------------------
+// The requirement the value reverse-map cannot meet: hazelcast holds
+// `5.8.0-SNAPSHOT` in {os-version}, {ee-version} AND {full-version} at once, so a
+// value does not identify an attribute — and the three genuinely diverge (at 5.5,
+// os-version is 5.5.0 while ee-version is 5.5.10), so guessing prints the wrong
+// version. The oracle is therefore the SOURCE's own text: whatever the source
+// wrote is what must come back.
+{
+  const lookup = {'os-version': '5.8.0-SNAPSHOT', 'ee-version': '5.8.0-SNAPSHOT', 'minimum-java-version': '17'}
+  const known = new Set(Object.keys(lookup))
+  const build = (src) => buildCodeTemplates(attrCodeTemplates(src), known, lookup, substituteAttrs)
+
+  // 1. Extraction: only VERBATIM lines, and a block is keyed whole as well as by line.
+  const src = [
+    'Prose mentioning {os-version} is not a code template.',
+    '',
+    '[source,xml,subs="attributes+"]',
+    '----',
+    '  <artifactId>hazelcast-enterprise</artifactId>',
+    '  <version>{ee-version}</version>',
+    '----',
+    '',
+    '....',
+    'docker run hazelcast/hazelcast:{os-version}',
+    '....',
+  ].join('\n')
+  const t = attrCodeTemplates(src)
+  assert.deepStrictEqual([...t.lines].sort(),
+    ['  <version>{ee-version}</version>', 'docker run hazelcast/hazelcast:{os-version}'].sort(),
+    'only lines INSIDE a verbatim block are templates; prose is not')
+  assert.ok([...t.blocks].some((b) => b.includes('<artifactId>') && b.includes('{ee-version}')),
+    'a block is also keyed whole, so its non-attribute lines can disambiguate it')
+
+  // 2. Round trip: a rendered line maps back to the source line that produced it.
+  const { lines } = build(src)
+  assert.strictEqual(lines.get('docker run hazelcast/hazelcast:5.8.0-SNAPSHOT'),
+    'docker run hazelcast/hazelcast:{os-version}',
+    'the resolved line keys the template that produced it')
+
+  // 3. THE POINT: two same-valued attributes stay apart. Same page, two blocks,
+  //    identical `<version>` lines — the LINE tier must refuse (ambiguous) while
+  //    the BLOCK tier resolves both, because the artifactId lines differ.
+  const both = [
+    '[source,xml,subs="attributes+"]', '----',
+    '  <artifactId>hazelcast</artifactId>', '  <version>{os-version}</version>', '----',
+    '[source,xml,subs="attributes+"]', '----',
+    '  <artifactId>hazelcast-enterprise</artifactId>', '  <version>{ee-version}</version>', '----',
+  ].join('\n')
+  const two = build(both)
+  assert.strictEqual(two.lines.get('  <version>5.8.0-SNAPSHOT</version>'), undefined,
+    'a line two different templates resolve to is dropped, never guessed')
+  assert.strictEqual(
+    two.blocks.get('  <artifactId>hazelcast</artifactId>\n  <version>5.8.0-SNAPSHOT</version>'),
+    '  <artifactId>hazelcast</artifactId>\n  <version>{os-version}</version>',
+    'the block keeps {os-version}')
+  assert.strictEqual(
+    two.blocks.get('  <artifactId>hazelcast-enterprise</artifactId>\n  <version>5.8.0-SNAPSHOT</version>'),
+    '  <artifactId>hazelcast-enterprise</artifactId>\n  <version>{ee-version}</version>',
+    'and the sibling block keeps {ee-version} — which no value-keyed map could do')
+
+  // 4. A name the site does not single-source must not be templated: emitting its
+  //    `{name}` would put literal braces in a code block.
+  const unknownAttr = ['....', 'chart --version={operator-chart-version}', '....'].join('\n')
+  assert.strictEqual(build(unknownAttr).lines.size, 0,
+    'a template naming an attribute outside the known set is dropped')
+  ok('code templates: a fence keeps the source\'s own attribute NAME, and refuses to guess when two collide')
+}
+
+// End to end: the fence converter tries the block tier before the line tier, and a
+// templated line is not offered to the value map afterwards.
+{
+  const fence = (code, lang = 'xml') =>
+    `<div class="listingblock"><div class="content"><pre class="highlight">` +
+    `<code class="language-${lang}">${code}</code></pre></div></div>`
+  const blocks = new Map([[
+    '<artifactId>hazelcast-enterprise</artifactId>\n<version>5.8.0-SNAPSHOT</version>',
+    '<artifactId>hazelcast-enterprise</artifactId>\n<version>{ee-version}</version>',
+  ]])
+  const body = convertBody(
+    fence('&lt;artifactId&gt;hazelcast-enterprise&lt;/artifactId&gt;\n&lt;version&gt;5.8.0-SNAPSHOT&lt;/version&gt;'),
+    // codeValueVars deliberately maps the same value to a DIFFERENT name: if the
+    // value map ran on a templated line it would overwrite the template's answer.
+    {pageUrl: '/x', codeVars: {blocks, lines: new Map()}, codeValueVars: new Map([['5.8.0-SNAPSHOT', 'os-version']])},
+  ).body
+
+  assert.match(body, /<version>\{ee-version\}<\/version>/,
+    'the block template wins: the fence carries the name the SOURCE wrote')
+  assert.doesNotMatch(body, /\{os-version\}/,
+    'and the value map does not get a second bite at a line a template already named')
+  assert.match(body, /^```xml vars$/m, 'the fence is flagged `vars` so CodeBlock resolves the placeholder')
+  ok('fences: block templates beat line templates beat the value map, and each line is claimed once')
+}
+
+// A fence FLAG needs a language in front of it. MDX reads the first token of the
+// info string as the language, so a flag on a language-less fence becomes the
+// language and the metastring comes out empty — the swizzled CodeBlock then never
+// sees `vars`/`conums` and the placeholders reach the reader as literal braces
+// (hazelcast clients/cplusplus, caught by fidelity Layer 1 as added code text).
+{
+  const fence = (code, lang) =>
+    `<div class="listingblock"><div class="content"><pre class="highlight">` +
+    (lang ? `<code class="language-${lang}">` : '<code>') + code + '</code></pre></div></div>'
+  const lines = new Map([['hazelcast-cpp-client/5.7.0', 'hazelcast-cpp-client/{page-latest-supported-cplusplus-client}']])
+  const st = {pageUrl: '/x', codeVars: {blocks: new Map(), lines}, codeValueVars: new Map()}
+
+  const noLang = convertBody(fence('hazelcast-cpp-client/5.7.0', null), st).body
+  assert.match(noLang, /^```text vars$/m,
+    'a language-less fence carrying a flag gets the explicit no-highlighting language')
+
+  const withLang = convertBody(fence('hazelcast-cpp-client/5.7.0', 'shell'), st).body
+  assert.match(withLang, /^```shell vars$/m, "a fence with a language keeps its own")
+
+  // No flag, no language -> nothing added: the fence stays exactly as it was.
+  const plain = convertBody(fence('just text', null), {pageUrl: '/x'}).body
+  assert.match(plain, /^```$/m, 'a plain fence gains no language it did not have')
+  ok('fence info strings: a flag never gets read as the language')
 }
 
 console.log(`\n[converter selftest] ${n} groups passed.`)

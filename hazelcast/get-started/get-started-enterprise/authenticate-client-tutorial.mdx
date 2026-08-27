@@ -14,7 +14,7 @@ This tutorial introduces you to member security by setting up authentication for
 
 In this tutorial, you'll do the following:
 
-1. Enable and configure authentication credentials for a Hazelcast Enterprise Edition member.
+1. Enable and configure authentication credentials for a Hazelcast <Variable name="enterprise-product-name"/> member.
 2. Configure and connect a client with the correct credentials.
 3. Test connecting an unauthorized client to the member.
 
@@ -94,7 +94,7 @@ hazelcast:
 
 <CodeCallouts>
 
-1. Replace the `<YOUR_LICENSE_KEY>` placeholder with your Hazelcast Enterprise Edition license key.
+1. Replace the `<YOUR_LICENSE_KEY>` placeholder with your Hazelcast <Variable name="enterprise-product-name"/> license key.
 2. Define a security realm and set 'member-authentication' to use it.
 3. Define a username and password combination here.
 4. Ensure the security realm matches the realm defined with the username and password above.
@@ -107,10 +107,10 @@ With this configuration the member only accepts connections from clients with a 
 
 Run the following command.
 
-```shell
+```shell vars
 docker run \
     -p 5701:5701 \
-    -e JAVA_OPTS="-Dhazelcast.config=/opt/hazelcast/config_ext/hazelcast.yaml" -v ~/config:/opt/hazelcast/config_ext hazelcast/hazelcast-enterprise:5.8.0-SNAPSHOT
+    -e JAVA_OPTS="-Dhazelcast.config=/opt/hazelcast/config_ext/hazelcast.yaml" -v ~/config:/opt/hazelcast/config_ext hazelcast/hazelcast-enterprise:{ee-version}
 ```
 
 This command starts the member and configures it using the `hazelcast.yaml` file defined above.
@@ -277,12 +277,12 @@ You can now use your preferred language client to create an authentication conne
 
 In the client terminal, you should see that the member has authenticated and accepted the client connection with confirmation similar to the following:
 
-```shell
-INFO:hazelcast.lifecycle:HazelcastClient 5.8.0-SNAPSHOT is STARTING
-INFO:hazelcast.lifecycle:HazelcastClient 5.8.0-SNAPSHOT is STARTED
+```shell vars
+INFO:hazelcast.lifecycle:HazelcastClient {full-version} is STARTING
+INFO:hazelcast.lifecycle:HazelcastClient {full-version} is STARTED
 INFO:hazelcast.connection:Trying to connect to Address(host=127.0.0.1, port=5701)
-INFO:hazelcast.lifecycle:HazelcastClient 5.8.0-SNAPSHOT is CONNECTED
-INFO:hazelcast.connection:Authenticated with server Address(host=172.18.0.2, port=5701):63b2a2ce-85f6-413f-8ce9-6058a748e4b9, server version: 5.8.0-SNAPSHOT, local address: Address(host=127.0.0.1, port=36006)
+INFO:hazelcast.lifecycle:HazelcastClient {full-version} is CONNECTED
+INFO:hazelcast.connection:Authenticated with server Address(host=172.18.0.2, port=5701):63b2a2ce-85f6-413f-8ce9-6058a748e4b9, server version: {full-version}, local address: Address(host=127.0.0.1, port=36006)
 INFO:hazelcast.cluster:
 
 Members [1] {
@@ -296,9 +296,9 @@ INFO:hazelcast.client:Client started
 
 If you try to connect a client without any credentials or with incorrect credentials, the connection is refused by the member and you will see confirmation similar to the following:
 
-```shell
-INFO:hazelcast.lifecycle:HazelcastClient 5.8.0-SNAPSHOT is STARTING
-INFO:hazelcast.lifecycle:HazelcastClient 5.8.0-SNAPSHOT is STARTED
+```shell vars
+INFO:hazelcast.lifecycle:HazelcastClient {full-version} is STARTING
+INFO:hazelcast.lifecycle:HazelcastClient {full-version} is STARTED
 INFO:hazelcast.connection:Trying to connect to Address(host=127.0.0.1, port=5701)
 INFO:hazelcast.connection:Connection(id=0, live=False, remote_address=None) closed. Reason: Failed to authenticate connection
 WARNING:hazelcast.connection:Error during initial connection to Address(host=127.0.0.1, port=5701)
@@ -314,7 +314,7 @@ To shut down the cluster, close the terminals in which the members are running o
 
 In this tutorial, you learned how to:
 
-1. Enable and configure authentication credentials for a Hazelcast Enterprise Edition member.
+1. Enable and configure authentication credentials for a Hazelcast <Variable name="enterprise-product-name"/> member.
 2. Configure and connect a client with the correct credentials.
 3. Test connecting an unauthorized client to the member.
 
@@ -322,7 +322,7 @@ In this tutorial, you learned how to:
 
 If you're interested in learning more about the topics introduced in this tutorial, see [Security Overview](../../operate-and-manage/securing-a-cluster/overview.mdx)
 
-To continue learning about Enterprise Edition features, see:
+To continue learning about <Variable name="enterprise-product-name"/> features, see:
 
 - [Deploy blue-green clusters](./deploy-blue-green-tutorial.mdx)
 - [Replicate a map across clusters in a WAN](../../operate-and-manage/synchronizing-data-across-clusters/wan-replication-tutorial.mdx)

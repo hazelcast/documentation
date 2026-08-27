@@ -10,7 +10,7 @@ import TabItem from '@theme/TabItem';
 
 You can use a rolling upgrade to upgrade the version of Hazelcast members in a running cluster without interrupting the operation of the cluster.
 
-If you are moving members from a Community Edition cluster to an Enterprise Edition cluster, use an in-place rolling restart instead of a rolling upgrade. See [Upgrade to Enterprise Edition](./rolling-restart/overview.mdx).
+If you are moving members from a <Variable name="open-source-product-name"/> cluster to an <Variable name="enterprise-product-name"/> cluster, use an in-place rolling restart instead of a rolling upgrade. See [Upgrade to Enterprise Edition](./rolling-restart/overview.mdx).
 
 If you used Hazelcast Operator to deploy your cluster, follow the upgrade procedure in the [Operator documentation](https://docs.hazelcast.com/operator/latest/scaling-upgrading#upgrading) instead.
 
@@ -32,10 +32,10 @@ To allow you to use rolling upgrades, Hazelcast provides the following GA (gener
 - Hazelcast members operating on the same major and minor cluster version are always compatible, regardless of patch version.
 - Each minor version is compatible with the previous one.
 
-As a result, you can use rolling upgrades to upgrade clusters to the following member codebase versions within the same edition (Community Edition to Community Edition or Enterprise Edition to Enterprise Edition only):
+As a result, you can use rolling upgrades to upgrade clusters to the following member codebase versions within the same edition (<Variable name="open-source-product-name"/> to <Variable name="open-source-product-name"/> or <Variable name="enterprise-product-name"/> to <Variable name="enterprise-product-name"/> only):
 
-- A new patch version of the same major and minor version (Enterprise Edition only)
-- The next minor version of the same major version (Enterprise Edition only)
+- A new patch version of the same major and minor version (<Variable name="enterprise-product-name"/> only)
+- The next minor version of the same major version (<Variable name="enterprise-product-name"/> only)
 
   This also includes the ability of rolling upgrade from Hazelcast IMDG 4.2 to Platform 5.0, since IMDG is part of the Platform and 5.0 is considered to be the next minor version after IMDG 4.2.
 
@@ -62,7 +62,7 @@ Note that because you are shutting down and upgrading the members one by one, wh
 - You will need the JAR file for your new version. You can download the JAR file from [the Hazelcast website](https://hazelcast.com/get-started/download/).
 - You can use Management Center or the [hz-cluster-admin](../../operate-and-manage/maintaining-a-cluster/cluster-utilities.mdx#using-the-hz-cluster-admin-script) script to set the cluster version.
 
-  - To use Management Center, you need to upgrade Management Center before upgrading the members. See [Hazelcast Cluster Compatibility](/management-center/5.12-snapshot/getting-started/overview#hazelcast-cluster-compatibility) for the list of versions that Management Center can set the cluster version to.
+  - To use Management Center, you need to upgrade Management Center before upgrading the members. See <Variable href="/management-center/{page-latest-supported-mc}/getting-started/overview#hazelcast-cluster-compatibility" text="Hazelcast Cluster Compatibility"/> for the list of versions that Management Center can set the cluster version to.
   - To use `hz-cluster-admin`, you must enable the `CLUSTER_WRITE` REST endpoint group (disabled by default). See [REST Endpoint Groups](../../maintain-cluster/rest-api.mdx#using-the-rest-endpoint-groups).
 
     :::caution[Deprecation Notice for the Community Edition REST API]
@@ -111,7 +111,7 @@ To upgrade your cluster, complete the following steps:
 
    </TabItem>
    </Tabs>
-2. Wait until all partition migrations are completed. You can monitor the progress of migrations on the [cluster dashboard](/management-center/5.12-snapshot/clusters/dashboard) in Management Center.
+2. Wait until all partition migrations are completed. You can monitor the progress of migrations on the <Variable href="/management-center/{page-latest-supported-mc}/clusters/dashboard" text="cluster dashboard"/> in Management Center.
 
    During migrations, members cannot join or leave the cluster.
 3. Upgrade the member's codebase to the new version. You can do this by replacing the Hazelcast JAR file in your installation directory.
@@ -133,7 +133,7 @@ To upgrade your cluster, complete the following steps:
 
    </TabItem>
    </Tabs>
-5. Wait until the new member joins the cluster and all partition migrations are completed. Again, you can monitor progress using the [cluster dashboard](/management-center/5.12-snapshot/clusters/dashboard) in Management Center.
+5. Wait until the new member joins the cluster and all partition migrations are completed. Again, you can monitor progress using the <Variable href="/management-center/{page-latest-supported-mc}/clusters/dashboard" text="cluster dashboard"/> in Management Center.
 
    You should see something like the following in your logs:
 
@@ -161,7 +161,7 @@ To upgrade your cluster, complete the following steps:
 6. Repeat this process for each member in the cluster.
 7. <Anchor id="upgrading-cluster-version"/>When all members have been updated, trigger a rolling upgrade on the cluster using one of the following methods:
 
-   - [Management Center](/management-center/5.12-snapshot/clusters/administration#rolling-upgrade).
+   - <Variable href="/management-center/{page-latest-supported-mc}/clusters/administration#rolling-upgrade" text="Management Center"/>.
    - [hz-cluster-admin](../../operate-and-manage/maintaining-a-cluster/cluster-utilities.mdx#using-the-hz-cluster-admin-script) script.
    - Allow the cluster to [auto-upgrade](#enabling-auto-upgrading).
 

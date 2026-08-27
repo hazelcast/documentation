@@ -8,7 +8,7 @@ enterprise: true
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-The Kerberos authentication protocol is one of the standard solutions for single sign-on (SSO). Hazelcast supports Kerberos authentication as an Enterprise Edition feature and also provides Kerberos integration to LDAP-based authorizations.
+The Kerberos authentication protocol is one of the standard solutions for single sign-on (SSO). Hazelcast supports Kerberos authentication as an <Variable name="enterprise-product-name"/> feature and also provides Kerberos integration to LDAP-based authorizations.
 
 The Kerberos support in Hazelcast has 2 configuration parts: identity and authentication. The identity part is responsible for retrieving the service ticket from Kerberos KDC (Key Distribution Center). The authentication part verifies the service tickets.
 
@@ -18,7 +18,7 @@ Before a service ticket is issued, the client side of the connection has to be a
 
 ## Simplified Kerberos configuration
 
-Both Hazelcast `kerberos` identity, and `kerberos` authentication delegate the ticket related tasks (such as TGT retrieval) to vendor-specific `Krb5LoginModule` implementations. It normally uses the [`com.sun.security.auth.module.Krb5LoginModule`](https://docs.oracle.com/en/java/javase/17/docs/api/jdk.security.auth/com/sun/security/auth/module/Krb5LoginModule.html) class. The `security-ream` property in `kerberos` configurations allows referencing another realm with `Krb5LoginModule` configured.
+Both Hazelcast `kerberos` identity, and `kerberos` authentication delegate the ticket related tasks (such as TGT retrieval) to vendor-specific `Krb5LoginModule` implementations. It normally uses the <Variable href="https://docs.oracle.com/en/java/javase/{minimum-java-version}/docs/api/jdk.security.auth/com/sun/security/auth/module/Krb5LoginModule.html" text="com.sun.security.auth.module.Krb5LoginModule"/> class. The `security-ream` property in `kerberos` configurations allows referencing another realm with `Krb5LoginModule` configured.
 
 To simplify the Kerberos configuration process for new users, Hazelcast allows skipping `Krb5LoginModule` JAAS configuration within separate security realms. Instead, it's possible to define the `principal` and `keytab-file` options in the `kerberos` identity and authentication configurations. If these options are used instead of the `security-realm`, then a new temporary realm is generated on the fly during authentication.
 

@@ -29,7 +29,7 @@ These utilities are included in the `bin` directory in your Hazelcast package an
 
 Hazelcast also provides a suite of products for managing and monitoring your Hazelcast deployment. For more information, see the following:
 
-- [Management Center](/management-center/5.12-snapshot/getting-started/overview)
+- <Variable href="/management-center/{page-latest-supported-mc}/getting-started/overview" text="Management Center"/>
 - [Platform Operator](https://docs.hazelcast.com/operator/latest/)
 - [Command Line Client (CLC)](/clc/latest/overview)
 
@@ -120,8 +120,8 @@ To use `hz-cluster-admin`:
 
 Executes a cluster-wide operation. Operations can be the following:
 
-- Community Edition operations: `get-state`, `change-state`, `shutdown` and `get-cluster-version`.
-- Enterprise Edition operations: `force-start`, `partial-start` and `change-cluster-version`.
+- <Variable name="open-source-product-name"/> operations: `get-state`, `change-state`, `shutdown` and `get-cluster-version`.
+- <Variable name="enterprise-product-name"/> operations: `force-start`, `partial-start` and `change-cluster-version`.
 
 For `force-start`, see [Triggering a Force-Start](../fault-tolerance/persistence/triggering-force-start.mdx).
 
@@ -194,7 +194,7 @@ For the full list of options, refer to the script help: `./hz-cluster-admin -h`.
 
 :::note
 
-You can also perform the above operations using the **Persistence** tab of Hazelcast Management Center or using the REST API. See [Persistence](/management-center/5.12-snapshot/clusters/persistence) in the Hazelcast Management Center documentation and [Managing Cluster's State](../../maintain-cluster/rest-api.mdx#managing-clusters-state).
+You can also perform the above operations using the **Persistence** tab of Hazelcast Management Center or using the REST API. See <Variable href="/management-center/{page-latest-supported-mc}/clusters/persistence" text="Persistence"/> in the Hazelcast Management Center documentation and [Managing Cluster's State](../../maintain-cluster/rest-api.mdx#managing-clusters-state).
 
 :::
 
@@ -340,7 +340,7 @@ HZ_INTEGRITYCHECKER_ENABLED=true
 
 If the verification fails, the member does not start and the checker prints which hook is missing its corresponding `/META-INF/service/com.hazelcast.DataSerializerHook`. An example log output in the terminal is as follows.
 
-```shell
-SEVERE: [192.168.56.1]:5701 [dev] [5.8.0-SNAPSHOT] Node creation failed
+```shell vars
+SEVERE: [192.168.56.1]:5701 [dev] [{full-version}] Node creation failed
 com.hazelcast.core.HazelcastException: Failed to verify distribution integrity, unable to load DataSerializerHook: com.hazelcast.aggregation.impl.AggregatorDataSerializerHook
 ```

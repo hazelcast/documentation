@@ -97,7 +97,7 @@ config
 
 Data connections created in SQL behave differently to those defined in members' configuration files or in Java.
 
-- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../../operate-and-manage/fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the Enterprise Edition.
+- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../../operate-and-manage/fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name"/>.
 - You can create or drop a data connection using SQL commands. To update a data connection, you need to drop and then recreate it.
 
 ```sql conums
@@ -273,7 +273,7 @@ config
 
 Data connections created in SQL behave differently to those defined in members' configuration files or in Java.
 
-- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../../operate-and-manage/fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the Enterprise Edition.
+- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../../operate-and-manage/fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name"/>.
 - You can create or drop a data connection using SQL commands. To update a data connection, you need to drop and then recreate it.
 
 ```sql conums
@@ -303,7 +303,7 @@ OPTIONS (
 
 ### Example Hazelcast Data Connection {/* #Hazelcast */}
 
-This example configuration shows a data connection to a remote Hazelcast cluster. You can use a Hazelcast data connection from the Pipeline API in [Sources\#remoteMapJournal](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/jet/pipeline/Sources.html#remoteMapJournal-java.lang.String-com.hazelcast.jet.pipeline.DataConnectionRef-com.hazelcast.jet.pipeline.JournalInitialPosition-com.hazelcast.function.FunctionEx-com.hazelcast.function.PredicateEx-) source.
+This example configuration shows a data connection to a remote Hazelcast cluster. You can use a Hazelcast data connection from the Pipeline API in <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/pipeline/Sources.html#remoteMapJournal-java.lang.String-com.hazelcast.jet.pipeline.DataConnectionRef-com.hazelcast.jet.pipeline.JournalInitialPosition-com.hazelcast.function.FunctionEx-com.hazelcast.function.PredicateEx-" text="Sources#remoteMapJournal"/> source.
 
 :::note
 
@@ -314,7 +314,7 @@ Currently, no SQL connector is available for Hazelcast data connections. This me
 <Tabs groupId="java--sql--xml--yaml">
 <TabItem value="xml" label="XML">
 
-```xml conums
+```xml conums vars
 <hazelcast>
   <data-connection name="my-remote-hazelcast">
     <type>Hz</type>
@@ -325,7 +325,7 @@ Currently, no SQL connector is available for Hazelcast data connections. This me
           <hazelcast-client xmlns="http://www.hazelcast.com/schema/client-config"
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:schemaLocation="http://www.hazelcast.com/schema/client-config
-              http://www.hazelcast.com/schema/client-config/hazelcast-client-config-5.8-SNAPSHOT.xsd">
+              http://www.hazelcast.com/schema/client-config/hazelcast-client-config-{version}.xsd">
 
             <cluster-name>dev</cluster-name>
               <network>
@@ -377,7 +377,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java conums
+```java conums vars
 config
   .addDataConnectionConfig(
     new DataConnectionConfig()
@@ -389,7 +389,7 @@ config
               "<hazelcast-client xmlns=\"http://www.hazelcast.com/schema/client-config\"" +
               "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
               "      xsi:schemaLocation=\"http://www.hazelcast.com/schema/client-config" +
-              "      http://www.hazelcast.com/schema/client-config/hazelcast-client-config-5.8-SNAPSHOT.xsd\">" +
+              "      http://www.hazelcast.com/schema/client-config/hazelcast-client-config-{version}.xsd\">" +
               "    " +
               "    <cluster-name>dev</cluster-name>" +
               "    <network>" +
@@ -414,10 +414,10 @@ config
 
 Data connections created in SQL behave differently to those defined in members' configuration files or in Java.
 
-- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../../operate-and-manage/fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the Enterprise Edition.
+- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../../operate-and-manage/fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name"/>.
 - You can create or drop a data connection using SQL commands. To update a data connection, you need to drop and then recreate it.
 
-```SQL conums
+```SQL conums vars
 CREATE DATA CONNECTION "my-hazelcast-cluster"
 TYPE Hz
 SHARED
@@ -427,7 +427,7 @@ OPTIONS (
      <hazelcast-client xmlns="http://www.hazelcast.com/schema/client-config"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://www.hazelcast.com/schema/client-config
-         http://www.hazelcast.com/schema/client-config/hazelcast-client-config-5.8-SNAPSHOT.xsd">
+         http://www.hazelcast.com/schema/client-config/hazelcast-client-config-{version}.xsd">
 
        <cluster-name>dev</cluster-name>
        <network>
@@ -455,7 +455,7 @@ Data connections have the following configuration options.
 
 :::note
 
-If you are using Java to configure the Mapstore, use the [`DataConnectionConfig` object](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/config/DataConnectionConfig.html).
+If you are using Java to configure the Mapstore, use the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/DataConnectionConfig.html" text="DataConnectionConfig object"/>.
 
 :::
 
@@ -465,7 +465,7 @@ If you are using Java to configure the Mapstore, use the [`DataConnectionConfig`
 | `name` (required) | The unique identifier for the data connection. |
 | `type` (required) | The type of data connection required for your external system. The following types of connection are supported: `JDBC`, `Kafka`, `Mongo`, `Hz` (case-insensitive). |
 | `properties` | Any configuration properties that the data connection expects to receive. |
-| `shared` | Whether the data connection instance is reusable in different MapStores, jobs, and SQL mappings. This behavior depends on the implementation of the specific data connection. The default value is `true`. See the implementation of each data connection type for full details of reusability: [`KafkaDataConnection`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/jet/kafka/KafkaDataConnection.html), [`MongoDataConnection`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/jet/mongodb/dataconnection/MongoDataConnection.html), [`HazelcastDataConnection`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/dataconnection/HazelcastDataConnection.html). |
+| `shared` | Whether the data connection instance is reusable in different MapStores, jobs, and SQL mappings. This behavior depends on the implementation of the specific data connection. The default value is `true`. See the implementation of each data connection type for full details of reusability: <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/kafka/KafkaDataConnection.html" text="KafkaDataConnection"/>, <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/mongodb/dataconnection/MongoDataConnection.html" text="MongoDataConnection"/>, <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/dataconnection/HazelcastDataConnection.html" text="HazelcastDataConnection"/>. |
 
 :::tip
 

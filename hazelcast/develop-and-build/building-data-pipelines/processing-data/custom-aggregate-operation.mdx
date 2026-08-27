@@ -6,7 +6,7 @@ slug: /pipelines/custom-aggregate-operation
 
 One of the most important kinds of processing Jet does is aggregation. In general it is a transformation of a set of input values into a single output value. The function that does this transformation is called the *aggregate function*. A basic example is `sum` applied to a set of integer numbers, but the result can also be a complex value, for example a list of all the input items.
 
-The Jet API contains a range of [predefined aggregate functions](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/jet/aggregate/AggregateOperations.html), but it also exposes an abstraction, called [`AggregateOperation`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/jet/aggregate/AggregateOperation.html), that allows you to plug in your own. Since Hazelcast does the aggregation in a parallelized and distributed way, you can't simply supply a piece of Java code that implements the aggregate function; we need you to break it down into several smaller pieces that fit into the Jet processing engine.
+The Jet API contains a range of <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/aggregate/AggregateOperations.html" text="predefined aggregate functions"/>, but it also exposes an abstraction, called <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/aggregate/AggregateOperation.html" text="AggregateOperation"/>, that allows you to plug in your own. Since Hazelcast does the aggregation in a parallelized and distributed way, you can't simply supply a piece of Java code that implements the aggregate function; we need you to break it down into several smaller pieces that fit into the Jet processing engine.
 
 ## Characteristics of Distributed Aggregation
 
@@ -43,7 +43,7 @@ This object will also have to be [serializable](../../serialization/serializatio
 
 ## The Building Blocks
 
-Instead of requiring you to write a complete class from scratch, Hazelcast separates the concern of holding the accumulated state from that of the computation performed on it. This means that you just need one accumulator class for each kind of structure that holds the accumulated data, as opposed to one for each aggregate operation. The Jet API offers in the [`com.hazelcast.jet.accumulator`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/jet/accumulator/package-summary.html) package several such classes, one of them being [`LongLongAccumulator`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/jet/accumulator/LongLongAccumulator.html), which is a match for our `average` function. You'll just have to supply the logic on top of it.
+Instead of requiring you to write a complete class from scratch, Hazelcast separates the concern of holding the accumulated state from that of the computation performed on it. This means that you just need one accumulator class for each kind of structure that holds the accumulated data, as opposed to one for each aggregate operation. The Jet API offers in the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/accumulator/package-summary.html" text="com.hazelcast.jet.accumulator"/> package several such classes, one of them being <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/accumulator/LongLongAccumulator.html" text="LongLongAccumulator"/>, which is a match for our `average` function. You'll just have to supply the logic on top of it.
 
 Specifically, you have to provide a set of six functions (we call them "primitives"):
 
@@ -123,7 +123,7 @@ Specifically note the `1` at the end of the type's name: it signifies that it's 
 
 ## Aggregating Over Multiple Inputs
 
-Hazelcast can join several streams and simultaneously perform aggregation on all them. You specify a separate aggregate operation for each input stream and have the opportunity to combine their results when done. You can use aggregate operations [provided in the library](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/jet/aggregate/AggregateOperations.html) (see the section on [co-aggregating](./transforms.mdx#stateful-transforms#co-group%E2%80%94%E2%80%8Bjoin) for an example).
+Hazelcast can join several streams and simultaneously perform aggregation on all them. You specify a separate aggregate operation for each input stream and have the opportunity to combine their results when done. You can use aggregate operations <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/aggregate/AggregateOperations.html" text="provided in the library"/> (see the section on [co-aggregating](./transforms.mdx#stateful-transforms#co-group%E2%80%94%E2%80%8Bjoin) for an example).
 
 If you cannot express your aggregation logic using this approach, you can also specify a custom multi-input aggregate operation that can combine the items into the accumulator immediately as it receives them.
 

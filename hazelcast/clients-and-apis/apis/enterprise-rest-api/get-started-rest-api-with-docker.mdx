@@ -17,7 +17,7 @@ To complete this tutorial, you need the following:
 
 | Prerequisites | Useful resources |
 | --- | --- |
-| Docker image for Hazelcast Enterprise Edition full distribution and an Enterprise Edition license | [Get started with Hazelcast Enterprise Edition](../../../get-started/get-started-enterprise/overview.mdx) |
+| Docker image for Hazelcast <Variable name="enterprise-product-name"/> full distribution and an <Variable name="enterprise-product-name"/> license | [Get started with Hazelcast Enterprise Edition](../../../get-started/get-started-enterprise/overview.mdx) |
 
 ## Step 1. Prepare configuration file
 
@@ -80,30 +80,30 @@ hazelcast:
 
 <CodeCallouts>
 
-1. Replace `<YOUR_LICENSE_KEY>` with your Hazelcast Enterprise Edition license key.
+1. Replace `<YOUR_LICENSE_KEY>` with your Hazelcast <Variable name="enterprise-product-name"/> license key.
 
 </CodeCallouts>
 
-## Step 2. Start Hazelcast Enterprise Edition server
+## Step 2. Start Hazelcast <Variable name="enterprise-product-name"/> server {/* #step-2-start-hazelcast-enterprise-edition-server */}
 
-To start the Hazelcast Enterprise Edition server, run the following command:
+To start the Hazelcast <Variable name="enterprise-product-name"/> server, run the following command:
 
 <Tabs groupId="using-xml-config--using-yaml-config">
 <TabItem value="using-xml-config" label="Using XML config">
 
-```shell
+```shell vars
 docker run \
     -p 5701:5701 -p 8443:8443\
-    -e JAVA_OPTS="-Dhazelcast.config=/opt/hazelcast/config_ext/hazelcast.xml" -v ~/config:/opt/hazelcast/config_ext hazelcast/hazelcast-enterprise:5.8.0-SNAPSHOT
+    -e JAVA_OPTS="-Dhazelcast.config=/opt/hazelcast/config_ext/hazelcast.xml" -v ~/config:/opt/hazelcast/config_ext hazelcast/hazelcast-enterprise:{ee-version}
 ```
 
 </TabItem>
 <TabItem value="using-yaml-config" label="Using YAML config">
 
-```shell
+```shell vars
 docker run \
     -p 5701:5701 -p 8443:8443\
-    -e JAVA_OPTS="-Dhazelcast.config=/opt/hazelcast/config_ext/hazelcast.yaml" -v ~/config:/opt/hazelcast/config_ext hazelcast/hazelcast-enterprise:5.8.0-SNAPSHOT
+    -e JAVA_OPTS="-Dhazelcast.config=/opt/hazelcast/config_ext/hazelcast.yaml" -v ~/config:/opt/hazelcast/config_ext hazelcast/hazelcast-enterprise:{ee-version}
 ```
 
 </TabItem>
@@ -113,9 +113,9 @@ This command starts the member and configures it using your configuration file. 
 
 You should see a message in the console indicating that the REST service is enabled, similar to the following:
 
-```shell
+```shell vars
 com.hazelcast.internal.rest.init.RestServiceImpl
-INFO: [192.168.0.24]:5701 [dev] [5.8.0-SNAPSHOT] Hazelcast REST Service is enabled on port: 8443 with security realm: restRealm and access control service: com.hazelcast.internal.rest.access.DefaultAccessControlService
+INFO: [192.168.0.24]:5701 [dev] [{ee-version}] Hazelcast REST Service is enabled on port: 8443 with security realm: restRealm and access control service: com.hazelcast.internal.rest.access.DefaultAccessControlService
 ```
 
 ## Step 3. Access the REST API and Swagger UI

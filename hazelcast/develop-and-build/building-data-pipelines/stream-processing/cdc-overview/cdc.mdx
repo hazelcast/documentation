@@ -114,8 +114,8 @@ mysql> SELECT * FROM customers;
 
 1. [Download Hazelcast](../../../../install-and-upgrade/community-edition/install-hazelcast.mdx).
 
-   If you already have Hazelcast and you skipped the above steps, make sure to follow from here on. Download and extract the Hazelcast ZIP file from [the repository](https://repository.hazelcast.com/snapshot/com/hazelcast/hazelcast-enterprise-distribution/5.8.0-SNAPSHOT).
-2. Make sure the MySQL CDC plugin is in the `lib/` directory. You must manually download the MySQL CDC plugin's `jar-with-dependencies` from [Hazelcast's Maven repository](https://repository.hazelcast.com/snapshot/com/hazelcast/jet/hazelcast-enterprise-cdc-mysql/5.8.0-SNAPSHOT) and then copy it to the `lib/` directory.
+   If you already have Hazelcast and you skipped the above steps, make sure to follow from here on. Download and extract the Hazelcast ZIP file from <Variable href="https://repository.hazelcast.com/snapshot/com/hazelcast/hazelcast-enterprise-distribution/{ee-version}" text="the repository"/>.
+2. Make sure the MySQL CDC plugin is in the `lib/` directory. You must manually download the MySQL CDC plugin's `jar-with-dependencies` from <Variable href="https://repository.hazelcast.com/snapshot/com/hazelcast/jet/hazelcast-enterprise-cdc-mysql/{ee-version}" text="Hazelcast’s Maven repository"/> and then copy it to the `lib/` directory.
 
    ```bash
    ls lib/
@@ -123,9 +123,9 @@ mysql> SELECT * FROM customers;
 
    You should see the following jars:
 
-   - hazelcast-enterprise-cdc-debezium-5.8.0-SNAPSHOT-jar-with-dependencies.jar
-   - hazelcast-enterprise-cdc-mysql-5.8.0-SNAPSHOT-jar-with-dependencies.jar
-   - hazelcast-enterprise-cdc-postgres-5.8.0-SNAPSHOT-jar-with-dependencies.jar
+   - hazelcast-enterprise-cdc-debezium-<Variable name="ee-version"/>-jar-with-dependencies.jar
+   - hazelcast-enterprise-cdc-mysql-<Variable name="ee-version"/>-jar-with-dependencies.jar
+   - hazelcast-enterprise-cdc-postgres-<Variable name="ee-version"/>-jar-with-dependencies.jar
 3. Start Hazelcast.
 
    ```bash
@@ -143,7 +143,7 @@ mysql> SELECT * FROM customers;
 
 We'll assume you're using an IDE. Create a blank Java project named `cdc-tutorial` and copy the Maven file into it:
 
-```xml
+```xml vars
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -154,24 +154,24 @@ We'll assume you're using an IDE. Create a blank Java project named `cdc-tutoria
    <version>1.0-SNAPSHOT</version>
 
    <properties>
-       <maven.compiler.release>17</maven.compiler.target>
+       <maven.compiler.release>{minimum-java-version}</maven.compiler.target>
    </properties>
 
    <dependencies>
        <dependency>
            <groupId>com.hazelcast</groupId>
            <artifactId>hazelcast</artifactId>
-           <version>5.8.0-SNAPSHOT</version>
+           <version>{os-version}</version>
        </dependency>
        <dependency>
            <groupId>com.hazelcast.jet</groupId>
            <artifactId>hazelcast-enterprise-cdc-debezium</artifactId>
-           <version>5.8.0-SNAPSHOT</version>
+           <version>{ee-version}</version>
        </dependency>
        <dependency>
            <groupId>com.hazelcast.jet</groupId>
            <artifactId>hazelcast-enterprise-cdc-mysql</artifactId>
-           <version>5.8.0-SNAPSHOT</version>
+           <version>{ee-version}</version>
        </dependency>
        <dependency>
            <groupId>com.fasterxml.jackson.core</groupId>
@@ -247,7 +247,7 @@ public class JetJob {
 
 :::note
 
-If you are using Hazelcast Community Edition, you have to change the package from `com.hazelcast.enterprise.jet…​` to `com.hazelcast.jet…​`.
+If you are using Hazelcast <Variable name="open-source-product-name"/>, you have to change the package from `com.hazelcast.enterprise.jet…​` to `com.hazelcast.jet…​`.
 
 :::
 

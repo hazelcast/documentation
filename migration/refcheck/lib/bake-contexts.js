@@ -42,6 +42,16 @@ const ATTR_CONTEXTS = {
   // pinned as a literal to preserve the URL fragment -- an interpolated id would
   // break every inbound link the moment a value changed.
   id: 'bake:anchor-id',
+  // A tab pane's `aria-labelledby` points at the id of its TAB, which
+  // Asciidoctor derives from the tab's label text -- so an attribute in a tab
+  // label (hazelcast's `{enterprise-product-name}::` / `{open-source-product-name}::`
+  // tabsets) lands here as well as in the `id` above. Same fact, same
+  // consequence, hence the same reason: it is a derived id, and our <Tabs> does
+  // not reproduce Asciidoctor's tab wiring at all (groupId/value are ours, and
+  // neither reaches the DOM). Every one of the 16,043 `aria-labelledby`
+  // occurrences in the golden corpus is this construct -- `<div class="tab-pane">`
+  // -- so the position is unambiguous.
+  'aria-labelledby': 'bake:anchor-id',
   // Markdown image syntax has no expression slot for alt text or for the path.
   // Images are co-located and their paths rewritten at conversion, so the path is
   // necessarily literal.

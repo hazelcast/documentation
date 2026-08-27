@@ -38,7 +38,7 @@ To complete this tutorial, you need the following:
 
 [Install Hazelcast](../../install-and-upgrade/community-edition/install-hazelcast.mdx#using-the-binary)
 
-[Install Hazelcast Enterprise Edition](../../install-and-upgrade/enterprise-edition/install-enterprise.mdx)
+<a href="/hazelcast/5.8-snapshot/getting-started/install-enterprise">Install Hazelcast <Variable name="enterprise-product-name"/></a>
 
 </td>
 </tr>
@@ -53,7 +53,7 @@ To complete this tutorial, you need the following:
 
 Cluster configuration is an important step in creating a Hazelcast cluster. In this step, you learn how to configure a cluster by customizing its name.
 
-1. Open the `hazelcast.xml` file in the `hazelcast-5.8.0-SNAPSHOT/config` directory.
+1. Open the `hazelcast.xml` file in the <code>{"hazelcast-"}<Variable name="full-version"/>{"/config"}</code> directory.
 2. Change the value of the `hazelcast.cluster-name` field to `hello-world`.
 
    ```xml
@@ -62,7 +62,7 @@ Cluster configuration is an important step in creating a Hazelcast cluster. In t
    </hazelcast>
    ```
 3. Save and exit the file.
-4. Open the `hazelcast-client.xml` file in the `hazelcast-5.8.0-SNAPSHOT/config` directory.
+4. Open the `hazelcast-client.xml` file in the <code>{"hazelcast-"}<Variable name="full-version"/>{"/config"}</code> directory.
 5. Add the same `cluster-name` configuration to the `hazelcast-client` element.
 
    ```xml
@@ -137,9 +137,9 @@ In this step, you use the cluster management scripts to start a single-member cl
 
    You should see something like the following:
 
-   ``` conums
+   ```text conums vars
    State: ACTIVE <1>
-   Version: 5.8.0-SNAPSHOT
+   Version: {full-version}
    Size: 1 <2>
 
    ADDRESS                  UUID
@@ -736,8 +736,8 @@ In this step, you add two more members to your cluster.
 
 1. Open a new terminal and run the `start` script to start another member.
 
-   ```shell
-   cd hazelcast-5.8.0-SNAPSHOT
+   ```shell vars
+   cd hazelcast-{full-version}
    bin/hz-start
    ```
 2. Repeat the previous step to start another member.
@@ -792,5 +792,5 @@ Or, if you're interested in learning more about topics that we introduced in thi
 - [Clients](../hazelcast-clients/overview.mdx)
 - [Data partitioning](../../develop-and-build/architecture/data-partitioning.mdx)
 - [Maps and other data structures](../../develop-and-build/distributed-data-structures/distributed-data-structures.mdx)
-- [Management Center](/management-center/5.12-snapshot/getting-started/overview)
+- <Variable href="/management-center/{page-latest-supported-mc}/getting-started/overview" text="Management Center"/>
 - [Network partitioning](../../operate-and-manage/fault-tolerance/handling-network-partitions/network-partitioning.mdx)

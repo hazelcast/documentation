@@ -210,8 +210,8 @@ You can also create your own Docker image using Dockerfiles to start Hazelcast a
 
 Create a Dockerfile as follows:
 
-```dockerfile
-FROM hazelcast/hazelcast:5.8.0-SNAPSHOT
+```dockerfile vars
+FROM hazelcast/hazelcast:{os-version}
 ADD examples/hello-world.jar /examples/
 ENV HAZELCAST_MEMBER_ADDRESS 172.17.0.2
 CMD ["sh", "-c", "hz-cli -t $HAZELCAST_MEMBER_ADDRESS submit /examples/hello-world.jar"]

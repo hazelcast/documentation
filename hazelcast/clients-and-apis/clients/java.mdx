@@ -15,24 +15,24 @@ import PartialClientsExampleRTClientJava from '@site/hazelcast/_partials/clients
 
 This topic is aimed at developers and describes basic usage, configuration, and advanced features.
 
-Hazelcast provides a Java Client and Embedded Server which you can use to connect to a Hazelcast cluster. `hazelcast-<VERSION>.jar` is bundled in the Hazelcast standard package, so you simply add this file to your classpath to begin using the client as if you are using the Hazelcast API.
+Hazelcast provides a <Variable name="java-client"/> which you can use to connect to a Hazelcast cluster. `hazelcast-<VERSION>.jar` is bundled in the Hazelcast standard package, so you simply add this file to your classpath to begin using the client as if you are using the Hazelcast API.
 
 ## Get started
 
-To get started using the Java Client and Embedded Server, you need to include the `hazelcast.jar` dependency in your classpath. You can then start using this client as if you are using the Hazelcast API.
+To get started using the <Variable name="java-client"/>, you need to include the `hazelcast.jar` dependency in your classpath. You can then start using this client as if you are using the Hazelcast API.
 
 :::note
 
-If you have a Hazelcast Enterprise Edition license, you don't need to set the license key in your Hazelcast Java clients to use the [Enterprise Edition features](../../get-started/editions.mdx#features-in-hazelcast-enterprise). You only have to set it on the member side, and include the `hazelcast-enterprise-<VERSION>.jar` dependency in your classpath.
+If you have a Hazelcast <Variable name="enterprise-product-name"/> license, you don't need to set the license key in your Hazelcast Java clients to use the <a href="/hazelcast/5.8-snapshot/getting-started/editions#features-in-hazelcast-enterprise"><Variable name="enterprise-product-name"/> features</a>. You only have to set it on the member side, and include the `hazelcast-enterprise-<VERSION>.jar` dependency in your classpath.
 
 :::
 
 If you prefer to use Maven, make sure you have added the appropriate `hazelcast` or `hazelcast-enterprise` dependency to your `pom.xml`:
 
-<Tabs groupId="community-edition--enterprise-edition">
-<TabItem value="enterprise-edition" label="Enterprise Edition">
+<Tabs groupId="enterprise-product-name-enterprise-edition--open-source-product-name-community-edition">
+<TabItem value="enterprise-product-name-enterprise-edition" label="Enterprise Edition">
 
-```xml conums
+```xml conums vars
 <repositories>
     <repository>
         <id>hazelcast-public-snapshot-repository</id>
@@ -48,7 +48,7 @@ If you prefer to use Maven, make sure you have added the appropriate `hazelcast`
     <dependency>
         <groupId>com.hazelcast</groupId>
         <artifactId>hazelcast-enterprise</artifactId> <2>
-        <version>5.8.0-SNAPSHOT</version> <3>
+        <version>{os-version}</version> <3>
     </dependency>
 </dependencies>
 ```
@@ -56,35 +56,35 @@ If you prefer to use Maven, make sure you have added the appropriate `hazelcast`
 <CodeCallouts>
 
 1. Location for Maven to access Hazelcast artifacts.
-2. Hazelcast Enterprise Edition dependency.
-3. Hazelcast Enterprise Edition version.
+2. Hazelcast <Variable name="enterprise-product-name"/> dependency.
+3. Hazelcast <Variable name="enterprise-product-name"/> version.
 
 </CodeCallouts>
 
 </TabItem>
-<TabItem value="community-edition" label="Community Edition">
+<TabItem value="open-source-product-name-community-edition" label="Community Edition">
 
-```xml conums
+```xml conums vars
 <dependencies>
    <dependency>
        <groupId>com.hazelcast</groupId>
        <artifactId>hazelcast</artifactId> <1>
-       <version>5.8.0-SNAPSHOT</version> <2>
+       <version>{os-version}</version> <2>
    </dependency>
 </dependencies>
 ```
 
 <CodeCallouts>
 
-1. Hazelcast Community Edition dependency.
-2. Hazelcast Community Edition version.
+1. Hazelcast <Variable name="open-source-product-name"/> dependency.
+2. Hazelcast <Variable name="open-source-product-name"/> version.
 
 </CodeCallouts>
 
 </TabItem>
 </Tabs>
 
-You can find Java Client and Embedded Server code samples in the [Hazelcast Code Samples repository](https://github.com/hazelcast/hazelcast-code-samples/tree/master/clients).
+You can find <Variable name="java-client"/> code samples in the [Hazelcast Code Samples repository](https://github.com/hazelcast/hazelcast-code-samples/tree/master/clients).
 
 :::tip
 
@@ -158,7 +158,7 @@ The `addLocalEntryListener()` and `localKeySet()` methods are not supported beca
 
 ### Use MultiMap
 
-You can use a distributed multiMap object with the Java Client and Embedded Server, as follows:
+You can use a distributed multiMap object with the <Variable name="java-client"/>, as follows:
 
 ```java
 MultiMap<Integer, String> multiMap = client.getMultiMap("myMultiMap");
@@ -218,13 +218,13 @@ The mode that you use depends on your network requirements due to the distribute
 In all modes, the following information is provided to the client on initial connection:
 
 - Cluster version
-- Member details, including instance name, IP or UUID, partition group information, CP membership status, and type (Enterprise Edition only)
-- Partition group information (Enterprise Edition only)
-- CP group leader information (Enterprise Edition with `Advanced CP` enabled only)
+- Member details, including instance name, IP or UUID, partition group information, CP membership status, and type (<Variable name="enterprise-product-name"/> only)
+- Partition group information (<Variable name="enterprise-product-name"/> only)
+- CP group leader information (<Variable name="enterprise-product-name"/> with `Advanced CP` enabled only)
 
 The client is updated whenever the cluster version, cluster topology, partition groups, or CP group leader changes.
 
-From Enterprise Edition 5.5, you can use any of the following cluster routing modes:
+From <Variable name="enterprise-product-name"/> 5.5, you can use any of the following cluster routing modes:
 
 - **ALL\_MEMBERS**
 
@@ -330,7 +330,7 @@ clientConfig.setClusterName("dev");
 
 ### Configure client security {/* #client-security-configuration */}
 
-**Hazelcast Enterprise Edition**
+**Hazelcast <Variable name="enterprise-product-name"/>**
 
 You can define control mechanisms for clients to control authentication and authorisation. For more information, see [Client Authorization](../../operate-and-manage/securing-a-cluster/client-authorization.mdx).
 
@@ -422,7 +422,7 @@ security:
 </TabItem>
 </Tabs>
 
-For more information, see [ClientSecurityConfig API documentation](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/config/ClientSecurityConfig.html)
+For more information, see <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/config/ClientSecurityConfig.html" text="ClientSecurityConfig API documentation"/>
 
 ### Configure ClassLoader {/* #classloader */}
 
@@ -1391,7 +1391,7 @@ The default value is **5000** milliseconds.
 
 ### Set a socket interceptor
 
-**Hazelcast Enterprise Edition**
+**Hazelcast <Variable name="enterprise-product-name"/>**
 
 Any class implementing `com.hazelcast.nio.SocketInterceptor` is a socket interceptor. The following code sample shows an example of how to set a socket interceptor:
 
@@ -1458,7 +1458,7 @@ socketOptions.setBufferSize(32)
 
 ### Enable client TLS
 
-**Hazelcast Enterprise Edition**
+**Hazelcast <Variable name="enterprise-product-name"/>**
 
 You can use TLS to secure the connection between the client and the members. If you want TLS enabled for the client-cluster connection, you should set `SSLConfig`. For more information, see [TLS](../../operate-and-manage/securing-a-cluster/tls/tls-ssl.mdx).
 
@@ -1472,9 +1472,9 @@ Keys and certificates in `keyStores` are used to prove identity to the other sid
 
 For a programmatic example, see this [code example](#programmatic-configuration-5).
 
-### Configure Hazelcast Cloud
+### Configure Hazelcast <Variable name="hazelcast-cloud"/> {/* #configure-hazelcast-cloud */}
 
-You can connect the Java Client and Embedded Server to a Cloud Standard cluster which is hosted on [Cloud](https://cloud.hazelcast.com/sign-up?utm_source=docs-website). For this, you need to enable Cloud and specify the cluster's discovery token provided while creating the cluster; this allows the cluster to discover your clients. See the following example configurations:
+You can connect the <Variable name="java-client"/> to a <Variable name="hazelcast-cloud"/> Standard cluster which is hosted on <Variable href="{url-cloud-signup}" text="{hazelcast-cloud}"/>. For this, you need to enable <Variable name="hazelcast-cloud"/> and specify the cluster's discovery token provided while creating the cluster; this allows the cluster to discover your clients. See the following example configurations:
 
 #### Declarative configuration {/* #declarative-configuration-5 */}
 
@@ -1520,9 +1520,9 @@ networkConfig.setSSLConfig(new SSLConfig().setEnabled(true));
 HazelcastInstance client = HazelcastClient.newHazelcastClient(config);
 ```
 
-Cloud is disabled for the Java client, by default (`enabled` attribute is `false`).
+<Variable name="hazelcast-cloud"/> is disabled for the Java client, by default (`enabled` attribute is `false`).
 
-See [Hazelcast Cloud](/cloud/overview) for more information about Cloud.
+See <a href="/cloud/overview">Hazelcast <Variable name="hazelcast-cloud"/></a> for more information about <Variable name="hazelcast-cloud"/>.
 
 :::note
 
@@ -1688,7 +1688,7 @@ For details about data pipelines, see [About Data Pipelines](../../develop-and-b
 
 You can define labels in your Java client, similar to the way labels are used for members. With client labels you can assign special roles for your clients and use these roles to perform actions specific to those client connections. For more information on labels, see [Cluster Utilities](../../operate-and-manage/maintaining-a-cluster/cluster-utilities.mdx).
 
-You can also group your clients using labels. You can use Hazelcast Management Center to blocklist these client groups to prevent them connecting to a cluster. For more information, see [Manage client connections](/management-center/5.12-snapshot/clusters/client-filtering).
+You can also group your clients using labels. You can use Hazelcast Management Center to blocklist these client groups to prevent them connecting to a cluster. For more information, see <Variable href="/management-center/{page-latest-supported-mc}/clusters/client-filtering" text="Manage client connections"/>.
 
 The following declarative example shows how to define client using the `client-labels` configuration element:
 
@@ -1762,34 +1762,34 @@ You need to restart clients after modifying system properties.
 
 | Property Name | Default Value | Type | Description |
 | --- | --- | --- | --- |
-| [`hazelcast.client.cloud.discovery.token`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#HAZELCAST_CLOUD_DISCOVERY_TOKEN) |  | long | Token to use when discovering the cluster via Cloud. |
-| [`hazelcast.client.concurrent.window.ms`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#CONCURRENT_WINDOW_MS) | 100 | int | Property needed for concurrency detection so that write through and dynamic response handling can be done correctly. This property sets the window for a concurrency detection (duration when it signals that a concurrency has been detected), even if there are no further updates in that window. Normally in a concurrent system the windows keeps sliding forward so it always remains concurrent. Setting it too high effectively disables the optimization because once concurrency has been detected it will keep that way. Setting it too low could lead to suboptimal performance because the system will try to use write-through and other optimizations even though the system is concurrent. |
-| [`hazelcast.discovery.enabled`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#DISCOVERY_SPI_ENABLED) | false | bool | Enables/disables the Discovery SPI lookup over the old native implementations. See [Discovery SPI](../../operate-and-manage/extending-hazelcast/discovery-spi.mdx) for more information. |
-| [`hazelcast.discovery.public.ip.enabled`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#DISCOVERY_SPI_PUBLIC_IP_ENABLED) | false | bool | Enables the discovery joiner to use public IPs from `DiscoveredNode`. See [Discovery SPI](../../operate-and-manage/extending-hazelcast/discovery-spi.mdx) for more information. When set to `true`, the client assumes that it needs to use public IP addresses reported by the members. When set to `false`, the client always uses private addresses reported by the members. If not set, the client attempts to infer which address type to use by testing member reachability. The inference checks only a small sample of members (3 by default) with fixed timeouts, so it is not 100% reliable and may produce incorrect results in environments with variable network latency or partial connectivity. Additionally, inference is skipped when SSL/TLS is enabled, defaulting to private addresses. When members are configured with [public addresses](../../operate-and-manage/partition-groups-and-networking/network-configuration.mdx#public-address), and you want the clients to use public IP addresses, we recommend explicitly setting this property to `true` rather than relying on inference. |
-| [`hazelcast.client.event.queue.capacity`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#EVENT_QUEUE_CAPACITY) | 1000000 | int | Default value of the capacity of executor that handles the incoming event packets. |
-| [`hazelcast.client.event.thread.count`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#EVENT_THREAD_COUNT) | 5 | int | Thread count for handling the incoming event packets. |
-| [`hazelcast.client.heartbeat.interval`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#HEARTBEAT_INTERVAL) | 5000 | int | Frequency of the heartbeat messages sent by the clients to members. |
-| [`hazelcast.client.heartbeat.timeout`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#HEARTBEAT_TIMEOUT) | 60000 | int | Timeout for the heartbeat messages sent by the client to members. If no messages pass between the client and member within the given time via this property in milliseconds, the connection will be closed. |
-| [`hazelcast.client.invocation.backoff.timeout.millis`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#BACKPRESSURE_BACKOFF_TIMEOUT_MILLIS) | -1 | int | Controls the maximum timeout, in milliseconds, to wait for an invocation space to be available. If an invocation cannot be made because there are too many pending invocations, then an exponential backoff is done to give the system time to deal with the backlog of invocations. This property controls how long an invocation is allowed to wait before getting a `HazelcastOverloadException`. When set to -1 then `HazelcastOverloadException` is thrown immediately without any waiting. |
-| [`hazelcast.client.invocation.retry.pause.millis`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#INVOCATION_RETRY_PAUSE_MILLIS) | 1000 | int | Pause time between each retry cycle of an invocation in milliseconds. |
-| [`hazelcast.client.invocation.timeout.seconds`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#INVOCATION_TIMEOUT_SECONDS) | 120 | int | Period, in seconds, to give up the invocation when a member in the member list is not reachable, or the member fails with an exception, or the client's heartbeat requests are timed out. |
-| [`hazelcast.client.io.balancer.interval.seconds`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#IO_BALANCER_INTERVAL_SECONDS) | 20 | int | Interval in seconds between each `IOBalancer` execution. By default Hazelcast uses 3 threads to read data from TCP connections and 3 threads to write data to connections. `IOBalancer` detects and fixes the fluctuations when these threads are not utilized equally. The shorter intervals catch I/O imbalances faster, but they cause higher overhead. A value smaller than 1 disables the balancer. |
-| [`hazelcast.client.io.input.thread.count`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#IO_INPUT_THREAD_COUNT) | -1 | int | Controls the number of I/O input threads. Defaults to -1, i.e., the system decides. If the client is using either the `ALL_MEMBERS` or the `MULTI_MEMBER` cluster routing mode, it defaults to 3, otherwise it defaults to 1. If there are more than 8 processors, it defaults to 3 threads. |
-| [`hazelcast.client.io.output.thread.count`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#IO_OUTPUT_THREAD_COUNT) | -1 | int | Controls the number of I/O output threads. Defaults to -1, i.e., the system decides. If the client is using either the `ALL_MEMBERS` or the `MULTI_MEMBER` cluster routing mode, it defaults to 3, otherwise it defaults to 1. If there are more than 8 processors, it defaults to 3 threads. |
-| [`hazelcast.client.io.write.through`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#IO_WRITE_THROUGH_ENABLED) | true | bool | Optimization that allows sending of packets over the network to be done on the calling thread if the conditions are right. This can reduce the latency and increase the performance for low threaded environments. |
-| [`hazelcast.client.max.concurrent.invocations`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#MAX_CONCURRENT_INVOCATIONS) | Integer.MAX\_VALUE | int | Maximum allowed number of concurrent invocations. You can apply a constraint on the number of concurrent invocations in order to prevent the system from overloading. If the maximum number of concurrent invocations is exceeded and a new invocation comes in, Hazelcast throws `HazelcastOverloadException`. |
-| [`hazelcast.client.metrics.collection.frequency`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#METRICS_COLLECTION_FREQUENCY) | 5 | int | Frequency, in seconds, of the [metrics](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics) collection cycle. Note that the preferred way for controlling this setting is [Metrics Configuration](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics#metrics-configuration). |
-| [`hazelcast.client.metrics.debug.enabled`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#METRICS_DEBUG) | false | bool | Enables collecting debug metrics if set to `true`, disables it otherwise. Note that this is meant to be enabled only if diagnostics is enabled, since currently only diagnostics consumes the debug metrics. |
-| [`hazelcast.client.metrics.enabled`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#METRICS_ENABLED) | true | bool | Enables the [metrics collection](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics) if set to `true`, disables it otherwise. Note that the preferred way for controlling this setting is [Metrics Configuration](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics#metrics-configuration). When it is `true` you can monitor metrics of the clients that are connected to your Hazelcast cluster, using Hazelcast Management Center. See [here](/management-center/5.12-snapshot/clusters/clients) for more information. |
-| [`hazelcast.client.metrics.jmx.enabled`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#METRICS_JMX_ENABLED) | true | bool | Enables exposing the collected [metrics](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics) over JMX if set to `true`, disables it otherwise. Note that the preferred way for controlling this setting is [Metrics Configuration](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics#metrics-configuration). |
-| [`hazelcast.client.operation.backup.timeout.millis`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#OPERATION_BACKUP_TIMEOUT_MILLIS) | 5000 | int | If an operation has sync backups, this property specifies how long the invocation will wait for acks from the backup replicas. If acks are not received from some backups, there will not be any rollback on other successful replicas. |
-| [`hazelcast.client.operation.fail.on.indeterminate.state`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#FAIL_ON_INDETERMINATE_OPERATION_STATE) | false | bool | When this configuration is enabled, if an operation has sync backups and acks are not received from backup replicas in time, or the member which owns primary replica of the target partition leaves the cluster, then the invocation fails with `IndeterminateOperationStateException`. However, even if the invocation fails, there will not be any rollback on other successful replicas. |
-| [`hazelcast.client.response.thread.count`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#RESPONSE_THREAD_COUNT) | 2 | int | Number of the response threads. By default, there are two response threads; this gives stable and good performance. If set to 0, the response threads are bypassed and the response handling is done on the I/O threads. Under certain conditions this can give a higher throughput, but setting to 0 should be regarded as an experimental feature. If set to 0, the IO\_OUTPUT\_THREAD\_COUNT is really going to matter because the inbound thread will have more work to do. By default when TLS is not enabled, there is just one inbound thread. |
-| [`hazelcast.client.response.thread.dynamic`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#RESPONSE_THREAD_DYNAMIC) | true | bool | Enables dynamic switching between processing the responses on the I/O threads and offloading the response threads. Under certain conditions (single threaded clients) processing on the I/O thread can increase the performance because useless handover to the response thread is removed. Also the response thread is not created until it is needed. Especially for ephemeral clients, reducing the threads can lead to increased performance and reduced memory usage. |
-| [`hazelcast.client.shuffle.member.list`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#SHUFFLE_MEMBER_LIST) | true | string | The client shuffles the given member list to prevent all the clients to connect to the same member when this property is `true`. When it is set to `false`, the client tries to connect to the members in the given order. |
-| [`hazelcast.client.connectivity.logging.delay.seconds`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#CLIENT_CONNECTIVITY_LOGGING_DELAY_SECONDS) | 10 | int | Delay in seconds after which the client logs connectivity statistics after member connection changes. If a member connection state changes before the delay period has elapsed, the delay is reset. The delay reduces noise from frequent connection updates that can occur in bursts. Note that only the last connectivity view will be logged when the task is run after this delay. |
-| [`hazelcast.client.statistics.enabled`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#STATISTICS_ENABLED) | false | bool | If set to `true`, it enables collecting the client statistics and sending them to the cluster. This property is deprecated, use `hazelcast.client.metrics.enabled` instead. If both are configured, this one is ignored. Note that since this is replaced with `hazelcast.client.metrics.enabled`, the default behavior is also changed: it is enabled by default. |
-| [`hazelcast.client.statistics.period.seconds`](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/client/properties/ClientProperty.html#STATISTICS_PERIOD_SECONDS) | 3 | int | Period in seconds the client statistics are collected and sent to the cluster. This property is deprecated, use `hazelcast.client.metrics.collection.frequency` instead. The value set here is used as `hazelcast.client.metrics.collection.frequency`. If both are configured, this one is ignored. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#HAZELCAST_CLOUD_DISCOVERY_TOKEN" text="hazelcast.client.cloud.discovery.token"/> |  | long | Token to use when discovering the cluster via <Variable name="hazelcast-cloud"/>. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#CONCURRENT_WINDOW_MS" text="hazelcast.client.concurrent.window.ms"/> | 100 | int | Property needed for concurrency detection so that write through and dynamic response handling can be done correctly. This property sets the window for a concurrency detection (duration when it signals that a concurrency has been detected), even if there are no further updates in that window. Normally in a concurrent system the windows keeps sliding forward so it always remains concurrent. Setting it too high effectively disables the optimization because once concurrency has been detected it will keep that way. Setting it too low could lead to suboptimal performance because the system will try to use write-through and other optimizations even though the system is concurrent. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#DISCOVERY_SPI_ENABLED" text="hazelcast.discovery.enabled"/> | false | bool | Enables/disables the Discovery SPI lookup over the old native implementations. See [Discovery SPI](../../operate-and-manage/extending-hazelcast/discovery-spi.mdx) for more information. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#DISCOVERY_SPI_PUBLIC_IP_ENABLED" text="hazelcast.discovery.public.ip.enabled"/> | false | bool | Enables the discovery joiner to use public IPs from `DiscoveredNode`. See [Discovery SPI](../../operate-and-manage/extending-hazelcast/discovery-spi.mdx) for more information. When set to `true`, the client assumes that it needs to use public IP addresses reported by the members. When set to `false`, the client always uses private addresses reported by the members. If not set, the client attempts to infer which address type to use by testing member reachability. The inference checks only a small sample of members (3 by default) with fixed timeouts, so it is not 100% reliable and may produce incorrect results in environments with variable network latency or partial connectivity. Additionally, inference is skipped when SSL/TLS is enabled, defaulting to private addresses. When members are configured with [public addresses](../../operate-and-manage/partition-groups-and-networking/network-configuration.mdx#public-address), and you want the clients to use public IP addresses, we recommend explicitly setting this property to `true` rather than relying on inference. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#EVENT_QUEUE_CAPACITY" text="hazelcast.client.event.queue.capacity"/> | 1000000 | int | Default value of the capacity of executor that handles the incoming event packets. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#EVENT_THREAD_COUNT" text="hazelcast.client.event.thread.count"/> | 5 | int | Thread count for handling the incoming event packets. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#HEARTBEAT_INTERVAL" text="hazelcast.client.heartbeat.interval"/> | 5000 | int | Frequency of the heartbeat messages sent by the clients to members. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#HEARTBEAT_TIMEOUT" text="hazelcast.client.heartbeat.timeout"/> | 60000 | int | Timeout for the heartbeat messages sent by the client to members. If no messages pass between the client and member within the given time via this property in milliseconds, the connection will be closed. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#BACKPRESSURE_BACKOFF_TIMEOUT_MILLIS" text="hazelcast.client.invocation.backoff.timeout.millis"/> | -1 | int | Controls the maximum timeout, in milliseconds, to wait for an invocation space to be available. If an invocation cannot be made because there are too many pending invocations, then an exponential backoff is done to give the system time to deal with the backlog of invocations. This property controls how long an invocation is allowed to wait before getting a `HazelcastOverloadException`. When set to -1 then `HazelcastOverloadException` is thrown immediately without any waiting. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#INVOCATION_RETRY_PAUSE_MILLIS" text="hazelcast.client.invocation.retry.pause.millis"/> | 1000 | int | Pause time between each retry cycle of an invocation in milliseconds. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#INVOCATION_TIMEOUT_SECONDS" text="hazelcast.client.invocation.timeout.seconds"/> | 120 | int | Period, in seconds, to give up the invocation when a member in the member list is not reachable, or the member fails with an exception, or the client's heartbeat requests are timed out. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#IO_BALANCER_INTERVAL_SECONDS" text="hazelcast.client.io.balancer.interval.seconds"/> | 20 | int | Interval in seconds between each `IOBalancer` execution. By default Hazelcast uses 3 threads to read data from TCP connections and 3 threads to write data to connections. `IOBalancer` detects and fixes the fluctuations when these threads are not utilized equally. The shorter intervals catch I/O imbalances faster, but they cause higher overhead. A value smaller than 1 disables the balancer. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#IO_INPUT_THREAD_COUNT" text="hazelcast.client.io.input.thread.count"/> | -1 | int | Controls the number of I/O input threads. Defaults to -1, i.e., the system decides. If the client is using either the `ALL_MEMBERS` or the `MULTI_MEMBER` cluster routing mode, it defaults to 3, otherwise it defaults to 1. If there are more than 8 processors, it defaults to 3 threads. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#IO_OUTPUT_THREAD_COUNT" text="hazelcast.client.io.output.thread.count"/> | -1 | int | Controls the number of I/O output threads. Defaults to -1, i.e., the system decides. If the client is using either the `ALL_MEMBERS` or the `MULTI_MEMBER` cluster routing mode, it defaults to 3, otherwise it defaults to 1. If there are more than 8 processors, it defaults to 3 threads. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#IO_WRITE_THROUGH_ENABLED" text="hazelcast.client.io.write.through"/> | true | bool | Optimization that allows sending of packets over the network to be done on the calling thread if the conditions are right. This can reduce the latency and increase the performance for low threaded environments. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#MAX_CONCURRENT_INVOCATIONS" text="hazelcast.client.max.concurrent.invocations"/> | Integer.MAX\_VALUE | int | Maximum allowed number of concurrent invocations. You can apply a constraint on the number of concurrent invocations in order to prevent the system from overloading. If the maximum number of concurrent invocations is exceeded and a new invocation comes in, Hazelcast throws `HazelcastOverloadException`. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#METRICS_COLLECTION_FREQUENCY" text="hazelcast.client.metrics.collection.frequency"/> | 5 | int | Frequency, in seconds, of the [metrics](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics) collection cycle. Note that the preferred way for controlling this setting is [Metrics Configuration](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics#metrics-configuration). |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#METRICS_DEBUG" text="hazelcast.client.metrics.debug.enabled"/> | false | bool | Enables collecting debug metrics if set to `true`, disables it otherwise. Note that this is meant to be enabled only if diagnostics is enabled, since currently only diagnostics consumes the debug metrics. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#METRICS_ENABLED" text="hazelcast.client.metrics.enabled"/> | true | bool | Enables the [metrics collection](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics) if set to `true`, disables it otherwise. Note that the preferred way for controlling this setting is [Metrics Configuration](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics#metrics-configuration). When it is `true` you can monitor metrics of the clients that are connected to your Hazelcast cluster, using Hazelcast Management Center. See <Variable href="/management-center/{page-latest-supported-mc}/clusters/clients" text="here"/> for more information. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#METRICS_JMX_ENABLED" text="hazelcast.client.metrics.jmx.enabled"/> | true | bool | Enables exposing the collected [metrics](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics) over JMX if set to `true`, disables it otherwise. Note that the preferred way for controlling this setting is [Metrics Configuration](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics#metrics-configuration). |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#OPERATION_BACKUP_TIMEOUT_MILLIS" text="hazelcast.client.operation.backup.timeout.millis"/> | 5000 | int | If an operation has sync backups, this property specifies how long the invocation will wait for acks from the backup replicas. If acks are not received from some backups, there will not be any rollback on other successful replicas. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#FAIL_ON_INDETERMINATE_OPERATION_STATE" text="hazelcast.client.operation.fail.on.indeterminate.state"/> | false | bool | When this configuration is enabled, if an operation has sync backups and acks are not received from backup replicas in time, or the member which owns primary replica of the target partition leaves the cluster, then the invocation fails with `IndeterminateOperationStateException`. However, even if the invocation fails, there will not be any rollback on other successful replicas. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#RESPONSE_THREAD_COUNT" text="hazelcast.client.response.thread.count"/> | 2 | int | Number of the response threads. By default, there are two response threads; this gives stable and good performance. If set to 0, the response threads are bypassed and the response handling is done on the I/O threads. Under certain conditions this can give a higher throughput, but setting to 0 should be regarded as an experimental feature. If set to 0, the IO\_OUTPUT\_THREAD\_COUNT is really going to matter because the inbound thread will have more work to do. By default when TLS is not enabled, there is just one inbound thread. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#RESPONSE_THREAD_DYNAMIC" text="hazelcast.client.response.thread.dynamic"/> | true | bool | Enables dynamic switching between processing the responses on the I/O threads and offloading the response threads. Under certain conditions (single threaded clients) processing on the I/O thread can increase the performance because useless handover to the response thread is removed. Also the response thread is not created until it is needed. Especially for ephemeral clients, reducing the threads can lead to increased performance and reduced memory usage. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#SHUFFLE_MEMBER_LIST" text="hazelcast.client.shuffle.member.list"/> | true | string | The client shuffles the given member list to prevent all the clients to connect to the same member when this property is `true`. When it is set to `false`, the client tries to connect to the members in the given order. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#CLIENT_CONNECTIVITY_LOGGING_DELAY_SECONDS" text="hazelcast.client.connectivity.logging.delay.seconds"/> | 10 | int | Delay in seconds after which the client logs connectivity statistics after member connection changes. If a member connection state changes before the delay period has elapsed, the delay is reset. The delay reduces noise from frequent connection updates that can occur in bursts. Note that only the last connectivity view will be logged when the task is run after this delay. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#STATISTICS_ENABLED" text="hazelcast.client.statistics.enabled"/> | false | bool | If set to `true`, it enables collecting the client statistics and sending them to the cluster. This property is deprecated, use `hazelcast.client.metrics.enabled` instead. If both are configured, this one is ignored. Note that since this is replaced with `hazelcast.client.metrics.enabled`, the default behavior is also changed: it is enabled by default. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#STATISTICS_PERIOD_SECONDS" text="hazelcast.client.statistics.period.seconds"/> | 3 | int | Period in seconds the client statistics are collected and sent to the cluster. This property is deprecated, use `hazelcast.client.metrics.collection.frequency` instead. The value set here is used as `hazelcast.client.metrics.collection.frequency`. If both are configured, this one is ignored. |
 
 ## Advanced configuration
 
@@ -2002,9 +2002,9 @@ The pseudo-code is as follows:
 
 ### Use High-Density Memory Store with Java Client
 
-**Hazelcast Enterprise Edition**
+**Hazelcast <Variable name="enterprise-product-name"/>**
 
-If you have **Hazelcast Enterprise Edition**, the client's Near Cache can benefit from the High-Density Memory Store.
+If you have **Hazelcast <Variable name="enterprise-product-name"/>**, the client's Near Cache can benefit from the High-Density Memory Store.
 
 Let's consider the Java client's Near Cache configuration (see the [Configure Client Near Cache section](#configure-client-near-cache)) **without** High-Density Memory Store:
 
@@ -2059,11 +2059,11 @@ See the [High-Density Memory Store section](../../operate-and-manage/high-densit
 
 ### Blue-Green Deployment {/* #blue-green-deployment-and-disaster-recovery */}
 
-**Hazelcast Enterprise Edition**
+**Hazelcast <Variable name="enterprise-product-name"/>**
 
 Blue-green deployment refers to a client connection technique that reduces system downtime by deploying two mirrored clusters: blue (active) and green (idle). One of these clusters is running in production while the other is on standby.
 
-Using the blue-green mechanism, clients can connect to another cluster automatically when they are blacklisted from their currently connected cluster. See the [Hazelcast Management Center Reference Manual](/management-center/5.12-snapshot/clusters/clients#changing-cluster-client-filtering) for information about blacklisting the clients.
+Using the blue-green mechanism, clients can connect to another cluster automatically when they are blacklisted from their currently connected cluster. See the <Variable href="/management-center/{page-latest-supported-mc}/clusters/clients#changing-cluster-client-filtering" text="Hazelcast Management Center Reference Manual"/> for information about blacklisting the clients.
 
 The client's behavior after this disconnection depends on its [`reconnect-mode`](#java-client-connection-strategy). The following are the options when you are using the blue-green mechanism, i.e., you have alternative clusters for your clients to connect:
 

@@ -97,7 +97,38 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
   assert.strictEqual(maskDerivedIds(a), maskDerivedIds(b), 'derived ids and their fragments are masked')
   assert.notStrictEqual(maskDerivedIds('<p>Cloud</p>'), maskDerivedIds('<p>Confluent Cloud</p>'),
     'a difference in CONTENT still fails the guard')
-  ok('maskDerivedIds: forgives derived anchor ids only, never content')
+  // A tab's id is derived from its LABEL, and the pane that shows it names that id
+  // in `aria-labelledby` -- so an attribute in a tab label lands in a derived id
+  // AND in a reference to one. hazelcast's `{enterprise-product-name}::` tabsets
+  // are exactly this, and masking only `id`/`href#` failed those pages.
+  const tabCensus = '<p><a id="tabset1_hzref0052x"></a>Enterprise Edition</p>' +
+    '<div class="tab-pane" aria-labelledby="tabset1_hzref0052x">x</div>'
+  const tabGolden = '<p><a id="tabset1_enterprise-edition"></a>Enterprise Edition</p>' +
+    '<div class="tab-pane" aria-labelledby="tabset1_enterprise-edition">x</div>'
+  assert.strictEqual(maskDerivedIds(tabCensus), maskDerivedIds(tabGolden),
+    "a tab pane's aria-labelledby is a reference to a derived id, so it is masked too")
+  assert.notStrictEqual(
+    maskDerivedIds('<div class="tab-pane" aria-labelledby="a">Enterprise</div>'),
+    maskDerivedIds('<div class="tab-pane" aria-labelledby="a">Enterprise Edition</div>'),
+    "masking the wiring must not forgive a difference in the pane's content")
+  ok('maskDerivedIds: forgives derived anchor ids and references to them, never content')
+}
+
+// Every position an attribute can reach must carry a disposition: deny-by-default
+// is what stops a new rendering context becoming an unchecked hole, so the two
+// positions a TAB LABEL reaches -- the derived id and the pane's reference to it --
+// must both be classified, and neither may read as 'preserve' (our <Tabs> emits no
+// such ids, so there is nothing to preserve them in).
+{
+  for (const attr of ['id', 'aria-labelledby']) {
+    const d = dispositionForAttr(attr)
+    assert(d, `${attr} must have a disposition, not fall through to deny-by-default`)
+    assert(!isPreserve(d), `${attr} is a derived id, so it must bake, not preserve`)
+    assert.match(d, /^bake:/, `${attr}'s disposition must record a reason`)
+  }
+  assert.strictEqual(dispositionForAttr('onclick'), null,
+    'an unrecognised position must stay unclassified so the gate fails on it')
+  ok('bake-contexts: a tab label\'s id and its pane reference are classified as derived ids')
 }
 
 // --- the census guard is read DE-INSTRUMENTED ---------------------------------

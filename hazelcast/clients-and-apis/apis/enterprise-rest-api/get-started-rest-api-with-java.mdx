@@ -18,23 +18,23 @@ To complete this tutorial, you need the following:
 | Prerequisites | Useful resources |
 | --- | --- |
 | Any supported JDK | [Supported Java Virtual Machines](../../../install-and-upgrade/overview/versioning-compatibility.mdx#supported-java-virtual-machines) |
-| Maven 3.9 | [Download Maven](https://maven.apache.org/install.html) |
+| Maven <Variable name="minimum-maven-version"/> | [Download Maven](https://maven.apache.org/install.html) |
 
 ## Set up the Java Maven project
 
 You need to set up a Java project that you can use later to start a Hazelcast member with REST API. Add the following dependencies to your `pom.xml` file:
 
-```xml
+```xml vars
 <dependencies>
     <dependency>
         <groupId>com.hazelcast</groupId>
         <artifactId>hazelcast-enterprise-rest</artifactId>
-        <version>5.8.0-SNAPSHOT</version>
+        <version>{full-version}</version>
     </dependency>
     <dependency>
         <groupId>com.hazelcast</groupId>
         <artifactId>hazelcast-enterprise</artifactId>
-        <version>5.8.0-SNAPSHOT</version>
+        <version>{full-version}</version>
     </dependency>
 </dependencies>
 ```
@@ -84,7 +84,7 @@ public class RestApi {
 }
 ```
 
-Replace the `<YOUR_LICENSE_KEY>` with your Hazelcast Enterprise Edition license key.
+Replace the `<YOUR_LICENSE_KEY>` with your Hazelcast <Variable name="enterprise-product-name"/> license key.
 
 ## Step 2. Execute the program
 
@@ -96,9 +96,9 @@ mvn compile exec:java -Dexec.mainClass="org.example.RestApi"
 
 You should see a message in the console indicating that the REST service is enabled, similar to the following:
 
-```shell
+```shell vars
 com.hazelcast.internal.rest.init.RestServiceImpl
-INFO: [192.168.0.24]:5701 [dev] [5.8.0-SNAPSHOT] Hazelcast REST Service is enabled on port: 8443 with security realm: restRealm and access control service: com.hazelcast.internal.rest.access.DefaultAccessControlService
+INFO: [192.168.0.24]:5701 [dev] [{full-version}] Hazelcast REST Service is enabled on port: 8443 with security realm: restRealm and access control service: com.hazelcast.internal.rest.access.DefaultAccessControlService
 ```
 
 ## Step 3. Access the REST API and Swagger UI

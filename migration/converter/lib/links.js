@@ -139,5 +139,8 @@ function repairApiDeepLink (href) {
 }
 
 module.exports = {
-  resolveHref, EXTERNAL, attrHrefTemplates, unmangleSubscripts, repairApiDeepLink,
+  // LINK_TARGET is exported for antora-extension/mark-attributes.js: the marking
+  // pass must SKIP exactly the targets attrHrefTemplates recovers references from,
+  // so the grammar has one definition.
+  resolveHref, EXTERNAL, LINK_TARGET, attrHrefTemplates, unmangleSubscripts, repairApiDeepLink,
 }

@@ -34,6 +34,17 @@ const { collectOccurrences, decide, consumerAttrs } = require('./lib/partials')
 // Link targets written with an `{attribute}` in them — the exact-match href path
 // (see buildHrefVars); shared with the selftest so the grammar has one definition.
 const { attrHrefTemplates, resolveHref } = require('./lib/links')
+// The verbatim-block counterpart: the source's own code LINES carrying an
+// `{attribute}`, so a fence keeps the right NAME where several attributes share
+// one value (hazelcast's os-/ee-/full-version are all `5.8.0-SNAPSHOT`).
+const { attrCodeTemplates, buildCodeTemplates } = require('./lib/code-templates')
+// The source-side include walker, shared with refcheck so the converter and the
+// gate agree on which files a page reaches. Needed here because a partial's code
+// lines have to be templated against the page that includes them: get-started-cli
+// pulls its brew/apt/yum commands from install-hazelcast, and those name
+// {os-version} where the page itself names {full-version} -- same value, so only
+// the source line can tell them apart.
+const { collectPageTexts } = require('../refcheck/lib/source-refs')
 const { parseNav, buildPlan, injectNavEntries, pageKey } = require('./lib/nav')
 const { loadDispositions, isDropped, navInjectionsFor } = require('../lib/dispositions')
 // Co-located image placement, computed from the reference graph. The converter
@@ -96,6 +107,39 @@ const SINGLE_SOURCE_ATTRS = {
     'open-source-product-name',
     'enterprise-product-name',
     'mc-repo-swagger-branch',
+  ],
+  // Platform's set, all per-version. Three groups:
+  //
+  //   - VERSION NUMBERS reached through a link href or a code fence, which
+  //     marking cannot carry: {os-version} alone is 199 href occurrences (the
+  //     javadoc links) and 72 in code. The href path is exact rather than
+  //     value-based (attrHrefTemplates reads the `{name}` out of the SOURCE's
+  //     link target), so the three same-valued version attributes are
+  //     unambiguous there; only their code occurrences rely on the value map,
+  //     and MARKED_ATTRS covers their prose. {version} and {jet-version} have
+  //     distinctive values and need no marking.
+  //   - THE PRODUCT NAMES, whose prose occurrences are marked (they collide with
+  //     literals) but whose handful of code occurrences still need the value map.
+  //   - {hz-repo-swagger-branch}, the git ref the swagger_ui macro fetches its
+  //     OpenAPI spec from, exactly as MC's mc-repo-swagger-branch above: per
+  //     release, so it must not bake.
+  //
+  // {minimum-java-version} is the uncomfortable one: value `17`, and it is
+  // referenced inside pom.xml fences (`<maven.compiler.release>{minimum-java-version}</…>`)
+  // as well as in prose and in a docs.oracle.com href. The value map is therefore
+  // scoped as tightly as the design allows -- to the pages whose SOURCE references
+  // it (scanPageAttrs) -- and refcheck's `extra` finding is the gate on a
+  // coincidental `17` in one of those fences being caught up in it.
+  hazelcast: [
+    'os-version', 'ee-version', 'full-version', 'version', 'jet-version',
+    'minimum-java-version',
+    'enterprise-product-name', 'open-source-product-name', 'java-client',
+    'url-cloud-signup', 'hz-repo-swagger-branch',
+    'page-latest-supported-mc', 'page-latest-supported-mc-installer',
+    'page-latest-supported-po', 'page-latest-supported-clc',
+    'page-latest-supported-cplusplus-client', 'page-latest-supported-csharp-client',
+    'page-latest-supported-python-client', 'page-latest-supported-nodejs-client',
+    'page-latest-supported-go-client',
   ],
 }
 
@@ -505,13 +549,32 @@ function scanPageAttrs (component, seg, sourcesDir) {
 
 // value->name map of the attrs a page references (source-scoped), resolved to
 // this version's values — passed to the converter to reverse-map prose/code.
+//
+// A value claimed by TWO names identifies neither, so it is dropped rather than
+// let the last writer win. hazelcast holds `5.8.0-SNAPSHOT` in {os-version},
+// {ee-version} AND {full-version} at once, and 14 pages reference two of the
+// three: guessing put 16 `{os-version}` occurrences out as `{ee-version}` on
+// deploying-with-docker alone. Since the three genuinely diverge (at 5.5,
+// os-version is 5.5.0 while ee-version is 5.5.10), a guess is not a cosmetic
+// mis-naming — it prints the wrong version, and fidelity cannot see it because
+// both names render a correct-looking value today.
+//
+// Dropping the value does not mean losing the reference: the exact paths still
+// name it (hrefVars for a link target, codeVars for a verbatim line), and where
+// neither reaches it, refcheck reports it baked — a visible finding instead of a
+// silent error.
 function buildPageVars (names, lookup) {
   const m = new Map()
+  const collided = new Set()
   if (!names) return m
   for (const name of names) {
     const v = lookup[name]
-    if (v != null && v !== '') m.set(String(v), name)
+    if (v == null || v === '') continue
+    const value = String(v)
+    if (m.has(value) && m.get(value) !== name) collided.add(value)
+    else m.set(value, name)
   }
+  for (const value of collided) m.delete(value)
   return m
 }
 
@@ -597,6 +660,51 @@ function buildHrefVars (attrsHere, lookup) {
     if (resolved !== tpl) m.set(resolved, tpl)
   }
   return m
+}
+
+// The same exact-match idea for a VERBATIM LINE: resolved line -> the source line
+// that produced it. See lib/code-templates.js for why a line is the unit and why
+// the value map cannot do this job.
+//
+// Collected over the page's whole INCLUDE CLOSURE, not just its own file, so a
+// code line reaching the page through a partial is templated too. `known` is the
+// component's single-sourced set rather than scanPageAttrs' per-page `all`, for the
+// same reason: an attribute a page only touches via an include is not in `all`, and
+// gating on it would drop exactly the templates the closure was walked for.
+function buildCodeVars (component, resource, seg, sourcesDir, lookup) {
+  const known = new Set(SINGLE_SOURCE_ATTRS[component] || [])
+  if (!known.size || !resource) return { templates: new Map(), named: new Set() }
+  const lines = new Set()
+  const blocks = new Set()
+  for (const text of collectPageTexts(resource, seg, sourcesDir)) {
+    const t = attrCodeTemplates(text)
+    for (const line of t.lines) lines.add(line)
+    for (const block of t.blocks) blocks.add(block)
+  }
+  const templates = buildCodeTemplates({ lines, blocks }, known, lookup, substitute)
+  // The names the templates account for. Where a name is templated, the value map
+  // must NOT also hunt for its value in the rest of the page's code: the source has
+  // just said exactly which code lines reference it, so any other line matching the
+  // value is a coincidence. `{minimum-java-version}` is why this matters — it
+  // resolves to the bare `17`, and on two pages the map turned a literal 17 in
+  // sample OUTPUT ("Kinesis got 17 tweets per second") into a reference. A missed
+  // reference bakes and the gate says so; a coincidental one silently changes with
+  // the attribute.
+  const named = new Set()
+  for (const map of [templates.blocks, templates.lines]) {
+    for (const tpl of map.values()) {
+      for (const m of tpl.matchAll(/\{([A-Za-z0-9_][A-Za-z0-9_-]*)\}/g)) named.add(m[1])
+    }
+  }
+  return { templates, named }
+}
+
+// `pageVars` minus the names the code templates already account for — the value
+// map used for FENCE lines no template covered. Prose and hrefs are unaffected:
+// they have their own maps and their own exact paths.
+function codeValueVarsFor (pageVars, named) {
+  if (!named || !named.size) return pageVars
+  return new Map([...pageVars].filter(([, name]) => !named.has(name)))
 }
 
 // The subset of `pageVars` that may be reverse-mapped in PROSE. Two exclusions,
@@ -865,7 +973,7 @@ function convertVersion (ver, ctx) {
 
   // Add whichever conditional branch this version's render did not keep, taken
   // from a version that kept it. No-op unless the page has exactly one branch.
-  function withBothConditionalBranches (mdx, { page, rec, relFile, pageVars, proseVars, hrefVars }) {
+  function withBothConditionalBranches (mdx, { page, rec, relFile, pageVars, proseVars, hrefVars, codeVars, codeValueVars }) {
     if (seg == null) return mdx // unversioned component: no cut, no other version
     const has = { ifdef: /<IfSnapshot>/.test(mdx), ifndef: /<IfNotSnapshot>/.test(mdx) }
     if (has.ifdef === has.ifndef) return mdx // neither, or already both
@@ -898,6 +1006,10 @@ function convertVersion (ver, ctx) {
         pageVars: dPageVars,
         proseVars: proseVarsFor(dPageVars, (donorAttrs && donorAttrs.prose) || new Set(), markedAttrsFor(component)),
         hrefVars: buildHrefVars(donorAttrs, donorLookup),
+        ...(() => {
+          const d = buildCodeVars(component, rec, donor, opts.sourcesDir, donorLookup)
+          return { codeVars: d.templates, codeValueVars: codeValueVarsFor(dPageVars, d.named) }
+        })(),
         latestVersions: ctx.latestVersions,
         urlToRelFile,
         imagePlacement,
@@ -946,11 +1058,14 @@ function convertVersion (ver, ctx) {
     const pageVars = buildPageVars(attrsHere && attrsHere.all, exampleLookup)
     const proseVars = proseVarsFor(pageVars, (attrsHere && attrsHere.prose) || new Set(), markedAttrsFor(component))
     const hrefVars = buildHrefVars(attrsHere, exampleLookup)
+    const code = buildCodeVars(component, rec, seg, opts.sourcesDir, exampleLookup)
+    const codeVars = code.templates
+    const codeValueVars = codeValueVarsFor(pageVars, code.named)
 
     let body, imports
     try {
-      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, hrefVars, latestVersions: ctx.latestVersions, urlToRelFile, imagePlacement }))
-      body = withBothConditionalBranches(body, { page: p, rec, relFile, pageVars, proseVars, hrefVars })
+      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, hrefVars, codeVars, codeValueVars, latestVersions: ctx.latestVersions, urlToRelFile, imagePlacement }))
+      body = withBothConditionalBranches(body, { page: p, rec, relFile, pageVars, proseVars, hrefVars, codeVars, codeValueVars })
     } catch (err) {
       problems.push({ url: p.url, error: err.message })
       continue

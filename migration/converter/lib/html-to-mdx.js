@@ -105,6 +105,10 @@ function convertBody (html, ctx) {
     // cannot work here, since it would have to decide that `.0` continues the
     // URL but not the version.
     hrefVars: ctx.hrefVars || new Map(),
+    codeVars: ctx.codeVars || null,
+    // The value map for fence lines no template covered: pageVars minus the names
+    // the templates already account for (convert.js codeValueVarsFor).
+    codeValueVars: ctx.codeValueVars || ctx.pageVars || new Map(),
     // component -> current stable latest version, for floating versionless
     // cross-component xrefs to `/<comp>/latest/` (see floatCrossComponentLatest).
     latestVersions: ctx.latestVersions || {},
@@ -260,6 +264,57 @@ const markerName = (node) => {
 // (the rest literal). Used for the `text` of a link-mode <Variable>, which the
 // component resolves per version -- so a marked reference inside a link label
 // stays a reference instead of being baked.
+// The single-sourced-link ladder: given the golden's verbatim href, the href we
+// resolved, and the link's visible text, return the `<Variable>` (link mode) that
+// keeps the destination a REFERENCE — or null when nothing about this link is
+// single-sourced. Three rungs, most exact first:
+//
+//   1. linkVars    — the whole href IS an attribute's value.
+//   2. hrefVars    — this href is what one of the page's own link TARGETS resolves
+//                    to, so the source template is re-emitted verbatim with its
+//                    `{attr}` intact. The only thing that recovers a reference
+//                    followed by authored text (`v{ver}.0`), which the value map
+//                    must refuse because it cannot tell that `.0` continues the
+//                    URL but not the version.
+//   3. pageVars    — a value that is a SUBSTRING of the href and/or the label
+//                    (cloud's release-notes link is `.../{page-cloud-platform-
+//                    version}/...` labelled `Hazelcast Platform {full-version}`).
+//
+// The HREF and the LABEL are reverse-mapped against DIFFERENT maps, and the
+// difference matters. A URL is not flow text, so marking never reaches it and the
+// full `pageVars` is the only thing that can: `href` uses that. A label IS flow
+// text, so it takes `proseVars` — the same restriction reverseProseVars applies,
+// which excludes MARKED attributes because marking already supplies their exact
+// positions and anything the value map finds on top of them is a coincidental
+// literal. hazelcast's release-notes/releases is the case: `xref:…enterprise.adoc[]`
+// takes its label from the TARGET'S DOCTITLE, which happens to read "Enterprise
+// Edition Release Notes", and matching on `pageVars` turned that derived title
+// into a `{enterprise-product-name}` reference — a link whose text would silently
+// change on a product rename, and which refcheck flags as over-variableised.
+//
+// Shared by the plain `<a>` and by a link WRAPPED IN `<code>`. That second caller
+// is why this is a function: the code-wrapped branch used to emit the resolved URL
+// directly, so every `link:…/{os-version}/jar[artifact]` in a monospace table
+// column baked its version — 14 occurrences over 3 hazelcast pages, invisible to
+// fidelity because a baked value renders identically.
+function singleSourcedLink (rawHref, href, tokenText, st, { code = false } = {}) {
+  const flag = code ? ' code' : ''
+  const labelVars = st.proseVars || st.pageVars
+  const varName = st.linkVars.get(rawHref)
+  if (varName) return `<Variable href=${jsxAttr(`{${varName}}`)} text=${jsxAttr(tokenText)}${flag}/>`
+  const hrefTpl = st.hrefVars.get(rawHref)
+  if (hrefTpl) {
+    const { code: textTpl } = reverseCodeVars(tokenText, labelVars)
+    return `<Variable href=${jsxAttr(hrefTpl)} text=${jsxAttr(textTpl)}${flag}/>`
+  }
+  if (st.pageVars && st.pageVars.size && !/[<>]/.test(href)) {
+    const { code: hrefTpl2, replaced: hrefRep } = reverseCodeVars(href, st.pageVars)
+    const { code: textTpl, replaced: textRep } = reverseCodeVars(tokenText, labelVars)
+    if (hrefRep || textRep) return `<Variable href=${jsxAttr(hrefTpl2)} text=${jsxAttr(textTpl)}${flag}/>`
+  }
+  return null
+}
+
 function markerText ($, node) {
   let out = ''
   for (const n of node.children || []) {
@@ -754,11 +809,53 @@ function reverseProseVars (text, pageVars) {
   return out
 }
 
+// A fence's lines, each replaced by the SOURCE line that produced it where the
+// page wrote one with an `{attribute}` in it (convert.js buildCodeVars). Exact
+// where the value map has to infer, and the only thing that keeps the right NAME
+// when several attributes hold one value — see lib/code-templates.js. Runs before
+// the value map, and a templated line is not offered to it: the template already
+// names every reference on that line.
+function applyCodeTemplates (code, codeVars) {
+  const none = { code, replaced: false, done: new Set() }
+  if (!codeVars) return none
+  // Whole-block first: a line can be ambiguous on its own where the block is not.
+  const whole = codeVars.blocks && codeVars.blocks.get(code)
+  if (whole !== undefined) {
+    const done = new Set(whole.split('\n').map((_l, i) => i))
+    return { code: whole, replaced: true, done }
+  }
+  if (!codeVars.lines || !codeVars.lines.size) return none
+  const done = new Set()
+  const lines = code.split('\n').map((line, i) => {
+    const tpl = codeVars.lines.get(line)
+    if (tpl === undefined) return line
+    done.add(i)
+    return tpl
+  })
+  return { code: lines.join('\n'), replaced: done.size > 0, done }
+}
+
 // Code: replace a resolved value with the `{name}` placeholder; the swizzled
 // CodeBlock resolves it per version when the fence carries the `vars` flag.
 // `boundary` selects which of the two matchers applies — verbatim blocks pass
 // varCodeTokenRe, the link path leaves it defaulted to the whole-token rule.
-function reverseCodeVars (code, pageVars, boundary = varTokenRe) {
+// `skipLines` are line indexes a template already handled.
+function reverseCodeVars (code, pageVars, boundary = varTokenRe, skipLines = null) {
+  if (skipLines && skipLines.size) {
+    const lines = code.split('\n')
+    let replaced = false
+    const out = lines.map((line, i) => {
+      if (skipLines.has(i)) return line
+      const r = reverseCodeVars(line, pageVars, boundary)
+      if (r.replaced) replaced = true
+      return r.code
+    })
+    return { code: out.join('\n'), replaced }
+  }
+  return reverseCodeVarsAll(code, pageVars, boundary)
+}
+
+function reverseCodeVarsAll (code, pageVars, boundary) {
   if (!pageVars || !pageVars.size) return { code, replaced: false }
   let out = code
   let replaced = false
@@ -786,11 +883,22 @@ function preToFence ($, pre, title, st) {
   // CodeBlock (src/theme/CodeBlock) strips the `<N>` and re-emits prod's circled
   // badge per line. The bare flag leaves every other code block untouched.
   const { text, hasConums } = extractConums($, code || pre)
-  const { code: varsText, replaced } = reverseCodeVars(text, st && st.pageVars, varCodeTokenRe)
-  let info = lang
-  if (title) info += ` title=${jsxAttr(title)}`
-  if (hasConums) info += ' conums'
-  if (replaced) info += ' vars'
+  // Exact line templates first, then the value reverse-map on the lines they did
+  // not cover. Either way the fence carries `vars` and the swizzled CodeBlock
+  // resolves the placeholders per version.
+  const tpl = applyCodeTemplates(text, st && st.codeVars)
+  const { code: varsText, replaced } = reverseCodeVars(tpl.code, st && st.codeValueVars, varCodeTokenRe, tpl.done)
+  let flags = ''
+  if (title) flags += ` title=${jsxAttr(title)}`
+  if (hasConums) flags += ' conums'
+  if (replaced || tpl.replaced) flags += ' vars'
+  // A flag needs a LANGUAGE in front of it. MDX reads the first token of a fence's
+  // info string as the language, so ```` ``` vars ```` makes `vars` the language and
+  // leaves the metastring empty — the swizzled CodeBlock then never sees the flag and
+  // the placeholders reach the reader as literal `{page-latest-supported-cplusplus-client}`.
+  // `text` is the no-highlighting language, which is what a fence with no language
+  // renders as anyway, so this changes nothing the reader sees.
+  const info = (flags && !lang ? 'text' : lang) + flags
   return fencedCode(varsText.replace(/\n$/, ''), info)
 }
 
@@ -1244,6 +1352,12 @@ function inlineTag ($, node, st, opt) {
         // authored occurrences in the corpus (`\http://…` in backticks) render as.
         if (kind !== 'empty' && kind !== 'malformed' && !/[<>]/.test(href) &&
             !isPlaceholderUrl(a.attribs.href)) {
+          // A single-sourced destination must stay a reference here too. Same
+          // ladder as the plain `<a>`, with `code` so <Variable> renders the label
+          // as monospace — the alternative (a Markdown link with a code label)
+          // has nowhere to put an unresolved `{attr}` in its href.
+          const single = singleSourcedLink(a.attribs.href, href, markerText($, node), st, { code: true })
+          if (single) return single
           const label = inlineCode($(node).text())
           return `[${label}](${/[()\s]/.test(href) ? `<${href}>` : href})`
         }
@@ -1301,34 +1415,8 @@ function inlineTag ($, node, st, opt) {
       // `{attr}` token in the visible text, resolved per version by <Variable> /
       // by the raw <a> fallback — never baked.
       const tokenText = markerText($, node)
-      const varName = st.linkVars.get(rawHref)
-      if (varName) {
-        return anchorEl + `<Variable href=${jsxAttr(`{${varName}}`)} text=${jsxAttr(tokenText)}/>`
-      }
-      // Source-derived template: this exact href is what one of the page's own
-      // link targets resolves to, so emit that target verbatim with its `{attr}`
-      // references intact. Tried before the value reverse-map below because it is
-      // exact where the reverse-map has to guess a boundary — it is the only thing
-      // that recovers a reference followed by authored text (`v{ver}.0`).
-      // The LABEL still goes through the value reverse-map: an href template says
-      // nothing about the link text, which carries its own references (cloud's
-      // release-notes link is `.../{page-cloud-platform-version}/...` labelled
-      // `Hazelcast Platform {full-version}` — two different attributes).
-      const hrefTpl = st.hrefVars.get(rawHref)
-      if (hrefTpl) {
-        const { code: textTpl } = reverseCodeVars(tokenText, st.pageVars)
-        return anchorEl + `<Variable href=${jsxAttr(hrefTpl)} text=${jsxAttr(textTpl)}/>`
-      }
-      // Templated single-sourcing: a version value can be a SUBSTRING of the
-      // href and/or label (e.g. the release-notes link `.../{page-cloud-platform-
-      // version}/...` with a `{full-version}` label). Reverse-map the page's
-      // referenced values (source-scoped, st.pageVars) in the plain href + text;
-      // any hit -> emit <Variable> in link mode with the placeholders kept.
-      if (st.pageVars && st.pageVars.size && !/[<>]/.test(href)) {
-        const { code: hrefTpl, replaced: hrefRep } = reverseCodeVars(href, st.pageVars)
-        const { code: textTpl, replaced: textRep } = reverseCodeVars(tokenText, st.pageVars)
-        if (hrefRep || textRep) return anchorEl + `<Variable href=${jsxAttr(hrefTpl)} text=${jsxAttr(textTpl)}/>`
-      }
+      const single = singleSourcedLink(rawHref, href, tokenText, st)
+      if (single) return anchorEl + single
       // A href with literal angle brackets (a placeholder pseudo-URL like
       // `http://<mc-ip-address>:8080`) cannot be a link in Docusaurus: it fails
       // URL validation at compile time in EVERY form (Markdown link and raw

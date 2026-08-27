@@ -42,11 +42,11 @@ These approaches are described in the following sections.
 
 ## Full WAN Synchronization {/* #synchronizing-wan-target-cluster */}
 
-Full WAN synchronization updates or adds entries in the target IMap to match the source IMap, but does not remove entries that exist only in the target. If you are concerned about extraneous entries on the target IMap, you should consider clearing it before initiating a WAN synchronization. Clearing an IMap can be done programmatically by calling `IMap#clear()`, through Management Center's [Clear Data action](/management-center/5.12-snapshot/data-structures/map#clear-map), or using Hazelcast's [REST API](../../clients-and-apis/apis/enterprise-rest-api/rest-api-swagger.mdx#tag/Data-Controller/operation/clearMap).
+Full WAN synchronization updates or adds entries in the target IMap to match the source IMap, but does not remove entries that exist only in the target. If you are concerned about extraneous entries on the target IMap, you should consider clearing it before initiating a WAN synchronization. Clearing an IMap can be done programmatically by calling `IMap#clear()`, through Management Center's <Variable href="/management-center/{page-latest-supported-mc}/data-structures/map#clear-map" text="Clear Data action"/>, or using Hazelcast's [REST API](../../clients-and-apis/apis/enterprise-rest-api/rest-api-swagger.mdx#tag/Data-Controller/operation/clearMap).
 
 Full WAN synchronization is useful if two remote clusters lost their synchronizations due to overflow in the WAN queue or in restart scenarios. This is the default synchronization option.
 
-Full WAN Synchronization can be initiated through [Management Center](/management-center/5.12-snapshot/clusters/wan-replication#wan-sync) and Hazelcast's REST API.
+Full WAN Synchronization can be initiated through <Variable href="/management-center/{page-latest-supported-mc}/clusters/wan-replication#wan-sync" text="Management Center"/> and Hazelcast's REST API.
 
 :::caution[Deprecation Notice for the Community Edition REST API]
 
@@ -151,7 +151,7 @@ To be able to use Delta WAN synchronization, the following must be met:
 
 To be able to use Delta WAN synchronization for a Hazelcast data structure:
 
-1 - Configure the WAN synchronization mechanism for your WAN publisher so that it uses the Merkle tree: If configuring declaratively, you can use the `consistency-check-strategy` sub-element of the `sync` element. If configuring programmatically, you can use the setter of the [WanSyncConfig](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/config/WanSyncConfig.html) object. Here is a declarative example:
+1 - Configure the WAN synchronization mechanism for your WAN publisher so that it uses the Merkle tree: If configuring declaratively, you can use the `consistency-check-strategy` sub-element of the `sync` element. If configuring programmatically, you can use the setter of the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/WanSyncConfig.html" text="WanSyncConfig"/> object. Here is a declarative example:
 
 <Tabs groupId="config-format">
 <TabItem value="yaml" label="YAML">
@@ -251,7 +251,7 @@ hazelcast:
 </TabItem>
 </Tabs>
 
-You can programmatically configure it, too, using the [MerkleTreeConfig](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/config/MerkleTreeConfig.html) object.
+You can programmatically configure it, too, using the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/MerkleTreeConfig.html" text="MerkleTreeConfig"/> object.
 
 Here is the full declarative configuration example showing how to enable Delta WAN Synchronization, bind it to a Hazelcast data structure (an IMap in this case) and specify its depth:
 
@@ -801,7 +801,7 @@ As shown in the above configuration, you can define more than one filter. Filter
 Map and Cache have different filter interfaces: `MapWanEventFilter` and `CacheWanEventFilter`. Both of these interfaces have the method `filter` which takes the following parameters:
 
 - `mapName`/`cacheName`: Name of the related data structure.
-- `entryView`: [EntryView](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/core/EntryView.html) or [CacheEntryView](https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/cache/CacheEntryView.html) depending on the data structure.
+- `entryView`: <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/core/EntryView.html" text="EntryView"/> or <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/cache/CacheEntryView.html" text="CacheEntryView"/> depending on the data structure.
 - `eventType`: Enum type - `UPDATED(1)`, `REMOVED(2)` or `LOADED(3)` - depending on the event.
 
 :::note

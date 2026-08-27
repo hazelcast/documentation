@@ -8,7 +8,7 @@ The RaftLogFileExporter is a tool that helps migrate persisted CP state between 
 
 ## Overview
 
-From Hazelcast Enterprise Edition version 5.6, Raft snapshots in the CP Subsystem use a new format due to the introduction of chunked snapshot transfers. If you need to downgrade a cluster from version 5.6 to 5.5, you can use the RaftLogFileExporter tool to convert the existing Raft data to the earlier format. The tool ensures that data can still be loaded and used after the downgrade.
+From Hazelcast <Variable name="enterprise-product-name"/> version 5.6, Raft snapshots in the CP Subsystem use a new format due to the introduction of chunked snapshot transfers. If you need to downgrade a cluster from version 5.6 to 5.5, you can use the RaftLogFileExporter tool to convert the existing Raft data to the earlier format. The tool ensures that data can still be loaded and used after the downgrade.
 
 The RaftLogFileExporter tool:
 
@@ -21,7 +21,7 @@ The tool is included in `hazelcast-enterprise.jar`. Note that you must configure
 
 ## System requirements
 
-- Java 17 or later.
+- Java <Variable name="minimum-java-version"/> or later.
 - Minimum heap size: 2GB (4GB recommended for large datasets).
 - Disk space: At least 2x the size of your source Raft log directory.
 
@@ -29,8 +29,8 @@ The tool is included in `hazelcast-enterprise.jar`. Note that you must configure
 
 Run the RaftLogFileExporter tool, specifying the following parameters:
 
-```bash conums
-java -Xms2g -Xmx4g -cp hazelcast-enterprise-5.8.0-SNAPSHOT.jar com.hazelcast.cp.RaftLogFileExporter \ <1>
+```bash conums vars
+java -Xms2g -Xmx4g -cp hazelcast-enterprise-{full-version}.jar com.hazelcast.cp.RaftLogFileExporter \ <1>
     --source=/path/to/raft/logs \ <2>
     --output=migrated_output \ <3>
     --max-uncommitted-entries=10000 <4>
@@ -55,8 +55,8 @@ java -Xms2g -Xmx4g -cp hazelcast-enterprise-5.8.0-SNAPSHOT.jar com.hazelcast.cp.
 
 You can also view these parameters using the help command:
 
-```bash
-java -cp hazelcast-enterprise-5.8.0-SNAPSHOT.jar com.hazelcast.cp.RaftLogFileExporter --help
+```bash vars
+java -cp hazelcast-enterprise-{full-version}.jar com.hazelcast.cp.RaftLogFileExporter --help
 ```
 
 ## Example
@@ -79,8 +79,8 @@ The following example migrates Raft logs from a Hazelcast V5.6 cluster to V5.5 f
    ```
 2. Run the tool:
 
-   ```bash
-   java -Xms2g -Xmx4g -cp hazelcast-enterprise-5.8.0-SNAPSHOT.jar com.hazelcast.cp.RaftLogFileExporter \
+   ```bash vars
+   java -Xms2g -Xmx4g -cp hazelcast-enterprise-{full-version}.jar com.hazelcast.cp.RaftLogFileExporter \
        --source=/data/hazelcast/cp-data \
        --output=migrated_v55 \
        --max-uncommitted-entries=10000
@@ -120,8 +120,8 @@ The following example migrates Raft logs from a Hazelcast V5.6 cluster to V5.5 f
 
 If you encounter an out of memory error, try increasing the Java heap size. The following example uses `-Xmx8g` to set the maximum heap size to 8GB:
 
-```bash
-java -Xms2g -Xmx8g -cp hazelcast-enterprise-5.8.0-SNAPSHOT.jar com.hazelcast.cp.RaftLogFileExporter \
+```bash vars
+java -Xms2g -Xmx8g -cp hazelcast-enterprise-{full-version}.jar com.hazelcast.cp.RaftLogFileExporter \
     --source=/path/to/raft/logs \
     --output=migrated_output \
     --max-uncommitted-entries=10000

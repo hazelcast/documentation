@@ -84,10 +84,10 @@ System.setProperty( "hazelcast.logging.type", "log4j" );
 
 The default log output resembles the following example:
 
-```bash
-2022-02-16 11:40:52,463 [ INFO] [main] [c.h.system]: [172.18.0.2]:5701 [hello-world] [5.8.0-SNAPSHOT] Copyright (c) 2008-2022, Hazelcast, Inc. All Rights Reserved.
-2022-02-16 11:40:52,463 [ INFO] [main] [c.h.system]: [172.18.0.2]:5701 [hello-world] [5.8.0-SNAPSHOT] Hazelcast Platform 5.8.0-SNAPSHOT (20220210 - 1d718cf) starting at [172.18.0.2]:5701
-2022-02-16 11:40:52,463 [ INFO] [main] [c.h.system]: [172.18.0.2]:5701 [hello-world] [5.8.0-SNAPSHOT] Cluster name: hello-world
+```bash vars
+2022-02-16 11:40:52,463 [ INFO] [main] [c.h.system]: [172.18.0.2]:5701 [hello-world] [{full-version}] Copyright (c) 2008-2022, Hazelcast, Inc. All Rights Reserved.
+2022-02-16 11:40:52,463 [ INFO] [main] [c.h.system]: [172.18.0.2]:5701 [hello-world] [{full-version}] Hazelcast Platform {full-version} (20220210 - 1d718cf) starting at [172.18.0.2]:5701
+2022-02-16 11:40:52,463 [ INFO] [main] [c.h.system]: [172.18.0.2]:5701 [hello-world] [{full-version}] Cluster name: hello-world
 ```
 
 The logging pattern is shown below.
@@ -110,10 +110,10 @@ LOGGING_PATTERN='{"time":"%date{ISO8601}", "logger": "%logger{36}", "level": "%l
 </TabItem>
 <TabItem value="docker" label="Docker">
 
-```bash
+```bash vars
 docker run \
     -e LOGGING_PATTERN='{"time":"%date{ISO8601}", "logger": "%logger{36}", "level": "%level", "msg": "%enc{%m %xEx}{JSON}"}%n' \
-    hazelcast/hazelcast:5.8.0-SNAPSHOT
+    hazelcast/hazelcast:{os-version}
 ```
 
 </TabItem>
@@ -139,10 +139,10 @@ LOGGING_CONFIG=config/myHzConfig.properties bin/hz start
 
 Provide the file's relative or absolute path.
 
-```bash
+```bash vars
 docker run \
     -e LOGGING_CONFIG=config/myHzConfig.properties \
-    hazelcast/hazelcast:5.8.0-SNAPSHOT
+    hazelcast/hazelcast:{os-version}
 ```
 
 </TabItem>
@@ -194,11 +194,11 @@ LOGGING_CONFIG=log4j2-json.properties LOGGING_JSON_TEMPLATE="classpath:EcsLayout
 </TabItem>
 <TabItem value="docker" label="Docker">
 
-```bash
+```bash vars
 docker run \
     -e LOGGING_CONFIG=config/log4j2-json.properties \
     -e LOGGING_JSON_TEMPLATE="classpath:EcsLayout.json" \
-    hazelcast/hazelcast:5.8.0-SNAPSHOT
+    hazelcast/hazelcast:{os-version}
 ```
 
 </TabItem>
@@ -217,10 +217,10 @@ You can change the JDK logging level as follows while starting a member.
 <Tabs groupId="docker--java-member-api">
 <TabItem value="docker" label="Docker">
 
-```bash
+```bash vars
 docker run \
     -e LOGGING_LEVEL=FINE \
-    hazelcast/hazelcast:5.8.0-SNAPSHOT
+    hazelcast/hazelcast:{os-version}
 ```
 
 </TabItem>

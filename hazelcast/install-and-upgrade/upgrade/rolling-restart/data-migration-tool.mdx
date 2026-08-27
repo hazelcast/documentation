@@ -7,7 +7,7 @@ slug: /migrate/data-migration-tool
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-You can use the Data Migration Tool (DMT) to migrate your data from version 4.x or 5.x Community Edition and Enterprise Edition Hazelcast clusters when upgrading to 5.3.x or later versions of Enterprise Edition, or moving to the latest Cloud release. The DMT can also be used for infrastructure consolidation or separation with selective migration of application data between clusters.
+You can use the Data Migration Tool (DMT) to migrate your data from version 4.x or 5.x <Variable name="open-source-product-name"/> and <Variable name="enterprise-product-name"/> Hazelcast clusters when upgrading to 5.3.x or later versions of <Variable name="enterprise-product-name"/>, or moving to the latest <Variable name="hazelcast-cloud"/> release. The DMT can also be used for infrastructure consolidation or separation with selective migration of application data between clusters.
 
 :::note
 
@@ -17,17 +17,17 @@ The DMT migrates your data for maps and replicated maps only. Replicated map met
 
 The DMT is typically used in the following situations:
 
-- When migrating from an Community Edition cluster to an Enterprise Edition cluster
-- When migrating from an earlier version of Enterprise Edition to a newer version. Such a migration can move directly between specified versions, even if several minor versions exist between them
-- When migrating from an on-premise cluster to a self-managed Enterprise Edition cluster in the cloud
-- When migrating from an on-premise cluster to a Cloud cluster
+- When migrating from an <Variable name="open-source-product-name"/> cluster to an <Variable name="enterprise-product-name"/> cluster
+- When migrating from an earlier version of <Variable name="enterprise-product-name"/> to a newer version. Such a migration can move directly between specified versions, even if several minor versions exist between them
+- When migrating from an on-premise cluster to a self-managed <Variable name="enterprise-product-name"/> cluster in the cloud
+- When migrating from an on-premise cluster to a <Variable name="hazelcast-cloud"/> cluster
 - When you want to migrate specific application data from one cluster to another due to infrastructure changes
 
 :::note
 
 1. You cannot use the DMT to upgrade or migrate from IMDG 3.12.x. If you are upgrading from IMDG 3.12.x, see the [Upgrading from IMDG 3.12.x](../upgrading-from-imdg-3.mdx) topic. If migrating from IMDG 3.12.x, see [Migrating Data from IMDG 3.12.x](../migration-tool-imdg.mdx).
 2. If you want to avoid downtime when upgrading members, use an in-place rolling upgrade instead of the DMT tool. For further information on upgrading without interrupting the operation of the cluster, see [Upgrade to a new version](../rolling-upgrades.mdx).
-3. If you are moving members from a Community Edition cluster to an Enterprise Edition cluster, use an in-place rolling restart instead of the DMT tool. See [Upgrade to Enterprise Edition](./overview.mdx).
+3. If you are moving members from a <Variable name="open-source-product-name"/> cluster to an <Variable name="enterprise-product-name"/> cluster, use an in-place rolling restart instead of the DMT tool. See [Upgrade to Enterprise Edition](./overview.mdx).
 4. The DMT does not support migrating data serialized with [Compact Serialization](../../../develop-and-build/serialization/compact-serialization/overview.mdx).
 
 :::
@@ -69,11 +69,11 @@ Ensure that you have installed the following:
 When using the DMT, bear the following in mind:
 
 - You can run only one migration at a time
-- The target cluster must be on 5.3.x Enterprise Edition or the latest Cloud release
+- The target cluster must be on 5.3.x <Variable name="enterprise-product-name"/> or the latest <Variable name="hazelcast-cloud"/> release
 
 :::note
 
-Cloud Trial and Cloud Standard have a limit of 14GB of primary data. If you require more, you must use Cloud Dedicated. For further information on the available Cloud editions, refer to the [Hazelcast Cloud](https://docs.hazelcast.com/cloud/overview) documentation.
+<Variable name="hazelcast-cloud"/> Trial and <Variable name="hazelcast-cloud"/> Standard have a limit of 14GB of primary data. If you require more, you must use <Variable name="hazelcast-cloud"/> Dedicated. For further information on the available <Variable name="hazelcast-cloud"/> editions, refer to the <a href="https://docs.hazelcast.com/cloud/overview">Hazelcast <Variable name="hazelcast-cloud"/></a> documentation.
 
 :::
 
@@ -257,8 +257,8 @@ To update the data structure information, complete the following steps:
 
 Ensure that the target cluster is running on one of the following:
 
-- Enterprise Edition version 5.3.2 or later
-- Cloud
+- <Variable name="enterprise-product-name"/> version 5.3.2 or later
+- <Variable name="hazelcast-cloud"/>
 
 #### Update the Target Configuration
 
@@ -282,7 +282,7 @@ To update the target configuration, complete the following steps:
 4. Update the `network` section as follows:
 
    - For an on-premise target cluster, update the `cluster-members` field to match the addresses of the cluster members
-   - For a cloud target cluster, including a Cloud cluster, update the network information. For a public cloud cluster, refer to the documentation for the cloud provider for the required network details. For Cloud, you must update the network section as follows:
+   - For a cloud target cluster, including a <Variable name="hazelcast-cloud"/> cluster, update the network information. For a public cloud cluster, refer to the documentation for the cloud provider for the required network details. For <Variable name="hazelcast-cloud"/>, you must update the network section as follows:
 
      ```
      hazelcast-client:
@@ -311,7 +311,7 @@ To update the target configuration, complete the following steps:
 
 :::note
 
-For further information on the `ssl` properties and their values, refer to the [Using Advanced Setup](https://docs.hazelcast.com/cloud/connect-to-cluster#advanced) section in the Hazelcast Cloud documentation.
+For further information on the `ssl` properties and their values, refer to the [Using Advanced Setup](https://docs.hazelcast.com/cloud/connect-to-cluster#advanced) section in the Hazelcast <Variable name="hazelcast-cloud"/> documentation.
 
 :::
 
@@ -395,8 +395,8 @@ You can verify the size of the map in the target cluster in the following ways:
 
   To use the Hazelcast Management Center, you can use either of the following methods:
 
-  - Check the target map size, as described in the [Maps](/management-center/5.12-snapshot/data-structures/map) section of the Hazelcast Management Center documentation
-  - Check the map entries, as described in the [Exploring Map Entries](/management-center/5.12-snapshot/data-structures/map#map-browser) section of the Hazelcast Management Center documentation
+  - Check the target map size, as described in the <Variable href="/management-center/{page-latest-supported-mc}/data-structures/map" text="Maps"/> section of the Hazelcast Management Center documentation
+  - Check the map entries, as described in the <Variable href="/management-center/{page-latest-supported-mc}/data-structures/map#map-browser" text="Exploring Map Entries"/> section of the Hazelcast Management Center documentation
 - Use Hazelcast CLC
 
   To use Hazelcast CLC to verify the migrated map size, enter the following command in your terminal:

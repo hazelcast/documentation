@@ -19,10 +19,10 @@ Follow this five-minute tutorial to set up a Hazelcast cluster for testing or ev
 
    To install on macOS, use the Homebrew package manager.
 
-   ```bash
+   ```bash vars
    brew tap hazelcast/hz
    brew trust hazelcast/hz
-   brew install hazelcast@5.8.0-SNAPSHOT
+   brew install hazelcast@{os-version}
    ```
 
    </TabItem>
@@ -30,18 +30,18 @@ Follow this five-minute tutorial to set up a Hazelcast cluster for testing or ev
 
    You can use either of these package managers to install Hazelcast, depending on your Linux distribution:
 
-   ```shell title="Debian"
+   ```shell title="Debian" vars
    sudo apt-get install -y --no-upgrade wget gpg coreutils \
      && wget -qO - https://repository.hazelcast.com/api/gpg/key/public | gpg --dearmor | sudo tee /usr/share/keyrings/hazelcast-archive-keyring.gpg > /dev/null \
      && echo "deb [signed-by=/usr/share/keyrings/hazelcast-archive-keyring.gpg] https://repository.hazelcast.com/debian stable main" | sudo tee -a /etc/apt/sources.list \
-     && sudo apt update && sudo apt install hazelcast=5.8.0-SNAPSHOT
+     && sudo apt update && sudo apt install hazelcast={os-version}
    ```
 
-   ```shell title="RPM"
+   ```shell title="RPM" vars
    sudo yum -y install wget \
      && wget https://repository.hazelcast.com/rpm/stable/hazelcast-rpm-stable.repo -O hazelcast-rpm-stable.repo \
      && sudo mv hazelcast-rpm-stable.repo /etc/yum.repos.d/ \
-     && sudo yum install hazelcast-5.8.0-SNAPSHOT
+     && sudo yum install hazelcast-{os-version}
    ```
 
    </TabItem>
@@ -73,8 +73,8 @@ Hazelcast clusters consist of servers that we call members. These members commun
 
    You should see the following in the console:
 
-   ```shell conums
-   INFO: [192.168.1.164]:5701 [dev] [5.8.0-SNAPSHOT] <1>
+   ```shell conums vars
+   INFO: [192.168.1.164]:5701 [dev] [{full-version}] <1>
 
    Members {size:1, ver:1} [ <2>
    	Member [192.168.1.164]:5701 - 4221d540-e34e-4ff2-8ad3-41e060b895ce this
@@ -209,7 +209,7 @@ In this quickstart, you have learnt how to start a local cluster, write data to 
 - [See the Getting Started section](../../install-and-upgrade/community-edition/install-hazelcast.mdx) for a complete introduction to Hazelcast.
 - Learn more about the [map data structure](../../develop-and-build/distributed-data-structures/ap-data-structures/map/map.mdx).
 - Find out more about how members automatically discover each other in [Discovery Mechanisms](../../develop-and-build/member-and-client-discovery/discovery-mechanisms.mdx).
-- Explore [Management Center](/management-center/5.12-snapshot/getting-started/overview).
+- Explore <Variable href="/management-center/{page-latest-supported-mc}/getting-started/overview" text="Management Center"/>.
 - Get started with one of the available client libraries:
 
   - [Java client](../../clients-and-apis/clients/java.mdx)

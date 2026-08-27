@@ -28,20 +28,20 @@ To allow members and clients on different hosts to discover each other with mult
 
 Members will discover and connect to each other automatically only if your local network supports multicast. If your network does not support multicast, members will not form a cluster. In this case, you can try [port mapping](#port-mapping).
 
-<Tabs groupId="community-edition--enterprise-edition">
-<TabItem value="community-edition" label="Community Edition">
+<Tabs groupId="enterprise-product-name-enterprise-edition--open-source-product-name-community-edition">
+<TabItem value="open-source-product-name-community-edition" label="Community Edition">
 
-```bash
-docker run --rm --network host --name member1 hazelcast/hazelcast:5.8.0-SNAPSHOT
-docker run --rm --network host --name member2 hazelcast/hazelcast:5.8.0-SNAPSHOT
+```bash vars
+docker run --rm --network host --name member1 hazelcast/hazelcast:{os-version}
+docker run --rm --network host --name member2 hazelcast/hazelcast:{os-version}
 ```
 
 </TabItem>
-<TabItem value="enterprise-edition" label="Enterprise Edition">
+<TabItem value="enterprise-product-name-enterprise-edition" label="Enterprise Edition">
 
-```bash
-docker run --rm --network host --name member1 hazelcast/hazelcast-enterprise:5.8.0-SNAPSHOT
-docker run --rm --network host --name member2 hazelcast/hazelcast-enterprise:5.8.0-SNAPSHOT
+```bash vars
+docker run --rm --network host --name member1 hazelcast/hazelcast-enterprise:{ee-version}
+docker run --rm --network host --name member2 hazelcast/hazelcast-enterprise:{ee-version}
 ```
 
 </TabItem>
@@ -113,15 +113,15 @@ You'll need the internal IP address of your Docker host.
    </CodeCallouts>
 2. Start a member on the first Docker host.
 
-   ```bash
+   ```bash vars
    docker run --rm --name member1 \
-     -e HZ_NETWORK_PUBLICADDRESS=192.168.1.12:5701 -p 5701:5701 hazelcast/hazelcast:5.8.0-SNAPSHOT
+     -e HZ_NETWORK_PUBLICADDRESS=192.168.1.12:5701 -p 5701:5701 hazelcast/hazelcast:{os-version}
    ```
 3. Start another member on the second host.
 
-   ```bash
+   ```bash vars
    docker run --rm --name member1 \
-     -e HZ_NETWORK_PUBLICADDRESS=192.168.1.13:5701 -p 5701:5701 hazelcast/hazelcast:5.8.0-SNAPSHOT
+     -e HZ_NETWORK_PUBLICADDRESS=192.168.1.13:5701 -p 5701:5701 hazelcast/hazelcast:{os-version}
    ```
 
 In the member logs, you should see that your members connected to each other:
@@ -135,7 +135,7 @@ Members {size:2, ver:2} [
 
 ## Starting Management Center
 
-Hazelcast Management Center provides an easy way to manage and monitor a Hazelcast cluster from a web page. See the [Getting Started guide](/management-center/5.12-snapshot/getting-started/install) for more information.
+Hazelcast Management Center provides an easy way to manage and monitor a Hazelcast cluster from a web page. See the <Variable href="/management-center/{page-latest-supported-mc}/getting-started/install" text="Getting Started guide"/> for more information.
 
 ## Configuration
 
@@ -147,16 +147,16 @@ We recommend that you use the default configuration file as a starting point.
 
 By default, Hazelcast configures the JVM with `-XX:MaxRAMPercentage=80.0`. This limits the JVM heap to 80% of the RAM available to the container. We recommend you leave this as-is and control Hazelcast's memory size with the Docker parameter `--memory`. For example, this will start Hazelcast with 1.6 GB assigned to the JVM:
 
-```bash
-docker run --memory 2g --rm hazelcast/hazelcast:5.8.0-SNAPSHOT
+```bash vars
+docker run --memory 2g --rm hazelcast/hazelcast:{os-version}
 ```
 
 ### JAVA\_OPTS
 
 To change the JVM parameters directly, use the `JAVA_OPTS` environment variable. Hazelcast passes it to the JVM when starting. For example:
 
-```bash
-docker run --memory 2g -e JAVA_OPTS="-XX:MaxRAMPercentage=85.0" --rm hazelcast/hazelcast:5.8.0-SNAPSHOT
+```bash vars
+docker run --memory 2g -e JAVA_OPTS="-XX:MaxRAMPercentage=85.0" --rm hazelcast/hazelcast:{os-version}
 ```
 
 Make sure to leave enough free RAM for metaspace and other overheads.
@@ -165,60 +165,60 @@ Make sure to leave enough free RAM for metaspace and other overheads.
 
 You can configure Hazelcast with your own YAML or XML file by replacing the default ones in the container at `/opt/hazelcast`:
 
-```bash
-docker run --rm hazelcast/hazelcast:5.8.0-SNAPSHOT \
+```bash vars
+docker run --rm hazelcast/hazelcast:{os-version} \
 cat /opt/hazelcast/config/examples/hazelcast-docker.yaml \
 > hazelcast.yml
 ```
 
 Now edit the file and apply it when starting Hazelcast:
 
-```bash
+```bash vars
 docker run \
 -v "$(pwd)"/hazelcast.yml:/opt/hazelcast/hazelcast.yml \
 -e HAZELCAST_CONFIG=hazelcast.yml \
--p:5701:5701 hazelcast/hazelcast:5.8.0-SNAPSHOT
+-p:5701:5701 hazelcast/hazelcast:{os-version}
 ```
 
 ### Extend Hazelcast's classpath with Custom JARS and Files
 
 If you have to add more classes or files to Hazelcast's classpath, one way to do it is to put them in a directory such as `ext`, mount it to the container, and set the `CLASSPATH` environment variable:
 
-```bash
+```bash vars
 docker run \
 -v /path/to/ext:/opt/hazelcast/ext \
 -e CLASSPATH="/opt/hazelcast/ext/" \
--p:5701:5701 hazelcast/hazelcast:5.8.0-SNAPSHOT
+-p:5701:5701 hazelcast/hazelcast:{os-version}
 ```
 
 If you have just one file to add, it's simpler to mount it directly to the Hazelcast `lib` directory:
 
-```bash
+```bash vars
 docker run \
 -v /path/to/my.jar:/opt/hazelcast-jet/lib/my.jar \
--p:5701:5701 hazelcast/hazelcast:5.8.0-SNAPSHOT
+-p:5701:5701 hazelcast/hazelcast:{os-version}
 ```
 
 ### Change logging level
 
 You can set the logging level using the `LOGGING_LEVEL` environment variable:
 
-```bash
-docker run -e LOGGING_LEVEL=DEBUG hazelcast/hazelcast:5.8.0-SNAPSHOT
+```bash vars
+docker run -e LOGGING_LEVEL=DEBUG hazelcast/hazelcast:{os-version}
 ```
 
 Available logging levels are (from highest to lowest): `FATAL`, `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE`. The default logging level is `INFO`.
 
 If you need more control over logging, you can supply your own `log4j2.properties` file. Use the default one as the starting point:
 
-```bash
-docker run --rm hazelcast/hazelcast:5.8.0-SNAPSHOT cat /opt/hazelcast/log4j2.properties > log4j2.properties
+```bash vars
+docker run --rm hazelcast/hazelcast:{os-version} cat /opt/hazelcast/log4j2.properties > log4j2.properties
 ```
 
 Edit the file and mount it when starting Hazelcast:
 
-```bash
-docker run -v /path/to/log4j2.properties:/opt/hazelcast/log4j2.properties hazelcast/hazelcast:5.8.0-SNAPSHOT
+```bash vars
+docker run -v /path/to/log4j2.properties:/opt/hazelcast/log4j2.properties hazelcast/hazelcast:{os-version}
 ```
 
 ## Build a custom image from the slim Docker image
@@ -227,11 +227,11 @@ Hazelcast offers a [slim](../../get-started/editions.mdx#full-slim) Docker image
 
 This example creates a Docker image for Hazelcast with the Kafka extension.
 
-```dockerfile
-FROM hazelcast:5.8.0-SNAPSHOT-slim
+```dockerfile vars
+FROM hazelcast:{os-version}-slim
 ARG HZ_HOME=/opt/hazelcast
 ARG REPO_URL=https://repo.maven.apache.org/maven2/com/hazelcast/jet
-ADD $REPO_URL/hazelcast-jet-kafka/5.8.0-SNAPSHOT/hazelcast-jet-kafka-5.8.0-SNAPSHOT-jar-with-dependencies.jar $HZ_HOME/lib/
+ADD $REPO_URL/hazelcast-jet-kafka/{os-version}/hazelcast-jet-kafka-{os-version}-jar-with-dependencies.jar $HZ_HOME/lib/
 # ... more ADD statements ...
 ```
 

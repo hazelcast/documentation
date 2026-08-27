@@ -32,13 +32,13 @@ The [Vector API](https://openjdk.org/jeps/338) is still preview in Java 21, see 
 
 If you use Docker, you can use the following example command:
 
-```bash
+```bash vars
 docker run -p 5701:5701 -e HZ_LICENSEKEY=<YOUR_LICENSE_KEY> \
      -e "JAVA_OPTS=--add-modules jdk.incubator.vector" \
-     hazelcast/hazelcast-enterprise:5.8.0-SNAPSHOT-slim
+     hazelcast/hazelcast-enterprise:{ee-version}-slim
 ```
 
-Replace the `<YOUR_LICENSE_KEY>` placeholder with your Hazelcast Enterprise Edition license key.
+Replace the `<YOUR_LICENSE_KEY>` placeholder with your Hazelcast <Variable name="enterprise-product-name"/> license key.
 
 ## Configuration
 
@@ -207,7 +207,7 @@ The value of `split-brain-protection-ref` should be the split-brain protection c
 
 ### Configuring Merge Policy {/* #merge-policy */}
 
-While recovering from a split-brain scenario, Vector Collection in the small cluster merges into the bigger cluster based on a configured merge policy. The merge policy resolves conflicts with different out-of-the-box strategies. It can be configured programmatically using the method [setMergePolicyConfig()](<https://docs.hazelcast.org/docs/5.8.0-SNAPSHOT/javadoc/com/hazelcast/config/vector/VectorCollectionConfig.html#setMergePolicyConfig(com.hazelcast.config.MergePolicyConfig)>), or declaratively using the element `merge-policy`. The following example shows declarative configuration:
+While recovering from a split-brain scenario, Vector Collection in the small cluster merges into the bigger cluster based on a configured merge policy. The merge policy resolves conflicts with different out-of-the-box strategies. It can be configured programmatically using the method <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/vector/VectorCollectionConfig.html#setMergePolicyConfig(com.hazelcast.config.MergePolicyConfig)" text="setMergePolicyConfig()"/>, or declaratively using the element `merge-policy`. The following example shows declarative configuration:
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">

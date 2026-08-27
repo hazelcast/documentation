@@ -112,17 +112,17 @@ SELECT * FROM customers;
 
    You should see the following jars:
 
-   <Tabs groupId="community-edition--enterprise-edition">
-   <TabItem value="enterprise-edition" label="Enterprise Edition">
+   <Tabs groupId="enterprise-product-name-enterprise-edition--open-source-product-name-community-edition">
+   <TabItem value="enterprise-product-name-enterprise-edition" label="Enterprise Edition">
 
-   - hazelcast-enterprise-cdc-debezium-5.8.0-SNAPSHOT.jar
-   - hazelcast-enterprise-cdc-postgres-5.8.0-SNAPSHOT.jar (for Postgres)
+   - hazelcast-enterprise-cdc-debezium-<Variable name="ee-version"/>.jar
+   - hazelcast-enterprise-cdc-postgres-<Variable name="ee-version"/>.jar (for Postgres)
 
    </TabItem>
-   <TabItem value="community-edition" label="Community Edition">
+   <TabItem value="open-source-product-name-community-edition" label="Community Edition">
 
-   - hazelcast-jet-cdc-debezium-5.8.0-SNAPSHOT.jar
-   - hazelcast-jet-cdc-postgres-5.8.0-SNAPSHOT.jar (for Postgres)
+   - hazelcast-jet-cdc-debezium-<Variable name="os-version"/>.jar
+   - hazelcast-jet-cdc-postgres-<Variable name="os-version"/>.jar (for Postgres)
 
    </TabItem>
    </Tabs>
@@ -143,7 +143,7 @@ SELECT * FROM customers;
 
 We'll assume you're using an IDE. Create a blank Java project named `cdc-tutorial` and copy the Maven file into it:
 
-```xml
+```xml vars
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -154,24 +154,24 @@ We'll assume you're using an IDE. Create a blank Java project named `cdc-tutoria
    <version>1.0-SNAPSHOT</version>
 
    <properties>
-       <maven.compiler.release>17</maven.compiler.release>
+       <maven.compiler.release>{minimum-java-version}</maven.compiler.release>
    </properties>
 
    <dependencies>
        <dependency>
            <groupId>com.hazelcast</groupId>
            <artifactId>hazelcast</artifactId>
-           <version>5.8.0-SNAPSHOT</version>
+           <version>{os-version}</version>
        </dependency>
        <dependency>
            <groupId>com.hazelcast.jet</groupId>
            <artifactId>hazelcast-enterprise-cdc-debezium</artifactId>
-           <version>5.8.0-SNAPSHOT</version>
+           <version>{ee-version}</version>
        </dependency>
        <dependency>
            <groupId>com.hazelcast.jet</groupId>
            <artifactId>hazelcast-enterprise-cdc-postgres</artifactId>
-           <version>5.8.0-SNAPSHOT</version>
+           <version>{ee-version}</version>
        </dependency>
        <dependency>
            <groupId>com.fasterxml.jackson.core</groupId>
@@ -198,7 +198,7 @@ We'll assume you're using an IDE. Create a blank Java project named `cdc-tutoria
 </project>
 ```
 
-If you are using Community Edition, you have to replace `hazelcast-enterprise-cdc-debezium` with `hazelcast-jet-cdc-debezium` and `hazelcast-enterprise-cdc-postgres` with `hazelcast-jet-cdc-postgres`.
+If you are using <Variable name="open-source-product-name"/>, you have to replace `hazelcast-enterprise-cdc-debezium` with `hazelcast-jet-cdc-debezium` and `hazelcast-enterprise-cdc-postgres` with `hazelcast-jet-cdc-postgres`.
 
 ## Step 6. Define Data Pipeline
 
@@ -208,8 +208,8 @@ By up-to-date view we mean an `IMap` keyed by customer ID and who's values are `
 
 This is how the code doing this looks like:
 
-<Tabs groupId="community-edition--enterprise-edition">
-<TabItem value="enterprise-edition" label="Enterprise Edition">
+<Tabs groupId="enterprise-product-name-enterprise-edition--open-source-product-name-community-edition">
+<TabItem value="enterprise-product-name-enterprise-edition" label="Enterprise Edition">
 
 ```java
 package org.example;
@@ -254,7 +254,7 @@ public class JetJob {
 ```
 
 </TabItem>
-<TabItem value="community-edition" label="Community Edition">
+<TabItem value="open-source-product-name-community-edition" label="Community Edition">
 
 ```java
 package org.example;

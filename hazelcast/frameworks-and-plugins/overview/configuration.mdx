@@ -12,28 +12,28 @@ These instructions assume you are using Apache Maven. If you use another build s
 
 To enable Spring integration:
 
-1. Add `hazelcast-spring-5.8.0-SNAPSHOT.jar` to your Java classpath.
+1. Add <code>{"hazelcast-spring-"}<Variable name="os-version"/>{".jar"}</code> to your Java classpath.
 2. Add the following lines to your `pom.xml` file:
 
-   ```xml
+   ```xml vars
    <dependency>
        <groupId>com.hazelcast</groupId>
        <artifactId>hazelcast-spring</artifactId>
-       <version>5.8.0-SNAPSHOT</version>
+       <version>{os-version}</version>
    </dependency>
    ```
 3. If you are an Enterprise customer and you want to use `hazelcast-spring` with `hazelcast-enterprise`, you also need to exclude the transitive `hazelcast` dependency:
 
-   ```xml
+   ```xml vars
    <dependency>
        <groupId>com.hazelcast</groupId>
        <artifactId>hazelcast-enterprise</artifactId>
-       <version>5.8.0-SNAPSHOT</version>
+       <version>{ee-version}</version>
    </dependency>
    <dependency>
        <groupId>com.hazelcast</groupId>
        <artifactId>hazelcast-spring</artifactId>
-       <version>5.8.0-SNAPSHOT</version>
+       <version>{ee-version}</version>
        <exclusions>
            <exclusion>
              <groupId>com.hazelcast</groupId>
@@ -198,12 +198,12 @@ Hazelcast has its own namespace `hazelcast` for bean definitions. You can add th
 
 Here is an example schema definition:
 
-```xml
+```xml vars
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:hz="http://www.hazelcast.com/schema/spring"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
-                http://www.springframework.org/schema/beans/spring-beans-5.8-SNAPSHOT.xsd
+                http://www.springframework.org/schema/beans/spring-beans-{version}.xsd
                 http://www.hazelcast.com/schema/spring
                 http://www.hazelcast.com/schema/spring/hazelcast-spring.xsd">
 ```
@@ -342,10 +342,10 @@ The following table lists all of the Hazelcast data structures you can use in yo
 | `idGenerator` | `config.addCardinalityEstimatorConfig(new CardinalityEstimatorConfig("gen") .setNodeIdOffset(1);` | `<hz:idGenerator id="idGenerator" instance-ref="instance" name="idGenerator"/>` |
 | `atomicLong` | - (needs manual bean addition) | `<hz:atomicLong id="atomicLong" instance-ref="instance" name="atomicLong"/>` |
 | `atomicReference` | - (needs manual bean addition) | `<hz:atomicReference id="atomicReference" instance-ref="instance" name="atomicReference"/>` |
-| `semaphore` <sup>Enterprise Edition</sup> | `config.getCPSubsystemConfig().addSemaphoreConfig(new SemaphoreConfig("s1").setInitialPermits(5));` | `<hz:semaphore id="semaphore" instance-ref="instance" name="semaphore"/>` |
+| `semaphore` <sup><Variable name="enterprise-product-name"/></sup> | `config.getCPSubsystemConfig().addSemaphoreConfig(new SemaphoreConfig("s1").setInitialPermits(5));` | `<hz:semaphore id="semaphore" instance-ref="instance" name="semaphore"/>` |
 | `countDownLatch` | - (needs manual bean addition) | `<hz:countDownLatch id="countDownLatch" instance-ref="instance" name="countDownLatch"/>` |
-| `lock` <sup>Enterprise Edition</sup> | `config.getCPSubsystemConfig().addLockConfig(new FencedLockConfig("lock1").setLockAcquireLimit(5));` | `<hz:lock id="lock" instance-ref="instance" name="lock"/>` |
-| `cpmap` <sup>Enterprise Edition</sup> | `config.getCPSubsystemConfig().addCPMapConfig(new CPMapConfig("cpMap1").setMaxSizeMb(150));` | `<hz:cpmap instance-ref="instance" name="cpmap" id="cpMap" />` |
+| `lock` <sup><Variable name="enterprise-product-name"/></sup> | `config.getCPSubsystemConfig().addLockConfig(new FencedLockConfig("lock1").setLockAcquireLimit(5));` | `<hz:lock id="lock" instance-ref="instance" name="lock"/>` |
+| `cpmap` <sup><Variable name="enterprise-product-name"/></sup> | `config.getCPSubsystemConfig().addCPMapConfig(new CPMapConfig("cpMap1").setMaxSizeMb(150));` | `<hz:cpmap instance-ref="instance" name="cpmap" id="cpMap" />` |
 | `dataConnection` | + \[source,java,opts=novalidate\] ----- config.addDataConnectionConfig(new DataConnectionConfig() .setName("my-jdbc-data-connection") .setType("Jdbc") .setProperties(getProperties())); ----- + | `<hz:external-data-store name="externalStore"> <hz:class-name>com.hazelcast.datastore.JdbcDataStoreFactory</hz:class-name> <hz:properties> <hz:property name="jdbcUrl">jdbc:mysql://dummy:3306</hz:property> </hz:properties> </hz:external-data-store>` |
 | `executorService` | `config.addExecutorConfig(new ExecutorConfig("executor1").setPoolSize(100));` | `<hz:executorService id="executorService" instance-ref="client" name="executorService"/>` |
 | `durableExecutorService` | `config.addDurableExecutorConfig(new DurableExecutorConfig("executor1").setPoolSize(100));` | `<hz:durableExecutorService id="durableExec" instance-ref="instance" name="durableExec"/>` |

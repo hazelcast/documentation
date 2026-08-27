@@ -22,7 +22,16 @@
 //
 // Two properties make this safe (verified against the cloud corpus):
 //   - references are marked only in contexts that render into flow text, so the
-//     span never lands in an id or an element attribute; and
+//     span never lands in an id or an element attribute. A LINK TARGET is the
+//     trap here and is skipped explicitly: `https://…/{os-version}/javadoc/…[text]`
+//     renders the reference into the `href`, and a span there
+//     (`href="https://…/<span class="hz-attr-os-version">…`) is malformed HTML that
+//     cheerio parses as a truncated URL followed by text. It cost hazelcast 226
+//     mangled javadoc links before the residue check below started catching it,
+//     because stripping the spans still reproduced the clean golden byte-for-byte
+//     — so nothing downstream noticed. Nothing is lost by skipping: a reference in
+//     a link target is recovered instead by the converter's href-template path
+//     (buildHrefVars), which is exact rather than value-matched; and
 //   - stripping the spans (`stripAttrSpans`) reproduces the un-instrumented
 //     golden BYTE-FOR-BYTE, so the fidelity baseline is untouched (readGolden in
 //     fidelity/lib/pairing.js strips them, exactly as it strips partial
@@ -54,6 +63,25 @@ const ETX = String.fromCharCode(3) // ends the marker
 //     substitutions, so the sentinel survives into `<code>` and spanifies there.
 //   - `:description:` entries: marked ONLY when the body renders them via
 //     `{description}` (see descriptionRendered); other attribute entries baked.
+// The link-macro TARGET grammar, shared with the converter (converter/lib/links.js
+// LINK_TARGET, also the basis of attrHrefTemplates). Marking must skip exactly the
+// targets the converter RECOVERS references from, so the two cannot disagree about
+// what a link target is: a marked reference inside one is both a corrupt golden and
+// a reference the href path would have restored for free.
+const { LINK_TARGET } = require('../converter/lib/links')
+
+// LINK_TARGET needs a `[` to close the target, so it does not see an UNLABELLED
+// autolink -- a bare `https://docs.hazelcast.org/hazelcast-ee-docs/{ee-version}/javadoc`
+// on its own. Asciidoctor autolinks that into `<a href="URL" class="bare">URL</a>`,
+// putting the reference in the href AND the visible text, from ONE source
+// occurrence: marking it marks both, so the href half is malformed either way and
+// the whole occurrence has to be skipped. (hazelcast clients/java, v/5.5 onwards --
+// found by hasAttrSpanLeak after the LINK_TARGET skip went in.) The range this
+// matches also covers the labelled autolink form, so the two grammars overlap
+// harmlessly; LINK_TARGET is still needed for a `link:`-prefixed target, which
+// need not be a URL at all.
+const BARE_URL = /(?<![\w:])https?:\/\/[^\s[\]]+/g
+
 const TITLE = /^\s*=\s/
 const SECTION = /^\s*==+\s/
 const BLOCK_IMAGE = /^\s*image::/
@@ -91,13 +119,20 @@ function transform (text, names, onRef) {
     if (!RE.test(line)) continue
     RE.lastIndex = 0
     const context = SECTION.test(line) ? 'heading' : 'flow'
-    // Inline-image alt-text ranges on this line (plain text -> skip).
-    const imgRanges = []
+    // Ranges on this line where a reference must NOT be marked, because it does
+    // not render into flow text: an inline image's alt text (plain text, no span
+    // can live there) and a link macro's TARGET (it renders into the `href`).
+    const skipRanges = []
     let im
     while ((im = INLINE_IMAGE.exec(line)) !== null) {
       const altStart = im.index + im[0].indexOf('[') + 1
-      imgRanges.push([altStart, altStart + im[1].length])
+      skipRanges.push([altStart, altStart + im[1].length])
     }
+    for (const lm of line.matchAll(LINK_TARGET)) {
+      const start = lm.index + lm[0].indexOf(lm[1])
+      skipRanges.push([start, start + lm[1].length])
+    }
+    for (const um of line.matchAll(BARE_URL)) skipRanges.push([um.index, um.index + um[0].length])
     lines[i] = line.replace(RE, (whole, esc, name, offset, str) => {
       if (esc) return whole
       const backticksBefore = (str.slice(0, offset).match(/`/g) || []).length
@@ -110,7 +145,7 @@ function transform (text, names, onRef) {
       // though: a sentinel would leak into the derived anchor id, and the role
       // span used for headings would render literally inside code.
       if (inCode && context === 'heading') return whole
-      if (imgRanges.some(([a, b]) => offset >= a && offset < b)) return whole // inside image alt
+      if (skipRanges.some(([a, b]) => offset >= a && offset < b)) return whole // image alt / link target
       return onRef(name, whole, inCode ? 'code' : context)
     })
   }
@@ -156,6 +191,20 @@ const spanify = (html) => html.replace(SENTINEL_RUN, (m, name, value) => `<span 
 const SENTINEL_CHAR = new RegExp(`[${SOH}${STX}${ETX}]`)
 const hasSentinelResidue = (html) => SENTINEL_CHAR.test(html)
 
+// The OTHER malformation, and the one the residue check cannot see: a
+// WELL-FORMED marker span that spanified inside an element's attribute value.
+// `stripAttrSpans` still reproduces the clean golden byte-for-byte there, so
+// every downstream faithfulness check passes -- while the marked golden itself is
+// unparseable, and the converter reads a truncated attribute followed by the rest
+// of the tag as text. That is how a marked `{os-version}` in a link TARGET
+// mangled 226 javadoc links across 66 hazelcast pages in silence.
+//
+// Detected structurally rather than by listing contexts: a well-formed tag never
+// contains a `<` between its name and its closing `>`, so a marker span opening
+// while a tag is still open is proof the span is inside an attribute value.
+const SPAN_IN_ATTR = /<[a-zA-Z][^<>]*<span class="hz-attr-/
+const hasAttrSpanLeak = (html) => SPAN_IN_ATTR.test(html)
+
 // Strip the marker spans, reproducing the un-instrumented HTML byte-for-byte.
 // Writer (spanify) and matcher must stay in lockstep -- keep them together.
 const ATTR_SPAN_RE = /<span class="hz-attr-[^"]*">([\s\S]*?)<\/span>/g
@@ -168,6 +217,6 @@ const attrNameFromClass = (cls) => {
 }
 
 module.exports = {
-  wrapRefs, wrappableRefs, spanify, hasSentinelResidue,
+  wrapRefs, wrappableRefs, spanify, hasSentinelResidue, hasAttrSpanLeak,
   stripAttrSpans, ATTR_SPAN_RE, attrNameFromClass,
 }

@@ -5,7 +5,7 @@ sidebar_position: 1
 slug: /configuration/dynamic-config
 ---
 
-You can use dynamic configuration to add new configuration to members at runtime or update some supported configuration such as Enterprise Edition license keys. This feature is useful if you want to configure a running cluster without having to restart the members.
+You can use dynamic configuration to add new configuration to members at runtime or update some supported configuration such as <Variable name="enterprise-product-name"/> license keys. This feature is useful if you want to configure a running cluster without having to restart the members.
 
 ## Adding Dynamic Configuration {/* #options */}
 
@@ -27,16 +27,16 @@ These options support different dynamic configuration changes, and not all chang
 
 :::note
 
-To use the REST endpoints you need an Enterprise Edition license.
+To use the REST endpoints you need an <Variable name="enterprise-product-name"/> license.
 
 :::
 
 | Dynamic change | Programmatic API | Dedicated REST endpoint | Update and reload | SQL | Management Center | Supports [Dynamic Configuration Persistence](#persistence) |
 | --- | --- | --- | --- | --- | --- | --- |
-| Add a new configuration block for a supported data structure | [Yes](#supported) | No | [Yes](#supported) | No | [Yes](/management-center/5.12-snapshot/clusters/update-config) | [Yes](#persistence) |
-| Add a new WAN configuration block | [Yes](../../synchronizing-data-across-clusters/advanced-features.mdx#dynamically-adding-wan-publishers) | [Yes](../../synchronizing-data-across-clusters/rest-api.mdx#wr-dynamically-adding) | [Yes](./dynamic-config-update-and-reload.mdx) | N/A | [Yes](/management-center/5.12-snapshot/clusters/update-config) | [Yes](#persistence) |
-| Update a Hazelcast Enterprise Edition license | No | [Yes](../../../install-and-upgrade/enterprise-edition/enterprise-licenses.mdx#update) | [Yes](./dynamic-config-update-and-reload.mdx) | N/A | [Yes](/management-center/5.12-snapshot/clusters/update-config) | [Yes](#persistence) |
-| Add a new index to an existing map | [Yes](../../../develop-and-build/improving-query-performance/indexing-maps.mdx) | No | No | [Yes](../../../develop-and-build/improving-query-performance/indexing-maps.mdx) | Yes, using [`CREATE INDEX`](../../../develop-and-build/sql/statements/create-index.mdx) in the [SQL browser](/management-center/5.12-snapshot/tools/sql-browser) | No |
+| Add a new configuration block for a supported data structure | [Yes](#supported) | No | [Yes](#supported) | No | <Variable href="/management-center/{page-latest-supported-mc}/clusters/update-config" text="Yes"/> | [Yes](#persistence) |
+| Add a new WAN configuration block | [Yes](../../synchronizing-data-across-clusters/advanced-features.mdx#dynamically-adding-wan-publishers) | [Yes](../../synchronizing-data-across-clusters/rest-api.mdx#wr-dynamically-adding) | [Yes](./dynamic-config-update-and-reload.mdx) | N/A | <Variable href="/management-center/{page-latest-supported-mc}/clusters/update-config" text="Yes"/> | [Yes](#persistence) |
+| Update a Hazelcast <Variable name="enterprise-product-name"/> license | No | [Yes](../../../install-and-upgrade/enterprise-edition/enterprise-licenses.mdx#update) | [Yes](./dynamic-config-update-and-reload.mdx) | N/A | <Variable href="/management-center/{page-latest-supported-mc}/clusters/update-config" text="Yes"/> | [Yes](#persistence) |
+| Add a new index to an existing map | [Yes](../../../develop-and-build/improving-query-performance/indexing-maps.mdx) | No | No | [Yes](../../../develop-and-build/improving-query-performance/indexing-maps.mdx) | Yes, using [`CREATE INDEX`](../../../develop-and-build/sql/statements/create-index.mdx) in the <Variable href="/management-center/{page-latest-supported-mc}/tools/sql-browser" text="SQL browser"/> | No |
 
 ### Supported Data Structures {/* #supported */}
 
@@ -113,7 +113,7 @@ Some dynamic configuration settings might reference user customizations, such as
 
 :::caution
 
-User Code Deployment has been deprecated and will be removed in the next major version. To continue deploying your user code after this time, Community Edition users can either upgrade to Enterprise Edition, or add their resources to the Hazelcast member class paths. Hazelcast recommends that Enterprise Edition users migrate their user code to use User Code Namespaces. For further information on migrating from User Code Deployment to User Code Namespaces, see [Migrate from User Code Deployment](../../../develop-and-build/distributed-computing/user-code-namespaces/ucn-migrate-ucd.mdx).
+<Variable name="ucd"/> has been deprecated and will be removed in the next major version. To continue deploying your user code after this time, <Variable name="open-source-product-name"/> users can either upgrade to <Variable name="enterprise-product-name"/>, or add their resources to the Hazelcast member class paths. Hazelcast recommends that <Variable name="enterprise-product-name"/> users migrate their user code to use <Variable name="ucn"/>. For further information on migrating from <Variable name="ucd"/> to <Variable name="ucn"/>, see [Migrate from User Code Deployment](../../../develop-and-build/distributed-computing/user-code-namespaces/ucn-migrate-ucd.mdx).
 
 :::
 
