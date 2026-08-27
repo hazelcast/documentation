@@ -234,3 +234,21 @@
   margin-left: 0;
   margin-right: 0.5em;
 }
+
+/* A table that carries a <colgroup> has author-specified column proportions,
+   converted from the AsciiDoc `[cols="1a,1a,1m,2a"]` spec. Under the default
+   `table-layout: auto` those percentages are only a hint: the browser still
+   sizes columns from their content, so a cell holding a tab set re-flowed the
+   whole table whenever the reader switched XML/YAML — the column grew or shrank
+   to fit whichever snippet was showing. `fixed` makes the declared widths
+   authoritative, so the geometry is stable across tab switches and the reader's
+   eye stays where it was. Scoped to tables that actually declare widths: a
+   markdown pipe table has no colgroup and keeps content-based sizing. */
+.markdown table:has(> colgroup) {
+  table-layout: fixed;
+  /* Required, not decorative: under `fixed` the column widths are resolved
+     against the TABLE's width, and the colgroup declares them as percentages.
+     Without an explicit width the table has none to resolve against and
+     collapses to a couple of pixels. */
+  width: 100%;
+}

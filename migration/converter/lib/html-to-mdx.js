@@ -1154,7 +1154,7 @@ function convertTable ($, table, st) {
   // Everything else becomes a clean semantic <table> whose cells are Markdown:
   // MDX parses block content (lists, admonitions, multiple paragraphs) inside a
   // <td> when the body is blank-line padded. No presentational classes emitted.
-  return htmlTable($, headRows, bodyRows, st)
+  return htmlTable($, table, headRows, bodyRows, st)
 }
 
 // A `[cols="l"]` (literal) column renders each cell as a single
@@ -1244,8 +1244,37 @@ function cellInline ($, cell, st) {
 // column 0 (indenting a closing tag after a list breaks the MDX parser), and a
 // cell whose Markdown spans lines is blank-line padded so MDX reads the body as
 // Markdown (lists, admonitions, paragraphs) rather than raw text.
-function htmlTable ($, headRows, bodyRows, st) {
+// The author's column proportions, carried across as a <colgroup>. Asciidoctor
+// turns a `[cols="1a,1a,1m,2a"]` spec into <col style="width: 20%;"> ... and the
+// Antora UI leaves `table-layout: fixed` COMMENTED OUT, so those percentages are
+// the only thing holding the columns in place on the current site.
+//
+// Dropping them (as "presentational") left every column sized purely by its
+// content, which is stable until the content CHANGES SIZE -- so on a table whose
+// cells hold tab sets, switching XML/YAML re-flowed the whole table under the
+// reader. 321 tables in Platform alone carried a colgroup and none survived.
+// Invisible to all three fidelity layers, which compare text and structure but
+// not column geometry.
+//
+// Emitted as JSX (`style={{width:'20%'}}`), since MDX needs an object, not a CSS
+// string. A colgroup whose cols carry no width is skipped: it says nothing.
+function colgroupJsx ($, table) {
+  const cols = $(table).children('colgroup').first().children('col').toArray()
+  if (!cols.length) return null
+  const widths = cols.map((c) => {
+    const m = /width:\s*([\d.]+%)/.exec((c.attribs && c.attribs.style) || '')
+    return m ? m[1] : null
+  })
+  if (!widths.some(Boolean)) return null
+  return '<colgroup>\n' +
+    widths.map((w) => (w ? `<col style={{width:'${w}'}}/>` : '<col/>')).join('\n') +
+    '\n</colgroup>'
+}
+
+function htmlTable ($, table, headRows, bodyRows, st) {
   const out = ['<table>']
+  const cg = colgroupJsx($, table)
+  if (cg) out.push(cg)
   if (headRows.length) {
     out.push('<thead>')
     for (const tr of headRows) out.push(rowHtml($, tr, st))

@@ -172,12 +172,38 @@ async function main () {
 
   const perComponent = {}
   const placed = new Set()
+// Docusaurus measures every image with `image-size` to set intrinsic width/height
+// (so the page does not shift as images load). Its SVG probe reads only the FIRST
+// 1000 BYTES and needs the whole `<svg ...>` root tag inside them -- and a
+// diagrams.net export carries a `content="&lt;mxfile ...&gt;"` attribute holding
+// the entire editable diagram, which pushes that tag past 3KB. The image is
+// perfectly valid; the probe just cannot see its dimensions, so it warns and the
+// image renders with no intrinsic size.
+//
+// Stripped from the PUBLISHED copy only. The attribute is editor metadata -- it
+// is what lets diagrams.net reopen the .svg for editing -- and since there is no
+// separate .drawio file in the sources, that attribute IS the editable master.
+// Removing it here keeps the source asset intact and untouched while shipping an
+// SVG the probe can measure. Nothing about the rendered drawing changes: `content`
+// is not referenced by any painting attribute.
+const MXFILE_CONTENT = /\scontent="(?:&lt;|<)mxfile[\s\S]*?"(?=[\s>])/
+
+function stripDrawioSource (file, contents) {
+  if (!/\.svg$/i.test(file.pub.url || '')) return contents
+  const head = contents.subarray(0, 8192).toString('utf8')
+  const close = head.indexOf('>')
+  if (close === -1 || close <= 1000) return contents // root tag already measurable
+  const text = contents.toString('utf8')
+  const out = text.replace(MXFILE_CONTENT, '')
+  return out === text ? contents : Buffer.from(out, 'utf8')
+}
+
   const heavy = []
   let written = 0
   let unchanged = 0
   let skipped = 0
   for (const file of images) {
-    const contents = file.contents
+    const contents = stripDrawioSource(file, file.contents)
     if (!contents || !contents.length) { skipped++; continue }
     const dest = path.join(rootDir, plan.get(file.pub.url))
     placed.add(dest)
