@@ -12,7 +12,7 @@
 
 const assert = require('node:assert')
 
-const { isUnpublished, redirectTo, unpublishedUrls, urlBase, redirectPairs } = require('./dispositions')
+const { isUnpublished, redirectTo, unpublishedUrls, urlBase, redirectPairs, publishedPageUrls } = require('./dispositions')
 
 let n = 0
 const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
@@ -144,6 +144,49 @@ const live = () => true
   assert.deepStrictEqual(redirectPairs(new Map(), manifest, live), [],
     'no redirect decisions => no pairs')
   ok('redirectPairs resolves within the version, gates on live, and fails closed')
+}
+
+// --- publishedPageUrls: the set every redirect target must be in ----------------
+// The rule any redirect has to satisfy, whichever source it comes from. It is
+// stated once here because BOTH callers depend on it: redirectPairs checks its
+// own `to`, and the converter checks page-ALIAS targets against it. Missing the
+// second one shipped a redirect into a dropped page and failed the site build
+// (getting-started/resources is drop-404 and carried a page-alias), so the
+// property is pinned rather than left to each caller to remember.
+{
+  const page = (over = {}) => ({
+    component: 'hazelcast', version: '5.8-snapshot', module: 'getting-started',
+    family: 'page', relative: 'resources.adoc',
+    url: '/hazelcast/5.8-snapshot/getting-started/resources', ...over,
+  })
+  const manifest = {
+    resources: [
+      page(),
+      page({ module: 'clients', relative: 'rest.adoc', url: '/hazelcast/5.8-snapshot/clients/rest' }),
+      page({ module: 'maintain-cluster', relative: 'rest-api.adoc', url: '/hazelcast/5.8-snapshot/maintain-cluster/rest-api' }),
+      page({ version: '5.7', url: '/hazelcast/5.7/getting-started/resources' }),
+      // Aliases are a different family and are never routes in their own right.
+      { component: 'hazelcast', version: '5.8-snapshot', family: 'alias', url: '/hazelcast/5.8-snapshot/overview/resources', aliasTo: '/hazelcast/5.8-snapshot/getting-started/resources' },
+    ],
+  }
+  const disp = new Map([
+    ['hazelcast:getting-started/resources', { disposition: 'drop-404' }],
+    ['hazelcast:clients/rest', { disposition: 'redirect', to: '/maintain-cluster/rest-api' }],
+  ])
+  const live = (r) => r.version === '5.8-snapshot'
+
+  const published = publishedPageUrls(disp, manifest, live)
+  assert.ok(published.has('/hazelcast/5.8-snapshot/maintain-cluster/rest-api'),
+    'a published page is a valid redirect target')
+  assert.ok(!published.has('/hazelcast/5.8-snapshot/getting-started/resources'),
+    'a drop-404 page is NOT a valid target, so its page-alias must not redirect to it')
+  assert.ok(!published.has('/hazelcast/5.8-snapshot/clients/rest'),
+    'nor is a redirected page -- chaining a redirect into a redirect')
+  assert.ok(!published.has('/hazelcast/5.7/getting-started/resources'),
+    'nor is a page in a version that is not live')
+  assert.ok(![...published].some((u) => u.endsWith('/overview/resources')),
+    'an alias is not itself a route, so it can never be a target')
+  ok('publishedPageUrls: the one rule every redirect target must satisfy')
 }
 
 console.log(`\n[dispositions selftest] ${n} groups passed.`)

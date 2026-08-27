@@ -46,7 +46,7 @@ const { attrCodeTemplates, buildCodeTemplates, resolveTemplates } = require('./l
 // the source line can tell them apart.
 const { collectPageTexts } = require('../refcheck/lib/source-refs')
 const { parseNav, buildPlan, injectNavEntries, pageKey } = require('./lib/nav')
-const { loadDispositions, isUnpublished, redirectTo, urlBase, redirectPairs, navInjectionsFor } = require('../lib/dispositions')
+const { loadDispositions, isUnpublished, redirectTo, urlBase, redirectPairs, publishedPageUrls, navInjectionsFor } = require('../lib/dispositions')
 // Co-located image placement, computed from the reference graph. The converter
 // is the only thing that knows every page's OUTPUT FILE (the nav plan decides
 // it, not the URL), so it owns the plan and writes it out for extract-images.js.
@@ -324,12 +324,19 @@ function collectRedirects (manifest, liveSegsByComponent, dispositions) {
     const liveSegs = liveSegsByComponent.get(r.component)
     return !(liveSegs && !liveSegs.has(r.version))
   }
+  // A page-alias whose TARGET is a page an orphan decision withholds has nowhere
+  // to land: the alias URL would redirect into a 404, and the client-redirects
+  // plugin fails the whole build on a `to` that is not a real route. Drop it --
+  // an alias is just another URL for the page it points at, so when that page is
+  // dropped its aliases go with it. (Real case: getting-started/resources is
+  // drop-404 and carried `:page-aliases: overview:resources.adoc`.)
+  const published = publishedPageUrls(dispositions, manifest, isLive)
   const redirects = []
   for (const r of manifest.resources || []) {
     if (r.family !== 'alias' || !r.aliasTo || !isLive(r)) continue
     const from = normalizeRoute(r.url)
     const to = normalizeRoute(r.aliasTo)
-    if (from === to) continue
+    if (from === to || !published.has(to)) continue
     redirects.push({ from, to })
   }
   // Orphan triage `redirect` decisions land in the same table: the page is not

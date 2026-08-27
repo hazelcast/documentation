@@ -101,13 +101,22 @@ const normalizeRoute = (url) => (url.length > 1 && url.endsWith('/') ? url.slice
 // client-redirects plugin fails the build on a `to` that is not a real route,
 // and a `to` naming another withheld page would be a redirect to a 404. Better
 // to say which allowlist entry is wrong than to ship either.
+// Every page URL that will actually BE a route: a live version of a converted
+// component, minus everything an orphan decision withholds. Any redirect target
+// -- whether it comes from a `redirect` decision or from a page-alias -- has to
+// be in here, or the client-redirects plugin fails the build on it.
+function publishedPageUrls (dispositions, manifest, isLive) {
+  const urls = new Set()
+  for (const r of manifest.resources || []) {
+    if (r.family !== 'page' || !r.url || !isLive(r)) continue
+    if (!isUnpublished(dispositions, r)) urls.add(normalizeRoute(r.url))
+  }
+  return urls
+}
+
 function redirectPairs (dispositions, manifest, isLive) {
   const resources = manifest.resources || []
-  const published = new Set()
-  for (const r of resources) {
-    if (r.family !== 'page' || !r.url || !isLive(r)) continue
-    if (!isUnpublished(dispositions, r)) published.add(normalizeRoute(r.url))
-  }
+  const published = publishedPageUrls(dispositions, manifest, isLive)
   const pairs = []
   for (const r of resources) {
     if (r.family !== 'page' || !r.url || !isLive(r)) continue
@@ -156,5 +165,5 @@ const navKey = (rest) => {
 
 module.exports = {
   loadDispositions, keyOf, isUnpublished, redirectTo, unpublishedUrls,
-  urlBase, redirectPairs, navInjectionsFor, ALLOWLIST,
+  urlBase, redirectPairs, publishedPageUrls, normalizeRoute, navInjectionsFor, ALLOWLIST,
 }

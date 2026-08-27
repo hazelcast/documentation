@@ -94,7 +94,6 @@ export const redirects: {from: string; to: string}[] = [
   { from: "/hazelcast/5.8-snapshot/migrate/upgrade-3-12-x", to: "/hazelcast/5.8-snapshot/migrate/upgrading-from-imdg-3" },
   { from: "/hazelcast/5.8-snapshot/overview/architecture", to: "/hazelcast/5.8-snapshot/architecture/architecture" },
   { from: "/hazelcast/5.8-snapshot/overview/data-partitioning", to: "/hazelcast/5.8-snapshot/architecture/data-partitioning" },
-  { from: "/hazelcast/5.8-snapshot/overview/resources", to: "/hazelcast/5.8-snapshot/getting-started/resources" },
   { from: "/hazelcast/5.8-snapshot/performance/back-pressure", to: "/hazelcast/5.8-snapshot/cluster-performance/best-practices" },
   { from: "/hazelcast/5.8-snapshot/performance/best-practices", to: "/hazelcast/5.8-snapshot/cluster-performance/best-practices" },
   { from: "/hazelcast/5.8-snapshot/performance/cpu-thread-affinity", to: "/hazelcast/5.8-snapshot/cluster-performance/best-practices" },
