@@ -82,12 +82,24 @@ const VERSIONS = {
   'management-center': { current: '5.12-snapshot', releases: ['5.11', '5.10', '5.9'] },
   // Platform's main declares `5.8-snapshot` (an unreleased snapshot, as MC's is),
   // so its current seg is a NUMBER and the dropdown lands on the newest release
-  // ('latest-release' in docusaurus.config.ts). The five releases below are the
-  // live set; 5.2 and older are frozen (freeze plan), which is why they stop at
-  // 5.3. Phase 1 converted the current branch alone so the plugin was stood up
-  // and the whole 439-page corpus converted once before the release copies
-  // multiplied it; phase 2 (this list) adds them.
-  hazelcast: { current: '5.8-snapshot', releases: ['5.7', '5.6', '5.5', '5.4', '5.3'] },
+  // ('latest-release' in docusaurus.config.ts). Phase 1 converted the current
+  // branch alone so the plugin was stood up and the whole 439-page corpus
+  // converted once before the release copies multiplied it; phase 2 adds the
+  // releases.
+  //
+  // The intended live set is 5.7 down to 5.3 (5.2 and older are frozen, freeze
+  // plan), but 5.4 and 5.3 are NOT LISTED YET: they use a different nav
+  // architecture from 5.5-and-newer. Their ROOT/nav.adoc is a skeleton that pulls
+  // in per-module `include::<module>:partial$nav.adoc[]` files (27 live includes
+  // at 5.3, 22 at 5.4, none commented), while 5.5+ are flat single files. The
+  // converter reads nav.adoc raw (loadNavAdoc git-shows it) and parseNav ignores
+  // `include::` lines, so those two versions would lose most of their sidebar
+  // tree and land nearly every page at the component root as `unlisted`. They
+  // also break the `maintain-cluster/rest-api` nav injection: its orphan-triage
+  // anchor (`maintain-cluster:rest-api-swagger`) only exists from 5.5 up -- at
+  // 5.4 the page is already in nav, and at 5.3 nav has no REST entries at all.
+  // Both need fixing before 5.4 and 5.3 can be added here.
+  hazelcast: { current: '5.8-snapshot', releases: ['5.7', '5.6', '5.5'] },
 }
 
 // Attributes whose references are MARKED in the golden (antora-extension/

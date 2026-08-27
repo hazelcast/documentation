@@ -129,10 +129,10 @@ const config: Config = {
     // the product's name. Its main is a NUMBERED snapshot like MC's — published
     // under `5.8-snapshot`, displayed `5.8-SNAPSHOT`.
     //
-    // The live release set (5.7 down to 5.3; 5.2 and older frozen) lives in
-    // lib/layout.js VERSIONS.hazelcast, so it needs no edit here — and because
-    // main is an unreleased snapshot, the dropdown lands on the newest release,
-    // as production does.
+    // The live release set lives in lib/layout.js VERSIONS.hazelcast, so it needs
+    // no edit here — and because main is an unreleased snapshot, the dropdown
+    // lands on the newest release, as production does. Currently 5.7/5.6/5.5;
+    // 5.4 and 5.3 are still to come (they nav differently — see that file).
     versionedDocs(platform),
     // Cloud docs — migration target #1. Unversioned: the only version is served
     // at the base path with no version segment, and routeBasePath === the Antora
@@ -228,7 +228,7 @@ const config: Config = {
           label: 'CLC',
         },
         // Version dropdown for the hazelcast (Platform) instance: the
-        // 5.8-SNAPSHOT current version plus the live releases 5.7 down to 5.3.
+        // 5.8-SNAPSHOT current version plus the live releases.
         {
           type: 'docsVersionDropdown',
           docsPluginId: 'hazelcast',
