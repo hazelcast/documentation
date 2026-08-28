@@ -426,22 +426,43 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
 }
 
 // --- structure.inventory: navigable-link + cell-code exclusion rules ---------
-// Two fidelity requirements, stated directly: an href with literal angle
+// Three fidelity requirements, stated directly: an href with literal angle
 // brackets is not a navigable link (Docusaurus rejects it, the converter drops
-// the anchor), and a <pre> inside a table cell is cell content compared via the
-// table-row mechanism, not a standalone code block.
+// the anchor); neither is an address the reader types or opens on their own
+// machine, whether or not it is a valid URL; and a <pre> inside a table cell is
+// cell content compared via the table-row mechanism, not a standalone code block.
 {
   const links = inventory(
     '<a href="/real">real</a> <code><a class="bare" href="http://<mc-ip>:8080">ph</a></code>',
     ASCIIDOC_PROFILE)
   assert.strictEqual(links.links, 1, 'a href containing literal <> is not a navigable link')
 
+  // Stated as the requirement, not as the regex: each of these hosts is one a
+  // reader cannot reach, so the golden's autolink is not a link we owe them --
+  // and a real host that merely CONTAINS one of those words still is.
+  const unreachable = [
+    'http://localhost:8443/swagger-ui/index.html', 'http://localhost:8080', 'https://127.0.0.1:9000/x',
+    'http://0.0.0.0/', 'https://router.local/status', 'https://example.com', 'http://example.org/a',
+  ]
+  for (const href of unreachable) {
+    assert.strictEqual(inventory(`<a href="${href}">u</a>`, ASCIIDOC_PROFILE).links, 0,
+      `an address the reader cannot reach is not a navigable link: ${href}`)
+  }
+  const reachable = [
+    'https://example.community/a', 'https://localhost.example.io/', 'https://docs.hazelcast.com/x',
+    'https://mylocal.com/', '/hazelcast/5.7/getting-started/quickstart',
+  ]
+  for (const href of reachable) {
+    assert.strictEqual(inventory(`<a href="${href}">u</a>`, ASCIIDOC_PROFILE).links, 1,
+      `a real destination is still counted: ${href}`)
+  }
+
   const cell = inventory(
     '<table class="tableblock"><tbody><tr><td><pre>in-cell</pre></td></tr></tbody></table>',
     ASCIIDOC_PROFILE)
   assert.strictEqual(cell.codeBlocks, 0, 'a <pre> inside a table cell is not a standalone code block')
   assert.strictEqual(cell.tables, 1, 'the content table itself is counted')
-  ok('inventory: excludes <>-href links and in-cell code blocks')
+  ok('inventory: excludes <>-href and unreachable-host links, and in-cell code blocks')
 }
 
 // --- layer2.compareInventory -------------------------------------------------

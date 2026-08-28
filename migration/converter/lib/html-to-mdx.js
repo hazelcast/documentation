@@ -1481,7 +1481,26 @@ function cellMarkdown ($, cell, st) {
   // the row reads differently and the page gains a list item that the golden does
   // not have (spring/hazelcast-spring-session's flushMode and saveMode cells,
   // where the author hand-typed a two-line pseudo-list inside one paragraph).
-  if (ps.length > 1) return ps.map((p) => escapeBlockStart(inline($, p, st).trim())).filter(Boolean).join('\n\n')
+  // Each paragraph is wrapped in an explicit `<p>`, because a blank line is NOT
+  // enough to keep two of them apart. MDX renders a block whose whole content is
+  // one JSX element as that element BARE -- no paragraph around it -- so a cell
+  // holding two `<Variable/>` links emitted `<td><a…/><a…/></td>` and the reader
+  // saw `hazelcast-default.xmlhazelcast-default.yaml` run together
+  // (configuration/configuring-declaratively, 4 cells x 3 released versions; 5.8
+  // escapes it only because its ifdef branch has no {os-version} to reference, so
+  // the links stay Markdown and Markdown DOES get a paragraph). The explicit tag
+  // is also what the golden has -- Asciidoctor emits `<p class="tableblock">` per
+  // paragraph -- and it costs nothing where MDX would have wrapped it anyway:
+  // there is no `p` override in the component map, and inline Markdown inside a
+  // raw `<p>` is still parsed (`**b**`, `[l](u)` and a hard break all survive).
+  //
+  // Only this branch: every child here IS a `<p>`. The `.content` branch above
+  // holds arbitrary blocks (lists, fences, admonitions), which must not be put
+  // inside a paragraph.
+  if (ps.length > 1) {
+    return ps.map((p) => escapeBlockStart(inline($, p, st).trim())).filter(Boolean)
+      .map((md) => `<p>${md}</p>`).join('\n\n')
+  }
   // Block/inline decision for the remaining cases: a cell may hold a block with
   // no `.content` wrapper (e.g. a `<div class="literal">` code block), which must
   // go through the block converters rather than be flattened to inline text.

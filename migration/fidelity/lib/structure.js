@@ -15,6 +15,10 @@
 // Docusaurus profile is filled in when the converter produces pages.
 
 const cheerio = require('cheerio')
+// The converter's own "is this a real destination?" predicate, shared rather than
+// restated so the comparator and the conversion cannot drift about it (see the
+// `links` count below).
+const { isPlaceholderUrl } = require('../../converter/lib/mdx')
 
 const ADMONITION_TYPES = ['note', 'tip', 'warning', 'caution', 'important']
 
@@ -22,7 +26,7 @@ const ADMONITION_TYPES = ['note', 'tip', 'warning', 'caution', 'important']
 // CACHED to disk keyed by the source pin (see inventory-index.js), which cannot
 // notice that this file changed -- so without this a new field would compare an
 // old cache's `undefined` against a freshly extracted value on every page.
-const INVENTORY_VERSION = 3
+const INVENTORY_VERSION = 4 // 4: `links` excludes placeholder-URL anchors
 
 // An image's identity for comparison purposes: its file name. Both sides lose
 // the directory anyway -- Docusaurus flattens every imported asset into
@@ -120,7 +124,26 @@ function inventory (html, profile = ASCIIDOC_PROFILE, { fragment = true } = {}) 
     // converter (correctly) drops the anchor, keeping the code. Excluding these
     // `<>`-href anchors from the count on BOTH sides removes a false positive
     // without weakening the check for real links.
-    links: $('a[href]').filter((_, el) => !/[<>]/.test($(el).attr('href') || '')).length,
+    //
+    // `isPlaceholderUrl` is the SAME judgement one step further out, and the
+    // converter has already taken that step: an address the reader types or opens
+    // on their own machine (loopback, `.local`, the RFC 2606 example domains) is
+    // not a destination either, so it is normalised to inline code with no link —
+    // whether or not it happens to be a syntactically valid URL. The exclusion
+    // here had not followed, which is why four pages x four versions reported a
+    // links deficit that was entirely `http://localhost:8443/swagger-ui/index.html`
+    // and `http://localhost:8080`: a comparator blind spot, not a conversion gap.
+    // Applied through the converter's own predicate so the two cannot disagree
+    // again, and symmetric by construction — one inventory serves both sides, and
+    // our side has no such anchors to drop. It replaces 12 accept-list entries
+    // (3 MC pages x 4 versions) that had recorded this very reasoning one page at
+    // a time; those carried an UPSTREAM REPORT note — the sources should write
+    // `` `\http://…` `` so Asciidoctor stops autolinking them — which the
+    // normalisation makes cosmetic rather than a fidelity matter.
+    links: $('a[href]').filter((_, el) => {
+      const href = $(el).attr('href') || ''
+      return !/[<>]/.test(href) && !isPlaceholderUrl(href)
+    }).length,
     listItems: $(profile.listItemSelector).length,
     tabSets: $(profile.tabSetSelector).length,
     tabItems: $(profile.tabItemSelector).length,
