@@ -105,10 +105,23 @@ const URL_END = "A-Za-z0-9\\-_~/#@$&+=%"
 const PROSE_URL = new RegExp(`https?://[${URL_CHAR}]*[${URL_END}]`, 'g')
 
 function inlineCode (text) {
-  const longest = (text.match(/`+/g) || []).reduce((n, r) => Math.max(n, r.length), 0)
+  // Newlines are collapsed FIRST, for two reasons that point the same way. A
+  // Markdown code span cannot hold a line break at all -- CommonMark converts one
+  // to a space -- so collapsing changes nothing about the render. And a newline at
+  // an EDGE of the content defeats the pad below: the pad would sit immediately
+  // before that newline, where inline()'s `[ \t]+\n` end-of-line cleanup deletes
+  // it, and the whitespace separating this span from the preceding text vanishes
+  // with it. That is not hypothetical -- Asciidoctor's repair of its own malformed
+  // overlapping markup on serialization/schema-evolution-full (an upstream
+  // `` `NULL`s `` breaks its backtick pairing, so a <code> opens inside <strong>
+  // and closes after it) leaves a soft line break at the START of a <code>, and
+  // `normally.` ran straight into `COUNT(currency)`. Collapsing keeps the span on
+  // one line, where no line-based cleanup can reach the pad.
+  const flat = text.replace(/\s*\n\s*/g, ' ')
+  const longest = (flat.match(/`+/g) || []).reduce((n, r) => Math.max(n, r.length), 0)
   const fence = '`'.repeat(longest + 1)
-  const pad = text.startsWith('`') || text.endsWith('`') || /^\s|\s$/.test(text) ? ' ' : ''
-  return fence + pad + text + pad + fence
+  const pad = flat.startsWith('`') || flat.endsWith('`') || /^\s|\s$/.test(flat) ? ' ' : ''
+  return fence + pad + flat + pad + fence
 }
 
 // A fenced code block whose backtick fence is longer than any run inside, so

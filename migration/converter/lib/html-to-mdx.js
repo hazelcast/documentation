@@ -764,7 +764,20 @@ function convertAdmonition ($, node, st, depth) {
 // came out as the tab labels run together followed by multi-line `code spans`,
 // which is not even valid MDX. converter/selftest.js asserts convertBlock
 // claims every name listed here, so the two cannot drift again.
-const BLOCK_TAGS = ['ul', 'ol', 'table', 'pre', 'details']
+// The last two are SYNTHETIC, built by collapseSentinels from the golden's
+// `<!--hz-if:snapshot:start-->` marker comments rather than present in the HTML.
+// They were missing, and the effect was the failure this comment warns about:
+// inside an admonition (data-structures/map-config, all live versions) the region
+// was not seen as a block, so its `<ul>` was flattened to a line of links run
+// together AND the wrapper was dropped entirely -- inlineTag has no case for
+// these names, so `default: return kids()` silently discarded the snapshot
+// condition, which would have shown snapshot-only content on every release.
+// `hzpartial` is the third synthetic name and belongs here on the same argument;
+// it is left out only because no golden page in the corpus puts a partial marker
+// inside a cell or admonition, so there is nothing to fix and the vocabulary test
+// would need per-fixture `partials` wiring to cover it. inlineTag keeps its
+// explicit `hzpartial` case as the insurance for that.
+const BLOCK_TAGS = ['ul', 'ol', 'table', 'pre', 'details', 'hzifsnapshot', 'hzifnotsnapshot']
 const BLOCK_CLASSES = [
   'paragraph', 'ulist', 'olist', 'dlist', 'colist',
   'listingblock', 'literalblock', 'literal', 'admonitionblock', 'imageblock',
@@ -1288,11 +1301,21 @@ const slug = (s) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/
 // `+\n.For Openshift` malformed continuation -> a literal paragraph); MDX would
 // otherwise eat the marker and synthesize a spurious list item. The trailing
 // whitespace guard keeps `-5`, `*emphasis*`, `#hashtag` untouched.
+// A marker needs no trailing content to be a marker: CommonMark reads a line
+// holding ONLY `+`, `-`, `*`, `>`, `#` or `1.` as an EMPTY construct of that kind
+// -- an empty list item, blockquote or `<h1>` -- so requiring whitespace after it
+// let every bare one through. That is not hypothetical authoring: hz-docs has four
+// pages where an author wrote a list-continuation `+` after a blank line had
+// already ended the list, so Asciidoctor renders a literal `<p>+</p>` and our
+// unescaped copy became a phantom empty list item (`listItems` +1) with the `+`
+// itself swallowed as the bullet (`L1 - "+"`). `$` therefore stands in for the
+// trailing whitespace, and the escaped forms all render as the literal character
+// (verified through this site's own @mdx-js/mdx).
 function escapeBlockStart (s) {
   return s
-    .replace(/^(\s*)([-+*>])(\s)/, '$1\\$2$3')
-    .replace(/^(\s*)(#{1,6})(\s)/, '$1\\$2$3')
-    .replace(/^(\s*)(\d+)([.)])(\s)/, '$1$2\\$3$4')
+    .replace(/^(\s*)([-+*>])(\s|$)/, '$1\\$2$3')
+    .replace(/^(\s*)(#{1,6})(\s|$)/, '$1\\$2$3')
+    .replace(/^(\s*)(\d+)([.)])(\s|$)/, '$1$2\\$3$4')
 }
 
 // --- tables ----------------------------------------------------------------
@@ -1918,6 +1941,10 @@ function serAttrs (node, st) {
 
 module.exports = {
   convertBody, serializeJsx, ADMONITION_TYPES, BLOCK_TAGS, BLOCK_CLASSES,
+  // Exported for the CommonMark oracle in converter/selftest.js: the requirement
+  // ("an escaped block renders as its own literal text and nothing else") is only
+  // checkable against a real parser.
+  escapeBlockStart,
   // BADGE_CLASSES is exported for refcheck/lib/census-ledger.js: the gate has to
   // recognise a badge label as the same thing the converter turns into <Badge/>,
   // or the two disagree about whether a reference was lost. One definition.

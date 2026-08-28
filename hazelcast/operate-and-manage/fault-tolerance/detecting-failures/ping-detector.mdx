@@ -27,8 +27,7 @@ For the Ping Failure Detector to rely **only** on ICMP Echo requests, there are 
   `sudo setcap cap_net_raw=+ep <JDK_HOME>/jre/bin/java`
 
   But note that choosing this latter option enables RAW socket capabilities for all Java programs, not just Hazelcast.
-- **When running with custom capabilities, the dynamic linker on Linux rejects loading the libs from untrusted paths.** Since you have now `cap_net_raw` as a custom capability for a process, it becomes suspicious to the dynamic linker and throws an error: `java: error while loading shared libraries: libjli.so:
-  cannot open shared object file: No such file or directory`
+- **When running with custom capabilities, the dynamic linker on Linux rejects loading the libs from untrusted paths.** Since you have now `cap_net_raw` as a custom capability for a process, it becomes suspicious to the dynamic linker and throws an error: `java: error while loading shared libraries: libjli.so: cannot open shared object file: No such file or directory`
 
   - To overcome this rejection, the `<JDK_HOME>/jre/lib/amd64/jli/` path needs to be added in the `ld.conf`. Run the following command to do this: `echo "<JDK_HOME>/jre/lib/amd64/jli/" >> /etc/ld.so.conf.d/java.conf && sudo ldconfig`
 - **ICMP Echo Requests must not be blocked by the receiving hosts.** `/proc/sys/net/ipv4/icmp_echo_ignore_all` set to `0`. Run the following command:

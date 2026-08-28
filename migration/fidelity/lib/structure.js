@@ -26,7 +26,7 @@ const ADMONITION_TYPES = ['note', 'tip', 'warning', 'caution', 'important']
 // CACHED to disk keyed by the source pin (see inventory-index.js), which cannot
 // notice that this file changed -- so without this a new field would compare an
 // old cache's `undefined` against a freshly extracted value on every page.
-const INVENTORY_VERSION = 4 // 4: `links` excludes placeholder-URL anchors
+const INVENTORY_VERSION = 5 // 4: `links` excludes placeholder-URL anchors; 5: `codeBlocks` excludes CONTENT-table cells only
 
 // An image's identity for comparison purposes: its file name. Both sides lose
 // the directory anyway -- Docusaurus flattens every imported asset into
@@ -102,11 +102,26 @@ function inventory (html, profile = ASCIIDOC_PROFILE, { fragment = true } = {}) 
   return {
     headings,
     headingsTotal: Object.values(headings).reduce((a, b) => a + b, 0),
-    // Standalone code blocks only: a `<pre>` inside a table cell (golden's
-    // `[cols="l"]` literal cell) is cell content compared via the table-row
-    // mechanism in Layer 1, not a block. Excluding it keeps the count invariant
-    // whether such a cell renders as a block <pre> or as inline `code`.
-    codeBlocks: $('pre').filter((_, el) => $(el).closest('td, th').length === 0).length,
+    // Standalone code blocks only: a `<pre>` inside a CONTENT table's cell
+    // (golden's `[cols="l"]` literal cell) is cell content compared via the
+    // table-row mechanism in Layer 1, not a block. Excluding it keeps the count
+    // invariant whether such a cell renders as a block <pre> or as inline `code`.
+    //
+    // "Content table" is the profile's question, not "any cell" -- the same
+    // distinction `tables` below already makes, and for the same reason.
+    // Asciidoctor renders an ADMONITION and a CALLOUT LIST as classless LAYOUT
+    // tables, so a fence written inside either one landed in a `<td>` and was
+    // silently dropped from the golden's count; our side has no table there at all
+    // (`:::note`, `<CodeCallouts>`), so it counted the very same fence and three
+    // pages reported a surplus that was nothing of the kind -- maintain-cluster/
+    // monitoring (99->101), data-structures/vector-search-tutorial (6->7) and
+    // sql/mapping-to-mongo (8->10), across every live version. Scoping to the
+    // content-table selector counts those fences on BOTH sides while still
+    // excluding a real literal cell, which is all the rule was ever for.
+    codeBlocks: $('pre').filter((_, el) => {
+      const cell = $(el).closest('td, th')
+      return cell.length === 0 || cell.closest(profile.contentTableSelector).length === 0
+    }).length,
     admonitions,
     admonitionsTotal: Object.values(admonitions).reduce((a, b) => a + b, 0),
     tables: $(profile.contentTableSelector).length,

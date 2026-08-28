@@ -460,9 +460,27 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
   const cell = inventory(
     '<table class="tableblock"><tbody><tr><td><pre>in-cell</pre></td></tr></tbody></table>',
     ASCIIDOC_PROFILE)
-  assert.strictEqual(cell.codeBlocks, 0, 'a <pre> inside a table cell is not a standalone code block')
+  assert.strictEqual(cell.codeBlocks, 0, 'a <pre> inside a CONTENT table cell is not a standalone code block')
   assert.strictEqual(cell.tables, 1, 'the content table itself is counted')
-  ok('inventory: excludes <>-href and unreachable-host links, and in-cell code blocks')
+
+  // A LAYOUT table is not a table, so its cells are not cells: Asciidoctor wraps
+  // an admonition and a callout list in classless tables, and a fence written
+  // inside either is a code block the reader sees -- counted, exactly as it is on
+  // the Docusaurus side, where those constructs are not tables at all.
+  const layouts = {
+    admonition: '<div class="admonitionblock note"><table><tr><td class="icon"></td>' +
+      '<td class="content"><div class="listingblock"><div class="content"><pre>in-note</pre>' +
+      '</div></div></td></tr></table></div>',
+    colist: '<div class="colist arabic"><table><tr><td>1</td>' +
+      '<td>why<div class="listingblock"><div class="content"><pre>in-callout</pre>' +
+      '</div></div></td></tr></table></div>',
+  }
+  for (const [kind, html] of Object.entries(layouts)) {
+    const inv = inventory(html, ASCIIDOC_PROFILE)
+    assert.strictEqual(inv.codeBlocks, 1, `a <pre> inside a ${kind}'s layout table IS a code block`)
+    assert.strictEqual(inv.tables, 0, `a ${kind}'s layout table is not a content table`)
+  }
+  ok('inventory: excludes <>-href and unreachable-host links, and content-table-cell code blocks')
 }
 
 // --- layer2.compareInventory -------------------------------------------------

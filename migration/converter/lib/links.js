@@ -23,7 +23,20 @@ const EXTERNAL = /^(https?:|mailto:|tel:|ftp:)/i
 
 // pageUrl is the site-absolute URL of the page being converted, e.g.
 // "/cloud/cluster-side-modules" or a directory URL "/cloud/".
-function resolveHref (raw, pageUrl) {
+function resolveHref (rawIn, pageUrl) {
+  // Normalise exactly as a browser does before parsing an href: WHATWG URL's
+  // basic parser removes any leading and trailing C0-control-or-space from the
+  // input. So Asciidoctor's output for a `<<id , label>>` -- written with a space
+  // before the comma, which hz-docs does once -- is `href="#id "`, and it reaches
+  // the reader as `#id` and RESOLVES. Carried through verbatim it survives into
+  // the MDX as `](<#id >)` and the build percent-encodes it to `#id%20`, which no
+  // longer resolves: a link the golden serves working, broken by the conversion
+  // (Layer 3 caught it on ROOT/system-properties, all four live versions). The
+  // `internal` branch below already gets this free from `new URL()`; the external
+  // and anchor early-returns did not, hence normalising up front. Whitespace
+  // INSIDE the fragment is deliberately untouched -- `# foo` keeps its space,
+  // because the browser strips only the ends of the whole string.
+  const raw = typeof rawIn === 'string' ? rawIn.trim() : rawIn
   if (!raw) return { kind: 'empty', href: raw }
   if (EXTERNAL.test(raw) || raw.startsWith('//')) return { kind: 'external', href: raw }
   if (raw.startsWith('#')) return { kind: 'anchor', href: raw }

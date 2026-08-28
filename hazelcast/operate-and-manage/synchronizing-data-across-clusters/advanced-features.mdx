@@ -389,8 +389,7 @@ The table below shows a few examples for what the memory overhead could be.
 
 The efficiency of the Delta WAN Synchronization (WAN synchronization based on Merkle trees) is determined by the average number of entries per the tree leaves that is proportionate to the number of entries in the map. The bigger this average, the more entries are getting synchronized for the same difference. Raising the depth decreases this average at the cost of increasing the memory overhead.
 
-This average can be calculated for a map as `avgEntriesPerLeaf = mapEntryCount / totalLeafCount`, where `totalLeafCount =
-partitionCount * 2depth-1`. The ideal value is 1, however this may come at significant memory overhead as shown in the table above.
+This average can be calculated for a map as `avgEntriesPerLeaf = mapEntryCount / totalLeafCount`, where `totalLeafCount = partitionCount * 2depth-1`. The ideal value is 1, however this may come at significant memory overhead as shown in the table above.
 
 In order to specify the tree depth, a trade-off between memory consumption and effectiveness might be needed.
 

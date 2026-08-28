@@ -23,7 +23,7 @@ const { gfmHtml } = require('micromark-extension-gfm')
 
 const { mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode } = require('./lib/mdx')
 const { resolveHref, attrHrefTemplates, unmangleSubscripts, repairApiDeepLink } = require('./lib/links')
-const { convertBody, BLOCK_TAGS, BLOCK_CLASSES } = require('./lib/html-to-mdx')
+const { convertBody, BLOCK_TAGS, BLOCK_CLASSES, escapeBlockStart } = require('./lib/html-to-mdx')
 const { classifyHref } = require('../fidelity/lib/links')
 const { collectOccurrences, decide, slugFor, componentNameFor, parseId, consumerAttrs } = require('./lib/partials')
 const { normalizeValues, groupIdFor } = require('./lib/tabs')
@@ -68,6 +68,31 @@ const renderedCode = (md) => {
   // glyphs, so the compare stays equal): curly quotes / nbsp -> ASCII.
   assert.strictEqual(renderedText(mdEscape('“x” a b')), '"x" a b', 'curly quotes + nbsp folded to ASCII')
   ok('mdEscape: folds the typographic glyphs Asciidoctor introduces')
+
+  // --- escapeBlockStart: a block's first character cannot start a construct ---
+  // Same shape of requirement, one level up: whatever a converted block STARTS
+  // with, the render must be that literal text and nothing structural. Stated
+  // against the parser, so it holds for markers with content after them AND for a
+  // marker standing alone -- which CommonMark reads as an EMPTY list item /
+  // blockquote / heading, and which the `(\s)` requirement used to let through.
+  const blockStarts = [
+    '+', '-', '*', '>', '#', '###', '1.', '2)',                    // bare markers
+    '+ then text', '- a', '* a', '> a', '# a', '1. a', '12) a',    // marker + content
+    '+------------+', '--force', '*emphasis*', '2.5 seconds',      // not markers at all
+  ]
+  // The real pipeline: inline escaping first (inline() -> escapeInlineText ->
+  // mdEscape), then the block-start guard on the result. Composing both is what
+  // makes the assertion about the converter rather than about one helper --
+  // `*emphasis*` is mdEscape's to neutralise, a bare `*` is this one's.
+  for (const s of blockStarts) {
+    const md = escapeBlockStart(mdEscape(s))
+    assert.strictEqual(renderedText(md), s,
+      `escapeBlockStart keeps rendered text == input for ${JSON.stringify(s)} (got ${JSON.stringify(md)})`)
+    const $ = cheerio.load(micromark(md))
+    assert.strictEqual($('li, blockquote, h1, h2, h3, h4, h5, h6').length, 0,
+      `escapeBlockStart introduces no list/quote/heading for ${JSON.stringify(s)} (got ${JSON.stringify(md)})`)
+  }
+  ok('escapeBlockStart: a block-leading marker stays literal, bare or not (CommonMark oracle)')
 
   // mdEscapeCell must additionally survive a GFM table cell -- the requirement is
   // that a literal pipe cannot split the cell, i.e. it is escaped.
@@ -114,6 +139,41 @@ const renderedCode = (md) => {
   }
   ok('inlineCode: one code span, content verbatim, fence not split (CommonMark oracle)')
 
+  // ...and the whitespace SEPARATING the span from its neighbours survives the
+  // end-of-line cleanup inline() applies to the assembled text. The requirement is
+  // about the reader: whitespace at the EDGE of the content is what separates the
+  // code from the words around it, so it must still be there after rendering.
+  // The span is placed against bare `x`/`y` with no space of our own -- any gap in
+  // the render can only have come from the content. Asserted through the real
+  // pipeline order (build the span, then inline()'s `[ \t]+\n` -> `\n` cleanup,
+  // then render), because that interaction is what dropped a space on
+  // serialization/schema-evolution-full: a <code> whose text STARTED with a soft
+  // line break, courtesy of Asciidoctor's repair of its own malformed overlap.
+  const afterInline = (md) => md.replace(/[ \t]+\n/g, '\n')
+  for (const [content, why] of [
+    ['\n`COUNT(currency)', 'a newline at the START of the content'],
+    ['trailing\n', 'a newline at the END of the content'],
+    ['\nboth\n', 'newlines at both ends'],
+    [' leading', 'a leading space'],
+    ['trailing ', 'a trailing space'],
+  ]) {
+    const rendered = renderedText('x' + afterInline(inlineCode(content)) + 'y')
+    if (/^\s/.test(content)) {
+      assert.match(rendered, /^x\s/, `leading whitespace separates the code from the text before it: ${why}`)
+    }
+    if (/\s$/.test(content)) {
+      assert.match(rendered, /\sy$/, `trailing whitespace separates the code from the text after it: ${why}`)
+    }
+  }
+  // The converse: content with no edge whitespace must not GAIN any, or the span
+  // would drift away from the word it is attached to.
+  for (const content of ['plain', 'mid\nnewline', 'a`b']) {
+    const rendered = renderedText('x' + afterInline(inlineCode(content)) + 'y')
+    assert.match(rendered, /^x\S/, `no space invented before the code span for ${JSON.stringify(content)}`)
+    assert.match(rendered, /\Sy$/, `no space invented after the code span for ${JSON.stringify(content)}`)
+  }
+  ok('inlineCode: whitespace at a code span\'s edges survives inline()\'s line cleanup')
+
   for (const code of ['code', 'line1\nline2', '```\nembedded fence\n```', '````\ndeeper\n````']) {
     const r = renderedCode(fencedCode(code, 'js'))
     assert.strictEqual(r.count, 1, `fencedCode yields one code block for ${JSON.stringify(code)}`)
@@ -154,6 +214,34 @@ const renderedCode = (md) => {
   assert.strictEqual(conv.path, '/cloud/install', 'converter resolves against a directory URL')
   assert.strictEqual(fid.path, '/cloud/install', 'fidelity resolves against a directory URL identically')
   ok('link classifiers: agree on directory-relative resolution')
+
+  // Whitespace around an href cannot change where the link points -- the browser
+  // strips it before parsing (WHATWG URL), so a padded href and its trimmed twin
+  // are the SAME destination. Asserted against `new URL` as the oracle rather
+  // than against a trim call, so it states the requirement and not the code.
+  // `#id ` is the one hz-docs writes (a `<<id , label>>` with a space before the
+  // comma): kept verbatim it became `#id%20` in the built page, which is a
+  // DIFFERENT and non-existent anchor.
+  for (const [padded, bare] of [
+    ['#hazelcast.shutdownhook.policy ', '#hazelcast.shutdownhook.policy'],
+    [' #section-id', '#section-id'],
+    ['serverless-cluster ', 'serverless-cluster'],
+    ['https://example.com/page ', 'https://example.com/page'],
+  ]) {
+    const base = 'https://docs.hazelcast.com' + pageUrl
+    assert.strictEqual(new URL(padded, base).href, new URL(bare, base).href,
+      `oracle: the browser reads ${JSON.stringify(padded)} as ${JSON.stringify(bare)}`)
+    assert.deepStrictEqual(resolveHref(padded, pageUrl), resolveHref(bare, pageUrl),
+      `resolveHref points ${JSON.stringify(padded)} at the same place as ${JSON.stringify(bare)}`)
+    assert.deepStrictEqual(
+      decide(classifyHref(padded, pageUrl, siteHost)), decide(classifyHref(bare, pageUrl, siteHost)),
+      `classifyHref agrees for ${JSON.stringify(padded)}`)
+  }
+  // ...but whitespace INSIDE the fragment is a real character: the browser strips
+  // only the ends of the whole string, so this must NOT be normalised away.
+  assert.strictEqual(resolveHref('# foo', pageUrl).href, '# foo',
+    'a space inside the fragment is preserved')
+  ok('link classifiers: whitespace around an href does not move the target')
 }
 
 // --- internal link with a <Variable> in the label -> raw <a>, site-absolute --
@@ -1506,6 +1594,10 @@ const renderedCode = (md) => {
       '<p class="tableblock">c</p></td></tr></tbody></table>',
     pre: '<pre>raw</pre>',
     details: '<details><summary class="title">S</summary><div class="content">' + P + '</div></details>',
+    // Synthetic: the vocabulary entry is built by collapseSentinels from these
+    // marker comments, so the fixture is the MARKED form the golden carries.
+    hzifsnapshot: '<!--hz-if:snapshot:start-->' + P + '<!--hz-if:snapshot:end-->',
+    hzifnotsnapshot: '<!--hz-ifnot:snapshot:start-->' + P + '<!--hz-ifnot:snapshot:end-->',
   }
   // An AsciiDoc (`a|`) cell: its blocks sit in a `.content` wrapper, which is
   // exactly the container blockOrInline is handed.
