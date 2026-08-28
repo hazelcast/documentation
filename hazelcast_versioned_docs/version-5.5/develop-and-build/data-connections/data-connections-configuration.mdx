@@ -319,7 +319,7 @@ Currently, no SQL connector is available for Hazelcast data connections. This me
 <Tabs groupId="java--sql--xml--yaml">
 <TabItem value="xml" label="XML">
 
-```xml conums
+```xml conums vars
 <hazelcast>
   <data-connection name="my-remote-hazelcast">
     <type>Hz</type>
@@ -330,7 +330,7 @@ Currently, no SQL connector is available for Hazelcast data connections. This me
           <hazelcast-client xmlns="http://www.hazelcast.com/schema/client-config"
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:schemaLocation="http://www.hazelcast.com/schema/client-config
-              http://www.hazelcast.com/schema/client-config/hazelcast-client-config-5.5.xsd">
+              http://www.hazelcast.com/schema/client-config/hazelcast-client-config-{minor-version}.xsd">
 
             <cluster-name>dev</cluster-name>
               <network>
@@ -382,7 +382,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java conums
+```java conums vars
 config
   .addDataConnectionConfig(
     new DataConnectionConfig()
@@ -394,7 +394,7 @@ config
               "<hazelcast-client xmlns=\"http://www.hazelcast.com/schema/client-config\"" +
               "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
               "      xsi:schemaLocation=\"http://www.hazelcast.com/schema/client-config" +
-              "      http://www.hazelcast.com/schema/client-config/hazelcast-client-config-5.5.xsd\">" +
+              "      http://www.hazelcast.com/schema/client-config/hazelcast-client-config-{minor-version}.xsd\">" +
               "    " +
               "    <cluster-name>dev</cluster-name>" +
               "    <network>" +
@@ -422,7 +422,7 @@ Data connections created in SQL behave differently to those defined in members' 
 - To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../../operate-and-manage/fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name"/>.
 - You can create or drop a data connection using SQL commands. To update a data connection, you need to drop and then recreate it.
 
-```sql conums
+```sql conums vars
 CREATE DATA CONNECTION "my-hazelcast-cluster"
 TYPE Hz
 SHARED
@@ -432,7 +432,7 @@ OPTIONS (
      <hazelcast-client xmlns="http://www.hazelcast.com/schema/client-config"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://www.hazelcast.com/schema/client-config
-         http://www.hazelcast.com/schema/client-config/hazelcast-client-config-5.5.xsd">
+         http://www.hazelcast.com/schema/client-config/hazelcast-client-config-{minor-version}.xsd">
 
        <cluster-name>dev</cluster-name>
        <network>

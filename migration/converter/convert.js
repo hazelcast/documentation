@@ -136,6 +136,13 @@ const SINGLE_SOURCE_ATTRS = {
   // coincidental `17` in one of those fences being caught up in it.
   hazelcast: [
     'os-version', 'ee-version', 'full-version', 'version', 'jet-version',
+    // {minor-version} is v/5.5-only in practice (later branches rewrote the
+    // blocks) and referenced on ONE page, in three `subs="attributes+"` fences:
+    // `hazelcast-client-config-{minor-version}.xsd`. Its value (`5.5`) is far too
+    // common for the value map, but it does not need it -- all three lines are
+    // covered by exact code-line templates, so `named` drops it from
+    // codeValueVars and nothing goes hunting for a bare `5.5`.
+    'minor-version',
     'minimum-java-version',
     'enterprise-product-name', 'open-source-product-name', 'java-client',
     'url-cloud-signup', 'hz-repo-swagger-branch',

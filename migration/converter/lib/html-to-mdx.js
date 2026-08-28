@@ -315,15 +315,40 @@ function singleSourcedLink (rawHref, href, tokenText, st, { code = false } = {})
   if (varName) return `<Variable href=${jsxAttr(`{${varName}}`)} text=${jsxAttr(tokenText)}${flag}/>`
   const hrefTpl = st.hrefVars.get(rawHref)
   if (hrefTpl) {
-    const { code: textTpl } = reverseCodeVars(tokenText, labelVars)
-    return `<Variable href=${jsxAttr(hrefTpl)} text=${jsxAttr(textTpl)}${flag}/>`
+    return `<Variable href=${jsxAttr(hrefTpl)} text=${jsxAttr(labelTemplate(tokenText, rawHref, hrefTpl, labelVars))}${flag}/>`
   }
   if (st.pageVars && st.pageVars.size && !/[<>]/.test(href)) {
     const { code: hrefTpl2, replaced: hrefRep } = reverseCodeVars(href, st.pageVars)
-    const { code: textTpl, replaced: textRep } = reverseCodeVars(tokenText, labelVars)
-    if (hrefRep || textRep) return `<Variable href=${jsxAttr(hrefTpl2)} text=${jsxAttr(textTpl)}${flag}/>`
+    const textTpl = labelTemplate(tokenText, rawHref, hrefTpl2, labelVars)
+    if (hrefRep || textTpl !== tokenText) return `<Variable href=${jsxAttr(hrefTpl2)} text=${jsxAttr(textTpl)}${flag}/>`
   }
   return null
+}
+
+// The `text` of a link-mode <Variable>: the label with its references restored.
+//
+// An UNLABELLED url macro is the case the value map cannot serve. Asciidoctor
+// copies the resolved URL into the visible text, so the label is not flow text --
+// it is a SECOND RENDER of the same target, and the href's own template is
+// therefore its exact template. Nothing else reaches it: marking skips a BARE_URL
+// (the reference renders into the href, so a span there would be malformed), and
+// the label's value map is proseVars, which excludes MARKED attributes. That is
+// how clients/java@5.5's two javadoc URLs came to print a baked `5.5.0`/`5.5.10`
+// next to a correctly-referenced href -- the only two bare-URL labels in the
+// corpus, and invisible to fidelity because both render the same string today.
+//
+// An AUTHORED label is flow text and keeps the value map (proseVars).
+//
+// The href template must actually CARRY a reference to be worth copying across.
+// Without that guard, a bare URL whose href we merely resolved (rawHref !==
+// href, nothing reverse-mapped) would hand the label the resolved URL and turn a
+// link with no single-sourced part in it into a <Variable> -- which is what the
+// callers' `replaced` checks exist to prevent.
+const hasAttrRef = (s) => /\{[A-Za-z0-9_][A-Za-z0-9_-]*\}/.test(s)
+
+function labelTemplate (tokenText, rawHref, hrefTpl, labelVars) {
+  if (tokenText === rawHref && hasAttrRef(hrefTpl)) return hrefTpl
+  return reverseCodeVars(tokenText, labelVars).code
 }
 
 function markerText ($, node) {

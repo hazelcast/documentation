@@ -187,12 +187,15 @@ async function main () {
 // SVG the probe can measure. Nothing about the rendered drawing changes: `content`
 // is not referenced by any painting attribute.
 const MXFILE_CONTENT = /\scontent="(?:&lt;|<)mxfile[\s\S]*?"(?=[\s>])/
+// The probe's own root-tag pattern and read limit, so "can it be measured?" is
+// asked the way image-size asks it rather than re-derived from byte offsets (an
+// XML declaration or a DOCTYPE puts a `>` long before the root tag).
+const SVG_ROOT = /<svg\s([^>"']|"[^"]*"|'[^']*')*>/
+const PROBE_BYTES = 1000
 
 function stripDrawioSource (file, contents) {
   if (!/\.svg$/i.test(file.pub.url || '')) return contents
-  const head = contents.subarray(0, 8192).toString('utf8')
-  const close = head.indexOf('>')
-  if (close === -1 || close <= 1000) return contents // root tag already measurable
+  if (SVG_ROOT.test(contents.subarray(0, PROBE_BYTES).toString('utf8'))) return contents
   const text = contents.toString('utf8')
   const out = text.replace(MXFILE_CONTENT, '')
   return out === text ? contents : Buffer.from(out, 'utf8')

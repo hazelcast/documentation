@@ -174,6 +174,19 @@ const MARKED_ATTRS = {
     'page-latest-supported-cplusplus-client',
     'page-latest-supported-csharp-client',
     'page-latest-supported-python-client',
+    // The rest of the compatibility table's curated numbers, for the same reason
+    // and on the evidence of the versions we emit: at 5.6 {page-latest-supported-
+    // clc} is `5.5.0`, the same as {page-latest-supported-csharp-client}; at 5.7
+    // {page-latest-supported-nodejs-client} is `5.6.0`, the same as the csharp AND
+    // python numbers. deploy/versioning-compatibility references all of them in
+    // one table, so the value was dropped as ambiguous and the marked sibling won
+    // -- the unmarked one baked. Which members of the family collide is an
+    // accident of each release's numbers, so the two proven cases are marked here
+    // and the gate stays the guard on the next one ({page-latest-supported-po} and
+    // -mc-installer are both `latest-snapshot` at 5.7 and main, and escape only
+    // because no page references both).
+    'page-latest-supported-clc',
+    'page-latest-supported-nodejs-client',
     // 3. The whole-token boundary REFUSES the value where the source put it, so a
     //    value match structurally cannot find it and marking is the only route:
     //      {java-client} = "Java Client and Embedded Server", written at the end of
