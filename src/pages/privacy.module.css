@@ -1,0 +1,122 @@
+/* Styling for the privacy policy fetched from the hazelcast.com WordPress API.
+ *
+ * The payload is SiteOrigin page-builder markup: every heading, paragraph and
+ * table sits several `div.panel-grid > div.panel-grid-cell > div.so-panel`
+ * wrappers deep, and its classes (`text-headline`, `col-md-8`, `m-t-30`, ...)
+ * belong to the marketing site's stylesheet, which we do not load. Two
+ * consequences drive everything below:
+ *
+ *  1. Infima's own prose rules are written as DIRECT children (`.markdown > h2`),
+ *     so they never match this markup. The `markdown` class on the container is
+ *     still worth having -- the site's table treatment in custom.css uses
+ *     descendant selectors (`.markdown table`) and applies for free -- but the
+ *     typography has to be restated here as descendant rules.
+ *  2. Nothing in the payload sets a colour, so dark mode needs no overrides:
+ *     text inherits, and the table colours come from custom.css.
+ */
+
+.page {
+  /* Measure: the current Antora page runs the full window width (max 1800px),
+     which puts ~250 characters on a line. 56rem keeps the prose readable while
+     still giving the seven 4- and 5-column tables room. */
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: calc(var(--hive-grid) * 12) var(--ifm-spacing-horizontal)
+    calc(var(--hive-grid) * 20);
+}
+
+.status {
+  color: var(--hive-color-text-secondary-v4);
+  text-align: center;
+  padding: calc(var(--hive-grid) * 16) 0;
+}
+
+/* Legal prose is read in long unbroken stretches, so it gets more leading than
+   HIVE's --hive-line-height-body-normal (1.4), which is tuned for UI copy. */
+.policy {
+  line-height: 1.65;
+}
+
+.policy h1 {
+  font-size: var(--hive-font-size-h1);
+  font-weight: var(--hive-font-weight-heading-bold);
+  margin-bottom: calc(var(--hive-grid) * 8);
+}
+
+/* The numbered section headings ("1. What does this Privacy Policy Cover?").
+   The large top margin is what separates the sections -- the payload has no
+   rules or other dividers between them. */
+.policy h2 {
+  font-size: var(--hive-font-size-h2);
+  font-weight: var(--hive-font-weight-heading-bold);
+  margin-top: calc(var(--hive-grid) * 14);
+  margin-bottom: calc(var(--hive-grid) * 4);
+}
+
+.policy h3,
+.policy h4 {
+  font-size: var(--hive-font-size-h3);
+  font-weight: var(--hive-font-weight-heading-bold);
+  margin-top: calc(var(--hive-grid) * 8);
+  margin-bottom: calc(var(--hive-grid) * 3);
+}
+
+.policy p {
+  margin-bottom: calc(var(--hive-grid) * 4);
+}
+
+.policy ul,
+.policy ol {
+  margin-bottom: calc(var(--hive-grid) * 4);
+  padding-left: calc(var(--hive-grid) * 6);
+}
+
+.policy ul {
+  list-style-type: disc;
+}
+
+.policy li {
+  margin-bottom: calc(var(--hive-grid) * 1.5);
+}
+
+/* Links. On the current site these inherit the body colour and carry no
+   underline, so a reader cannot tell them from plain text -- there are 57 of
+   them buried in the prose. They get the site link colour AND an underline:
+   this page is an unbroken wall of text with no other affordances, so colour
+   alone (the site-wide HIVE treatment) is too weak a signal here, and relying
+   on colour alone fails WCAG 1.4.1 in body copy.
+
+   `overflow-wrap` because several links use a bare URL as their label
+   (http://www.allaboutcookies.org/browsers/), which otherwise overflows a
+   narrow table column. */
+.policy a {
+  color: var(--ifm-link-color);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  overflow-wrap: anywhere;
+}
+
+.policy a:hover {
+  color: var(--ifm-link-hover-color);
+}
+
+/* Every table in the payload is wrapped in its own div. Turning that div into
+   the scroll container keeps wide tables from forcing the page to scroll
+   sideways on narrow screens, and `min-width` stops the browser crushing five
+   prose columns into unreadable slivers instead of scrolling. */
+.policy div:has(> table) {
+  overflow-x: auto;
+  margin-bottom: calc(var(--hive-grid) * 6);
+}
+
+.policy table {
+  min-width: 34rem;
+}
+
+/* The payload's cells hold full paragraphs and bullet lists; without this their
+   bottom margins stack up against the cell padding from custom.css. */
+.policy td > p:last-child,
+.policy td > ul:last-child,
+.policy th > p:last-child {
+  margin-bottom: 0;
+}

@@ -43,11 +43,36 @@ const config: Config = {
     v4: true, // Improve compatibility with the upcoming Docusaurus v4
   },
 
-  // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
+  // The production url. Matches the Antora playbook's `site.url`, and is not
+  // cosmetic: it is the origin baked into every canonical tag and every
+  // sitemap entry, so a placeholder here ships a sitemap pointing at a domain
+  // that does not exist.
+  url: 'https://docs.hazelcast.com',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
+
+  // `trailingSlash` is deliberately UNSET, and the choice is not yet made.
+  //
+  // The Antora site has no single convention: under `html_extension_style:
+  // drop` a page is a file (`cloud/overview.html` -> `/cloud/overview`, no
+  // slash) but a component, version or site root is a directory index
+  // (`privacy/index.html` -> `/privacy/`, slash). The host 301s the other form
+  // to the canonical one in BOTH directions, and canonical tags and sitemap
+  // agree with it.
+  //
+  // Docusaurus can only pick one form for the whole site:
+  //   false        -> `page.html`; matches the ~3,355 content pages exactly,
+  //                   but a root like `/cloud/` becomes a directory with no
+  //                   index.html, which some hosts 404 rather than resolve.
+  //   unset / true -> `page/index.html`; matches the ~20 roots, but every
+  //                   content URL gains a slash.
+  //
+  // Leaving it unset serves both forms today, so nothing is broken while the
+  // migration is in progress. Before launch, pick a form, add redirects for
+  // whichever set of URLs it does not preserve, and verify on the TARGET HOST
+  // -- trailing-slash canonicalization is host behaviour, not framework
+  // behaviour, and hosts differ.
 
   // '.api-specs' is where plugins/openapi-specs stages the OpenAPI specs it
   // fetches from the product repos: gitignored, rebuilt every run, and listed
@@ -270,7 +295,7 @@ const config: Config = {
             },
             {
               label: 'Privacy',
-              to: '/privacy/',
+              to: '/privacy',
             },
             {
               label: 'Contact us',
