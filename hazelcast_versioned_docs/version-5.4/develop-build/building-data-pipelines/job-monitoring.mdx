@@ -1,0 +1,89 @@
+---
+title: "Monitoring Jobs"
+sidebar_position: 12
+slug: /pipelines/job-monitoring
+---
+
+To ensure the reliability of streaming jobs and their workloads, try implementing some basic monitoring. With Hazelcast, you can monitor the status of streaming jobs to quickly identify job failures for troubleshooting.
+
+## Monitoring for Status Changes
+
+There are two ways to monitor for job status changes. You can either poll the `Job.getStatus()` method separately for each job or add a `JobStatusListener` to your jobs. In both cases, you can write custom code for execution on status change. For example, triggering an alert or writing the changed status to a dashboard.
+
+## Using a JobStatusListener
+
+The `JobStatusListener` has several advantages over polling for the job status.
+
+- The listener is notified immediately when a status change occurs. To achieve a similar result with polling, you might increase the polling frequency, which would decrease performance.
+- You can identify jobs in an error state. By default, [all streaming jobs are suspended on failure](../troubleshooting/error-handling.mdx#processing-guarantees). When a job moves to the suspended status, the listener is passed a suspension cause; either an error description or requested by a user.
+
+:::note
+
+The reasons for job suspensions and failures are also displayed on the Jobs page in Management Center.
+
+:::
+
+:::note
+
+Even though you can attach a `JobStatusListener` to a job at any time, in some cases the attachment may occur after the job starts, so the transition from a job starting to running is missed. To wait for the job to start running, use `assertJobStatusEventually(job, JobStatus.RUNNING)`. See [Waiting for a Job to be in a Desired State](../testing-applications/testing.mdx#waiting-for-a-job-to-be-in-a-desired-state) for more details.
+
+:::
+
+### Adding a JobStatusListener
+
+To register the listener for a job, add the following to your client code:
+
+```java
+statusListenerId = myJob.addStatusListener(JobStatusListener)
+```
+
+The following example creates a new job, registers the `JobStatusListener`, and uses a lambda expression to print out status changes to the stdout console, including whether they were requested by a user.
+
+```java
+JetService jet1 = hz1.getJet();
+JobConfig jobConfig = new JobConfig();
+String jobName = "sampleJob";
+jobConfig.setName(jobName);
+Job job = jet1.newJob(pipeline, jobConfig);
+
+job.addStatusListener(event ->
+        System.out.printf("Job status changed: %s -> %s. User requested? %b%n",
+                event.getPreviousStatus(),
+                event.getNewStatus(),
+                event.isUserRequested())
+);
+```
+
+### Removing a JobStatusListener
+
+To de-register the listener from a job, add the following to your client code:
+
+```java
+myJob.removeStatusListener(statusListenerId)
+```
+
+## Monitoring for Canceled Jobs
+
+A job with `FAILED` status may have been canceled by a user. To monitor for canceled jobs, use the `Job.isUserCancelled()` method, which returns `true` if a user stopped the job.
+
+## Accessing Job Metrics
+
+You can see the job-specific metrics using the following methods:
+
+- [Job API](../../operate-manage/maintaining-a-cluster/monitoring.mdx#via-job-api) via the `getMetrics()` method:
+
+  ```java
+  JobMetrics metrics = job.getMetrics();
+  ```
+
+  With this method, you can see the metrics for all running jobs, and finished jobs for which the `storeMetricsAfterJobCompletion` option is enabled. See the below table for this option's description.
+- [JMX](../../operate-manage/maintaining-a-cluster/monitoring.mdx#over-jmx)/[Prometheus](../../operate-manage/maintaining-a-cluster/monitoring.mdx#prometheus): With these methods, the `userCanceled` metric is not available, and you can see the metrics only for running jobs.
+
+See [Job-Specific Metrics](../../reference/list-of-metrics.mdx#job-metrics) to learn which metrics are available for jobs.
+
+You can configure whether the job-specific metrics are enabled and whether Hazelcast stores and provides metrics after a job is completed:
+
+| Option | Description | Type | Default Value |
+| --- | --- | --- | --- |
+| metricsEnabled | Enable metrics for the job to be collected by the cluster. | boolean | true |
+| storeMetricsAfterJobCompletion | Enable metrics to be stored in the cluster even after the job completes. | boolean | false |

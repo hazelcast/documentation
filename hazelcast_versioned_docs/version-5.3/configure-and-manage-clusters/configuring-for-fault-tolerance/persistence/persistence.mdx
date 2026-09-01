@@ -1,0 +1,56 @@
+---
+title: "Persisting Data on Disk"
+sidebar_label: "Overview"
+sidebar_position: 1
+slug: /storage/persistence
+enterprise: true
+---
+
+Persistence allows individual members and whole clusters to recover data by persisting map entries, JCache data, and streaming job snapshots on disk. Members can use persisted data to recover from a planned shutdown (including rolling upgrades), a sudden cluster-wide crash, or a single member failure.
+
+## Why Persist Data
+
+Data in Hazelcast is usually stored in-memory (RAM) so that it's faster to access. However, data in RAM is volatile, meaning that when one or more members shut down, their data is lost. When you persist data on disk, members can load it upon a restart and continue to operate as usual.
+
+Clusters can use persisted data to recover from the following scenarios:
+
+- **Cluster-wide shutdown**:
+
+  - **Planned**: A whole cluster is shut down and restarted with the same configuration, state, and data as before the restart. A planned shutdown includes rolling restarts, where the cluster is restarted member by member for scenarios such as installing an operating system patch or new hardware. [Rolling upgrades](../../maintaining-a-cluster/rolling-upgrades.mdx) are an example of a rolling restart.
+  - **Unplanned**: A cluster is restarted after all its members crashed at the same time due an event such as a power outage.
+- **A single member restart**: A single member is restarted for whatever reason.
+
+## Supported Features
+
+You can persist the following:
+
+- Contents of map or JCache data structure
+
+  :::important
+
+  Hazelcast does not persist the metadata of your data structure entries, including time-to-live (TTL), to disk when [Persistence is enabled](./configuring-persistence.mdx#quickstart-configuration).
+
+  For example, assuming the following:
+
+  - The cluster was started with persistence enabled and TTL configured to three hours for your map entries.
+  - The cluster was shut down and restarted two hours after the initial cluster start up.
+
+  As TTL is metadata, which is not persisted when the cluster restarts, it is reset to the configured three hours from the time of the restart. Two hours have already passed before the restart, so the map entries now have a TTL value of five hours.
+
+  :::
+- Streaming job snapshots
+- SQL metadata, to avoid loss of SQL mappings, data connections, or views after a cluster restart.
+
+## Limitations
+
+- **Cluster crashes**: When a whole cluster crashes while repartitioning, currently it is not possible to restore persisted data.
+- **Map naming conventions**: You cannot persist a map if its name contains either of the following. Otherwise, Hazelcast throws an exception.
+
+  - 255+ characters
+  - Special characters (`*:"'|<,>?/`)
+
+## Related Resources
+
+[Configuring Persistence](./configuring-persistence.mdx)
+
+[Backing Up the Persistence Store](./backing-up-persistence.mdx)

@@ -87,19 +87,23 @@ const VERSIONS = {
   // converted once before the release copies multiplied it; phase 2 adds the
   // releases.
   //
-  // The intended live set is 5.7 down to 5.3 (5.2 and older are frozen, freeze
-  // plan), but 5.4 and 5.3 are NOT LISTED YET: they use a different nav
-  // architecture from 5.5-and-newer. Their ROOT/nav.adoc is a skeleton that pulls
-  // in per-module `include::<module>:partial$nav.adoc[]` files (27 live includes
-  // at 5.3, 22 at 5.4, none commented), while 5.5+ are flat single files. The
-  // converter reads nav.adoc raw (loadNavAdoc git-shows it) and parseNav ignores
-  // `include::` lines, so those two versions would lose most of their sidebar
-  // tree and land nearly every page at the component root as `unlisted`. They
-  // also break the `maintain-cluster/rest-api` nav injection: its orphan-triage
-  // anchor (`maintain-cluster:rest-api-swagger`) only exists from 5.5 up -- at
-  // 5.4 the page is already in nav, and at 5.3 nav has no REST entries at all.
-  // Both need fixing before 5.4 and 5.3 can be added here.
-  hazelcast: { current: '5.8-snapshot', releases: ['5.7', '5.6', '5.5'] },
+  // The live set is 5.7 down to 5.3; 5.2 and older are frozen (freeze plan).
+  //
+  // 5.4 and 5.3 use a DIFFERENT nav architecture from 5.5-and-newer, and adding
+  // them is what forced the converter to handle it. Their ROOT/nav.adoc is a
+  // skeleton that pulls in per-module `include::<module>:partial$nav.adoc[]`
+  // files (27 live includes at 5.3, 22 at 5.4), where 5.5+ are flat single files.
+  // converter/lib/nav resolveNavIncludes now splices those in before parsing, as
+  // Antora does; without it those versions lost most of their sidebar tree (235
+  // of 398 pages at 5.4, 333 of 390 at 5.3 landed at the component root as
+  // `unlisted`). It is a no-op on a flat nav, so 5.5+ are unchanged byte for byte.
+  //
+  // The same two versions also made the `maintain-cluster/rest-api` nav injection
+  // conditional: that page is an orphan from 5.5 up, but ALREADY in nav at 5.4 and
+  // 5.3, and its `nav.after` anchor (rest-api-swagger) is a page that did not
+  // exist before 5.5. injectNavEntries now skips an injection whose page is
+  // already listed, rather than throwing over a version that needs no fix.
+  hazelcast: { current: '5.8-snapshot', releases: ['5.7', '5.6', '5.5', '5.4', '5.3'] },
 }
 
 // Attributes whose references are MARKED in the golden (antora-extension/

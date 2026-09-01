@@ -1,0 +1,340 @@
+---
+title: "SELECT"
+sidebar_label: "`SELECT`"
+sidebar_position: 17
+slug: /sql/select
+---
+
+The `SELECT` statement reads data from tables, allowing you to query and process your data based on one or more parameters.
+
+## Syntax Summary
+
+This code block is a quick reference with all the [parameters](#parameters) that you can use with the `SELECT` statement.
+
+See some [practical examples](#examples).
+
+```sql
+SELECT [ DISTINCT ] [ * | expression [ [ AS ] expression_alias ] [, ...] ]
+FROM from_item [, ...]
+[[INNER | LEFT | RIGHT | CROSS] JOIN from_item [ ON join_condition | USING ( join_column [, ...] ) ]]
+[ WHERE condition ]
+[ GROUP BY { expression | expression_index } [, ...] ]
+[ HAVING condition [, ...] ]
+[ ORDER BY { column_name | column_position |expression } [, ...] ]
+```
+
+## Parameters
+
+The `SELECT` statement accepts the following parameters.
+
+You must provide at least one `expression` parameter in the `SELECT` clause.
+
+<table>
+<colgroup>
+<col style={{width:'25%'}}/>
+<col style={{width:'50%'}}/>
+<col style={{width:'25%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`DISTINCT`</td>
+<td>The `SELECT DISTINCT` statement returns only unique rows, ignoring any duplicates.</td>
+<td>[Get columns](#get-columns-by-name)</td>
+</tr>
+<tr>
+<td>`expression`</td>
+<td>The columns to select such as names of columns, the `*` wildcard, or an expression.</td>
+<td>[Get columns](#get-columns-by-name)</td>
+</tr>
+<tr>
+<td>`from_item`</td>
+<td>
+
+A table expression that can be one of the following:
+
+- `[schema_name.]table_name [ [ AS ] table_alias]`
+- `(SELECT ... ) AS table_alias`
+- `TABLE(function_name([ argument [, ...] ] ))`
+- `(VALUES (expression, [, …​]) [, …​] )`
+
+</td>
+<td>[Get columns](#get-columns-by-name)</td>
+</tr>
+<tr>
+<td>`JOIN`</td>
+<td>An optional clause that, if given, combines the results of two or more table expressions based on the values of particular columns. `JOIN` expressions (also called joins) define a data source in the `FROM` sub-clause.</td>
+<td>[Join tables](#join-tables)</td>
+</tr>
+<tr>
+<td>`WHERE condition`</td>
+<td>An optional clause that, if given, indicates the conditions that rows must satisfy to be selected. `condition` is an expression that is evaluated for each row. If the expression is `true`, the row is selected. This expression is evaluated before grouping.</td>
+<td>[Filter rows by condition](#filter-rows-by-condition)</td>
+</tr>
+<tr>
+<td>`GROUP BY expression`</td>
+<td>An optional clause that allows you to group results in a column by the given expression.</td>
+<td>[Aggregate data](#aggregate-data)</td>
+</tr>
+<tr>
+<td>`HAVING condition`</td>
+<td>An optional filter that selects only group rows that satisfy the condition. Unlike `WHERE` filters, the `HAVING` filter is applied to group rows created by a `GROUP BY` subquery or aggregate functions such as `SUM()`.</td>
+<td>[Aggregate data](#aggregate-data)</td>
+</tr>
+<tr>
+<td>`ORDER BY`</td>
+<td>An optional clause that specifies the order of rows to be returned by the query. Without this clause, the order is arbitrary.</td>
+<td>[Sort and limit results](#sort)</td>
+</tr>
+</tbody>
+</table>
+
+## Examples
+
+This section lists some example SQL queries that show you how to use the `SELECT` statement.
+
+### Get Columns by Name
+
+You can get columns by name, by adding them as a comma-separated list after the `SELECT` statement.
+
+```sql
+SELECT name, likes FROM csv_likes;
+```
+
+```none
++--------------------+------------+
+|name                |       likes|
++--------------------+------------+
+|Jerry               |          13|
+|Greg                |         108|
+|Mary                |          73|
+|Jerry               |          88|
++--------------------+------------+
+```
+
+To get all columns from a table, use the `*` character.
+
+```sql
+SELECT * FROM csv_likes;
+```
+
+```none
++------------+--------------------+------------+
+|          id|name                |       likes|
++------------+--------------------+------------+
+|           1|Jerry               |          13|
+|           2|Greg                |         108|
+|           3|Mary                |          73|
+|           4|Jerry               |          88|
++------------+--------------------+------------+
+```
+
+### Filter Rows by Condition
+
+You can filter rows by using a `WHERE` clause to find columns according to a certain condition.
+
+```sql
+SELECT name FROM csv_likes WHERE likes > 20;
+```
+
+```none
++--------------------+
+|name                |
++--------------------+
+|Greg                |
+|Mary                |
+|Jerry               |
++--------------------+
+```
+
+To filter rows on more than one condition, you can join conditions with the `AND`, `OR`, and `NOT` operators.
+
+```sql
+SELECT *
+FROM csv_likes
+WHERE likes > 20 AND name = 'Mary';
+```
+
+```none
++------------+--------------------+------------+
+|          id|name                |       likes|
++------------+--------------------+------------+
+|           3|Mary                |          73|
++------------+--------------------+------------+
+```
+
+### Sort and Limit Results {/* #sort */}
+
+You can use the standard SQL clauses `ORDER BY`, `LIMIT`, and `OFFSET` to sort and limit the result set of a query.
+
+:::note
+
+You cannot use these clauses in subqueries.
+
+:::
+
+The following statement gets the top five employees ordered by the `first_name` field and skips the first three results:
+
+```sql
+SELECT
+    employee_id, first_name, last_name
+FROM
+    employees
+ORDER BY first_name
+LIMIT 5 OFFSET 3;
+```
+
+The following statement gets the top five employees with the highest salaries.
+
+```sql
+SELECT
+    employee_id, first_name, last_name, salary
+FROM
+    employees
+ORDER BY salary DESC
+LIMIT 5;
+```
+
+### Join Tables
+
+You can use the standard SQL `JOIN` clause to combine rows from two or more tables, based on a related column among them.
+
+In Hazelcast, JOIN clauses have the following limitations:
+
+- JOIN clauses between batch and stream sources where the outer side of the JOIN is a stream are not currently supported.
+- JOIN order optimization is not currently supported. Tables are always joined in the order they appear in the `FROM` clause. Reordering the tables in the JOIN clause can greatly affect the query performance.
+
+The following query gets the names of all employees that are managers and their departments.
+
+```sql
+SELECT
+    managers.department, employees.name
+FROM
+    managers
+JOIN employees
+ON managers.manager_id = employees.manager_id
+```
+
+The following query is equivalent.
+
+```sql
+SELECT
+    managers.department, employees.name
+FROM
+    managers, employees
+WHERE managers.manager_id = employees.manager_id
+```
+
+### Alias Columns in the Query Results
+
+If you are returning query results to a client, you may want to give the returned columns a new name.
+
+To alias a column in your query results, use the `AS` clause.
+
+:::note
+
+This clause does not rename the column in the table.
+
+:::
+
+```sql
+SELECT name AS popular_users, likes
+FROM csv_likes
+WHERE likes > 20;
+```
+
+```none
++--------------------+------------+
+|popular_users       |       likes|
++--------------------+------------+
+|Greg                |         108|
+|Mary                |          73|
+|Jerry               |          88|
++--------------------+------------+
+```
+
+### Aggregate Data
+
+To perform calculations on rows, use aggregate functions.
+
+For a complete list of available aggregate functions, see [Functions and Operators](../functions-and-operators.mdx).
+
+To calculate the total number of likes for all names, use the `SUM()` function.
+
+```sql
+SELECT SUM(likes) AS total_likes FROM csv_likes;
+```
+
+```none
++--------------------+
+|         total_likes|
++--------------------+
+|                 282|
++--------------------+
+```
+
+To filter for the names that have more than 100 likes, use the `HAVING` clause, which is equivalent to the `WHERE` clause, but is applied after the aggregation is performed.
+
+```sql
+SELECT name AS much_liked
+FROM csv_likes
+GROUP BY name
+HAVING SUM(likes) > 100;
+```
+
+```none
++--------------------+
+|much_liked          |
++--------------------+
+|Jerry               |
+|Greg                |
++--------------------+
+```
+
+To pass a function only unique values, use the `DISTINCT` operator.
+
+:::note
+
+This operator is ignored in `MIN`/`MAX` functions.
+
+:::
+
+This query calculates the number of distinct colors of cars in a table.
+
+```sql
+SELECT COUNT(DISTINCT color)
+FROM cars
+```
+
+### Generate Data
+
+To generate data and make it available as a table that you can use in your own statements, use [table-valued functions](../functions-and-operators.mdx#table-valued-functions).
+
+To generate a table with numbers 1 to 3, use the `TABLE(generate_series())` table expression.
+
+```sql
+SELECT * FROM TABLE(generate_series(1,3));
+```
+
+```none
++------------+
+|           v|
++------------+
+|           1|
+|           2|
+|           3|
++------------+
+```
+
+To generate a stream of data, use the `TABLE(generate_stream())` table expression. This example generates 100 numbers per second, starting from 0 and displays only multiples of 10 in the results.
+
+```sql
+SELECT * FROM TABLE(generate_stream(100))
+WHERE v / 10 * 10 = v;
+```

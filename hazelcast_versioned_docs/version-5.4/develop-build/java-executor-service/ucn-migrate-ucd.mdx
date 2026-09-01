@@ -1,0 +1,17 @@
+---
+title: "Migrate from User Code Deployment"
+sidebar_position: 10
+slug: /clusters/ucn-migrate-ucd
+enterprise: true
+---
+
+<Variable name="ucn"/> improves and extends the capabilities of <Variable name="ucd"/> and is applicable to more use cases. Hazelcast recommends that <Variable name="enterprise-product-name"/> users deprecate their <Variable name="ucd"/> implementations and migrate to using <Variable name="ucn"/>.
+
+To migrate your existing <Variable name="ucd"/>, enable <Variable name="ucn"/> and complete the configuration as described in [Enable User Code Namespaces](./ucn-enable.mdx).
+
+There are several differences between <Variable name="ucd"/> and <Variable name="ucn"/> that you must account for when migrating:
+
+- <Variable name="ucn"/> does not have any configuration elements for Hazelcast Clients: all static configuration is managed in member configurations. This means that resources deployed statically need to be referenceable by all members of the cluster. For more information, see [Member Configuration](./ucn-static-config/ucn-member-side.mdx).
+- Resources deployed with <Variable name="ucd"/> are added to the member classpath. In contrast, <Variable name="ucn"/> introduces namespaces, which allows resources to be separated. This separation allows conflicting classes to exist in separate namespaces without issue. However, data structures will need to reference the correct namespace to access the relevant resources. If you want to achieve similar behaviour to <Variable name="ucd"/> in <Variable name="ucn"/>, configure your resources in the `default` namespace, which means they will be available to all data structures that do not explicitly define a namespace.
+- <Variable name="ucn"/> does not support loading resources from the classpath and they should be defined from static locations instead. Resources, including classpath classes, can still be uploaded by clients to the cluster, but you will need to do this using the programmatic API. For more information, see [Configure Client](./ucn-dynamic-config/ucn-dynamic-client.mdx).
+- Resources in <Variable name="ucn"/> can be dynamically added or replaced at runtime. This provides various benefits, but you must ensure that resources are not removed from actively running operations, as this could cause errors. For more information, see [Dynamic Configuration API](./ucn-dynamic-config/overview.mdx).

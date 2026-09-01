@@ -1,0 +1,20 @@
+---
+title: "Copying Persisted Data onto other Members"
+sidebar_label: "Copying Data"
+sidebar_position: 7
+slug: /storage/copying-persistence
+enterprise: true
+---
+
+When you persist data on disk, you may want to copy that data onto another cluster to perform testing, QA, or reproduce an issue on production data.
+
+To copy persisted data onto other members, you have two options:
+
+- [Shut down the cluster](../../maintaining-a-cluster/shutdown.mdx) and copy the files onto a new cluster.
+- [Create backups of the files](./backing-up-persistence.mdx) and copy those onto the new cluster while the cluster is still running (recommended).
+
+The server onto which you copy files (in the directory configured in the [`base-dir` setting](./configuring-persistence.mdx#base-dir)) can have a different IP address and/or different number of CPU cores to the original server without affecting performance. This flexibility provides the following abilities:
+
+- Replacing one or more faulty servers with the new ones easily without touching remaining cluster.
+- Using Persistence on the cloud environments easily. Sometimes cloud providers do not preserve the IP addresses on restart or after shutdown. Also it is possible to startup the whole cluster on a different set of machines.
+- Copying production data to the test environment so that a more functional test cluster can be set up.

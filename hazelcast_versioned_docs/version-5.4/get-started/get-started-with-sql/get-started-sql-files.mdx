@@ -1,0 +1,327 @@
+---
+title: "Get Started with SQL Over Files"
+sidebar_position: 3
+slug: /sql/get-started-sql-files
+---
+
+In this tutorial, you learn the basics of querying files in SQL by creating and querying a CSV file.
+
+## Before You Begin
+
+To complete this tutorial, you need the following:
+
+| Prerequisites | Useful resources |
+| --- | --- |
+| A Hazelcast cluster in client/server mode and an instance of Management Center running on your local network. | [Start a Local Cluster](../start-a-local-cluster/get-started-binary.mdx). |
+| A connection to the SQL shell | [SQL](../../develop-build/sql/sql-overview.mdx) |
+
+## Step 1. Create a Data Source to Query
+
+SQL can query data in maps, Kafka topics and the local cluster's file system.
+
+In this step, you create a CSV file that you can use to query.
+
+1. Create a file named `likes.csv`.
+2. Add the following data to your file.
+
+   ```shell
+   msg_id,likes,dislikes
+   1,20,13
+   2,108,25
+   3,122,73
+   4,9,88
+   5,51,42
+   ```
+
+   This example file contains a record of the number of likes each message has.
+
+## Step 2. Create a Mapping to the File
+
+To allow Hazelcast to find and recognize the data in your CSV file, you need to create a mapping to it.
+
+In the SQL shell, use the [`CREATE MAPPING` statement](../../develop-build/sql/statements/create-mapping.mdx) to configure the file connector and give Hazelcast access to the data in the `likes.csv` file.
+
+```sql
+CREATE MAPPING csv_likes (msg_id INT, likes INT, dislikes INT)
+TYPE File
+OPTIONS ('format'='csv',
+    'path'='/absolute/path/to/current/directory', 'glob'='likes.csv');
+```
+
+:::tip
+
+Make sure you replace the `path` option with the absolute path to your CSV file.
+
+:::
+
+## Step 3. Run Ad-Hoc Queries
+
+Ad-hoc queries allow you to retrieve a small subset of data. Usually these queries are simple and you can have many of them running concurrently in a Hazelcast cluster.
+
+1. Use a [`SELECT` statement](../../develop-build/sql/statements/select.mdx) to query all the data in the `likes.csv` file.
+
+   ```sql
+   SELECT * FROM csv_likes;
+   ```
+
+   You should see the following:
+
+   ```shell
+   +------------+------------+------------+
+   |      msg_id|       likes|    dislikes|
+   +------------+------------+------------+
+   |           1|          20|          13|
+   |           4|           9|          88|
+   |           3|         122|          73|
+   |           2|         108|          25|
+   |           5|          51|          42|
+   +------------+------------+------------+
+   ```
+2. Query only the `msg_id` and `likes` columns, by adding them as a comma-separated list after the `SELECT` statement.
+
+   ```sql
+   SELECT msg_id, likes FROM csv_likes;
+   ```
+
+   ```none
+   +------------+------------+
+   |      msg_id|       likes|
+   +------------+------------+
+   |           1|          20|
+   |           3|         122|
+   |           4|           9|
+   |           2|         108|
+   |           5|          51|
+   +------------+------------+
+   ```
+3. Use a filter to display only the message numbers with more than 50 likes.
+
+   ```sql
+   SELECT msg_id FROM csv_likes WHERE likes > 50;
+   ```
+
+   ```none
+   +------------+
+   |      msg_id|
+   +------------+
+   |           2|
+   |           5|
+   |           3|
+   +------------+
+   ```
+4. Give the `msg_id` column an alias for the query results.
+
+   :::note
+
+   This clause does not rename the column in the table.
+
+   :::
+
+   ```sql
+   SELECT msg_id AS message_number, likes, dislikes
+   FROM csv_likes
+   WHERE likes > 20;
+   ```
+
+   ```none
+   +--------------+------------+------------+
+   |message_number|       likes|    dislikes|
+   +--------------+------------+------------+
+   |             2|         108|          25|
+   |             3|         122|          73|
+   |             5|          51|          42|
+   +--------------+------------+------------+
+   ```
+5. To filter rows on more than one condition, you can join conditions with the `AND`, `OR`, and `NOT` operators.
+
+   ```sql
+   SELECT *
+   FROM csv_likes
+   WHERE likes > 100 OR dislikes < 30;
+   ```
+
+   ```none
+   +------------+------------+------------+
+   |      msg_id|       likes|    dislikes|
+   +------------+------------+------------+
+   |           1|          20|          13|
+   |           2|         108|          25|
+   |           3|         122|          73|
+   +------------+------------+------------+
+   ```
+
+   ```sql
+   SELECT *
+   FROM csv_likes
+   WHERE likes > 100 AND dislikes < 30;
+   ```
+
+   ```none
+   +------------+------------+------------+
+   |      msg_id|       likes|    dislikes|
+   +------------+------------+------------+
+   |           2|         108|          25|
+   +------------+------------+------------+
+   ```
+
+If you need more control over how your data is being transformed and aggregated, you may want to [build a pipeline with the Jet API](../../develop-build/building-data-pipelines/overview.mdx).
+
+## Step 4. Run Federated Queries
+
+Federated queries are those that join tables from different datasets.
+
+Normally, SQL queries are executed on one particular database or dataset. However, with Hazelcast, you can pull information from different sources and present a more complete picture of the data.
+
+1. Configure the map connector to create a new table called `dislikes`.
+
+   ```sql
+   CREATE MAPPING names
+   TYPE IMap OPTIONS ('keyFormat'='int', 'valueFormat'='varchar');
+   ```
+
+   This table is mapped to a distributed map in Hazelcast where the key is an integer and the value is a string.
+2. Use the `SINK INTO` statement to add some entries to the map.
+
+   ```sql
+   SINK INTO names VALUES
+   (1, 'Greg'),
+   (2, 'Jerry'),
+   (3, 'Mary'),
+   (4, 'Jerry'),
+   (5, 'Joe');
+   ```
+3. Use the [`JOIN` clause](../../develop-build/sql/statements/select.mdx#join-tables) to merge results from the `messages` and `names` tables so you can see who has the most likes and dislikes.
+
+```sql
+SELECT names.this, csv_likes.likes, csv_likes.dislikes
+FROM csv_likes
+JOIN names
+ON csv_likes.msg_id = names.__key;
+```
+
+\+
+
+```none
++--------------------+------------+------------+
+|this                |       likes|    dislikes|
++--------------------+------------+------------+
+|Jerry               |         108|          25|
+|Greg                |          20|          13|
+|Jerry               |           9|          88|
+|Joe                 |          51|          42|
+|Mary                |         122|          73|
++--------------------+------------+------------+
+```
+
+1. Use the `ORDER BY` clause to order the results by name and use the `LIMIT` clause to limit them so that only the first two are displayed. Change the header of the `names` column to `name`.
+
+   ```sql
+   SELECT names.this AS name, csv_likes.likes, csv_likes.dislikes
+   FROM csv_likes
+   JOIN names
+   ON csv_likes.msg_id = names.__key
+   ORDER BY names.this
+   LIMIT 2;
+   ```
+
+   ```none
+   +--------------------+------------+------------+
+   |name                |       likes|    dislikes|
+   +--------------------+------------+------------+
+   |Greg                |          20|          13|
+   |Jerry               |           9|          88|
+   +--------------------+------------+------------+
+   ```
+2. Use the `SUM()` function to aggregate the total number of likes for each person and group the results by name.
+
+   ```sql
+   SELECT names.this AS name, sum(csv_likes.likes) AS total_likes
+   FROM csv_likes
+   JOIN names
+   ON csv_likes.msg_id = names.__key
+   GROUP BY name;
+   ```
+
+   You should see the following:
+
+   ```none
+   +--------------------+--------------------+
+   |name                |         total_likes|
+   +--------------------+--------------------+
+   |Greg                |                  20|
+   |Mary                |                 122|
+   |Joe                 |                  51|
+   |Jerry               |                 117|
+   +--------------------+--------------------+
+   ```
+
+   The results do not include a row for each Jerry because the `GROUP BY` statement groups the results by name.
+3. Filter for the names that have more than 100 likes combined, using the `HAVING` clause. This clause is equivalent to the `WHERE` clause but for aggregate results.
+
+   ```sql
+   SELECT names.this AS most_liked
+   FROM csv_likes
+   JOIN names
+   ON csv_likes.msg_id = names.__key
+   GROUP BY names.this HAVING SUM(likes) > 100;
+   ```
+
+   ```none
+   +--------------------+
+   |most_liked          |
+   +--------------------+
+   |Jerry               |
+   |Mary                |
+   +--------------------+
+   ```
+
+For a list of available aggregations, see [Expressions, Functions and Operators](../../develop-build/sql/functions-and-operators.mdx).
+
+## Step 5. Ingest Query Results into a Hazelcast Map
+
+To save your query results as a view, you can cache them in Hazelcast by ingesting them into a map.
+
+1. Configure the map connector to create a new table called `likes_and_dislikes`.
+
+   ```sql
+   CREATE MAPPING likes_and_dislikes (
+   __key INT,
+   name VARCHAR,
+   likes INT,
+   dislikes INT
+   ) TYPE IMap OPTIONS ('keyFormat'='int', 'valueFormat'='json-flat');
+   ```
+
+   This table is mapped to a distributed map in Hazelcast where the key is an integer and the value is an object that's serialized to JSON.
+2. Run the `JOIN` query to merge results from the CSV file and the `dislikes` map and insert them into the `likes_and_dislikes` map.
+
+   ```sql
+   INSERT INTO likes_and_dislikes SELECT csv_likes.msg_id, names.this, csv_likes.likes, csv_likes.dislikes
+   FROM csv_likes
+   JOIN names
+   ON csv_likes.msg_id = names.__key;
+   ```
+3. Make sure that the query results were added to the map.
+
+   ```sql
+   SELECT * FROM likes_and_dislikes
+   ORDER BY __key;
+   ```
+
+   ```none
+   +------------+--------------------+------------+------------+
+   |       __key|name                |       likes|    dislikes|
+   +------------+--------------------+------------+------------+
+   |           1|Greg                |          20|          13|
+   |           2|Jerry               |         108|          25|
+   |           3|Mary                |         122|          73|
+   |           4|Jerry               |           9|          88|
+   |           5|Joe                 |          51|          42|
+   +------------+--------------------+------------+------------+
+   ```
+
+## Next Steps
+
+Learn how to [query maps with SQL](../../develop-build/sql/sql-over-maps/querying-maps-sql.mdx).
+
+Explore [all available SQL statements](../../develop-build/sql/statements/sql-statements.mdx).

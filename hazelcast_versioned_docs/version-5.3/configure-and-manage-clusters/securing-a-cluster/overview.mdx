@@ -1,0 +1,43 @@
+---
+title: "Security Overview"
+sidebar_position: 1
+slug: /security/overview
+enterprise: true
+---
+
+This section provides an introduction to the security features of Hazelcast. These features allow you to perform security activities, such as intercepting socket connections and remote operations executed by the clients, encrypting the communications between the members at socket level and using SSL socket communication. All of the security features explained in this chapter are the features of Hazelcast Enterprise edition.
+
+While Hazelcast supports non-secured cluster members and clients, it is recommended to secure your deployments. A cluster without security may face with:
+
+- unauthorized cluster members joining or accessing it
+- unwanted or malicious clients accessing it
+- unauthorized use (access or creation) of cluster resources and data tampering by the malicious cluster members and clients.
+
+And when using Hazelcast's Jet streaming engine, notice the following security considerations:
+
+- Hazelcast jobs allow you to use your custom codes and these codes must be available on cluster classpath or deployed to the cluster; this means any client is able to deploy custom codes to the cluster, so make sure each client is authorized to access the cluster.
+- The Jet engine bypasses the access control layer when accessing the data structures in the same cluster.
+- The connectors of the Jet engine include 3rd party codes which may increase the attack surface.
+- SQL, which is used by the Jet engine, includes file connectors and it can read files on the cluster filesystem.
+
+Due to the above considerations, Hazelcast's streaming engine is disabled by default for our users who mostly use Hazelcast's storage engine (formerly known as Hazelcast IMDG) with the JAR distribution (See the [Security Defaults section](./security-defaults.mdx) for information about the security considerations for different Hazelcast distributions). [Enabling the Jet Engine section](../../configuration/jet-configuration.mdx) shows how you can start using the Jet engine; relatedly, see the [Security Hardening Recommendations section](./hardening-recommendations.mdx) to learn the best practices to secure your cluster.
+
+Below, you can see the brief descriptions of Hazelcast's security features. You can evaluate them and decide which ones you want to use based on your security concerns and requirements.
+
+For data privacy:
+
+- [TLS/SSL](./tls-ssl/tls-ssl.mdx) communication for members and clients for all socket-level communication; uses key stores and trust stores to encrypt communications across a Hazelcast cluster, as well as between the clusters replicated over WAN. You can also configure [cipher suites](./tls-ssl/tls-configuration.mdx#configuring-cipher-suites) to secure the network communication.
+
+For authentication:
+
+- [JAAS-based authentication](./authentication-types/jaas-authentication.mdx) between the cluster members and for pluggable identity verifications; works with identity, role and endpoint principal implementations.
+- [Socket Interceptor](./socket-interceptor.mdx) to interfere socket connections before a new member or client comes to the cluster; you can perform identity checking using custom authentication protocols.
+- [TLS Mutual Authentication](./tls-ssl/tls-ssl.mdx#mutual-authentication) to ensure each TLS-communicating side proves its identity to the other.
+- [Security Realms](./security-realms.mdx) for authentication and identity configurations.
+
+For authorization:
+
+- [JAAS-based authorization](./native-client-security.mdx#authorization) using permission policies for role-based security.
+- [Security Interceptor](./security-interceptor.mdx) that provides a callback point for every operation executed against the cluster.
+
+See also [Security Hardening Recommendations section](./hardening-recommendations.mdx) to learn more about the best security practices.

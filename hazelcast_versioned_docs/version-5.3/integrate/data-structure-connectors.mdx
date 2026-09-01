@@ -1,0 +1,38 @@
+---
+title: "Data Structure Connectors"
+slug: /integrate/data-structure-connectors
+unlisted: true
+---
+
+Hazelcast comes with connectors for the following data structures:
+
+- [Map](../develop-solutions/connector-guides/data-structure-connectors/map-connector.mdx)
+- [List](../develop-solutions/connector-guides/data-structure-connectors/list-connector.mdx)
+- [JCache](../develop-solutions/connector-guides/data-structure-connectors/jcache-connector.mdx)
+- [Reliable topic](../develop-solutions/connector-guides/data-structure-connectors/reliable-topic-connector.mdx)
+
+It's possible to use the data structures that are part of the same Hazelcast cluster, and share the same memory and computation resources with running jobs. For a more in-depth discussion on this topic, see the [In-Memory Storage](../reference/architecture/in-memory-storage.mdx).
+
+## Accessing Data Structures on Remote Clusters
+
+With the Jet API, you can also read from or write to data structures from remote Hazelcast clusters.
+
+:::note
+
+With SQL, you can only access local maps.
+
+:::
+
+When reading or writing to remote data structures, Hazelcast internally creates a client using the supplied configuration and will create connections to the other cluster.
+
+```java
+ClientConfig cfg = new ClientConfig();
+cfg.setClusterName("cluster-name");
+cfg.getNetworkConfig().addAddress("node1.mydomain.com", "node2.mydomain.com");
+
+Pipeline p = Pipeline.create();
+p.readFrom(Sources.remoteMap("inputMap", cfg));
+...
+```
+
+This client uses the embedded Hazelcast version to connect to the remote cluster. Hazelcast server and client versions are backward and forward compatible within the same major version.

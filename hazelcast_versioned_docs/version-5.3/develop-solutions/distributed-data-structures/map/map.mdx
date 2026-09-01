@@ -1,0 +1,34 @@
+---
+title: "Distributed Map"
+sidebar_label: "Overview"
+sidebar_position: 1
+slug: /data-structures/map
+---
+
+Distributed maps, also known as maps or IMaps, are key-value pairs that are partitioned across a cluster. Use maps to distribute data across a cluster and make it easy to scale your applications while protecting data against member failures.
+
+Distributed maps store values that you can access, using a unique key. These values can be primitives, serialized objects, or JSON values. In the following example, the map stores the names of captial cities as simple strings. The key is an incrementing integer to make sure that each entry is unique.
+
+```none
+1. Tokyo
+2. Paris
+3. London
+4. Ankara
+5. Berlin
+```
+
+## How Map Entries are Distributed
+
+Hazelcast uses the keys to distribute map entries across the cluster. Each member in a cluster stores an almost equal number of entries. For example, if you have a map with 1000 entries on one member, then you start a second member, each member will store 500 entries. To learn more about how data is partitioned in a cluster, see [Data Partitioning and Replication](../../../reference/architecture/data-partitioning.mdx).
+
+## What Makes Maps Fault Tolerant
+
+By default, all maps are backed up by one other member to avoid data loss. If a member goes down, the members holding the backup data take over. Backup copies are then redistributed across remaining cluster members.
+
+## Availability vs Consistency
+
+In terms of the [CAP theorem](https://en.wikipedia.org/wiki/CAP_theorem), distributed maps are designed to ensure that data is *available* rather than *consistent*. However, you can configure maps to [reduce the chances of data becoming stale](./managing-map-memory.mdx).
+
+## Next Steps
+
+Find out how to [configure maps](./map-config.mdx). You can then [create a map](./creating-a-map.mdx) that inherits your configuration.

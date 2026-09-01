@@ -1,0 +1,22 @@
+---
+title: "C++ Client"
+sidebar_position: 3
+slug: /clients/cplusplus
+---
+
+:::tip
+
+For the latest C++ API documentation, see <Variable href="http://hazelcast.github.io/hazelcast-cpp-client/{page-latest-supported-cplusplus-client}/index.html" text="Hazelcast C++ Client docs"/>.
+
+:::
+
+You can use the native C++ client to connect to Hazelcast cluster members and perform almost all operations that a member can perform. Clients differ from members in that clients do not hold data. The C++ client is by default a smart client, i.e., it knows where the data is and asks directly for the correct member. You can disable this feature (using the `client_config::set_smart_routing` method) if you do not want the clients to connect to every member.
+
+The features of C++ clients are listed below:
+
+- Access to distributed data structures (`imap`, `iqueue`, `multi_map`, etc.).
+- Access to transactional distributed data structures (`transactional_map`, `transactional_queue`, etc.).
+- Ability to add cluster listeners to a cluster and entry/item listeners to distributed data structures.
+- Distributed synchronization mechanisms with `fenced_lock`, `counting_semaphore` and `latch`.
+
+See Hazelcast C++ client's own GitHub [repo](https://github.com/hazelcast/hazelcast-cpp-client) for information on setting the client up, installing and compiling it, its serialization, query support and available APIs. You can also find [code samples](https://github.com/hazelcast/hazelcast-cpp-client/tree/master/examples) for this client in this repo.

@@ -1,0 +1,127 @@
+---
+title: "INSERT INTO/SINK INTO"
+sidebar_label: "`INSERT INTO`/`SINK INTO`"
+sidebar_position: 16
+slug: /sql/sink-into
+---
+
+The `INSERT INTO`/`SINK INTO` statements write data to platforms that are connected to Hazelcast through connectors.
+
+These statements require that the data types in source and sink tables match.
+
+:::note
+
+When you submit an `INSERT INTO`/`SINK INTO` statement, its lifecycle is tied to the SQL client session. If the SQL client disconnects, the statement is canceled. To run these statements independently, use the [`CREATE JOB` statement](./create-job.mdx).
+
+:::
+
+:::note
+
+This statement is not atomic. If it fails, part of the rows might be inserted and other parts might not be inserted.
+
+:::
+
+## Syntax Summary
+
+This code block is a quick reference with all the [parameters](#parameters) that you can use with the `INSERT INTO/SINK INTO` statements.
+
+```sql
+{ INSERT | SINK } INTO [schema_name.]table_name[(column_name [, ...])]
+{ SELECT ... | VALUES(expression [, ...]) [, ...] }
+```
+
+## Parameters
+
+The `INSERT INTO/SINK INTO` statements accept the following parameters.
+
+| Parameter | Description | Example |
+| --- | --- | --- |
+| table\_name | The name of the table to write data to. | [Overwrite Data in a Map](#overwrite-data-in-an-map) |
+
+## Difference between INSERT INTO and SINK INTO
+
+The `INSERT INTO` statement works as defined by the SQL standard. This statement is append-only, meaning that you cannot overwrite existing data. For example, you cannot add a duplicate key to a map.
+
+The `SINK INTO` statement is a custom statement whose behavior depends on the underlying connector. For example, when writing to a map, the value associated with the key is overwritten, and one key can be overwritten multiple times by a single statement.
+
+## Examples
+
+This section lists some example SQL queries that show you how to use the `INSERT INTO/SINK INTO` statements.
+
+### Add Entries to a Map
+
+This example creates a mapping to a map whose keys are `VARCHAR` and whose values are `INT`.
+
+```sql
+CREATE MAPPING myMap TYPE IMap OPTIONS ('keyFormat'='varchar','valueFormat'='int');
+```
+
+```none
+OK
+```
+
+```sql
+SELECT * FROM myMap;
+```
+
+```none
++--------------------+------------+
+|__key               |        this|
++--------------------+------------+
++--------------------+------------+
+```
+
+Use the `INSERT INTO` statement to add an entry to the map.
+
+```sql
+INSERT INTO myMap VALUES('Jake', 29);
+```
+
+```none
++--------------------+------------+
+|__key                |       this|
++--------------------+------------+
+|Jake                |          29|
++--------------------+------------+
+```
+
+### Add Objects to a Map
+
+To add objects to a map, you can use one of the following serialization formats that the [map connector](../connector-guides/data-structure-connectors/map-connector.mdx) supports:
+
+- `portable`
+- `compact`
+- `json-flat`
+- `java`
+
+For example, to add Java objects as values to a map, create a mapping where the `valueFormat` is `java` and the `valueJavaClass` is the name of the class.
+
+:::note
+
+The class must be available to the cluster. You can add the class to member's classpath, or use User Code Deployment.
+
+:::
+
+```sql
+CREATE MAPPING people (__key BIGINT, name VARCHAR, age INT) TYPE IMap OPTIONS ('keyFormat'='bigint','valueFormat'='java','valueJavaClass' = 'sql.Person')
+```
+
+```sql
+INSERT INTO people (__key, name, age) VALUES (1 , 'Jake', 29);
+```
+
+### Overwrite Data in a Map
+
+Use the `SINK INTO` statement to overwrite the value of an existing key in a map.
+
+```sql
+SINK INTO myMap VALUES(1, 'Jake', 21);
+```
+
+```none
++--------------------+------------+
+|name                |         age|
++--------------------+------------+
+|Jake                |          21|
++--------------------+------------+
+```

@@ -12,7 +12,9 @@
 // silently reverted by the next conversion run.
 //
 // Keys are the logical page keys orphancheck reports (`{component}[:{module}]/
-// {relative-without-.adoc}`), so one entry covers a page across every version.
+// {relative-without-.adoc}`), so one entry covers a page across every version --
+// unless it narrows itself with `versions` (see entryFor), which is how a page
+// whose orphan-ness DIFFERS between versions is triaged honestly.
 
 const fs = require('node:fs')
 const path = require('node:path')
@@ -29,6 +31,32 @@ function loadDispositions (file = ALLOWLIST) {
 // The logical key of a manifest-shaped resource ({component, module, relative}).
 const keyOf = (r) => logicalKey({ component: r.component, module: r.module, relative: r.relative })
 
+// The decision that applies to THIS resource, or undefined -- the single lookup
+// every consumer goes through, so version scoping cannot be honoured in one
+// place and forgotten in another.
+//
+// A key covers the page in every version by default, which is right whenever the
+// page is an orphan wherever it exists. It is NOT right when a version navigates
+// differently, and Platform 5.4/5.3 are exactly that: their nav.adoc is a
+// skeleton of per-module partials, so pages the flat 5.5+ nav dropped are still
+// listed there. Six triaged pages are in nav at 5.4 or 5.3 -- among them
+// cluster-performance/performance-tuning, whose 5.5 redirect target
+// (performance-tips) does not even EXIST at 5.3. Applying those decisions across
+// the board would withhold pages their own version's sidebar links to, and emit
+// a redirect to a 404.
+//
+// So an entry may carry `versions`: the version segments the decision applies in,
+// which are the versions the page is actually an orphan in. Where it is absent
+// the entry covers every version, exactly as before. Deny-by-default is
+// unaffected and now works per version: an orphan in a version no entry covers is
+// still flagged untriaged by the gate, so narrowing an entry can only ever
+// surface work, never hide it.
+function entryFor (dispositions, resource) {
+  const e = dispositions.get(keyOf(resource))
+  if (!e || !e.versions) return e
+  return e.versions.includes(resource.version) ? e : undefined
+}
+
 // Pages the migration deliberately does not publish. TWO dispositions land
 // here, for the same reason: the decision only takes effect if no .mdx ever
 // reaches the site. `drop-404` is dead or empty and its URL is allowed to 404;
@@ -42,7 +70,7 @@ const keyOf = (r) => logicalKey({ component: r.component, module: r.module, rela
 const UNPUBLISHED = new Set(['drop-404', 'redirect'])
 
 function isUnpublished (dispositions, resource) {
-  const e = dispositions.get(keyOf(resource))
+  const e = entryFor(dispositions, resource)
   return !!(e && UNPUBLISHED.has(e.disposition))
 }
 
@@ -67,7 +95,7 @@ function isUnpublished (dispositions, resource) {
 // converter's job (collectRedirects), which is where the URL space and the
 // live-version set are known.
 function redirectDest (dispositions, resource) {
-  const e = dispositions.get(keyOf(resource))
+  const e = entryFor(dispositions, resource)
   if (!e || e.disposition !== 'redirect') return null
   if (e.toUrl) return { url: e.toUrl, relative: false }
   return e.to ? { url: e.to, relative: true } : null
@@ -173,12 +201,17 @@ function redirectPairs (dispositions, manifest, isLive) {
 // `module/` segment becomes the `module:` coordinate: the injected line is nav
 // AsciiDoc, so it has to name the module the way an xref does, and a bare stem
 // would resolve against ROOT and point at nothing.
-function navInjectionsFor (dispositions, component) {
+// `seg` scopes the same way entryFor does: a `keep-in-nav` entry narrowed with
+// `versions` injects only in the versions it names. Passing no seg keeps every
+// entry, for a caller with no version to judge against (an unversioned
+// component).
+function navInjectionsFor (dispositions, component, seg = null) {
   const out = []
   for (const [key, entry] of dispositions) {
     if (!entry || entry.disposition !== 'keep-in-nav' || !entry.nav) continue
     const [comp, rest] = [key.slice(0, key.indexOf(':')), key.slice(key.indexOf(':') + 1)]
     if (comp !== component) continue
+    if (seg != null && entry.versions && !entry.versions.includes(seg)) continue
     out.push({ key: navKey(rest), after: entry.nav.after })
   }
   return out
@@ -192,6 +225,6 @@ const navKey = (rest) => {
 }
 
 module.exports = {
-  loadDispositions, keyOf, isUnpublished, redirectDest, redirectRoute, unpublishedUrls,
+  loadDispositions, keyOf, entryFor, isUnpublished, redirectDest, redirectRoute, unpublishedUrls,
   urlBase, redirectPairs, publishedPageUrls, normalizeRoute, navInjectionsFor, ALLOWLIST,
 }

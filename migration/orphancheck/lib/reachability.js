@@ -147,6 +147,20 @@ function validateAllowlist (allow) {
         errors.push(`${key}: "nav" requires a non-empty "after" (the nav stem this entry follows)`)
       }
     }
+    // `versions` NARROWS the entry to the version segments named. Absent, the
+    // entry covers every version -- right whenever a page is an orphan wherever
+    // it exists, which is most of them. Present, it says the page's orphan-ness
+    // differs BETWEEN versions, which is a fact about the source, not a
+    // preference: Platform 5.4/5.3 nav via per-module partials and still list
+    // pages the flat 5.5+ nav dropped. An empty list would silently disable the
+    // entry, so it is rejected rather than read as "nowhere".
+    if (entry.versions != null) {
+      if (!Array.isArray(entry.versions) || !entry.versions.length) {
+        errors.push(`${key}: "versions" must be a non-empty array of version segments (e.g. ["5.5", "5.6"])`)
+      } else if (!entry.versions.every((v) => typeof v === 'string' && v)) {
+        errors.push(`${key}: "versions" entries must be non-empty strings`)
+      }
+    }
   }
   return errors
 }
@@ -156,17 +170,59 @@ function validateAllowlist (allow) {
 //   allowed — orphans a human has triaged (grouped for the report)
 //   staleKeys — allowlist keys that match no current orphan (a page that stopped
 //               being an orphan; surfaced so the entry can be pruned, not fatal)
-function applyAllowlist (orphans, allow, component) {
+//   staleScopes — allowlist entries whose `versions` names a version the page is
+//               in scope in but NOT an orphan in (the narrowing has drifted past
+//               what the sources say; surfaced, not fatal, like staleKeys)
+//
+// Matching is PER VERSION: an entry narrowed with `versions` clears the orphan
+// only in the versions it names. Deny-by-default therefore applies per version
+// too -- the same page orphaned in a version the entry does not name is flagged
+// as untriaged, so narrowing an entry can only surface work, never hide it.
+//
+// `inScopePages` (optional) is every page the run judged, not just the orphans.
+// It is what makes staleScopes decidable: without the full page set, a version
+// naming a page that is no longer an orphan is indistinguishable from one naming
+// a page that no longer exists.
+function applyAllowlist (orphans, allow, component, inScopePages = null) {
   const allowMap = allow || {}
   const flagged = []
   const allowed = []
   const matchedKeys = new Set()
+  const covers = (entry, o) => !entry.versions || entry.versions.includes(o.version)
   for (const o of orphans) {
-    if (Object.prototype.hasOwnProperty.call(allowMap, o.key)) {
+    const entry = Object.prototype.hasOwnProperty.call(allowMap, o.key) ? allowMap[o.key] : null
+    if (entry && covers(entry, o)) {
       matchedKeys.add(o.key)
       allowed.push(o)
     } else {
       flagged.push(o)
+    }
+  }
+  // A `versions` list is hand-maintained, so it drifts: a version named there
+  // may stop being one the page is orphaned in. Report that rather than leaving a
+  // decision quietly applying to nothing -- this is the failure mode explicit
+  // scoping trades for, and the gate is the only thing that can catch it.
+  const orphanVersionsByKey = new Map()
+  for (const o of orphans) {
+    if (!orphanVersionsByKey.has(o.key)) orphanVersionsByKey.set(o.key, new Set())
+    orphanVersionsByKey.get(o.key).add(o.version)
+  }
+  const inScopeVersionsByKey = new Map()
+  for (const p of inScopePages || []) {
+    const k = logicalKey(p)
+    if (!inScopeVersionsByKey.has(k)) inScopeVersionsByKey.set(k, new Set())
+    inScopeVersionsByKey.get(k).add(p.version)
+  }
+  const staleScopes = []
+  if (inScopePages) {
+    for (const [key, entry] of Object.entries(allowMap)) {
+      if (!entry || !entry.versions) continue
+      if (component && !key.startsWith(component + ':')) continue
+      const inScopeVersions = inScopeVersionsByKey.get(key)
+      if (!inScopeVersions) continue // page not in this run's scope at all
+      const orphaned = orphanVersionsByKey.get(key) || new Set()
+      const dead = entry.versions.filter((v) => inScopeVersions.has(v) && !orphaned.has(v))
+      if (dead.length) staleScopes.push({ key, versions: dead })
     }
   }
   // Staleness is only judgeable for keys this run could have MATCHED. A
@@ -177,7 +233,7 @@ function applyAllowlist (orphans, allow, component) {
   const staleKeys = Object.keys(allowMap)
     .filter((k) => !matchedKeys.has(k))
     .filter((k) => !component || k.startsWith(component + ':'))
-  return { flagged, allowed, staleKeys }
+  return { flagged, allowed, staleKeys, staleScopes }
 }
 
 module.exports = {

@@ -1,0 +1,178 @@
+---
+title: "5.3.0 Release Notes"
+sidebar_label: "5.3.0"
+sidebar_position: 7
+slug: /release-notes/5-3-0
+---
+
+:::warning
+
+The minimal supported Java version is 11 starting with this release of Hazelcast Platform.
+
+:::
+
+## New Features
+
+- **[Connector for Kafka Connect source (BETA)](../develop-solutions/connector-guides/kafka-connect-connectors/kafka-connect-connectors.mdx)**: Import data from an external system directly into a Hazelcast data pipeline without the need of a Kafka cluster.
+- **[Connector for MongoDB (BETA)](../develop-solutions/connector-guides/databases/mongodb-connector.mdx)**: Read and write from/to MongoDB via this connector and execute SQL queries on Mongo collections directly from Hazelcast.
+- **[Partition-Aware SQL Client](https://github.com/hazelcast/hazelcast/blob/master/docs/design/sql/16-partition-aware-client.md)**: Send the SQL commands only to the members having the relevant data, which reduces the network hops and improves the query performances.
+- **[Data Connection Support via SQL](../develop-solutions/statements/create-data-connection.mdx)**: Data connections and mappings using them can be managed using SQL commands.
+
+## Breaking Changes
+
+- Renamed the `DataLinkFactory` interface as `DataConnection`. [\#24224](https://github.com/hazelcast/hazelcast/pull/24224)
+- Removed the `TO_ROW` function as it is obsolete, you can use `CAST (udtObj AS JSON)` instead. [\#23808](https://github.com/hazelcast/hazelcast/pull/23808)
+- SQL mappings for internal maps (`__sql.catalog` and `__jet.*`) cannot be created anymore. [\#24282](https://github.com/hazelcast/hazelcast/pull/24282)
+- Changed the default cloud coordinator URL from `coordinator.hazelcast.cloud` to `api.viridian.hazelcast.com`. The default configuration now connects to [Hazelcast Viridian Cloud](https://viridian.hazelcast.com/sign-in?utm_source=docs-website) instead of Hazelcast Cloud. If you want to continue accessing your Hazelcast Cloud clusters, you need to set the `hazelcast.client.cloud.url` property to [`https://coordinator.hazelcast.cloud`](https://coordinator.hazelcast.cloud) in your configuration. [\#23290](https://github.com/hazelcast/hazelcast/pull/23290)
+
+## Enhancements
+
+### Cloud
+
+- Hazelcast was sending requests to Kubernetes API when deploying an application with embedded Hazelcast and `service-dns` (DNS lookup mode) specified to a Kubernetes cluster. This was causing the requests to be unsuccessful and the application not to start. This mechanism has been improved by creating Kubernetes client only for the DNS lookup mode. [\#23883](https://github.com/hazelcast/hazelcast/pull/23883)
+- When advanced networking is enabled, the Kubernetes discovery plugin might have been discovering several endpoints (per each port) for each member's pod. The discovery plugin now matches only the private IP per endpoint, ignoring the port values. [\#23766](https://github.com/hazelcast/hazelcast/pull/23766)
+- Added support of [IMDSv2](https://aws.amazon.com/about-aws/whats-new/2022/10/amazon-machine-images-support-instance-metadata-service-version-2-default/#:~:text=Posted%20On%3A%20Oct%203%2C%202022,depth%20against%20unauthorized%20metadata%20access.) for Hazelcast's AWS Discovery plugin. [\#23545](https://github.com/hazelcast/hazelcast/pull/23545)
+- Added the support of discovering ECS and EC2 members on AWS. See [Deploying a Cluster on Amazon AWS](../deploy-clusters/public-cloud/deploying-on-aws.mdx). [\#22411](https://github.com/hazelcast/hazelcast/pull/22411)
+- <Badge type="enterprise"/> Enhanced the experience of using Hazelcast with persistence under Kubernetes by removing requirements for manual interventions. Previously, when there is a restart on such a cluster, the cluster states were needed to be changed manually. For some cases, this might have led to data loss. Now, the shutdown process is automated. See [Configuring Kubernetes](../deploy-clusters/kubernetes/kubernetes-auto-discovery.mdx#running-hazelcast-enterprise-with-persistence-under-kubernetes) for details. [\#21844](https://github.com/hazelcast/hazelcast/pull/21844)
+
+### Storage
+
+- Added support of generating suggested Data Definition Language (DDL) for a map with High-Density Memory Store and having no indexes. [\#24054](https://github.com/hazelcast/hazelcast/pull/24054)
+- Disk tier option of Tiered Storage is now disabled by default. [\#23747](https://github.com/hazelcast/hazelcast/pull/23747)
+
+:::note
+
+Tiered Storage feature is still in BETA stage.
+
+:::
+
+### Distribution
+
+- Hazelcast no longer depends on JRuby; the JRuby `ScriptFactory` dependency must be explicitly added to the application. [\#23355](https://github.com/hazelcast/hazelcast/pull/23355)
+- Added the Kafka Connect extension to the distribution. [\#23312](https://github.com/hazelcast/hazelcast/pull/23312)
+- Shaded dependencies for Hazelcast Platform have been combined in a dedicated package (`com.hazelcast.shaded`). [\#23124](https://github.com/hazelcast/hazelcast/pull/23124)
+
+### Networking
+
+- Added socket options for per-socket keep-alive configuration: `keep-count`, `keep-idle-seconds`, and `keep-interval-seconds`. You can set these options using either the advanced network configurations or Hazelcast system properties. See [Configuring TCP Keep-Alive](../configure-and-manage-clusters/partition-groups-and-networking/network-configuration.mdx#configuring-tcp-keep-alive). [\#23816](https://github.com/hazelcast/hazelcast/pull/23816), [\#24050](https://github.com/hazelcast/hazelcast/pull/24050)
+
+### SQL Engine
+
+- The `CREATE MAPPING` statement for Compact Serialization now supports nullable primitives. [\#24300](https://github.com/hazelcast/hazelcast/pull/24300)
+- Added support of fault tolerance and processing guarantees for stream-to-stream JOINs. [\#22979](https://github.com/hazelcast/hazelcast/pull/22979), [\#23462](https://github.com/hazelcast/hazelcast/pull/23462)
+- Implemented the `GET_DDL` function. [\#23595](https://github.com/hazelcast/hazelcast/pull/23595)
+- Implemented the `SHOW DATA CONNECTIONS` and `SHOW RESOURCES` statements to show the connections and resources created by the `CREATE CONNECTIONS` statement. [\#24028](https://github.com/hazelcast/hazelcast/pull/24028), [\#23844](https://github.com/hazelcast/hazelcast/pull/23844)
+- Added support of providing declarative partitioning strategies based on attributes. These attributes represent specific partition keys for a map. You can also configure this strategy dynamically. [\#23535](https://github.com/hazelcast/hazelcast/pull/23535), [\#23954](https://github.com/hazelcast/hazelcast/pull/23954)
+- Added `attributes` and `user_defined_types` tables to `information_schema`. [\#23267](https://github.com/hazelcast/hazelcast/pull/23267)
+- Made all streaming SQL jobs to be suspending on failure. [\#23178](https://github.com/hazelcast/hazelcast/pull/23178)
+- Implemented the `TO_CHAR` function which is capable of formatting dates, timestamps, and numbers. [\#22529](https://github.com/hazelcast/hazelcast/pull/22529)
+- Implemented `JSON=VARCHAR` comparison. [\#22746](https://github.com/hazelcast/hazelcast/pull/22746)
+- <Badge type="enterprise"/> Added support of configuring SQL Catalog persistence. [\#24383](https://github.com/hazelcast/hazelcast/pull/24383)
+
+### Jet Engine
+
+- Added support of modifying the job configuration of suspended jobs so that jobs can run without overflow failures by adding more resources. [\#23862](https://github.com/hazelcast/hazelcast/pull/23862)
+- Each Jet engine job was creating a client for connecting to the remote cluster, resulting in an excessive number of clients. This has been fixed by introducing a single data connection which can be reused for all job instances. [\#23472](https://github.com/hazelcast/hazelcast/pull/23472), [\#23849](https://github.com/hazelcast/hazelcast/pull/23849)
+- Added MongoDB read (source) and write (sink) processors. [\#23348](https://github.com/hazelcast/hazelcast/pull/23348)
+- Introduced `JobStatusListener` as an alternative to repeatedly retrieve a job status via the `Job.getStatus()` method. [\#23193](https://github.com/hazelcast/hazelcast/pull/23193)
+- Updated the [job API](https://docs.hazelcast.org/docs/5.3.5/javadoc/com/hazelcast/jet/Job.html#isUserCancelled--) to add the ability to distinguish the user-cancelled jobs from the failed ones. [\#22924](https://github.com/hazelcast/hazelcast/pull/22924)
+- Added `flock` to guard all the concurrent `pip` executions (upgrading `pip` and `protobuf` versions) in the Jet-to-Python script. [\#22829](https://github.com/hazelcast/hazelcast/pull/22829)
+
+### Security
+
+- <Badge type="enterprise"/> Added the TLS configuration property `keyMaterialDuration` which allows using a configurable timeout for caching keyStores and trustStores. See [TLS Configuration](../configure-and-manage-clusters/securing-a-cluster/tls-ssl/tls-configuration.mdx) for the details on how to configure this property. [\#23307](https://github.com/hazelcast/hazelcast/pull/23307)
+
+### Serialization
+
+- Hazelcast now allows serializing unsupported types via [zero-configuration](../develop-solutions/serialization/compact-serialization.mdx#using-compact-serialization-with-zero-configuration) provided that there is an explicit serializer implemented for the unsupported type. [\#23449](https://github.com/hazelcast/hazelcast/pull/23449)
+- Setting a generic record now fails if the value is not of the same type of generic record. [\#23522](https://github.com/hazelcast/hazelcast/pull/23522)
+- Introduced clearer exception messages for Generic MapStore, instead of `UndefinedErrorCodeException`. [\#22765](https://github.com/hazelcast/hazelcast/pull/22765)
+
+### WAN Replication
+
+- Added the REST endpoint `/hazelcast/rest/wan/sync/progress` which allows tracking the WAN synchronization progress. [\#22958](https://github.com/hazelcast/hazelcast/pull/22958)
+
+### Connectors
+
+- Added support of predicates in DML (Data Manipulation Language) in JDBC SQL connector. [\#24521](https://github.com/hazelcast/hazelcast/pull/24521)
+- Added the ability to provide host, username, password, and authDB when connecting to a MongoDB, as an alternative to specifying a connection string. [\#24238](https://github.com/hazelcast/hazelcast/pull/24238)
+- Added the ability to create a mapping with a MongoDB data connections that provides unbounded (streaming) results. [\#24356](https://github.com/hazelcast/hazelcast/pull/24356)
+- Added compound identifier for the `externalName()` method. [\#23772](https://github.com/hazelcast/hazelcast/pull/23772)
+- Added an option for the MongoDB source to perform reading with a single processor instance. Usually distributing the operations is a best practice; however, the `$function` aggregation method is not supported by the Atlas Serverless instances. In this case, this newly introduced option can be used to to query such instances in one processor. See the option's [documentation](https://github.com/hazelcast/hazelcast/blob/master/hazelcast-sql/src/main/java/com/hazelcast/jet/sql/impl/connector/mongodb/Options.java#L77). [\#24198](https://github.com/hazelcast/hazelcast/pull/24198/files)
+- Added additional permission checks to JDBC connectors (source and sink). The previous checks in some cases used only the `jdbc:` name in `ConnectorPermission`. The newly introduced checks get the JDBC URL from existing connection metadata and check if the permission is granted. If want to grant a `ConnectorPermission` to all JDBC URLs, you may use wildcards, e.g., `jdbc:*`. [\#23716](https://github.com/hazelcast/hazelcast/pull/23716)
+- Added `DataConnection` for Kafka consumers and producers, and for MongoDB [\#23886](https://github.com/hazelcast/hazelcast/pull/23886), [\#23837](https://github.com/hazelcast/hazelcast/pull/23837)
+- Jet engine's connector for MongoDB is now a part of the Hazelcast Platform distribution. [\#22565](https://github.com/hazelcast/hazelcast/pull/22565)
+- Introduced a way to control the initial partitions offsets when consuming records from Kafka via the Jet engine: by passing an additional topics configuration object that contains definitions of initial offsets for specific partitions. [\#21546](https://github.com/hazelcast/hazelcast/pull/21546)
+
+### Metrics
+
+- Added name of the job to the [job specific metrics](../reference/list-of-metrics.mdx#jet-engine-job-specific-metrics). [\#23744](https://github.com/hazelcast/hazelcast/pull/23744)
+- Added Tiered Storage compactor metrics to be exposed by the tools and interfaces such as Management Center, JMX, and diagnostics. [\#23643](https://github.com/hazelcast/hazelcast/pull/23643)
+- Added a new tag to the CP Subsystem metrics to display the client names for CP sessions on Hazelcast Management Center. [\#23387](https://github.com/hazelcast/hazelcast/pull/23387)
+- Added entry eviction and expiration counts to local map statistics and metrics. [\#23318](https://github.com/hazelcast/hazelcast/pull/23318)
+
+### Other Enhancements
+
+- *External Data Store* references have been renamed as \_Data Connections. This includes the renaming of the `external-data-store` configuration element as `data-connection`. [\#24224](https://github.com/hazelcast/hazelcast/pull/24224)
+- Added the ability to test whether the connection with a JDBC data link is valid (`testConnection` method for `JdbcDataConnection`). [\#23405](https://github.com/hazelcast/hazelcast/pull/23405)
+- Upgraded Apache Calcite to 1.32.0. [\#22849](https://github.com/hazelcast/hazelcast/pull/22849)
+- Added confirmation that Hazelcast Platform has been tested on x86\_64 and AArch64/ARM64 system architectures from Platform 5.3.
+
+## Fixes
+
+- <Badge type="enterprise"/> Fixed an issue where a member with persistence can be restarted even though the persistence file structure is not valid (e.g., the persistence directory does not contain the required files). \#5861
+- <Badge type="enterprise"/> Fixed an issue where multiple Hazelcast members were able to use the same base directory for Tiered Storage, causing crashes. \#5770
+- <Badge type="enterprise"/> Fixed an issue where the members were crashing while they are loading data into the NATIVE memory and using JSON or Kryo serialization. \#5384
+- <Badge type="enterprise"/> Fixed an issue where Jet job snapshots could be prematurely deleted after a restart of a cluster, having lossless restart enabled. [\#24576](https://github.com/hazelcast/hazelcast/pull/24576)
+- Fixed an issue where `map.clear()` was timing out when the map is configured with a generic map store. [\#24534](https://github.com/hazelcast/hazelcast/pull/24534)
+- Fixed an issue where the `SELECT COUNT(DISTINCT COLUMN)` query for maps was producing incorrect results. [\#24464](https://github.com/hazelcast/hazelcast/pull/24464)
+- Fixed an issue where there was a memory leak when Jet engine metrics are enabled. [\#23492](https://github.com/hazelcast/hazelcast/issues/23492)
+- Fixed an issue where the `DELETE FROM` or `UPDATE` functions, when used with fully-qualified names, was failing in a JDBC table. [\#23476](https://github.com/hazelcast/hazelcast/issues/23476)
+- Fixed an issue where SQL statements were failing when a class (to determine the fields of a key/value pair) no longer exists but the mapping is still valid. [\#24003](https://github.com/hazelcast/hazelcast/pull/24003)
+- Fixed an issue where `lastAccessTime` and `expirationTime` was not updated when an entry is accessed via `executeOnEntries`. [\#23926](https://github.com/hazelcast/hazelcast/pull/23926)
+- Fixed an issue where the Hazelcast configuration was modified by the Jet engine, if the wildcard configuration is used and Jet is enabled; meaning the configurations made by the user was not being reflected. [\#23848](https://github.com/hazelcast/hazelcast/pull/23848)
+- Fixed an issue where Hazelcast was failing to connect to a database when using Debezium, and the key of a record is null. [\#23768](https://github.com/hazelcast/hazelcast/pull/23768)
+- Fixed an issue where the `SELECT` query was returning duplicated rows for the mappings in AWS S3 bucket. [\#23723](https://github.com/hazelcast/hazelcast/pull/23723)
+- Enabled smart client connectivity to Hazelcast clusters deployed on Kubernetes, when advanced network configuration is enabled. [\#23707](https://github.com/hazelcast/hazelcast/pull/23707)
+- Fixed an issue where Debezium connector for MongoDB could not keep the connection after some time. [\#23689](https://github.com/hazelcast/hazelcast/pull/23689)
+- Enhanced the handling of errors coming from the Kubernetes API:
+
+  - Not detecting the intent correctly whenever the cluster is shutdown, so the cluster was not restarted successfully.
+  - Extensive amount of Kubernetes API calls were being logged when Automatic State Management feature is enabled.
+
+    [\#23538](https://github.com/hazelcast/hazelcast/pull/23538)
+- Fixed an issue where Hazelcast transaction manager was timing out before the timeout value set for the transaction commit. [\#23471](https://github.com/hazelcast/hazelcast/pull/23471)
+- Fixed an issue where the unordered `mapUsingServiceAsync` was losing items when there are no watermarks. [\#23271](https://github.com/hazelcast/hazelcast/pull/23271)
+- Fixed an issue where the state of a job was being corrupted if a member is forcefully shut down and the job is restarted from snapshot. [\#23201](https://github.com/hazelcast/hazelcast/pull/23201)
+- Fixed an issue where disabling metrics and JMX on a Hazelcast client was failing the members to start. [\#23360](https://github.com/hazelcast/hazelcast/pull/23360)
+- Fixed an issue where a JDBC related exception message was mentioning data source reference instead of the table name. [\#23122](https://github.com/hazelcast/hazelcast/pull/23122)
+- Fixed an issue where the beginning time of a job was being recorded after the job is submitted, which was causing a race condition. [\#23065](https://github.com/hazelcast/hazelcast/pull/23065)
+- Fixed an issue where the `hz-cli` shell script was failing to run in bash on Windows systems since it uses a colon-separated `CLASSPATH` where each path is a Linux-style path. However, Java on Windows expects a semicolon-separated `CLASSPATH` where each path is a Windows-style path. As a consequence, the `hz-cli` could not be used from bash on Windows. [\#22884](https://github.com/hazelcast/hazelcast/pull/22884)
+- Fixed a memory leak due to incomplete clean-up of backup replica sync operations. [\#22769](https://github.com/hazelcast/hazelcast/pull/22769)
+- Fixed an issue where a map was loading old values with map.set() when map store offloading is enabled. [\#22602](https://github.com/hazelcast/hazelcast/pull/22602)
+- Fixed an issue where a CP Subsystem object could be destroyed without a permission even the object has security and permission configurations enabled. [\#22475](https://github.com/hazelcast/hazelcast/pull/22475)
+- Fixed an issue where external data store configurations could not be added dynamically. [\#22450](https://github.com/hazelcast/hazelcast/pull/22450)
+- Fixed an issue where replication over WAN was failing on the source cluster members, when there are multiple batch publishers configured in a single WAN replication. [\#22437](https://github.com/hazelcast/hazelcast/pull/22437)
+- Fixed an issue where creating a JDBC SQL mapping without specifying the columns was causing the column order to be reversed compared to that in the remote source table (affecting statements such as `SELECT * FROM ...` and `INSERT INTO <mapping> VALUES`. [\#22410](https://github.com/hazelcast/hazelcast/pull/22410)
+- Fixed an issue where the map entries recovered from persistence were not expiring after their time-to-live durations. [\#22279](https://github.com/hazelcast/hazelcast/pull/22279)
+- Fixed an issue where Hazelcast members in a Spring Boot application could not establish a connection to each other when deployed in Kubernetes cluster with Istio Envoy Proxy enabled. [\#22256](https://github.com/hazelcast/hazelcast/issues/22256)
+- Eliminated the usage of `ForkJoinPool#commonPool` for internal Hazelcast code, improving stability and avoiding potential deadlocks. [\#18190](https://github.com/hazelcast/hazelcast/issues/18190)
+
+## Upcoming Deprecations
+
+- Hazelcast will end support for Elasticsearch 6 in the upcoming release (5.4). This will affect you if you are using the [version 6 module of the Elasticsearch connector](../develop-solutions/connector-guides/databases/elasticsearch-connector.mdx#installing-the-connector).
+
+## Contributors
+
+We would like to thank the contributors from our open source community who worked on this release:
+
+- [Ilia Vianni](https://github.com/ivyanni)
+- [Xitep](https://github.com/xitep)
+- [Agrawal Prakash](https://github.com/agrawalprakash)
+- [Denis Baltor](https://github.com/dbaltor)
+- [Debanjan Choudhury](https://github.com/debanjanc01)
+- [Nikhil Umraliya](https://github.com/Nikhil2508)
+- [Erdinc Taskin](https://github.com/erdinctaskin)
+- [Ture Bentzin](https://github.com/TureBentzin)
+- [John Blum](https://github.com/jxblum)
+- [Andrzej Nestoruk](https://github.com/anestoruk)

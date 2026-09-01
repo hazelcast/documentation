@@ -1,0 +1,503 @@
+---
+title: "Configuring Data Connections to External Systems"
+slug: /data-connections/data-connections-configuration
+unlisted: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import PartialDataConnectionsMongoDcConfiguration from '@site/hazelcast_versioned_docs/version-5.4/_partials/data-connections-mongo-dc-configuration.mdx';
+
+A data connection contains the metadata that Hazelcast needs to connect an external system. You can define a data connection in your members' configuration files, in the Java member API, or in SQL, and reuse the same connection details in the Pipeline API, SQL mappings, and MapStores.
+
+## Quickstart Configuration
+
+To configure a data connection to an external system, you must do the following:
+
+- Provide a unique identifier (`name`) for the data connection.
+- Choose the correct type of data connection for your external system.
+
+See examples for other [connection properties](#configuration-options) for each data connection type.
+
+### Example JDBC Data Connection {/* #JDBC */}
+
+This example configuration shows a data connection to a MySQL database using a JDBC connection.
+
+<Tabs groupId="java--sql--xml--yaml">
+<TabItem value="xml" label="XML">
+
+```xml conums
+<hazelcast>
+  <data-connection name="my-mysql-database">
+    <type>JDBC</type>
+    <properties>
+      <property name="jdbcUrl">jdbc:mysql://mysql.example.org:3306</property> <1>
+      <property name="user">my_user</property> <2>
+      <property name="password">my_password</property>
+    </properties>
+    <shared>true</shared>
+  </data-connection>
+</hazelcast>
+```
+
+<CodeCallouts>
+
+1. (Required) JDBC URL for establishing a connection to the MySQL database
+2. (Optional) Separate user credentials for authentication. Alternatively, you can include the user credentials in the JDBC URL.
+
+</CodeCallouts>
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml conums
+hazelcast:
+  data-connection:
+    my-mysql-database:
+      type: JDBC
+      properties:
+        jdbcUrl: jdbc:mysql://mysql.example.org:3306 <1>
+        user: my_user <2>
+        password: my_password
+      shared: true
+```
+
+<CodeCallouts>
+
+1. (Required) JDBC URL for establishing a connection to the MySQL database
+2. (Optional) Separate user credentials for authentication. Alternatively, you can include the user credentials in the JDBC URL.
+
+</CodeCallouts>
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java conums
+config
+  .addDataConnectionConfig(
+    new DataConnectionConfig("my-mysql-database")
+      .setType("JDBC")
+      .setProperty("jdbcUrl", "jdbc:mysql://mysql.example.org:3306") <1>
+      .setProperty("user", "my_user") <2>
+      .setProperty("password", "my_password")
+      .setShared(true)
+  );
+```
+
+<CodeCallouts>
+
+1. (Required) JDBC URL for establishing a connection to the MySQL database
+2. (Optional) Separate user credentials for authentication. Alternatively, you can include the user credentials in the JDBC URL.
+
+</CodeCallouts>
+
+</TabItem>
+<TabItem value="sql" label="SQL">
+
+Data connections created in SQL behave differently to those defined in members' configuration files or in Java.
+
+- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../operate-manage/configuring-for-fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name"/>.
+- You can create or drop a data connection using SQL commands. To update a data connection, you need to drop and then recreate it.
+
+```sql conums
+CREATE DATA CONNECTION my_mysql_database
+TYPE JDBC
+SHARED
+OPTIONS (
+    'jdbcUrl'='jdbc:mysql://mysql.example.org:3306', <1>
+    'user'='my_user', <2>
+    'password'='my_password');
+```
+
+<CodeCallouts>
+
+1. (Required) JDBC URL for establishing a connection to the MySQL database
+2. (Optional) Separate user credentials for authentication. Alternatively, you can include the user credentials in the JDBC URL.
+
+</CodeCallouts>
+
+</TabItem>
+</Tabs>
+
+For `shared` connections, the following optional properties allow you to control how the JDBC connection pool behaves. All other properties are passed directly to the JDBC driver.
+
+Default values are in milliseconds except for where indicated.
+
+<table>
+<colgroup>
+<col style={{width:'20%'}}/>
+<col style={{width:'20%'}}/>
+<col style={{width:'60%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th>Property</th>
+<th>Default Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`connectionTimeout`</td>
+<td>`30000` (30 seconds)</td>
+<td>Maximum time that Hazelcast waits for a connection from the pool when attempting to connect to the external system, typically a database. A SQL exception is thrown when the `connectionTimeout` is exceeded before a connection becomes available.</td>
+</tr>
+<tr>
+<td>`idleTimeout`</td>
+<td>`600000` (10 minutes)</td>
+<td>
+
+Maximum time that the JDBC connection component allows a connection to sit idle in the connection pool. After the `idleTimeout` is exceeded, there may be a time lag of up to +30 seconds before the connection is retired. Although, the average time lag is +15 seconds.
+
+- Only applies when `minimumIdle` is less than `maximumPoolSize`.
+- A value of `0` means that idle connections are never removed from the pool.
+- The minimum allowed value is `1000` ms (10 seconds)
+
+</td>
+</tr>
+<tr>
+<td>`keepaliveTime`</td>
+<td>`0` (Disabled)</td>
+<td>How frequently the JDBC connection component attempts to keep an idle connection alive. When the `keepaliveTime` is reached, the idle connection is removed from the connection pool, pinged, and then returned to the pool. The minimum allowed `keepaliveTime` value is 30000 ms (30 seconds), but a value in the range of minutes is recommended.</td>
+</tr>
+<tr>
+<td>`maxLifetime`</td>
+<td>`1800000` (30 minutes)</td>
+<td>
+
+Maximum lifetime of a connection in the pool. Only closed connections are removed. A value of `0` indicates an infinite lifetime, unless an `idleTimeout` value is set and reached. The minimum allowed `maxLifetime` value is 30000 ms (30 seconds).
+
+- We recommend setting this value, and it should be several seconds shorter than any database or infrastructure imposed connection time limit.
+
+</td>
+</tr>
+<tr>
+<td>`minimumIdle`</td>
+<td>Same as `maximumPoolSize`</td>
+<td>
+
+Minimum number of idle connections that the JDBC connection component attempts to maintain in the connection pool. When the number of idle connections dips below the `minimumIdle`, and the total connections are less than `maximumPoolSize`, the connection component attempts to add more connections.
+
+- For maximum performance and responsive we do not recommend setting this value, instead use a fixed size connection pool.
+
+</td>
+</tr>
+<tr>
+<td>`maximumPoolSize`</td>
+<td>`10` (connections)</td>
+<td>Maximum size of the connection pool, which includes both idle and active connections. The `maximumPoolSize` sets the maximum number of connections to the external system. When the pool reaches this size, and no more idle connections are available, calls to get a new connection are blocked for up to the `connectionTimeout` before timing out.</td>
+</tr>
+</tbody>
+</table>
+
+### Example Kafka Data Connection {/* #kafka */}
+
+This example shows the configuration of a data connection to a single Kafka broker.
+
+<Tabs groupId="java--sql--xml--yaml">
+<TabItem value="xml" label="XML">
+
+```xml conums
+<hazelcast>
+  <data-connection name="my-kafka">
+    <type>Kafka</type>
+    <properties>
+      <property name="bootstrap.servers">127.0.0.1:9092</property> <1>
+      <property name="key.deserializer">org.apache.kafka.common.serialization.IntegerDeserializer</property> <2>
+      <property name="key.serializer">org.apache.kafka.common.serialization.IntegerSerializer</property>
+      <property name="value.serializer">org.apache.kafka.common.serialization.StringSerializer</property>
+      <property name="value.deserializer">org.apache.kafka.common.serialization.StringDeserializer</property>
+      <property name="auto.offset.reset">earliest</property> <3>
+    </properties>
+    <shared>true</shared>
+  </data-connection>
+</hazelcast>
+```
+
+<CodeCallouts>
+
+1. (Required) Address of the Kafka consumer/producer
+2. (Optional) Automatic serializers/deserializers for keys and values in Kafka messages
+3. (Optional) Consumer behavior if the connection is interrupted
+
+</CodeCallouts>
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml conums
+hazelcast:
+  data-connection:
+    my-kafka:
+      type: Kafka
+      properties:
+        bootstrap.servers: 127.0.0.1:9092 <1>
+        key.deserializer: org.apache.kafka.common.serialization.IntegerDeserialize <2>
+        key.serializer: org.apache.kafka.common.serialization.IntegerSerializer
+        value.serializer: org.apache.kafka.common.serialization.StringSerializer
+        auto.offset.reset: earliest <3>
+      shared: true
+```
+
+<CodeCallouts>
+
+1. (Required) Address of the Kafka consumer/producer
+2. (Optional) Automatic serializers/deserializers for keys and values in Kafka messages
+3. (Optional) Consumer behavior if the connection is interrupted
+
+</CodeCallouts>
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java conums
+config
+  .addDataConnectionConfig(
+    new DataConnectionConfig("my-kafka")
+      .setType("Kafka")
+      .setProperty("bootstrap.servers", "127.0.0.1:9092") <1>
+      .setProperty("key.deserializer", "org.apache.kafka.common.serialization.IntegerDeserialize") <2>
+      .setProperty("key.serializer", "org.apache.kafka.common.serialization.IntegerSerializer")
+      .setProperty("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+      .setProperty("auto.offset.reset", "earliest") <3>
+      .setShared(true)
+  );
+```
+
+<CodeCallouts>
+
+1. (Required) Address of the Kafka consumer/producer
+2. (Optional) Automatic serializers/deserializers for keys and values in Kafka messages
+3. (Optional) Consumer behavior if the connection is interrupted
+
+</CodeCallouts>
+
+</TabItem>
+<TabItem value="sql" label="SQL">
+
+Data connections created in SQL behave differently to those defined in members' configuration files or in Java.
+
+- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../operate-manage/configuring-for-fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name"/>.
+- You can create or drop a data connection using SQL commands. To update a data connection, you need to drop and then recreate it.
+
+```sql conums
+CREATE DATA CONNECTION my_kafka
+TYPE Kafka
+SHARED
+OPTIONS (
+    'bootstrap.servers'='127.0.0.1:9092', <1>
+    'key.deserializer'='org.apache.kafka.common.serialization.IntegerDeserialize', <2>
+    'key.serializer'='org.apache.kafka.common.serialization.IntegerSerializer',
+    'value.serializer'='org.apache.kafka.common.serialization.StringSerializer',
+    'auto.offset.reset'='earliest'); <3>
+```
+
+<CodeCallouts>
+
+1. (Required) Address of the Kafka consumer/producer
+2. (Optional) Automatic serializers/deserializers for keys and values in Kafka messages
+3. (Optional) Consumer behavior if the connection is interrupted
+
+</CodeCallouts>
+
+</TabItem>
+</Tabs>
+
+<PartialDataConnectionsMongoDcConfiguration/>
+
+### Example Hazelcast Data Connection {/* #Hazelcast */}
+
+This example configuration shows a data connection to a remote Hazelcast cluster. You can use a Hazelcast data connection from the Pipeline API in <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/jet/pipeline/Sources.html#remoteMapJournal-java.lang.String-com.hazelcast.jet.pipeline.DataConnectionRef-com.hazelcast.jet.pipeline.JournalInitialPosition-com.hazelcast.function.FunctionEx-com.hazelcast.function.PredicateEx-" text="Sources#remoteMapJournal"/> source.
+
+:::note
+
+Currently, no SQL connector is available for Hazelcast data connections. This means that although you can [create a data connection in SQL](../develop-build/sql/statements/create-data-connection.mdx), you cannot yet use it in SQL, for example, in a mapping statement.
+
+:::
+
+<Tabs groupId="java--sql--xml--yaml">
+<TabItem value="xml" label="XML">
+
+```xml conums vars
+<hazelcast>
+  <data-connection name="my-remote-hazelcast">
+    <type>Hz</type>
+    <properties>
+      <property name="client_xml"> <1>
+        <![CDATA[ <2>
+          <?xml version="1.0" encoding="UTF-8"?>
+          <hazelcast-client xmlns="http://www.hazelcast.com/schema/client-config"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://www.hazelcast.com/schema/client-config
+              http://www.hazelcast.com/schema/client-config/hazelcast-client-config-{minor-version}.xsd">
+
+            <cluster-name>dev</cluster-name>
+              <network>
+                <cluster-members>
+                  <address>172.17.0.2:5701</address>
+                </cluster-members>
+              </network>
+          </hazelcast-client>
+        ]]>
+      </property>
+    </properties>
+    <shared>true</shared>
+  </data-connection>
+</hazelcast>
+```
+
+<CodeCallouts>
+
+1. (Required) Specify exactly one of `client_xml`, `client_yml`, `client_xml_path`, `client_yml_path`.
+2. Hazelcast client configuration to connect to a remote cluster. See [Configuring Java Client](../clients-apis/java.mdx#configuring-java-client). You can specify an external file with the `client_xml_path` property instead of using an embedded configuration file.
+
+</CodeCallouts>
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml conums
+hazelcast:
+  data-connection:
+    my-remote-hazelcast:
+      type: Hz
+      properties:
+        client_yml: | <1>
+          hazelcast-client: <2>
+            cluster-name: dev
+            network:
+              cluster-members:
+                - 172.17.0.2:5701
+      shared: true
+```
+
+<CodeCallouts>
+
+1. (Required) Specify exactly one of `client_xml`, `client_yml`, `client_xml_path`, `client_yml_path`.
+2. Hazelcast client configuration to connect to a remote cluster. See [Configuring Java Client](../clients-apis/java.mdx#configuring-java-client). You can specify an external file with the `client_yml_path` property instead of using an embedded configuration file.
+
+</CodeCallouts>
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java conums vars
+config
+  .addDataConnectionConfig(
+    new DataConnectionConfig()
+      .setName("my-remote-hazelcast")
+      .setType("Hz")
+      .setProperty(
+              "client_xml", <1>
+              "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + <2>
+              "<hazelcast-client xmlns=\"http://www.hazelcast.com/schema/client-config\"" +
+              "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
+              "      xsi:schemaLocation=\"http://www.hazelcast.com/schema/client-config" +
+              "      http://www.hazelcast.com/schema/client-config/hazelcast-client-config-{minor-version}.xsd\">" +
+              "    " +
+              "    <cluster-name>dev</cluster-name>" +
+              "    <network>" +
+              "        <cluster-members>" +
+              "            <address>172.17.0.2:5701</address>" +
+              "        </cluster-members>" +
+              "    </network>" +
+              "</hazelcast-client>")
+      .setShared(true)
+  );
+```
+
+<CodeCallouts>
+
+1. (Required) Specify exactly one of `client_xml`, `client_yml`, `client_xml_path`, `client_yml_path`.
+2. Hazelcast client configuration to connect to a remote cluster. See [Configuring Java Client](../clients-apis/java.mdx#configuring-java-client). You can specify an external file with the `client_xml_path` or `client_yml_path` property instead of using an embedded configuration file.
+
+</CodeCallouts>
+
+</TabItem>
+<TabItem value="sql" label="SQL">
+
+Data connections created in SQL behave differently to those defined in members' configuration files or in Java.
+
+- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../operate-manage/configuring-for-fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name"/>.
+- You can create or drop a data connection using SQL commands. To update a data connection, you need to drop and then recreate it.
+
+```sql conums vars
+CREATE DATA CONNECTION "my-hazelcast-cluster"
+TYPE Hz
+SHARED
+OPTIONS (
+    'client_xml'= <1>
+    '<?xml version="1.0" encoding="UTF-8"?> <2>
+     <hazelcast-client xmlns="http://www.hazelcast.com/schema/client-config"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.hazelcast.com/schema/client-config
+         http://www.hazelcast.com/schema/client-config/hazelcast-client-config-{minor-version}.xsd">
+
+       <cluster-name>dev</cluster-name>
+       <network>
+         <cluster-members>
+	   <address>172.17.0.2:5701</address>
+         </cluster-members>
+       </network>
+      </hazelcast-client>'
+);
+```
+
+<CodeCallouts>
+
+1. (Required) Specify exactly one of `client_xml`, `client_yml`, `client_xml_path`, `client_yml_path`.
+2. Hazelcast client configuration to connect to a remote cluster. See [Configuring Java Client](../clients-apis/java.mdx#configuring-java-client). You can specify an external file with the `client_xml_path` or `client_yml_path` property instead of using an embedded configuration file.
+
+</CodeCallouts>
+
+</TabItem>
+</Tabs>
+
+## Configuration Options for Data Connections {/* #configuration-options */}
+
+Data connections have the following configuration options.
+
+:::note
+
+If you are using Java to configure the Mapstore, use the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/DataConnectionConfig.html" text="DataConnectionConfig object"/>.
+
+:::
+
+| Option | Description |
+| --- | --- |
+| Default | Example |
+| `name` (required) | The unique identifier for the data connection. |
+| `type` (required) | The type of data connection required for your external system. The following types of connection are supported: `JDBC`, `Kafka`, `Mongo`, `Hz` (case-insensitive). |
+| `properties` | Any configuration properties that the data connection expects to receive. |
+| `shared` | Whether the data connection instance is reusable in different MapStores, jobs, and SQL mappings. This behavior depends on the implementation of the specific data connection. The default value is `true`. See the implementation of each data connection type for full details of reusability: <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/jet/kafka/KafkaDataConnection.html" text="KafkaDataConnection"/>, <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/jet/mongodb/dataconnection/MongoDataConnection.html" text="MongoDataConnection"/>, <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/dataconnection/HazelcastDataConnection.html" text="HazelcastDataConnection"/>. |
+
+:::tip
+
+You can use the [EncryptionReplacer class](../operate-manage/configuration/static-configuration/configuring-declaratively.mdx#encryptionreplacer) to hide sensitive data in configuration files.
+
+:::
+
+## Types of Data Connection {/* #connectors */}
+
+The following types of data connection are available for use.
+
+| Type | Description | Properties |
+| --- | --- | --- |
+| `JDBC` | Connect to external systems that support JDBC, including MySQL and PostgreSQL. | See [example](#JDBC). If there is more than one JDBC connection used on a single member from a single job, they will share the same data store and connection pool. |
+| `Kafka` | Connect to a Kafka data source. | See [example](#kafka) and [Create a Kafka Mapping](../develop-build/sql/sql-over-kafka/mapping-to-kafka.mdx#creating-a-kafka-mapping). |
+| `Mongo` | Connect to a MongoDB database. | See [example](#Mongo). |
+| `Hz` | Connect to a remote Hazelcast cluster. | See [example](#Hazelcast). |
+
+:::note
+
+If you use the slim distribution of Hazelcast with a built-in data connector, make sure that you have an appropriate driver on your cluster's classpath.
+
+:::
+
+## Next Steps
+
+Use your configured connection:
+
+- Build a data pipeline with the [Pipeline API](../integrate/database-connectors/jdbc-connector.mdx).
+- Query your data connection, using a [SQL mapping](../develop-build/sql/sql-over-jdbc/mapping-to-jdbc.mdx).
+- Build a cache with a [MapStore](../develop-build/working-with-external-data/configuring-a-generic-mapstore.mdx).

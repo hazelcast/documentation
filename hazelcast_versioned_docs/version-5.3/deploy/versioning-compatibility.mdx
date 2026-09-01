@@ -1,0 +1,342 @@
+---
+title: "Supported Versions and Compatibilities"
+slug: /deploy/versioning-compatibility
+unlisted: true
+---
+
+This section provides the supported versions and interoperability of Hazelcast Platform and its modules.
+
+## Semantic Versioning
+
+Hazelcast Platform uses [semantic versioning](https://semver.org/) where versions appear in the following format:
+
+`major.minor.patch`
+
+For example, in Platform version 5.2.1, **5** is the major version, **2** is the minor version, and **1** is the patch version.
+
+Semantic versioning separates new releases into three types:
+
+- Major: This version may include breaking changes.
+- Minor:This version includes backward-compatible functionality.
+- Patch: This version includes backward-compatible bug fixes.
+
+### API Compatibility Exceptions
+
+According to semantic versioning, a Platform job written using the Pipeline API in a previous minor version should compile and have the same behavior in later minor versions.
+
+However, note the following exceptions:
+
+- Classes in the `com.hazelcast.jet.core` package provide only patch-level compatibility guarantees.
+- Types and methods annotated with `@EvolvingApi` and `@Beta` provide only patch-level compatibility guarantee. These are typically new features where the API is subject to further changes.
+- Types and methods annotated with `@PrivateApi`, and classes in the `impl` and `internal` packages do not provide any compatibility guarantees between versions. These APIs are not meant for public use.
+
+## Supported Architectures
+
+Hazelcast Platform has been tested on the following system architectures.
+
+| Architecture | Supported |
+| --- | --- |
+| x86\_64 | From Platform 5.3 |
+| AArch64/ARM64 | From Platform 5.3 |
+
+## Supported Operating Systems
+
+Hazelcast Platform has been tested against the following operating systems.
+
+| OS | Platform <Variable name="full-version"/> |
+| --- | --- |
+| RHEL 7, 8 | ✓ |
+| Fedora 17, 25 | ✓ |
+| Windows 10, 11<sup><Anchor id="_footnote_dev"/><Anchor id="_footnoteref_1"/>[<a href="#_footnotedef_1">1</a>]</sup> | Supported for development |
+| Windows Server 2016, 2019<sup>[<a href="#_footnotedef_1">1</a>]</sup> | Supported for development |
+| macOS<sup>[<a href="#_footnotedef_1">1</a>]</sup> | Supported for development |
+| Amazon Linux | ✓ |
+| Debian | ✓ |
+| Ubuntu | ✓ |
+
+## Supported Virtualization Environments
+
+| Environment | Platform <Variable name="full-version"/> |
+| --- | --- |
+| VMWare 6.x | ✓ |
+| Docker 18, 19 | ✓ |
+| Kubernetes (1.4.x or newer) | ✓ |
+| RedHat OpenShift | ✓ |
+
+## Supported Public Cloud Environments
+
+| Environment | Platform <Variable name="full-version"/> |
+| --- | --- |
+| AWS | ✓ |
+| GCP | ✓ |
+| Azure | ✓ |
+| RedHat OpenShift | ✓ |
+
+## Supported Java Virtual Machines
+
+Hazelcast Platform runs on Java, and supports the following JDKs. It may run on other JDK distributions which are not listed here.
+
+| JDK | Platform <Variable name="full-version"/> |
+| --- | --- |
+| Amazon Corretto 17 | ✓ |
+| Amazon Corretto 11 | ✓ |
+| Azul Core (formerly Zulu) 17 | ✓ |
+| Azul Core (formerly Zulu) 11 | ✓ |
+| Azul Zing 17 | ✓ |
+| Azul Zing 11 | ✓ |
+| Oracle 17 | ✓ |
+| Oracle 11 | ✓ |
+| Red Hat build of OpenJDK 17 | ✓ |
+| Red Hat build of OpenJDK 11 | ✓ |
+| Microsoft Build of OpenJDK 17 | ✓ |
+| Microsoft Build of OpenJDK 11 | ✓ |
+| IBM Semeru Runtime (OpenJ9) 17 | ✓ |
+| IBM Semeru Runtime (OpenJ9) 11 | ✓ |
+
+:::warning
+
+Hazelcast no longer supports JDK 8 as runtime for Hazelcast 5.3.x and later releases.
+
+:::
+
+## Compatibility Guarantees
+
+### Cluster Members
+
+Hazelcast Platform members operating on the same major and minor Platform version are always compatible, regardless of the patch version.
+
+Each minor version is always compatible with the previous minor version.
+
+### Management Center
+
+All 5.x.y versions of Management Center are compatible with Hazelcast Platform 5.x.y versions. But, it's recommended to use the same version of Management Center as the Hazelcast Platform version in your cluster. For example, Management Center 5.1.1 may not support all the features of Hazelcast Platform 5.2, or vice versa.
+
+### Job States
+
+Hazelcast Platform job states are only backward-compatible across the same minor versions. A newer patch version is able to understand the job states only from the previous patch versions of the same minor version.
+
+If you have a running job, using the rolling upgrades feature, you are able to upgrade the cluster to a newer patch version without losing the state of a running job. See [Rolling Upgrades](../configure-and-manage-clusters/maintaining-a-cluster/rolling-upgrades.mdx). Also note that jobs must be resubmitted after a rolling upgrade to a newer minor version since they don't run during upgrades. See [Submitting Jobs](../develop-solutions/building-data-pipelines/submitting-jobs.mdx).
+
+Hazelcast clients that submit jobs (currently only Java clients) are compatible with members running on the same minor version. This means that a client using an older or newer patch version is able to connect and submit a job to a cluster that's running a different patch version.
+
+### Command Line Tools
+
+Hazelcast [CLI](../configure-and-manage-clusters/maintaining-a-cluster/cluster-utilities.mdx#hazelcast-command-line-tool) and [cluster admin](../configure-and-manage-clusters/maintaining-a-cluster/cluster-utilities.mdx#using-the-hz-cluster-admin-script) tools are backwards-compatible across the same minor versions.
+
+### Configuration Files
+
+XML and YAML configuration files provided with the Hazelcast Platform package are backward-compatible across the same minor versions. After upgrading a cluster to a new minor version, the configuration files for the previous version can be used without any modification.
+
+### Names of Metrics
+
+Hazelcast Platform sends metrics to Management Center and other means such as JMX. The names of these metrics may change across minor versions but not between patch versions.
+
+### Client Version Compatibilities
+
+Hazelcast Platform has clients implemented in the following languages:
+
+- Java
+- C++
+- .NET
+- Python
+- Go
+- Node.js
+- Hazelcast Command Line Client (CLC)
+
+The following table lists the compatibilities between client and Platform/IMDG versions.
+
+<table>
+<colgroup>
+<col style={{width:'33.3333%'}}/>
+<col style={{width:'66.6667%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th>Client</th>
+<th>Platform and/or IMDG</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Java 5.x.y</td>
+<td>
+
+- Platform 5.x.y
+- IMDG 4.x.y
+
+</td>
+</tr>
+<tr>
+<td>Java 4.x.y</td>
+<td>
+
+- Platform 5.x.y
+- IMDG 4.x.y
+
+</td>
+</tr>
+<tr>
+<td>Java 3.6.x through 3.12.x</td>
+<td>
+
+- IMDG 3.6.x through 3.12.x
+
+</td>
+</tr>
+<tr>
+<td>C++ 5.x.y</td>
+<td>
+
+- Platform 5.x.y
+- IMDG 4.x.y
+
+</td>
+</tr>
+<tr>
+<td>C++ 4.x.y</td>
+<td>
+
+- Platform 5.x.y
+- IMDG 4.x.y
+
+</td>
+</tr>
+<tr>
+<td>C++ 3.6.x through 3.12.x</td>
+<td>
+
+- IMDG 3.6.x through 3.12.x
+
+</td>
+</tr>
+<tr>
+<td>.NET 5.x.y</td>
+<td>
+
+- Platform 5.x.y
+- IMDG 4.x.y
+
+</td>
+</tr>
+<tr>
+<td>.NET 4.x.y</td>
+<td>
+
+- Platform 5.x.y
+- IMDG 4.x.y
+
+</td>
+</tr>
+<tr>
+<td>.NET 3.6.x through 3.12.x</td>
+<td>
+
+- IMDG 3.6.x through 3.12.x
+
+</td>
+</tr>
+<tr>
+<td>Python 5.x.y</td>
+<td>
+
+- Platform 5.x.y
+- IMDG 4.x.y
+
+</td>
+</tr>
+<tr>
+<td>Python 4.x.y</td>
+<td>
+
+- Platform 5.x.y
+- IMDG 4.x.y
+
+</td>
+</tr>
+<tr>
+<td>Python 3.6.x through 3.12.x</td>
+<td>
+
+- IMDG 3.6.x through 3.12.x
+
+</td>
+</tr>
+<tr>
+<td>Node.js 5.x.y</td>
+<td>
+
+- Platform 5.x.y
+- IMDG 4.x.y
+
+</td>
+</tr>
+<tr>
+<td>Node.js 4.x.y</td>
+<td>
+
+- Platform 5.x.y
+- IMDG 4.x.y
+
+</td>
+</tr>
+<tr>
+<td>Node.js 3.6.x through 3.12.x</td>
+<td>
+
+- IMDG 3.6.x through 3.12.x
+
+</td>
+</tr>
+<tr>
+<td>Go 1.x.y</td>
+<td>
+
+- Platform 5.x.y
+- IMDG 4.x.y
+
+</td>
+</tr>
+<tr>
+<td>Go 0.x.y</td>
+<td>
+
+- Platform 5.x.y
+- IMDG 4.x.y
+
+</td>
+</tr>
+<tr>
+<td>CLC 5.x.y</td>
+<td>
+
+- Platform 5.x.y
+- IMDG 4.x.y
+
+</td>
+</tr>
+<tr>
+<td>CLC 1.x.y</td>
+<td>
+
+- Platform 5.x.y
+- IMDG 4.x.y
+
+</td>
+</tr>
+<tr>
+<td>CLC 0.x.y</td>
+<td>
+
+- Platform 5.x.y
+- IMDG 4.x.y
+
+</td>
+</tr>
+</tbody>
+</table>
+
+<Anchor id="footnotes"/>
+
+<hr />
+
+<Anchor id="_footnotedef_1"/>[1](#_footnoteref_1). Suitable for the development of applications (or Hazelcast itself), *but not* for production. Some features are not available or are not supported.

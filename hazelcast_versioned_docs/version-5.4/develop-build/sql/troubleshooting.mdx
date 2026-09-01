@@ -1,0 +1,56 @@
+---
+title: "Troubleshooting SQL"
+sidebar_label: "Troubleshooting"
+sidebar_position: 13
+slug: /sql/troubleshooting
+---
+
+This topic provides solutions to some common errors in SQL queries.
+
+## Mapping Errors
+
+This section provides troubleshooting for the `CREATE MAPPING` statement.
+
+### Reading Parquet files is not supported in local filesystem mode
+
+You cannot create mappings to local files in the parquet format.
+
+To read from local files in the parquet format, you can use the Java [`FileSourceBuilder` API](https://docs.hazelcast.org/docs/5.1/javadoc/com/hazelcast/jet/pipeline/file/FileSourceBuilder.html) with the `useHadoopforLocalFiles` method. See the [unified file connector documentation](../../integrate/file-connectors/file-connector.mdx#usehadoopforlocalfiles) for examples.
+
+### Could not find ReadFileFnProvider
+
+Hazelcast cannot read the file format that you're trying to map to. This error could be thrown because you are using the slim distribution of Hazelcast Platform, which doesn't come with the ability to read the file format by default.
+
+Use the [full distribution](../../get-started/editions.mdx) of Hazelcast Platform or find the missing module and add it to your cluster members' classpaths.
+
+### No suitable FileSourceFactory found
+
+Hazelcast cannot read from the specified file system.
+
+To read from some file systems, you must add additional modules to your cluster members' classpaths. See [Supported file systems](./sql-over-file-systems/mapping-to-a-file-system.mdx#supported-file-systems).
+
+### java.net.UnknownHostException: path {/* #java-net-unknownhostexception-path */}
+
+Your mapping contains an invalid URL.
+
+Make sure that all your URLs are resolvable.
+
+## JSON Errors
+
+This section provides troubleshooting for using JSON in SQL.
+
+### JSON\_QUERY evaluated to multiple values
+
+The JsonPath is matching multiple values, which results in invalid JSON.
+
+If the JsonPath expression can match multiple values in some edge cases, add a wrapper, such as the [`WITH CONDITIONAL ARRAY WRAPPER`](./functions-and-operators.mdx#json_query) clause, to wrap the matches in an array.
+
+### jsonpath.InvalidPathException {/* #jsonpath-invalidpathexception */}
+
+The JsonPath in your query is invalid.
+
+Check the [supported JsonPath syntax](./working-with-json.mdx#jsonpath-syntax).
+
+## Out Of Memory Errors
+
+If you find that your queries lead to out of memory exceptions (OOME), consider decreasing the value of the Jet engine's [maxProcessorAccumulatedRecords option](../../operate-manage/jet-configuration.mdx#list-of-configuration-options), or reduce the number of concurrently running queries.

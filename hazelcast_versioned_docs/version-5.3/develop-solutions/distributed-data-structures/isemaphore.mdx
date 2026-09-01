@@ -1,0 +1,79 @@
+---
+title: "ISemaphore"
+sidebar_position: 14
+slug: /data-structures/isemaphore
+---
+
+Hazelcast `ISemaphore` is the distributed implementation of `java.util.concurrent.Semaphore`.
+
+:::warning
+
+This data structure is a member of the CP Subsystem. By default, the CP Subsystem is in [unsafe mode](../../configure-and-manage-clusters/cp-subsystem/cp-subsystem.mdx#unsafe-mode), which provides weaker consistency guarantees. You can [enable the CP Subsystem](../../configure-and-manage-clusters/cp-subsystem/configuration.mdx#quickstart) in the member configuration.
+
+:::
+
+## Controlling Thread Counts with Permits
+
+Semaphores offer **permit**s to control the thread counts when performing concurrent activities. To execute a concurrent activity, a thread grants a permit or waits until a permit becomes available. When the execution is completed, the permit is released.
+
+:::tip
+
+`ISemaphore` with a single permit may be considered as a lock. Unlike the locks, when semaphores are used, any thread can release the permit depending on the configuration, and semaphores can have multiple permits. For more information, see the [Semaphore Configuration section](../../configure-and-manage-clusters/cp-subsystem/configuration.mdx#semaphore-configuration).
+
+:::
+
+:::warning
+
+Hazelcast `ISemaphore` does not support fairness at all times. There are some edge cases where the fairness is not honored, e.g., when the permit becomes available at the time when an internal timeout occurs.
+
+:::
+
+When a permit is acquired on `ISemaphore`:
+
+- If there are permits, the number of permits in the semaphore is decreased by one and the calling thread performs its activity. If there is contention, the longest waiting thread acquires the permit before all other threads.
+- If no permits are available, the calling thread blocks until a permit becomes available. When a timeout happens during this block, the thread is interrupted.
+
+## Example Semaphore Code
+
+The following example code uses an `IAtomicLong` resource 1000 times, increments the resource when a thread starts to use it and decrements it when the thread completes.
+
+```java
+        HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance();
+        ISemaphore semaphore = hazelcastInstance.getCPSubsystem().getSemaphore( "semaphore" );
+        IAtomicLong resource = hazelcastInstance.getCPSubsystem().getAtomicLong( "resource" );
+        semaphore.init(4);
+        for ( int k = 0 ; k < 1000 ; k++ ) {
+            System.out.println( "At iteration: " + k + ", Active Threads: " + resource.get() );
+            semaphore.acquire();
+            try {
+                resource.incrementAndGet();
+                Thread.sleep( 1000 );
+                resource.decrementAndGet();
+            } finally {
+                semaphore.release();
+            }
+        }
+        System.out.println("Finished");
+        semaphore.destroy();
+        resource.destroy();
+```
+
+If you execute the above code 5 times, the following output appears:
+
+`At iteration: 0, Active Threads: 1`
+
+`At iteration: 1, Active Threads: 2`
+
+`At iteration: 2, Active Threads: 3`
+
+`At iteration: 3, Active Threads: 3`
+
+`At iteration: 4, Active Threads: 3`
+
+As you can see, the maximum count of concurrent threads is equal or smaller than three. If you remove the semaphore acquire/release statements in the above example, you will see that there is no limitation on the number of concurrent usages.
+
+:::warning
+
+`ISemaphore`s are not automatically removed. If a semaphore is not used anymore, Hazelcast does not automatically perform garbage collection in it. This can lead to an `OutOfMemoryError`. If you create `ISemaphore`s on the fly, make sure they are destroyed. See [Destroying Objects](./distributed-data-structures.mdx#destroying-objects) and [CP Data Structures](./distributed-data-structures.mdx#cp-data).
+
+:::

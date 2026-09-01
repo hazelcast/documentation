@@ -113,6 +113,76 @@ function parseNav (adoc) {
   return roots
 }
 
+// A live nav include: `include::[<module>:]partial$<path>[]` on its own line.
+// Anchored at line start so a COMMENTED include (`// include::…`, which is how
+// every management-center nav disables its module partials) is left alone —
+// Asciidoctor does not process it, and neither do we.
+const NAV_INCLUDE_RE = /^[ \t]*include::(?:([a-z0-9_-]+):)?partial\$([^[\]]+)\[\s*\]\s*$/
+// Any other uncommented include directive in a nav file — a form this resolver
+// does not understand. Never silently dropped: see resolveNavIncludes.
+const UNKNOWN_INCLUDE_RE = /^[ \t]*include::/
+
+// Resolve a nav.adoc's `include::<module>:partial$nav.adoc[]` lines into the text
+// they pull in, SPLICED IN PLACE — which is exactly what Asciidoctor does, and the
+// only faithful reading: an included partial's own bullet depths are interpreted
+// where the include sat, so position determines the whole subtree's placement.
+//
+// Platform's nav architecture changed at 5.5: 5.5-and-newer ROOT/nav.adoc is one
+// flat file, while 5.4 (22 includes) and 5.3 (27) are skeletons that pull in a
+// per-module partial each. Without this, parseNav skips the include lines and
+// those versions lose most of their sidebar tree — 235 of 398 pages at 5.4 and
+// 333 of 390 at 5.3 land at the component root as `unlisted`. A flat nav has no
+// include lines, so this is a no-op on every version that already worked (the
+// orphan gate has always expanded includes via the Antora catalog; this is the
+// converter catching up to it, and to Antora).
+//
+// `read(module, relPath)` returns the partial's text, or null/undefined if there
+// is no such file; `module` is '' for a partial in the nav's own module.
+//
+// Fails closed in both directions — an unresolvable partial and an include form
+// this does not recognise BOTH throw. A nav include that silently resolves to
+// nothing is invisible: it costs a whole subtree of pages their placement while
+// the build stays green, which is the failure this function exists to end.
+//
+// Recursion is bounded and cycle-guarded. Neither is exercised by any live
+// version (no Platform nav partial includes another), but a nav include graph is
+// data from a frozen source repo, and a self-referential partial should raise a
+// legible error rather than blow the stack.
+function resolveNavIncludes (adoc, read, seen = [], depth = 0) {
+  if (adoc == null) return adoc
+  if (depth > MAX_NAV_INCLUDE_DEPTH) {
+    throw new Error(`nav includes nested more than ${MAX_NAV_INCLUDE_DEPTH} deep (${seen.join(' -> ')}); cyclic or pathological nav`)
+  }
+  const out = []
+  for (const line of adoc.split('\n')) {
+    const m = line.match(NAV_INCLUDE_RE)
+    if (!m) {
+      if (UNKNOWN_INCLUDE_RE.test(line)) {
+        throw new Error(`unsupported include directive in nav.adoc: ${line.trim()}`)
+      }
+      out.push(line)
+      continue
+    }
+    const [, module = '', relPath] = m
+    const coord = `${module || '<self>'}:partial$${relPath}`
+    if (seen.includes(coord)) {
+      throw new Error(`nav include cycle: ${[...seen, coord].join(' -> ')}`)
+    }
+    const text = read(module, relPath)
+    if (text == null) {
+      throw new Error(`nav include "${coord}" could not be resolved to a partial`)
+    }
+    // Drop the partial's trailing newline: the include occupies ONE line, so
+    // keeping it would inject a blank line the source does not have. parseNav
+    // skips blanks, so this is tidiness rather than correctness — but it keeps
+    // the resolved text a faithful stand-in for what Asciidoctor produces.
+    out.push(resolveNavIncludes(text.replace(/\n$/, ''), read, [...seen, coord], depth + 1))
+  }
+  return out.join('\n')
+}
+
+const MAX_NAV_INCLUDE_DEPTH = 10
+
 // Insert nav entries the MIGRATION adds, before the nav is parsed. A page absent
 // from nav.adoc gets no plan entry, so the converter drops it at the component
 // root as `unlisted: true` — correct for a genuine orphan, wrong for a page that
@@ -129,11 +199,25 @@ function parseNav (adoc) {
 // doing nothing would leave the page an orphan at the component root, which is
 // precisely the state the injection exists to fix, and the caller has already
 // established that the page exists in this version.
+//
+// An injection whose page is ALREADY a nav item is skipped instead, and that is a
+// different case from a missing anchor, not a softer one. An orphan disposition
+// covers a page across EVERY branch, but a page is only an orphan in the branches
+// whose nav omits it: hazelcast:maintain-cluster/rest-api is an orphan from 5.5
+// up and already in nav at 5.4 and 5.3, whose nav is organised differently.
+// Injecting there would duplicate the entry, and throwing (its anchor
+// rest-api-swagger is a page that did not exist before 5.5) would fail the build
+// over a version that needs no fix at all. So presence is checked FIRST, and only
+// where the page is genuinely missing does the anchor have to be there — which
+// leaves a mistyped `nav.after` exactly as loud as it ever was.
 function injectNavEntries (adoc, injections) {
   if (!injections || !injections.length) return adoc
   const lines = adoc.split('\n')
+  const itemKeyAt = (i) => { const m = lines[i].match(ITEM_RE); return m ? parseTarget(m[2]).key : null }
+  const indexOfItem = (key) => lines.findIndex((_, i) => itemKeyAt(i) === key)
   for (const { key, after } of injections) {
-    const at = lines.findIndex((l) => { const m = l.match(ITEM_RE); return m && parseTarget(m[2]).key === after })
+    if (indexOfItem(key) !== -1) continue // this version's nav already lists it
+    const at = indexOfItem(after)
     if (at === -1) throw new Error(`nav injection for "${key}": anchor item "${after}" not found in nav.adoc`)
     lines.splice(at + 1, 0, `${lines[at].match(ITEM_RE)[1]} xref:${key}.adoc[]`)
   }
@@ -256,4 +340,4 @@ function buildPlan (roots, titles = new Map()) {
   return { pages, categories, duplicates }
 }
 
-module.exports = { parseNav, buildPlan, injectNavEntries, parseTarget, pageKey, keyStem, folderName }
+module.exports = { parseNav, buildPlan, injectNavEntries, resolveNavIncludes, parseTarget, pageKey, keyStem, folderName }

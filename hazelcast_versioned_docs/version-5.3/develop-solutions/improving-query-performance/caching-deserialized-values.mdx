@@ -1,0 +1,48 @@
+---
+title: "Caching Deserialized Values"
+sidebar_position: 3
+slug: /performance/caching-deserialized-values
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+There may be cases where you do not want to deserialize some values in your Hazelcast map again which were already deserialized previously. This way your query operations get faster. This is possible by using the `cache-deserialized-values` element in your declarative Hazelcast configuration, as shown below.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <map name="myMap">
+        <in-memory-format>BINARY</in-memory-format>
+        <cache-deserialized-values>INDEX-ONLY</cache-deserialized-values>
+        <backup-count>1</backup-count>
+    </map>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  map:
+    myMap:
+      in-memory-format: BINARY
+      cache-deserialized-values: INDEX-ONLY
+      backup-count: 1
+```
+
+</TabItem>
+</Tabs>
+
+The `cache-deserialized-values` element controls the caching of deserialized values. Note that caching makes the query evaluation faster, but it consumes more memory. This element has the following values:
+
+- NEVER: Deserialized values are never cached.
+- INDEX-ONLY: Deserialized values are cached only when they are inserted into an index.
+- ALWAYS: Deserialized values are always cached.
+
+If you are using [Portable](../serialization/other-serialization-options/implementing-portable-serialization.mdx) / [Compact](../serialization/compact-serialization.mdx) serialization or your map's in-memory format is `OBJECT` or `NATIVE`, then `cache-deserialized-values` element does not have any effect.

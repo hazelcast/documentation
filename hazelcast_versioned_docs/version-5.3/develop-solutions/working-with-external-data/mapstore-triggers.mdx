@@ -1,0 +1,112 @@
+---
+title: "Map Operations that Trigger Methods on a MapStore"
+sidebar_position: 5
+slug: /mapstore/mapstore-triggers
+---
+
+These are the map operations that trigger methods on a configured MapStore.
+
+:::note
+
+If the `initial-mode` configuration is set to `LAZY`, the first time any <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/IMap.html" text="map method"/> is called, it triggers the `MapLoader.loadAllKeys()` method.
+
+:::
+
+<table>
+<colgroup>
+<col style={{width:'16.6666%'}}/>
+<col style={{width:'83.3334%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th>Map method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`flush()`</td>
+<td>Flush all the local dirty entries by calling the `MapStore.storeAll(Map)` or `MapStore.deleteAll(Collection)` methods with the elements marked as dirty.</td>
+</tr>
+<tr>
+<td>
+
+<p>`put()`</p>
+
+<p>`putAll()`</p>
+
+<p>`putAsync()`</p>
+
+<p>`tryPut()`</p>
+
+<p>`putIfAbsent()`</p>
+
+</td>
+<td>Add entries to the map. Because `map.put()` returns the old value, these methods call the `MapLoader.load(Object)` method if the entry is not found in memory to load the old value from the external system. If the MapStore uses the write-through pattern, these methods also call the `MapStore.store(Object, Object)` method for each entry to write the new value to the external system.</td>
+</tr>
+<tr>
+<td>
+
+<p>`set()`</p>
+
+<p>`setAsync()`</p>
+
+</td>
+<td>Add an entry to the map without returning the old value. These methods call the \`MapStore.store(Object,Object) method to write the value to the external system.</td>
+</tr>
+<tr>
+<td>`remove()`</td>
+<td>Remove the mapping for a key from the map if it is present. Because `map.remove()` returns the old value, this method calls the `MapLoader.load(Object)` if the entry is not found in memory to load the value from the external system. This method also calls the `MapStore.delete(Object)` method to remove the value from the external system.</td>
+</tr>
+<tr>
+<td>
+
+<p>`removeAll()`</p>
+
+<p>`delete()`</p>
+
+<p>`removeAsync()`</p>
+
+<p>`tryRemove()`</p>
+
+</td>
+<td>Remove entries from the map in various conditions. These methods call the `MapStore.delete(Object)` method to remove the value from the external system.</td>
+</tr>
+<tr>
+<td>`setTtl`</td>
+<td>Update the time-to-live of an existing entry. This method calls the `MapLoader.load(Object)` method if no value is found in memory. It also calls `EntryStore.store(Object, MetadataAwareValue)` with the entry whose time-to-live has been updated.</td>
+</tr>
+<tr>
+<td>`clear()`</td>
+<td>
+
+Delete all entries from the map and the corresponding items from the external system. This method calls the `MapStore.deleteAll(Collection)` method on each partition with the keys that the given partition stores.
+
+:::note
+
+If the `initial-mode` configuration is set to `LAZY`, Hazelcast deletes **only** the loaded entries from the map and the data store. Since all the data may not be loaded in this case, some entries may still exist in the data store.
+
+:::
+
+</td>
+</tr>
+<tr>
+<td>`replace()`</td>
+<td>Replace the entry for a key only if the key is currently mapped to a given value. This method calls the `MapStore.store(Object, Object)` method to write the value into the external system.</td>
+</tr>
+<tr>
+<td>
+
+<p>`executeOnKey()`</p>
+
+<p>`executeOnKeys()`</p>
+
+<p>`submitToKey()`</p>
+
+<p>`executeOnAllEntries()`</p>
+
+</td>
+<td>Apply the user-defined entry processors to one or more entries. These methods call the `MapLoader.load(Object)` method if the value with key is not found in the memory, to load the value from the external system. If the entry processor updates the entry, these methods call the `MapStore.store(Object, Object)` method to write the value into the external system. If the entry processor updates the entry's value to null value, they call the `MapStore.delete(Object)` method to delete the value from the external system.</td>
+</tr>
+</tbody>
+</table>

@@ -1,0 +1,134 @@
+---
+title: "CREATE INDEX"
+sidebar_label: "`CREATE INDEX`"
+sidebar_position: 4
+slug: /sql/create-index
+---
+
+The `CREATE INDEX` statement creates a sorted, hash, or bitmap index for a given map.
+
+:::note
+
+- You cannot yet delete an index.
+- Although you can create bitmap indexes with SQL, SQL queries do not currently support bitmap index scans. As a result, bitmap indexes do not improve SQL query performance.
+- SQL queries cannot use more than one SORTED or HASH index for given scan, index combining is not supported.
+
+:::
+
+## Syntax Summary
+
+This code block is a quick reference with all the [parameters](#parameters) that you can use with the `CREATE MAPPING` statement.
+
+See some [practical examples](#examples).
+
+```sql
+CREATE INDEX [ IF NOT EXISTS ] index_name
+ON map_name ( attribute_name [, ...] )
+[ TYPE index_type ]
+[ OPTIONS ( 'option_name' = 'option_value' [, ...] ) ]
+```
+
+## Parameters
+
+The `CREATE INDEX` statement accepts the following parameters.
+
+You must provide the following:
+
+- `index_name`
+- `map_name`
+- `attribute_name`
+
+<table>
+<colgroup>
+<col style={{width:'33.3333%'}}/>
+<col style={{width:'66.6667%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`IF NOT EXISTS`</td>
+<td>Create a new index only if an index of the same name does not already exist (recommended).</td>
+</tr>
+<tr>
+<td>`index_name`</td>
+<td>Name of the index. This name must be unique. The `index_name` is scoped to the map.</td>
+</tr>
+<tr>
+<td>`map_name`</td>
+<td>Name of the map to index</td>
+</tr>
+<tr>
+<td>`attribute_name`</td>
+<td>Names of the map's fields to index. The `attribute_name` may not be exactly the same as SQL maps it, because there's no link to an SQL mapping. For example, if an attribute refers to an array, the index contains the array elements as individual index entries, all referring to the containing entry.</td>
+</tr>
+<tr>
+<td>`index_type`</td>
+<td>
+
+One of the following index types:
+
+- `SORTED` (default)
+- `HASH`
+- `BITMAP`
+
+For details about these index types, see [Indexing Maps](../improving-query-performance/indexing-maps.mdx).
+
+</td>
+</tr>
+<tr>
+<td>`OPTIONS`</td>
+<td>
+
+Configuration options for `BITMAP` indexes. Valid values for the `option_name` parameter include the following:
+
+- `unique-key`: The attribute to use as a unique key source for internal unique long ID assignment. Default: `__key`.
+- `unique-key-transformation`: The transformation to be applied to unique keys to generate unique long IDs from them. Default: `OBJECT`.
+
+For details, see [Bitmap Indexes](../improving-query-performance/indexing-maps.mdx#bitmap-indexes).
+
+</td>
+</tr>
+</tbody>
+</table>
+
+## Permissions
+
+<Badge type="enterprise"/>
+
+If [security](../../configure-and-manage-clusters/securing-a-cluster/enabling-jaas.mdx) is enabled, you can grant or deny permission for certain clients to use this statement. See [SQL Permissions](../../configure-and-manage-clusters/securing-a-cluster/native-client-security.mdx#sql-permission).
+
+## Examples
+
+This section lists some example SQL queries that show you how to use the `CREATE INDEX` statement.
+
+```sql title="Sorted index"
+CREATE INDEX IF NOT EXISTS age
+ON employees (age)
+TYPE SORTED
+```
+
+```sql title="Sorted composite index"
+CREATE INDEX IF NOT EXISTS name_age
+ON employees (name, age)
+TYPE SORTED
+```
+
+```sql title="Hash index"
+CREATE INDEX IF NOT EXISTS name
+ON employees (name)
+TYPE HASH
+```
+
+```sql title="Bitmap index"
+CREATE INDEX IF NOT EXISTS firstName
+ON employees ("name.first")
+TYPE BITMAP
+OPTIONS (
+  'unique-key' = '__key'
+)
+```

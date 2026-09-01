@@ -1,0 +1,116 @@
+---
+title: "Configuring with System Properties and Environment Variables"
+sidebar_label: "System Props and Environment Variables"
+sidebar_position: 3
+slug: /configuration/configuring-with-system-properties
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+You can use [system properties](../../../reference/system-properties.mdx) and environment variables to configure Hazelcast and override existing settings in a root configuration file. Environment variables are useful for configuring members in containerized environments.
+
+:::note[Using Java?]
+
+If you use [configuration builders](./configuring-programmatically.mdx#builders) or the `new Config()` constructor with the Java member API, you cannot override existing configuration with system properties and environment variables. To override existing configuration, you must use [configuration loaders](./configuring-programmatically.mdx#loaders).
+
+:::
+
+:::important
+
+If you override a value in a configuration file, the other values in the same block are reset to their defaults. For example, if you override the `hazelcast.map.backup-count` value, all other settings within the `map` block are reset to their defaults. To avoid the other values being reset to their defaults, you must override all values in the block.
+
+:::
+
+You can set system properties as name and value pairs through declarative configuration, programmatic configuration, or JVM arguments:
+
+<Tabs groupId="java--jvm--xml--yaml">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <properties>
+        <property name="hazelcast.property.foo">value</property>
+    </properties>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+    ...
+    properties:
+      hazelcast.property.foo: value
+    ...
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+Config config = new Config();
+config.setProperty( "hazelcast.property.foo", "value" );
+```
+
+</TabItem>
+<TabItem value="jvm" label="JVM">
+
+```shell title="Java command"
+java -Dhazelcast.property.foo=value
+```
+
+```shell title="JAVA_OPTS"
+JAVA_OPTS="-Dhazelcast.property.foo=value"
+```
+
+</TabItem>
+</Tabs>
+
+## Naming System Properties and Environment Variables
+
+The names of system properties and environment variables follow a consistent pattern, where the names match those in the YAML declarative configuration file. See [Member Configuration Files](./configuring-declaratively.mdx).
+
+:::note
+
+All entries need to mirror the YAML configuration structure which differs slightly to XML. And, you cannot configure settings that use YAML lists.
+
+:::
+
+The names of environment variables follow these rules:
+
+- Each configuration entry needs to start with `HZ_` for member configuration or `HZCLIENT_` for client configuration.
+- A new configuration level should be introduced with an underscore (`_`).
+- Dashes (`-`) should be removed.
+- Names should be in upper case.
+
+The names of system properties must follow these rules:
+
+- Each configuration entry needs to start with `hz.` for member configuration or `hz-client.` for client configuration.
+- A new configuration level should be introduced with a dot (`.`).
+- Names should be in lower case.
+
+For example, consider the following configuration settings.
+
+```yaml
+hazelcast:
+  cluster-name: dev
+  network:
+    port:
+      auto-increment: true
+```
+
+You can override these settings by using the following environment variables or system properties:
+
+```shell title="Environment variables"
+HZ_CLUSTERNAME=dev
+HZ_NETWORK_PORT_AUTOINCREMENT=true
+```
+
+```shell title="System properties"
+hz.cluster-name=dev
+hz.network.port.auto-increment=true
+```

@@ -1,0 +1,981 @@
+---
+title: "Network Configurations"
+sidebar_label: "Networking"
+sidebar_position: 3
+slug: /clusters/network-configuration
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import PartialClientsRestDeprecation from '@site/hazelcast_versioned_docs/version-5.4/_partials/clients-rest-deprecation.mdx';
+
+All network related configurations are performed via the `network` element in the Hazelcast XML configuration file or the class `NetworkConfig` when using programmatic configuration. Following subsections describe the available configurations that you can perform under the `network` element.
+
+## Public Address
+
+`public-address` overrides the public address of a member. By default, a member selects its socket address as its public address. But behind a network address translation (NAT), two endpoints (members) may not be able to see/access each other. If both members set their public addresses to their defined addresses on NAT, then that way they can communicate with each other. In this case, their public addresses are not an address of a local network interface but a virtual address defined by NAT. It is optional to set and useful when you have a private cloud. Note that, the value for this element should be given in the format **`host IP address:port number`**. See the following examples.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <network>
+        <public-address>11.22.33.44:5555</public-address>
+    </network>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  network:
+    public-address: 11.22.33.44:5555
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+Config config = new Config();
+config.getNetworkConfig()
+    .setPublicAddress( "11.22.33.44:5555" );
+```
+
+</TabItem>
+</Tabs>
+
+## Port
+
+You can specify the ports that Hazelcast uses to communicate between cluster members. Its default value is `5701`. A port number of `0` will let the system pick up an ephemeral port. The following are example configurations.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <network>
+        <port port-count="20" auto-increment="true">5701</port>
+    </network>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  network:
+    port:
+      auto-increment: true
+      port-count: 20
+      port: 5701
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```yaml
+Config config = new Config();
+config.getNetworkConfig().setPort( 5701 )
+    .setPortAutoIncrement( true ).setPortCount( 20 );
+```
+
+</TabItem>
+</Tabs>
+
+According to the above example, Hazelcast tries to find free ports between 5701 and 5720.
+
+`port` has the following attributes.
+
+- `port-count`: By default, Hazelcast tries 100 ports to bind. Meaning that, if you set the value of port as 5701, as members are joining to the cluster, Hazelcast tries to find ports between 5701 and 5801. You can choose to change the port count in the cases like having large instances on a single machine or willing to have only a few ports to be assigned. The parameter `port-count` is used for this purpose, whose default value is 100.
+- `auto-increment`: In some cases you may want to choose to use only one port. In that case, you can disable the auto-increment feature of `port` by setting `auto-increment` to `false`. The `port-count` attribute is not used when auto-increment feature is disabled.
+
+## Outbound Ports
+
+By default, Hazelcast lets the system pick up an ephemeral port during socket bind operation. But security policies/firewalls may require you to restrict outbound ports to be used by Hazelcast-enabled applications. To fulfill this requirement, you can configure Hazelcast to use only defined outbound ports. The following are example configurations.
+
+**Declarative Configuration:**
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <network>
+        <outbound-ports>
+            <!-- ports between 33000 and 35000 -->
+            <ports>33000-35000</ports>
+            <!-- comma separated ports -->
+            <ports>37000,37001,37002,37003</ports>
+            <ports>38000,38500-38600</ports>
+        </outbound-ports>
+    </network>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  network:
+    outbound-ports:
+      - 33000-35000
+      - 37000,37001,37002,37003
+      - 38000,38500-38600
+```
+
+</TabItem>
+</Tabs>
+
+**Programmatic Configuration:**
+
+```java
+...
+NetworkConfig networkConfig = config.getNetworkConfig();
+// ports between 35000 and 35100
+networkConfig.addOutboundPortDefinition("35000-35100");
+// comma separated ports
+networkConfig.addOutboundPortDefinition("36001, 36002, 36003");
+networkConfig.addOutboundPort(37000);
+networkConfig.addOutboundPort(37001);
+...
+```
+
+:::note
+
+You can use port ranges and/or comma separated ports.
+
+:::
+
+As shown in the programmatic configuration, you use the method `addOutboundPort` to add only one port. If you need to add a group of ports, then use the method `addOutboundPortDefinition`.
+
+In the declarative configuration, the element `ports` can be used for both single and multiple port definitions. When you set this element to `0` or `*`, your operating system (not Hazelcast) selects a free port from the ephemeral range.
+
+## Reuse Address
+
+When you shutdown a cluster member, the server socket port goes into the `TIME_WAIT` state for the next couple of minutes. If you start the member right after shutting it down, you may not be able to bind it to the same port because it is in the `TIME_WAIT` state. If you set the `reuse-address` element to `true`, the `TIME_WAIT` state is ignored and you can bind the member to the same port again.
+
+The following are example configurations.
+
+**Declarative Configuration:**
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <network>
+        <reuse-address>true</reuse-address>
+    </network>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  network:
+    reuse-address: true
+```
+
+</TabItem>
+</Tabs>
+
+**Programmatic Configuration:**
+
+```java
+...
+NetworkConfig networkConfig = config.getNetworkConfig();
+
+networkConfig.setReuseAddress( true );
+...
+```
+
+## Join
+
+The `join` configuration element is used to discover Hazelcast members and enable them to form a cluster. Hazelcast provides Auto Detection, Multicast, TCP/IP, AWS, Kubernetes, Azure, GCP, Eureka, and more. These mechanisms are explained the [Discovery Mechanisms section](../../develop-build/member-client-discovery/discovery-mechanisms.mdx). This section describes all the sub-elements and attributes of `join` element. The following are example configurations.
+
+**Declarative Configuration:**
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <network>
+        <join>
+            <auto-detection enabled="true" />
+            <multicast enabled="false">
+                <multicast-group>224.2.2.3</multicast-group>
+                <multicast-port>54327</multicast-port>
+                <multicast-time-to-live>32</multicast-time-to-live>
+                <multicast-timeout-seconds>2</multicast-timeout-seconds>
+                <trusted-interfaces>
+                    <interface>192.168.1.102</interface>
+                </trusted-interfaces>
+            </multicast>
+            <tcp-ip enabled="false">
+                <required-member>192.168.1.104</required-member>
+                <member>192.168.1.104</member>
+                <members>192.168.1.105,192.168.1.106</members>
+            </tcp-ip>
+            <aws enabled="false">
+                <access-key>my-access-key</access-key>
+                <secret-key>my-secret-key</secret-key>
+                <region>us-west-1</region>
+                <host-header>ec2.amazonaws.com</host-header>
+                <security-group-name>hazelcast-sg</security-group-name>
+                <tag-key>type</tag-key>
+                <tag-value>hz-members</tag-value>
+            </aws>
+            <discovery-strategies>
+                <discovery-strategy ... />
+            </discovery-strategies>
+        </join>
+    </network>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  network:
+    join:
+      auto-detection:
+        enabled: true
+      multicast:
+        enabled: false
+        multicast-group: 224.2.2.3
+        multicast-port: 54327
+        multicast-time-to-live: 32
+        multicast-timeout-seconds: 2
+        trusted-interfaces:
+          - 192.168.1.102
+      tcp-ip:
+        enabled: false
+        required-member: 192.168.1.104
+        member-list:
+          - 192.168.1.104
+          - 192.168.1.105,192.168.1.106
+      aws:
+        enabled: false
+        access-key: my-access-key
+        secret-key: my-secret-key
+        region: us-west-1
+        host-header: ec2.amazonaws.com
+        security-group-name: hazelcast-sg
+        tag-key: type
+        tag-value: hz-nodes
+      discovery-strategies:
+        discovery-strategy:
+          ...
+```
+
+</TabItem>
+</Tabs>
+
+**Programmatic Configuration:**
+
+```java
+Config config = new Config();
+NetworkConfig network = config.getNetworkConfig();
+JoinConfig join = network.getJoin();
+join.getTcpIpConfig().addMember( "10.45.67.32" ).addMember( "10.45.67.100" )
+            .setRequiredMember( "192.168.10.100" ).setEnabled( true );
+```
+
+The `join` element has the following sub-elements and attributes.
+
+### auto-detection element
+
+The `auto-detection` element includes the following parameters:
+
+- `enabled`: Enables [Hazelcast Auto Detection](../../develop-build/member-client-discovery/discovery-mechanisms.mdx#auto-detection.adoc), `true` by default.
+
+### multicast element
+
+The `multicast` element includes parameters to fine tune the multicast join mechanism.
+
+- `enabled`: Specifies whether the multicast discovery is enabled or not, `true` or `false`.
+- `multicast-group`: The multicast group IP address. Specify it when you want to create clusters within the same network. Values can be between 224.0.0.0 and 239.255.255.255. Its default value is 224.2.2.3.
+- `multicast-port`: The multicast socket port that the Hazelcast member listens to and sends discovery messages through. Its default value is 54327.
+- `multicast-time-to-live`: Time-to-live value for multicast packets sent out to control the scope of multicasts. See more information, see [The Linux Documentation Project](http://www.tldp.org/HOWTO/Multicast-HOWTO-2.html).
+- `multicast-timeout-seconds`: Only when the members are starting up, this timeout (in seconds) specifies the period during which a member waits for a multicast response from another member. For example, if you set it as 60 seconds, each member waits for 60 seconds until a leader member is selected. Its default value is 2 seconds.
+- `trusted-interfaces`: Includes IP addresses of trusted members. When a member wants to join to the cluster, its join request is rejected if it is not a trusted member. You can give an IP addresses range using the wildcard (\*) on the last digit of IP address, e.g., 192.168.1.\* or 192.168.1.100-110.
+
+:::note
+
+If you prefer to use the multicast mechanism, make sure that your network is enclosed and secure. See the [Multicast section](../../develop-build/member-client-discovery/discovery-mechanisms.mdx#multicast).
+
+:::
+
+### tcp-ip element
+
+The `tcp-ip` element includes parameters to fine tune the TCP/IP join mechanism.
+
+- `enabled`: Specifies whether the TCP/IP discovery is enabled or not. Values can be `true` or `false`.
+- `required-member`: IP address of the required member. Cluster is only formed if the member with this IP address is found.
+- `member`: IP address(es) of one or more well known members. Once members are connected to these well known ones, all member addresses are communicated with each other. You can also give comma separated IP addresses using the `members` element.
+
+  :::note
+
+  `tcp-ip` element also accepts the `interface` parameter. See the [Interfaces element description](#interfaces).
+
+  :::
+- `connection-timeout-seconds`: Defines the connection timeout in seconds. This is the maximum amount of time Hazelcast is going to try to connect to a well known member before giving up. Setting it to a too low value could mean that a member is not able to connect to a cluster. Setting it to a too high value means that member startup could slow down because of longer timeouts, for example when a well known member is not up. Increasing this value is recommended if you have many IPs listed and the members cannot properly build up the cluster. Its default value is 5 seconds.
+
+### aws element
+
+The `aws` element includes parameters to allow the members to form a cluster on the Amazon EC2 and ECS environments.
+
+For details, see [Deploying a Cluster on Amazon AWS](../../install-and-upgrade/overview/deploying-in-cloud/deploying-on-aws.mdx).
+
+### azure element
+
+The `azure` element includes parameters to allow the members to form a cluster on the Azure VM machines.
+
+For details, see [Deploying a Cluster on Microsoft Azure](../../install-and-upgrade/overview/deploying-in-cloud/deploying-on-azure.mdx).
+
+### gcp element
+
+The `gcp` element includes parameters to allow the members to form a cluster on the GCP Compute VM instances.
+
+For details, see [Deploying a Cluster on Google Cloud Platform](../../install-and-upgrade/overview/deploying-in-cloud/deploying-on-gcp.mdx).
+
+### kubernetes element
+
+The `kubernetes` element includes parameters to allow the members to form a cluster on the Kubernetes environment.
+
+For details, see [Deploying on Kubernetes](../../develop-build/kubernetes/deploying-in-kubernetes.mdx).
+
+### discovery-strategies element
+
+The `discovery-strategies` element configures internal or external discovery strategies based on the Hazelcast Discovery SPI. For further information, see the [Discovery SPI section](../extending-hazelcast/discovery-spi.mdx) and the vendor documentation of the used discovery strategy.
+
+## Interfaces
+
+You can specify which network interfaces that Hazelcast should use. Servers mostly have more than one network interface, so you may want to list the valid IPs. **Range characters `"*"` and `"-"`** can be used for simplicity. For instance, 10.3.10.\* refers to IPs between 10.3.10.0 and 10.3.10.255. Interface 10.3.10.4-18 refers to IPs between 10.3.10.4 and 10.3.10.18 (4 and 18 included). If network interface configuration is enabled (it is disabled by default) and if Hazelcast cannot find a matching interface, then it prints a message on the console and does not start on that member.
+
+The following are example configurations.
+
+**Declarative Configuration:**
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <network>
+        <interfaces enabled="true">
+            <interface>10.3.16.*</interface>
+            <interface>10.3.10.4-18</interface>
+            <interface>192.168.1.3</interface>
+        </interfaces>
+    </network>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  network:
+    interfaces:
+      enabled: true
+      interfaces:
+        - 10.3.16.*
+        - 10.3.10.4-18
+        - 192.168.1.3
+```
+
+</TabItem>
+</Tabs>
+
+**Programmatic Configuration:**
+
+```java
+Config config = new Config();
+NetworkConfig network = config.getNetworkConfig();
+InterfacesConfig interfaceConfig = network.getInterfaces();
+interfaceConfig.setEnabled( true )
+            .addInterface( "192.168.1.3" );
+```
+
+### IPv6 Support
+
+Hazelcast supports IPv6 addresses seamlessly (This support is switched off by default, see the note at the end of this section).
+
+All you need is to define IPv6 addresses or interfaces in the network configuration. The only current limitation is that you cannot define wildcard IPv6 addresses in the TCP/IP join configuration (`tcp-ip` element). [Interfaces](#interfaces) configuration does not have this limitation, you can configure wildcard IPv6 interfaces in the same way as IPv4 interfaces.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <network>
+        <port auto-increment="true">5701</port>
+        <join>
+            <multicast enabled="false">
+                <multicast-group>FF02:0:0:0:0:0:0:1</multicast-group>
+                <multicast-port>54327</multicast-port>
+            </multicast>
+            <tcp-ip enabled="true">
+                <member>[fe80::223:6cff:fe93:7c7e]:5701</member>
+                <interface>192.168.1.0-7</interface>
+                <interface>192.168.1.*</interface>
+                <interface>fe80:0:0:0:45c5:47ee:fe15:493a</interface>
+            </tcp-ip>
+        </join>
+        <interfaces enabled="true">
+            <interface>10.3.16.*</interface>
+            <interface>10.3.10.4-18</interface>
+            <interface>fe80:0:0:0:45c5:47ee:fe15:*</interface>
+            <interface>fe80::223:6cff:fe93:0-5555</interface>
+        </interfaces>
+    </network>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  network:
+    port:
+      auto-increment: true
+      port: 5701
+    join:
+      multicast:
+        enabled: false
+        multicast-group: FF02:0:0:0:0:0:0:1
+        multicast-port: 54327
+      tcp-ip:
+        enabled: true
+        member: [fe80::223:6cff:fe93:7c7e]:5701
+        interface: 192.168.1.0-7
+        interface: 192.168.1.*
+        interface: fe80:0:0:0:45c5:47ee:fe15:493a
+    interfaces:
+      enabled: true
+      interfaces:
+        - 10.3.16.*
+        - 10.3.10.4-18
+        - fe80:0:0:0:45c5:47ee:fe15:*
+        - fe80::223:6cff:fe93:0-5555
+```
+
+</TabItem>
+</Tabs>
+
+JVM has two system properties for setting the preferred protocol stack (IPv4 or IPv6) as well as the preferred address family types (inet4 or inet6). On a dual stack machine, IPv6 stack is preferred by default, you can change this through the `java.net.preferIPv4Stack=<true|false>` system property. When querying name services, JVM prefers IPv4 addresses over IPv6 addresses and returns an IPv4 address if possible. You can change this through `java.net.preferIPv6Addresses=<true|false>` system property.
+
+See also additional [details on IPv6 support in Java](http://docs.oracle.com/javase/1.5.0/docs/guide/net/ipv6_guide/).
+
+:::note
+
+By default, IPv6 support has been switched off. Some platforms have issues using the IPv6 stack. Other platforms have no IPv6 support at all. To enable IPv6 support, just set the configuration property `hazelcast.prefer.ipv4.stack` to `false`. See the [System Properties appendix](../../reference/system-properties.mdx) for details.
+
+:::
+
+## Member Address Provider SPI {/* #member-address-provides-spi */}
+
+:::note
+
+This SPI is not intended to provide addresses of other cluster members with which the Hazelcast instance forms a cluster. To do that, see the [previous sections](#other-network-configurations) above.
+
+:::
+
+By default, Hazelcast chooses the public and bind address. You can influence on the choice by defining a `public-address` in the configuration or by using other properties mentioned above. In some cases, though, these properties are not enough and the default address picking strategy chooses wrong addresses. This may be the case when deploying Hazelcast in some cloud environments, such as AWS, when using Docker or when the instance is deployed behind a NAT and the `public-address` property is not enough (see the [Public Address section](#public-address)).
+
+In these cases, it is possible to configure the bind and public address in a more advanced way. You can provide an implementation of the `com.hazelcast.spi.MemberAddressProvider` interface which provides the bind and public address. The implementation may then choose these addresses in any way - it may read from a system property or file or even invoke a web service to retrieve the public and private address.
+
+The details of the implementation depend heavily on the environment in which Hazelcast is deployed. As such, we now demonstrate how to configure Hazelcast to use a simplified custom member address provider SPI implementation. An example implementation is shown below:
+
+```java
+public static final class SimpleMemberAddressProvider implements MemberAddressProvider {
+    @Override
+    public InetSocketAddress getBindAddress() {
+        // determine the address using some configuration, calling an API, ...
+        return new InetSocketAddress(hostname, port);
+    }
+
+    @Override
+    public InetSocketAddress getPublicAddress() {
+        // determine the address using some configuration, calling an API, ...
+        return new InetSocketAddress(hostname, port);
+    }
+}
+```
+
+Note that if the bind address port is `0` then it uses a port as configured in the Hazelcast network configuration (see the [Port section](#port)). If the public address port is set to `0` then it broadcasts the same port that it is bound to. If you wish to bind to any local interface, you may return `new InetSocketAddress((InetAddress) null, port)` from the `getBindAddress()` address.
+
+The following configuration examples contain properties that are provided to the constructor of the provider class. If you do not provide any properties, the class may have either a no-arg constructor or a constructor accepting a single `java.util.Properties` instance. On the other hand, if you do provide properties in the configuration, the class must have a constructor accepting a single `java.util.Properties` instance.
+
+**Declarative Configuration:**
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <network>
+        <member-address-provider enabled="true">
+            <class-name>SimpleMemberAddressProvider</class-name>
+            <properties>
+                <property name="prop1">prop1-value</property>
+                <property name="prop2">prop2-value</property>
+            </properties>
+        </member-address-provider>
+        <!-- other network configurations -->
+    </network>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  network:
+    member-address-provider:
+      enabled: true
+      class-name: SimpleMemberAddressProvider
+      properties:
+        prop1: prop1-value
+        prop2: prop2-value
+    ...
+```
+
+</TabItem>
+</Tabs>
+
+**Programmatic Configuration:**
+
+```java
+Config config = new Config();
+MemberAddressProviderConfig memberAddressProviderConfig = config.getNetworkConfig().getMemberAddressProviderConfig();
+memberAddressProviderConfig
+      .setEnabled(true)
+      .setClassName(MemberAddressProviderWithStaticProperties.class.getName());
+Properties properties = memberAddressProviderConfig.getProperties();
+properties.setProperty("prop1", "prop1-value");
+properties.setProperty("prop2", "prop2-value");
+
+config.getNetworkConfig().getJoin().getAutoDetectionConfig().setEnabled(false);
+
+// perform other configuration
+
+Hazelcast.newHazelcastInstance(config);
+```
+
+## Advanced Network Configuration
+
+With the default configuration, Hazelcast members use a single server socket for all kinds of connections: cluster members, Hazelcast clients implementing the Open Binary Client Protocol and HTTP protocol clients connect to a single server socket that handles all the protocols.
+
+You can also configure the Hazelcast members with separate server sockets using a different network configuration for different protocols. This configuration scheme allows more flexibility when deploying Hazelcast as described in the following cases:
+
+- For security, it is possible to bind the member protocol server socket on a protected internal network interface, while the client connections can be established on another network interface accessible by the Hazelcast clients.
+- Different kinds of network connections can be established with different socket options. For example varying send/receive window size to optimize the network usage, TLS for connections over WAN while member-to-member connections may remain unencrypted, etc.
+
+In the following example we introduce the advanced network configuration for a member to listen for member-to-member connections on the default port `5701` while listening for client connections on the port `9090`:
+
+```java
+        Config config = new Config();
+        config.getAdvancedNetworkConfig().setEnabled(true);
+        config.getAdvancedNetworkConfig().setClientEndpointConfig(
+                new ServerSocketEndpointConfig().setPort(9090)
+        );
+        HazelcastInstance instance = Hazelcast.newHazelcastInstance(config);
+        System.out.println(instance.getCluster().getLocalMember().getAddressMap());
+```
+
+Running this example prints something similar to the following output, indicating that the member listens for the specified protocols on the respective configured ports:
+
+```none
+{EndpointQualifier{type='CLIENT'}=[10.212.134.156]:9090, EndpointQualifier{type='MEMBER'}=[10.212.134.156]:5701}
+```
+
+The following is the equivalent declarative configuration:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <advanced-network enabled="true">
+        <member-server-socket-endpoint-config>
+            <port>5701</port>
+        </member-server-socket-endpoint-config>
+        <client-server-socket-endpoint-config>
+            <port>9090</port>
+        </client-server-socket-endpoint-config>
+    </advanced-network>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  advanced-network:
+    enabled: true
+    member-server-socket-endpoint-config:
+      port:
+        - 5701
+    client-server-socket-endpoint-config:
+      port:
+        - 9090
+```
+
+</TabItem>
+</Tabs>
+
+### Setting Up Cluster Members for Advanced Network Configuration
+
+Advanced network configuration and single-socket network configuration are mutually exclusive: either an enabled `AdvancedNetworkConfig` or the `NetworkConfig` object is used to configure a member's networking, including the joiner, discovery, failure detectors, etc. as described in the previous sections of this chapter.
+
+You cannot define both elements in the declarative configuration, i.e., the `network` and `advanced-network` elements cannot be configured at the same time. In the programmatic configuration, an enabled `AdvancedNetworkConfig` takes precedence over the `NetworkConfig`. `AdvancedNetworkConfig` is disabled by default, therefore the unisocket member configuration under `NetworkConfig` is used in the default case.
+
+When using the advanced network configuration, the following configurations are defined member-wide:
+
+- Joiner and cluster discovery (Multicast, TCP/IP, AWS, Azure, GCP, Kubernetes, Eureka, etc.)
+- `MemberAddressProvider` configuration
+- Failure detector configuration
+
+In addition to the above, the advanced network configuration allows the configuration of multiple endpoints: each endpoint configuration applies for a specific protocol, e.g., `MEMBER` and `CLIENT`. An additional optional identifier can be configured to separate the configuration of multiple `WAN` protocol endpoints.
+
+The supported protocols are as follows:
+
+- `MEMBER`: A member server socket is required for Hazelcast to operate. The default advanced network configuration defines a member endpoint configuration listening on port 5701 (same as the single-socket Hazelcast member configuration).
+- `CLIENT`: A single server socket handling the Hazelcast Open Binary Client Protocol can be optionally configured. If no such endpoint is configured, then the clients will not be able to connect to the Hazelcast member.
+- `REST`: A REST server socket is optional.
+- `MEMCACHE`: When accessing a Hazelcast cluster over the Memcache text protocol, an endpoint listening to `MEMCACHE` protocol must be defined.
+- `WAN`: Multiple WAN endpoint configurations can be defined to determine the network settings of outgoing connections (from the members of a source cluster to the target WAN cluster members) or to establish server sockets on which a target WAN member can listen for the incoming connections from the source cluster.
+
+:::note
+
+When using the advanced network configuration and defining separate endpoints for `WAN` and `MEMBER` protocols, you must ensure that endpoint ranges do not overlap. Each protocol must be configured with unique endpoints that are not used in other protocols, otherwise WAN replication can cause the cluster to become unstable if IPs are reused.
+
+:::
+
+### Server Socket Endpoint Configuration
+
+The server socket endpoint configuration is common for all protocols. The elements comprising a server socket endpoint configuration are identical to their single-socket network configuration counterparts.
+
+The following declarative configuration example includes all the common server socket endpoint elements:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+   ...
+   <advanced-network enabled="true">
+       <member-server-socket-endpoint-config>
+           <port auto-increment="true" port-count="100">5701</port>
+           <outbound-ports>
+               <ports>33000-35000</ports>
+               <ports>37000,37001,37002,37003</ports>
+               <ports>38000,38500-38600</ports>
+           </outbound-ports>
+           <interfaces enabled="true">
+               <interface>10.10.1.*</interface>
+           </interfaces>
+           <ssl enabled="true">
+               <factory-class-name>com.hazelcast.examples.MySSLContextFactory</factory-class-name>
+               <properties>
+                   <property name="foo">bar</property>
+               </properties>
+           </ssl>
+           <symmetric-encryption>
+               <algorithm>ALGO</algorithm>
+               <salt>SALT</salt>
+               <password>PASS</password>
+               <iteration-count>10000</iteration-count>
+           </symmetric-encryption>
+           <socket-interceptor enabled="true">
+               <class-name>com.hazelcast.examples.MySocketInterceptor</class-name>
+               <properties>
+                   <property name="foo">bar</property>
+               </properties>
+           </socket-interceptor>
+           <socket-options>
+               <buffer-direct>true</buffer-direct>
+               <tcp-no-delay>true</tcp-no-delay>
+               <keep-alive>true</keep-alive>
+               <connect-timeout-seconds>64</connect-timeout-seconds>
+               <send-buffer-size-kb>25</send-buffer-size-kb>
+               <receive-buffer-size-kb>33</receive-buffer-size-kb>
+               <linger-seconds>99</linger-seconds>
+           </socket-options>
+           <public-address>dummy</public-address>
+           <reuse-address>true</reuse-address>
+        </member-server-socket-endpoint-config>
+    </advanced-network>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  advanced-network
+    enabled: true
+    member-server-socket-endpoint-config:
+    port:
+      auto-increment: true
+      port-count: 100
+      port: 5701
+    outbound-ports:
+      - 33000-35000
+      - 37000,37001,37002,37003
+      - 38000,38500-38600
+    interfaces:
+      enabled: true
+      interfaces:
+        - 10.10.1.*
+    ssl:
+      enabled: true
+      factory-class-name: com.hazelcast.examples.MySSLContextFactory
+      properties:
+        foo: bar
+    symmetric-encryption:
+      algorithm: ALGO
+      salt: SALT
+      password: PASS
+      iteration-count: 10000
+    socket-interceptor:
+      enabled: true
+      class-name: com.hazelcast.examples.MySocketInterceptor
+      properties:
+        foo: bar
+    socket-options:
+      buffer-direct: true
+      tcp-no-delay: true
+      keep-alive: true
+      connect-timeout-seconds: 64
+      send-buffer-size-kb: 25
+      receive-buffer-size-kb: 33
+      linger-seconds: 99
+    public-address: dummy
+    reuse-address: true
+```
+
+</TabItem>
+</Tabs>
+
+When using the declarative configuration, specific element names introduce the server socket endpoint configuration for each protocol:
+
+- `member-server-socket-endpoint-config` for `MEMBER` protocol
+- `client-server-socket-endpoint-config` for `CLIENT` protocol
+- `rest-server-socket-endpoint-config` for `REST` endpoint
+- `memcache-server-socket-endpoint-config` for `MEMCACHE` endpoint
+- `wan-server-socket-endpoint-config` for `WAN` endpoints
+
+When using the programmatic configuration, corresponding methods set the respective server socket endpoint configuration:
+
+```java
+        config.getAdvancedNetworkConfig().setMemberEndpointConfig(
+                new ServerSocketEndpointConfig()
+                    .setPort(5701)
+                    .setPortAutoIncrement(false)
+                    .setSSLConfig(new SSLConfig())
+                    .setReuseAddress(true)
+                    .setSocketTcpNoDelay(true)
+        );
+```
+
+### Setting Up REST Server Socket Endpoint Configuration
+
+In addition to the common server socket configuration described above, the REST endpoint configuration includes certain additional elements which are used to enable/disable the REST functionality groups.
+
+```java
+        config.getAdvancedNetworkConfig().setRestEndpointConfig(
+                new RestServerEndpointConfig()
+                    .setPort(8080)
+                    .setPortAutoIncrement(false)
+                    .enableGroups(WAN, CLUSTER_READ, HEALTH_CHECK)
+        );
+```
+
+The following is the equivalent declarative configuration:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <advanced-network enabled="true">
+        <rest-server-socket-endpoint-config>
+            <port auto-increment="false">8080</port>
+            <endpoint-groups>
+                <endpoint-group name="WAN" enabled="true"/>
+                <endpoint-group name="CLUSTER_READ" enabled="true"/>
+                <endpoint-group name="HEALTH_CHECK" enabled="true"/>
+            </endpoint-groups>
+        </rest-server-socket-endpoint-config>
+    </advanced-network>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  advanced-network:
+    enabled: true
+    rest-server-socket-endpoint-config:
+      port:
+        auto-increment: false
+        port: 8080
+      endpoint-groups:
+        WAN:
+          enabled: true
+        CLUSTER_READ:
+          enabled: true
+        HEALTH_CHECK:
+          enabled: true
+```
+
+</TabItem>
+</Tabs>
+
+<PartialClientsRestDeprecation/>
+
+### Configuring TCP Keep-Alive
+
+You can specify TCP keep-alive options for each socket for use cases such as preventing the connections over WAN to be dropped due to inactivity.
+
+These options are generally supported by macOS and Linux systems (not Windows OS).
+
+:::note
+
+TCP keep-alive feature may not be supported on specific builds of the above systems as there is no official JDK documentation guaranteeing such. In this case, Hazelcast logs a warning suggesting to upgrade to the latest JDK. If upgrading does not work either, you should check with your JDK vendor.
+
+:::
+
+You can set up the following keep-alive socket options.
+
+<Tabs groupId="system-properties--xml-advanced-network-configuration--yaml-advanced-network-configuration">
+<TabItem value="xml-advanced-network-configuration" label="XML (Advanced Network Configuration)">
+
+```xml conums
+<hazelcast>
+    ...
+    <advanced-network enabled="true">
+        <member-server-socket-endpoint-config>
+            <socket-options>
+                ...
+                <keep-alive>true</keep-alive> <1>
+                <keep-count>10</keep-count> <2>
+                <keep-idle-seconds>600</keep-idle-seconds> <3>
+                <keep-interval-seconds>15</keep-interval-seconds> <4>
+            </socket-options>
+        </member-server-socket-endpoint-config>
+    </advanced-network>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml-advanced-network-configuration" label="YAML (Advanced Network Configuration)">
+
+```yaml conums
+hazelcast:
+  advanced-network:
+    enabled: true
+    member-server-socket-endpoint-config:
+      socket-options:
+        ...
+        keep-alive: true <1>
+        keep-count: 10 <2>
+        keep-idle-seconds: 600 <3>
+        keep-interval-seconds: 15 <4>
+```
+
+</TabItem>
+<TabItem value="system-properties" label="System Properties">
+
+You can use this configuration approach when you don't need or want to use the advanced network configuration. See [Configuring with System Properties](../configuration/static-configuration/configuring-with-system-properties.mdx) to see the alternative options.
+
+```xml conums
+<hazelcast>
+    ...
+    <properties>
+        <property name="hazelcast.socket.keep.alive">true</property> <1>
+        <property name="hazelcast.socket.keep.count">10</property> <2>
+        <property name="hazelcast.socket.keep.idle">600</property> <3>
+        <property name="hazelcast.socket.keep.interval">15</property> <4>
+    </properties>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+</Tabs>
+
+<CodeCallouts>
+
+1. Specifies whether [TCP keep-alive](https://tldp.org/HOWTO/TCP-Keepalive-HOWTO/overview.html) should be enabled. The default value is `true`.
+2. The number of unacknowledged TCP keep-alive probes to be sent before declaring a connection dead. Configuration is valid when `keep-alive` is `true.`
+3. The duration, in seconds, to wait after the last packet was sent before sending a TCP keep-alive probe. Configuration is valid when `keep-alive` is `true.`
+4. The duration, in seconds, to wait between the TCP keep-alive probes. Configuration is valid when `keep-alive` is `true.`
+
+</CodeCallouts>
+
+:::note
+
+See [Keeping WAN Connections Alive Across Firewalls](../synchronizing-data-across-clusters/defining-wan-replication.mdx#keeping-wan-connections-alive-across-firewalls) on how to set the keep-alive options for your WAN replicated clusters.
+
+The keep-alive options are defined under the `member-server-socket-endpoint-config` parent element in the above examples. The same options also exist under the `wan-server-socket-endpoint-config` and `wan-endpoint-config` parent elements in case you want to configure TCP keep-alive for WAN replication.
+
+:::
+
+### Setting Up WAN Endpoints Configuration
+
+Multiple WAN endpoint configurations can be defined to configure the outgoing connections and server sockets, depending on the role of the member in the WAN replication. See the [Securing the Connections for WAN Replication section](../synchronizing-data-across-clusters/advanced-features.mdx#securing-wan-connections.adoc) for the configuration examples.
+
+### Advanced Network Configuration FAQ
+
+1. *Can I multiplex protocols on a single advanced network endpoint? For example, can I use a single server socket to listen for `MEMBER` and `CLIENT` protocols?*
+
+   No, each endpoint configuration that defines a server socket must bind to a different socket address.
+2. *Can I mix unisocket and advanced network members in the same cluster?*
+
+   No, the results will be undefined.
+3. *Can I configure multiple server socket endpoints for the same protocol?*
+
+   You can only configure multiple server socket endpoints for `WAN` protocol. For other protocols (`MEMBER`, `CLIENT`, `REST`, `MEMCACHE`), a single server socket can be configured.

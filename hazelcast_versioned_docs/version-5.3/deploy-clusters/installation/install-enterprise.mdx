@@ -1,0 +1,260 @@
+---
+title: "Installing Hazelcast Enterprise"
+sidebar_label: "Enterprise"
+sidebar_position: 4
+slug: /getting-started/install-enterprise
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+To install Hazelcast Enterprise, you can use Docker, the binary, or Java. To unlock the Enterprise features, you must install your Enterprise license key.
+
+:::note
+
+These instructions apply only to the licensed Enterprise edition, which provides additional features such as the security suite and blue/green client deployment. If you have the Open Source edition, follow the instructions in the [Installing Hazelcast Open Source](./install-hazelcast.mdx) topic.
+
+:::
+
+Both slim and full distributions are available. For further information on the available editions and distributions, see the [Hazelcast Editions and Distributions](./editions.mdx) topic.
+
+To install a slim distribution, append `-slim` to the version number in the commands shown in the following sections; for example, to install the slim distribution of <Variable name="full-version"/>, use <code><Variable name="full-version"/>{"-slim"}</code>.
+
+## Using the Enterprise Docker Image
+
+1. [Install Docker](https://docs.docker.com/get-docker/).
+2. Check that Docker is correctly installed.
+
+   ```bash
+   docker version
+   ```
+3. If you do not see a version number, see the [Docker docs](https://docs.docker.com/config/daemon/) for troubleshooting information.
+4. [Start the cluster](../../get-started/start-a-local-cluster/get-started-docker.mdx).
+
+## Using the Enterprise Binary
+
+Download and extract the binaries.
+
+<Tabs groupId="os">
+<TabItem value="mac" label="Mac">
+
+```bash vars
+curl -L 'https://repository.hazelcast.com/download/hazelcast-enterprise/hazelcast-enterprise-{full-version}.tar.gz' | tar xvzf -
+```
+
+</TabItem>
+<TabItem value="linux" label="Linux">
+
+```bash vars
+wget -O - 'https://repository.hazelcast.com/download/hazelcast-enterprise/hazelcast-enterprise-{full-version}.tar.gz' | tar xvzf -
+```
+
+</TabItem>
+<TabItem value="windows" label="Windows">
+
+Download and extract the <Variable href="https://repository.hazelcast.com/download/hazelcast-enterprise/hazelcast-enterprise-{full-version}.zip" text="Hazelcast ZIP file"/>.
+
+</TabItem>
+</Tabs>
+
+To start the cluster, see [Start a Local Cluster from Binary](../../get-started/start-a-local-cluster/get-started-binary.mdx).
+
+## Using Enterprise Java
+
+To install Hazelcast with Java, you can use one of the following:
+
+- Maven
+- JAR file
+- Modular Java
+
+### Using Maven
+
+Hazelcast runs on Java, which means you can add it as a dependency in your Java project.
+
+The Java package includes both a member API and a Java client API. The member API is for [embedded topologies](./choosing-a-deployment-option.mdx) where you want to deploy and manage a cluster in the same Java Virtual Machine (JVM) as your applications. The Java client is for connecting to an existing member in a client/server topology, such as <a href="/cloud/overview">Hazelcast <Variable name="hazelcast-cloud"/></a>.
+
+1. Download and install a [supported JDK](../../deploy/versioning-compatibility.mdx#supported-java-virtual-machines).
+2. Add the following to your `pom.xml` file.
+
+   ```xml vars
+   <repositories>
+       <repository>
+           <id>private-repository</id>
+           <name>Hazelcast Private Repository</name>
+           <url>https://repository.hazelcast.com/release/</url>
+           <releases>
+               <enabled>true</enabled>
+           </releases>
+           <snapshots>
+               <enabled>false</enabled>
+           </snapshots>
+       </repository>
+   </repositories>
+
+   <dependencies>
+       <dependency>
+           <groupId>com.hazelcast</groupId>
+           <artifactId>hazelcast-enterprise</artifactId>
+           <version>{full-version}</version>
+       </dependency>
+   </dependencies>
+   ```
+3. [Start the cluster](../../get-started/start-a-local-cluster/get-started-java.mdx).
+
+### Using Modular Java
+
+If you're using JDK 11 or later, you can use Hazelcast as a module in the [Java Platform Module System](http://openjdk.java.net/projects/jigsaw/) (JPMS).
+
+To run your application with Hazelcast libraries on the modulepath, use the `com.hazelcast.core` for <code>{"hazelcast-"}<Variable name="full-version"/>{".jar"}</code> module name.
+
+The JPMS comes with stricter visibility rules. It affects Hazelcast which uses the internal Java API to reach the best performance results.
+
+Hazelcast needs the `java.se` module and access to the following Java packages:
+
+- `java.base/jdk.internal.ref`
+- `java.base/java.nio` *(reflective access)*
+- `java.base/sun.nio.ch` *(reflective access)*
+- `java.base/java.lang` *(reflective access)*
+- `jdk.management/com.ibm.lang.management.internal` *(reflective access)*
+- `jdk.management/com.sun.management.internal` *(reflective access)*
+- `java.management/sun.management` *(reflective access)*
+
+You can provide access to these packages by using `--add-exports` and `--add-opens` (for reflective access) Java arguments.
+
+```bash title="Running a Member on the Classpath" vars
+java --add-modules java.se \
+  --add-exports java.base/jdk.internal.ref=ALL-UNNAMED \
+  --add-opens java.base/java.lang=ALL-UNNAMED \
+  --add-opens java.base/java.nio=ALL-UNNAMED \
+  --add-opens java.base/sun.nio.ch=ALL-UNNAMED \
+  --add-opens java.management/sun.management=ALL-UNNAMED \
+  --add-opens jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED \
+  --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
+  -jar hazelcast-{full-version}.jar
+```
+
+```bash title="Running a Member on the Modulepath" conums
+java --add-modules java.se \
+  --add-exports java.base/jdk.internal.ref=com.hazelcast.core \
+  --add-opens java.base/java.lang=com.hazelcast.core \
+  --add-opens java.base/java.nio=com.hazelcast.core \
+  --add-opens java.base/sun.nio.ch=com.hazelcast.core \
+  --add-opens java.management/sun.management=com.hazelcast.core \
+  --add-opens jdk.management/com.ibm.lang.management.internal=com.hazelcast.core \
+  --add-opens jdk.management/com.sun.management.internal=com.hazelcast.core \
+  --module-path lib \ <1>
+  --module com.hazelcast.core/com.hazelcast.core.server.HazelcastMemberStarter
+```
+
+<CodeCallouts>
+
+1. This example expects the <code>{"hazelcast-"}<Variable name="full-version"/>{".jar"}</code> file in the `lib` directory.
+
+</CodeCallouts>
+
+## Getting an Enterprise License Key
+
+Hazelcast Enterprise requires a license key. You can get a 30-day trial license from the [Hazelcast website](https://hazelcast.com/get-started).
+
+<Anchor id="license-key-format"/>License keys have the following format:
+
+```none
+<Hazelcast edition>#<Maximum members>#<License key>
+```
+
+- `<Hazelcast edition>`: Name of the product.
+- `<Maximum members>`: Maximum number of members that may use the license at the same time.
+- `<License key>`: Machine-readable license key.
+
+The first two strings up to the second hash (\#) character are optional. These strings provide information about the license key. For example, both of the following formats are valid:
+
+```none title="Full-form license"
+HazelcastEnterprise#2Nodes#1q2w3e4r5t
+```
+
+```none title="Short-form license"
+1q2w3e4r5t
+```
+
+:::note
+
+These licenses are examples and will not work if you install them on members.
+
+:::
+
+## Installing an Enterprise License Key
+
+To use Hazelcast Enterprise, you need to configure a license key on all members in a cluster.
+
+:::note
+
+Hazelcast Enterprise license keys are required only for members. You do not need to set a license key for Java clients that are connected to members.
+
+:::
+
+<Tabs groupId="environment-variable--java--system-property--xml--yaml">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <license-key>Your Enterprise License Key</license-key>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  license-key: Your Enterprise License Key
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+Add your license to the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/Config.html#setLicenseKey-java.lang.String-" text="setLicenseKey()"/> method.
+
+```java
+Config config = new Config();
+config.setLicenseKey( "Your Enterprise License Key" );
+```
+
+</TabItem>
+<TabItem value="environment-variable" label="Environment Variable">
+
+```shell
+HZ_LICENSEKEY=<Your Enterprise License Key>
+```
+
+</TabItem>
+<TabItem value="system-property" label="System Property">
+
+```shell
+-Dhazelcast.enterprise.license.key=<Your Enterprise License Key>
+```
+
+</TabItem>
+</Tabs>
+
+## Next Steps
+
+Learn more about [Enterprise license keys](../../configure-and-manage-clusters/enterprise-licenses.mdx).
+
+Get started with the Hazelcast Enterprise features with a series of [tutorials](../../get-started/explore-enterprise-features/enterprise-overview.mdx).
+
+<details>
+<summary>Explore the Hazelcast Enterprise features in more detail</summary>
+
+- [Security suite](../../configure-and-manage-clusters/securing-a-cluster/overview.mdx)
+- [WAN Replication](../../configure-and-manage-clusters/synchronizing-data-across-clusters/wan.mdx)
+- [Configuring CP Subsystem](../../configure-and-manage-clusters/cp-subsystem/configuration.mdx)
+- [Deploying in Openshift container platform](../kubernetes/deploying-in-kubernetes.mdx)
+- [Clustered REST](../../configure-and-manage-clusters/maintaining-a-cluster/monitoring.mdx#clustered-jmx-and-rest-via-management-center)
+- [Clustered JMX](../../configure-and-manage-clusters/maintaining-a-cluster/monitoring.mdx#clustered-jmx-and-rest-via-management-center)
+- [Rolling upgrades](../../configure-and-manage-clusters/maintaining-a-cluster/rolling-upgrades.mdx)
+- [High-Density Memory Store](../../configure-and-manage-clusters/improving-cluster-performance/high-density-memory.mdx)
+- [Persisting Data on Disk](../../configure-and-manage-clusters/configuring-for-fault-tolerance/persistence/persistence.mdx)
+- [Blue/Green client support](../../develop-solutions/connecting-to-a-cluster/java.mdx#blue-green-deployment-and-disaster-recovery)
+- [Job updates](../../develop-solutions/building-data-pipelines/job-update.mdx)
+
+</details>

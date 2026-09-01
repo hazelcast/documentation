@@ -45,7 +45,7 @@ const { attrCodeTemplates, buildCodeTemplates, resolveTemplates } = require('./l
 // {os-version} where the page itself names {full-version} -- same value, so only
 // the source line can tell them apart.
 const { collectPageTexts, collectPageExamples } = require('../refcheck/lib/source-refs')
-const { parseNav, buildPlan, injectNavEntries, pageKey } = require('./lib/nav')
+const { parseNav, buildPlan, injectNavEntries, resolveNavIncludes, pageKey } = require('./lib/nav')
 const { decodeHTML } = require('entities')
 const { loadDispositions, isUnpublished, redirectRoute, urlBase, redirectPairs, publishedPageUrls, navInjectionsFor } = require('../lib/dispositions')
 // Co-located image placement, computed from the reference graph. The converter
@@ -500,16 +500,43 @@ function exampleKey (raw, lookup) {
 // attributes and `(N)` conums, so it needs no further canonicalization).
 const normalizeCode = (s) => s.replace(/\n+$/, '')
 
+// The component's nav.adoc for one version, with its module-partial includes
+// resolved (see resolveNavIncludes) so the nav the converter plans from is the
+// one Antora renders. Both reads go through the same frozen git ref, so a
+// version's nav and its partials can never come from different branches.
+//
+// A missing nav.adoc is a WARNING and a flat layout, as before. A nav.adoc that
+// exists but whose includes cannot be resolved is an ERROR: falling back to flat
+// there would quietly discard a sidebar tree we did find, which is worse than not
+// finding one at all.
 function loadNavAdoc (component, seg, sourcesDir) {
   const src = NAV_SOURCES[component]
   if (!src) return null
   const ref = src.refFor ? src.refFor(seg) : src.ref
   const repoDir = path.join(sourcesDir, src.repo)
+  const show = (file) => {
+    try {
+      return execFileSync('git', ['-C', repoDir, 'show', `${ref}:${file}`], { encoding: 'utf8' })
+    } catch {
+      return null
+    }
+  }
+  let adoc
   try {
-    return execFileSync('git', ['-C', repoDir, 'show', `${ref}:${src.file}`], { encoding: 'utf8' })
+    adoc = execFileSync('git', ['-C', repoDir, 'show', `${ref}:${src.file}`], { encoding: 'utf8' })
   } catch (err) {
     console.warn(`[convert] could not read nav.adoc for ${component}@${seg || '-'} (${err.message.split('\n')[0]}); falling back to flat layout`)
     return null
+  }
+  // `docs/modules/ROOT/nav.adoc` -> `docs/modules`, the root every module's
+  // `<module>/partials/<path>` hangs off. A partial with no module coordinate
+  // belongs to the nav's own module (ROOT here), exactly as Antora resolves it.
+  const modulesRoot = path.posix.dirname(path.posix.dirname(src.file))
+  const navModule = path.posix.basename(path.posix.dirname(src.file))
+  try {
+    return resolveNavIncludes(adoc, (module, relPath) => show(`${modulesRoot}/${module || navModule}/partials/${relPath}`))
+  } catch (err) {
+    throw new Error(`nav.adoc for ${component}@${seg || '-'} (${ref}): ${err.message}`)
   }
 }
 
@@ -938,7 +965,7 @@ function convertVersion (ver, ctx) {
   // failure to bake, not a reference.
   const navAttrs = attrTableFor(manifest, component, seg)
   const navAdoc = withAttrs(loadNavAdoc(component, seg, opts.sourcesDir), navAttrs)
-  const injections = navInjectionsFor(ctx.dispositions, component).filter((i) => titleByKey.has(i.key))
+  const injections = navInjectionsFor(ctx.dispositions, component, seg).filter((i) => titleByKey.has(i.key))
   const plan = navAdoc
     ? buildPlan(parseNav(injectNavEntries(navAdoc, injections)), titleByKey)
     : { pages: new Map(), categories: [], duplicates: [] }

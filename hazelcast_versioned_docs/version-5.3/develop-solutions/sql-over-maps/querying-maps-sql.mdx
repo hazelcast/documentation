@@ -1,0 +1,190 @@
+---
+title: "Querying Maps with SQL"
+sidebar_label: "Queries"
+sidebar_position: 2
+slug: /sql/querying-maps-sql
+---
+
+You can use SQL to run optimized distributed queries on the keys and values of maps in a local cluster.
+
+## Querying Primitive Entries
+
+A map entry consists of a key and a value. You can query the key through the `__key` field and the value through the `this` field.
+
+For example, if you have a map named `capital_cities`, you can query that map, using the following `SELECT` statement.
+
+```sql
+SELECT * FROM capital_cities;
+```
+
+```none
++--------------------+------------+
+|     __key          |    this    |
++--------------------+------------+
+|        1           |   Tokyo    |
++--------------------+------------+
+```
+
+The `this` alias is returned by a query only if the value does not contain an object. For example, if the `capital_cities` value was a serialized object that had a `name` and a `country` field, the query result would include those fields as columns and exclude the `this` column.
+
+```none
++--------------------+------------+--------------+
+|     __key          |    name    |   country    |
++--------------------+------------+--------------+
+|        1           |   Tokyo    |    Japan     |
++--------------------+------------+--------------+
+```
+
+## Querying Objects in Map Entries
+
+If you store objects in a map, you can query the objects' top-level fields only if they are serialized using one of the following options.
+
+:::note
+
+You cannot query nested object fields using SQL.
+
+:::
+
+- [`Serializable`](../serialization/other-serialization-options/implementing-java-serializable.mdx) - [`DataSerializable`](../serialization/other-serialization-options/implementing-dataserializable.mdx), and [`IdentifiedDataSerializable`](../serialization/other-serialization-options/implementing-dataserializable.mdx#identifieddataserializable)
+
+  Only public fields and getters are available. A public field is available with its exact name. A getter is available with the JavaBean naming conventions.
+- [`Portable`](../serialization/other-serialization-options/implementing-portable-serialization.mdx)
+
+  The fields that are written in the `Portable.writePortable()` method are exposed using their given names. The fields that are written in the `GenericRecordBuilder` API are exposed using their given names.
+- [`Compact`](../serialization/compact-serialization.mdx)
+
+  The fields that are written in the `CompactSerializer.write()` method are exposed using their given names. The fields that are written in the `GenericRecordBuilder` API are exposed using their given names.
+
+  :::note
+
+  If the compact serializer is not configured, only public fields and getters are available. A public field is available with its exact name. A getter is available with the JavaBean naming conventions.
+
+  :::
+- [JSON](../working-with-json.mdx).
+
+Consider a map that stores `Employee` objects as values with `name` and `age` fields:
+
+```java
+IMap<Long, Employee>
+```
+
+The SQL service has access to the `Employee` object's fields.
+
+<table>
+<colgroup>
+<col style={{width:'50%'}}/>
+<col style={{width:'50%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Type</td>
+</tr>
+<tr>
+<td>`name`</td>
+<td>`VARCHAR`</td>
+</tr>
+<tr>
+<td>`age`</td>
+<td>`INT`</td>
+</tr>
+</tbody>
+</table>
+
+Together with the key, you may query those fields.
+
+```sql
+SELECT __key, this, name, age FROM employee
+```
+
+If both the key and value have fields with the same name, you may only query the key's field and not the value's field, or you must rename the column when creating the mapping.
+
+## Querying Enums in Java
+
+An enum is a user-defined type, which is mapped to the [`OBJECT` type](../data-types.mdx) in SQL.
+
+If you use Java, you can use the following options to query enums:
+
+- [Use a parameterized query](../parameterized-queries.mdx).
+- Create getter/setter methods that use the enum's ordinal or name.
+
+For example, consider a map whose values are `Employee` objects with the following fields.
+
+<table>
+<colgroup>
+<col style={{width:'50%'}}/>
+<col style={{width:'50%'}}/>
+</colgroup>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Type</td>
+</tr>
+<tr>
+<td>`name`</td>
+<td>`String`</td>
+</tr>
+<tr>
+<td>`age`</td>
+<td>`Int`</td>
+</tr>
+<tr>
+<td>`status`</td>
+<td>`EmployeeStatus`</td>
+</tr>
+</tbody>
+</table>
+
+And the `status` field is an enum called `EmployeeStatus`.
+
+```java
+public enum EmployeeStatus {
+  PENDING,
+  ACTIVE,
+  VACATION,
+  DELETED;
+}
+```
+
+To query employees who have a `VACATION` status, you could do either of the following:
+
+- Define a getter method that returns the string representation of the enum.
+
+  ```java
+  public enum EmployeeStatus {
+    PENDING,
+    ACTIVE,
+    VACATION,
+    DELETED;
+
+    public String getEmployeeStatusString() {
+      return employeeStatus != null ? employeeStatus.name() : null;
+    }
+
+    public void setEmployeeStatusString(String newValue) {
+      employeeStatus = newValue == null ? null : EmployeeStatus.valueOf(newValue);
+    }
+  }
+  ```
+
+  ```sql
+  SELECT * FROM employees
+  WHERE employeeStatusString='VACATION';
+  ```
+- Use a [parameterized query](../parameterized-queries.mdx) with Java.
+
+  ```java
+  sql.execute("SELECT * FROM employees WHERE employee.status = ?", EmployeeStatus.VACATION);
+  ```
+
+## Streaming Map Changes
+
+At the moment, you cannot run queries streaming the changes on maps with SQL.
+
+Until this feature is available, use the Jet API to run streaming queries on maps. For a tutorial, see [Subscribe to Changes to a Map](../building-data-pipelines/stream-processing/stream-imap.mdx).
+
+## Learn More
+
+Learn the details of all the available [SQL statements](../statements/sql-statements.mdx).
+
+See more examples of the [`SELECT` statement](../statements/select.mdx).

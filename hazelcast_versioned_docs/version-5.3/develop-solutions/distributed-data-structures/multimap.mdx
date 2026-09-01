@@ -1,0 +1,499 @@
+---
+title: "MultiMap"
+sidebar_position: 6
+slug: /data-structures/multimap
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Hazelcast MultiMap, also known as IMultiMap, is a specialized map where you can store multiple values under a single key. Just like any other distributed data structure implementation in Hazelcast, MultiMap is distributed and thread-safe.
+
+MultiMap supports most features of Hazelcast Map except for indexing, predicates and MapLoader/MapStore. The entries are almost evenly distributed onto all cluster members. However, this distribution is based on the entry keys: if there are multiple entries having the same key but different values, such entries are stored on the same member, otherwise they are distributed among the members. When a new member joins the cluster, the same ownership logic used in the Hazelcast Map applies.
+
+## Creating a MultiMap
+
+<Anchor id="getting-a-multimap-and-putting-an-entry"/>
+
+When you start a Hazelcast member with default configuration, it will have an empty MultiMap named `default`. See [Start a Local Cluster in Docker](../../get-started/start-a-local-cluster/get-started-docker.mdx) for a quick cluster startup.
+
+You can either use this `default` MultiMap or create your own using the MultiMap's getter methods as shown in the below example. If you pass a name other than `default` as the MultiMap name in these methods, it creates a new MultiMap with the given name; otherwise, it will use this existing MultiMap.
+
+In this example, we create a MultiMap called `multimap`, add entries to it, and print the entries.
+
+<Tabs groupId="c--c-sharp--go--java--nodejs--python">
+<TabItem value="java" label="Java">
+
+1. [Install the Java client library](../../deploy-clusters/installation/install-hazelcast.mdx#using-java)
+2. Add the following to your file:
+
+   ```java conums
+   import com.hazelcast.client.HazelcastClient;
+   import com.hazelcast.core.HazelcastInstance;
+   import com.hazelcast.multimap.MultiMap;
+
+   import java.util.Collection;
+
+   public class Client {
+
+       public static void main(String[] args) throws Exception {
+
+           HazelcastInstance client = HazelcastClient.newHazelcastClient();
+
+           MultiMap<String, String> multimap = client.getMultiMap("multimap"); <1>
+
+           <2>
+           multimap.put("a", "1");
+           multimap.put("a", "2");
+           multimap.put("b", "3");
+           System.out.printf("Put items:Done");
+
+           <3>
+           for (String key: multimap.keySet()){
+               Collection<String> values = multimap.get(key);
+               System.out.printf("%s -> %s\n", key, values);
+           }
+       }
+   }
+   ```
+
+   <CodeCallouts>
+
+   1. Create or access the MultiMap called `multimap`.
+   2. Add entries to `multimap`.
+   3. Print the entries.
+
+   </CodeCallouts>
+
+</TabItem>
+<TabItem value="c" label="C++">
+
+1. [Install the latest C++ client library](https://github.com/hazelcast/hazelcast-cpp-client/blob/v5.0.0/Reference_Manual.md#11-installing)
+2. Add the following to your file:
+
+   ```cpp conums
+   #include <hazelcast/client/hazelcast_client.h>
+
+   int main() {
+       auto hz = hazelcast::new_client().get();
+
+       auto multimap = hz.get_multi_map("multimap").get(); <1>
+
+       <2>
+       multimap->put("a", "1").get();
+       multimap->put("a", "2").get();
+       multimap->put("b", "3").get();
+
+       std::cout << "Put items: Done" << std::endl;
+
+       <3>
+       for (auto &key : multimap->key_set<std::string>().get()) {
+           std::cout << key << " -> (";
+           for (auto &value : multimap->get<std::string, std::string>(key).get()) {
+               std::cout << value << ", \n";
+           }
+           std::cout << ")" << "\n";
+       }
+
+       std::cout << "Finished" << std::endl;
+
+       return 0;
+   }
+   ```
+
+   <CodeCallouts>
+
+   1. Create or access the MultiMap called `multimap`.
+   2. Add entries to `multimap`.
+   3. Print the entries.
+
+   </CodeCallouts>
+
+</TabItem>
+<TabItem value="c-sharp" label="C Sharp">
+
+1. [Install the latest C Sharp client library](http://hazelcast.github.io/hazelcast-csharp-client/latest/doc/download-install.html)
+2. Add the following to your file:
+
+   ```cs conums
+   using System;
+   using System.Threading.Tasks;
+
+   namespace Hazelcast.Examples.DistributedObjects
+   {
+       public class ExampleMultiMap
+       {
+           public static async Task Main(string[] args)
+           {
+               var options = new HazelcastOptionsBuilder()
+                   .With(args)
+                   .WithConsoleLogger()
+                   .Build();
+
+               await using var client = await HazelcastClientFactory.StartNewClientAsync(options);
+
+               await using var multimap = await client.GetMultiMapAsync<string, string>("multimap"); <1>
+
+               <2>
+               await multimap.PutAsync("a", "1");
+               await multimap.PutAsync("a", "2");
+               await multimap.PutAsync("b", "3");
+
+               <3>
+               Console.WriteLine("Value: " + string.Join(", ", await multimap.GetAsync("key")));
+               Console.WriteLine("Values : " + string.Join(", ", await multimap.GetValuesAsync()));
+               Console.WriteLine("Keys: " + string.Join(", ", await multimap.GetKeysAsync()));
+               Console.WriteLine("Count: " + await multimap.GetSizeAsync());
+               Console.WriteLine("Entries: " + string.Join(", ", await multimap.GetEntriesAsync()));
+               Console.WriteLine("ContainsKey: " + await multimap.ContainsKeyAsync("key"));
+               Console.WriteLine("ContainsValue: " + await multimap.ContainsValueAsync("value"));
+           }
+       }
+   }
+   ```
+
+   <CodeCallouts>
+
+   1. Create or access the MultiMap called `multimap`.
+   2. Add entries to `multimap`.
+   3. Print the entries.
+
+   </CodeCallouts>
+
+</TabItem>
+<TabItem value="nodejs" label="Node.js">
+
+1. Install the Node.js client library.
+
+   ```shell
+   npm install hazelcast-client
+   ```
+2. Add the following to your file:
+
+   ```javascript conums
+   const multiMap = await client.getMultiMap('multimap'); <1>
+
+   <2>
+   await multiMap.put('a', '1');
+   await multiMap.put('a', '2');
+   await multiMap.put('b', '3');
+
+   <3>
+   const values = await multiMap.get('a')
+   for (const value of values) {
+       console.log(value);
+   }
+   ```
+
+   <CodeCallouts>
+
+   1. Create or access the MultiMap called `multimap`.
+   2. Add entries to `multimap`.
+   3. Print the values for the key **`a`**.
+
+   </CodeCallouts>
+
+</TabItem>
+<TabItem value="python" label="Python">
+
+1. Install the Python client library.
+
+   ```shell
+   pip install hazelcast-python-client
+   ```
+2. Add the following to your file:
+
+   ```python conums
+   import hazelcast
+
+   client = hazelcast.HazelcastClient()
+
+   multi_map = client.get_multi_map("multi-map").blocking() <1>
+
+   <2>
+   multi_map.put("a", "1")
+   multi_map.put("a", "2")
+   multi_map.put("b", "3")
+
+   value = multi_map.get("a")
+   print("Get:", value)
+
+   values = multi_map.values()
+   print("Values:", values)
+
+   key_set = multi_map.key_set()
+   print("Key Set:", key_set)
+
+   size = multi_map.size()
+   print("Size:", size)
+
+   <3>
+   for key, value in multi_map.entry_set():
+       print("%s -> %s" % (key, value))
+
+   client.shutdown()
+   ```
+
+   <CodeCallouts>
+
+   1. Create or access the MultiMap called `multimap`.
+   2. Add entries to `multimap`.
+   3. Print the entries.
+
+   </CodeCallouts>
+
+</TabItem>
+<TabItem value="go" label="Go">
+
+1. Install the Go client library.
+
+   ```shell
+   go get github.com/hazelcast/hazelcast-go-client
+   ```
+2. Add the following to your file:
+
+   ```go conums
+   package main
+
+   import (
+   	"context"
+   	"fmt"
+   	"log"
+   	"math/rand"
+   	"time"
+
+   	"github.com/hazelcast/hazelcast-go-client"
+   )
+
+   func main() {
+   	ctx := context.TODO()
+   	client, err := hazelcast.StartNewClient(ctx)
+   	if err != nil {
+   		log.Fatal(err)
+   	}
+
+   	rand.Seed(time.Now().Unix())
+   	mapName := fmt.Sprintf("sample-%d", rand.Int())
+   	m, err := client.GetMultiMap(ctx, mapName) <1>
+   	if err != nil {
+   		log.Fatal(err)
+   	}
+
+           <2>
+   	success, err := m.Put(ctx, "a", "1")
+   	if err != nil {
+   		log.Fatal(err)
+   	}
+   	if !success {
+   		log.Fatal("multi-map put operation failed")
+   	}
+   	success, err = m.Put(ctx, "a", "2")
+   	if err != nil {
+   		log.Fatal(err)
+   	}
+   	if !success {
+   		log.Fatal("multi-map put operation failed")
+   	}
+   	success, err := m.Put(ctx, "b", "1")
+   	if err != nil {
+   		log.Fatal(err)
+   	}
+   	if !success {
+   		log.Fatal("multi-map put operation failed")
+   	}
+
+            <3>
+   	values, err := m.Get(ctx, "a")
+   	if err != nil {
+   		log.Fatal(err)
+   	}
+
+            <4>
+   	fmt.Printf("%#v", values)
+   }
+   ```
+
+   <CodeCallouts>
+
+   1. Create or access the MultiMap called `multimap`.
+   2. Add entries to `multimap`.
+   3. Get values for the key **`a`**.
+   4. Print the values.
+
+   </CodeCallouts>
+
+</TabItem>
+</Tabs>
+
+After you run the example code, you will see the key **`a`** has two values:
+
+`b → [3]`
+
+`a → [2, 1]`
+
+Hazelcast MultiMap uses entry listeners to listen to events which occur when entries are added to, updated in or removed from the MultiMap. See the [Listening for MultiMap Events section](../listening-to-events/object-events.mdx#listening-for-multimap-events) for information about how to create an entry listener class and register it.
+
+## Configuring MultiMap
+
+When using MultiMap, the collection type of the values can be either **Set** or **List**. Configure the collection type with the `value-collection-type` parameter. If you choose Set, duplicate and null values are not allowed in your collection and ordering is irrelevant. If you choose List, ordering is relevant and your collection can include duplicate but not null values.
+
+You can also enable statistics for your MultiMap with the `statistics-enabled` parameter. If you enable `statisticsEnabled`, statistics can be retrieved with `getLocalMultiMapStats()` method.
+
+:::note
+
+Currently, eviction is not supported for the MultiMap data structure.
+
+:::
+
+The following is an example MultiMap configuration.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <multimap name="default">
+        <backup-count>0</backup-count>
+        <async-backup-count>1</async-backup-count>
+        <value-collection-type>SET</value-collection-type>
+        <statistics-enabled>true</statistics-enabled>
+        <entry-listeners>
+            <entry-listener include-value="false" local="false" >com.hazelcast.examples.EntryListener</entry-listener>
+        </entry-listeners>
+        <split-brain-protection-ref>split-brain-protection-name</split-brain-protection-ref>
+    </multimap>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  multimap:
+    default:
+      backup-count: 0
+      async-backup-count: 1
+      value-collection-type: SET
+      statistics-enabled: true
+      entry-listeners:
+        - class-name: com.hazelcast.examples.EntryListener
+          include-value: false
+          local: false
+      split-brain-protection-ref: split-brain-protection-name
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+        MultiMapConfig mmConfig = new MultiMapConfig();
+        mmConfig.setName( "default" )
+                .setBackupCount( 0 ).setAsyncBackupCount( 1 )
+                .setValueCollectionType( "SET" )
+                .setSplitBrainProtectionName( "splitbrainprotectionname" );
+```
+
+</TabItem>
+</Tabs>
+
+The following are the configuration elements and their descriptions:
+
+- `backup-count`: Count of synchronous backups. For example, if it is set to `1`, backup of a partition is placed on one other member. If it is `2`, it is placed on two other members.
+- `async-backup-count`: Count of asynchronous backups. See [Backup Types](./map/backing-up-maps.mdx#in-memory-backup-types) to learn more about synchronous and asynchronous backups.
+- `value-collection-type`: Type of the value collection. It can be `SET` or `LIST`.
+- `statistics-enabled`: Specifies whether the statistics gathering is enabled for your MultiMap. If set to `false`, you cannot collect statistics in your implementation and also <Variable href="/management-center/{page-latest-supported-mc}/data-structures/overview#monitoring-multimaps" text="Hazelcast Management Center"/> will not show them. Its default value is `true`.
+- `entry-listeners`: Lets you add listeners (listener classes) for the map entries. You can also set the attribute `include-value` to `true` if you want the item event to contain the entry values. You can set `local` to `true` if you want to listen to the entries on the local member.
+- `split-brain-protection-ref`: Name of the split-brain protection configuration that you want this MultiMap to use. See the [Split-Brain Protection for MultiMap and TransactionalMultiMap section](../../configure-and-manage-clusters/configuring-for-fault-tolerance/handling-network-partitions/split-brain-protection.mdx#split-brain-protection-for-multimap-and-transactionalmultimap).
+
+## Split-Brain Protection for MultiMap and TransactionalMultiMap
+
+MultiMap & TransactionalMultiMap can be configured to check for a minimum number of available members before applying their operations (see the [Split-Brain Protection section](../../configure-and-manage-clusters/configuring-for-fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful queue operations on all parts of a cluster during a network partition.
+
+The following is a list of methods that support split-brain protection checks. The list is grouped by the protection types.
+
+MultiMap:
+
+- WRITE, READ\_WRITE:
+
+  - `clear`
+  - `forceUnlock`
+  - `lock`
+  - `put`
+  - `remove`
+  - `tryLock`
+  - `unlock`
+- READ, READ\_WRITE:
+
+  - `containsEntry`
+  - `containsKey`
+  - `containsValue`
+  - `entrySet`
+  - `get`
+  - `isLocked`
+  - `keySet`
+  - `localKeySet`
+  - `size`
+  - `valueCount`
+  - `values`
+
+TransactionalMultiMap:
+
+- WRITE, READ\_WRITE:
+
+  - `put`
+  - `remove`
+- READ, READ\_WRITE:
+
+  - `size`
+  - `get`
+  - `valueCount`
+
+The configuration is done on the member side and the following is an example.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <multimap name="default">
+        <split-brain-protection-ref>splitBrainProtectionRuleWithFourMembers</split-brain-protection-ref>
+    </multimap>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  multimap:
+    default:
+      split-brain-protection-ref: splitBrainProtectionRuleWithFourMembers
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+SplitBrainProtectionConfig splitBrainProtectionConfig = new SplitBrainProtectionConfig();
+splitBrainProtectionConfig.setName("splitBrainProtectionRuleWithFourMembers")
+			 .setEnabled(true)
+			 .setMinimumClusterSize(4);
+
+MultiMapConfig multimapConfig = new MultiMapConfig();
+multimapConfig.setSplitBrainProtectionName("splitBrainProtectionRuleWithFourMembers");
+
+Config config = new Config();
+config.addSplitBrainProtectionConfig(splitBrainProtectionConfig);
+config.addMultiMapConfig(multimapConfig);
+```
+
+</TabItem>
+</Tabs>
+
+The value of `split-brain-protection-ref` should be the split-brain protection configuration name which you configured under the `split-brain-protection` element as explained in the [Split-Brain Protection section](../../configure-and-manage-clusters/configuring-for-fault-tolerance/handling-network-partitions/split-brain-protection.mdx).

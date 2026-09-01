@@ -1,0 +1,37 @@
+---
+title: "Providing XA Transactions"
+sidebar_position: 2
+slug: /transactions/providing-xa-transactions
+---
+
+XA describes the interface between the global transaction manager and the local resource manager. XA allows multiple resources (such as databases, application servers, message queues and transactional caches) to be accessed within the same transaction, thereby preserving the ACID properties across applications. XA uses a two-phase commit to ensure that all resources either commit or rollback any particular transaction consistently (all do the same).
+
+When you implement the `XAResource` interface, Hazelcast provides XA transactions. You can obtain the `HazelcastXAResource` instance via the `HazelcastInstance getXAResource` method. You can see the HazelcastXAResource API <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/transaction/HazelcastXAResource.html" text="here"/>.
+
+Below is example code that uses JTA API for transaction management.
+
+```java
+        cleanAtomikosLogs();
+
+        HazelcastInstance instance = Hazelcast.newHazelcastInstance();
+        HazelcastXAResource xaResource = instance.getXAResource();
+
+        UserTransactionManager tm = new UserTransactionManager();
+        tm.begin();
+
+        Transaction transaction = tm.getTransaction();
+        transaction.enlistResource(xaResource);
+        TransactionContext context = xaResource.getTransactionContext();
+        TransactionalMap<Object, Object> map = context.getMap("map");
+        map.put("key", "val");
+        transaction.delistResource(xaResource, XAResource.TMSUCCESS);
+
+        tm.commit();
+
+        IMap<Object, Object> m = instance.getMap("map");
+        Object val = m.get("key");
+        System.out.println("value: " + val);
+
+        cleanAtomikosLogs();
+        Hazelcast.shutdownAll();
+```

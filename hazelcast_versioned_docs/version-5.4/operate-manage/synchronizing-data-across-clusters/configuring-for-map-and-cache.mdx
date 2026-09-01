@@ -1,0 +1,179 @@
+---
+title: "Configuring for IMap and ICache"
+sidebar_position: 5
+slug: /wan/configuring-for-map-and-cache
+enterprise: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+As mentioned before, for now Hazelcast's map (`IMap`) and cache (`ICache`) data structures support WAN Replication. After you define and configure the WAN Replication as explained in previous sections above, you need to bind it to your maps and/or caches.
+
+To enable WAN replication for an `IMap` or `ICache` instance, you can use the `wan-replication-ref` configuration element. Each instance can have a different WAN replication configuration.
+
+**Enabling WAN Replication for IMap:**
+
+Imagine you have different distributed maps, however only one of those maps should be replicated to a target cluster. To achieve this, configure the map that you want to be replicated by adding the `wan-replication-ref` element in the map configuration as shown below.
+
+<Tabs groupId="java-member-api--xml--yaml">
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  wan-replication:
+    london-wan-rep:
+      ...
+  map:
+    my-shared-map:
+      wan-replication-ref:
+        london-wan-rep:
+          merge-policy-class-name: PassThroughMergePolicy
+          republishing-enabled: false
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <wan-replication name="london-wan-rep">
+        ...
+    </wan-replication>
+    <map name="my-shared-map">
+        <wan-replication-ref name="london-wan-rep">
+            <merge-policy-class-name>PassThroughMergePolicy</merge-policy-class-name>
+            <republishing-enabled>false</republishing-enabled>
+        </wan-replication-ref>
+    </map>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="java-member-api" label="Java Member API">
+
+```java
+        Config config = new Config();
+
+        WanReplicationConfig wrConfig = new WanReplicationConfig();
+        wrConfig.setName("my-wan-cluster");
+
+        config.addWanReplicationConfig(wrConfig);
+
+        WanReplicationRef wanRef = new WanReplicationRef();
+        wanRef.setName("my-wan-cluster");
+        wanRef.setMergePolicyClassName(PassThroughMergePolicy.class.getName());
+        wanRef.setRepublishingEnabled(false);
+        config.getMapConfig("my-shared-map").setWanReplicationRef(wanRef);
+```
+
+</TabItem>
+</Tabs>
+
+You see that we have `my-shared-map` configured to replicate itself to the cluster targets defined in the earlier `wan-replication` element.
+
+`wan-replication-ref` has the following elements;
+
+- `name`: Name of the `wan-replication` configuration. `IMap` or `ICache` instance uses this `wan-replication` configuration.
+- `merge-policy-class-name`: Policy to resolve conflicts that occur when the target cluster already has the replicated entry key. This configuration element is optional. If it is not specified, `com.hazelcast.spi.merge.PassThroughMergePolicy` will be used as the merge policy.
+- `republishing-enabled`: When enabled, an incoming event to a member is forwarded to target cluster of that member. Enabling the event republishing is useful in a scenario where cluster A replicates to cluster B and cluster B replicates to cluster C. You do not need to enable republishing when all your clusters replicate to each other. If not otherwise specified, the default value for republishing is `true` (enabled).
+
+When using Active-Active Replication, multiple clusters can simultaneously update the same entry in a distributed data structure. You can configure a merge policy to resolve these potential conflicts, as shown in the above example configuration (using the `merge-policy-class-name` sub-element under the `wan-replication-ref` element).
+
+Hazelcast provides the following merge policies for `IMap`:
+
+- `PutIfAbsentMergePolicy`: Incoming entry merges from the source map to the target map if it does not exist in the target map.
+- `HigherHitsMergePolicy`: Incoming entry merges from the source map to the target map if the source entry has more hits than the target one.
+- `PassThroughMergePolicy`: Incoming entry merges from the source map to the target map unless the incoming entry is not null.
+- `ExpirationTimeMergePolicy`: Incoming entry merges from the source map to the target map if the source entry will expire later than the destination entry. Please note that this merge policy can only be used when the clusters' clocks are in sync.
+- `LatestAccessMergePolicy`: Incoming entry merges from the source map to the target map if the source entry has been accessed more recently than the destination entry. Please note that this merge policy can only be used when the clusters' clocks are in sync.
+- `LatestUpdateMergePolicy`: Incoming entry merges from the source map to the target map if the source entry has been updated more recently than the target entry. Please note that this merge policy can only be used when the clusters' clocks are in sync.
+
+:::note
+
+When using WAN replication, please note that the key based operations are replicated to the target cluster, except `evict()`. Also, the results of entry processors are also replicated.
+
+:::
+
+:::note
+
+Note that WAN replication does not replicate configurations, but only the events, i.e., data inserts, updates and removals. When a map or cache is replicated and the target cluster does not have a configuration for that map or cache, the default configuration will apply on the target cluster.
+
+:::
+
+**Enabling WAN Replication for `ICache`:**
+
+The following is a configuration example for enabling WAN Replication for `ICache`:
+
+<Tabs groupId="java-member-api--xml--yaml">
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  wan-replication:
+    london-wan-rep:
+      ...
+  cache:
+    my-shared-cache:
+      wan-replication-ref:
+        london-wan-rep:
+          merge-policy-class-name: PassThroughMergePolicy
+          republishing-enabled: true
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <wan-replication name="london-wan-rep">
+        ...
+    </wan-replication>
+    <cache name="my-shared-cache">
+        <wan-replication-ref name="london-wan-rep">
+            <merge-policy-class-name>PassThroughMergePolicy</merge-policy-class-name>
+            <republishing-enabled>true</republishing-enabled>
+        </wan-replication-ref>
+    </cache>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="java-member-api" label="Java Member API">
+
+```java
+        Config config = new Config();
+
+        WanReplicationConfig wrConfig = new WanReplicationConfig();
+        wrConfig.setName("my-wan-cluster");
+
+        config.addWanReplicationConfig(wrConfig);
+
+        WanReplicationRef cacheWanRef = new WanReplicationRef();
+        cacheWanRef.setName("my-wan-cluster");
+        cacheWanRef.setMergePolicyClassName(PassThroughMergePolicy.class.getName());
+        cacheWanRef.setRepublishingEnabled(true);
+        config.getCacheConfig("my-shared-cache").setWanReplicationRef(cacheWanRef);
+```
+
+</TabItem>
+</Tabs>
+
+:::note
+
+Caches that are created dynamically do not support WAN replication functionality. Cache configurations should be defined either declaratively (by XML/YAML) or programmatically on both source and target clusters.
+
+:::
+
+Hazelcast provides the following merge policies for `ICache`:
+
+- `PutIfAbsentMergePolicy`: Incoming entry merges from the source cache to the target cache if it does not exist in the target cache.
+- `HigherHitsMergePolicy`: Incoming entry merges from the source cache to the target cache if the source entry has more hits than the target one.
+- `PassThroughMergePolicy`: Incoming entry merges from the source cache to the target cache unless the incoming entry is not null.
+- `ExpirationTimeMergePolicy`: Incoming entry merges from the source cache to the target cache if the source entry will expire later than the destination entry. Please note that this merge policy can only be used when the clusters' clocks are in sync.
+- `LatestAccessMergePolicy`: Incoming entry merges from the source cache to the target cache if the source entry has been accessed more recently than the destination entry. Please note that this merge policy can only be used when the clusters' clocks are in sync.
+- `LatestUpdateMergePolicy`: Incoming entry merges from the source cache to the target cache if the source entry has been updated more recently than the target entry. Please note that this merge policy can only be used when the clusters' clocks are in sync.

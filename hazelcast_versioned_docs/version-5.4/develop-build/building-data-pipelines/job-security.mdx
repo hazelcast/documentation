@@ -1,0 +1,264 @@
+---
+title: "Securing Jobs"
+sidebar_position: 9
+slug: /pipelines/job-security
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+While submitting jobs, you can upload custom code that bypasses client permissions. Jobs also have access to data outside Hazelcast such as files on the device that's running a member. As a result, it's important to be aware of how to secure your Hazelcast member against malicious jobs.
+
+To secure your cluster against malicious jobs, you have the following options:
+
+- [Disable code uploads](#disabling-code-uploads): Do not allow applications to submit Java classes along with a job.
+- [Disable the Jet engine](#disabling-the-jet-engine): Do not allow any jobs or SQL queries to run on the cluster.
+
+  :::note
+
+  You cannot run SQL queries when the Jet engine is disabled.
+
+  :::
+- [Control which clients have permission to work with jobs](#controlling-access-to-jobs) <Badge type="enterprise"/>.
+
+  :::warning
+
+  The <Variable name="open-source-product-name"/> of Hazelcast does not include security settings. To secure your Hazelcast members against clients misusing jobs, you can only [disable code uploads](#disabling-code-uploads) or [the Jet engine](#disabling-the-jet-engine).
+
+  :::
+
+## Disabling Code Uploads
+
+When submitting a job to a member, you have the option of uploading some of your own classes for the cluster to run with the job. This code is not subject to any <Variable name="enterprise-product-name"/> client permissions that you may have set up. For example, if you restrict clients' write access to a map, the uploaded code bypasses those restrictions and can write to the map.
+
+:::note
+
+If you're using Hazelcast in embedded mode, this feature is disabled by default.
+
+:::
+
+To disable this feature, use the following configuration:
+
+<Tabs groupId="env--java--system-properties--xml--yaml">
+<TabItem value="xml" label="XML">
+
+```xml
+<jet enabled="true" resource-upload-enabled="false">
+  ...
+</jet>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+jet:
+  enabled: true
+  resource-upload-enabled: false
+```
+
+</TabItem>
+<TabItem value="env" label="Env">
+
+```shell
+HZ_JET_RESOURCEUPLOADENABLED=false
+```
+
+</TabItem>
+<TabItem value="system-properties" label="System Properties">
+
+```shell
+-Dhz.jet.resource-upload-enabled=false
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+Config config = new Config();
+JetConfig jetConfig = config.getJetConfig();
+jetConfig.setEnabled(true).setResourceUploadEnabled(false);
+HazelcastInstance instance = Hazelcast.newHazelcastInstance(config);
+```
+
+</TabItem>
+</Tabs>
+
+## Disabling the Jet Engine
+
+If you don't plan on using the Jet engine, it's safer to disable it. This way, your members don't start Jet, keeping your members safe from malicious jobs.
+
+:::warning
+
+Disabling Jet also disables [code uploads](#disabling-code-uploads) and [SQL](../sql/sql-overview.mdx).
+
+:::
+
+:::note
+
+If you're using Hazelcast in [embedded mode](../../get-started/start-a-local-cluster/get-started-java.mdx), this feature is disabled by default.
+
+:::
+
+To disable this feature, use the following configuration:
+
+<Tabs groupId="env--java--system-properties--xml--yaml">
+<TabItem value="xml" label="XML">
+
+```xml
+<jet enabled="false">
+  ...
+</jet>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+jet:
+  enabled: false
+```
+
+</TabItem>
+<TabItem value="env" label="Env">
+
+```shell
+HZ_JET_ENABLED=false
+```
+
+</TabItem>
+<TabItem value="system-properties" label="System Properties">
+
+```shell
+-Dhz.jet.enabled=false
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+Config config = new Config();
+JetConfig jetConfig = config.getJetConfig();
+jetConfig.setEnabled(false);
+HazelcastInstance instance = Hazelcast.newHazelcastInstance(config);
+```
+
+</TabItem>
+</Tabs>
+
+## Controlling Access to Jobs
+
+In Hazelcast <Variable name="enterprise-product-name"/>, you can restrict access to jobs, using the following [client permissions](../../operate-manage/securing-a-cluster/native-client-security.mdx):
+
+- Job permissions: Restrict what clients can do with jobs and SQL queries.
+- Connector permissions: Restrict read and write access for each connector.
+
+### Job Permissions
+
+When the [code uploads](#disabling-code-uploads) and the [Jet engine](#disabling-the-jet-engine) are enabled, all clients are unrestricted in what they can do with jobs.
+
+To restrict clients, you can set the following permissions:
+
+- `submit`: Submit new jobs and run new SQL queries.
+- `cancel`: Cancel a running job.
+- `read`: Get or list information about a job (by ID or name) such as job configuration, job status, and submission time.
+- `restart`: Suspend and resume a running job.
+- `export-snapshot`: Export or list snapshots.
+- `add-resources`: Upload resources and classes as well as jobs to members.
+
+  :::note
+
+  Hazelcast cannot check permissions in code that's uploaded with a job. If you enable this permission, clients can upload custom code that ignores any configured permissions. An alternative to uploading resources and classes with a job is to add them to the member's classpath.
+
+  :::
+- `all`: Enable all actions.
+
+:::note
+
+All actions for job permissions also enable the `read` action. For example if you enable the `submit` action, the `read` action is automatically enabled as well.
+
+:::
+
+### Connector Permissions
+
+By default, connectors can read from and write to data outside Hazelcast that you may want to keep secure. For example, the file connector gives jobs access to all files on your members' local filesystems. As a result, a job could read SSH keys and log them to the console.
+
+```java
+Pipeline pipeline = Pipeline.create();
+pipeline.readFrom(Sources.files("/Users/ali/.ssh"))
+  .writeTo(Sinks.logger());
+```
+
+To protect your data outside Hazelcast, you can set the following permissions for the file, socket, JMS, and JDBC connectors:
+
+- `read`: Read data from sources.
+- `write`: Write data to sinks.
+- `all`: Enable all actions.
+
+You can also give different permissions to different directories. For example:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<connector-permission name="file:/home/user/source" principal="dev">
+  <actions>
+    <action>read</action>
+  </actions>
+</connector-permission>
+<connector-permission name="file:/home/user/sink" principal="dev">
+  <actions>
+    <action>write</action>
+  </actions>
+</connector-permission>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+connector:
+  - name: "file:/home/user/source"
+    actions:
+      - action: read
+connector:
+  - name: "file:/home/user/sink"
+    actions:
+      - action: write
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+Config config = new Config();
+SecurityConfig securityConfig = config.getSecurityConfig();
+securityConfig.setEnabled(true);
+securityConfig.addClientPermissionConfig(
+  new PermissionConfig(PermissionConfig.PermissionType.CONNECTOR, "file:/home/user/source", "dev")
+  .addAction(ActionConstants.ACTION_READ)
+);
+securityConfig.addClientPermissionConfig(
+  new PermissionConfig(PermissionConfig.PermissionType.CONNECTOR, "file:/home/user/sink", "dev")
+  .addAction(ActionConstants.ACTION_WRITE)
+);
+```
+
+</TabItem>
+</Tabs>
+
+:::note
+
+Only connectors that access information local to the member implement permissions - namely the file and socket connector. If you use the data structure connectors such as the map connector, you must also have certain permissions on those data structures. For example, to read from map sources, you must add the `create` and `read` permissions for those maps. If you use the map connector to write to map sinks, you must add the `create` and `put` permissions for those maps.
+
+:::
+
+:::warning
+
+To protect external systems from being reached by external connectors (JDBC, Mongo, S3, …​), use other means than Hazelcast client permissions. Traditionally, this is done by enabling authentication on the external system and/or setting up firewall rules.
+
+:::
+
+## Related Resources
+
+For information about client permissions, see [Client Security](../../operate-manage/securing-a-cluster/native-client-security.mdx).

@@ -1,0 +1,59 @@
+---
+title: "Cluster Member Security"
+sidebar_position: 8
+slug: /security/cluster-member-security
+enterprise: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Hazelcast supports the standard Java Security (JAAS) based authentication between the cluster members. A [Security Realm](./security-realms.mdx) can be referenced by `<member-authentication/>` element to define authentication between the member and identity of the current member.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <security enabled="true">
+      <realms>
+          <realm name="memberRealm">
+              <authentication>
+                <ldap>
+                    <url>ldap://corp-ldap.example.com/</url>
+                </ldap>
+              </authentication>
+              <identity>
+                <username-password username="uid=member1,dc=example,dc=com" password="s3crEt"/>
+              </identity>
+          </realm>
+      </realms>
+      <member-authentication realm="memberRealm"/>
+    </security>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  security:
+    enabled: true
+    realms:
+      name: memberRealm
+      authentication:
+        ldap:
+          url: ldap://corp-ldap.example.com
+      identity:
+        username-password:
+          username: uid=member1,dc=example,dc=com
+          password: s3crEt
+    member-authentication:
+      realm: memberRealm
+```
+
+</TabItem>
+</Tabs>

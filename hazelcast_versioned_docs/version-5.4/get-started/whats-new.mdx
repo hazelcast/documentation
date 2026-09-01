@@ -1,0 +1,60 @@
+---
+title: "What’s New in Hazelcast Platform"
+sidebar_label: "What's new in 5.4"
+sidebar_position: 1
+slug: /whats-new
+---
+
+Here are the highlights of what's new and improved in Hazelcast Platform
+
+## Use CP Map for mission-critical workflows
+
+<Badge type="enterprise"/>
+
+A new CP Map data structure is the latest addition to our [CP Subsystem](../operate-manage/cp-subsystem/cp-subsystem.mdx). Unlike traditional maps built for availability (AP), CP Maps guarantee data consistency even during network partitions, ensuring that every member within the cluster sees the same data. CP Maps are ideal for storing sensitive information or managing mission-critical workflows.
+
+The CP Subsystem is the Hazelcast component that builds a strongly consistent layer for a set of distributed data structures. As well as network partitions, the CP Subsystem withstands server and client failures. [Hazelcast Management Center](/management-center/latest/cp-subsystem/dashboard) allows you to inspect the CP Subsystem as a whole – for individual data record access, you can use the Hazelcast Command Line Client (CLC).
+
+For more information on how to use this new `CPMap` data structure, see [CPMap](../develop-build/distributed-data-structures/cpmap.mdx).
+
+## Manage resources effectively with User Code Namespaces
+
+<Badge type="enterprise"/>
+
+User Code Namespaces provide a container for Java classpath resources, such as user code and accompanying artifacts such as property files. This helps you effectively manage access to resources in different namespaces through either static or dynamic configuration. This is an Enterprise feature that extends and replaces the now deprecated [User Code Deployment](../develop-build/java-executor-service/legacy-ucd/overview.mdx) functionality.
+
+For more information on how to enable and configure User Code Namespaces, or migrate from User Code Deployment, see [User Code Namespaces](../develop-build/java-executor-service/user-code-namespaces.mdx).
+
+## Connector updates
+
+**Kafka Connect Source connector** is now generally available, which means that Kafka Connect sources can scale across the whole cluster instead of just a single member. For more information, see [Kafka Connect Source Connectors](../integrate/kafka-connect-connectors.mdx).
+
+**Mongo SQL Connector (SQL over MongoDB)** is now generally available. With the addition of security support, you can now secure your data connection with TLS when creating MongoDB mappings over SQL. For more information, see [Mapping to MongoDB](../develop-build/sql/sql-over-mongodb/mapping-to-mongo.mdx).
+
+**JDBC SQL Connector (SQL over JDBC)** is now generally available. In addition to MySQL and PostgreSQL, the JDBC SQL connector now also supports Oracle and Microsoft SQL Server databases. For more information, see [Mapping between Hazelcast and MSSQL](../develop-build/sql/sql-over-jdbc/mapping-to-jdbc.mdx#data-type-mapping-between-hazelcast-and-mssql).
+
+## Thread-Per-Core (TPC) now generally available (GA)
+
+<Badge type="enterprise"/>
+
+Enable Thread-Per-Core (TPC) on both clients and cluster members to improve system performance, especially in environments where the number of CPU cores on your machines does not match the recommended hardware. TPC is an alternative to traditional Staged Event-Driven Architecture (SEDA) that supports easier scaling based on the number of available cores.
+
+For more information on how to enable and configure TPC, see [Thread-Per-Core (TPC)](../operate-manage/thread-per-core-tpc.mdx).
+
+## Upgrade Requirements
+
+Hazelcast Platform 5.4 requires Java 17 or later.
+
+## Release Notes
+
+For detailed release notes that include new features and enhancements, breaking changes, deprecations and other fixes, see [5.4 Release Notes](../install-and-upgrade/releases.mdx).
+
+## Hazelcast Command Line Client (CLC)
+
+You can use the Hazelcast Command Line Client (CLC) to connect to and interact with clusters on Hazelcast Platform and Hazelcast Cloud directly from the command line or through scripts.
+
+With Hazelcast CLC 5.3.7 you can now import a subset of the Java client configuration. You can also define custom template actions using advanced scripts, and add a success note when a project is created successfully.
+
+For detailed release notes that include new features and fixes, see [Hazelcast CLC 5.3.7](/clc/latest/release-notes-5.3.7).
+
+To get started with Hazelcast CLC, see [Installing the Hazelcast CLC](/clc/latest/install-clc).

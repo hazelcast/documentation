@@ -1,0 +1,123 @@
+---
+title: "ALTER JOB"
+sidebar_label: "`ALTER JOB`"
+sidebar_position: 2
+slug: /sql/alter-job
+---
+
+With the `ALTER JOB` statement, you can suspend, resume, or restart a job that is running on a cluster. You can also update the configuration of a suspended job and resume it.
+
+## Syntax Summary
+
+This code block is a quick reference with all the [parameters](#parameters) that you can use with the `ALTER JOB` statement.
+
+See some [practical examples](#examples).
+
+```sql
+ALTER JOB job_name {  SUSPEND | [OPTIONS ( 'option_name' = 'option_value' [, ...] )] RESUME | RESTART }
+```
+
+## Parameters
+
+The `ALTER JOB` statement accepts the following parameters.
+
+The `job_name` parameter is required.
+
+<table>
+<colgroup>
+<col style={{width:'25%'}}/>
+<col style={{width:'50%'}}/>
+<col style={{width:'25%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`job_name`</td>
+<td>The name of the job to suspend, resume, or restart.</td>
+<td></td>
+</tr>
+<tr>
+<td>`SUSPEND`</td>
+<td>Suspend the job. For details, see the API reference for the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/jet/Job.html#suspend()" text="suspend()"/> method.</td>
+<td>[Suspend and Resume a Job](#suspend)</td>
+</tr>
+<tr>
+<td>`OPTIONS`</td>
+<td>
+
+Applies new configuration options to a suspended job. The following `option_name` parameters are accepted:
+
+- `autoScaling`
+- `maxProcessorAccumulatedRecords`
+- `metricsEnabled`
+- `snapshotIntervalMillis`
+- `splitBrainProtection`
+- `storeMetricsAfterJobCompletion`
+- `suspendOnFailure`
+- `timeoutMillis`
+
+See [job configuration options](../building-data-pipelines/configuring-jobs.mdx#job-configuration-options) for valid values for the each of the listed parameters. For more details, see the API for the Job interface: <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/jet/config/DeltaJobConfig.html" text="updateConfig(DeltaJobConfig deltaConfig)"/>.
+
+</td>
+<td>[Update the Configuration of a Suspended Job](#update)</td>
+</tr>
+<tr>
+<td>`RESUME`</td>
+<td>Resume a suspended job. For details, see the API reference for the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/jet/Job.html#resume()" text="resume()"/> method.</td>
+<td>[Suspend and Resume a Job](#suspend)</td>
+</tr>
+<tr>
+<td>`RESTART`</td>
+<td>Suspends and resumes the job. For details, see the API reference for the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/jet/Job.html#restart()" text="restart()"/> method.</td>
+<td>[Restart a Job](#restart)</td>
+</tr>
+</tbody>
+</table>
+
+## Examples
+
+This section lists some example SQL queries that show you how to use the `ALTER JOB` statement.
+
+### Suspend and Resume a Job {/* #suspend */}
+
+You may want to suspend a job to perform maintenance on a source or a sink without disrupting the job.
+
+```sql
+ALTER JOB track_trades SUSPEND
+```
+
+When maintenance is finished, you can resume the job to restart it.
+
+```sql
+ALTER JOB track_trades RESUME
+```
+
+### Restart a Job {/* #restart */}
+
+You may want to restart a job if you want to distribute it over some new members in your cluster and auto-scaling is disabled.
+
+```sql
+ALTER JOB track_trades RESTART
+```
+
+### Update the Configuration of a Suspended Job {/* #update */}
+
+Currently, Jet processors implement basic memory management by limiting the number of objects individual processors store. When this number is exceeded, the job fails. To recover the failed job, try updating the job configuration to increase the processor limit, and resume the job.
+
+```sql
+ALTER JOB hello-world OPTIONS ('maxProcessorAccumulatedRecords'='100') RESUME;
+```
+
+You might also consider increasing the number of records that each processor can accumulate, if SQL operations such as grouping, sorting, or joining end in errors.
+
+:::note
+
+By default, all streaming jobs are automatically suspended on failure.
+
+:::

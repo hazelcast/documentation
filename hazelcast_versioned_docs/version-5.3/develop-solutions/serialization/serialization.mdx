@@ -1,0 +1,218 @@
+---
+title: "Serializing Objects and Classes"
+sidebar_label: "Overview"
+sidebar_position: 1
+slug: /serialization/serialization
+---
+
+For data to be sent over a network between cluster members and/or clients, it needs to be serialized into raw bytes. Hazelcast has many serialization options to choose from, depending on what you plan on doing with your data.
+
+You can store any primitive types in a Hazelcast data structure and Hazelcast will serialize them for you, using [built-in serializers](#built-in). But, to store custom classes or objects, you need to tell a cluster how to serialize and deserialize them when they are sent over the network. For example, you must serialize the following:
+
+- Custom objects
+- Tasks used by the executor service
+- Some entry processors
+
+## Serialization Options
+
+Hazelcast offers the following serialization options:
+
+<table>
+<colgroup>
+<col style={{width:'27.2727%'}}/>
+<col style={{width:'27.2727%'}}/>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.091%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th>Serialization interface</th>
+<th>Advantages</th>
+<th>Disadvantages</th>
+<th>Client support</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[Compact Serialization](./compact-serialization.mdx)</td>
+<td>
+
+- More memory usage efficient than `Portable`
+- Convenient, flexible, and can be used with no configuration
+- Does not require class to implement an interface
+- Supports schema evolution
+- Partial deserialization is supported during queries and indexing
+
+</td>
+<td>
+
+- Specific to Hazelcast
+- Schema is not part of the data but schema distribution may incur costs on short-lived use cases
+
+</td>
+<td>All clients</td>
+</tr>
+<tr>
+<td>[`HazelcastJsonValue`](./serializing-json.mdx)</td>
+<td>
+
+- No member-side coding required
+
+</td>
+<td>
+
+- Specific to Hazelcast
+- Requires extra metadata to be stored on members.
+
+</td>
+<td>All clients</td>
+</tr>
+<tr>
+<td>[`IdentifiedDataSerializable`](./other-serialization-options/implementing-dataserializable.mdx)</td>
+<td>
+
+- More CPU and memory usage efficient than `Serializable`
+- Reflection is not used during deserialization
+
+</td>
+<td>
+
+- Specific to Hazelcast
+- Serialization interface must be implemented
+- A factory and configuration must be implemented
+
+</td>
+<td>All clients</td>
+</tr>
+</tbody>
+</table>
+
+<details>
+<summary>Other alternative serialization options</summary>
+
+<table>
+<colgroup>
+<col style={{width:'27.2727%'}}/>
+<col style={{width:'27.2727%'}}/>
+<col style={{width:'36.3636%'}}/>
+<col style={{width:'9.091%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th>Serialization interface</th>
+<th>Advantages</th>
+<th>Disadvantages</th>
+<th>Client support</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[`Serializable`](./other-serialization-options/implementing-java-serializable.mdx)</td>
+<td>
+
+- A standard and basic Java interface
+- Requires no implementation
+
+</td>
+<td>
+
+- More time and CPU usage
+- More space occupancy
+
+</td>
+<td>Java only</td>
+</tr>
+<tr>
+<td>[`Externalizable`](./other-serialization-options/implementing-java-serializable.mdx)</td>
+<td>
+
+- A standard Java interface
+- More CPU and memory usage efficient than `Serializable`
+
+</td>
+<td>
+
+- Serialization interface must be implemented
+
+</td>
+<td>Java only</td>
+</tr>
+<tr>
+<td>[`DataSerializable`](./other-serialization-options/implementing-dataserializable.mdx)</td>
+<td>
+
+- More CPU and memory usage efficient than `Serializable`
+
+</td>
+<td>
+
+- Specific to Hazelcast
+
+</td>
+<td>Java only</td>
+</tr>
+<tr>
+<td>[`Portable`](./other-serialization-options/implementing-portable-serialization.mdx)</td>
+<td>
+
+- More CPU and memory usage efficient than `Serializable`
+- Reflection is not used during deserialization
+- Versioning is supported
+- Partial deserialization is supported during queries
+
+</td>
+<td>
+
+- Specific to Hazelcast
+- Serialization interface must be implemented
+- A Factory and configuration must be implemented
+- Class definition is also sent with data but stored only once per class
+
+</td>
+<td>All clients</td>
+</tr>
+<tr>
+<td>[Custom Serialization](./other-serialization-options/custom-serialization.mdx)</td>
+<td>
+
+- Does not require class to implement an interface
+- Convenient and flexible
+- Can be based on `StreamSerializer` `ByteArraySerializer`
+
+</td>
+<td>
+
+- Serialization interface must be implemented
+- Plug in and configuration is required
+
+</td>
+<td>All clients</td>
+</tr>
+</tbody>
+</table>
+
+</details>
+
+## How Hazelcast Serializes Objects {/* #steps */}
+
+When Hazelcast serializes an object:
+
+1. It first checks whether the object is `null`.
+2. If the above check fails, then Hazelcast looks for a user-specified [CompactSerializer](./compact-serialization.mdx#implementing-compactserializer).
+3. If the above check fails, then Hazelcast checks if it is an instance of `com.hazelcast.nio.serialization.DataSerializable` or `com.hazelcast.nio.serialization.IdentifiedDataSerializable`.
+4. If the above check fails, then Hazelcast checks if it is an instance of `com.hazelcast.nio.serialization.Portable`.
+5. If the above check fails, then Hazelcast checks if it is an instance of one of the default types.
+6. If the above check fails, then Hazelcast looks for a user-specified [Custom Serializer](./other-serialization-options/custom-serialization.mdx), i.e. an implementation of `ByteArraySerializer` or `StreamSerializer`. Custom serializer is searched using the input Object's Class and its parent class up to Object. If parent class search fails, all interfaces implemented by the class are also checked (excluding `java.io.Serializable` and `java.io.Externalizable`).
+7. If the above check fails, then Hazelcast checks if it is an instance of `java.io.Serializable` or `java.io.Externalizable` and a Global Serializer is not registered with Java Serialization Override feature.
+8. If the above check fails, Hazelcast uses the registered Global Serializer if one exists.
+9. If the above check fails, then Hazelcast tries to extract a schema out of the Object's class [automatically](./compact-serialization.mdx#using-compact-serialization-with-zero-configuration), if possible.
+
+If all the above checks fail, then serialization fails. When a class implements multiple interfaces, the above steps are important to determine the serialization mechanism that Hazelcast uses. When a class definition is required for any of these serializations, you need to have all the classes needed by the application on your classpath because Hazelcast does not download them automatically, unless you are using [user code deployment](../adding-java-classes-to-members/deploying-code-on-member.mdx).
+
+## Data Types with Built-In Serialization
+
+By default, Hazelcast optimizes the serialization for the following data types. You do not need to serialize or deserialize these types yourself:
+
+- `Class`, `Optional`, `Date`, `BigInteger`, `BigDecimal`, `ArrayList`, `LinkedList`, `CopyOnWriteArrayList/Set`, `HashMap/Set`, `ConcurrentSkipListMap/Set`, `ConcurrentHashMap`, `LinkedHashMap/Set`, `TreeMap/Set`, `ArrayDeque`, `LinkedBlockingQueue`, `ArrayBlockingQueue`, `PriorityBlockingQueue`, `PriorityQueue`, `DelayQueue`, `SynchronousQueue`, `LinkedTransferQueue`
+
+If you would rather implement your own serialization for these types, you can configure Hazelcast to [enable overriding the default serializers](./serialization-configuration.mdx#override).

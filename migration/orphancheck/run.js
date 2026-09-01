@@ -150,9 +150,9 @@ async function main () {
 
   const linkedByIds = new Map([...linkedBy].map(([id, set]) => [id, [...set]]))
   const orphans = classifyOrphans({ pages: inScope, navIds, startIds, linkedBy: linkedByIds })
-  const { flagged, allowed, staleKeys } = applyAllowlist(orphans, allow, opts.component)
+  const { flagged, allowed, staleKeys, staleScopes } = applyAllowlist(orphans, allow, opts.component, inScope)
 
-  report(opts, migratedVersions, { scanned: inScope.length, orphans: orphans.length }, flagged, allowed, staleKeys, allowErrors)
+  report(opts, migratedVersions, { scanned: inScope.length, orphans: orphans.length }, flagged, allowed, staleKeys, allowErrors, staleScopes)
   process.exit(flagged.length > 0 || allowErrors.length > 0 ? 1 : 0)
 }
 
@@ -180,7 +180,7 @@ const fmtVersions = (versions) => {
   return real.length ? real.join(', ') : 'unversioned'
 }
 
-function report (opts, migratedVersions, counts, flagged, allowed, staleKeys, allowErrors) {
+function report (opts, migratedVersions, counts, flagged, allowed, staleKeys, allowErrors, staleScopes = []) {
   const outFile = path.resolve('build/orphancheck-report.json')
   const flaggedPages = byLogicalPage(flagged)
   const allowedPages = byLogicalPage(allowed)
@@ -200,6 +200,7 @@ function report (opts, migratedVersions, counts, flagged, allowed, staleKeys, al
     },
     allowlistErrors: allowErrors,
     staleAllowlistKeys: staleKeys,
+    staleAllowlistScopes: staleScopes,
     flagged: flaggedPages,
     allowed: allowedPages,
   }, null, 2) + '\n')
@@ -222,6 +223,14 @@ function report (opts, migratedVersions, counts, flagged, allowed, staleKeys, al
   if (staleKeys.length) {
     console.log(`\n[orphancheck] ⚠ ${staleKeys.length} stale allowlist entr${staleKeys.length === 1 ? 'y' : 'ies'} (page no longer an orphan — prune):`)
     for (const k of staleKeys) console.log(`      ${k}`)
+  }
+  // A narrowed entry that has drifted: it still triages the page somewhere, but
+  // names a version the page is in scope in and no longer orphaned in. Surfaced
+  // separately from a wholly stale key because the fix is different -- trim the
+  // `versions` list, do not delete the entry.
+  if (staleScopes.length) {
+    console.log(`\n[orphancheck] ⚠ ${staleScopes.length} allowlist entr${staleScopes.length === 1 ? 'y names a version' : 'ies name versions'} the page is no longer an orphan in (trim "versions"):`)
+    for (const { key, versions } of staleScopes) console.log(`      ${key}    (${versions.join(', ')})`)
   }
 
   if (!flaggedPages.length) {

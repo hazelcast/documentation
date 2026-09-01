@@ -1,0 +1,161 @@
+---
+title: "Simple Authentication"
+sidebar_position: 2
+slug: /security/simple-authentication
+enterprise: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+The simple authentication enables you to define users and their roles **directly** in the Hazelcast member configuration.
+
+The [default authentication](./default-authentication.mdx) is based on the member's identity configuration (when defined) or cluster name (otherwise); it does not allow defining users and assigning them roles.
+
+And when using the advanced authentication methods, you either need additional infrastructure for Hazelcast's enterprise-level authentication (LDAP server, Kerberos, etc.) or you need to provide your login module implementations in [JAAS-based authentication](./jaas-authentication.mdx).
+
+Simple authentication closes the gap between the default authentication and advanced authentication methods.
+
+An example security configuration with the simple authentication used for client protocol is shown below. The configuration should be done on the member side.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <security enabled="true">
+        <realms>
+            <realm name="simpleRealm">
+                <authentication>
+                    <simple>
+                        <user username="test" password="a1234">
+                            <role>monitor</role>
+                            <role>hazelcast</role>
+                        </user>
+                        <user username="root" password="secret">
+                            <role>admin</role>
+                        </user>
+                    </simple>
+                </authentication>
+            </realm>
+        </realms>
+        <client-authentication realm="simpleRealm" />
+        <client-permissions>
+            <all-permissions principal="admin" />
+        </client-permissions>
+    </security>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  security:
+    enabled: true
+    realms:
+      - name: simpleRealm
+      authentication:
+        simple:
+          users:
+            - username: test
+              password: 'a1234'
+              roles:
+                - monitor
+                - hazelcast
+            - username: root
+              password: 'secret'
+              roles:
+                - admin
+    client-authentication:
+      realm: simpleRealm
+    client-permissions:
+      all:
+        principal: admin
+```
+
+</TabItem>
+</Tabs>
+
+You can also provide multiple roles within a single role configuration element using comma as the separator. See the below example:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <security enabled="true">
+        <realms>
+            <realm name="simpleRealm">
+                <authentication>
+                    <simple>
+                        <user username="test" password="a1234">
+                            <role>monitor,hazelcast</role>
+                        </user>
+                        ...
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  security:
+    enabled: true
+    realms:
+      - name: simpleRealm
+      authentication:
+        simple:
+          users:
+            - username: test
+              password: 'a1234'
+              roles:
+                - monitor,hazelcast
+                ...
+```
+
+</TabItem>
+</Tabs>
+
+You should not use the comma character in the role names since it is the default role separator. However, in some cases (for example when using String based login modules), you may want to use the comma character in a role name. For this, you need to specify a different role separator character using the `role-separator` element so that Hazelcast understands the default separator is changed. See the below example where we set the separator character as `&`:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <security enabled="true">
+        <realms>
+            <realm name="simpleRealm">
+                <authentication>
+                    <simple>
+                        <role-separator>&</role-separator>
+                        <user username="test" password="a1234">
+                            <role>monitor&hazelcast</role>
+                        </user>
+                        ...
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  security:
+    enabled: true
+    realms:
+      - name: simpleRealm
+      authentication:
+        simple:
+          role-separator: &
+          users:
+            - username: test
+              password: 'a1234'
+              roles:
+                - monitor&hazelcast
+                ...
+```
+
+</TabItem>
+</Tabs>

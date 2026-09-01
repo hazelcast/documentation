@@ -1,0 +1,126 @@
+---
+title: "Dynamic Configuration for Members"
+sidebar_label: "Overview"
+sidebar_position: 1
+slug: /configuration/dynamic-config
+---
+
+You can use dynamic configuration to add new configuration to members at runtime or update some supported configuration such as Enterprise license keys. This feature is useful if you want to configure a running cluster without having to restart the members.
+
+## Adding Dynamic Configuration {/* #options */}
+
+You can add dynamic configuration, using the following options:
+
+- Programmatic API (Java member or client)
+- SQL
+- Management Center
+- Update and reload REST endpoints
+- Dedicated REST endpoints such as `/addWanConfig`
+
+  :::caution[Deprecation Notice for the REST API]
+
+  The REST API has been deprecated and will be removed as of Hazelcast version 7.0. An improved version of this feature is under development.
+
+  :::
+
+These options support different dynamic configuration changes, and not all changes support [persistence](#persistence). See the following table for what's available with each option.
+
+:::note
+
+To use the REST endpoints you need an Enterprise license.
+
+:::
+
+| Dynamic change | Programmatic API | Dedicated REST endpoint | Update and reload | SQL | Management Center | Supports [Dynamic Configuration Persistence](#persistence) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Add a new configuration block for a supported data structure | [Yes](#supported) | No | [Yes](#supported) | No | <Variable href="/management-center/{page-latest-supported-mc}/clusters/update-config" text="Yes"/> | [Yes](#persistence) |
+| Add a new WAN configuration block | [Yes](../../synchronizing-data-across-clusters/advanced-features.mdx#dynamically-adding-wan-publishers) | [Yes](../../synchronizing-data-across-clusters/rest-api.mdx#wr-dynamically-adding) | [Yes](./dynamic-config-update-and-reload.mdx) | No | <Variable href="/management-center/{page-latest-supported-mc}/clusters/update-config" text="Yes"/> | [Yes](#persistence) |
+| Update a Hazelcast Enterprise license | No | [Yes](../../../install-and-upgrade/enterprise-edition/enterprise-licenses.mdx#update) | [Yes](./dynamic-config-update-and-reload.mdx) | No | <Variable href="/management-center/{page-latest-supported-mc}/clusters/update-config" text="Yes"/> | [Yes](#persistence) |
+| Add a new index to an existing map | [Yes](../../../develop-build/improving-query-performance/indexing-maps.mdx) | No | No | [Yes](../../../develop-build/improving-query-performance/indexing-maps.mdx) | Yes, using [`CREATE INDEX`](../../../develop-build/sql/statements/create-index.mdx) in the <Variable href="/management-center/{page-latest-supported-mc}/tools/sql-browser" text="SQL browser"/> | No |
+
+### Supported Data Structures {/* #supported */}
+
+Dynamic configuration is supported for the following data structures:
+
+- Map
+- Cache
+- Queue
+- List
+- Set
+- MultiMap
+- ReplicatedMap
+- Ringbuffer
+- Topic
+- ReliableTopic
+- Executor
+- DurableExecutor
+- ScheduledExecutor
+- CardinalityEstimator
+- PNCounter
+- FlakeIdGenerator
+- ExternalDataStore
+
+## Persisting Dynamic Configuration {/* #persistence */}
+
+By default, dynamic configuration changes are stored in-memory and are lost when a cluster restarts.
+
+To persist changes, you must follow one of the following procedures:
+
+- [Manual deployments](#manual)
+- [Kubernetes](#k8)
+
+Persistence is idempotent. If a member fails to write changes to a file, you can add the same dynamic configuration again. For example, the following scenario is valid:
+
+1. Start a cluster with 3 members.
+2. Try adding dynamic configuration for a new map.
+3. The 2nd member doesn't have write permissions for the configuration file, so it doesn't persist the changes.
+4. Give the 2nd member write permissions.
+5. Add the same map configuration again.
+6. This time, the map configuration is added successfully.
+
+### Persisting Changes in Manual Deployments {/* #manual */}
+
+To persist changes, you must do the following:
+
+1. Configure the member, using a [configuration file](../static-configuration/configuring-declaratively.mdx).
+
+   :::note
+
+   If you use the Java member API, you need to use an [API](#config-file) that sets the `configurationFile` field of the `Config` object such as `Config.setConfigurationFile()` or `Config.loadFromFile()`.
+
+   :::
+2. [Enable and configure persistence](./dynamic-config-persistence.mdx) for dynamic configuration.
+3. Add dynamic configuration, using an [option that supports persistence](#options).
+
+### Persisting Changes in Kubernetes {/* #k8 */}
+
+To persist changes in Kubernetes, you must do the following:
+
+1. Update the ConfigMap with any of the configuration [options](#options) that are supported by the `/config/reload` or `/config/update` REST endpoints.
+2. Apply your ConfigMap changes to Kubernetes. For example, you can use `kubectl replace configmap`.
+3. Do one of the following:
+
+   - Wait 2-3 minutes for the ConfigMap changes to be applied to your pods, then call the [`/config/reload`](./dynamic-config-update-and-reload.mdx) endpoint.
+   - Call the [`config/update` REST endpoint](./dynamic-config-update-and-reload.mdx) to reflect the changes you made to the ConfigMap in Hazelcast.
+
+## Dynamic Configuration and User Customizations
+
+Some dynamic configuration settings might reference user customizations, such as a `MapLoader` implementation that is referenced in a map's configuration. User customizations can usually be configured using either of the following:
+
+- A class or factory class name, such as `MapStoreConfig.setClassName`, that allows Hazelcast members to instantiate the object.
+- An existing instance, such as, `MapStoreConfig.setImplementation`.
+
+:::caution
+
+<Variable name="ucd"/> has been deprecated and will be removed in the next major version. To continue deploying your user code after this time, <Variable name="open-source-product-name"/> users can either upgrade to <Variable name="enterprise-product-name"/>, or add their resources to the Hazelcast member class paths. Hazelcast recommends that <Variable name="enterprise-product-name"/> users migrate their user code to use <Variable name="ucn"/> for all purposes other than Jet stream processing. For further information on migrating from <Variable name="ucd"/> to <Variable name="ucn"/>, see [Migrate from User Code Deployment](../../../develop-build/java-executor-service/ucn-migrate-ucd.mdx).
+
+:::
+
+When adding a new data structure configuration with user customizations, take the following considerations into account:
+
+- Classes are resolved lazily, so they should be either already on each member's local classpath or resolvable using [user code deployment](../../../develop-build/java-executor-service/legacy-ucd/deploying-code-on-member.mdx) or [User Code Namespaces](../../../develop-build/java-executor-service/user-code-namespaces.mdx).
+- Instances (or similarly factory instances) have to be serializable. This is because the entire configuration needs to be sent over the network to all cluster members, and their classes have to be available on each member's local classpath.
+
+## Limitations
+
+Although you can configure members to [apply the client permissions of a new member](../../securing-a-cluster/native-client-security.mdx#handling-permissions-when-a-new-member-joins), you can't use dynamic configuration to make changes to client permissions.

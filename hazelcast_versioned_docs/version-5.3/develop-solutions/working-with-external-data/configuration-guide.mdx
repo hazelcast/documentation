@@ -1,0 +1,539 @@
+---
+title: "Configuring a MapStore"
+sidebar_position: 4
+slug: /mapstore/configuration-guide
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+This topic explains how to configure a map with a MapStore. It includes configuration options for loading data, as well as caching behaviors, and MapStore reuse.
+
+## Before you Begin
+
+If you use Hazelcast in client/server mode, make sure to add the MapStore to the cluster's classpath.
+
+## Quickstart Configuration
+
+To configure a MapStore, you must provide the the [name](#class-name) of your class that implements the MapStore.
+
+:::note
+
+Follow the instructions in [Using the generic MapLoader](./configuring-a-generic-maploader.mdx) or [Using the generic MapStore](./configuring-a-generic-mapstore.mdx) for this step if you are using a pre-built Mapstore.
+
+:::
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <map name="default">
+        <map-store enabled="true">
+            <class-name>com.hazelcast.examples.DummyStore</class-name>
+        </map-store>
+    </map>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  map:
+    default:
+      map-store:
+        enabled: true
+        class-name: com.hazelcast.examples.DummyStore
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+MapConfig mapConfig = new MapConfig("default");
+
+MapStoreConfig mapStoreConfig = new MapStoreConfig();
+mapStoreConfig.setClassName("com.hazelcast.examples.DummyStore");
+
+mapConfig.setMapStoreConfig(mapStoreConfig);
+```
+
+</TabItem>
+</Tabs>
+
+## Configuring for Write-Behind Caching {/* #write-behind */}
+
+To configure a MapStore to use write-behind caching, set the [`write-delay-seconds`](#write-delay-seconds) configuration to a number greater than 0.
+
+## Configuring the Offloading of MapStore Operations
+
+To improve cluster throughput, MapStore API calls, such as `load()` and `store()` operations, are offloaded by default. This way partition threads are not blocked by them.
+
+Because each partition in a member is managed by a single thread, the write operations to a given partition are handled one at a time in first-in-first-out order. However, MapStore operations may take a long time to connect to the data store and complete, blocking the affected partitions. To avoid blocking partition threads, MapStore operations communicate with the data store asynchronously, using an [executor](#configuring-the-offload-executor).
+
+:::note
+
+- The `init()` and `destroy()` methods of the `MapLoaderLifecycleSupport` interface are not offloaded. These methods are triggered only once in the whole lifecycle of a map.
+
+:::
+
+<Anchor id="configuring-the-offload-executor"/>
+
+You can configure the executor service that handles asynchronous MapStore operations. The offload executor's name is `hz:map-store-offloadable`. You can configure the number of threads for this executor and its task queue capacity. See [Configuring Executor Service](../java-executor-service/executor-service.mdx#configuring-executor-service) for a guide.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <executor-service name="hz:map-store-offloadable">
+        <pool-size>16</pool-size>
+        <queue-capacity>0</queue-capacity>
+    </executor-service>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  ..
+  executor-service:
+    "hz:map-store-offloadable":
+      pool-size: 16
+      queue-capacity: 0
+```
+
+</TabItem>
+</Tabs>
+
+## Blocking Partition Threads
+
+You can choose not to offload MapStore operations, which is the behavior in previous Hazelcast Platform releases before version 5.2. To block partition threads during MapStore API operations, set the `offload` configuration to `false`.
+
+## Delaying the Loading Process of a MapStore
+
+By default, the MapStore is loaded as soon as the first cluster member starts. If you want the cluster to wait until a certain number of members are available, you can use the `hazelcast.initial.min.cluster.size` system property. For example, if you set this value to `3`, the MapStore is not loaded until three cluster members are running.
+
+## Applying the Same MapStore to Multiple Maps {/* #storing-entries-to-multiple-maps */}
+
+A MapStore can be applied to more than one map, using [wildcards](../../configure-and-manage-clusters/configuration/static-configuration/using-wildcards.mdx). But a MapStore does not know which entries to store when there is one configuration applied to multiple maps. To store entries when there is one configuration applied to multiple maps, use the Java `MapStoreFactory` interface. Using the `MapStoreFactory` interface, a MapStore for each map can be created when a wildcard configuration is used.
+
+:::note
+
+This option applies only to custom MapStore implementations, not the generic MapStore.
+
+:::
+
+To initialize the MapStore with the given map name, configuration properties, and Hazelcast instance, the MapStore must implement the [`MapLoaderLifecycleSupport` interface](./implement-a-mapstore.mdx#managing-the-lifecycle-of-a-mapLoader).
+
+```java
+Config config = new Config();
+MapConfig mapConfig = config.getMapConfig( "*" );
+MapStoreConfig mapStoreConfig = mapConfig.getMapStoreConfig();
+mapStoreConfig.setFactoryImplementation( new MapStoreFactory<Object, Object>() {
+    @Override
+    public MapLoader<Object, Object> newMapStore( String mapName, Properties properties ) {
+        return null;
+    }
+});
+```
+
+## Configuration Options for All MapStores
+
+Use these configuration options to configure the Mapstore for specific maps.
+
+If you are using Java to configure the Mapstore, use the <Variable href="https://javadoc.io/static/com.hazelcast/hazelcast/{full-version}/com/hazelcast/config/MapStoreConfig.html" text="MapStoreConfig object"/>.
+
+<table>
+<colgroup>
+<col style={{width:'20%'}}/>
+<col style={{width:'20%'}}/>
+<col style={{width:'20%'}}/>
+<col style={{width:'40%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><Anchor id="enabled"/>`enabled`</td>
+<td>Whether the MapStore is enabled for the map.</td>
+<td>`true`</td>
+<td>
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+  <map name="default">
+    <map-store enabled="true">
+    </map-store>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  map:
+    default:
+      map-store:
+        enabled: true
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+MapConfig mapConfig = new MapConfig("default");
+
+MapStoreConfig mapStoreConfig = new MapStoreConfig();
+mapStoreConfig.setEnabled(true);
+
+mapConfig.setMapStoreConfig(mapStoreConfig);
+```
+
+</TabItem>
+</Tabs>
+
+</td>
+</tr>
+<tr>
+<td><Anchor id="class-name"/>`class-name`</td>
+<td>Name of a class that implements the MapStore.</td>
+<td>`''` (empty)</td>
+<td>
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+  <map name="default">
+    <map-store enabled="true">
+      <class-name>com.hazelcast.examples.DummyStore</class-name>
+    </map-store>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  map:
+    default:
+      map-store:
+        enabled: true
+        class-name: com.hazelcast.examples.DummyStore
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+MapConfig mapConfig = new MapConfig("default");
+
+MapStoreConfig mapStoreConfig = new MapStoreConfig();
+mapStoreConfig.setClassName("com.hazelcast.examples.DummyStore");
+
+mapConfig.setMapStoreConfig(mapStoreConfig);
+```
+
+</TabItem>
+</Tabs>
+
+</td>
+</tr>
+<tr>
+<td><Anchor id="offload"/>`offload`</td>
+<td>Whether MapStore operations are handled asychronously to avoid blocking partition threads.</td>
+<td>`true`</td>
+<td>
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <map name="default">
+        <map-store enabled="true">
+            <offload>true</offload>
+            ...
+        </map-store>
+    </map>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  map:
+    default:
+      map-store:
+        enabled: true
+        offload: true
+        ...
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+Config config = new Config();
+MapConfig mapConfig = config.getMapConfig();
+MapStoreConfig mapStoreConfig = mapConfig.getMapStoreConfig();
+mapStoreConfig.setOffload(true);
+...
+```
+
+</TabItem>
+</Tabs>
+
+</td>
+</tr>
+<tr>
+<td><Anchor id="write-delay-seconds"/>`write-delay-seconds`</td>
+<td>Number of seconds of delay before the `MapStore.store(key, value)` method is called. If this value is zero, the Mapstore is write-through, otherwise it is write-behind.</td>
+<td>`0`</td>
+<td>
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+  <map name="default">
+    <map-store enabled="true">
+      <class-name>com.hazelcast.examples.DummyStore
+      </class-name>
+      <write-delay-seconds>0
+      </write-delay-seconds>
+    </map-store>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  map:
+    default:
+      map-store:
+        enabled: true
+        class-name: com.hazelcast.examples.DummyStore
+        write-delay-seconds: 0
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+MapConfig mapConfig = new MapConfig("default");
+
+MapStoreConfig mapStoreConfig = new MapStoreConfig();
+mapStoreConfig.setClassName("com.hazelcast.examples.DummyStore");
+mapStoreConfig.setWriteDelaySeconds(0)
+
+mapConfig.setMapStoreConfig(mapStoreConfig);
+```
+
+</TabItem>
+</Tabs>
+
+</td>
+</tr>
+<tr>
+<td><Anchor id="write-batch-size"/>`write-batch-size`</td>
+<td>Number of batches to group map entries into before writing them to the data store. By default, all map entries are written in one go.</td>
+<td>`1`</td>
+<td>
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+  <map name="default">
+    <map-store enabled="true">
+      <class-name>com.hazelcast.examples.DummyStore
+      </class-name>
+      <write-batch-size>1
+      </write-batch-size>
+    </map-store>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  map:
+    default:
+      map-store:
+        enabled: true
+        class-name: com.hazelcast.examples.DummyStore
+        write-batch-size: 1
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+MapConfig mapConfig = new MapConfig("default");
+
+MapStoreConfig mapStoreConfig = new MapStoreConfig();
+mapStoreConfig.setClassName("com.hazelcast.examples.DummyStore");
+mapStoreConfig.setWriteBatchSize(1)
+
+mapConfig.setMapStoreConfig(mapStoreConfig);
+```
+
+</TabItem>
+</Tabs>
+
+</td>
+</tr>
+<tr>
+<td><Anchor id="write-coalescing"/>`write-coalescing`</td>
+<td>When `write-coalescing` is `true`, only the latest store operation on a key is written to the data store when the change is made within the [`write-delay-seconds`](#write-delay-seconds) time window. If this value is `false`, Hazelcast writes every change to the data store in order.</td>
+<td>`true`</td>
+<td>
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+  <map name="default">
+    <map-store enabled="true">
+      <class-name>com.hazelcast.examples.DummyStore
+      </class-name>
+      <write-coalescing>true
+      </write-coalescing>
+    </map-store>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  map:
+    default:
+      map-store:
+        enabled: true
+        class-name: com.hazelcast.examples.DummyStore
+        write-coalescing: true
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+MapConfig mapConfig = new MapConfig("default");
+
+MapStoreConfig mapStoreConfig = new MapStoreConfig();
+mapStoreConfig.setClassName("com.hazelcast.examples.DummyStore");
+mapStoreConfig.setWriteCoalescing(true)
+
+mapConfig.setMapStoreConfig(mapStoreConfig);
+```
+
+</TabItem>
+</Tabs>
+
+</td>
+</tr>
+<tr>
+<td><Anchor id="initial-mode"/>`initial-mode`</td>
+<td>
+
+The load mode for populating empty maps:
+
+- `LAZY`: MapStore operations are asynchronous.
+- `EAGER`: Map operations are blocked until the MapStore loads all partitions.
+
+:::note
+
+If you add [indexes](../improving-query-performance/indexing-maps.mdx#indexing-queries) to the map, then the `initial-mode` property is overridden by `EAGER`.
+
+:::
+
+</td>
+<td>`LAZY`</td>
+<td>
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+  <map name="default">
+    <map-store enabled="true" initial-mode="LAZY">
+      <class-name>com.hazelcast.examples.DummyStore
+      </class-name>
+    </map-store>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  map:
+    default:
+      map-store:
+        enabled: true
+        class-name: com.hazelcast.examples.DummyStore
+        initial-mode: LAZY
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+MapConfig mapConfig = new MapConfig("default");
+
+MapStoreConfig mapStoreConfig = new MapStoreConfig();
+mapStoreConfig.setClassName("com.hazelcast.examples.DummyStore");
+mapStoreConfig.setInitialLoadMode(MapStoreConfig.InitialLoadMode.LAZY)
+
+mapConfig.setMapStoreConfig(mapStoreConfig);
+```
+
+</TabItem>
+</Tabs>
+
+</td>
+</tr>
+</tbody>
+</table>
+
+## Related Resources
+
+More configuration options:
+
+- For the generic MapStore, see [Using the generic MapStore](./configuring-a-generic-mapstore.mdx).
+- For the generic MapLoader, see [Using the generic MapLoader](./configuring-a-generic-maploader.mdx).

@@ -1,0 +1,117 @@
+---
+title: "Dynamic Configuration with Programmatic APIs (Java)"
+sidebar_label: "Programmatic API"
+sidebar_position: 2
+slug: /configuration/dynamic-config-programmatic-api
+---
+
+import PartialConfigurationPrereqsDynamicConfig from '@site/hazelcast_versioned_docs/version-5.3/_partials/configuration-prereqs-dynamic-config.mdx';
+import PartialConfigurationDynConfigPartialPropagation from '@site/hazelcast_versioned_docs/version-5.3/_partials/configuration-dyn-config-partial-propagation.mdx';
+
+You can use the Java member or client APIs to add [dynamic configuration](./dynamic-config.mdx) for some [supported features](./dynamic-config.mdx#options) at runtime.
+
+## Before you Begin
+
+<PartialConfigurationPrereqsDynamicConfig/>
+
+Dynamic configuration changes are not persisted by default. See [Dynamic Configuration Persistence](./dynamic-config-persistence.mdx).
+
+## Adding Dynamic Configuration
+
+To add new configuration to a member at runtime, use the `add*Config()` method of a supported data structure after starting the Hazelcast instance.
+
+<br />
+
+<details>
+<summary>Example of adding properties to the `Config` object</summary>
+
+```java title="Member API"
+Config config = new Config();
+MapConfig mapConfig = new MapConfig("sessions");
+config.addMapConfig(mapConfig);
+HazelcastInstance instance = Hazelcast.newHazelcastInstance(config);
+MapConfig noBackupsMap = new MapConfig("dont-backup").setBackupCount(0);
+instance.getConfig().addMapConfig(noBackupsMap);
+```
+
+```java title="Java Client"
+HazelcastInstance client = HazelcastClient.newHazelcastClient();
+MapConfig noBackupsMap = new MapConfig("dont-backup");
+noBackupsMap.setBackupCount(0);
+client.getConfig().addMapConfig(noBackupsMap);
+```
+
+</details>
+
+<br />
+
+<details>
+<summary>Example of loading from a configuration file</summary>
+
+```java title="Member API"
+Config config = Config.loadFromFile(/path/to/config/file);
+HazelcastInstance instance = Hazelcast.newHazelcastInstance(config);
+MapConfig noBackupsMap = new MapConfig("dont-backup").setBackupCount(0);
+instance.getConfig().addMapConfig(noBackupsMap);
+```
+
+```java title="Java Client"
+HazelcastInstance client = HazelcastClient.newHazelcastClient();
+MapConfig noBackupsMap = new MapConfig("dont-backup");
+noBackupsMap.setBackupCount(0);
+client.getConfig().addMapConfig(noBackupsMap);
+```
+
+</details>
+
+When the member receives the request, it will check if the configuration already exists and propagate any new configuration across the rest of the cluster.
+
+<PartialConfigurationDynConfigPartialPropagation/>
+
+## Handling Configuration Conflicts
+
+You can add only new dynamic configuration. You cannot use dynamic configuration to override existing configuration at runtime.
+
+If you add dynamic configuration for a configuration block that already exists, Hazelcast throws `InvalidConfigurationException`.
+
+For example, assuming you start a member with the following fragment in `hazelcast.xml` configuration:
+
+```xml
+<hazelcast>
+    ...
+    <map name="sessions">
+        ...
+    </map>
+    ...
+</hazelcast>
+```
+
+If you add dynamic configuration for a map with the name `sessions`, Hazelcast throws `InvalidConfigurationException`:
+
+```java
+HazelcastInstance instance = Hazelcast.newHazelcastInstance();
+
+MapConfig sessionsMapConfig = new MapConfig("sessions");
+
+// this will throw ConfigurationException:
+instance.getConfig().addMapConfig(sessionsMapConfig);
+```
+
+When attempting to add dynamic configuration for an element for which dynamic configuration has already been added, then if a configuration conflict is detected `InvalidConfigurationException` is thrown:
+
+```java
+HazelcastInstance instance = Hazelcast.newHazelcastInstance();
+
+MapConfig sessionsMapConfig = new MapConfig("sessions").setBackupCount(0);
+instance.getConfig().addMapConfig(sessionsMapConfig);
+
+MapConfig sessionsWithBackup = new MapConfig("sessions").setBackupCount(1);
+// throws ConfigurationException because the new MapConfig conflicts with existing one
+instance.getConfig().addMapConfig(sessionsWithBackup);
+
+MapConfig sessionsWithoutBackup = new MapConfig("sessions").setBackupCount(0);
+// does not throw exception: new dynamic config is equal to existing dynamic config of same name
+instance.getConfig().addMapConfig(sessionsWithoutBackup);
+```
+
+To ignore conflicts between dynamic configurations, set the [`hazelcast.dynamicconfig.ignore.conflicts`](../../../reference/system-properties.mdx#ignore-dynamic-conf-conflicts) system property to `true`.

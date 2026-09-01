@@ -1,0 +1,191 @@
+---
+title: "Integrating OpenSSL / BoringSSL"
+sidebar_position: 2
+slug: /security/integrating-openssl
+enterprise: true
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+:::note
+
+You cannot integrate OpenSSL into Hazelcast when [Symmetric Encryption](../advanced-security-features/encryption.mdx) is enabled. Also note that the symmetric encryption feature has been deprecated.
+
+:::
+
+TLS/SSL in Java is normally provided by the JRE. However, the performance overhead can be significant; even with AES intrinsics enabled. If you are using an x86\_64 system (Linux, Mac, Windows), Hazelcast supports native integration for TLS/SSL which can provide significant performance improvements. There are two supported native TLS/SSL libraries available through [netty-tcnative](https://netty.io/wiki/forked-tomcat-native.html) libraries:
+
+- OpenSSL
+
+  - dynamically linked
+  - prerequisites: `libapr`, `openssl` packages installed on your system
+- BoringSSL - Google managed fork of the OpenSSL
+
+  - statically linked
+  - easier to get started with
+  - benefits: reduced code footprint, additional features
+
+The native TLS integration can be used on clients and/or members. For best performance, it is recommended to install on a client and member and configure the appropriate cipher suite(s).
+
+Check the [netty-tcnative](https://netty.io/wiki/forked-tomcat-native.html) page for installation details.
+
+:::note
+
+If OpenSSL capabilities are detected (also the appropriate Java libraries are included) and if no explicit `SSLEngineFactory` is set, Hazelcast defaults to use OpenSSL.
+
+:::
+
+## Netty Libraries
+
+For the native TLS/SSL integration in Java, the [Netty](https://netty.io/) library is used.
+
+Make sure the following libraries from the Netty framework and their dependencies are on the classpath:
+
+- `netty-handler`
+- one of `tc-native` implementations
+
+  - either BoringSSL: `netty-tcnative-boringssl-static`
+  - or OpenSSL: `netty-tcnative` (for given OS architecture)
+
+:::note
+
+It is very important that the version of Netty JAR(s) corresponds to a very specific version of `netty-tcnative`. In case of doubt, the simplest thing to do is to download the `netty-<version>.tar.bz2` file from the [Netty](https://netty.io/downloads.html) website and check which `netty-tcnative` version is used for that Netty release.
+
+:::
+
+## Using BoringSSL
+
+The statically linked BoringSSL binaries are included within the `netty-tcnative` libraries. There is no need to install additional software on supported systems.
+
+Example Maven dependencies:
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-tcnative-boringssl-static</artifactId>
+        <version>${netty-tcnative.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-handler</artifactId>
+        <version>${netty.version}</version>
+    </dependency>
+</dependencies>
+```
+
+## Using OpenSSL
+
+1. Install OpenSSL. Make sure that you are installing 1.0.1 or newer release. See its documentation at [github.com/openssl](https://github.com/openssl/openssl/blob/master/INSTALL.md).
+2. Install Apache Portable Runtime (APR) library. See [apr.apache.org](https://apr.apache.org/download.cgi).
+
+   For RHEL: `sudo yum -y install apr openssl`
+
+   For Ubuntu: `sudo apt-get -y install libapr1 openssl`
+
+   For Alpine Linux: `apk add --update apr openssl`
+
+Example Maven dependencies (for Linux):
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-tcnative</artifactId>
+        <version>${netty-tcnative.version}</version>
+        <classifier>linux-x86_64</classifier>
+    </dependency>
+    <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-handler</artifactId>
+        <version>${netty.version}</version>
+    </dependency>
+</dependencies>
+```
+
+## Configuring Hazelcast for OpenSSL
+
+Configuring OpenSSL in Hazelcast is straight forward. On the client and/or member side, the following snippet enables TLS/SSL using OpenSSL:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <network>
+        <ssl enabled="true">
+            <factory-class-name>com.hazelcast.nio.ssl.OpenSSLEngineFactory</factory-class-name>
+            <properties>
+                <property name="protocol">TLSv1.2</property>
+                <property name="trustCertCollectionFile">trusted-certs.pem</property>
+                 <!-- If the TLS mutual authentication is not used,
+                     then the key configuration is not needed on the client side. -->
+                <property name="keyFile">privkey.pem</property>
+                <property name="keyCertChainFile">chain.pem</property>
+            </properties>
+        </ssl>
+    </network>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  network:
+    ssl:
+      enabled: true
+      factory-class-name: com.hazelcast.nio.ssl.OpenSSLEngineFactory
+      properties:
+        protocol: TLSv1.2
+        trustCertCollectionFile: trusted-certs.pem
+
+        # If the TLS mutual authentication is not used, following lines (key configuration) are not needed on the client side.
+        keyFile: privkey.pem
+        keyCertChainFile: chain.pem
+```
+
+</TabItem>
+</Tabs>
+
+The configuration is similar to a regular TLS/SSL integration. The main differences are the `OpenSSLEngineFactory` factory class and the following properties:
+
+- `keyFile`: Path of your PKCS\#8 key file in PEM format.
+- `keyPassword`: Password to access the key file when it's encrypted.
+- `keyCertChainFile`: Path to an X.509 certificate chain file in PEM format.
+- `trustCertCollectionFile`: Path to an X.509 certificate collection file in PEM format.
+- `fipsMode`: Boolean flag to switch OpenSSL into the FIPS mode. See the [FIPS 140-2 section](../advanced-security-features/fips-140-2.mdx).
+
+The key and certificate related properties take precedence over keyStore and trustStore configurations. Using keyStores and trustStores together with OpenSSL causes problems on some Java versions, therefore we recommend to use the OpenSSL native way.
+
+The following are the other supported properties:
+
+- `keyStore`: Path of your keystore file.
+
+  - *Using the `keyStore` property is not recommended, use `keyFile` and `keyCertChainFile` instead*
+- `keyStorePassword`: Password to access the key from your keystore file.
+- `keyStoreType`: Type of the keystore. Its default value is `JKS`. Another commonly used type is the `PKCS12`. Available keystore/truststore types depend on your Operating system and the Java runtime.
+- `keyManagerAlgorithm`: Name of the algorithm based on which the authentication keys are provided.
+- `trustManagerAlgorithm`: Name of the algorithm based on which the trust managers are provided.
+- `trustStore`: Path of your truststore file. The file truststore is a keystore file that contains a collection of certificates trusted by your application. Its type should be `JKS`.
+
+  - *Using the `trustStore` property is not recommended, use `trustCertCollectionFile` instead*
+- `trustStorePassword`: Password to unlock the truststore file.
+- `trustStoreType`: Type of the truststore. Its default value is `JKS`. Another commonly used type is the `PKCS12`. Available keystore/truststore types depend on your operating system and the Java runtime.
+- `mutualAuthentication`: Mutual authentication configuration. It's empty by default which means the client side of connection is not authenticated. Available values are:
+
+  - `REQUIRED` - server forces usage of a trusted client certificate
+  - `OPTIONAL` - server asks for a client certificate, but it doesn't require it
+- `ciphersuites`: Comma-separated list of cipher suite names allowed to be used.
+- `protocol`: Name of the algorithm which is used in your TLS. Its default value is empty, meaning the protocol version to use is not specified. Available values depend on the engine implementation but usually support:
+
+  - `TLS` (equivalent to the empty value)
+  - `TLSv1.2`
+  - `TLSv1.3`
+
+    For the `protocol` property, we recommend you to provide TLS with its version information, e.g., `TLSv1.3`. It ensures the engine won't allow a fallback to an old, insecure version.
+- `validateIdentity`: Flag which allows enabling endpoint identity validation. It means, during the TLS handshake client verifies if the server's hostname (or IP address) matches the information in X.509 certificate (Subject Alternative Name extension). Possible values are `"true"` and `"false"` (default).

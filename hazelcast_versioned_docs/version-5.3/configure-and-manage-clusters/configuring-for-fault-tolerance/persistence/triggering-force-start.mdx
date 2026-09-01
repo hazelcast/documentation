@@ -1,0 +1,31 @@
+---
+title: "Triggering a Force-Start"
+sidebar_label: "Force-start"
+sidebar_position: 4
+slug: /storage/triggering-force-start
+enterprise: true
+---
+
+To recover a cluster that has [Persistence](./persistence.mdx) enabled after a cluster-wide restart, you can force a cluster to delete their persistence stores when one or more members fail to restart.
+
+## Before you Begin
+
+You should trigger a force-start only if your cluster has Persistence enabled and it is configured to use the `FULL_RECOVERY_ONLY` policy. See [Choosing a Cluster Recovery Policy](./configuring-persistence.mdx#policy).
+
+:::warning
+
+Force-start deletes all data in your cluster members' persistence stores.
+
+:::
+
+## Using Management Center
+
+See the <Variable href="/management-center/{page-latest-supported-mc}/clusters/triggering-force-start" text="Management Center docs"/>.
+
+## Using the REST API
+
+See the [REST API docs](../../maintaining-a-cluster/cluster-utilities.mdx#partial-start-force-start).
+
+## Using Cluster Management Scripts
+
+See the [Cluster management scripts](../../maintaining-a-cluster/cluster-utilities.mdx#example-usages-for-cluster-sh).

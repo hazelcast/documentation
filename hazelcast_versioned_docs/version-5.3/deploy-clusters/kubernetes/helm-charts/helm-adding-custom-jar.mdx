@@ -1,0 +1,38 @@
+---
+title: "Adding custom JAR files to the Platform/Management Center Classpath"
+sidebar_label: "Adding Custom Jar"
+sidebar_position: 4
+slug: /kubernetes/helm-adding-custom-jar
+---
+
+:::note
+
+We strongly recommend that you use Hazelcast Platform Operator's [User Code Deployment](/operator/latest/user-code-deployment) feature if you need to add a custom JAR to your Hazelcast members.
+
+:::
+
+If you want to add custom JAR files to the Platform and/or Management Center, you can extend the relevant base image and provide your configuration file and/or custom JARs. To do this, you must create a new `Dockerfile` and build it using the `docker build` command.
+
+In the `Dockerfile` example below, we create a new image based on the Hazelcast image and add a custom JAR from our host to the container, which will be used with Hazelcast when the container runs.
+
+```dockerfile
+FROM hazelcast/hazelcast:$HAZELCAST_VERSION
+
+# Adding custom JARs to the classpath
+ADD custom-library.jar ${HZ_HOME}
+```
+
+Build and push the image to your own Docker registry.
+
+```bash
+docker build -t example/hazelcast .
+docker push example/hazelcast
+```
+
+You can configure your Helm chart to use the custom image you have built in your `values.yaml`.
+
+```yaml
+image:
+  # repository is the Hazelcast image name
+  repository: example/hazelcast
+```

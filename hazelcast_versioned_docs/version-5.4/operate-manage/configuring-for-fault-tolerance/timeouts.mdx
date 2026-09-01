@@ -1,0 +1,22 @@
+---
+title: "Timeouts"
+sidebar_label: "Connection Timeouts"
+sidebar_position: 4
+slug: /fault-tolerance/timeouts
+---
+
+The following properties and configuration elements define timeouts for several aspects of connections.
+
+For cluster and members:
+
+- [connection-timeout-seconds](../partition-groups-and-networking/network-configuration.mdx#tcp-ip-element): Maximum amount of time the member is going to try to connect to the cluster before giving up. Setting it to a too low value could mean that a member is not able to connect to a cluster. Setting it to a too high value means that member startup could slow down because of longer timeouts. Increasing this value is recommended if you have many IPs listed and the members cannot properly build up the cluster. Its default value is 5 seconds.
+- [timeout-milliseconds](./detecting-failures/failure-detector-configuration.mdx#ping-failure-detector): Amount of milliseconds until a ping attempt is considered failed if there was no reply. Its default value is 1000 milliseconds.
+- [hazelcast.connect.all.wait.seconds](../../reference/system-properties.mdx): Timeout in seconds to connect all other cluster members when a member is joining to a cluster.
+- [hazelcast.socket.connect.timeout.seconds](../../reference/system-properties.mdx): Socket connection timeout in seconds. The connection is blocked until either it is established or refused or this timeout passes. Default is 0, means infinite.
+- [hazelcast.max.no.heartbeat.seconds](./detecting-failures/failure-detector-configuration.mdx#phi-accrual-failure-detector): Maximum timeout of heartbeat in seconds for a member to assume it is dead. This is the timeout which defines when a cluster member is suspected because it has not sent any heartbeats. It is used in the [deadline](./detecting-failures/failure-detector-configuration.mdx#deadline-failure-detector) and [phi accrual failure detector](./detecting-failures/failure-detector-configuration.mdx#phi-accrual-failure-detector) configurations.
+
+For clients:
+
+- [cluster-connect-timeout-millis](../../clients-apis/java.mdx#configuring-client-connection-retry): Timeout value in milliseconds for the client to give up to connect to the current cluster. Its default value is -1, i.e., infinite. For the default value, client will not stop trying to connect to the target cluster (infinite timeout). If the [failover client](../../clients-apis/java.mdx#blue-green-mechanism) is used with the default value of this configuration element, the failover client will try to connect alternative clusters after 120000 ms (2 minutes). For any other value, both the client and the failover client will use this as it is.
+- [connection-timeout](../../clients-apis/java.mdx#setting-connection-timeout): Timeout in milliseconds to accept the client connection requests by the members.
+- [hazelcast.client.heartbeat.timeout](../../clients-apis/java.mdx#client-system-properties): Timeout in milliseconds for the heartbeat messages sent by the client to members. If no messages pass between the client and member within the given time, the connection will be closed.

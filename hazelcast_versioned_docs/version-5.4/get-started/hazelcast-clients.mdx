@@ -1,0 +1,47 @@
+---
+title: "Getting Started with a Hazelcast Client"
+sidebar_label: "Get started with a Hazelcast Client"
+sidebar_position: 7
+slug: /clients/hazelcast-clients
+---
+
+Hazelcast has clients in Java, C++, .NET, Node.js, Go, Python, and Memcache. You can use these clients to communicate with cluster members.
+
+For documentation and code samples for each client, see the following:
+
+- [Java](../clients-apis/java.mdx)
+- [C++](../clients-apis/cplusplus.mdx)
+- [.NET](../clients-apis/dotnet.mdx)
+- [Memcache](../clients-apis/memcache.mdx)
+- [REST](../clients-apis/enterprise-rest-api/rest-api.mdx)
+- [Node.js](../clients-apis/nodejs.mdx)
+- [Go](../clients-apis/go.mdx)
+- [Python](../clients-apis/python.mdx)
+
+You can also check out the command-line tool for simple operations
+
+- [Command-Line Client](../tools-plugins/clc.mdx)
+
+## Feature Comparison for Hazelcast Clients
+
+Not all features are available in all clients.
+
+To find out which features are available in each client, see the [clients page](https://hazelcast.com/developers/clients/).
+
+After selecting the language you need, you can find the table showing supported features on the selected language.
+
+## Maximum Number of Client Connections Per Member
+
+The maximum recommended number of clients per member is 100. Members use different executors, each with a different thread count, for handling different types of client message tasks:
+
+- Query tasks: `core count` threads
+- Blocking tasks: `core count * 20` threads
+- All other tasks: `core count` threads
+
+These values, as well as each member's [I/O Thread](../develop-build/best-practices/threading.mdx#io-threading) counts, need to be taken into consideration when determining the appropriate client connection limits for clusters.
+
+## Serialization in Client/Server Mode
+
+In [client/server topologies](../install-and-upgrade/overview/choosing-a-deployment-option.mdx), you can serialize your data on the client side before sending it to a member. For example, you can serialize data in JSON and add it to a map. This option is useful if you plan on using Hazelcast to store your data in binary. Clients can handle serialization without the members needing to know how to do so.
+
+For details about why you need to serialize data and the options for doing so, see [Serialization](../develop-build/serialization/serialization.mdx).

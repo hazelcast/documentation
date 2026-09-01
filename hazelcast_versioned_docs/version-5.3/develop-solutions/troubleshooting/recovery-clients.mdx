@@ -1,0 +1,13 @@
+---
+title: "Recovery from Client Connection Failures"
+sidebar_position: 5
+slug: /troubleshoot/recovery-clients
+---
+
+When a client is disconnected from the cluster, it automatically tries to re-connect. There are configurations you can perform to achieve proper behavior; see the [Timeouts section](../../configure-and-manage-clusters/configuring-for-fault-tolerance/timeouts.mdx).
+
+While the client is trying to connect initially to one of the members in the cluster, none the members might be not available. In this case, you can configure the client to act in several ways:
+
+- Client can give up, throwing an exception and shutting down eventually.
+- Client will not shutdown, but will not block the operations and throw the `HazelcastClientOfflineException` until it can reconnect.
+- Client will block operations and retry as configured; see the [Client Connection Strategy section](../connecting-to-a-cluster/java.mdx#java-client-connection-strategy).

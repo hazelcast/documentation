@@ -29,7 +29,7 @@ const { collectOccurrences, decide, slugFor, componentNameFor, parseId, consumer
 const { normalizeValues, groupIdFor } = require('./lib/tabs')
 const { attrCodeTemplates, buildCodeTemplates } = require('./lib/code-templates')
 const substituteAttrs = require('../../plugins/lib/substitute-attributes')
-const { parseNav, buildPlan, injectNavEntries, parseTarget, pageKey, folderName } = require('./lib/nav')
+const { parseNav, buildPlan, injectNavEntries, resolveNavIncludes, parseTarget, pageKey, folderName } = require('./lib/nav')
 const {
   wrapRefs, wrappableRefs, hasSentinelResidue, hasAttrSpanLeak, stripAttrSpans,
 } = require('../antora-extension/mark-attributes')
@@ -569,6 +569,75 @@ const renderedCode = (md) => {
       'a missing anchor throws rather than silently doing nothing')
     assert.strictEqual(injectNavEntries(source, []), source, 'no injections leaves the nav byte-identical')
     ok('injectNavEntries: injected page is planned as if the nav had listed it')
+
+    // A disposition covers a page across EVERY branch, but a page is only an
+    // orphan in the branches whose nav omits it. Where this version's nav already
+    // lists the page, the injection has nothing to do -- and must not duplicate the
+    // entry, nor throw because the anchor it would have used is itself a page that
+    // version predates. Oracle = the untouched nav, which is what "nothing to do"
+    // means. This is hazelcast:maintain-cluster/rest-api at 5.4 and 5.3 exactly.
+    const already = ['.Reference', '* xref:commands.adoc[Command Reference]',
+      '** xref:cfg.adoc[]', '** xref:cpmap.adoc[]'].join('\n')
+    assert.strictEqual(injectNavEntries(already, [{ key: 'cpmap', after: 'cfg' }]), already,
+      'a page its nav already lists is left alone, not injected twice')
+    assert.strictEqual(injectNavEntries(already, [{ key: 'cpmap', after: 'no-such-anchor' }]), already,
+      'and needs no anchor, because there is nothing to place')
+    // The presence check must be by KEY, not by stem: a same-named page in another
+    // module is a different page and must not suppress the injection.
+    const otherMod = '.R\n* xref:mymod:cfg.adoc[]\n* xref:othermod:cpmap.adoc[]'
+    assert(/^\* xref:mymod:cpmap\.adoc\[\]$/m.test(injectNavEntries(otherMod, [{ key: 'mymod:cpmap', after: 'mymod:cfg' }])),
+      'a same-stem page in a different module does not count as already listed')
+    ok('injectNavEntries: an injection whose page is already in nav is a no-op')
+  }
+
+  // Correctness: nav includes are resolved SPLICED IN PLACE, because an included
+  // partial's own bullet depths are interpreted where the include sat -- position
+  // is what places the whole subtree. Oracle = the equivalent flat nav with the
+  // partial's text written out inline, so the test states the equivalence Antora
+  // guarantees rather than mirroring the splice.
+  {
+    const partials = {
+      'computing:nav.adoc': '* Java Executor Service\n** xref:computing:executor-service.adoc[]\n',
+      'ROOT:extra.adoc': '** xref:extra.adoc[Extra]',
+    }
+    const read = (module, relPath) => partials[`${module || 'ROOT'}:${relPath}`]
+
+    const withInclude = ['.Develop', '* xref:computing:distributed-computing.adoc[]',
+      '** Executor Services', 'include::computing:partial$nav.adoc[]',
+      '* xref:last.adoc[Last]'].join('\n')
+    const flat = ['.Develop', '* xref:computing:distributed-computing.adoc[]',
+      '** Executor Services', '* Java Executor Service',
+      '** xref:computing:executor-service.adoc[]', '* xref:last.adoc[Last]'].join('\n')
+
+    assert.deepStrictEqual(buildPlan(parseNav(resolveNavIncludes(withInclude, read))), buildPlan(parseNav(flat)),
+      'an included partial plans exactly as if its text were written inline at the include')
+    // Position matters: the partial's depths are read where the include sat, so
+    // the entries after it keep their own place rather than being appended past.
+    const plan = buildPlan(parseNav(resolveNavIncludes(withInclude, read)))
+    assert(plan.pages.get('computing:executor-service').sidebarPosition < plan.pages.get('last').sidebarPosition,
+      'entries following the include stay after the text it pulled in')
+    // A partial with no module coordinate belongs to the nav's own module.
+    assert(buildPlan(parseNav(resolveNavIncludes('.R\n* xref:top.adoc[T]\ninclude::partial$extra.adoc[]', read))).pages.has('extra'),
+      'a module-less partial coordinate resolves against the nav\'s own module')
+    // A flat nav has no include lines: unchanged, byte for byte. This is what
+    // makes the change a no-op on 5.5-and-newer Platform and on every other
+    // component.
+    assert.strictEqual(resolveNavIncludes(flat, read), flat, 'a nav with no includes is returned unchanged')
+    // A COMMENTED include is not a directive -- management-center's navs disable
+    // every module partial that way, and must keep parsing as flat files.
+    const commented = '.R\n* xref:top.adoc[T]\n// include::computing:partial$nav.adoc[]'
+    assert.strictEqual(resolveNavIncludes(commented, read), commented, 'a commented-out include is left alone')
+    // Fails closed both ways: a nav include that silently resolved to nothing
+    // would cost a whole subtree its placement while the build stayed green.
+    assert.throws(() => resolveNavIncludes('include::nope:partial$nav.adoc[]', read), /could not be resolved/i,
+      'an unresolvable partial throws rather than vanishing')
+    assert.throws(() => resolveNavIncludes('include::some:example$thing.adoc[]', read), /unsupported include/i,
+      'an include form this does not understand throws rather than being dropped')
+    // A partial that includes itself must give a legible error, not a stack blowup.
+    const cyclic = (module, relPath) => (relPath === 'loop.adoc' ? 'include::partial$loop.adoc[]' : undefined)
+    assert.throws(() => resolveNavIncludes('include::partial$loop.adoc[]', cyclic), /cycle|nested more than/i,
+      'a self-referential nav partial is reported, not recursed forever')
+    ok('resolveNavIncludes: a partial plans as if spliced inline, and failures are loud')
   }
 
   // Correctness: a nav label equal to the doctitle is redundant -> no sidebar_label;

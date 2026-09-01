@@ -1,0 +1,347 @@
+---
+title: "Cluster Utilities"
+sidebar_position: 8
+slug: /management/cluster-utilities
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+This section provides information about the Hazelcast command line and other programmatic utilities you can use to listen to the cluster events, to change the state of your cluster, to check whether the cluster and/or members are safe before shutting down a member and to define the minimum number of cluster members required for the cluster to remain up and running. It also gives information about the Hazelcast Lite Member.
+
+## Hazelcast Command Line Tool
+
+This is a tool using which you can install and run Hazelcast and Management Center on your Unix-like local environments. You need [JRE 8 or newer](https://www.oracle.com/java/technologies/javase-downloads.html) as a prerequisite.
+
+You can install this tool using its Homebrew, RPM, or Debian packages:
+
+<Tabs groupId="debian--homebrew--rpm">
+<TabItem value="homebrew" label="Homebrew">
+
+<IfNotSnapshot>
+
+```bash vars
+brew tap hazelcast/hz
+brew install hazelcast@{full-version}
+```
+
+</IfNotSnapshot>
+
+</TabItem>
+<TabItem value="debian" label="Debian">
+
+```shell vars
+wget -qO - https://repository.hazelcast.com/api/gpg/key/public | gpg --dearmor | sudo tee /usr/share/keyrings/hazelcast-archive-keyring.gpg > /dev/null
+echo "deb [signed-by=/usr/share/keyrings/hazelcast-archive-keyring.gpg] https://repository.hazelcast.com/debian stable main" | sudo tee -a /etc/apt/sources.list
+sudo apt update && sudo apt install hazelcast={full-version}
+```
+
+</TabItem>
+<TabItem value="rpm" label="RPM">
+
+```shell vars
+wget https://repository.hazelcast.com/rpm/stable/hazelcast-rpm-stable.repo -O hazelcast-rpm-stable.repo
+sudo mv hazelcast-rpm-stable.repo /etc/yum.repos.d/
+sudo yum install hazelcast-{full-version}
+```
+
+</TabItem>
+</Tabs>
+
+Alternatively, you can manually download and install this tool using the TAR package on its GitHub [repo](https://github.com/hazelcast/hazelcast-command-line/releases). After you download and extract the package, you see the `hazelcast-<version>` directory. Simply run the following commands to install it:
+
+```none
+cd hazelcast-<version>/bin
+./hz
+```
+
+You are now ready to use the tool.
+
+- **Starting a standalone Hazelcast member with the default configuration:**
+
+  `./hz start` \*
+- **Starting Hazelcast Management Center:**
+
+  `./hz mc start`
+
+Please see the tool's [documentation](https://github.com/hazelcast/hazelcast-command-line) for all the other usages.
+
+## Using the `hz-cluster-admin` Script
+
+You can use the script `hz-cluster-admin`, which comes with the Hazelcast package, to get/change the state of your cluster, to shutdown your cluster and to force your cluster to clean its persisted data and make a fresh start. The latter is the force-start operation of Persistence. See the [Force-start section](../configuring-for-fault-tolerance/persistence/persistence.mdx#force-start).
+
+:::note
+
+The script `hz-cluster-admin` uses `curl` command and `curl` must be installed to be able to use the script.
+
+:::
+
+The script `hz-cluster-admin` takes the following parameters to operate according to your needs. If these parameters are not provided, the default values are used.
+
+<table>
+<colgroup>
+<col style={{width:'22.2222%'}}/>
+<col style={{width:'22.2222%'}}/>
+<col style={{width:'55.5556%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Default Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`-o` or `--operation`</td>
+<td>`get-state`</td>
+<td>
+
+Executes a cluster-wide operation. Operations can be the following:
+
+- Open Source operations: `get-state`, `change-state`, `shutdown` and `get-cluster-version`.
+- Enterprise operations: `force-start`, `partial-start` and `change-cluster-version`.
+
+</td>
+</tr>
+<tr>
+<td>`-s` or `--state`</td>
+<td>None</td>
+<td>Updates the state of the cluster to a new state. New state can be `active`, `no_migration`, `frozen`, `passive`. This is used with the operation `change-state`. This parameter has no default value; when you use this, you should provide a valid state.</td>
+</tr>
+<tr>
+<td>`-a` or `--address`</td>
+<td>`127.0.0.1`</td>
+<td>Defines the IP address of a cluster member. If you want to manage your cluster remotely, you should use this parameter to provide the IP address of a member to this script.</td>
+</tr>
+<tr>
+<td>`-p` or `--port`</td>
+<td>`5701`</td>
+<td>Defines on which port Hazelcast is running on the local or remote machine.</td>
+</tr>
+<tr>
+<td>`-c` or `--clustername`</td>
+<td>`dev`</td>
+<td>Defines the name of a cluster which is used for a simple authentication. See the [Creating Clusters section](../partition-groups-and-networking/creating-clusters.mdx).</td>
+</tr>
+<tr>
+<td>`-P` or `--password`</td>
+<td>`dev-pass`</td>
+<td>Defines the password of a cluster (valid only for Hazelcast releases older than 3.8.2). See the [Creating Clusters section](../partition-groups-and-networking/creating-clusters.mdx).</td>
+</tr>
+<tr>
+<td>`-v` or `--version`</td>
+<td>*no argument expected*</td>
+<td>Defines the cluster version to change to. It is used in conjunction with the `change-cluster-version` operation.</td>
+</tr>
+<tr>
+<td>`-d` or `--debug`</td>
+<td>*no argument expected*</td>
+<td>Prints error output.</td>
+</tr>
+<tr>
+<td>`--https`</td>
+<td>*no argument expected*</td>
+<td>Uses HTTPS protocol for REST calls.</td>
+</tr>
+<tr>
+<td>`--cacert`</td>
+<td>*set of well-known CA certificates*</td>
+<td>Defines trusted PEM-encoded certificate file path. It's used to verify member certificates.</td>
+</tr>
+<tr>
+<td>`--cert`</td>
+<td>None</td>
+<td>Defines PEM-encoded client certificate file path. Only needed when client certificate authentication is used.</td>
+</tr>
+<tr>
+<td>`--key`</td>
+<td>None</td>
+<td>Defines PEM-encoded client private key file path. Only needed when client certificate authentication is used.</td>
+</tr>
+<tr>
+<td>`--insecure`</td>
+<td>*no argument expected*</td>
+<td>Disables member certificate verification.</td>
+</tr>
+</tbody>
+</table>
+
+The script `hz-cluster-admin` is self-documented; you can see the parameter descriptions using the command `./hz-cluster-admin -h` or `./hz-cluster-admin --help`.
+
+:::note
+
+You can perform the above operations using the **Persistence** tab of Hazelcast Management Center or using the REST API. See the <Variable href="/management-center/{page-latest-supported-mc}/clusters/administration#persistence" text="Persistence"/> and [Managing Cluster's State](./rest-api.mdx#using-rest-api-for-cluster-management) sections in the Hazelcast Management Center documentation.
+
+:::
+
+### Example Usages for hz-cluster-admin
+
+Let's say you have a cluster running on remote machines and one Hazelcast member is running on the IP `172.16.254.1` and on the port `5702`. The cluster name and password of the cluster are `test` and `test`.
+
+**Getting the cluster state:**
+
+To get the state of the cluster, use the following command:
+
+`./hz-cluster-admin -o get-state -a 172.16.254.1 -p 5702 -g test -P test`
+
+The following also gets the cluster state, using the alternative parameter names, e.g., `--port` instead of `-p`:
+
+`./hz-cluster-admin --operation get-state --address 172.16.254.1 --port 5702 --clustername test --password test`
+
+**Changing the cluster state:**
+
+To change the state of the cluster to `frozen`, use the following command:
+
+`./hz-cluster-admin -o change-state -s frozen -a 172.16.254.1 -p 5702 -g test -P test`
+
+Similarly, you can use the following command for the same purpose:
+
+`./hz-cluster-admin --operation change-state --state frozen --address 172.16.254.1 --port 5702 --clustername test --password test`
+
+**Shutting down the cluster:**
+
+To shutdown the cluster, use the following command:
+
+`./hz-cluster-admin -o shutdown -a 172.16.254.1 -p 5702 -g test -P test`
+
+Similarly, you can use the following command for the same purpose:
+
+`./hz-cluster-admin --operation shutdown --address 172.16.254.1 --port 5702 --clustername test --password test`
+
+**Triggering a partial-start on the cluster:**
+
+To trigger a partial-start when Persistence is enabled, use the following command:
+
+`./hz-cluster-admin -o partial-start -a 172.16.254.1 -p 5702 -g test -P test`
+
+Similarly, you can use the following command for the same purpose:
+
+`./hz-cluster-admin --operation partial-start --address 172.16.254.1 --port 5702 --clustername test --password test`
+
+**Triggering a force-start the cluster:**
+
+To trigger a force-start when Persistence is enabled, use the following command:
+
+`./hz-cluster-admin -o force-start -a 172.16.254.1 -p 5702 -g test -P test`
+
+Similarly, you can use the following command for the same purpose:
+
+`./hz-cluster-admin --operation force-start --address 172.16.254.1 --port 5702 --clustername test --password test`
+
+**Getting the current cluster version:**
+
+To get the cluster version, use the following command:
+
+`./hz-cluster-admin -o get-cluster-version -a 172.16.254.1 -p 5702 -g test -P test`
+
+The following also gets the cluster state, using the alternative parameter names, e.g., `--port` instead of `-p`:
+
+`./hz-cluster-admin --operation get-cluster-version --address 172.16.254.1 --port 5702 --clustername test --password test`
+
+**Changing the cluster version:**
+
+See the [Rolling Member Upgrades chapter](./rolling-upgrades.mdx) to learn more about the cases when you should change the cluster version.
+
+To change the cluster version to `X.Y`, use the following command:
+
+`./hz-cluster-admin -o change-cluster-version -v X.Y -a 172.16.254.1 -p 5702 -g test -P test`
+
+The cluster version is always in the `major.minor` format, e.g., 3.12. Using other formats results in a failure.
+
+**Calls against the TLS protected members (using HTTPS protocol):**
+
+When the member has TLS configured, use the `--https` argument to instruct `hz-cluster-admin` to use the proper URL scheme:
+
+```sh
+./hz-cluster-admin --https \
+  --operation get-state --address member1.example.com --port 5701
+```
+
+If the default set of trusted certificate authorities is not sufficient, e.g, you use a self-signed certificate, you can provide a custom file with the root certificates:
+
+```sh
+./hz-cluster-admin --https \
+  --cacert /path/to/ca-certs.pem \
+  --operation get-state --address member1.example.com --port 5701
+```
+
+When the TLS mutual authentication is enabled, you have to provide the client certificate and related private key:
+
+```sh
+./hz-cluster-admin --https \
+  --key privkey.pem \
+  --cert cert.pem \
+  --operation get-state --address member1.example.com --port 5701
+```
+
+:::note
+
+Currently, this script is not supported on the Windows platforms.
+
+:::
+
+## Integrity Checker
+
+The integrity checker is a utility developed for Java developers who build Hazelcast applications. It checks the classpath of your applications built with Hazelcast JAR dependencies (e.g., `hazelcast` or `hazelcast-sql`, using the assembly or other uber-JAR plugins). This check involves the verification of all serializer hooks are loaded during a Hazelcast member startup, that is, it verifies that the executable of your application contains all the required `META-INF/services` files.
+
+For example, there may be cases where:
+
+- you add a new `DataSerializer` hook for your application, but do not update the corresponding `/META-INF/services/com.hazelcast.DataSerializerHook` file
+- you build an application with a plugin that merges dependency JARs into the application's executable JAR; the plugin might be misconfigured and `DataSerializerHook` files are not merged correctly, resulting in a corrupted executable.
+
+The integrity checker is disabled by default and can be used for your development clusters on your local machines (not recommended for production clusters where the integrity of applications are already verified, and since it is a compute-intensive check).
+
+You can enable it in the configuration as follows.
+
+<Tabs groupId="environment-variable--java-member-api--system-prop--xml--yaml">
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  integrity-checker:
+    enabled: true
+```
+
+</TabItem>
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <integrity-checker enabled="true"/>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="java-member-api" label="Java member API">
+
+```java
+Config config = new Config();
+config.setIntegrityCheckerEnabled(true);
+
+HazelcastInstance hazelcast = Hazelcast.newHazelcastInstance(config);
+```
+
+</TabItem>
+<TabItem value="system-prop" label="System Prop">
+
+```shell
+-Dhz.integritychecker.enabled=true
+```
+
+</TabItem>
+<TabItem value="environment-variable" label="Environment Variable">
+
+```shell
+HZ_INTEGRITYCHECKER_ENABLED=true
+```
+
+</TabItem>
+</Tabs>
+
+If the verification fails, the member does not start and the checker prints which hook is missing its corresponding `/META-INF/service/com.hazelcast.DataSerializerHook`. An example log output in the terminal is as follows.
+
+```shell vars
+SEVERE: [192.168.56.1]:5701 [dev] [{full-version}] Node creation failed
+com.hazelcast.core.HazelcastException: Failed to verify distribution integrity, unable to load DataSerializerHook: com.hazelcast.aggregation.impl.AggregatorDataSerializerHook
+```
