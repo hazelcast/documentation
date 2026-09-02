@@ -6,6 +6,16 @@ slug: /scheduling-configuration
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_node_selector_yaml from '../examples/hazelcast-node-selector.yaml';
+import Ex_management_center_node_selector_yaml from '../examples/management-center-node-selector.yaml';
+import Ex_hazelcast_node_affinity_yaml from '../examples/hazelcast-node-affinity.yaml';
+import Ex_management_center_node_affinity_yaml from '../examples/management-center-node-affinity.yaml';
+import Ex_hazelcast_pod_affinity_yaml from '../examples/hazelcast-pod-affinity.yaml';
+import Ex_management_center_pod_affinity_yaml from '../examples/management-center-pod-affinity.yaml';
+import Ex_hazelcast_pod_tolerations_yaml from '../examples/hazelcast-pod-tolerations.yaml';
+import Ex_management_center_pod_tolerations_yaml from '../examples/management-center-pod-tolerations.yaml';
+import Ex_hazelcast_topology_spread_constraints_yaml from '../examples/hazelcast-topology-spread-constraints.yaml';
 
 Kubernetes supports several policies for assigning pods to nodes. Operator uses the same policies to allow or disallow specified assignments for Hazelcast members and Management Center.
 
@@ -20,30 +30,12 @@ For example, to run Hazelcast pods on a node in the us-west1 region, apply the f
 <Tabs groupId="product">
 <TabItem value="hazelcast" label="Hazelcast">
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  scheduling:
-    nodeSelector:
-      topology.kubernetes.io/region: us-west1
-```
+<CodeBlock language="yaml">{Ex_hazelcast_node_selector_yaml}</CodeBlock>
 
 </TabItem>
 <TabItem value="management-center" label="Management Center">
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: ManagementCenter
-metadata:
-  name: managementcenter
-spec:
-  scheduling:
-    nodeSelector:
-      topology.kubernetes.io/region: us-west1
-```
+<CodeBlock language="yaml">{Ex_management_center_node_selector_yaml}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -59,70 +51,12 @@ For example, you can set a hard requirement for Hazelcast pods to run only on no
 <Tabs groupId="product">
 <TabItem value="hazelcast" label="Hazelcast">
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  scheduling:
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-            - matchExpressions:
-              - key: kubernetes.io/arch
-                operator: In
-                values:
-                  - amd64
-              - key: kubernetes.io/os
-                operator: In
-                values:
-                  - linux
-        preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 15
-            preference:
-              matchExpressions:
-                - key: topology.kubernetes.io/region
-                  operator: In
-                  values:
-                    - us-west1
-                    - us-west2
-```
+<CodeBlock language="yaml">{Ex_hazelcast_node_affinity_yaml}</CodeBlock>
 
 </TabItem>
 <TabItem value="management-center" label="Management Center">
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: ManagementCenter
-metadata:
-  name: managementcenter
-spec:
-  scheduling:
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-            - matchExpressions:
-              - key: kubernetes.io/arch
-                operator: In
-                values:
-                  - amd64
-              - key: kubernetes.io/os
-                operator: In
-                values:
-                  - linux
-        preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 15
-            preference:
-              matchExpressions:
-                - key: topology.kubernetes.io/region
-                  operator: In
-                  values:
-                    - us-west1
-                    - us-west2
-```
+<CodeBlock language="yaml">{Ex_management_center_node_affinity_yaml}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -138,68 +72,12 @@ For example, you may want to run Hazelcast pods on the same nodes as your applic
 <Tabs groupId="product">
 <TabItem value="hazelcast" label="Hazelcast">
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  scheduling:
-    affinity:
-      podAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                    - app1
-            topologyKey: kubernetes.io/hostname
-      podAntiAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 10
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                  - key: app.kubernetes.io/instance
-                    operator: In
-                    values:
-                      - hazelcast
-              topologyKey: kubernetes.io/hostname
-```
+<CodeBlock language="yaml">{Ex_hazelcast_pod_affinity_yaml}</CodeBlock>
 
 </TabItem>
 <TabItem value="management-center" label="Management Center">
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: ManagementCenter
-metadata:
-  name: managementcenter
-spec:
-  scheduling:
-    affinity:
-      podAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                    - app1
-            topologyKey: kubernetes.io/hostname
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 10
-              podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                    - key: app.kubernetes.io/instance
-                      operator: In
-                      values:
-                        - hazelcast
-                topologyKey: kubernetes.io/hostname
-```
+<CodeBlock language="yaml">{Ex_management_center_pod_affinity_yaml}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -221,34 +99,12 @@ To allow the pods to run on the node `node1`, you need to add tolerations to the
 <Tabs groupId="product">
 <TabItem value="hazelcast" label="Hazelcast">
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  scheduling:
-    tolerations:
-      - key: "forbidden"
-        operator: "Exists"
-        effect: "NoSchedule"
-```
+<CodeBlock language="yaml">{Ex_hazelcast_pod_tolerations_yaml}</CodeBlock>
 
 </TabItem>
 <TabItem value="management-center" label="Management Center">
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: ManagementCenter
-metadata:
-  name: managementcenter
-spec:
-  scheduling:
-    tolerations:
-      - key: "forbidden"
-        operator: "Exists"
-        effect: "NoSchedule"
-```
+<CodeBlock language="yaml">{Ex_management_center_pod_tolerations_yaml}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -264,23 +120,7 @@ The following configuration will ensure that Hazelcast pods will be spread acros
 <Tabs groupId="product">
 <TabItem value="hazelcast" label="Hazelcast">
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  scheduling:
-    topologySpreadConstraints:
-      - maxSkew: 1
-        topologyKey: kubernetes.io/hostname
-        whenUnsatisfiable: DoNotSchedule
-        labelSelector:
-          matchLabels:
-            app.kubernetes.io/name: hazelcast
-            app.kubernetes.io/instance: hazelcast
-            app.kubernetes.io/managed-by: hazelcast-platform-operator
-```
+<CodeBlock language="yaml">{Ex_hazelcast_topology_spread_constraints_yaml}</CodeBlock>
 
 </TabItem>
 </Tabs>

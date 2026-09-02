@@ -4,6 +4,9 @@ sidebar_position: 5
 slug: /cache-configuration
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_cache_yaml from '../../../examples/cache.yaml';
+
 Hazelcast offers a specification-compliant JCache implementation. The Hazelcast JCache implementation is 100% TCK (Technology Compatibility Kit) compliant and therefore passes all specification requirements. You can create and configure JCache using the `Cache` custom resource.
 
 ## Configure a cache resource
@@ -25,20 +28,7 @@ You can use any of the following configuration options in the `Cache` resource. 
 
 The following `Cache` custom resource creates a cache configuration for the `Hazelcast` custom resource that is defined in the `hazelcastResourceName` field.
 
-```yaml title="Example configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Cache
-metadata:
-  name: cache-sample
-spec:
-  hazelcastResourceName: hazelcast
-  backupCount: 1
-  asyncBackupCount: 0
-  inMemoryFormat: NATIVE
-  keyType: java.lang.Object
-  valueType: java.lang.Object
-  persistenceEnabled: false
-```
+<CodeBlock language="yaml" title="Example configuration">{Ex_cache_yaml}</CodeBlock>
 
 After creating the `Cache` resource, you can check its status:
 

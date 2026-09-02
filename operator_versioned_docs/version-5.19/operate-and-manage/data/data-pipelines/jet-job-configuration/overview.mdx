@@ -5,6 +5,9 @@ sidebar_position: 0
 slug: /jet-job-configuration
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_jet_job_example_yaml from '../../../../examples/jet-job-example.yaml';
+
 To execute a data pipeline it needs to be submitted to the cluster as a job. Once the job is submitted, it's distributed automatically and executed on all members.
 
 With Operator, you can run pipelines from existing JAR files for processing data. Pipelines, depending on the data source, can be used for stream or batch processing.
@@ -121,32 +124,7 @@ For production deployments, you should ensure that sidecar logs are collected by
 
 The following `JetJob` resource runs the Data Pipeline for the `Hazelcast` resources on the source Hazelcast cluster from `my-data-pipeline.jar`.
 
-```yaml title="Example configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  clusterSize: 3
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  jet:
-    enabled: true
-    resourceUploadEnabled: true
-    bucketConfig:
-      secretName: br-secret-gcp
-      bucketURI: "gs://your-bucket/path/to/jars"
-  licenseKeySecretName: hazelcast-license-key
----
-apiVersion: hazelcast.com/v1alpha1
-kind: JetJob
-metadata:
-  name: jet-job-sample
-spec:
-  name: my-test-jet-job
-  hazelcastResourceName: hazelcast
-  state: Running
-  jarName: my-data-pipeline.jar
-```
+<CodeBlock language="yaml" title="Example configuration">{Ex_jet_job_example_yaml}</CodeBlock>
 
 :::note
 

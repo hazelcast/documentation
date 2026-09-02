@@ -4,6 +4,9 @@ sidebar_position: 3
 slug: /topic-configuration
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_topic_yaml from '../../../examples/topic.yaml';
+
 Hazelcast provides a distribution mechanism for publishing messages that are delivered to multiple subscribers. This is known as a publish/subscribe (pub/sub) messaging model. Publishing and subscription operations are cluster wide. When a member subscribes to a topic, it is registered to receive messages published by any member in the cluster, including any new members that joined after you added the listener. You can create and configure topics using the `Topic` custom resource.
 
 ## Configure a topic resource
@@ -55,16 +58,7 @@ You cannot enable multi-threading when global ordering is in use.
 
 The following `Topic` custom resource creates a topic configuration for the `Hazelcast` custom resource that is defined in the `hazelcastResourceName` field.
 
-```yaml title="Example configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Topic
-metadata:
-  name: topic-sample
-spec:
-  hazelcastResourceName: hazelcast-sample
-  globalOrderingEnabled: true
-  multiThreadingEnabled: false
-```
+<CodeBlock language="yaml" title="Example configuration">{Ex_topic_yaml}</CodeBlock>
 
 After creating the `Topic` resource, you can check its status:
 

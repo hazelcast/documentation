@@ -4,6 +4,9 @@ sidebar_position: 4
 slug: /authorization
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_service_account_yaml from '../../examples/service-account.yaml';
+
 You can use either a secret or Service Accounts to access your cloud storage.
 
 ## Use secrets
@@ -44,13 +47,7 @@ See [Azure Storage Account Keys](https://docs.microsoft.com/en-us/azure/storage/
 
 You can use `Service Accounts` to access cloud provider resources without providing `secretName` in `HotBackup`, `JetJob`, and `UCN` custom resources. To use this approach, you must provide `serviceAccountName` in your Hazelcast CR.
 
-```yaml title="Example of Service Account configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-  serviceAccountName: myServiceAccount
-```
+<CodeBlock language="yaml" title="Example of Service Account configuration">{Ex_service_account_yaml}</CodeBlock>
 
 ### Access GCP resources using Workload Identity
 

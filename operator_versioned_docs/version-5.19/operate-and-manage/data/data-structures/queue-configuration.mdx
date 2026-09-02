@@ -4,6 +4,9 @@ sidebar_position: 4
 slug: /queue-configuration
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_queue_yaml from '../../../examples/queue.yaml';
+
 Hazelcast's distributed queue is an implementation of `java.util.concurrent.BlockingQueue`. Being distributed enables all cluster members to interact with it. Using Hazelcast distributed queue, you can add an item in one cluster member and remove it from another one. You can create and configure queues using the `Queue` custom resource.
 
 ## Configure a queue resource
@@ -24,19 +27,7 @@ You can use any of the following configuration options in the `Queue` resource. 
 
 The following `Queue` custom resource creates a queue configuration for the `Hazelcast` custom resource that is defined in the `hazelcastResourceName` field.
 
-```yaml title="Example configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Queue
-metadata:
-  name: queue-sample
-spec:
-  hazelcastResourceName: hazelcast
-  backupCount: 1
-  asyncBackupCount: 0
-  emptyQueueTTLSeconds: -1
-  maxSize: 0
-  priorityComparatorClassName: "com.hazelcast.collection.impl.queue.model.PriorityElementComparator"
-```
+<CodeBlock language="yaml" title="Example configuration">{Ex_queue_yaml}</CodeBlock>
 
 After creating the `Queue` resource, you can check its status:
 

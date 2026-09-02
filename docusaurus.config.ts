@@ -28,8 +28,8 @@ const managementCenter = {
 // needs its current version's URL segment too.
 const platform = {
   id: 'hazelcast',
-  currentSeg: '5.8-snapshot',
-  currentLabel: '5.8-SNAPSHOT',
+  currentSeg: '6.0-snapshot',
+  currentLabel: '6.0-SNAPSHOT',
   defaultVersion: 'latest-release',
 } as const;
 
@@ -150,9 +150,9 @@ const config: Config = {
     // Platform docs — migration target #5 and the biggest by a wide margin: 439
     // pages over 46 Antora modules. The plugin id is the Antora component name
     // `hazelcast`, because that is the URL segment production serves it at
-    // (/hazelcast/5.8-snapshot/sql/…); the navbar calls it "Platform", which is
+    // (/hazelcast/6.0-snapshot/sql/…); the navbar calls it "Platform", which is
     // the product's name. Its main is a NUMBERED snapshot like MC's — published
-    // under `5.8-snapshot`, displayed `5.8-SNAPSHOT`.
+    // under `6.0-snapshot`, displayed `6.0-SNAPSHOT`.
     //
     // The live release set lives in lib/layout.js VERSIONS.hazelcast, so it needs
     // no edit here — and because main is an unreleased snapshot, the dropdown
@@ -253,7 +253,7 @@ const config: Config = {
           label: 'CLC',
         },
         // Version dropdown for the hazelcast (Platform) instance: the
-        // 5.8-SNAPSHOT current version plus the live releases.
+        // 6.0-SNAPSHOT current version plus the live releases.
         {
           type: 'docsVersionDropdown',
           docsPluginId: 'hazelcast',

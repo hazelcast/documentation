@@ -6,6 +6,14 @@ slug: /module-deployment
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_module_deployment_aws_yaml from '../../examples/hazelcast-module-deployment-aws.yaml';
+import Ex_hazelcast_module_deployment_gcp_yaml from '../../examples/hazelcast-module-deployment-gcp.yaml';
+import Ex_hazelcast_module_deployment_azure_yaml from '../../examples/hazelcast-module-deployment-azure.yaml';
+import Ex_map_map_store_yaml from '../../examples/map-map-store.yaml';
+import Ex_hazelcast_executor_service_yaml from '../../examples/hazelcast-executor-service.yaml';
+import Ex_hazelcast_durable_executor_service_yaml from '../../examples/hazelcast-durable-executor-service.yaml';
+import Ex_hazelcast_scheduled_executor_service_yaml from '../../examples/hazelcast-scheduled-executor-service.yaml';
 
 Operator allows you to deploy your own custom and domain classes to Hazelcast Plaftorm cluster members. You can deploy your application code from external buckets, ConfigMap objects, and URLs in Kubernetes.
 
@@ -81,72 +89,21 @@ Mounted persistent volumes are not supported; only cloud provider external bucke
 
 Module Deployment in AWS S3:
 
-```yaml conums
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  licenseKeySecretName: hazelcast-license-key
-  moduleDeployment:
-    bucketConfig:
-      secretName: map-store-bucket-secret <1>
-      bucketURI: s3://map-store-bucket/path/to/jars <2>
-    configMaps:
-    - domain-classes-cm
-    - entryprocessor-cm
-    remoteURLs:
-    - https://example.com/entry-processor.jar
-    triggerSequence: "001"
-```
+<CodeBlock language="yaml" metastring="conums">{Ex_hazelcast_module_deployment_aws_yaml}</CodeBlock>
 
 </TabItem>
 <TabItem value="gcp" label="GCP">
 
 Module Deployment in GCP:
 
-```yaml conums
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  licenseKeySecretName: hazelcast-license-key
-  moduleDeployment:
-    bucketConfig:
-      secretName: map-store-bucket-secret <1>
-      bucketURI: gs://map-store-bucket/path/to/jars <2>
-    configMaps:
-    - domain-classes-cm
-    - entryprocessor-cm
-    remoteURLs:
-    - https://example.com/entry-processor.jar
-    triggerSequence: "001"
-```
+<CodeBlock language="yaml" metastring="conums">{Ex_hazelcast_module_deployment_gcp_yaml}</CodeBlock>
 
 </TabItem>
 <TabItem value="azure" label="Azure">
 
 Module Deployment in Azure Blob:
 
-```yaml conums
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  licenseKeySecretName: hazelcast-license-key
-  moduleDeployment:
-    bucketConfig:
-      secretName: map-store-bucket-secret <1>
-      bucketURI: azblob://map-store-bucket/path/to/jars <2>
-    configMaps:
-    - domain-classes-cm
-    - entryprocessor-cm
-    remoteURLs:
-    - https://example.com/entry-processor.jar
-    triggerSequence: "001"
-```
+<CodeBlock language="yaml" metastring="conums">{Ex_hazelcast_module_deployment_azure_yaml}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -182,21 +139,7 @@ Use the following configuration options in the `Map` resource for a MapStore. Th
 
 An example `Map` resource with MapStore configuration.
 
-```yaml title="Example configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Map
-metadata:
-  name: map-sample
-spec:
-  hazelcastResourceName: hazelcast-sample
-  mapStore:
-    className: com.example.SimpleStore
-    propertiesSecretName: props
-    initialMode: LAZY
-    writeDelaySeconds: 1
-    writeBatchSize: 20
-    writeCoalescing: false
-```
+<CodeBlock language="yaml" title="Example configuration">{Ex_map_map_store_yaml}</CodeBlock>
 
 ## Configure executor services
 
@@ -261,50 +204,17 @@ An example `Hazelcast` resource with Executor Services configured:
 <Tabs groupId="durable-executor-service--executor-service--scheduled-executor-service">
 <TabItem value="executor-service" label="Executor service">
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  executorServices:
-    - name: service1
-      capacity: 8
-      queueCapacity: 0
-```
+<CodeBlock language="yaml">{Ex_hazelcast_executor_service_yaml}</CodeBlock>
 
 </TabItem>
 <TabItem value="durable-executor-service" label="Durable executor service">
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  durableExecutorServices:
-    - name: service1
-      poolSize: 16
-      capacity: 100
-      durability: 1
-```
+<CodeBlock language="yaml">{Ex_hazelcast_durable_executor_service_yaml}</CodeBlock>
 
 </TabItem>
 <TabItem value="scheduled-executor-service" label="Scheduled executor service">
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  scheduledExecutorServices:
-    - name: service1
-      poolSize: 16
-      capacity: 100
-      durability: 1
-      capacityPolicy: PER_NODE
-```
+<CodeBlock language="yaml">{Ex_hazelcast_scheduled_executor_service_yaml}</CodeBlock>
 
 </TabItem>
 </Tabs>

@@ -5,8 +5,21 @@ sidebar_position: 0
 slug: /backup-restore
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_persistence_yaml from '../../../examples/hazelcast-persistence.yaml';
+import Ex_hot_backup_local_yaml from '../../../examples/hot-backup-local.yaml';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import Ex_hot_backup_external_aws_yaml from '../../../examples/hot-backup-external-aws.yaml';
+import Ex_hot_backup_external_gcp_yaml from '../../../examples/hot-backup-external-gcp.yaml';
+import Ex_hot_backup_external_azure_yaml from '../../../examples/hot-backup-external-azure.yaml';
+import Ex_cron_hot_backup_yaml from '../../../examples/cron-hot-backup.yaml';
+import Ex_hazelcast_persistence_restore_cr_name_yaml from '../../../examples/hazelcast-persistence-restore-cr-name.yaml';
+import Ex_hazelcast_persistence_restore_external_yaml from '../../../examples/hazelcast-persistence-restore-external.yaml';
+import Ex_hazelcast_persistence_restore_local_yaml from '../../../examples/hazelcast-persistence-restore-local.yaml';
+import Ex_pod_local_pvc_content_yaml from '../../../examples/pod-local-pvc-content.yaml';
+import Ex_hazelcast_persistence_datarecoverytimeout_yaml from '../../../examples/hazelcast-persistence-datarecoverytimeout.yaml';
+import Ex_hazelcast_forcestart_yaml from '../../../examples/hazelcast-forcestart.yaml';
 
 Persistence allows individual members and whole clusters to recover data by persisting map entries, JCache data, and streaming job snapshots on disk. Members can use persisted data to recover from a planned shutdown (including rolling upgrades), a sudden cluster-wide crash, or a single member failure.
 
@@ -27,23 +40,7 @@ For a worked example, see the [Restore a cluster from cloud storage tutorial](./
 
 Enabling Hazelcast persistence requires the following configuration.
 
-```yaml conums
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  clusterSize: 3
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  licenseKeySecretName: hazelcast-license-key
-  persistence:
-    clusterDataRecoveryPolicy: "FullRecoveryOnly"  <1>
-    pvc:
-      accessModes: ["ReadWriteOnce"]
-      requestStorage: 20Gi  <2>
-  agent: <3>
-    repository: hazelcast/platform-operator-agent
-```
+<CodeBlock language="yaml" metastring="conums">{Ex_hazelcast_persistence_yaml}</CodeBlock>
 
 <CodeCallouts>
 
@@ -65,14 +62,7 @@ Make sure to calculate the total disk space that you will use. The total used di
 
 You can take local backups using the `HotBackup` custom resource. Local backups are kept in volume and are not moved anywhere.
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: HotBackup
-metadata:
-  name: hot-backup
-spec:
-  hazelcastResourceName: hazelcast
-```
+<CodeBlock language="yaml">{Ex_hot_backup_local_yaml}</CodeBlock>
 
 ## Trigger external backups
 
@@ -87,16 +77,7 @@ To trigger an external backup, you need to configure a bucket URI and a secret t
 
 External backup in AWS S3:
 
-```yaml conums
-apiVersion: hazelcast.com/v1alpha1
-kind: HotBackup
-metadata:
-  name: hot-backup
-spec:
-  hazelcastResourceName: hazelcast
-  bucketURI: "s3://bucket-name/path/to/folder" <1>
-  secretName: "secret-aws-s3" <2>
-```
+<CodeBlock language="yaml" metastring="conums">{Ex_hot_backup_external_aws_yaml}</CodeBlock>
 
 :::note
 
@@ -109,16 +90,7 @@ For further information about accessing resources on different cloud providers, 
 
 External backup in GCP Bucket:
 
-```yaml conums
-apiVersion: hazelcast.com/v1alpha1
-kind: HotBackup
-metadata:
-  name: hot-backup
-spec:
-  hazelcastResourceName: hazelcast
-  bucketURI: "gs://bucket-name/path/to/folder" <1>
-  secretName: "secret-gcp-bucket" <2>
-```
+<CodeBlock language="yaml" metastring="conums">{Ex_hot_backup_external_gcp_yaml}</CodeBlock>
 
 :::note
 
@@ -131,16 +103,7 @@ For further information about accessing resources on different cloud providers, 
 
 External backup in Azure Blob:
 
-```yaml conums
-apiVersion: hazelcast.com/v1alpha1
-kind: HotBackup
-metadata:
-  name: hot-backup
-spec:
-  hazelcastResourceName: hazelcast
-  bucketURI: "azblob://bucket-name/path/to/folder" <1>
-  secretName: "secret-azure-blob" <2>
-```
+<CodeBlock language="yaml" metastring="conums">{Ex_hot_backup_external_azure_yaml}</CodeBlock>
 
 :::note
 
@@ -162,17 +125,7 @@ For further information about accessing resources on different cloud providers, 
 
 You can schedule backups using the `schedule` and `hotBackupTemplate` fields of the `CronHotBackup` resource. For more information about the `CronHotBackup` resource, see the [API reference](../../../reference/api-ref.mdx#cronhotbackupspec).
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: CronHotBackup
-metadata:
-  name: cron-hot-backup
-spec:
-  schedule: "* 0-23/6 * * *"
-  hotBackupTemplate:
-    spec:
-      hazelcastResourceName: hazelcast
-```
+<CodeBlock language="yaml">{Ex_cron_hot_backup_yaml}</CodeBlock>
 
 The `schedule` field takes a valid cron expression. For example, you can configure the following scheduled backups:
 
@@ -222,25 +175,7 @@ To restore from local backups that you have taken using the `HotBackup` resource
 
 When this restore mechanism is used, the Restore Agent container is deployed with the Hazelcast container in the same Pod. The agent starts as an `initContainer` before the Hazelcast container.
 
-```yaml conums
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast <1>
-spec:
-  clusterSize: 3
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  licenseKeySecretName: hazelcast-license-key
-  persistence:
-    clusterDataRecoveryPolicy: "FullRecoveryOnly"
-    pvc:
-      accessModes: ["ReadWriteOnce"]
-      requestStorage: 20Gi
-    restore:
-      hotBackupResourceName: hot-backup <2>
-  agent: <3>
-    repository: hazelcast/platform-operator-agent
-```
+<CodeBlock language="yaml" metastring="conums">{Ex_hazelcast_persistence_restore_cr_name_yaml}</CodeBlock>
 
 <CodeCallouts>
 
@@ -271,27 +206,7 @@ If you have not created the secret, you must do so in the same way as in [Trigge
 <Tabs groupId="bucket-configuration--hotbackup-resource-name">
 <TabItem value="bucket-configuration" label="Bucket configuration">
 
-```yaml conums
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  clusterSize: 3
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  licenseKeySecretName: hazelcast-license-key
-  persistence:
-    clusterDataRecoveryPolicy: "FullRecoveryOnly"
-    pvc:
-      accessModes: ["ReadWriteOnce"]
-      requestStorage: 20Gi
-    restore:
-      bucketConfig:
-        bucketURI: "s3://operator-backup?prefix=hazelcast/2022-06-08-17-01-20/" <1>
-        secretName: br-secret-s3 <2>
-  agent: <3>
-    repository: hazelcast/platform-operator-agent
-```
+<CodeBlock language="yaml" metastring="conums">{Ex_hazelcast_persistence_restore_external_yaml}</CodeBlock>
 
 <CodeCallouts>
 
@@ -304,25 +219,7 @@ spec:
 </TabItem>
 <TabItem value="hotbackup-resource-name" label="HotBackup resource name">
 
-```yaml conums
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast <1>
-spec:
-  clusterSize: 3
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  licenseKeySecretName: hazelcast-license-key
-  persistence:
-    clusterDataRecoveryPolicy: "FullRecoveryOnly"
-    pvc:
-      accessModes: ["ReadWriteOnce"]
-      requestStorage: 20Gi
-    restore:
-      hotBackupResourceName: hot-backup <2>
-  agent: <3>
-    repository: hazelcast/platform-operator-agent
-```
+<CodeBlock language="yaml" metastring="conums">{Ex_hazelcast_persistence_restore_cr_name_yaml}</CodeBlock>
 
 <CodeCallouts>
 
@@ -338,27 +235,7 @@ spec:
 
 To restore from local backups that are in an existing [persistent volume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/), configure `localConfig`.
 
-```yaml conums
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast <1>
-spec:
-  clusterSize: 3
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  licenseKeySecretName: hazelcast-license-key
-  customConfigCmName: mapCustomConfig <2>
-  persistence:
-    pvc:
-      accessModes: ["ReadWriteOnce"]
-      requestStorage: 20Gi
-    restore:
-      localConfig:
-        pvcNamePrefix: "hot-restart-persistence" <3>
-        baseDir: "base" <4>
-        backupDir: "backup" <5>
-        backupFolder: "backup-1709045128548" <6>
-```
+<CodeBlock language="yaml" metastring="conums">{Ex_hazelcast_persistence_restore_local_yaml}</CodeBlock>
 
 <CodeCallouts>
 
@@ -380,24 +257,7 @@ To find the `backupFolder` value, you can run `kubectl exec -it <hazelcast-custo
 
 :::
 
-```yaml conums
-apiVersion: v1
-kind: Pod
-metadata:
-  name: list-content-pod
-spec:
-  containers:
-    - name: list-content-container
-      image: busybox
-      command: ["/bin/sh", "-c", "tree /data/persistence"] <1>
-      volumeMounts:
-        - name: pv-storage
-          mountPath: /data/persistence <2>
-  volumes:
-    - name: pv-storage
-      persistentVolumeClaim:
-        claimName: hot-restart-persistence-hazelcast-0 <3>
-```
+<CodeBlock language="yaml" metastring="conums">{Ex_pod_local_pvc_content_yaml}</CodeBlock>
 
 <CodeCallouts>
 
@@ -419,22 +279,7 @@ Agent copies the backup to be restored from `{baseDir}/{backupDir}/{backupFolder
 
 To choose a data recovery timeout, you can use `dataRecoveryTimeout`. The field takes an integer value representing the timeout in seconds and uses this value to set [validation-timeout-seconds, data-load-timeout-seconds](https://docs.hazelcast.com/hazelcast/latest/storage/configuring-persistence#global-persistence-options) Hazelcast persistence options.
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  clusterSize: 3
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  licenseKeySecretName: hazelcast-license-key
-  persistence:
-    clusterDataRecoveryPolicy: "FullRecoveryOnly"
-    dataRecoveryTimeout: 600
-    pvc:
-      accessModes: ["ReadWriteOnce"]
-      requestStorage: 20Gi
-```
+<CodeBlock language="yaml">{Ex_hazelcast_persistence_datarecoverytimeout_yaml}</CodeBlock>
 
 ### Choose a cluster recovery policy {/* #recovery-policy */}
 
@@ -474,23 +319,6 @@ To recover a cluster that has persistence enabled after a cluster-wide restart, 
 
 To trigger the cluster recover action, set the `startupAction`:
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  clusterSize: 3
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  version: '5.7.1-slim'
-  licenseKeySecretName: hazelcast-license-key
-  persistence:
-    clusterDataRecoveryPolicy: "FullRecoveryOnly"
-    pvc:
-      accessModes: ["ReadWriteOnce"]
-      requestStorage: 8Gi
-      storageClassName: "standard"
-    startupAction: ForceStart
-```
+<CodeBlock language="yaml">{Ex_hazelcast_forcestart_yaml}</CodeBlock>
 
 `PartialStart` can be triggered only when `clusterDataRecoveryPolicy` is set to `PartialRecoveryMostRecent` or `PartialRecoveryMostComplete`.

@@ -4,6 +4,13 @@ sidebar_position: 5
 slug: /jvm-parameters
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_jvm_args_yaml from '../../examples/jvm_args.yaml';
+import Ex_jvm_yaml from '../../examples/jvm.yaml';
+import Ex_jvm_gc_logging_yaml from '../../examples/jvm_gc_logging.yaml';
+import Ex_jvm_gc_collector_yaml from '../../examples/jvm_gc_collector.yaml';
+import Ex_hazelcast_ipv6_yaml from '../../examples/hazelcast-ipv6.yaml';
+
 You can configure the JVM in the `hazelcast` container using the `jvm` field of the CRD.
 
 ## Configure a JVM parameter
@@ -20,33 +27,13 @@ Operator supports the following JVM configuration options in the `Hazelcast` res
 
 You can provide a list of JVM arguments.
 
-```yaml title="Example configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  jvm:
-    args:
-      - "-XX:MaxGCPauseMillis=200"
-```
+<CodeBlock language="yaml" title="Example configuration">{Ex_jvm_args_yaml}</CodeBlock>
 
 ## Example configuration
 
 The following `Hazelcast` custom resource creates a cluster that uses all three parameters.
 
-```yaml title="Example configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  jvm:
-    memory:
-      initialRAMPercentage: "10"
-      maxRAMPercentage: "20"
-      minRAMPercentage: "10"
-```
+<CodeBlock language="yaml" title="Example configuration">{Ex_jvm_yaml}</CodeBlock>
 
 ## Garbage collector parameters
 
@@ -54,16 +41,7 @@ spec:
 
 To enable garbage collector logging, you can use the following configuration:
 
-```yaml title="Example configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  jvm:
-    gc:
-      logging: true
-```
+<CodeBlock language="yaml" title="Example configuration">{Ex_jvm_gc_logging_yaml}</CodeBlock>
 
 This sets the JVM argument `-verbose:gc`.
 
@@ -77,16 +55,7 @@ Before making garbage collector-related changes using Operator, read [Garbage co
 
 To set the garbage collector:
 
-```yaml title="Example configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  jvm:
-    gc:
-      collector: <collector>
-```
+<CodeBlock language="yaml" title="Example configuration">{Ex_jvm_gc_collector_yaml}</CodeBlock>
 
 `<collector>` can be replaced with the following options:
 
@@ -100,16 +69,4 @@ spec:
 
 You can use JVM arguments to enable IPv6 addressing in Hazelcast and set up a Hazelcast cluster on an IPv6-stack Kubernetes Cluster. The following example creates an IPv6 Hazelcast cluster:
 
-```yaml title="IPv6 Example configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast-ipv6
-spec:
-  properties:
-    - "hazelcast.prefer.ipv4.stack": "false"
-  jvm:
-    args:
-      - "-Djava.net.preferIPv4Stack=false"
-      - "-Djava.net.preferIPv6Addresses=true"
-```
+<CodeBlock language="yaml" title="IPv6 Example configuration">{Ex_hazelcast_ipv6_yaml}</CodeBlock>

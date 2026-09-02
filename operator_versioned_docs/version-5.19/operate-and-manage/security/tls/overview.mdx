@@ -5,6 +5,10 @@ sidebar_position: 0
 slug: /tls
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_tls_yaml from '../../../examples/hazelcast-tls.yaml';
+import Ex_management_center_tls_yaml from '../../../examples/management-center-tls.yaml';
+
 Hazelcast TLS is a security feature that provides encryption and authentication of data transmitted between Hazelcast nodes, preventing unauthorized access and eavesdropping.
 
 Hazelcast TLS uses standard SSL/TLS certificates, which can be obtained from trusted Certificate Authorities (CAs) or self-signed. The certificates are used to establish trust between the communicating parties and ensure the authenticity of the communication channel.
@@ -98,33 +102,9 @@ The following example configuration does the following:
 - Enables member to member and member to client Hazelcast TLS connections.
 - Enforces mutual TLS authentication for cluster members.
 
-```yaml title="Example Hazelcast configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  clusterSize: 3
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  licenseKeySecretName: hazelcast-license-key
-  tls:
-    secretName: example
-```
+<CodeBlock language="yaml" title="Example Hazelcast configuration">{Ex_hazelcast_tls_yaml}</CodeBlock>
 
-```yaml title="Example Management Center configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: ManagementCenter
-metadata:
-  name: managementcenter
-spec:
-  repository: 'hazelcast/management-center'
-  licenseKeySecretName: hazelcast-license-key
-  hazelcastClusters:
-  - address: hazelcast
-    name: dev
-    tls:
-      secretName: example
-```
+<CodeBlock language="yaml" title="Example Management Center configuration">{Ex_management_center_tls_yaml}</CodeBlock>
 
 :::note
 

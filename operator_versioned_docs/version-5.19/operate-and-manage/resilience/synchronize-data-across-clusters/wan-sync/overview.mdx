@@ -5,6 +5,10 @@ sidebar_position: 0
 slug: /wan-sync
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_wan_sync_full_yaml from '../../../../examples/wan-sync-full.yaml';
+import Ex_wan_sync_delta_yaml from '../../../../examples/wan-sync-delta.yaml';
+
 WAN syncronization allows you to overcome out-of-sync issues with WAN replicated data.
 
 See [Synchronizing WAN clusters](/hazelcast/latest/wan/advanced-features#synchronizing-wan-clusters.adoc) for more detailed information about the configuration and behavior of WAN syncronization in Hazelcast.
@@ -29,14 +33,7 @@ To configure WAN syncronization, you must create a `WanSync` resource. For more 
 
 To create a `WanSync` resource you must use the existing `WanReplication` CR. This means that the `WanSync` resource reuses the existing and running WAN replication process.
 
-```yaml title="Example of WanSync using the existing WanReplication"
-apiVersion: hazelcast.com/v1alpha1
-kind: WanSync
-metadata:
-  name: wansync-sample
-spec:
-  wanReplicationResourceName: wan-replication-sample
-```
+<CodeBlock language="yaml" title="Example of WanSync using the existing WanReplication">{Ex_wan_sync_full_yaml}</CodeBlock>
 
 ## Configure delta WAN syncronization
 
@@ -46,35 +43,7 @@ To configure [delta WAN syncronization](/hazelcast/latest/wan/advanced-features#
 - Set `syncConsistencyCheckStrategy` to `MERKLE_TREES` in the `WanReplication` resource.
 - Create the `WanSync` resource. The created `WanSync` automatically uses Delta WAN Synchronization.
 
-```yaml title="Example of delta WAN syncronization"
-apiVersion: hazelcast.com/v1alpha1
-kind: Map
-metadata:
-  name: map-sample
-spec:
-  hazelcastResourceName: hazelcast
-  merkleTree:
-    depth: 10
----
-apiVersion: hazelcast.com/v1alpha1
-kind: WanReplication
-metadata:
-  name: wan-replication-sample
-spec:
-  resources:
-  - name: map-sample
-    kind: Map
-  targetClusterName: dev
-  endpoints: "198.51.100.252"
-  syncConsistencyCheckStrategy: "MERKLE_TREES"
----
-apiVersion: hazelcast.com/v1alpha1
-kind: WanSync
-metadata:
-  name: wansync-sample
-spec:
-  wanReplicationResourceName: wan-replication-sample
-```
+<CodeBlock language="yaml" title="Example of delta WAN syncronization">{Ex_wan_sync_delta_yaml}</CodeBlock>
 
 ## Checking the status of a WAN syncronization
 

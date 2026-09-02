@@ -4,6 +4,9 @@ sidebar_position: 5
 slug: /client-simple-auth
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_management_center_simple_auth_yaml from '../../examples/management-center-simple-auth.yaml';
+
 You can use Operator to configure [client authentication](/hazelcast/latest/security/authentication-overview) and [client authorization](/hazelcast/latest/security/client-authorization).
 
 ## Simple authentication
@@ -81,20 +84,7 @@ spec:
 
 Because Management Center serves as a client of the Hazelcast cluster, it must be properly configured to connect to the cluster. The `security.clientSecretName` field in the `hazelcastClusters` section is used for this configuration.
 
-```yaml title="Management Center Simple Authentication Example"
-apiVersion: hazelcast.com/v1alpha1
-kind: ManagementCenter
-metadata:
-  name: managementcenter-sample
-spec:
-  repository: 'hazelcast/management-center'
-  version: '5.11.1'
-  hazelcastClusters:
-    - address: hazelcast-sample
-      name: dev
-      security:
-        clientSecretName: user1-secret
-```
+<CodeBlock language="yaml" title="Management Center Simple Authentication Example">{Ex_management_center_simple_auth_yaml}</CodeBlock>
 
 :::note
 

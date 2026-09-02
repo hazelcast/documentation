@@ -4,6 +4,9 @@ sidebar_position: 1
 slug: /high-availability-mode
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_high_availability_mode_yaml from '../../../examples/hazelcast-high-availability-mode.yaml';
+import Ex_hazelcast_high_availability_mode_multi_member_routing_yaml from '../../../examples/hazelcast-high-availability-mode-multi-member-routing.yaml';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
@@ -79,14 +82,7 @@ High Availability mode supports the following configuration options.
 
 The following example configures ZONE\_AWARE high availability.
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  highAvailabilityMode: ZONE
-```
+<CodeBlock language="yaml">{Ex_hazelcast_high_availability_mode_yaml}</CodeBlock>
 
 ## High Availability mode and multi-member routing
 
@@ -94,18 +90,7 @@ spec:
 
 Example server and client configuration using `MULTI_MEMBER` routing:
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  highAvailabilityMode: ZONE
-  exposeExternally:
-    type: Smart
-    discoveryServiceType: LoadBalancer
-    memberAccess: LoadBalancer
-```
+<CodeBlock language="yaml">{Ex_hazelcast_high_availability_mode_multi_member_routing_yaml}</CodeBlock>
 
 <Tabs groupId="config-format">
 <TabItem value="java" label="Java">

@@ -5,6 +5,9 @@ sidebar_position: 0
 slug: /wan-replication
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_wan_replication_example_yaml from '../../../../examples/wan-replication-example.yaml';
+
 WAN replication allows you to keep Hazelcast clusters in sync across multiple sites or cloud deployments. Using Operator, you can create a `WanReplication` resource to replicate multiple maps from multiple source clusters to a single target Hazelcast cluster.
 
 See [WAN replication](/hazelcast/latest/wan/wan) for more detailed information about the configuration and behavior of WAN replication in Hazelcast.
@@ -97,29 +100,7 @@ Configuration of the acknowledgement sent after a batch of replication events is
 
 The following `WanReplication` resource creates the WAN replication configuration for the `Hazelcast` and `Map` resources on the source Hazelcast cluster.
 
-```yaml title="Example configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: WanReplication
-metadata:
-  name: wanreplication-sample
-spec:
-  resources:
-    - name: map-sample
-      kind: Map
-    - name: hz-sample
-      kind: Hazelcast
-  targetClusterName: dev
-  endpoints: "198.51.100.252,198.51.100.255"
-  queue:
-    capacity: 10000
-    fullBehavior: DISCARD_AFTER_MUTATION
-  batch:
-    size: 500
-    maximumDelay: 1000
-  acknowledgement:
-    type: ACK_ON_OPERATION_COMPLETE
-    timeout: 60000
-```
+<CodeBlock language="yaml" title="Example configuration">{Ex_wan_replication_example_yaml}</CodeBlock>
 
 :::note
 

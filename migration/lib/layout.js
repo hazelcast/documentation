@@ -38,7 +38,7 @@ const NAV_SOURCES = {
   // Platform (Antora component name `hazelcast`, hence the URL /hazelcast/... and
   // the reason the plugin id is `hazelcast` while the navbar says "Platform").
   // Its main is a NUMBERED snapshot like management-center's -- it declares
-  // version `5.8-snapshot`, display `5.8-SNAPSHOT` -- so its current seg is that
+  // version `6.0-snapshot`, display `6.0-SNAPSHOT` -- so its current seg is that
   // number (VERSIONS.current) and main is the branch behind it. Multi-module and
   // by far the largest component: 439 pages over 46 modules at 5.7.
   hazelcast: {
@@ -80,7 +80,7 @@ const VERSIONS = {
   operator: { releases: ['5.19', '5.18', '5.17', '5.16', '5.15', '5.14', '5.13', '5.12'] },
   clc: { current: '5.5.1', releases: ['5.5.0'] },
   'management-center': { current: '5.12-snapshot', releases: ['5.11', '5.10', '5.9'] },
-  // Platform's main declares `5.8-snapshot` (an unreleased snapshot, as MC's is),
+  // Platform's main declares `6.0-snapshot` (an unreleased snapshot, as MC's is),
   // so its current seg is a NUMBER and the dropdown lands on the newest release
   // ('latest-release' in docusaurus.config.ts). Phase 1 converted the current
   // branch alone so the plugin was stood up and the whole 439-page corpus
@@ -103,7 +103,7 @@ const VERSIONS = {
   // 5.3, and its `nav.after` anchor (rest-api-swagger) is a page that did not
   // exist before 5.5. injectNavEntries now skips an injection whose page is
   // already listed, rather than throwing over a version that needs no fix.
-  hazelcast: { current: '5.8-snapshot', releases: ['5.7', '5.6', '5.5', '5.4', '5.3'] },
+  hazelcast: { current: '6.0-snapshot', releases: ['5.7', '5.6', '5.5', '5.4', '5.3'] },
 }
 
 // Attributes whose references are MARKED in the golden (antora-extension/

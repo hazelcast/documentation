@@ -5,6 +5,8 @@ sidebar_position: 0
 slug: /deploy-management-center
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_management_center_with_license_key_yaml from '../../examples/management-center-with-license-key.yaml';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
@@ -31,21 +33,7 @@ For more information about Management Center, see [https://docs.hazelcast.com/ma
    ```
 2. Create the `ManagementCenter` custom resource file and name it `management-center.yaml`:
 
-   ```yaml
-   apiVersion: hazelcast.com/v1alpha1
-   kind: ManagementCenter
-   metadata:
-     name: managementcenter-sample
-   spec:
-     repository: 'hazelcast/management-center'
-     version: '5.11.1'
-     licenseKeySecretName: hazelcast-license-key
-     externalConnectivity:
-       type: LoadBalancer
-     hazelcastClusters:
-     - address: hazelcast-sample
-       name: dev
-   ```
+   <CodeBlock language="yaml">{Ex_management_center_with_license_key_yaml}</CodeBlock>
 3. Apply the custom resource file to start Management Center:
 
    ```shell title="For Kubernetes"

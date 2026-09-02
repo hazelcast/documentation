@@ -7,6 +7,8 @@ slug: /get-started
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_enterprise_yaml from '../../examples/hazelcast-enterprise.yaml';
 
 This topic explains how to deploy a Hazelcast cluster using Operator for Kubernetes.
 
@@ -149,18 +151,7 @@ After installing and running Operator, you can create a Hazelcast cluster.
    ```
 2. Create the `Hazelcast` custom resource file and name it `hazelcast-enterprise.yaml`.
 
-   ```yaml
-   apiVersion: hazelcast.com/v1alpha1
-   kind: Hazelcast
-   metadata:
-     name: hazelcast-sample
-   spec:
-     clusterSize: 3
-     clusterName: mycluster
-     repository: 'docker.io/hazelcast/hazelcast-enterprise'
-     version: '5.7.1-slim'
-     licenseKeySecretName: hazelcast-license-key
-   ```
+   <CodeBlock language="yaml">{Ex_hazelcast_enterprise_yaml}</CodeBlock>
 3. Apply the custom resource to start the Hazelcast cluster.
 
    ```shell title="For Kubernetes"

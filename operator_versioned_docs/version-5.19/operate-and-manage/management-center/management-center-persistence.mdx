@@ -4,6 +4,9 @@ sidebar_position: 3
 slug: /management-center-persistence
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_management_center_persistence_yaml from '../../examples/management-center-persistence.yaml';
+
 By default, Management Center persists metrics to a persistent volume. You can turn this off by disabling persistence.
 
 Management Center collects and report metrics data for connected Hazelcast clusters. See [Monitoring](/hazelcast/latest/maintain-cluster/monitoring) for more information.
@@ -59,18 +62,4 @@ StatefulSet does not support updates to the `volumeClaimTemplates` field, so the
 
 The following example configuration assigns a Kubernetes Persistent Volume with a size of 10GiB:
 
-```yaml title="Example Management Center with Persistence Configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: ManagementCenter
-metadata:
-  name: managementcenter
-spec:
-  repository: "hazelcast/management-center"
-  licenseKeySecretName: hazelcast-license-key
-  hazelcastClusters:
-    - address: hazelcast
-      name: dev
-  persistence:
-    enabled: true
-    size: 10Gi
-```
+<CodeBlock language="yaml" title="Example Management Center with Persistence Configuration">{Ex_management_center_persistence_yaml}</CodeBlock>

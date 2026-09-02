@@ -5,6 +5,8 @@ sidebar_position: 0
 slug: /connect-outside-kubernetes
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_expose_externally_yaml from '../../examples/hazelcast_expose_externally.yaml';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
@@ -212,21 +214,7 @@ In this configuration, the standard Kubernetes mechanism automatically load bala
 
 In this example, the Hazelcast cluster is configured to load balance connections from smart clients.
 
-```yaml title="Example configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast-sample
-spec:
-  clusterSize: 3
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  version: '5.7.1-slim'
-  licenseKeySecretName: hazelcast-license-key
-  exposeExternally:
-    type: Smart
-    discoveryServiceType: LoadBalancer
-    memberAccess: NodePortExternalIP
-```
+<CodeBlock language="yaml" title="Example configuration">{Ex_hazelcast_expose_externally_yaml}</CodeBlock>
 
 This configuration creates a load balancer for the discovery service and one service for each member.
 

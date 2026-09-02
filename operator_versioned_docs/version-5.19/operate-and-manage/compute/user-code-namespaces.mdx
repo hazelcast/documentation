@@ -4,8 +4,14 @@ sidebar_position: 3
 slug: /user-code-namespaces
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_ucn_yaml from '../../examples/hazelcast-ucn.yaml';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import Ex_user_code_namespace_aws_yaml from '../../examples/user-code-namespace-aws.yaml';
+import Ex_user_code_namespace_gcp_yaml from '../../examples/user-code-namespace-gcp.yaml';
+import Ex_user_code_namespace_azure_yaml from '../../examples/user-code-namespace-azure.yaml';
+import Ex_map_ucn_yaml from '../../examples/map-ucn.yaml';
 
 User Code Namespaces provide a container for Java classpath resources, such as user code and accompanying artifacts like property files. This provides namespace isolation to ensure that access to resources in different namespaces can be managed through configuration. Using Operator, you can deploy your application code from external buckets using UserCodeNamespace CRs.
 
@@ -15,17 +21,7 @@ See [User Code Namespaces](/hazelcast/latest/clusters/user-code-namespaces) for 
 
 To enable User Code Namespaces, configure the `userCodeNamespaces` section in the Hazelcast custom resource (CR).
 
-```yaml title="Example of Hazelcast with User Code Namespaces enabled"
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  clusterSize: 3
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  licenseKeySecretName: hazelcast-license-key
-  userCodeNamespaces: {}
-```
+<CodeBlock language="yaml" title="Example of Hazelcast with User Code Namespaces enabled">{Ex_hazelcast_ucn_yaml}</CodeBlock>
 
 ## Create a User Code Namespace
 
@@ -36,17 +32,7 @@ To create a User Code Namespace, you must create a new `UserCodeNamespace` CR. T
 
 User Code Namespaces in AWS S3:
 
-```yaml conums
-apiVersion: hazelcast.com/v1alpha1
-kind: UserCodeNamespace
-metadata:
-  name: ucn-sample
-spec:
-  hazelcastResourceName: hazelcast
-  bucketConfig:
-    secretName: s3-bucket-secret <1>
-    bucketURI: s3://map-store-bucket/path/to/jars <2>
-```
+<CodeBlock language="yaml" metastring="conums">{Ex_user_code_namespace_aws_yaml}</CodeBlock>
 
 :::note
 
@@ -59,17 +45,7 @@ For further information about accessing resources on different cloud providers, 
 
 User Code Namespaces in GCP:
 
-```yaml conums
-apiVersion: hazelcast.com/v1alpha1
-kind: UserCodeNamespace
-metadata:
-  name: ucn-sample
-spec:
-  hazelcastResourceName: hazelcast
-  bucketConfig:
-    secretName: cloud-storage-bucket-secret <1>
-    bucketURI: gs://map-store-bucket/path/to/jars <2>
-```
+<CodeBlock language="yaml" metastring="conums">{Ex_user_code_namespace_gcp_yaml}</CodeBlock>
 
 :::note
 
@@ -82,17 +58,7 @@ For further information about accessing resources on different cloud providers, 
 
 User Code Namespaces in Azure Blob:
 
-```yaml conums
-apiVersion: hazelcast.com/v1alpha1
-kind: UserCodeNamespace
-metadata:
-  name: ucn-sample
-spec:
-  hazelcastResourceName: hazelcast
-  bucketConfig:
-    secretName: azure-blob-bucket-secret <1>
-    bucketURI: azblob://map-store-bucket/path/to/jars <2>
-```
+<CodeBlock language="yaml" metastring="conums">{Ex_user_code_namespace_azure_yaml}</CodeBlock>
 
 :::note
 
@@ -112,15 +78,7 @@ For further information about accessing resources on different cloud providers, 
 
 To allow your data structures to resolve your user code, set `spec.userCodeNamespace` on the data structure CR to the name of the `UserCodeNamespace` CR. You can use the same namespace name on multiple data structures.
 
-```yaml title="Example of Map with User Code Namespace"
-apiVersion: hazelcast.com/v1alpha1
-kind: Map
-metadata:
-  name: my-map
-spec:
-  hazelcastResourceName: hazelcast
-  userCodeNamespace: ucn-sample
-```
+<CodeBlock language="yaml" title="Example of Map with User Code Namespace">{Ex_map_ucn_yaml}</CodeBlock>
 
 ## Delete a User Code Namespace
 

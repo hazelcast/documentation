@@ -4,6 +4,8 @@ sidebar_position: 5
 slug: /upgrade
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_yaml from '../examples/hazelcast.yaml';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
@@ -28,29 +30,11 @@ To upgrade your existing Hazelcast deployment to a newer version, update the `sp
 
 For example, if the following is the existing configuration:
 
-```yaml vars
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast-sample
-spec:
-  clusterSize: 3
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  version: '{page-latest-supported-hazelcast}-slim'
-```
+<CodeBlock language="yaml">{Ex_hazelcast_yaml}</CodeBlock>
 
 Apply the following to upgrade your Hazelcast version to <Variable name="page-latest-supported-hazelcast"/>:
 
-```yaml vars
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast-sample
-spec:
-  clusterSize: 3
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  version: '{page-latest-supported-hazelcast}-slim'
-```
+<CodeBlock language="yaml">{Ex_hazelcast_yaml}</CodeBlock>
 
 ## Check the cluster status
 

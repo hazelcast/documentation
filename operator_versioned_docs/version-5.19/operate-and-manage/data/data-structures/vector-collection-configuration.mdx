@@ -4,6 +4,9 @@ sidebar_position: 6
 slug: /vector-collection-configuration
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_vector_collection_yaml from '../../../examples/vector-collection.yaml';
+
 The primary object for interacting with vector storage is a vector collection. A vector collection holds information about the vectors and associated metadata (user values).
 
 ## Configure a vector collection resource
@@ -20,20 +23,7 @@ You can use any of the following configuration options in the `VectorCollection`
 
 The following `VectorCollection` custom resource creates a vector collection configuration for the `Hazelcast` custom resource that is defined in the `hazelcastResourceName` field.
 
-```yaml title="Example configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: VectorCollection
-metadata:
-  name: vectorcollection-sample
-spec:
-  hazelcastResourceName: hazelcast
-  indexes:
-  - dimension: 10
-    efConstruction: 256
-    maxDegree: 32
-    metric: Dot
-    useDeduplication: false
-```
+<CodeBlock language="yaml" title="Example configuration">{Ex_vector_collection_yaml}</CodeBlock>
 
 After creating the `VectorCollection` resource, you can check its status:
 

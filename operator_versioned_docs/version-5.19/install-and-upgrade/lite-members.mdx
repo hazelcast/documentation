@@ -4,6 +4,12 @@ sidebar_position: 2
 slug: /lite-members
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_lite_member_yaml from '../examples/lite-member.yaml';
+import Ex_lite_member_jvm_yaml from '../examples/lite-member-jvm.yaml';
+import Ex_lite_member_resource_limits_yaml from '../examples/lite-member-resource-limits.yaml';
+import Ex_lite_member_scheduling_yaml from '../examples/lite-member-scheduling.yaml';
+
 Lite members are Hazelcast cluster members that do not store data or have partitions. They are mainly used to execute tasks and register listeners.
 
 You can use Operator to deploy [Lite members](https://docs.hazelcast.com/hazelcast/latest/maintain-cluster/lite-members). Lite members use the separate `liteMember` section in the [Hazelcast custom resource (CR)](../reference/api-ref.mdx#litemember).
@@ -18,18 +24,7 @@ Configuring `jvm`, `env`, `resources` or `scheduling` sections in the Hazelcast 
 
 To set the number of Lite members you want to deploy in the Hazelcast CR, use the `count` field in the `liteMember` section of the [Hazelcast CR](../reference/api-ref.mdx#litemember).
 
-```yaml title="Example Lite member count configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  licenseKeySecretName: hazelcast-license-key
-  clusterSize: 3
-  liteMember:
-    count: 2
-```
+<CodeBlock language="yaml" title="Example Lite member count configuration">{Ex_lite_member_yaml}</CodeBlock>
 
 This example deploys three data members and two Lite members. Note that `clusterSize` represents the number of data members only.
 
@@ -37,67 +32,19 @@ This example deploys three data members and two Lite members. Note that `cluster
 
 To configure JVM Parameters for Lite members, use the `jvm` field in the `liteMember` section of the [Hazelcast CR](../reference/api-ref.mdx#litemember).
 
-```yaml title="Example Lite member JVM configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  licenseKeySecretName: hazelcast-license-key
-  clusterSize: 3
-  liteMember:
-    count: 2
-    jvm:
-      memory:
-        initialRAMPercentage: "10"
-        maxRAMPercentage: "20"
-        minRAMPercentage: "10"
-```
+<CodeBlock language="yaml" title="Example Lite member JVM configuration">{Ex_lite_member_jvm_yaml}</CodeBlock>
 
 ## Configure resource limits
 
 To configure resource limits for Lite members, use the `resources` field in the `liteMember` section of the [Hazelcast CR](../reference/api-ref.mdx#litemember).
 
-```yaml title="Example Lite member resource limits configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  licenseKeySecretName: hazelcast-license-key
-  clusterSize: 3
-  liteMember:
-    count: 2
-    resources:
-      requests:
-        memory: "64Mi"
-        cpu: "250m"
-      limits:
-        memory: "128Mi"
-        cpu: "500m"
-```
+<CodeBlock language="yaml" title="Example Lite member resource limits configuration">{Ex_lite_member_resource_limits_yaml}</CodeBlock>
 
 ## Configure scheduling
 
 To configure scheduling for Lite members, use the `scheduling` field in the `liteMember` section of the [Hazelcast CR](../reference/api-ref.mdx#litemember).
 
-```yaml title="Example Lite member scheduling configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  licenseKeySecretName: hazelcast-license-key
-  clusterSize: 3
-  liteMember:
-    count: 2
-    scheduling:
-      nodeSelector:
-        topology.kubernetes.io/region: us-west1
-```
+<CodeBlock language="yaml" title="Example Lite member scheduling configuration">{Ex_lite_member_scheduling_yaml}</CodeBlock>
 
 ## Configure environment variables
 

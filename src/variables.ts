@@ -79,7 +79,7 @@ export const versionedVariables: Record<string, Record<string, Record<string, st
     }
   },
   "hazelcast": {
-    "6.0-snapshot": {
+    "current": {
       "ee-version": "6.0.0-SNAPSHOT",
       "enterprise-product-name": "Enterprise Edition",
       "full-version": "6.0.0-SNAPSHOT",

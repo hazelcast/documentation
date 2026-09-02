@@ -4,6 +4,10 @@ sidebar_position: 1
 slug: /jet-engine-configuration
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_jet_engine_configuration_yaml from '../../../examples/jet-engine-configuration.yaml';
+import Ex_jet_engine_properties_yaml from '../../../examples/jet-engine-properties.yaml';
+
 The Jet engine is a batch and stream processing system that allows Hazelcast members to do both stateless and stateful computations over large amounts of data with consistent low latency.
 
 The Jet engine processes data in *pipelines*. Pipelines allow you to take data stored in one location (source), apply processing, and send it to another location (sink). If you only want to process data without moving it, you can use the same location for source and sink.
@@ -124,52 +128,13 @@ JAR files from an external bucket are made accessible to cluster members when th
 
 The following example creates a Hazelcast cluster and sets some Jet configuration.
 
-```yaml title="Example configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  clusterSize: 3
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  version: '5.7.1-slim'
-  licenseKeySecretName: hazelcast-license-key
-  jet:
-    enabled: true
-    resourceUploadEnabled: true
-    instance:
-      cooperativeThreadCount: 4
-      flowControlPeriodMillis: 100
-      backupCount: 1
-      scaleUpDelayMillis: 10000
-      losslessRestartEnabled: false
-      maxProcessorAccumulatedRecords: 1000000000
-    edgeDefaults:
-      queueSize: 1024
-      packetSizeLimit: 16384
-      receiveWindowMultiplier: 3
-```
+<CodeBlock language="yaml" title="Example configuration">{Ex_jet_engine_configuration_yaml}</CodeBlock>
 
 ## Configuration properties
 
 You can also set configuration using Java system properties. See [Set arbitrary JVM arguments](../../configuration-properties/jvm-parameters.mdx#setting-arbitrary-jvm-arguments) for more information.
 
-```yaml title="Example configuration"
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: hazelcast
-spec:
-  clusterSize: 3
-  repository: 'docker.io/hazelcast/hazelcast-enterprise'
-  version: '5.7.1-slim'
-  licenseKeySecretName: hazelcast-license-key
-  jet:
-    enabled: true
-  jvm:
-    args:
-    - "-Dhazelcast.jet.idle.cooperative.min.microseconds=50"
-```
+<CodeBlock language="yaml" title="Example configuration">{Ex_jet_engine_properties_yaml}</CodeBlock>
 
 ## Next steps
 

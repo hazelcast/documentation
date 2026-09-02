@@ -4,6 +4,11 @@ sidebar_position: 2
 slug: /management-center-external-access
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_management_center_loadbalancer_yaml from '../../examples/management-center-loadbalancer.yaml';
+import Ex_management_center_ingress_yaml from '../../examples/management-center-ingress.yaml';
+import Ex_management_center_route_yaml from '../../examples/management-center-route.yaml';
+
 You can expose Management Center outside Kubernetes to remotely manage your Hazelcast deployment.
 
 Management Center supports several options for external access.
@@ -51,63 +56,16 @@ Management Center external access methods:
 
 The following example exposes Management Center using a dedicated load balancer.
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: ManagementCenter
-metadata:
-  name: managementcenter
-spec:
-  repository: "hazelcast/management-center"
-  licenseKeySecretName: hazelcast-license-key
-  externalConnectivity:
-    type: LoadBalancer
-  hazelcastClusters:
-    - address: hazelcast
-      name: dev
-```
+<CodeBlock language="yaml">{Ex_management_center_loadbalancer_yaml}</CodeBlock>
 
 ### Example Management Center ingress configuration
 
 The following example exposes Management Center using [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/).
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: ManagementCenter
-metadata:
-  name: managementcenter
-spec:
-  repository: "hazelcast/management-center"
-  licenseKeySecretName: hazelcast-license-key
-  externalConnectivity:
-    type: ClusterIP
-    ingress:
-      hostname: "example.hostname"
-      ingressClassName: nginx
-      path: "/mancenter"
-      annotations:
-        nginx.ingress.kubernetes.io/enable-opentelemetry: "true"
-  hazelcastClusters:
-    - address: hazelcast
-      name: dev
-```
+<CodeBlock language="yaml">{Ex_management_center_ingress_yaml}</CodeBlock>
 
 ### Example Management Center route configuration
 
 The following example exposes Management Center using the default OpenShift Container Platform [Route](https://docs.openshift.com/container-platform/4.13/networking/routes/route-configuration.html).
 
-```yaml
-apiVersion: hazelcast.com/v1alpha1
-kind: ManagementCenter
-metadata:
-  name: managementcenter
-spec:
-  repository: "hazelcast/management-center"
-  licenseKeySecretName: hazelcast-license-key
-  externalConnectivity:
-    type: ClusterIP
-    route:
-      hostname: ""
-  hazelcastClusters:
-    - address: hazelcast
-      name: dev
-```
+<CodeBlock language="yaml">{Ex_management_center_route_yaml}</CodeBlock>
