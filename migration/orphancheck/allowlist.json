@@ -23,6 +23,23 @@
       "disposition": "drop-404",
       "note": "\"Teams and User Roles\" (75 lines) is SUPERSEDED by the Organizations and Accounts section, which covers accounts, users, roles and invitations. Never in nav and nothing links to it (the gate classifies it UNREACHABLE), so it is already invisible on the current site. User decision 2026-08-17: drop it, a 404 is acceptable. ACTED ON: the converter skips drop-404 pages, so no .mdx is emitted and the URL 404s; the gates drop it from scope rather than counting it as not-yet-converted."
     },
+    "hazelcast:architecture/design-docs": {
+      "disposition": "drop-404",
+      "versions": [
+        "5.3"
+      ],
+      "note": "\"Design Decisions\" is a 10-line Jet-era blurb saying design docs \"appear under that version's docs\" and linking to jet-start.sh/versions -- the decommissioned Jet documentation site. Classified UNREACHABLE at 5.3 and deleted upstream at 5.4. User decision 2026-09-02: no content to preserve and no meaningful redirect target, so a 404 is acceptable. Decided together with clusters/setting-up-clusters. `versions` scopes it to 5.3."
+    },
+    "hazelcast:cache/overview": {
+      "disposition": "keep-in-nav",
+      "versions": [
+        "5.4"
+      ],
+      "nav": {
+        "after": "data-structures:distributed-data-structures"
+      },
+      "note": "\"Caching Data\" (144 lines) is real content, classified REFERENCED at 5.4: three getting-started pages link to it (get-started-binary, get-started-docker, get-started-java), so it sits in the new-user flow. WHY IT IS AN ORPHAN AT THIS VERSION SPECIFICALLY: 5.5 is where hz-docs FLATTENED ROOT/nav.adoc; 5.4 and 5.3 still build it from per-module `include::<module>:partial$nav.adoc[]` partials, and this page was simply never listed in the older shape. Upstream fixed that at 5.5 -- the page is in nav at 5.5, 5.6 AND 5.7, unchanged -- so this is a SOURCE OMISSION in the old nav, not a retirement. User decision 2026-09-02: fix it as part of the migration, the same call as clc-cpmap. `nav.after` injects the entry into the parsed nav at conversion time (converter/lib/nav injectNavEntries) at the same bullet depth as its anchor, reproducible on every run with no hand-edit to be clobbered. The anchor is the nearest preceding 5.5 sibling that also exists in this version's nav, so the entry lands where 5.5 puts it. Slug is URL-derived, so the URL is unchanged. `versions` scopes it to the affected version(s) only: from 5.5 up the page is in nav already and injecting would duplicate the entry."
+    },
     "hazelcast:clients/clc": {
       "disposition": "redirect",
       "versions": [
@@ -52,6 +69,49 @@
       "to": "/cluster-performance/performance-tips",
       "note": "\"Performance Tuning\" (511 lines) is SUPERSEDED by cluster-performance/performance-tips, which is in nav at 5.5 and contains essentially all of it: THP and swap OS tuning, dedicated NIC, TCP buffer size, GC, Minimize Heap Usage, Azul Zing/Zulu, the whole Query Tuning subsection list, Serialization Tuning, the full Executor Services list, Entry Processors, TLS tuning, High-Density Memory Store, and \"Clusters with Huge Amount of Members/Clients\". Upstream deleted performance-tuning at 5.6 (commit 55ced078 \"Security v4 (#1320)\") and kept performance-tips. Classified UNREACHABLE: nothing links to it. WHY IT IS AN ORPHAN AT 5.5 SPECIFICALLY: 5.5 is where hz-docs flattened ROOT/nav.adoc, and this entry was dropped in the flattening -- the stale cluster-performance/partials/nav.adoc still lists it, but nothing includes that partial any more. At 5.4 and 5.3, which still use nav includes, the page IS in nav, so it is not an orphan there and this key will simply not match those versions when they are added. User decision 2026-08-27: superseded, so redirect to the maintained page rather than 404 -- the same call as pipelines/object-events. `to` is COMPONENT/VERSION-RELATIVE, so each version redirects within itself."
     },
+    "hazelcast:clusters/logging-configuration": {
+      "disposition": "redirect",
+      "versions": [
+        "5.3"
+      ],
+      "to": "/maintain-cluster/logging",
+      "note": "\"Logging Configuration\" (272 lines) is classified REFERENCED at 5.3 (inbound from faq and system-properties) and was DELETED upstream at 5.4, while maintain-cluster/logging exists at both 5.3 and 5.4 and survives. User decision 2026-09-02: superseded, redirect to maintain-cluster/logging rather than keep a second unlisted logging page. `to` is COMPONENT/VERSION-RELATIVE so 5.3 redirects within itself. NOTE the two pages COEXISTED at 5.3, so this is a judgement that maintain-cluster/logging is the maintained one -- evidenced by which of the two upstream kept. The two inbound xrefs are retargeted at conversion time, leaving the client redirect to keep the old URL alive for outside links. `versions` scopes it to 5.3, the only version where this page exists."
+    },
+    "hazelcast:clusters/setting-up-clusters": {
+      "disposition": "drop-404",
+      "versions": [
+        "5.3"
+      ],
+      "note": "\"Setting Up Clusters\" is a 5-line chapter intro and nothing else: a title, an anchor, and one sentence (\"This chapter describes Hazelcast clusters and the methods cluster members and native clients use to form a Hazelcast cluster.\"). An artefact of the pre-5.5 nav, where a chapter needed a landing page. Classified UNREACHABLE at 5.3 and deleted upstream at 5.4. User decision 2026-09-02: a 404 is acceptable -- there is no content to lose, and a redirect is more machinery than a five-line intro ever justified. `versions` scopes it to 5.3."
+    },
+    "hazelcast:configuration/checking-configuration": {
+      "disposition": "redirect",
+      "versions": [
+        "5.3"
+      ],
+      "to": "/configuration/configuring-declaratively",
+      "note": "\"Checking Configuration\" (38 lines) documents how a member locates its config -- the `hazelcast.config` system property, then the working directory, then the classpath. Classified UNREACHABLE at 5.3 and deleted upstream at 5.4. User decision 2026-09-02: redirect to configuration/configuring-declaratively, which is in nav at 5.3, runs to 462 lines and references `hazelcast.config` ten times, so it is both the natural home for the lookup order and a far more complete answer than the 71-line understanding-configuration (two mentions), which was the alternative considered. `to` is COMPONENT/VERSION-RELATIVE. `versions` scopes it to 5.3, the only version where the page exists."
+    },
+    "hazelcast:configuration/jet-configuration": {
+      "disposition": "keep-in-nav",
+      "versions": [
+        "5.3"
+      ],
+      "nav": {
+        "after": "maintain-cluster:logging"
+      },
+      "note": "\"Configuring the Jet Engine\" (337 lines) exists at EVERY version 5.3-5.7 and is classified REFERENCED at 5.3 with four inbound xrefs (capacity-planning, configuration/configuring-declaratively, pipelines/configuring-jobs, security/overview). WHY IT IS AN ORPHAN AT THIS VERSION SPECIFICALLY: 5.5 is where hz-docs FLATTENED ROOT/nav.adoc; 5.4 and 5.3 still build it from per-module `include::<module>:partial$nav.adoc[]` partials, and this page was simply never listed in the older shape. Upstream fixed that at 5.5 -- the page is in nav at 5.5, 5.6 AND 5.7, unchanged -- so this is a SOURCE OMISSION in the old nav, not a retirement. User decision 2026-09-02: fix it as part of the migration, the same call as clc-cpmap. `nav.after` injects the entry into the parsed nav at conversion time (converter/lib/nav injectNavEntries) at the same bullet depth as its anchor, reproducible on every run with no hand-edit to be clobbered. The anchor is the nearest preceding 5.5 sibling that also exists in this version's nav, so the entry lands where 5.5 puts it. Slug is URL-derived, so the URL is unchanged. `versions` scopes it to the affected version(s) only: from 5.5 up the page is in nav already and injecting would duplicate the entry."
+    },
+    "hazelcast:data-connections/data-connections-configuration": {
+      "disposition": "keep-in-nav",
+      "versions": [
+        "5.4"
+      ],
+      "nav": {
+        "after": "pipelines:xa"
+      },
+      "note": "\"Configuring Data Connections to External Systems\" (453 lines) is substantial reference material, classified REFERENCED at 5.4 with five inbound xrefs (mapstore/configuring-a-generic-maploader, mapstore/configuring-a-generic-mapstore, mapstore/working-with-external-data, sql/create-data-connection, +1). WHY IT IS AN ORPHAN AT THIS VERSION SPECIFICALLY: 5.5 is where hz-docs FLATTENED ROOT/nav.adoc; 5.4 and 5.3 still build it from per-module `include::<module>:partial$nav.adoc[]` partials, and this page was simply never listed in the older shape. Upstream fixed that at 5.5 -- the page is in nav at 5.5, 5.6 AND 5.7, unchanged -- so this is a SOURCE OMISSION in the old nav, not a retirement. User decision 2026-09-02: fix it as part of the migration, the same call as clc-cpmap. `nav.after` injects the entry into the parsed nav at conversion time (converter/lib/nav injectNavEntries) at the same bullet depth as its anchor, reproducible on every run with no hand-edit to be clobbered. The anchor is the nearest preceding 5.5 sibling that also exists in this version's nav, so the entry lands where 5.5 puts it. Slug is URL-derived, so the URL is unchanged. `versions` scopes it to the affected version(s) only: from 5.5 up the page is in nav already and injecting would duplicate the entry."
+    },
     "hazelcast:data-connections/mongo-dc-configuration": {
       "disposition": "redirect",
       "to": "/data-connections/data-connections-configuration",
@@ -79,12 +139,64 @@
       ],
       "note": "\"Developer Resources\" is a 5-bullet link list: the hazelcast/hazelcast GitHub repo, the Javadoc at docs.hazelcast.org, the hazelcast-code-samples repo, hazelcast.com, and an xref to getting-started:support. Present from 5.1 to main, never in nav in any version and nothing links to it (the gate classifies it UNREACHABLE), so it is already invisible on the current Antora site. User decision 2026-08-27: drop it, a 404 is acceptable -- generic entry points, no unique content. ACTED ON: the converter skips drop-404 pages, so no .mdx is emitted and the URL 404s; the gates drop it from scope rather than counting it as not-yet-converted. NOTE the page carries `:page-aliases: overview:resources.adoc`, so the pre-5.1 /overview/resources URL currently lands here; that alias goes away with the page."
     },
+    "hazelcast:integrate/data-structure-connectors": {
+      "disposition": "redirect",
+      "versions": [
+        "5.3"
+      ],
+      "to": "/integrate/connectors",
+      "note": "\"Data Structure Connectors\" (40 lines) is an index listing the Map, List, JCache and Reliable-topic connectors, plus one section on accessing data structures on remote clusters. Classified UNREACHABLE at 5.3 and deleted upstream at 5.4. User decision 2026-09-02: redirect to integrate/connectors, which is in nav at 5.3, runs to 334 lines and links to all four of those same connector pages from its source and sink tables -- a strictly more complete version of the same index. `to` is COMPONENT/VERSION-RELATIVE. NOTE the remote-cluster section has no counterpart on the target and is not preserved. `versions` scopes it to 5.3."
+    },
+    "hazelcast:integrate/http-connector": {
+      "disposition": "keep-in-nav",
+      "versions": [
+        "5.4"
+      ],
+      "nav": {
+        "after": "integrate:custom-connectors"
+      },
+      "note": "\"HTTP Listener Connector\" is a 3-line incubation stub pointing at the hazelcast-jet-contrib GitHub repo. Classified UNREACHABLE at 5.4 (nothing links to it), unlike its sibling pulsar-connector. WHY IT IS AN ORPHAN AT THIS VERSION SPECIFICALLY: 5.5 is where hz-docs FLATTENED ROOT/nav.adoc; 5.4 and 5.3 still build it from per-module `include::<module>:partial$nav.adoc[]` partials, and this page was simply never listed in the older shape. Upstream fixed that at 5.5 -- the page is in nav at 5.5, 5.6 AND 5.7, unchanged -- so this is a SOURCE OMISSION in the old nav, not a retirement. User decision 2026-09-02: fix it as part of the migration, the same call as clc-cpmap. `nav.after` injects the entry into the parsed nav at conversion time (converter/lib/nav injectNavEntries) at the same bullet depth as its anchor, reproducible on every run with no hand-edit to be clobbered. The anchor is the nearest preceding 5.5 sibling that also exists in this version's nav, so the entry lands where 5.5 puts it. Slug is URL-derived, so the URL is unchanged. `versions` scopes it to the affected version(s) only: from 5.5 up the page is in nav already and injecting would duplicate the entry."
+    },
+    "hazelcast:integrate/influxdb-connector": {
+      "disposition": "keep-in-nav",
+      "versions": [
+        "5.4"
+      ],
+      "nav": {
+        "after": "integrate:custom-connectors"
+      },
+      "note": "\"InfluxDB Connector\" is a 3-line incubation stub pointing at the hazelcast-jet-contrib GitHub repo. Classified UNREACHABLE at 5.4. Evidence is identical to http-connector, and both were decided together. WHY IT IS AN ORPHAN AT THIS VERSION SPECIFICALLY: 5.5 is where hz-docs FLATTENED ROOT/nav.adoc; 5.4 and 5.3 still build it from per-module `include::<module>:partial$nav.adoc[]` partials, and this page was simply never listed in the older shape. Upstream fixed that at 5.5 -- the page is in nav at 5.5, 5.6 AND 5.7, unchanged -- so this is a SOURCE OMISSION in the old nav, not a retirement. User decision 2026-09-02: fix it as part of the migration, the same call as clc-cpmap. `nav.after` injects the entry into the parsed nav at conversion time (converter/lib/nav injectNavEntries) at the same bullet depth as its anchor, reproducible on every run with no hand-edit to be clobbered. The anchor is the nearest preceding 5.5 sibling that also exists in this version's nav, so the entry lands where 5.5 puts it. Slug is URL-derived, so the URL is unchanged. `versions` scopes it to the affected version(s) only: from 5.5 up the page is in nav already and injecting would duplicate the entry."
+    },
     "hazelcast:integrate/observable-connector": {
       "disposition": "keep-in-nav",
       "note": "\"Observable Connector\" is a real connector page, structurally identical to its ~25 `*-connector` siblings, and it is the SURVIVOR of the pair it forms with pipelines/observables (which is redirected into it) -- not a casualty. Every other connector page is listed in the Connectors section of nav.adoc; this one is simply missing, so it is invisible on the current Antora site too -- a source omission, not a migration artifact. It is referenced from the connectors overview table, which lists `Sinks.observable` between map-connector and reliable-topic-connector. User decision 2026-08-27: keep it in nav. Fixed AS PART OF THE MIGRATION via `nav.after`, which injects the entry into the parsed nav at conversion time (converter/lib/nav injectNavEntries) at the SAME bullet depth as its anchor -- list-connector is a `**` item in the Data structure connectors group, so this lands as a `**` sibling between list-connector and reliable-topic-connector, matching the overview table's own order. Reproducible on every run, no hand-edit to be clobbered. The injected entry carries an empty label, so the sidebar label comes from the page's doctitle. Slug (/integrate/observable-connector) is URL-derived, so its URL is unchanged, which is what makes it a valid redirect target for pipelines/observables.",
       "nav": {
         "after": "integrate:list-connector"
       }
+    },
+    "hazelcast:integrate/pulsar-connector": {
+      "disposition": "keep-in-nav",
+      "versions": [
+        "5.4"
+      ],
+      "nav": {
+        "after": "integrate:custom-connectors"
+      },
+      "note": "\"Apache Pulsar Connector\" is a 3-line incubation stub pointing at the hazelcast-jet-contrib GitHub repo. Classified REFERENCED at 5.4 -- integrate/connectors links to it -- so unlike its siblings it was already reachable; nav is what was missing. WHY IT IS AN ORPHAN AT THIS VERSION SPECIFICALLY: 5.5 is where hz-docs FLATTENED ROOT/nav.adoc; 5.4 and 5.3 still build it from per-module `include::<module>:partial$nav.adoc[]` partials, and this page was simply never listed in the older shape. Upstream fixed that at 5.5 -- the page is in nav at 5.5, 5.6 AND 5.7, unchanged -- so this is a SOURCE OMISSION in the old nav, not a retirement. User decision 2026-09-02: fix it as part of the migration, the same call as clc-cpmap. `nav.after` injects the entry into the parsed nav at conversion time (converter/lib/nav injectNavEntries) at the same bullet depth as its anchor, reproducible on every run with no hand-edit to be clobbered. The anchor is the nearest preceding 5.5 sibling that also exists in this version's nav, so the entry lands where 5.5 puts it. Slug is URL-derived, so the URL is unchanged. `versions` scopes it to the affected version(s) only: from 5.5 up the page is in nav already and injecting would duplicate the entry."
+    },
+    "hazelcast:integrate/redis-connector": {
+      "disposition": "drop-404",
+      "versions": [
+        "5.4"
+      ],
+      "note": "\"Redis Connector\" is a 3-line incubation stub pointing at the hazelcast-jet-contrib GitHub repo. Classified UNREACHABLE at 5.4 and DELETED upstream at 5.5 -- unlike http-, influxdb- and pulsar-connector, which survive to 5.7 and are in nav there. That difference is the whole decision: these two were genuinely retired, not merely unlisted. User decision 2026-09-02: nothing links to it, it carries no content of its own, and there is no successor page to redirect to, so a 404 is acceptable. `versions` scopes it to 5.4, the last version that shipped it."
+    },
+    "hazelcast:integrate/twitter-connector": {
+      "disposition": "drop-404",
+      "versions": [
+        "5.4"
+      ],
+      "note": "\"Twitter Connector\" is a 3-line incubation stub pointing at the hazelcast-jet-contrib GitHub repo. Classified UNREACHABLE at 5.4 and DELETED upstream at 5.5. Decided together with redis-connector on identical evidence -- see that entry. `versions` scopes it to 5.4, the last version that shipped it."
     },
     "hazelcast:maintain-cluster/rest-api": {
       "disposition": "keep-in-nav",
@@ -100,6 +212,85 @@
       ],
       "toUrl": "/management-center/5.9/getting-started/overview",
       "note": "\"Management Center\" is a 5-line stub: a one-sentence description plus a link out to the Management Center docs. Exists only at 5.5 and earlier (deleted at 5.6), and never in nav. REFERENCED, not unreachable: one inbound xref, from clients/hazelcast-clients at 5.5. User decision 2026-08-27: redirect to the MC landing page -- exactly where the stub already sends readers. Uses `toUrl` (an ABSOLUTE route) for the same reason as clients/clc: the destination is in another component with its own version line. 5.9 is the target because the stub pins its xref to `{page-latest-supported-mc}@management-center:...`, which at 5.5 resolves to 5.9 (verified in the golden: href=\"../../management-center/5.9/getting-started/overview\"), and 5.9 is a live MC version. Needs revisiting if MC's live set drops 5.9. Unambiguous because the page exists at 5.5 only. The one inbound xref is retargeted at conversion time straight to the absolute route."
+    },
+    "hazelcast:migrate/evaluation-tool": {
+      "disposition": "drop-404",
+      "versions": [
+        "5.3"
+      ],
+      "note": "\"Evaluating 5.x (For IMDG 3.x Users)\" (277 lines) documents a downloadable evaluation tool for trying 5.x features against an existing IMDG 3.x cluster. Shipped in 5.3 ONLY -- absent at 5.2, gone again at 5.4 -- and classified UNREACHABLE there. Its 5.3 siblings (migration-tool-imdg, data-migration-tool) address MIGRATING rather than evaluating, so neither supersedes it and a redirect would land the reader on the wrong procedure. User decision 2026-09-02: drop-404, the same reasoning as pipelines/spring-boot -- a one-release tool for a product line long past, whose documentation now serves nobody. `versions` scopes it to 5.3."
+    },
+    "hazelcast:performance/back-pressure": {
+      "disposition": "redirect",
+      "versions": [
+        "5.3"
+      ],
+      "to": "/cluster-performance/best-practices",
+      "note": "SUPERSEDED by cluster-performance/best-practices, which at 5.3 is 1517 lines, IS in nav, and carries a `==` section for every one of these pages -- Basic Performance Recommendations, AWS Deployments, Pipelining, Back Pressure, Near Cache, Data Affinity, CPU Thread Affinity, Threading Model, SlowOperationDetector, Caching Deserialized Values. The 5.3 `performance` module is the un-consolidated original: 11 pages of which the 5.3 nav lists only three (data-affinity, caching-deserialized-values, near-cache). Upstream finished the job at 5.4 by moving the module's content into `cluster-performance` and deleting these copies. User decision 2026-09-02: superseded, so redirect rather than 404 -- the same call as pipelines/object-events. `to` is COMPONENT/VERSION-RELATIVE so 5.3 redirects within itself, and the target is in nav there. NOTE the redirect lands at the page TOP: `to` carries no fragment, so a reader arriving from one of these URLs has to find the matching section on the consolidated page. `versions` scopes this to 5.3, the only version where the `performance` module still held the content."
+    },
+    "hazelcast:performance/best-practices": {
+      "disposition": "redirect",
+      "versions": [
+        "5.3"
+      ],
+      "to": "/cluster-performance/best-practices",
+      "note": "SUPERSEDED by cluster-performance/best-practices, which at 5.3 is 1517 lines, IS in nav, and carries a `==` section for every one of these pages -- Basic Performance Recommendations, AWS Deployments, Pipelining, Back Pressure, Near Cache, Data Affinity, CPU Thread Affinity, Threading Model, SlowOperationDetector, Caching Deserialized Values. The 5.3 `performance` module is the un-consolidated original: 11 pages of which the 5.3 nav lists only three (data-affinity, caching-deserialized-values, near-cache). Upstream finished the job at 5.4 by moving the module's content into `cluster-performance` and deleting these copies. User decision 2026-09-02: superseded, so redirect rather than 404 -- the same call as pipelines/object-events. `to` is COMPONENT/VERSION-RELATIVE so 5.3 redirects within itself, and the target is in nav there. NOTE the redirect lands at the page TOP: `to` carries no fragment, so a reader arriving from one of these URLs has to find the matching section on the consolidated page. `versions` scopes this to 5.3, the only version where the `performance` module still held the content."
+    },
+    "hazelcast:performance/cpu-thread-affinity": {
+      "disposition": "redirect",
+      "versions": [
+        "5.3"
+      ],
+      "to": "/cluster-performance/best-practices",
+      "note": "SUPERSEDED by cluster-performance/best-practices, which at 5.3 is 1517 lines, IS in nav, and carries a `==` section for every one of these pages -- Basic Performance Recommendations, AWS Deployments, Pipelining, Back Pressure, Near Cache, Data Affinity, CPU Thread Affinity, Threading Model, SlowOperationDetector, Caching Deserialized Values. The 5.3 `performance` module is the un-consolidated original: 11 pages of which the 5.3 nav lists only three (data-affinity, caching-deserialized-values, near-cache). Upstream finished the job at 5.4 by moving the module's content into `cluster-performance` and deleting these copies. User decision 2026-09-02: superseded, so redirect rather than 404 -- the same call as pipelines/object-events. `to` is COMPONENT/VERSION-RELATIVE so 5.3 redirects within itself, and the target is in nav there. NOTE the redirect lands at the page TOP: `to` carries no fragment, so a reader arriving from one of these URLs has to find the matching section on the consolidated page. `versions` scopes this to 5.3, the only version where the `performance` module still held the content."
+    },
+    "hazelcast:performance/performance": {
+      "disposition": "redirect",
+      "versions": [
+        "5.3"
+      ],
+      "to": "/cluster-performance/best-practices",
+      "note": "SUPERSEDED by cluster-performance/best-practices, which at 5.3 is 1517 lines, IS in nav, and carries a `==` section for every one of these pages -- Basic Performance Recommendations, AWS Deployments, Pipelining, Back Pressure, Near Cache, Data Affinity, CPU Thread Affinity, Threading Model, SlowOperationDetector, Caching Deserialized Values. The 5.3 `performance` module is the un-consolidated original: 11 pages of which the 5.3 nav lists only three (data-affinity, caching-deserialized-values, near-cache). Upstream finished the job at 5.4 by moving the module's content into `cluster-performance` and deleting these copies. User decision 2026-09-02: superseded, so redirect rather than 404 -- the same call as pipelines/object-events. `to` is COMPONENT/VERSION-RELATIVE so 5.3 redirects within itself, and the target is in nav there. NOTE the redirect lands at the page TOP: `to` carries no fragment, so a reader arriving from one of these URLs has to find the matching section on the consolidated page. `versions` scopes this to 5.3, the only version where the `performance` module still held the content."
+    },
+    "hazelcast:performance/pipelining": {
+      "disposition": "redirect",
+      "versions": [
+        "5.3"
+      ],
+      "to": "/cluster-performance/best-practices",
+      "note": "SUPERSEDED by cluster-performance/best-practices, which at 5.3 is 1517 lines, IS in nav, and carries a `==` section for every one of these pages -- Basic Performance Recommendations, AWS Deployments, Pipelining, Back Pressure, Near Cache, Data Affinity, CPU Thread Affinity, Threading Model, SlowOperationDetector, Caching Deserialized Values. The 5.3 `performance` module is the un-consolidated original: 11 pages of which the 5.3 nav lists only three (data-affinity, caching-deserialized-values, near-cache). Upstream finished the job at 5.4 by moving the module's content into `cluster-performance` and deleting these copies. User decision 2026-09-02: superseded, so redirect rather than 404 -- the same call as pipelines/object-events. `to` is COMPONENT/VERSION-RELATIVE so 5.3 redirects within itself, and the target is in nav there. NOTE the redirect lands at the page TOP: `to` carries no fragment, so a reader arriving from one of these URLs has to find the matching section on the consolidated page. `versions` scopes this to 5.3, the only version where the `performance` module still held the content."
+    },
+    "hazelcast:performance/running-on-ec2": {
+      "disposition": "redirect",
+      "versions": [
+        "5.3"
+      ],
+      "to": "/cluster-performance/best-practices",
+      "note": "SUPERSEDED by cluster-performance/best-practices, which at 5.3 is 1517 lines, IS in nav, and carries a `==` section for every one of these pages -- Basic Performance Recommendations, AWS Deployments, Pipelining, Back Pressure, Near Cache, Data Affinity, CPU Thread Affinity, Threading Model, SlowOperationDetector, Caching Deserialized Values. The 5.3 `performance` module is the un-consolidated original: 11 pages of which the 5.3 nav lists only three (data-affinity, caching-deserialized-values, near-cache). Upstream finished the job at 5.4 by moving the module's content into `cluster-performance` and deleting these copies. User decision 2026-09-02: superseded, so redirect rather than 404 -- the same call as pipelines/object-events. `to` is COMPONENT/VERSION-RELATIVE so 5.3 redirects within itself, and the target is in nav there. NOTE the redirect lands at the page TOP: `to` carries no fragment, so a reader arriving from one of these URLs has to find the matching section on the consolidated page. `versions` scopes this to 5.3, the only version where the `performance` module still held the content."
+    },
+    "hazelcast:performance/slowoperationdetector": {
+      "disposition": "redirect",
+      "versions": [
+        "5.3"
+      ],
+      "to": "/cluster-performance/best-practices",
+      "note": "SUPERSEDED by cluster-performance/best-practices, which at 5.3 is 1517 lines, IS in nav, and carries a `==` section for every one of these pages -- Basic Performance Recommendations, AWS Deployments, Pipelining, Back Pressure, Near Cache, Data Affinity, CPU Thread Affinity, Threading Model, SlowOperationDetector, Caching Deserialized Values. The 5.3 `performance` module is the un-consolidated original: 11 pages of which the 5.3 nav lists only three (data-affinity, caching-deserialized-values, near-cache). Upstream finished the job at 5.4 by moving the module's content into `cluster-performance` and deleting these copies. User decision 2026-09-02: superseded, so redirect rather than 404 -- the same call as pipelines/object-events. `to` is COMPONENT/VERSION-RELATIVE so 5.3 redirects within itself, and the target is in nav there. NOTE the redirect lands at the page TOP: `to` carries no fragment, so a reader arriving from one of these URLs has to find the matching section on the consolidated page. `versions` scopes this to 5.3, the only version where the `performance` module still held the content."
+    },
+    "hazelcast:performance/threading-model": {
+      "disposition": "redirect",
+      "versions": [
+        "5.3"
+      ],
+      "to": "/cluster-performance/best-practices",
+      "note": "SUPERSEDED by cluster-performance/best-practices, which at 5.3 is 1517 lines, IS in nav, and carries a `==` section for every one of these pages -- Basic Performance Recommendations, AWS Deployments, Pipelining, Back Pressure, Near Cache, Data Affinity, CPU Thread Affinity, Threading Model, SlowOperationDetector, Caching Deserialized Values. The 5.3 `performance` module is the un-consolidated original: 11 pages of which the 5.3 nav lists only three (data-affinity, caching-deserialized-values, near-cache). Upstream finished the job at 5.4 by moving the module's content into `cluster-performance` and deleting these copies. User decision 2026-09-02: superseded, so redirect rather than 404 -- the same call as pipelines/object-events. `to` is COMPONENT/VERSION-RELATIVE so 5.3 redirects within itself, and the target is in nav there. NOTE the redirect lands at the page TOP: `to` carries no fragment, so a reader arriving from one of these URLs has to find the matching section on the consolidated page. `versions` scopes this to 5.3, the only version where the `performance` module still held the content."
+    },
+    "hazelcast:pipelines/event-time": {
+      "disposition": "redirect",
+      "versions": [
+        "5.3"
+      ],
+      "to": "/architecture/event-time-processing",
+      "note": "\"Stream Processing and Event Timestamps\" (113 lines, with SVG diagrams) covers event vs processing time, event disorder, and sliding/tumbling/session windowing. Classified UNREACHABLE at 5.3 and deleted upstream at 5.4, where the nearest surviving pages are architecture/event-time-processing and pipelines/windowing. User decision 2026-09-02: redirect to architecture/event-time-processing. NOTE this redirect is LOSSY and knowingly so: the target is 54 lines to this page's 113 and covers the event-time half only, so the time-windowing material has no counterpart there (pipelines/windowing is the closer match for that half, but the page cannot redirect to two places). Recorded here so the loss is visible rather than discovered later. `to` is COMPONENT/VERSION-RELATIVE. `versions` scopes it to 5.3."
     },
     "hazelcast:pipelines/grpc": {
       "disposition": "keep-in-nav",
@@ -117,6 +308,14 @@
       "disposition": "redirect",
       "to": "/integrate/observable-connector",
       "note": "\"Receiving Pipeline Results on the Client\" (73 lines) is SUPERSEDED by integrate/observable-connector, the connector-catalogue rewrite of the same subject: the newer page covers this one point for point (Observable as a sink, destroy() clean-up, listing via JetService.getObservables(), toFuture()) and adds what this one lacks -- setting the ringbuffer's maximum capacity, onError()/onComplete(), sample output, and an install section. This is the old Jet-docs prose version left behind by that rewrite; never in nav, and its single referrer (integrate/reliable-topic-connector) links to it saying \"for a more advanced version, see Observables\", i.e. it points readers at the LESS complete of the two. User decision 2026-08-27: superseded, so redirect rather than 404 -- the referrer then lands on the page it meant. `to` is COMPONENT/VERSION-RELATIVE, so each version redirects within itself. ACTED ON: the converter withholds redirect pages exactly as it does drop-404 ones (no .mdx is emitted, and the gates drop it from scope), lib/dispositions redirectPairs resolves the `to` against the page's own URL base into a {from,to} in src/redirects.ts per version, and inbound xrefs are retargeted at conversion time so internal navigation goes straight to the target."
+    },
+    "hazelcast:pipelines/spring-boot": {
+      "disposition": "drop-404",
+      "versions": [
+        "5.4",
+        "5.3"
+      ],
+      "note": "\"Spring Boot Starter\" (207 lines) is classified UNREACHABLE at both 5.4 and 5.3, and was deleted upstream at 5.5. User decision 2026-09-02: drop-404, on the evidence that the page documents something that no longer exists -- the repository it sends readers to (github.com/hazelcast/hazelcast-jet-contrib/tree/master/hazelcast-jet-spring-boot-starter) NO LONGER RESOLVES, and hazelcast-jet-contrib was archived in 2025. Keeping the page published would keep a working URL whose entire purpose is to point at a dead one, so a redirect has no honest target either. One key covers both versions via `versions`."
     },
     "hazelcast:placeholder": {
       "disposition": "drop-404",

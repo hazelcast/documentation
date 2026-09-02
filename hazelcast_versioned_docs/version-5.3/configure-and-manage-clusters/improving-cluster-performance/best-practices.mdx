@@ -912,7 +912,7 @@ Let's have a look at how we define the values for the above configuration proper
 
 You can also combine those, e.g., `1,2,[5-7],[10,12,16]:2`.
 
-Note that, the syntax for CPU thread affinity shown above not only determines the mapping of CPUs to threads, it also determines the thread count. If you use CPU thread affinity, e.g., `hazelcast.io.input.thread.affinity`, then `hazelcast.io.input.thread.count` is ignored. See [Threading Model](../../performance/threading-model.mdx#io-threading) for more information about specifying explicit thread counts.
+Note that, the syntax for CPU thread affinity shown above not only determines the mapping of CPUs to threads, it also determines the thread count. If you use CPU thread affinity, e.g., `hazelcast.io.input.thread.affinity`, then `hazelcast.io.input.thread.count` is ignored. See [Threading Model](./best-practices.mdx#io-threading) for more information about specifying explicit thread counts.
 
 If you don't configure affinity for a category of threads, it means they can run on any CPU.
 
@@ -1071,7 +1071,7 @@ In the future, this will be optimized to reduce the amount of expensive systems 
 
 ## SlowOperationDetector
 
-The `SlowOperationDetector` monitors the operation threads and collects information about all slow operations. An `Operation` is a task executed by a generic or partition thread (see [Operation Threading](../../performance/threading-model.mdx#operation-threading)). An operation is considered as slow when it takes more computation time than the configured threshold.
+The `SlowOperationDetector` monitors the operation threads and collects information about all slow operations. An `Operation` is a task executed by a generic or partition thread (see [Operation Threading](./best-practices.mdx#operation-threading)). An operation is considered as slow when it takes more computation time than the configured threshold.
 
 The `SlowOperationDetector` stores the fully qualified classname of the operation and its stacktrace as well as operation details, start time and duration of each slow invocation. All collected data is available in the <Variable href="/management-center/{page-latest-supported-mc}/clusters/members" text="Management Center"/>.
 

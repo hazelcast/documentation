@@ -927,6 +927,28 @@ const renderedCode = (md) => {
     'a placeholder URL with a REAL label keeps its link -- code would lose the label')
   assert.strictEqual(body(para('<code><a href="#Type">Type</a></code>')), '[`Type`](#Type)',
     'a monospaced internal xref is unaffected')
+  // (a2) The www FORM of the same rule. Breaking the scheme alone is not enough:
+  // the `{/**/}` ends the text run, so a `www.` host that followed the `//` now
+  // begins one and micromark's www-autolink rule fires on the remainder. The real
+  // case is 5.4/5.3 spring/configuration -- `xmlns:hz="http://www.hazelcast.com/
+  // schema/spring"` in bold prose, which the golden does not link at all. The
+  // reader-visible TEXT stayed correct there, so only Layer 2 caught it, which is
+  // exactly why it is worth a test: the symptom is invisible in the text diff.
+  const wwwUrl = body(para('add xmlns:hz="http://www.hazelcast.com/schema/spring" to it.'))
+  assert.ok(!/\]\(|\[http/.test(wwwUrl), 'no link is invented for a www host behind a scheme')
+  assert.ok(!wwwUrl.includes('//www.hazelcast'), 'the www run is broken too, not left contiguous')
+  // A BARE www host (no scheme) is the same hazard with nothing for SCHEME to match.
+  // Faithful unconditionally: Asciidoctor does not autolink a bare www host, and no
+  // anchor anywhere in the golden has link text starting `www.`.
+  const bareWww = body(para('see www.hazelcast.com/pricing for details.'))
+  assert.ok(!/\]\(/.test(bareWww), 'no link is invented for a bare www host either')
+  // Text is preserved EXACTLY: the break renders the same characters. Oracle is the
+  // input text, recovered by deleting the guards.
+  for (const [out, want] of [[wwwUrl, 'add xmlns:hz="http://www.hazelcast.com/schema/spring" to it.'],
+    [bareWww, 'see www.hazelcast.com/pricing for details.']]) {
+    assert.strictEqual(out.replace(/\{\/\*\*\/\}/g, '').replace(/\\/g, ''), want,
+      'breaking an autolink changes no reader-visible character')
+  }
   ok('prose URLs: autolinks not invented, placeholders normalised to code, real links intact')
 }
 

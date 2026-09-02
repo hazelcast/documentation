@@ -124,7 +124,7 @@ CREATE JOB myJob
 
 ## Setting a Processing Guarantee for Streaming Jobs {/* #setting-processing-guarantees */}
 
-When you set a processing guarantee that isn't `NONE`, Hazelcast takes distributed snapshots of your jobs. The distributed snapshot algorithm works by sending *barriers* down the event stream which upon receiving causes the Jet processors to save their state as a snapshot. Snapshots are saved in-memory in [map backups](../../configuration/jet-configuration.mdx) and replicated across the cluster.
+When you set a processing guarantee that isn't `NONE`, Hazelcast takes distributed snapshots of your jobs. The distributed snapshot algorithm works by sending *barriers* down the event stream which upon receiving causes the Jet processors to save their state as a snapshot. Snapshots are saved in-memory in [map backups](../../configure-and-manage-clusters/jet-configuration.mdx) and replicated across the cluster.
 
 :::tip
 
@@ -178,6 +178,6 @@ The exact behavior of what happens when a node joins or leaves depends on whethe
 
 | Auto-Scaling | Processing Guarantee | Member Added | Member Removed |
 | --- | --- | --- | --- |
-| enabled (default) | any setting | restart after a configured delay ([scale-up-delay-millis](../../configuration/jet-configuration.mdx#list-of-configuration-options)) | restart immediately |
+| enabled (default) | any setting | restart after a configured delay ([scale-up-delay-millis](../../configure-and-manage-clusters/jet-configuration.mdx#list-of-configuration-options)) | restart immediately |
 | disabled | none | keep job running on old members | fail job |
 | disabled | at-least-once or exactly-once | keep job running on old members | suspend job |

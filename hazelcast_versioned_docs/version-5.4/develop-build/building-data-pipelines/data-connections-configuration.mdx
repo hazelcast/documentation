@@ -1,7 +1,7 @@
 ---
 title: "Configuring Data Connections to External Systems"
+sidebar_position: 15
 slug: /data-connections/data-connections-configuration
-unlisted: true
 ---
 
 import Tabs from '@theme/Tabs';
@@ -96,7 +96,7 @@ config
 
 Data connections created in SQL behave differently to those defined in members' configuration files or in Java.
 
-- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../operate-manage/configuring-for-fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name"/>.
+- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../../operate-manage/configuring-for-fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name"/>.
 - You can create or drop a data connection using SQL commands. To update a data connection, you need to drop and then recreate it.
 
 ```sql conums
@@ -277,7 +277,7 @@ config
 
 Data connections created in SQL behave differently to those defined in members' configuration files or in Java.
 
-- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../operate-manage/configuring-for-fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name"/>.
+- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../../operate-manage/configuring-for-fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name"/>.
 - You can create or drop a data connection using SQL commands. To update a data connection, you need to drop and then recreate it.
 
 ```sql conums
@@ -311,7 +311,7 @@ This example configuration shows a data connection to a remote Hazelcast cluster
 
 :::note
 
-Currently, no SQL connector is available for Hazelcast data connections. This means that although you can [create a data connection in SQL](../develop-build/sql/statements/create-data-connection.mdx), you cannot yet use it in SQL, for example, in a mapping statement.
+Currently, no SQL connector is available for Hazelcast data connections. This means that although you can [create a data connection in SQL](../sql/statements/create-data-connection.mdx), you cannot yet use it in SQL, for example, in a mapping statement.
 
 :::
 
@@ -349,7 +349,7 @@ Currently, no SQL connector is available for Hazelcast data connections. This me
 <CodeCallouts>
 
 1. (Required) Specify exactly one of `client_xml`, `client_yml`, `client_xml_path`, `client_yml_path`.
-2. Hazelcast client configuration to connect to a remote cluster. See [Configuring Java Client](../clients-apis/java.mdx#configuring-java-client). You can specify an external file with the `client_xml_path` property instead of using an embedded configuration file.
+2. Hazelcast client configuration to connect to a remote cluster. See [Configuring Java Client](../../clients-apis/java.mdx#configuring-java-client). You can specify an external file with the `client_xml_path` property instead of using an embedded configuration file.
 
 </CodeCallouts>
 
@@ -374,7 +374,7 @@ hazelcast:
 <CodeCallouts>
 
 1. (Required) Specify exactly one of `client_xml`, `client_yml`, `client_xml_path`, `client_yml_path`.
-2. Hazelcast client configuration to connect to a remote cluster. See [Configuring Java Client](../clients-apis/java.mdx#configuring-java-client). You can specify an external file with the `client_yml_path` property instead of using an embedded configuration file.
+2. Hazelcast client configuration to connect to a remote cluster. See [Configuring Java Client](../../clients-apis/java.mdx#configuring-java-client). You can specify an external file with the `client_yml_path` property instead of using an embedded configuration file.
 
 </CodeCallouts>
 
@@ -409,7 +409,7 @@ config
 <CodeCallouts>
 
 1. (Required) Specify exactly one of `client_xml`, `client_yml`, `client_xml_path`, `client_yml_path`.
-2. Hazelcast client configuration to connect to a remote cluster. See [Configuring Java Client](../clients-apis/java.mdx#configuring-java-client). You can specify an external file with the `client_xml_path` or `client_yml_path` property instead of using an embedded configuration file.
+2. Hazelcast client configuration to connect to a remote cluster. See [Configuring Java Client](../../clients-apis/java.mdx#configuring-java-client). You can specify an external file with the `client_xml_path` or `client_yml_path` property instead of using an embedded configuration file.
 
 </CodeCallouts>
 
@@ -418,7 +418,7 @@ config
 
 Data connections created in SQL behave differently to those defined in members' configuration files or in Java.
 
-- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../operate-manage/configuring-for-fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name"/>.
+- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../../operate-manage/configuring-for-fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name"/>.
 - You can create or drop a data connection using SQL commands. To update a data connection, you need to drop and then recreate it.
 
 ```sql conums vars
@@ -446,7 +446,7 @@ OPTIONS (
 <CodeCallouts>
 
 1. (Required) Specify exactly one of `client_xml`, `client_yml`, `client_xml_path`, `client_yml_path`.
-2. Hazelcast client configuration to connect to a remote cluster. See [Configuring Java Client](../clients-apis/java.mdx#configuring-java-client). You can specify an external file with the `client_xml_path` or `client_yml_path` property instead of using an embedded configuration file.
+2. Hazelcast client configuration to connect to a remote cluster. See [Configuring Java Client](../../clients-apis/java.mdx#configuring-java-client). You can specify an external file with the `client_xml_path` or `client_yml_path` property instead of using an embedded configuration file.
 
 </CodeCallouts>
 
@@ -473,7 +473,7 @@ If you are using Java to configure the Mapstore, use the <Variable href="https:/
 
 :::tip
 
-You can use the [EncryptionReplacer class](../operate-manage/configuration/static-configuration/configuring-declaratively.mdx#encryptionreplacer) to hide sensitive data in configuration files.
+You can use the [EncryptionReplacer class](../../operate-manage/configuration/static-configuration/configuring-declaratively.mdx#encryptionreplacer) to hide sensitive data in configuration files.
 
 :::
 
@@ -484,7 +484,7 @@ The following types of data connection are available for use.
 | Type | Description | Properties |
 | --- | --- | --- |
 | `JDBC` | Connect to external systems that support JDBC, including MySQL and PostgreSQL. | See [example](#JDBC). If there is more than one JDBC connection used on a single member from a single job, they will share the same data store and connection pool. |
-| `Kafka` | Connect to a Kafka data source. | See [example](#kafka) and [Create a Kafka Mapping](../develop-build/sql/sql-over-kafka/mapping-to-kafka.mdx#creating-a-kafka-mapping). |
+| `Kafka` | Connect to a Kafka data source. | See [example](#kafka) and [Create a Kafka Mapping](../sql/sql-over-kafka/mapping-to-kafka.mdx#creating-a-kafka-mapping). |
 | `Mongo` | Connect to a MongoDB database. | See [example](#Mongo). |
 | `Hz` | Connect to a remote Hazelcast cluster. | See [example](#Hazelcast). |
 
@@ -498,6 +498,6 @@ If you use the slim distribution of Hazelcast with a built-in data connector, ma
 
 Use your configured connection:
 
-- Build a data pipeline with the [Pipeline API](../integrate/database-connectors/jdbc-connector.mdx).
-- Query your data connection, using a [SQL mapping](../develop-build/sql/sql-over-jdbc/mapping-to-jdbc.mdx).
-- Build a cache with a [MapStore](../develop-build/working-with-external-data/configuring-a-generic-mapstore.mdx).
+- Build a data pipeline with the [Pipeline API](../../integrate/database-connectors/jdbc-connector.mdx).
+- Query your data connection, using a [SQL mapping](../sql/sql-over-jdbc/mapping-to-jdbc.mdx).
+- Build a cache with a [MapStore](../working-with-external-data/configuring-a-generic-mapstore.mdx).

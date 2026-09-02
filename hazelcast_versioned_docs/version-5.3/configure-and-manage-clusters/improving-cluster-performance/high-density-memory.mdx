@@ -246,7 +246,7 @@ Hazelcast iterates over the configured memory directories and makes sure that ev
 
 The persistent memory modules are mounted in memory slots just like the regular memory modules, and share the same memory bus. Therefore, the same NUMA locality concerns apply to the memory from a persistent memory device as regular memory. It is cheaper to access memory modules attached to the socket on which the current thread runs than from a different socket. The modules are typically referenced as NUMA-local and NUMA-remote memories. To achieve the best possible performance, Hazelcast implements a NUMA-aware allocation strategy to ensure that all accesses to memory modules are local, if certain conditions hold.
 
-To enable this allocation strategy for a certain thread, the thread must be bounded to a single NUMA node, which means the kernel's scheduler makes sure that the thread can only be scheduled on the CPUs of a single NUMA node. Starting with Hazelcast 4.1, this can be done with thread group granularity. For a detailed explanation, see [CPU Thread Affinity](../../performance/cpu-thread-affinity.mdx).
+To enable this allocation strategy for a certain thread, the thread must be bounded to a single NUMA node, which means the kernel's scheduler makes sure that the thread can only be scheduled on the CPUs of a single NUMA node. Starting with Hazelcast 4.1, this can be done with thread group granularity. For a detailed explanation, see [CPU Thread Affinity](./best-practices.mdx).
 
 Enabling the NUMA-aware allocation strategy for the operation threads can make the biggest impact on performance. For example:
 

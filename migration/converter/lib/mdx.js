@@ -76,8 +76,22 @@ function jsxAttr (s) {
 // swallow a neighbouring <Variable/> (unlike wrapping the URL in a JSX string),
 // and leaves real Markdown links untouched. Verified in a paragraph, a list item,
 // a table cell, and between smart quotes.
+//
+// Breaking the SCHEME is not sufficient on its own, and the reason is subtle:
+// the `{/**/}` expression ends the text run, so a `www.` host that followed the
+// `//` now STARTS one -- and micromark's www-autolink rule, which needs the run
+// to begin there, then fires on the remainder. So `xmlns:hz="http://www.hazelcast
+// .com/schema/spring"` in 5.4/5.3 spring/configuration rendered as
+// `http://` + a LINK on `www.hazelcast.com/schema/spring`: the reader-visible text
+// is still correct, which is why only Layer 2 saw it (`links: golden=12
+// converted=13`). Breaking `www` as well closes that, and is faithful in this
+// corpus unconditionally: Asciidoctor does not autolink a bare `www.` host, and
+// the golden confirms it -- ZERO anchors anywhere in it have link text starting
+// `www.`. So a `www.` in prose is never a link on the golden side, and inserting
+// the break renders the identical characters either way.
 const SCHEME = /\b(https?:)(?=\/\/[^\s<]*[A-Za-z0-9])/g
-const breakAutolinks = (s) => s.replace(SCHEME, '$1{/**/}')
+const WWW = /\bwww(?=\.[^\s<]*[A-Za-z0-9])/g
+const breakAutolinks = (s) => s.replace(SCHEME, '$1{/**/}').replace(WWW, 'www{/**/}')
 
 // (2) PLACEHOLDER URLS. An address the reader types or opens on their own
 // machine is never a navigable destination, so it should read as code, never as a
