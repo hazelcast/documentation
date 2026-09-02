@@ -302,6 +302,57 @@ const renderedCode = (md) => {
   ok('link with a <Variable> label: raw <a> + site-absolute href; plain label: markdown + relative .mdx')
 }
 
+// --- a CODE-labelled internal link takes the same relative form --------------
+// The link form must follow the TARGET (same component + version -> relative
+// .mdx, so it survives a version cut), never the shape of the label. A `m`
+// (monospace) table column makes Asciidoctor wrap the cell in <code>, so the
+// anchor arrives NESTED -- a different converter branch, which must reach the
+// same answer. Stated as an equivalence against the plain-label form rather than
+// a hardcoded string, so the two branches cannot drift apart.
+{
+  const ctx = {
+    pageUrl: '/hazelcast/6.0-snapshot/integrate/connectors',
+    component: 'hazelcast',
+    seg: '6.0-snapshot',
+    relFile: 'connectors/connectors.mdx',
+    urlToRelFile: new Map([
+      ['/hazelcast/6.0-snapshot/sql/mapping-to-kafka', 'develop-and-build/sql/sql-over-kafka/mapping-to-kafka.mdx'],
+    ]),
+  }
+  const hrefOf = (body) => (body.match(/\]\(([^)]*)\)/) || [])[1]
+
+  const plain = convertBody('<p>see <a href="../sql/mapping-to-kafka">Apache Kafka</a>.</p>', ctx).body
+  const coded = convertBody('<p>see <code><a href="../sql/mapping-to-kafka">Apache Kafka</a></code>.</p>', ctx).body
+
+  assert.strictEqual(hrefOf(coded), hrefOf(plain),
+    'a code-labelled link resolves to the same href as the same link with a plain label')
+  assert(/^\.\.\//.test(hrefOf(coded)) && hrefOf(coded).endsWith('.mdx'),
+    'that shared href is the file-relative .mdx form, not the absolute route')
+  assert(coded.includes('[`Apache Kafka`]'), 'the label stays inline code')
+  assert(!coded.includes('/hazelcast/6.0-snapshot/'),
+    'no absolute /<comp>/<version>/ route survives for a same-version target')
+
+  // SEVERAL links in one <code> (`[`Sources.map`](…), [`Sources.remoteMap`](…)`,
+  // the shape integrate/connectors uses throughout) take a THIRD branch, which
+  // has to reach the same answer as the other two.
+  const multi = convertBody(
+    '<p><code><a href="../sql/mapping-to-kafka">Sources.map</a>, ' +
+    '<a href="../sql/mapping-to-kafka">Sources.remoteMap</a></code></p>', ctx).body
+  const multiHrefs = [...multi.matchAll(/\]\(([^)]*)\)/g)].map((m) => m[1])
+  assert.deepStrictEqual(multiHrefs, [hrefOf(plain), hrefOf(plain)],
+    'every link in a multi-link <code> gets the same relative form as a plain-label link')
+  assert(multi.includes('[`Sources.map`]') && multi.includes('[`Sources.remoteMap`]'),
+    'both links survive with their own code labels')
+
+  // An href the version map does NOT hold (cross-component) has no relative
+  // form, so it must still keep the absolute route -- the fix must not relativize
+  // what cannot be relativized.
+  const cross = convertBody('<p>see <code><a href="/clc/5.5.1/overview">CLC</a></code>.</p>', ctx).body
+  assert.strictEqual(hrefOf(cross), '/clc/5.5.1/overview',
+    'a cross-component code-labelled link keeps its absolute route')
+  ok('link form follows the target, not the label: code-labelled links relativize like plain ones')
+}
+
 // --- heal a `link:`-macro doc ref (foo.adoc/.html -> the real page) -----------
 // Antora leaves an unresolved `link:clc-script.adoc[…]` as a literal `.adoc`
 // href (dead in prod). When the extensionless target is a real page, the

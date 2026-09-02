@@ -27,18 +27,18 @@ You can use the following connectors in SQL by configuring them in the [`CREATE 
 
 | Connector | Module | Batch/Streaming | Processing guarantee |
 | --- | --- | --- | --- |
-| [`Apache Kafka`](/hazelcast/5.3/sql/mapping-to-kafka) | hazelcast-jet-kafka | streaming | exactly-once |
-| [`File`](/hazelcast/5.3/sql/mapping-to-a-file-system) | Depends on the file format and/or storage system. | Depends on the storage system. | Depends on the storage system. |
-| [`IMap`](/hazelcast/5.3/sql/mapping-to-maps) | hazelcast-sql | batch | N/A |
-| [`JDBC`](/hazelcast/5.3/sql/mapping-to-jdbc) | hazelcast-sql | batch | N/A |
+| [`Apache Kafka`](../sql-over-kafka/mapping-to-kafka.mdx) | hazelcast-jet-kafka | streaming | exactly-once |
+| [`File`](../sql-over-file-systems/mapping-to-a-file-system.mdx) | Depends on the file format and/or storage system. | Depends on the storage system. | Depends on the storage system. |
+| [`IMap`](../sql-over-maps/mapping-to-maps.mdx) | hazelcast-sql | batch | N/A |
+| [`JDBC`](../sql-over-jdbc/mapping-to-jdbc.mdx) | hazelcast-sql | batch | N/A |
 
 ### Sinks
 
 | Connector | Module | Batch/Streaming | Processing guarantee |
 | --- | --- | --- | --- |
-| [`Apache Kafka`](/hazelcast/5.3/sql/mapping-to-kafka) | hazelcast-jet-kafka | streaming | exactly-once |
-| [`IMap`](/hazelcast/5.3/sql/mapping-to-maps) | hazelcast-sql | batch | N/A |
-| [`JDBC`](/hazelcast/5.3/sql/mapping-to-jdbc) | hazelcast-sql | batch | N/A |
+| [`Apache Kafka`](../sql-over-kafka/mapping-to-kafka.mdx) | hazelcast-jet-kafka | streaming | exactly-once |
+| [`IMap`](../sql-over-maps/mapping-to-maps.mdx) | hazelcast-sql | batch | N/A |
+| [`JDBC`](../sql-over-jdbc/mapping-to-jdbc.mdx) | hazelcast-sql | batch | N/A |
 
 ## Kafka Connect Connectors
 
@@ -48,7 +48,7 @@ Integrate the [Kafka Connect Source](./kafka-connect-connectors/kafka-connect-co
 
 | Connector | Module | Batch/Streaming | Processing Guarantee |
 | --- | --- | --- | --- |
-| [`KafkaConnectSources.connect`](/hazelcast/5.3/integrate/kafka-connect-connectors) | `hazelcast-jet-kafka-connect` | streaming | at-least-once |
+| [`KafkaConnectSources.connect`](./kafka-connect-connectors/kafka-connect-connectors.mdx) | `hazelcast-jet-kafka-connect` | streaming | at-least-once |
 
 ## Connectors for the Jet API
 
@@ -58,53 +58,53 @@ The Jet API supports more connectors than SQL.
 
 | Connector | Module | Batch/Streaming | Processing guarantee |
 | --- | --- | --- | --- |
-| [`AvroSources.files`](/hazelcast/5.3/integrate/legacy-file-connector) | `hazelcast-jet-avro` | batch | N/A |
-| [`DebeziumCdcSources.debezium`](/hazelcast/5.3/integrate/cdc-connectors) | `hazelcast-jet-cdc-debezium` | streaming | at-least-once |
-| [`ElasticSources.elastic`](/hazelcast/5.3/integrate/elasticsearch-connector) | `hazelcast-jet-elasticsearch-6` | batch | N/A |
-| [`ElasticSources.elastic`](/hazelcast/5.3/integrate/elasticsearch-connector) | `hazelcast-jet-elasticsearch-7` | batch | N/A |
-| [`HadoopSources.inputFormat`](/hazelcast/5.3/integrate/legacy-file-connector) | `hazelcast-jet-hadoop` | batch | N/A |
-| [`KafkaSources.kafka`](/hazelcast/5.3/integrate/kafka-connector) | `hazelcast-jet-kafka` | streaming | exactly-once |
-| [`KinesisSources.kinesis`](/hazelcast/5.3/integrate/kinesis-connector) | `hazelcast-jet-kinesis` | streaming | exactly-once |
-| [`MySqlCdcSources.mysql`](/hazelcast/5.3/integrate/cdc-connectors) | `hazelcast-jet-cdc-mysql` | streaming | exactly-once |
-| [`PostgresCdcSources.postgres`](/hazelcast/5.3/integrate/cdc-connectors) | `hazelcast-jet-cdc-postgres` | streaming | exactly-once |
-| [`PulsarSources.pulsarConsumer`](/hazelcast/5.3/integrate/pulsar-connector) | `hazelcast-jet-contrib-pulsar` | streaming | N/A |
-| [`PulsarSources.pulsarReader`](/hazelcast/5.3/integrate/pulsar-connector) | `hazelcast-jet-contrib-pulsar` | streaming | exactly-once |
-| [`S3Sources.s3`](/hazelcast/5.3/integrate/legacy-file-connector) | `hazelcast-jet-s3` | batch | N/A |
-| [`Sources.cache`](/hazelcast/5.3/integrate/jcache-connector) | `hazelcast-jet` | batch | N/A |
-| [`Sources.cacheJournal`](/hazelcast/5.3/integrate/jcache-connector) | `hazelcast-jet` | streaming | exactly-once |
-| [`Sources.files`](/hazelcast/5.3/integrate/file-connector) | `hazelcast-jet` | batch | N/A |
-| [`Sources.fileWatcher`](/hazelcast/5.3/integrate/legacy-file-connector) | `hazelcast-jet` | streaming | none |
-| [`Sources.json`](/hazelcast/5.3/integrate/legacy-file-connector) | `hazelcast-jet` | batch | N/A |
-| [`Sources.jsonWatcher`](/hazelcast/5.3/integrate/legacy-file-connector) | `hazelcast-jet` | streaming | none |
-| [`Sources.jdbc`](/hazelcast/5.3/integrate/jdbc-connector) | `hazelcast-jet` | batch | N/A |
-| [`Sources.jmsQueue`](/hazelcast/5.3/integrate/jms-connector) | `hazelcast-jet` | streaming | exactly-once |
-| [`Sources.list`](/hazelcast/5.3/integrate/list-connector) | `hazelcast-jet` | batch | N/A |
-| [`Sources.map`](/hazelcast/5.3/integrate/map-connector) | `hazelcast-jet` | batch | N/A |
-| [`Sources.mapJournal`](/hazelcast/5.3/integrate/map-connector) | `hazelcast-jet` | streaming | exactly-once |
-| [`Sources.socket`](/hazelcast/5.3/integrate/socket-connector) | `hazelcast-jet` | streaming | none |
-| [`TestSources.items`](/hazelcast/5.3/integrate/test-connectors) | `hazelcast-jet` | batch | N/A |
-| [`TestSources.itemStream`](/hazelcast/5.3/integrate/test-connectors) | `hazelcast-jet` | streaming | none |
+| [`AvroSources.files`](./files/legacy-file-connector.mdx) | `hazelcast-jet-avro` | batch | N/A |
+| [`DebeziumCdcSources.debezium`](./databases/cdc-connectors.mdx) | `hazelcast-jet-cdc-debezium` | streaming | at-least-once |
+| [`ElasticSources.elastic`](./databases/elasticsearch-connector.mdx) | `hazelcast-jet-elasticsearch-6` | batch | N/A |
+| [`ElasticSources.elastic`](./databases/elasticsearch-connector.mdx) | `hazelcast-jet-elasticsearch-7` | batch | N/A |
+| [`HadoopSources.inputFormat`](./files/legacy-file-connector.mdx) | `hazelcast-jet-hadoop` | batch | N/A |
+| [`KafkaSources.kafka`](./messaging-system-connectors/kafka-connector.mdx) | `hazelcast-jet-kafka` | streaming | exactly-once |
+| [`KinesisSources.kinesis`](./messaging-system-connectors/kinesis-connector.mdx) | `hazelcast-jet-kinesis` | streaming | exactly-once |
+| [`MySqlCdcSources.mysql`](./databases/cdc-connectors.mdx) | `hazelcast-jet-cdc-mysql` | streaming | exactly-once |
+| [`PostgresCdcSources.postgres`](./databases/cdc-connectors.mdx) | `hazelcast-jet-cdc-postgres` | streaming | exactly-once |
+| [`PulsarSources.pulsarConsumer`](./messaging-system-connectors/pulsar-connector.mdx) | `hazelcast-jet-contrib-pulsar` | streaming | N/A |
+| [`PulsarSources.pulsarReader`](./messaging-system-connectors/pulsar-connector.mdx) | `hazelcast-jet-contrib-pulsar` | streaming | exactly-once |
+| [`S3Sources.s3`](./files/legacy-file-connector.mdx) | `hazelcast-jet-s3` | batch | N/A |
+| [`Sources.cache`](./data-structure-connectors/jcache-connector.mdx) | `hazelcast-jet` | batch | N/A |
+| [`Sources.cacheJournal`](./data-structure-connectors/jcache-connector.mdx) | `hazelcast-jet` | streaming | exactly-once |
+| [`Sources.files`](./files/file-connector.mdx) | `hazelcast-jet` | batch | N/A |
+| [`Sources.fileWatcher`](./files/legacy-file-connector.mdx) | `hazelcast-jet` | streaming | none |
+| [`Sources.json`](./files/legacy-file-connector.mdx) | `hazelcast-jet` | batch | N/A |
+| [`Sources.jsonWatcher`](./files/legacy-file-connector.mdx) | `hazelcast-jet` | streaming | none |
+| [`Sources.jdbc`](./databases/jdbc-connector.mdx) | `hazelcast-jet` | batch | N/A |
+| [`Sources.jmsQueue`](./messaging-system-connectors/jms-connector.mdx) | `hazelcast-jet` | streaming | exactly-once |
+| [`Sources.list`](./data-structure-connectors/list-connector.mdx) | `hazelcast-jet` | batch | N/A |
+| [`Sources.map`](./data-structure-connectors/map-connector.mdx) | `hazelcast-jet` | batch | N/A |
+| [`Sources.mapJournal`](./data-structure-connectors/map-connector.mdx) | `hazelcast-jet` | streaming | exactly-once |
+| [`Sources.socket`](./socket-connector.mdx) | `hazelcast-jet` | streaming | none |
+| [`TestSources.items`](./test-connectors.mdx) | `hazelcast-jet` | batch | N/A |
+| [`TestSources.itemStream`](./test-connectors.mdx) | `hazelcast-jet` | streaming | none |
 
 ### Sinks {/* #sinks-2 */}
 
 | Connector | Module | Batch/Streaming | Processing Guarantee |
 | --- | --- | --- | --- |
-| [`AvroSinks.files`](/hazelcast/5.3/integrate/legacy-file-connector) | `hazelcast-jet-avro` | batch | N/A |
-| [`CdcSinks.map`](/hazelcast/5.3/integrate/cdc-connectors) | `hazelcast-jet-cdc-debezium` | streaming | at-least-once |
-| [`ElasticSinks.elastic`](/hazelcast/5.3/integrate/elasticsearch-connector) | `hazelcast-jet-elasticsearch-6` | streaming | at-least-once |
-| [`ElasticSinks.elastic`](/hazelcast/5.3/integrate/elasticsearch-connector) | `hazelcast-jet-elasticsearch-7` | streaming | at-least-once |
-| [`HadoopSinks.outputFormat`](/hazelcast/5.3/integrate/legacy-file-connector) | `hazelcast-jet-hadoop` | batch | N/A |
-| [`KafkaSinks.kafka`](/hazelcast/5.3/integrate/kafka-connector) | `hazelcast-jet-kafka` | streaming | exactly-once |
-| [`KinesisSinks.kinesis`](/hazelcast/5.3/integrate/kinesis-connector) | `hazelcast-jet-kinesis` | streaming | at-least-once |
-| [`PulsarSources.pulsarSink`](/hazelcast/5.3/integrate/pulsar-connector) | `hazelcast-jet-contrib-pulsar` | streaming | at-least-once |
-| [`S3Sinks.s3`](/hazelcast/5.3/integrate/legacy-file-connector) | `hazelcast-jet-s3` | batch | N/A |
-| [`Sinks.cache`](/hazelcast/5.3/integrate/jcache-connector) | `hazelcast-jet` | streaming | at-least-once |
-| [`Sinks.files`](/hazelcast/5.3/integrate/legacy-file-connector) | `hazelcast-jet` | streaming | exactly-once |
-| [`Sinks.json`](/hazelcast/5.3/integrate/legacy-file-connector) | `hazelcast-jet` | streaming | exactly-once |
-| [`Sinks.jdbc`](/hazelcast/5.3/integrate/jdbc-connector) | `hazelcast-jet` | streaming | exactly-once |
-| [`Sinks.jmsQueue`](/hazelcast/5.3/integrate/jms-connector) | `hazelcast-jet` | streaming | exactly-once |
-| [`Sinks.list`](/hazelcast/5.3/integrate/list-connector) | `hazelcast-jet` | batch | N/A |
-| [`Sinks.map`](/hazelcast/5.3/integrate/map-connector) | `hazelcast-jet` | streaming | at-least-once |
-| [`Sinks.observable`](/hazelcast/5.3/integrate/observable-connector) | `hazelcast-jet` | streaming | at-least-once |
-| [`Sinks.reliableTopic`](/hazelcast/5.3/integrate/reliable-topic-connector) | `hazelcast-jet` | streaming | at-least-once |
-| [`Sinks.socket`](/hazelcast/5.3/integrate/socket-connector) | `hazelcast-jet` | streaming | at-least-once |
+| [`AvroSinks.files`](./files/legacy-file-connector.mdx) | `hazelcast-jet-avro` | batch | N/A |
+| [`CdcSinks.map`](./databases/cdc-connectors.mdx) | `hazelcast-jet-cdc-debezium` | streaming | at-least-once |
+| [`ElasticSinks.elastic`](./databases/elasticsearch-connector.mdx) | `hazelcast-jet-elasticsearch-6` | streaming | at-least-once |
+| [`ElasticSinks.elastic`](./databases/elasticsearch-connector.mdx) | `hazelcast-jet-elasticsearch-7` | streaming | at-least-once |
+| [`HadoopSinks.outputFormat`](./files/legacy-file-connector.mdx) | `hazelcast-jet-hadoop` | batch | N/A |
+| [`KafkaSinks.kafka`](./messaging-system-connectors/kafka-connector.mdx) | `hazelcast-jet-kafka` | streaming | exactly-once |
+| [`KinesisSinks.kinesis`](./messaging-system-connectors/kinesis-connector.mdx) | `hazelcast-jet-kinesis` | streaming | at-least-once |
+| [`PulsarSources.pulsarSink`](./messaging-system-connectors/pulsar-connector.mdx) | `hazelcast-jet-contrib-pulsar` | streaming | at-least-once |
+| [`S3Sinks.s3`](./files/legacy-file-connector.mdx) | `hazelcast-jet-s3` | batch | N/A |
+| [`Sinks.cache`](./data-structure-connectors/jcache-connector.mdx) | `hazelcast-jet` | streaming | at-least-once |
+| [`Sinks.files`](./files/legacy-file-connector.mdx) | `hazelcast-jet` | streaming | exactly-once |
+| [`Sinks.json`](./files/legacy-file-connector.mdx) | `hazelcast-jet` | streaming | exactly-once |
+| [`Sinks.jdbc`](./databases/jdbc-connector.mdx) | `hazelcast-jet` | streaming | exactly-once |
+| [`Sinks.jmsQueue`](./messaging-system-connectors/jms-connector.mdx) | `hazelcast-jet` | streaming | exactly-once |
+| [`Sinks.list`](./data-structure-connectors/list-connector.mdx) | `hazelcast-jet` | batch | N/A |
+| [`Sinks.map`](./data-structure-connectors/map-connector.mdx) | `hazelcast-jet` | streaming | at-least-once |
+| [`Sinks.observable`](./data-structure-connectors/observable-connector.mdx) | `hazelcast-jet` | streaming | at-least-once |
+| [`Sinks.reliableTopic`](./data-structure-connectors/reliable-topic-connector.mdx) | `hazelcast-jet` | streaming | at-least-once |
+| [`Sinks.socket`](./socket-connector.mdx) | `hazelcast-jet` | streaming | at-least-once |

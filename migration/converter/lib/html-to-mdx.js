@@ -1194,6 +1194,22 @@ function retargetRedirect (resolved, st) {
   return relativeDocLink(to, resolved.hash, st) || (to + (resolved.hash || ''))
 }
 
+// The emitted FORM of a resolved internal href: the redirect target if the page
+// is redirected away, else a relative .mdx path to this component+version's file
+// (which survives a version cut), else the absolute route with a versionless
+// cross-component xref floated to `/<comp>/latest/`. Single-sourced because there
+// are THREE call sites -- a plain `<a>`, and the one-link and many-link
+// `<code><a></code>` branches -- and they DID drift: both code branches resolved
+// the href and emitted it raw, so every link with a code label (a `[cols="m,…"]`
+// table column wraps its cells in <code>) kept an absolute /<comp>/<version>/
+// route and froze on the segment it was converted at.
+function docLinkHref (resolved, st) {
+  if (resolved.kind !== 'internal') return resolved.href
+  return retargetRedirect(resolved, st) ||
+    relativeDocLink(resolved.path, resolved.hash, st) ||
+    floatCrossComponentLatest(resolved.href, st)
+}
+
 // Heal a `link:`-macro doc reference. Antora only resolves `xref:` to a page URL;
 // `link:clc-script.adoc[…]` is treated as a literal link, so the golden carries a
 // raw `foo.adoc` (or `.html`) href that 404s in prod AND here. If dropping the
@@ -1650,7 +1666,7 @@ function inlineTag ($, node, st, opt) {
           if (c.type === 'text') return mdEscape(c.data)
           if (c.type !== 'tag') return ''
           if (c.name === 'a' && c.attribs && c.attribs.href) {
-            const { href } = resolveHref(c.attribs.href, st.pageUrl)
+            const href = docLinkHref(resolveHref(c.attribs.href, st.pageUrl), st)
             const single = singleSourcedLink(c.attribs.href, href, markerText($, c), st, { code: true })
             if (single) return single
             return `[${inlineCode($(c).text())}](${/[()\s]/.test(href) ? `<${href}>` : href})`
@@ -1660,7 +1676,8 @@ function inlineTag ($, node, st, opt) {
       }
       const a = $(node).find('a[href]')[0]
       if (a && a.attribs && a.attribs.href) {
-        const { kind, href } = resolveHref(a.attribs.href, st.pageUrl)
+        const resolved = resolveHref(a.attribs.href, st.pageUrl)
+        const { kind, href } = resolved
         // A bare-URL autolink inside code (`<code><a class="bare" href=…>`) whose
         // URL carries literal angle brackets is a placeholder shown AS code, not
         // a real link — and its invalid URL fails Docusaurus compile. Keep it as
@@ -1672,14 +1689,23 @@ function inlineTag ($, node, st, opt) {
         // authored occurrences in the corpus (`\http://…` in backticks) render as.
         if (kind !== 'empty' && kind !== 'malformed' && !/[<>]/.test(href) &&
             !isPlaceholderUrl(a.attribs.href)) {
-          // A single-sourced destination must stay a reference here too. Same
-          // ladder as the plain `<a>`, with `code` so <Variable> renders the label
-          // as monospace — the alternative (a Markdown link with a code label)
-          // has nowhere to put an unresolved `{attr}` in its href.
-          const single = singleSourcedLink(a.attribs.href, href, markerText($, node), st, { code: true })
+          // Same relative-link ladder as the plain `<a>` case below, and for the
+          // same reason: a link whose LABEL is code is still a link, so a
+          // same-component same-version target has to become a relative .mdx path
+          // that survives a version cut. Without it a `[cols="m,…"]` column --
+          // Asciidoctor wraps a monospace cell's content in <code>, so the anchor
+          // arrives NESTED and takes this branch instead of that one -- kept the
+          // absolute /<comp>/<version>/ route and froze on the segment it was
+          // converted at.
+          const linkHref = docLinkHref(resolved, st)
+          // A single-sourced destination must stay a reference here too, with
+          // `code` so <Variable> renders the label as monospace — the alternative
+          // (a Markdown link with a code label) has nowhere to put an unresolved
+          // `{attr}` in its href.
+          const single = singleSourcedLink(a.attribs.href, linkHref, markerText($, node), st, { code: true })
           if (single) return single
           const label = inlineCode($(node).text())
-          return `[${label}](${/[()\s]/.test(href) ? `<${href}>` : href})`
+          return `[${label}](${/[()\s]/.test(linkHref) ? `<${linkHref}>` : linkHref})`
         }
       }
       // A marked {attr} reference inside inline code. Markdown backticks cannot
@@ -1721,11 +1747,7 @@ function inlineTag ($, node, st, opt) {
       // Internal link: prefer a relative link to the target .mdx of THIS
       // component+version (survives version cuts); otherwise keep the absolute
       // path, floating a versionless cross-component xref to `/<comp>/latest/`.
-      const href = kind === 'internal'
-        ? (retargetRedirect(resolved, st) ||
-           relativeDocLink(resolved.path, resolved.hash, st) ||
-           floatCrossComponentLatest(resolved.href, st))
-        : resolved.href
+      const href = docLinkHref(resolved, st)
       if (kind === 'empty' || label === '') return anchorEl + label
       // Single-sourced destination: emit the globally-registered <Variable> in
       // link mode (no import needed) instead of baking the URL in. The href is
