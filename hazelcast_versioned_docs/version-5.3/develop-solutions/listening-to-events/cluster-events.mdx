@@ -4,8 +4,12 @@ sidebar_position: 2
 slug: /events/cluster-events
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_distributedevents_ClusterMembershipListener_java_tag_cml from '../../examples/distributedevents/ClusterMembershipListener.java?tag=cml';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import Ex_distributedevents_ExampleDistObjListener_java_tag_distobjlistener from '../../examples/distributedevents/ExampleDistObjListener.java?tag=distobjlistener';
+import Ex_distributedevents_ClusterMigrationListener_java_tag_clstrmigrationlistener from '../../examples/distributedevents/ClusterMigrationListener.java?tag=clstrmigrationlistener';
 
 ## Listening for Member Events
 
@@ -18,18 +22,7 @@ To write a Membership Listener class, you implement the MembershipListener inter
 
 The following is an example Membership Listener class.
 
-```java
-public class ClusterMembershipListener implements MembershipListener {
-
-    public void memberAdded(MembershipEvent membershipEvent) {
-        System.err.println("Added: " + membershipEvent);
-    }
-
-    public void memberRemoved(MembershipEvent membershipEvent) {
-        System.err.println("Removed: " + membershipEvent);
-    }
-}
-```
+<CodeBlock language="java">{Ex_distributedevents_ClusterMembershipListener_java_tag_cml}</CodeBlock>
 
 When a respective event is fired, the membership listener outputs the addresses of the members that joined and left, and also which attribute changed on which member.
 
@@ -97,21 +90,7 @@ The Distributed Object Listener methods `distributedObjectCreated` and `distribu
 
 The following is an example Distributed Object Listener class.
 
-```java
-public class ExampleDistObjListener implements DistributedObjectListener {
-
-    @Override
-    public void distributedObjectCreated(DistributedObjectEvent event) {
-        DistributedObject instance = event.getDistributedObject();
-        System.out.println("Created " + instance.getName() + ", service=" + instance.getServiceName());
-    }
-
-    @Override
-    public void distributedObjectDestroyed(DistributedObjectEvent event) {
-        System.out.println("Destroyed " + event.getObjectName() + ", service=" + event.getServiceName());
-    }
-}
-```
+<CodeBlock language="java">{Ex_distributedevents_ExampleDistObjListener_java_tag_distobjlistener}</CodeBlock>
 
 When a respective event is fired, the distributed object listener outputs the event type, the object name and a service name (for example, for a Map object the service name is `"hz:impl:mapService"`).
 
@@ -187,30 +166,7 @@ To write a Migration Listener class, you implement the `MigrationListener` inter
 
 The following is an example Migration Listener class.
 
-```java
-public class ClusterMigrationListener implements MigrationListener {
-
-    @Override
-    public void migrationStarted(MigrationState state) {
-        System.out.println("Migration Started: " + state);
-    }
-
-    @Override
-    public void migrationFinished(MigrationState state) {
-        System.out.println("Migration Finished: " + state);
-    }
-
-    @Override
-    public void replicaMigrationCompleted(ReplicaMigrationEvent event) {
-        System.out.println("Replica Migration Completed: " + event);
-    }
-
-    @Override
-    public void replicaMigrationFailed(ReplicaMigrationEvent event) {
-        System.out.println("Replica Migration Failed: " + event);
-    }
-}
-```
+<CodeBlock language="java">{Ex_distributedevents_ClusterMigrationListener_java_tag_clstrmigrationlistener}</CodeBlock>
 
 ### Registering Migration Listeners
 

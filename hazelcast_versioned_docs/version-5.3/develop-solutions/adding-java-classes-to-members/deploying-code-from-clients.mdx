@@ -6,6 +6,11 @@ slug: /clusters/deploying-code-from-clients
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_ClientUCD_java_tag_clientucd from '../../examples/ClientUCD.java?tag=clientucd';
+import Ex_ClientUCD_java_tag_configureMemberForClientUcd from '../../examples/ClientUCD.java?tag=configureMemberForClientUcd';
+import Ex_settingupclusters_IdentifiedEntryProcessor_java_tag_iep from '../../examples/settingupclusters/IdentifiedEntryProcessor.java?tag=iep';
+import Ex_settingupclusters_IdentifiedFactory_java_tag_if from '../../examples/settingupclusters/IdentifiedFactory.java?tag=if';
 
 You can also deploy your code from the client side for the following situations:
 
@@ -77,18 +82,7 @@ hazelcast-client:
 
 **Programmatic Configuration:**
 
-```java
-        ClientConfig clientConfig = new ClientConfig();
-        ClientUserCodeDeploymentConfig clientUserCodeDeploymentConfig = new ClientUserCodeDeploymentConfig();
-
-        clientUserCodeDeploymentConfig.addJar("/User/example/example.jar");
-        clientUserCodeDeploymentConfig.addJar("https://com.example.com/example.jar");
-        clientUserCodeDeploymentConfig.addClass("example.ClassName");
-        clientUserCodeDeploymentConfig.addClass("example.ClassName2");
-
-        clientUserCodeDeploymentConfig.setEnabled(true);
-        clientConfig.setUserCodeDeploymentConfig(clientUserCodeDeploymentConfig);
-```
+<CodeBlock language="java">{Ex_ClientUCD_java_tag_clientucd}</CodeBlock>
 
 ### Important to Know {/* #client-user-code-deployment-note */}
 
@@ -100,14 +94,7 @@ To enable all existing and new members in a cluster to receive classes from clie
 
 Here's a programmatic configuration of the members that will work with client user code deployment:
 
-```java
-        Config config = new Config();
-        UserCodeDeploymentConfig ucdConfig = config.getUserCodeDeploymentConfig();
-        ucdConfig.setEnabled(true);
-        // following two configs are defaults, we show them for clarity
-        ucdConfig.setProviderMode(ProviderMode.LOCAL_AND_CACHED_CLASSES);
-        ucdConfig.setProviderFilter(null);
-```
+<CodeBlock language="java">{Ex_ClientUCD_java_tag_configureMemberForClientUcd}</CodeBlock>
 
 See the [Member User Code Deployment section](#member-user-code-deployment) for more information about enabling it on the member side and the configuration properties.
 
@@ -127,50 +114,11 @@ When you want to use a Hazelcast feature in a non-Java client, you need to make 
 
 The following is an example code which can be the Java equivalent of entry processor in the Node.js client:
 
-```java
-public class IdentifiedEntryProcessor implements EntryProcessor<String, String, String>, IdentifiedDataSerializable {
-    static final int CLASS_ID = 1;
-    private String value;
-    public IdentifiedEntryProcessor() {
-    }
-    @Override
-    public int getFactoryId() {
-        return IdentifiedFactory.FACTORY_ID;
-    }
-    @Override
-    public int getClassId() {
-        return CLASS_ID;
-    }
-    @Override
-    public void writeData(ObjectDataOutput out) throws IOException {
-        out.writeString(value);
-    }
-    @Override
-    public void readData(ObjectDataInput in) throws IOException {
-        value = in.readString();
-    }
-    @Override
-    public String process(Map.Entry<String, String> entry) {
-        entry.setValue(value);
-        return value;
-    }
-}
-```
+<CodeBlock language="java">{Ex_settingupclusters_IdentifiedEntryProcessor_java_tag_iep}</CodeBlock>
 
 You can implement the above processor's factory as follows:
 
-```java
-public class IdentifiedFactory implements DataSerializableFactory {
-    public static final int FACTORY_ID = 5;
-    @Override
-    public IdentifiedDataSerializable create(int typeId) {
-        if (typeId == IdentifiedEntryProcessor.CLASS_ID) {
-            return new IdentifiedEntryProcessor();
-        }
-        return null;
-    }
-}
-```
+<CodeBlock language="java">{Ex_settingupclusters_IdentifiedFactory_java_tag_if}</CodeBlock>
 
 And the following is the configuration for the above factory:
 

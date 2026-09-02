@@ -4,6 +4,8 @@ sidebar_position: 18
 slug: /data-structures/flake-id-generator
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_dds_ExampleFlakeIdGenerator_java_tag_fid from '../../examples/dds/ExampleFlakeIdGenerator.java?tag=fid';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
@@ -23,25 +25,7 @@ Operation on member is always local, if the member has valid node ID, otherwise 
 
 Let's write an example identifier generator.
 
-```java
-public class ExampleFlakeIdGenerator {
-    public static void main(String[] args) {
-        HazelcastInstance hazelcast = Hazelcast.newHazelcastInstance();
-
-        ClientConfig clientConfig = new ClientConfig()
-                .addFlakeIdGeneratorConfig(new ClientFlakeIdGeneratorConfig("idGenerator")
-                        .setPrefetchCount(10)
-                        .setPrefetchValidityMillis(MINUTES.toMillis(10)));
-        HazelcastInstance client = HazelcastClient.newHazelcastClient(clientConfig);
-
-        FlakeIdGenerator idGenerator = client.getFlakeIdGenerator("idGenerator");
-        for (int i = 0; i < 10000; i++) {
-            sleepSeconds(1);
-            System.out.printf("Id: %s\n", idGenerator.newId());
-        }
-    }
-}
-```
+<CodeBlock language="java">{Ex_dds_ExampleFlakeIdGenerator_java_tag_fid}</CodeBlock>
 
 ## Node ID Assignment
 

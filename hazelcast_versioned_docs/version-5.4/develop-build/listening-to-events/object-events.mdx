@@ -4,8 +4,13 @@ sidebar_position: 5
 slug: /events/object-events
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_distributedevents_Listen_java_tag_listen from '../../examples/distributedevents/Listen.java?tag=listen';
+import Ex_distributedevents_ModifyMap_java_tag_modify from '../../examples/distributedevents/ModifyMap.java?tag=modify';
+import Ex_distributedevents_ListenMapPartitionLostEvents_java_tag_lmple from '../../examples/distributedevents/ListenMapPartitionLostEvents.java?tag=lmple';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import Ex_distributedevents_ExampleEntryListener_java_tag_mm from '../../examples/distributedevents/ExampleEntryListener.java?tag=mm';
 
 ## Listening for Map Events
 
@@ -39,78 +44,11 @@ The `EntryListener` interface still can be implemented (we kept it for backward 
 
 Let's take a look at the following class example.
 
-```java
-public class Listen {
-
-    public static void main( String[] args ) {
-        HazelcastInstance hz = HazelcastClient.newHazelcastCllient();
-        IMap<String, String> map = hz.getMap( "somemap" );
-        map.addEntryListener( new MyEntryListener(), true );
-        System.out.println( "EntryListener registered" );
-    }
-
-    static class MyEntryListener implements
-            EntryAddedListener<String, String>,
-            EntryRemovedListener<String, String>,
-            EntryUpdatedListener<String, String>,
-            EntryEvictedListener<String, String>,
-            EntryLoadedListener<String,String>,
-            MapEvictedListener,
-            MapClearedListener   {
-        @Override
-        public void entryAdded( EntryEvent<String, String> event ) {
-            System.out.println( "Entry Added:" + event );
-        }
-
-        @Override
-        public void entryRemoved( EntryEvent<String, String> event ) {
-            System.out.println( "Entry Removed:" + event );
-        }
-
-        @Override
-        public void entryUpdated( EntryEvent<String, String> event ) {
-            System.out.println( "Entry Updated:" + event );
-        }
-
-        @Override
-        public void entryEvicted( EntryEvent<String, String> event ) {
-            System.out.println( "Entry Evicted:" + event );
-        }
-
-        @Override
-        public void entryLoaded( EntryEvent<String, String> event ) {
-            System.out.println( "Entry Loaded:" + event );
-        }
-        
-        @Override
-        public void mapEvicted( MapEvent event ) {
-            System.out.println( "Map Evicted:" + event );
-        }
-
-        @Override
-        public void mapCleared( MapEvent event ) {
-            System.out.println( "Map Cleared:" + event );
-        }
-    }
-}
-```
+<CodeBlock language="java">{Ex_distributedevents_Listen_java_tag_listen}</CodeBlock>
 
 Now, let's perform some modifications on the map entries using the following example code.
 
-```java
-public class ModifyMap {
-
-    public static void main( String[] args ) {
-        HazelcastInstance hz = HazelcastClient.newHazelcastClient();
-        IMap<String, String> map = hz.getMap( "somemap");
-        String key = "" + System.nanoTime();
-        String value = "1";
-        map.put( key, value );
-        map.put( key, "2" );
-        map.delete( key );
-    }
-}
-```
+<CodeBlock language="java">{Ex_distributedevents_ModifyMap_java_tag_modify}</CodeBlock>
 
 If you execute the `Listen` class and then the `Modify` class, you get the following output produced by the `Listen` class.
 
@@ -146,28 +84,7 @@ You can listen to `MapPartitionLostEvent` instances by registering an implementa
 
 Let's consider the following example code:
 
-```java
-public class ListenMapPartitionLostEvents {
-
-    public static void main(String[] args) {
-        Config config = new Config();
-        // keeps its data if a single node crashes
-        config.getMapConfig("map").setBackupCount(1);
-
-        HazelcastInstance instance = HazelcastInstanceFactory.newHazelcastInstance(config);
-
-        IMap<Object, Object> map = instance.getMap("map");
-        map.put(0, 0);
-
-        map.addPartitionLostListener(new MapPartitionLostListener() {
-            @Override
-            public void partitionLost(MapPartitionLostEvent event) {
-                System.out.println(event);
-            }
-        });
-    }
-}
-```
+<CodeBlock language="java">{Ex_distributedevents_ListenMapPartitionLostEvents_java_tag_lmple}</CodeBlock>
 
 Within this example code, a `MapPartitionLostListener` implementation is registered to a map that is configured with one backup. For this particular map and any of the partitions in the system, if the partition owner member and its first backup member crash simultaneously, the given `MapPartitionLostListener` receives a corresponding `MapPartitionLostEvent`. If only a single member crashes in the cluster, there is no `MapPartitionLostEvent` fired for this map since backups for the partitions owned by the crashed member are kept on other members.
 
@@ -257,26 +174,7 @@ The entry listener for MultiMap supports only `entryAdded`, `entryRemoved` and `
 
 :::
 
-```java
-public class ExampleEntryListener implements EntryListener<String, String> {
-    @Override
-    public void entryAdded(EntryEvent<String, String> event) {
-        System.out.println("Entry Added: " + event);
-    }
-    @Override
-    public void entryRemoved(EntryEvent<String, String> event) {
-        System.out.println( "Entry Removed: " + event );
-    }
-    @Override
-    public void mapCleared(MapEvent event) {
-        System.out.println( "Map Cleared: " + event );
-    }
-    @Override
-    public void entryUpdated(EntryEvent<String, String> event) {
-        // not supported for MultiMap
-    }
-}
-```
+<CodeBlock language="java">{Ex_distributedevents_ExampleEntryListener_java_tag_mm}</CodeBlock>
 
 ### Registering MultiMap Listeners
 

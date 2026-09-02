@@ -6,6 +6,9 @@ slug: /cluster-performance/best-practices
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_performance_ExampleNearCacheConfiguration_java_tag_nearcacheconfig from '../../examples/performance/ExampleNearCacheConfiguration.java?tag=nearcacheconfig';
+import Ex_performance_OrderKey_java_tag_orderkey from '../../examples/performance/OrderKey.java?tag=orderkey';
 
 ## Basic Performance Recommendations {/* #basic-recs */}
 
@@ -258,30 +261,7 @@ The element `<near-cache>` has an optional attribute `name` whose default value 
 
 **Programmatic Configuration:**
 
-```java
-        EvictionConfig evictionConfig = new EvictionConfig()
-                .setMaxSizePolicy(MaxSizePolicy.ENTRY_COUNT)
-                .setEvictionPolicy(EvictionPolicy.LRU)
-                .setSize( 1 );
-
-        NearCachePreloaderConfig preloaderConfig = new NearCachePreloaderConfig()
-                .setEnabled(true)
-                .setDirectory("nearcache-example")
-                .setStoreInitialDelaySeconds( 1 )
-                .setStoreIntervalSeconds( 2 );
-
-        NearCacheConfig nearCacheConfig = new NearCacheConfig()
-                .setName("myDataStructure")
-                .setInMemoryFormat(InMemoryFormat.BINARY)
-                .setSerializeKeys(true)
-                .setInvalidateOnChange(false)
-                .setTimeToLiveSeconds( 1 )
-                .setMaxIdleSeconds( 5 )
-                .setEvictionConfig(evictionConfig)
-                .setCacheLocalEntries(true)
-                .setLocalUpdatePolicy(NearCacheConfig.LocalUpdatePolicy.CACHE_ON_UPDATE)
-                .setPreloaderConfig(preloaderConfig);
-```
+<CodeBlock language="java">{Ex_performance_ExampleNearCacheConfiguration_java_tag_nearcacheconfig}</CodeBlock>
 
 The class <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/NearCacheConfig.html" text="NearCacheConfig"/> is used for all supported Hazelcast data structures on members and clients.
 
@@ -691,29 +671,7 @@ hazelcastInstance.getExecutorService().executeOnKeyOwner( runnable, "key1" );
 
 When the keys are the same, entries are stored on the same member. But we sometimes want to have related entries stored on the same member, such as a customer and his/her order entries. We would have a customers map with customerId as the key and an orders map with orderId as the key. Since customerId and orderId are different keys, a customer and his/her orders may fall into different members in your cluster. So how can we have them stored on the same member? We create an affinity between customer and orders. If we make them part of the same partition then these entries will be co-located. We achieve this by making `orderKey` s `PartitionAware`.
 
-```java
-final class OrderKey implements PartitionAware, Serializable {
-
-    private final long orderId;
-    private final long customerId;
-
-    OrderKey(long orderId, long customerId) {
-        this.orderId = orderId;
-        this.customerId = customerId;
-    }
-
-    @Override
-    public Object getPartitionKey() {
-        return customerId;
-    }
-
-    @Override
-    public String toString() {
-        return "OrderKey{"
-                + "orderId=" + orderId
-                + ", customerId=" + customerId
-                + '}';
-```
+<CodeBlock language="java">{Ex_performance_OrderKey_java_tag_orderkey}</CodeBlock>
 
 Notice that OrderKey implements `PartitionAware` and that `getPartitionKey()` returns the `customerId`. These make sure that the `Customer` entry and its `Order`s are stored on the same member.
 

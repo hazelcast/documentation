@@ -4,8 +4,13 @@ sidebar_position: 4
 slug: /serialization/custom-serialization
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_serialization_EmployeeSS_java from '../../../examples/serialization/EmployeeSS.java';
+import Ex_serialization_EmployeeStreamSerializer_java_tag_empss from '../../../examples/serialization/EmployeeStreamSerializer.java?tag=empss';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import Ex_serialization_FooXmlSerializer_java_tag_fooxml from '../../../examples/serialization/FooXmlSerializer.java?tag=fooxml';
+import Ex_serialization_EmployeeByteArraySerializer_java_tag_empbas from '../../../examples/serialization/EmployeeByteArraySerializer.java?tag=empbas';
 
 Hazelcast lets you plug in a custom serializer for serializing your objects. You can use [StreamSerializer](#implementing-streamserializer) and [ByteArraySerializer](#implementing-bytearrayserializer) interfaces for this purpose.
 
@@ -17,53 +22,11 @@ You can use a stream to serialize and deserialize data by using `StreamSerialize
 
 First, let's create a simple object.
 
-```java
-public class EmployeeSS {
-    private String surname;
-    private String name;
-
-    public EmployeeSS( String surname ) {
-        this.surname = surname;
-    }
-
-    public String getSurname() {
-        return surname;
-    }
-    public String getName() {
-        return name;
-    }
-}
-```
+<CodeBlock language="java">{Ex_serialization_EmployeeSS_java}</CodeBlock>
 
 Now, let's implement StreamSerializer for `Employee` class.
 
-```java
-public class EmployeeStreamSerializer
-        implements StreamSerializer<EmployeeSS> {
-
-    @Override
-    public int getTypeId () {
-        return 1;
-    }
-
-    @Override
-    public void write( ObjectDataOutput out, EmployeeSS employee )
-            throws IOException {
-        out.writeString(employee.getSurname());
-    }
-
-    @Override
-    public EmployeeSS read( ObjectDataInput in )
-            throws IOException {
-        String surname = in.readString();
-        return new EmployeeSS(surname);
-    }
-
-    @Override
-    public void destroy () {
-    }
-}
-```
+<CodeBlock language="java">{Ex_serialization_EmployeeStreamSerializer_java_tag_empss}</CodeBlock>
 
 In practice, classes may have many fields. Just make sure the fields are read in the same order as they are written. The type ID must be unique and greater than or equal to **1**. Uniqueness of the type ID enables Hazelcast to determine which serializer is used during deserialization.
 
@@ -124,32 +87,7 @@ public class Foo {
 
 Assume that our custom serialization serializes Foo into XML. First you need to implement a `com.hazelcast.nio.serialization.StreamSerializer`. A very simple one that uses XMLEncoder and XMLDecoder could look like the following:
 
-```java
-public class FooXmlSerializer implements StreamSerializer<Foo> {
-
-    @Override
-    public int getTypeId() {
-        return 10;
-    }
-
-    public void write( ObjectDataOutput out, Foo object ) throws IOException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        XMLEncoder encoder = new XMLEncoder( bos );
-        encoder.writeObject( object );
-        encoder.close();
-        out.write( bos.toByteArray() );
-    }
-
-    public Foo read( ObjectDataInput in ) throws IOException {
-        InputStream inputStream = (InputStream) in;
-        XMLDecoder decoder = new XMLDecoder( inputStream );
-        return (Foo) decoder.readObject();
-    }
-
-    public void destroy() {
-    }
-}
-```
+<CodeBlock language="java">{Ex_serialization_FooXmlSerializer_java_tag_fooxml}</CodeBlock>
 
 ### Configuring StreamSerializer
 
@@ -205,33 +143,7 @@ See the [Serialization Configuration Wrap-Up section](../serialization-configura
 
 Let's implement `ByteArraySerializer` for the `Employee` class mentioned in [Implementing StreamSerializer](#implementing-streamserializer).
 
-```java
-public class EmployeeByteArraySerializer
-        implements ByteArraySerializer<EmployeeSS> {
-
-    @Override
-    public void destroy () {
-    }
-
-    @Override
-    public int getTypeId () {
-        return 1;
-    }
-
-    @Override
-    public byte[] write( EmployeeSS object )
-            throws IOException {
-        return object.getName().getBytes();
-    }
-
-    @Override
-    public EmployeeSS read( byte[] buffer )
-            throws IOException {
-        String surname = new String( buffer );
-        return new EmployeeSS( surname );
-    }
-}
-```
+<CodeBlock language="java">{Ex_serialization_EmployeeByteArraySerializer_java_tag_empbas}</CodeBlock>
 
 ### Configuring ByteArraySerializer
 

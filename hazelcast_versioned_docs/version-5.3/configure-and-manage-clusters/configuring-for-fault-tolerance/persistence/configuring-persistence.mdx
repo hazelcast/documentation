@@ -8,6 +8,10 @@ enterprise: true
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_storage_SampleEncryptionAtRestConfiguration_java_tag_keystore from '../../../examples/storage/SampleEncryptionAtRestConfiguration.java?tag=keystore';
+import Ex_storage_SampleEncryptionAtRestConfiguration_java_tag_vault from '../../../examples/storage/SampleEncryptionAtRestConfiguration.java?tag=vault';
+import Ex_storage_SampleHotRestartConfiguration_java_tag_hrconf from '../../../examples/storage/SampleHotRestartConfiguration.java?tag=hrconf';
 
 You can configure clusters to persist data structures, job snapshots, and SQL metadata on disk. You can also implement configuration options to fine-tune backups, encryption, and auto-recovery.
 
@@ -915,14 +919,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java
-        JavaKeyStoreSecureStoreConfig keyStoreConfig =
-                new JavaKeyStoreSecureStoreConfig(new File("/path/to/keystore.file"))
-                        .setType("PKCS12")
-                        .setPassword("password")
-                        .setCurrentKeyAlias("current")
-                        .setPollingInterval(60);
-```
+<CodeBlock language="java">{Ex_storage_SampleEncryptionAtRestConfiguration_java_tag_keystore}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -1006,12 +1003,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java
-        VaultSecureStoreConfig vaultConfig =
-                new VaultSecureStoreConfig("http://localhost:1234", "secret/path", "token")
-                        .setPollingInterval(60);
-        configureSSL(vaultConfig.getSSLConfig());
-```
+<CodeBlock language="java">{Ex_storage_SampleEncryptionAtRestConfiguration_java_tag_vault}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -1477,35 +1469,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java
-        Config config = new Config();
-        PersistenceConfig PersistenceConfig = new PersistenceConfig()
-        .setEnabled(true)
-        .setBaseDir(new File("/mnt/persistence"))
-        .setParallelism(1)
-        .setValidationTimeoutSeconds(120)
-        .setDataLoadTimeoutSeconds(900)
-        .setClusterDataRecoveryPolicy(PersistenceClusterDataRecoveryPolicy.FULL_RECOVERY_ONLY)
-        .setAutoRemoveStaleData(true);
-        .setRebalanceDelaySeconds(0)
-        config.setPersistenceConfig(PersistenceConfig);
-
-        MapConfig mapConfig = config.getMapConfig("test-map");
-        mapConfig.getDataPersistenceConfig().setEnabled(true);
-        mapConfig.getMerkleTreeConfig().setEnabled(true);
-        mapConfig.getMerkleTreeConfig().setDepth(12);
-        config.addMapConfig(mapConfig);
-
-        CacheSimpleConfig cacheConfig = config.getCacheConfig("test-cache");
-        cacheConfig.getDataPersistenceConfig().setEnabled(true);
-        cacheConfig.getMerkleTreeConfig().setEnabled(true);
-        cacheConfig.getMerkleTreeConfig().setDepth(12);
-        config.addCacheConfig(cacheConfig);
-
-        config.getSqlConfig().setCatalogPersistenceEnabled(true);
-
-        config.getJetConfig().setLosslessRestartEnabled(true);
-```
+<CodeBlock language="java">{Ex_storage_SampleHotRestartConfiguration_java_tag_hrconf}</CodeBlock>
 
 </TabItem>
 </Tabs>

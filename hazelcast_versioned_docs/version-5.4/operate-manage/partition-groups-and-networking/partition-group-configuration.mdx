@@ -7,6 +7,8 @@ slug: /clusters/partition-group-configuration
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_PartitionGrouping_java_tag_partitiongrouping from '../../examples/PartitionGrouping.java?tag=partitiongrouping';
 
 Hazelcast distributes key objects into partitions using the consistent hashing algorithm. Multiple replicas are created for each partition and those partition replicas are distributed among Hazelcast members. An entry is stored in the members that own replicas of the partition to which the entry's key is assigned. The total partition count is 271 by default; you can change it with the configuration property `hazelcast.partition.count`. See the [System Properties appendix](../../reference/system-properties.mdx).
 
@@ -283,23 +285,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java
-        Config config = new Config();
-        PartitionGroupConfig partitionGroupConfig = config.getPartitionGroupConfig();
-        partitionGroupConfig.setEnabled( true )
-                .setGroupType( PartitionGroupConfig.MemberGroupType.CUSTOM );
-
-        MemberGroupConfig memberGroupConfig = new MemberGroupConfig();
-        memberGroupConfig.addInterface( "10.10.0.*" )
-                .addInterface( "10.10.3.*" ).addInterface("10.10.5.*" );
-
-        MemberGroupConfig memberGroupConfig2 = new MemberGroupConfig();
-        memberGroupConfig2.addInterface( "10.10.10.10-100" )
-                .addInterface( "10.10.1.*").addInterface( "10.10.2.*" );
-
-        partitionGroupConfig.addMemberGroupConfig( memberGroupConfig );
-        partitionGroupConfig.addMemberGroupConfig( memberGroupConfig2 );
-```
+<CodeBlock language="java">{Ex_PartitionGrouping_java_tag_partitiongrouping}</CodeBlock>
 
 </TabItem>
 </Tabs>

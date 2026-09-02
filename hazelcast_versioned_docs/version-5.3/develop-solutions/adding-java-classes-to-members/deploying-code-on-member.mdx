@@ -6,6 +6,10 @@ slug: /clusters/deploying-code-on-member
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_MemberUCD_java_tag_ucd from '../../examples/MemberUCD.java?tag=ucd';
+import Ex_MemberUCD_java_tag_hasAttributeConfig from '../../examples/MemberUCD.java?tag=hasAttributeConfig';
+import Ex_MemberUCD_java_tag_memberAttributeConfig from '../../examples/MemberUCD.java?tag=memberAttributeConfig';
 
 Hazelcast can dynamically load your custom classes or domain classes from other members. A [lite member](../../configure-and-manage-clusters/maintaining-a-cluster/lite-members.mdx) can be designated as a *class repository*, but any member can *provide* classes to other members. For this purpose Hazelcast offers a distributed dynamic class loader.
 
@@ -68,16 +72,7 @@ hazelcast:
 
 **Programmatic Configuration:**
 
-```java
-        Config config = new Config();
-        UserCodeDeploymentConfig distCLConfig = config.getUserCodeDeploymentConfig();
-        distCLConfig.setEnabled( true )
-                .setClassCacheMode( UserCodeDeploymentConfig.ClassCacheMode.ETERNAL )
-                .setProviderMode( UserCodeDeploymentConfig.ProviderMode.LOCAL_AND_CACHED_CLASSES )
-                .setBlacklistedPrefixes( "com.foo,com.bar" )
-                .setWhitelistedPrefixes( "com.bar.MyClass" )
-                .setProviderFilter( "HAS_ATTRIBUTE:lite" );
-```
+<CodeBlock language="java">{Ex_MemberUCD_java_tag_ucd}</CodeBlock>
 
 User Code Deployment on the member has the following configuration:
 
@@ -106,20 +101,8 @@ As described above, the configuration element `provider-filter` is used to limit
 
 The example configuration below allows the Hazelcast member to load classes only from members with the `class-provider` attribute set. It prevents from asking any other member to provide a locally unavailable class:
 
-```java
-        Config hazelcastConfig = new Config();
-        UserCodeDeploymentConfig ucdConfig = hazelcastConfig.getUserCodeDeploymentConfig();
-        ucdConfig.setProviderFilter("HAS_ATTRIBUTE:class-provider");
-
-        HazelcastInstance instance = Hazelcast.newHazelcastInstance(hazelcastConfig);
-```
+<CodeBlock language="java">{Ex_MemberUCD_java_tag_hasAttributeConfig}</CodeBlock>
 
 The example configuration below sets the attribute `class-provider` for a member. Therefore the above member will be able to load classes from this member:
 
-```java
-        Config hazelcastConfig = new Config();
-        MemberAttributeConfig memberAttributes = hazelcastConfig.getMemberAttributeConfig();
-        memberAttributes.setAttribute("class-provider", "true");
-
-        HazelcastInstance instance = Hazelcast.newHazelcastInstance(hazelcastConfig);
-```
+<CodeBlock language="java">{Ex_MemberUCD_java_tag_memberAttributeConfig}</CodeBlock>

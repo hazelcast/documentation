@@ -244,6 +244,31 @@ const renderedCode = (md) => {
   ok('link classifiers: whitespace around an href does not move the target')
 }
 
+// --- a link label containing square brackets stays ONE parseable link ---------
+// Asciidoctor renders an UNRESOLVED internal xref with the id in square brackets
+// as its label -- `<<configuring-queue>>` against an anchor that is not on the
+// page becomes `<a href="#configuring-queue">[configuring-queue]</a>`. That is
+// real: 5.3 data-structures/priority-queue. The brackets must survive as label
+// TEXT, and the link must still parse, or the reader sees raw Markdown source.
+// Oracle: the same label with the brackets removed, which is unambiguously one
+// link -- the bracketed form must differ from it only by those two characters.
+{
+  const ctx = { pageUrl: '/hazelcast/5.3/data-structures/priority-queue', component: 'hazelcast' }
+  const body = (label) => convertBody(`<p>see <a href="#configuring-queue">${label}</a> for more.</p>`, ctx).body
+  const bracketed = body('[configuring-queue]')
+  const plain = body('configuring-queue')
+
+  // One link, one href -- not source text that failed to parse.
+  assert.strictEqual((bracketed.match(/\]\(#configuring-queue\)/g) || []).length, 1,
+    'the bracketed label emits exactly one Markdown link')
+  assert.strictEqual(bracketed.replace(/\\\[|\\\]/g, ''), plain,
+    'and differs from the unbracketed link only by the escaped brackets themselves')
+  // The specific failure: escaping a `]` that mdEscape already escaped yields
+  // `\\]` -- an escaped BACKSLASH plus a live `]`, which ends the label early.
+  assert(!/\\\\\]/.test(bracketed), 'no double-escaped closing bracket')
+  ok('link labels: square brackets are escaped once, so the link still parses')
+}
+
 // --- internal link with a <Variable> in the label -> raw <a>, site-absolute --
 // A marked {attr} in a link label becomes a <Variable/>, which cannot sit inside
 // Markdown `[…]`, so the link must emit as a raw <a>. A raw <a> is NOT rewritten

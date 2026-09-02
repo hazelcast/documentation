@@ -5,36 +5,14 @@ sidebar_position: 2
 slug: /serialization/implementing-dataserializable
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_serialization_Address_java_tag_address from '../../../examples/serialization/Address.java?tag=address';
+
 As mentioned in [Implementing Java Serializable & Externalizable](./implementing-java-serializable.mdx), Java serialization is an easy mechanism. However, it does not control how fields are serialized or deserialized. Moreover, Java serialization can lead to excessive CPU loads since it keeps track of objects to handle the cycles and streams class descriptors. These are performance decreasing factors; thus, serialized data may not have an optimal size.
 
 The `DataSerializable` interface of Hazelcast overcomes these issues. Here is an example of a class implementing the `com.hazelcast.nio.serialization.DataSerializable` interface.
 
-```java
-public class Address implements DataSerializable {
-    private String street;
-    private int zipCode;
-    private String city;
-    private String state;
-
-    public Address() {}
-
-    //getters setters..
-
-    public void writeData( ObjectDataOutput out ) throws IOException {
-        out.writeString(street);
-        out.writeInt(zipCode);
-        out.writeString(city);
-        out.writeString(state);
-    }
-
-    public void readData( ObjectDataInput in ) throws IOException {
-        street = in.readString();
-        zipCode = in.readInt();
-        city = in.readString();
-        state = in.readString();
-    }
-}
-```
+<CodeBlock language="java">{Ex_serialization_Address_java_tag_address}</CodeBlock>
 
 ## Reading and Writing and DataSerializable
 

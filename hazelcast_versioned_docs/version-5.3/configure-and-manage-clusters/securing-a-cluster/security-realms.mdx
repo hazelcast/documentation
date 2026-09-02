@@ -7,38 +7,26 @@ enterprise: true
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_security_realms_xml_tag_realms from '../../examples/hazelcast-security-realms.xml?tag=realms';
+import Ex_hazelcast_authentication_types_xml_tag_jaas from '../../examples/hazelcast-authentication-types.xml?tag=jaas';
+import Ex_security_ldap_CustomSSLSocketFactory_java from '../../examples/security/ldap/CustomSSLSocketFactory.java';
+import Ex_hazelcast_authentication_types_xml_tag_ldaps from '../../examples/hazelcast-authentication-types.xml?tag=ldaps';
+import Ex_hazelcast_authentication_types_xml_tag_ldap_fallback from '../../examples/hazelcast-authentication-types.xml?tag=ldap-fallback';
+import Ex_hazelcast_authentication_types_xml_tag_tls from '../../examples/hazelcast-authentication-types.xml?tag=tls';
+import Ex_CustomLoginModuleTest_java_tag_credentials_callback from '../../examples/CustomLoginModuleTest.java?tag=credentials-callback';
+import Ex_hazelcast_password_realm_xml_tag_password from '../../examples/hazelcast-password-realm.xml?tag=password';
+import Ex_SecurityXmlTest_java_tag_password_realm from '../../examples/SecurityXmlTest.java?tag=password-realm';
+import Ex_hazelcast_authentication_types_xml_tag_token from '../../examples/hazelcast-authentication-types.xml?tag=token';
+import Ex_SecurityXmlTest_java_tag_token_realm from '../../examples/SecurityXmlTest.java?tag=token-realm';
+import Ex_hazelcast_authentication_types_xml_tag_credentialsFactoryRealm from '../../examples/hazelcast-authentication-types.xml?tag=credentialsFactoryRealm';
 
 Security realms allow configuring JAAS authentication and/or own identity independently on the module which consumes this configuration. The realm is a named configuration and other modules just reference it by name.
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
 
-```xml
-    <security enabled="true">
-        <realms>
-            <realm name="realm1">
-                <authentication>
-                    <jaas>
-                        <login-module class-name="com.hazelcast.examples.MyRequiredLoginModule" usage="REQUIRED">
-                            <properties>
-                                <property name="property">value</property>
-                            </properties>
-                        </login-module>
-                    </jaas>
-                </authentication>
-                <identity>
-                    <credentials-factory class-name="com.hazelcast.examples.MyCredentialsFactory">
-                        <properties>
-                            <property name="property">value</property>
-                        </properties>
-                    </credentials-factory>
-                </identity>
-            </realm>
-        </realms>
-        <member-authentication realm="realm1"/>
-        <client-authentication realm="realm1"/>
-    </security>
-```
+<CodeBlock language="xml">{Ex_hazelcast_security_realms_xml_tag_realms}</CodeBlock>
 
 </TabItem>
 <TabItem value="yaml" label="YAML">
@@ -88,26 +76,7 @@ The following is a sample configuration which authenticates against an LDAP serv
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
 
-```xml
-            <realm name="jaasRealm">
-                <authentication>
-                    <jaas>
-                        <login-module class-name="com.examples.LdapLoginModule" usage="SUFFICIENT">
-                            <properties>
-                                <property name="url">ldap://corp-ldap/</property>
-                            </properties>
-                        </login-module>
-                        <login-module class-name="com.examples.DatabaseLoginModule" usage="SUFFICIENT">
-                            <properties>
-                                <property name="type">ora18</property>
-                                <property name="host">corp-db</property>
-                                <property name="table">USERS</property>
-                            </properties>
-                        </login-module>
-                    </jaas>
-                </authentication>
-            </realm>
-```
+<CodeBlock language="xml">{Ex_hazelcast_authentication_types_xml_tag_jaas}</CodeBlock>
 
 </TabItem>
 <TabItem value="yaml" label="YAML">
@@ -398,103 +367,14 @@ When even more control is necessary, you can implement your own `SSLSocketFactor
 
 Here is an example custom socket factory class:
 
-```java
-package security.ldap;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.security.KeyStore;
-import java.security.SecureRandom;
-
-import javax.net.SocketFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManagerFactory;
-
-public class CustomSSLSocketFactory extends SSLSocketFactory {
-
-    private static final SocketFactory INSTANCE = new CustomSSLSocketFactory();
-
-    /**
-     * JNDI uses this method when creating {@code ldaps} connections.
-     */
-    public static SocketFactory getDefault() {
-        return INSTANCE;
-    }
-
-    private SSLSocketFactory delegate;
-
-    public CustomSSLSocketFactory() {
-        try {
-            KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            try (FileInputStream fis = new FileInputStream("/opt/ldap.truststore")) {
-                trustStore.load(fis, "S3cr3t".toCharArray());
-            }
-            TrustManagerFactory tmFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            tmFactory.init(trustStore);
-            SSLContext sc = SSLContext.getInstance("TLS");
-            sc.init(null, tmFactory.getTrustManagers(), new SecureRandom());
-            delegate = sc.getSocketFactory();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public String[] getDefaultCipherSuites() {
-        return delegate.getDefaultCipherSuites();
-    }
-
-    @Override
-    public String[] getSupportedCipherSuites() {
-        return delegate.getSupportedCipherSuites();
-    }
-
-    @Override
-    public Socket createSocket(Socket arg0, String arg1, int arg2, boolean arg3) throws IOException {
-        return delegate.createSocket(arg0, arg1, arg2, arg3);
-    }
-
-    @Override
-    public Socket createSocket(String arg0, int arg1) throws IOException {
-        return delegate.createSocket(arg0, arg1);
-    }
-
-    @Override
-    public Socket createSocket(InetAddress arg0, int arg1) throws IOException {
-        return delegate.createSocket(arg0, arg1);
-    }
-
-    @Override
-    public Socket createSocket(String arg0, int arg1, InetAddress arg2, int arg3) throws IOException {
-        return delegate.createSocket(arg0, arg1, arg2, arg3);
-    }
-
-    @Override
-    public Socket createSocket(InetAddress arg0, int arg1, InetAddress arg2, int arg3) throws IOException {
-        return delegate.createSocket(arg0, arg1, arg2, arg3);
-    }
-}
-```
+<CodeBlock language="java">{Ex_security_ldap_CustomSSLSocketFactory_java}</CodeBlock>
 
 The authentication configuration could look like as follows:
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
 
-```xml
-            <realm name="ldapsRealm">
-                <authentication>
-                    <ldap>
-                        <url>ldaps://ldapserver.acme.com</url>
-                        <socket-factory-class-name>security.ldap.CustomSSLSocketFactory</socket-factory-class-name>
-                        <role-mapping-attribute>cn</role-mapping-attribute>
-                    </ldap>
-                </authentication>
-            </realm>
-```
+<CodeBlock language="xml">{Ex_hazelcast_authentication_types_xml_tag_ldaps}</CodeBlock>
 
 </TabItem>
 <TabItem value="yaml" label="YAML">
@@ -517,15 +397,7 @@ The LDAP authentication is backed by the JNDI API in Java. It has also the failo
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
 
-```xml
-            <realm name="ldapFallbackRealm">
-                <authentication>
-                    <ldap>
-                        <url>ldap://ldap-master.example.com ldap://ldap-backup.example.com</url>
-                    </ldap>
-                </authentication>
-            </realm>
-```
+<CodeBlock language="xml">{Ex_hazelcast_authentication_types_xml_tag_ldap_fallback}</CodeBlock>
 
 </TabItem>
 <TabItem value="yaml" label="YAML">
@@ -934,13 +806,7 @@ This authentication type is able to parse a role name from the client's certific
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
 
-```xml
-            <realm name="tlsRealm">
-                <authentication>
-                    <tls roleAttribute="cn" />
-                </authentication>
-            </realm>
-```
+<CodeBlock language="xml">{Ex_hazelcast_authentication_types_xml_tag_tls}</CodeBlock>
 
 </TabItem>
 <TabItem value="yaml" label="YAML">
@@ -1010,25 +876,7 @@ The `Credentials` instance can be retrieved in the login modules by handling a `
 
 Here is an example:
 
-```java
-            CredentialsCallback credcb = new CredentialsCallback();
-            try {
-                callbackHandler.handle(new Callback[] { credcb });
-            } catch (IOException | UnsupportedCallbackException e) {
-                throw new LoginException("Unable to retrieve credetials");
-            }
-            Credentials credentials = credcb.getCredentials();
-            if (credentials instanceof PasswordCredentials) {
-                PasswordCredentials passwordCredentials = (PasswordCredentials) credentials;
-                if (expectedName.equals(credentials.getName())
-                        && expectedPassword.equals(passwordCredentials.getPassword())) {
-                    name = credentials.getName();
-                    addRole(name);
-                    return true;
-                }
-            }
-            throw new FailedLoginException("Credentials verification failed.");
-```
+<CodeBlock language="java">{Ex_CustomLoginModuleTest_java_tag_credentials_callback}</CodeBlock>
 
 ### Password Credentials
 
@@ -1037,16 +885,7 @@ A `PasswordCredentials` implementation can be configured as a simple identity re
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
 
-```xml
-        <realms>
-            <realm name="passwordRealm">
-                <identity>
-                    <username-password username="member1" password="s3crEt" />
-                </identity>
-            </realm>
-        </realms>
-        <member-authentication realm="passwordRealm" />
-```
+<CodeBlock language="xml">{Ex_hazelcast_password_realm_xml_tag_password}</CodeBlock>
 
 </TabItem>
 <TabItem value="yaml" label="YAML">
@@ -1067,11 +906,7 @@ member-authentication:
 
 The equivalent programmatic configuration is shown below:
 
-```java
-        RealmConfig realmConfig = new RealmConfig()
-                .setUsernamePasswordIdentityConfig("member1", "s3crEt");
-        config.getSecurityConfig().setMemberRealmConfig("passwordRealm", realmConfig);
-```
+<CodeBlock language="java">{Ex_SecurityXmlTest_java_tag_password_realm}</CodeBlock>
 
 ### Token Credentials
 
@@ -1082,18 +917,7 @@ The following two realms define the same token value - bytes of the "Hazelcast" 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
 
-```xml
-            <realm name="tokenRealm1">
-                <identity>
-                    <token>Hazelcast</token>
-                </identity>
-            </realm>
-            <realm name="tokenRealm2">
-                <identity>
-                    <token encoding="base64">SGF6ZWxjYXN0</token>
-                </identity>
-            </realm>
-```
+<CodeBlock language="xml">{Ex_hazelcast_authentication_types_xml_tag_token}</CodeBlock>
 
 </TabItem>
 <TabItem value="yaml" label="YAML">
@@ -1116,10 +940,7 @@ realms:
 
 The equivalent programmatic configuration is as follows:
 
-```java
-        TokenIdentityConfig tokenConfig = new TokenIdentityConfig("Hazelcast".getBytes(StandardCharsets.US_ASCII));
-        RealmConfig realmConfig = new RealmConfig().setTokenIdentityConfig(tokenConfig);
-```
+<CodeBlock language="java">{Ex_SecurityXmlTest_java_tag_token_realm}</CodeBlock>
 
 ### Kerberos Identity
 
@@ -1138,17 +959,7 @@ A sample configuration is shown below:
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
 
-```xml
-            <realm name="credentialsFactoryRealm">
-                <identity>
-                    <credentials-factory class-name="com.examples.TOTPCredentialsFactory">
-                        <properties>
-                            <property name="seed">3132333435363738393031323334353637383930</property>
-                        </properties>
-                    </credentials-factory>
-                </identity>
-            </realm>
-```
+<CodeBlock language="xml">{Ex_hazelcast_authentication_types_xml_tag_credentialsFactoryRealm}</CodeBlock>
 
 </TabItem>
 <TabItem value="yaml" label="YAML">

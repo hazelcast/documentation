@@ -12,7 +12,7 @@
 
 const assert = require('node:assert')
 
-const { isUnpublished, redirectDest, redirectRoute, unpublishedUrls, urlBase, redirectPairs, publishedPageUrls } = require('./dispositions')
+const { isUnpublished, redirectDest, redirectRoute, unpublishedUrls, urlBase, redirectPairs, publishedPageUrls, navInjectionsFor } = require('./dispositions')
 
 let n = 0
 const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
@@ -265,6 +265,76 @@ const KEY = 'hazelcast:clients/rest'
   assert.ok(![...published].some((u) => u.endsWith('/overview/resources')),
     'an alias is not itself a route, so it can never be a target')
   ok('publishedPageUrls: the one rule every redirect target must satisfy')
+}
+
+// --- `versions` narrows a decision to the versions it names ------------------
+// A key covers every version by default, which is right whenever a page is an
+// orphan wherever it exists. Platform 5.4/5.3 are the case where it is not: they
+// build nav.adoc from per-module partials and still list pages the flat 5.5+ nav
+// dropped, so a decision applied across the board would withhold a page its own
+// version's sidebar links to -- and for cluster-performance/performance-tuning
+// would redirect 5.3 to a page that does not exist there.
+//
+// The requirement is symmetric and stated from both sides: inside the named
+// versions the decision applies in full, outside them it does not apply AT ALL --
+// not to withholding, not to the destination, not to a nav injection.
+{
+  const scoped = new Map([['hazelcast:clients/rest', {
+    disposition: 'redirect', to: '/maintain-cluster/rest-api', versions: ['5.8-snapshot', '5.4'],
+  }]])
+  for (const v of ['5.8-snapshot', '5.4']) {
+    assert.strictEqual(isUnpublished(scoped, page({ version: v })), true,
+      `the decision applies in a version it names (${v})`)
+    assert.ok(redirectDest(scoped, page({ version: v })), 'and its destination is readable there')
+  }
+  for (const v of ['5.7', '5.3']) {
+    assert.strictEqual(isUnpublished(scoped, page({ version: v })), false,
+      `the decision does not withhold the page in a version it omits (${v})`)
+    assert.strictEqual(redirectDest(scoped, page({ version: v })), null,
+      'and reads no destination there -- so no redirect is emitted either')
+  }
+  // Absent `versions` must keep the old meaning exactly: every version.
+  const unscoped = new Map([['hazelcast:clients/rest', { disposition: 'drop-404' }]])
+  for (const v of ['5.8-snapshot', '5.7', '5.4', '5.3']) {
+    assert.strictEqual(isUnpublished(unscoped, page({ version: v })), true,
+      `an entry with no "versions" still covers every version (${v})`)
+  }
+  // End to end through redirectPairs: the pair exists for a named version and is
+  // simply absent for an omitted one, rather than resolving to a bad target. This
+  // is the performance-tuning case -- at 5.3 the target page does not exist, so
+  // producing a pair there is what failed the build.
+  const manifest = {
+    resources: [
+      page({ version: '5.4', url: '/hazelcast/5.4/clients/rest' }),
+      page({ version: '5.3', url: '/hazelcast/5.3/clients/rest' }),
+      page({ version: '5.4', module: 'maintain-cluster', relative: 'rest-api.adoc', url: '/hazelcast/5.4/maintain-cluster/rest-api' }),
+    ],
+  }
+  const only54 = new Map([['hazelcast:clients/rest', {
+    disposition: 'redirect', to: '/maintain-cluster/rest-api', versions: ['5.4'],
+  }]])
+  assert.deepStrictEqual(redirectPairs(only54, manifest, live),
+    [{ from: '/hazelcast/5.4/clients/rest', to: '/hazelcast/5.4/maintain-cluster/rest-api' }],
+    'a scoped redirect emits a pair only for the version it names')
+  // The 5.3 target genuinely does not exist in this manifest. Unscoped, that is
+  // the hard failure; scoped away, there is nothing to resolve.
+  const allVersions = new Map([['hazelcast:clients/rest', {
+    disposition: 'redirect', to: '/maintain-cluster/rest-api',
+  }]])
+  assert.throws(() => redirectPairs(allVersions, manifest, live), /not a published page/,
+    'and unscoped it still fails closed on the version whose target is missing')
+
+  // A nav injection is scoped the same way, by the same field.
+  const keepInNav = new Map([['hazelcast:maintain-cluster/rest-api', {
+    disposition: 'keep-in-nav', nav: { after: 'maintain-cluster:rest-api-swagger' }, versions: ['5.5'],
+  }]])
+  assert.deepStrictEqual(navInjectionsFor(keepInNav, 'hazelcast', '5.5').map((i) => i.key),
+    ['maintain-cluster:rest-api'], 'a scoped keep-in-nav injects in the version it names')
+  assert.deepStrictEqual(navInjectionsFor(keepInNav, 'hazelcast', '5.4'), [],
+    'and injects nothing in a version it omits')
+  assert.deepStrictEqual(navInjectionsFor(keepInNav, 'hazelcast').map((i) => i.key),
+    ['maintain-cluster:rest-api'], 'with no version to judge against, the entry is kept')
+  ok('versions: a decision applies in the versions it names, and nowhere else')
 }
 
 console.log(`\n[dispositions selftest] ${n} groups passed.`)

@@ -7,6 +7,10 @@ enterprise: true
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_wan_MinimalActivePassiveConfiguration_java_tag_wrc from '../../examples/wan/MinimalActivePassiveConfiguration.java?tag=wrc';
+import Ex_wan_MinimalActiveActiveConfiguration1_java_tag_wrc from '../../examples/wan/MinimalActiveActiveConfiguration1.java?tag=wrc';
+import Ex_wan_MinimalActiveActiveConfiguration2_java_tag_wrc from '../../examples/wan/MinimalActiveActiveConfiguration2.java?tag=wrc';
 
 This section provides information about how you can start using WAN Replication with a minimal setup for both [Active-Passive](./modes.mdx#active-passive) and [Active-Active](./modes.mdx#active-active) modes.
 
@@ -56,21 +60,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java-member-api" label="Java Member API">
 
-```java
-        Config config = new Config();
-        WanBatchPublisherConfig batchPublisherConfig = new WanBatchPublisherConfig()
-                .setPublisherId("londonPublisherId")
-                .setClusterName("london")
-                .setTargetEndpoints("10.3.5.1:5701");
-
-        WanReplicationConfig wrConfig = new WanReplicationConfig()
-                .setName("london-wan-rep")
-                .addBatchReplicationPublisherConfig(batchPublisherConfig);
-
-        config.addWanReplicationConfig(wrConfig);
-
-        config.getMapConfig("replicatedMap").setWanReplicationRef(new WanReplicationRef().setName("london-wan-rep"));
-```
+<CodeBlock language="java">{Ex_wan_MinimalActivePassiveConfiguration_java_tag_wrc}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -133,22 +123,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java-member-api" label="Java Member API">
 
-```java
-        Config config = new Config();
-        config.setClusterName("tokyo");
-        WanBatchPublisherConfig batchPublisherConfig = new WanBatchPublisherConfig()
-                .setPublisherId("londonPublisherId")
-                .setClusterName("london")
-                .setTargetEndpoints("10.3.5.1:5701");
-
-        WanReplicationConfig wrConfig = new WanReplicationConfig()
-                .setName("london-wan-rep")
-                .addBatchReplicationPublisherConfig(batchPublisherConfig);
-
-        config.addWanReplicationConfig(wrConfig);
-
-        config.getMapConfig("replicatedMap").setWanReplicationRef(new WanReplicationRef().setName("london-wan-rep"));
-```
+<CodeBlock language="java">{Ex_wan_MinimalActiveActiveConfiguration1_java_tag_wrc}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -196,22 +171,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java-member-api" label="Java Member API">
 
-```java
-        Config config = new Config();
-        config.setClusterName("london");
-        WanBatchPublisherConfig batchPublisherConfig = new WanBatchPublisherConfig()
-                .setPublisherId("tokyoPublisherId")
-                .setClusterName("tokyo")
-                .setTargetEndpoints("32.1.1.1:5701");
-
-        WanReplicationConfig wrConfig = new WanReplicationConfig()
-                .setName("tokyo-wan-rep")
-                .addBatchReplicationPublisherConfig(batchPublisherConfig);
-
-        config.addWanReplicationConfig(wrConfig);
-
-        config.getMapConfig("replicatedMap").setWanReplicationRef(new WanReplicationRef().setName("tokyo-wan-rep"));
-```
+<CodeBlock language="java">{Ex_wan_MinimalActiveActiveConfiguration2_java_tag_wrc}</CodeBlock>
 
 </TabItem>
 </Tabs>

@@ -4,8 +4,12 @@ sidebar_position: 19
 slug: /data-structures/replicated-map
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_dds_replicatedmap_FillMapMember_java_tag_fmm from '../../examples/dds/replicatedmap/FillMapMember.java?tag=fmm';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import Ex_dds_replicatedmap_ReplicatedMapConfiguration_java_tag_rmc from '../../examples/dds/replicatedmap/ReplicatedMapConfiguration.java?tag=rmc';
+import Ex_dds_replicatedmap_ListeningMember_java_tag_lm from '../../examples/dds/replicatedmap/ListeningMember.java?tag=lm';
 
 A Replicated Map is a distributed key-value data structure where the data is replicated to all members in the cluster. It provides full replication of entries to all members for high-speed access.
 
@@ -45,17 +49,7 @@ You cannot use Replicated Map from a lite member. A `com.hazelcast.replicatedmap
 
 Here is an example of Replicated Map code. The HazelcastInstance's `getReplicatedMap` method gets the Replicated Map, and the Replicated Map's `put` method creates map entries.
 
-```java
-        HazelcastInstance hz = Hazelcast.newHazelcastInstance();
-        Map<String, String> map = hz.getReplicatedMap("map");
-
-        map.put("1", "Tokyo");
-        map.put("2", "Paris");
-        map.put("3", "New York");
-
-        System.out.println("Finished loading map");
-        hz.shutdown();
-```
+<CodeBlock language="java">{Ex_dds_replicatedmap_FillMapMember_java_tag_fmm}</CodeBlock>
 
 `HazelcastInstance.getReplicatedMap()` returns `com.hazelcast.core.ReplicatedMap` which, as stated above, extends the `java.util.Map` interface.
 
@@ -151,15 +145,7 @@ A Replicated Map has the following configuration elements:
 
 You can configure a Replicated Map programmatically, as you can do for all other data structures in Hazelcast. You must create the configuration upfront, when you instantiate the `HazelcastInstance`. A basic example of how to configure the Replicated Map using the programmatic approach is shown in the following snippet.
 
-```java
-        Config config = new Config();
-
-        ReplicatedMapConfig replicatedMapConfig =
-                config.getReplicatedMapConfig( "default" );
-
-        replicatedMapConfig.setInMemoryFormat( InMemoryFormat.BINARY )
-                .setSplitBrainProtectionName( "splitbrainprotectionname" );
-```
+<CodeBlock language="java">{Ex_dds_replicatedmap_ReplicatedMapConfiguration_java_tag_rmc}</CodeBlock>
 
 All properties that can be configured using the declarative configuration are also available using programmatic configuration by transforming the tag names into getter or setter names.
 
@@ -184,49 +170,7 @@ Here is a code example for using EntryListener on a Replicated Map.
 
 The `HazelcastInstance` s `getReplicatedMap` method gets a Replicated Map (customers), and the `ReplicatedMap` s `addEntryListener` method adds an entry listener to the Replicated Map. Then, the `ReplicatedMap` s `put` method adds a Replicated Map entry and updates it. The method `remove` removes the entry.
 
-```java
-        HazelcastInstance hz = Hazelcast.newHazelcastInstance();
-        ReplicatedMap<String, String> map = hz.getReplicatedMap("somemap");
-        map.addEntryListener(new MyEntryListener());
-        System.out.println("EntryListener registered");
-    }
-
-    private static class MyEntryListener implements EntryListener<String, String> {
-
-        @Override
-        public void entryAdded(EntryEvent<String, String> event) {
-            System.out.println("entryAdded: " + event);
-        }
-
-        @Override
-        public void entryRemoved(EntryEvent<String, String> event) {
-            System.out.println("entryRemoved: " + event);
-        }
-
-        @Override
-        public void entryUpdated(EntryEvent<String, String> event) {
-            System.out.println("entryUpdated: " + event);
-        }
-
-        @Override
-        public void entryEvicted(EntryEvent<String, String> event) {
-            System.out.println("entryEvicted: " + event);
-        }
-        @Override
-        public void entryExpired(EntryEvent<String, String> event) {
-            System.out.println( "Entry expired: " + event );
-        }
-        @Override
-        public void mapEvicted(MapEvent event) {
-            System.out.println("mapEvicted:" + event);
-
-        }
-
-        @Override
-        public void mapCleared(MapEvent event) {
-            System.out.println("mapCleared: " + event);
-        }
-```
+<CodeBlock language="java">{Ex_dds_replicatedmap_ListeningMember_java_tag_lm}</CodeBlock>
 
 ## Split-Brain Protection for Replicated Map
 

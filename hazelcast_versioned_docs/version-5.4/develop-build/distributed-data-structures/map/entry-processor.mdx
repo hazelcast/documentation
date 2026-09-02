@@ -4,8 +4,11 @@ sidebar_position: 12
 slug: /computing/entry-processor
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_distributedcomputing_IncrementingEntryProcessor_java_tag_iep from '../../../examples/distributedcomputing/IncrementingEntryProcessor.java?tag=iep';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import Ex_distributedcomputing_OffloadableReadOnlyEntryProcessor_java_tag_oroep from '../../../examples/distributedcomputing/OffloadableReadOnlyEntryProcessor.java?tag=oroep';
 
 An entry processor is a function that executes your code on a map entry in an atomic way.
 
@@ -116,20 +119,7 @@ The interface also provides the ability to update the entry value without changi
 
 The class `IncrementingEntryProcessor` creates an entry processor to process the map entries. It implements the `EntryProcessor` interface. The `process()` method will be called for both primary and backup entries.
 
-```java
-public class IncrementingEntryProcessor implements EntryProcessor<Integer, Integer, Integer> {
-    public Integer process( Map.Entry<Integer, Integer> entry ) {
-        Integer value = entry.getValue();
-        entry.setValue( value + 1 );
-        return value + 1;
-    }
-
-    @Override
-    public EntryProcessor<Integer, Integer, Integer> getBackupProcessor() {
-        return IncrementingEntryProcessor.this;
-    }
-}
-```
+<CodeBlock language="java">{Ex_distributedcomputing_IncrementingEntryProcessor_java_tag_iep}</CodeBlock>
 
 An example usage is shown below:
 
@@ -289,26 +279,4 @@ If the entry processor implements `ReadOnly` and modifies the entry, an `Unsuppo
 
 Putting it all together:
 
-```java
-public class OffloadableReadOnlyEntryProcessor implements EntryProcessor<String, Employee, Object>,
-        Offloadable, ReadOnly {
-
-    @Override
-    public Object process(Map.Entry<String, Employee> entry) {
-        // heavy logic
-        return null;
-    }
-
-    @Override
-    public EntryProcessor<String, Employee, Object> getBackupProcessor() {
-        // ReadOnly EntryProcessor has to return null, since it's just a read-only operation that will not be
-        // executed on the backup
-        return null;
-    }
-
-    @Override
-    public String getExecutorName() {
-        return OFFLOADABLE_EXECUTOR;
-    }
-}
-```
+<CodeBlock language="java">{Ex_distributedcomputing_OffloadableReadOnlyEntryProcessor_java_tag_oroep}</CodeBlock>

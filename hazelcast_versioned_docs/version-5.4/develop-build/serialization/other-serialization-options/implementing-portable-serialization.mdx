@@ -5,8 +5,11 @@ sidebar_position: 4
 slug: /serialization/implementing-portable-serialization
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_serialization_Foo_java_tag_fooportable from '../../../examples/serialization/Foo.java?tag=fooportable';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import Ex_serialization_EmployeePortable_java_tag_empportable from '../../../examples/serialization/EmployeePortable.java?tag=empportable';
 
 :::caution[Deprecation Notice for Portable Serialization]
 
@@ -30,41 +33,7 @@ Portable serialization is totally language independent and is used as the binary
 
 Here is example code for Portable implementation of a Foo class.
 
-```java
-public class Foo implements Portable {
-    final static int ID = 5;
-
-    private String foo;
-
-    public String getFoo() {
-        return foo;
-    }
-
-    public void setFoo( String foo ) {
-        this.foo = foo;
-    }
-
-    @Override
-    public int getFactoryId() {
-        return 1;
-    }
-
-    @Override
-    public int getClassId() {
-        return ID;
-    }
-
-    @Override
-    public void writePortable( PortableWriter writer ) throws IOException {
-        writer.writeString( "foo", foo );
-    }
-
-    @Override
-    public void readPortable( PortableReader reader ) throws IOException {
-        foo = reader.readString( "foo" );
-    }
-}
-```
+<CodeBlock language="java">{Ex_serialization_Foo_java_tag_fooportable}</CodeBlock>
 
 Similar to `IdentifiedDataSerializable`, a Portable Class must provide `classId` and `factoryId`. The Factory object creates the Portable object given the `classId`.
 
@@ -204,43 +173,7 @@ Independent of the member-member or member-client communications, the method `wr
 
 Let's consider the following `Employee` class:
 
-```java
-class EmployeePortable implements Portable {
-
-    private String name;
-    private int age;
-
-    public EmployeePortable() {
-    }
-
-    public EmployeePortable(int age, String name) {
-        this.age = age;
-        this.name = name;
-    }
-
-    public int getFactoryId() {
-        return 666;
-    }
-
-    public int getClassId() {
-        return 2;
-    }
-
-    public void writePortable(PortableWriter writer) throws IOException {
-        writer.writeString("n", name);
-        writer.writeInt("a", age);
-    }
-
-    public void readPortable(PortableReader reader) throws IOException {
-        name = reader.readString("n");
-        age = reader.readInt("a");
-    }
-
-    public int getAge() {
-        return age;
-    }
-}
-```
+<CodeBlock language="java">{Ex_serialization_EmployeePortable_java_tag_empportable}</CodeBlock>
 
 As you see in the above example, first the `name` and then the `age` is written. This order should be preserved in other members or clients.
 

@@ -6,6 +6,8 @@ slug: /computing/scheduled-executor-service
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_distributedcomputing_ScheduledExecutorConfiguration_java_tag_sec from '../../examples/distributedcomputing/ScheduledExecutorConfiguration.java?tag=sec';
 
 Hazelcast's scheduled executor service (IScheduledExecutorService) is a data structure which implements `java.util.concurrent.ScheduledExecutorService`, partially. By partially, we mean the behavior difference in scheduling a task at a fixed rate (`scheduleAtFixedRate()`). Hazelcast's behavior guarantees that a task is not executed by multiple threads concurrently: a scheduled execution is skipped, instead of postponing, if another thread is still running the same task.
 
@@ -92,19 +94,7 @@ hazelcast:
 
 **Programmatic Configuration:**
 
-```java
-        Config config = new Config();
-        config.getScheduledExecutorConfig( "myScheduledExecSvc" )
-              .setPoolSize ( 16 )
-              .setCapacityPolicy( ScheduledExecutorConfig.CapacityPolicy.PER_PARTITION )
-              .setCapacity( 100 )
-              .setDurability( 1 )
-              .setMergePolicyConfig( new MergePolicyConfig("com.hazelcast.spi.merge.PassThroughMergePolicy", 110) )
-              .setSplitBrainProtectionName( "splitbrainprotectionname" );
-
-        HazelcastInstance hazelcast = Hazelcast.newHazelcastInstance(config);
-        IScheduledExecutorService myScheduledExecSvc = hazelcast.getScheduledExecutorService("myScheduledExecSvc");
-```
+<CodeBlock language="java">{Ex_distributedcomputing_ScheduledExecutorConfiguration_java_tag_sec}</CodeBlock>
 
 The following are the descriptions of each configuration element and attribute:
 

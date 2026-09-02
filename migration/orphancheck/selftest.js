@@ -151,6 +151,18 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
   assert.strictEqual(validateAllowlist({ 'c:x': { disposition: 'drop-404', toUrl: '/y/z' } }).length, 1,
     '`toUrl` on a non-redirect is rejected, for the same reason as `to`')
   assert.strictEqual(validateAllowlist({ 'c:x': 'keep' }).length, 1, 'a non-object entry is rejected')
+  // `versions` narrows an entry to the versions named. A well-formed list is
+  // valid; an EMPTY one is not -- it would silently disable the entry, which
+  // reads as "triaged" while clearing nothing.
+  assert.deepStrictEqual(
+    validateAllowlist({ 'c:x': { disposition: 'drop-404', versions: ['5.5', '5.4'] } }), [],
+    'a non-empty list of version segments is valid')
+  assert.strictEqual(validateAllowlist({ 'c:x': { disposition: 'drop-404', versions: [] } }).length, 1,
+    'an empty "versions" is rejected rather than read as "nowhere"')
+  assert.strictEqual(validateAllowlist({ 'c:x': { disposition: 'drop-404', versions: '5.5' } }).length, 1,
+    '"versions" must be an array, not a bare string')
+  assert.strictEqual(validateAllowlist({ 'c:x': { disposition: 'drop-404', versions: ['5.5', ''] } }).length, 1,
+    'an empty version segment is rejected')
 
   // The two destination forms are ALTERNATIVES, not a pair. Accepting both would
   // leave which one wins to implementation order, and they resolve differently
@@ -214,6 +226,55 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
     applyAllowlist(orphans, { 'cloudy:x': { disposition: 'drop-404' } }, 'c').staleKeys, [],
     'a same-prefix component name is not treated as the scoped component')
   ok('stale keys are judged only within the run\'s scope')
+}
+
+// --- SPEC: `versions` makes deny-by-default work PER VERSION -------------------
+// A narrowed entry clears the page only in the versions it names. The property
+// that matters is that narrowing can only ever SURFACE work: the same page
+// orphaned in a version the entry omits must be flagged as untriaged, never
+// quietly cleared. Platform 5.4/5.3 are why -- they nav via per-module partials
+// and still list pages the flat 5.5+ nav dropped.
+{
+  const pages = [
+    { id: 'i57', url: '/c/5.7/a', component: 'c', version: '5.7', module: 'ROOT', relative: 'a.adoc' },
+    { id: 'i55', url: '/c/5.5/a', component: 'c', version: '5.5', module: 'ROOT', relative: 'a.adoc' },
+    { id: 'i54', url: '/c/5.4/a', component: 'c', version: '5.4', module: 'ROOT', relative: 'a.adoc' },
+  ]
+  const orphans = classifyOrphans({ pages, navIds: new Set(), startIds: new Set(), linkedBy: new Map() })
+  const scoped = { 'c:a': { disposition: 'drop-404', versions: ['5.7', '5.5'] } }
+  const { flagged, allowed } = applyAllowlist(orphans, scoped, 'c', pages)
+  assert.deepStrictEqual(allowed.map((o) => o.version).sort(), ['5.5', '5.7'],
+    'a narrowed entry clears only the versions it names')
+  assert.deepStrictEqual(flagged.map((o) => o.version), ['5.4'],
+    'and the same page orphaned in an omitted version is FLAGGED, not cleared')
+  // An unnarrowed entry must keep covering every version.
+  assert.deepStrictEqual(
+    applyAllowlist(orphans, { 'c:a': { disposition: 'drop-404' } }, 'c', pages).flagged, [],
+    'an entry with no "versions" still clears every version')
+
+  // SPEC: a `versions` list is hand-maintained, so it drifts. A version named
+  // there that the page is in scope in and NOT an orphan in is reported, because
+  // nothing else can catch it -- the entry still matches elsewhere, so it is not
+  // a stale KEY, and the decision quietly applies to nothing in that version.
+  // Here 5.4 is in nav (hence not an orphan) but still named by the entry.
+  const navved = classifyOrphans({
+    pages, navIds: new Set(['i54']), startIds: new Set(), linkedBy: new Map(),
+  })
+  const drifted = applyAllowlist(navved, { 'c:a': { disposition: 'drop-404', versions: ['5.7', '5.5', '5.4'] } }, 'c', pages)
+  assert.deepStrictEqual(drifted.staleScopes, [{ key: 'c:a', versions: ['5.4'] }],
+    'a named version the page is no longer an orphan in is surfaced')
+  assert.deepStrictEqual(drifted.staleKeys, [],
+    'and it is NOT reported as a stale key -- the entry is still doing work')
+  // A version the page does not exist in at all is not judgeable, so it is not
+  // reported: the page may simply be out of this run\'s scope (a frozen branch).
+  assert.deepStrictEqual(
+    applyAllowlist(navved, { 'c:a': { disposition: 'drop-404', versions: ['5.7', '5.5', '5.2'] } }, 'c', pages).staleScopes,
+    [], 'a version outside the run\'s scope is not judged')
+  // Without the full page set there is nothing to judge against, so no claim is made.
+  assert.deepStrictEqual(
+    applyAllowlist(navved, { 'c:a': { disposition: 'drop-404', versions: ['5.4'] } }, 'c').staleScopes,
+    [], 'scope staleness is only claimed when the in-scope page set is supplied')
+  ok('versions: deny-by-default per version, and a drifted narrowing is surfaced')
 }
 
 console.log(`\n[orphancheck selftest] ${n} groups passed.`)

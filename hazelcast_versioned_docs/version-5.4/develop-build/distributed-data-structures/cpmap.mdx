@@ -5,6 +5,9 @@ slug: /data-structures/cpmap
 enterprise: true
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_dds_cpmap_ExampleCPMap_java_tag_cpm from '../../examples/dds/cpmap/ExampleCPMap.java?tag=cpm';
+
 Hazelcast `CPMap` is a distributed implementation of a minimal key-value interface. It is a CP data structure, so unlike the traditional maps built for availability (AP), `CPMap` guarantees data consistency even during network partitions, ensuring that every cluster member always sees the same data. This reliability makes it ideal for storing sensitive information such as user bank balances and system configurations, or managing mission-critical workflows.
 
 `CPMap` data structure supports the following atomic operations:
@@ -29,25 +32,7 @@ There is no unsafe variant of `CPMap`, unlike other CP data structures. Therefor
 
 The following example creates an instance of a `CPMap` in the `default` CP group, then updates its contents using the operations listed previously.
 
-```java
-        HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance();
-        // creates 'capitalCities' CPMap in the 'default' CP Group
-        CPMap<String, String> capitalCities = hazelcastInstance.getCPSubsystem().getMap("capitalCities");
-        // prefer 'set' over 'put' when the previous value associated with a key is not required
-        capitalCities.set("England", "London");
-        assert "London".equals(capitalCities.get("England"));
-        assert null == capitalCities.put("France", "Paris");
-        assert "London".equals(capitalCities.remove("England"));
-        // prefer 'delete' over 'remove' when the value associated with the key is not required
-        capitalCities.delete("France");
-        capitalCities.set("Germany", "Munich");
-        assert capitalCities.compareAndSet("Germany", "Munich", "Berlin");
-        assert "Berlin".equals(capitalCities.get("Germany"));
-        assert null == capitalCities.putIfAbsent("Ireland", "Dublin");
-        assert "Dublin".equals(capitalCities.putIfAbsent("Ireland", "Cork"));
-        assert "Dublin".equals(capitalCities.get("Ireland"));
-        capitalCities.destroy();
-```
+<CodeBlock language="java">{Ex_dds_cpmap_ExampleCPMap_java_tag_cpm}</CodeBlock>
 
 The mutations over the `CPMap` `capitalCities` in the above example are replicated across each of the members of the `default` CP Group.
 

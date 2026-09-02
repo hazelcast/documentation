@@ -5,8 +5,21 @@ sidebar_position: 3
 slug: /cp-subsystem/management
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_cp_event_CPMembershipListenerImpl_java_tag_impl from '../../examples/cp/event/CPMembershipListenerImpl.java?tag=impl';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import Ex_cp_event_CPGroupAvailabilityListenerImpl_java_tag_impl from '../../examples/cp/event/CPGroupAvailabilityListenerImpl.java?tag=impl';
+import Ex_cp_CpSubsystemAPI_java_tag_localmember from '../../examples/cp/CpSubsystemAPI.java?tag=localmember';
+import Ex_cp_CpSubsystemAPI_java_tag_cpmembers from '../../examples/cp/CpSubsystemAPI.java?tag=cpmembers';
+import Ex_cp_CpSubsystemAPI_java_tag_cpgroups from '../../examples/cp/CpSubsystemAPI.java?tag=cpgroups';
+import Ex_cp_CpSubsystemAPI_java_tag_cpgroup from '../../examples/cp/CpSubsystemAPI.java?tag=cpgroup';
+import Ex_cp_CpSubsystemAPI_java_tag_sessions from '../../examples/cp/CpSubsystemAPI.java?tag=sessions';
+import Ex_cp_CpSubsystemAPI_java_tag_destroygroup from '../../examples/cp/CpSubsystemAPI.java?tag=destroygroup';
+import Ex_cp_CpSubsystemAPI_java_tag_removemember from '../../examples/cp/CpSubsystemAPI.java?tag=removemember';
+import Ex_cp_CpSubsystemAPI_java_tag_promotemember from '../../examples/cp/CpSubsystemAPI.java?tag=promotemember';
+import Ex_cp_CpSubsystemAPI_java_tag_reset from '../../examples/cp/CpSubsystemAPI.java?tag=reset';
+import Ex_cp_CpSubsystemAPI_java_tag_closesession from '../../examples/cp/CpSubsystemAPI.java?tag=closesession';
 
 The CP Subsystem requires manual intervention while expanding or shrinking its size, or when a CP member crashes or becomes unreachable. When a CP member becomes unreachable, it is not automatically removed from CP Subsystem because it could still be active and partitioned away.
 
@@ -75,24 +88,7 @@ To get notified for CP membership events, implement the `CPMembershipListener` i
 
 The following is an example `CPMembershipListener` class:
 
-```java
-public class CPMembershipListenerImpl implements CPMembershipListener {
-
-    /**
-     * Called when a new CP member is added to the CP Subsystem.
-     */
-    public void memberAdded(CPMembershipEvent event) {
-        System.out.println("Added: " + event);
-    }
-
-    /**
-     * Called when a CP member is removed from the CP Subsystem.
-     */
-    public void memberRemoved(CPMembershipEvent event) {
-        System.out.println("Removed: " + event);
-    }
-}
-```
+<CodeBlock language="java">{Ex_cp_event_CPMembershipListenerImpl_java_tag_impl}</CodeBlock>
 
 `CPMembershipListener` can be defined in the configuration or can be registered at runtime with the `CPSubsystem` API.
 
@@ -188,25 +184,7 @@ The listener interface has methods that are invoked for the following events:
 
 The following is an example `CPGroupAvailabilityListener` class:
 
-```java
-public class CPGroupAvailabilityListenerImpl implements CPGroupAvailabilityListener {
-
-    /**
-     * Called when a CP group's availability decreases,
-     * but still has the majority of members available.
-     */
-    public void availabilityDecreased(CPGroupAvailabilityEvent event) {
-        System.out.println("Availability decreased: " + event);
-    }
-
-    /**
-     * Called when a CP group has lost its majority.
-     */
-    public void majorityLost(CPGroupAvailabilityEvent event) {
-        System.out.println("Majority Lost: " + event);
-    }
-}
-```
+<CodeBlock language="java">{Ex_cp_event_CPGroupAvailabilityListenerImpl_java_tag_impl}</CodeBlock>
 
 A `CPGroupAvailabilityListener` can be defined in the configuration or can be registered at runtime with the `CPSubsystem` API.
 
@@ -291,9 +269,7 @@ See <Variable href="/management-center/{page-latest-supported-mc}/cp-subsystem/d
 </TabItem>
 <TabItem value="java-member-api" label="Java member API">
 
-```java
-        CPMember localMember = cpSubsystem.getLocalCPMember();
-```
+<CodeBlock language="java">{Ex_cp_CpSubsystemAPI_java_tag_localmember}</CodeBlock>
 
 </TabItem>
 <TabItem value="rest-api" label="REST API">
@@ -328,11 +304,7 @@ See <Variable href="/management-center/{page-latest-supported-mc}/cp-subsystem/d
 </TabItem>
 <TabItem value="java-member-api" label="Java member API">
 
-```java
-        CPSubsystemManagementService managementService = cpSubsystem.getCPSubsystemManagementService();
-        CompletionStage<Collection<CPMember>> future = managementService.getCPMembers();
-        Collection<CPMember> members = future.toCompletableFuture().get();
-```
+<CodeBlock language="java">{Ex_cp_CpSubsystemAPI_java_tag_cpmembers}</CodeBlock>
 
 </TabItem>
 <TabItem value="rest-api" label="REST API">
@@ -385,11 +357,7 @@ See <Variable href="/management-center/{page-latest-supported-mc}/cp-subsystem/d
 </TabItem>
 <TabItem value="java-member-api" label="Java member API">
 
-```java
-        CPSubsystemManagementService managementService = cpSubsystem.getCPSubsystemManagementService();
-        CompletionStage<Collection<CPGroupId>> future = managementService.getCPGroupIds();
-        Collection<CPGroupId> groups = future.toCompletableFuture().get();
-```
+<CodeBlock language="java">{Ex_cp_CpSubsystemAPI_java_tag_cpgroups}</CodeBlock>
 
 </TabItem>
 <TabItem value="rest-api" label="REST API">
@@ -430,11 +398,7 @@ See <Variable href="/management-center/{page-latest-supported-mc}/cp-subsystem/d
 </TabItem>
 <TabItem value="java-member-api" label="Java member API">
 
-```java
-        CPSubsystemManagementService managementService = cpSubsystem.getCPSubsystemManagementService();
-        CompletionStage<CPGroup> future = managementService.getCPGroup(groupName);
-        CPGroup group = future.toCompletableFuture().get();
-```
+<CodeBlock language="java">{Ex_cp_CpSubsystemAPI_java_tag_cpgroup}</CodeBlock>
 
 </TabItem>
 <TabItem value="rest-api" label="REST API">
@@ -488,11 +452,7 @@ See <Variable href="/management-center/{page-latest-supported-mc}/cp-subsystem/d
 </TabItem>
 <TabItem value="java-member-api" label="Java member API">
 
-```java
-        CPSessionManagementService sessionManagementService = cpSubsystem.getCPSessionManagementService();
-        CompletionStage<Collection<CPSession>> future = sessionManagementService.getAllSessions(groupName);
-        Collection<CPSession> sessions = future.toCompletableFuture().get();
-```
+<CodeBlock language="java">{Ex_cp_CpSubsystemAPI_java_tag_sessions}</CodeBlock>
 
 </TabItem>
 <TabItem value="rest-api" label="REST API">
@@ -542,11 +502,7 @@ You cannot yet destroy a CP group from Management Center.
 </TabItem>
 <TabItem value="java-member-api" label="Java member API">
 
-```java
-        CPSubsystemManagementService managementService = cpSubsystem.getCPSubsystemManagementService();
-        CompletionStage<Void> future = managementService.forceDestroyCPGroup(groupName);
-        future.toCompletableFuture().get();
-```
+<CodeBlock language="java">{Ex_cp_CpSubsystemAPI_java_tag_destroygroup}</CodeBlock>
 
 </TabItem>
 <TabItem value="rest-api" label="REST API">
@@ -580,11 +536,7 @@ See <Variable href="/management-center/{page-latest-supported-mc}/cp-subsystem/d
 </TabItem>
 <TabItem value="java-member-api" label="Java member API">
 
-```java
-        CPSubsystemManagementService managementService = cpSubsystem.getCPSubsystemManagementService();
-        CompletionStage<Void> future = managementService.removeCPMember(memberUUID);
-        future.toCompletableFuture().get();
-```
+<CodeBlock language="java">{Ex_cp_CpSubsystemAPI_java_tag_removemember}</CodeBlock>
 
 </TabItem>
 <TabItem value="rest-api" label="REST API">
@@ -627,11 +579,7 @@ See <Variable href="/management-center/{page-latest-supported-mc}/cp-subsystem/d
 </TabItem>
 <TabItem value="java-member-api" label="Java member API">
 
-```java
-        CPSubsystemManagementService managementService = cpSubsystem.getCPSubsystemManagementService();
-        CompletionStage<Void> future = managementService.promoteToCPMember();
-        future.toCompletableFuture().get();
-```
+<CodeBlock language="java">{Ex_cp_CpSubsystemAPI_java_tag_promotemember}</CodeBlock>
 
 </TabItem>
 <TabItem value="rest-api" label="REST API">
@@ -673,11 +621,7 @@ See <Variable href="/management-center/{page-latest-supported-mc}/cp-subsystem/d
 </TabItem>
 <TabItem value="java-member-api" label="Java member API">
 
-```java
-        CPSubsystemManagementService managementService = cpSubsystem.getCPSubsystemManagementService();
-        CompletionStage<Void> future = managementService.reset();
-        future.toCompletableFuture().get();
-```
+<CodeBlock language="java">{Ex_cp_CpSubsystemAPI_java_tag_reset}</CodeBlock>
 
 </TabItem>
 <TabItem value="rest-api" label="REST API">
@@ -705,11 +649,7 @@ You cannot yet force a session to close from Management Center.
 </TabItem>
 <TabItem value="java-member-api" label="Java member API">
 
-```java
-        CPSessionManagementService sessionManagementService = cpSubsystem.getCPSessionManagementService();
-        CompletionStage<Boolean> future = sessionManagementService.forceCloseSession(groupName, sessionId);
-        future.toCompletableFuture().get();
-```
+<CodeBlock language="java">{Ex_cp_CpSubsystemAPI_java_tag_closesession}</CodeBlock>
 
 </TabItem>
 <TabItem value="rest-api" label="REST API">

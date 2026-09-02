@@ -5,6 +5,11 @@ sidebar_position: 1
 slug: /data-structures/distributed-data-structures
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_MapMember_java_tag_mapmember from '../../examples/MapMember.java?tag=mapmember';
+import Ex_ExampleDOL_java_tag_sampledol from '../../examples/ExampleDOL.java?tag=sampledol';
+import Ex_cp_CpSubsystemAPI_java_tag_apisample from '../../examples/cp/CpSubsystemAPI.java?tag=apisample';
+
 Hazelcast offers distributed implementations of many common data structures. For each of the client languages, Hazelcast mimics as closely as possible the natural interface of the structure. For example in Java, the map follows `java.util.Map` semantics. All of these structures are available in Java, .NET, C++, Node.js, Python, and Go.
 
 | Data structure | Description | Partitioned/Non-partitioned | [AP/CP](../architecture/architecture.mdx#apcp) |
@@ -79,16 +84,7 @@ Map<Integer, String> customers = hazelcastInstance.getMap( "customers" );
 
 To destroy a Hazelcast distributed object, you can use the `destroy()` method, which clears and releases all resources of the object. Therefore, you must use it with care since a reload with the same object reference after the object is destroyed creates a new data structure without an error. See the following example code where one of the queues are destroyed and the other one is accessed.
 
-```java
-        HazelcastInstance hz1 = Hazelcast.newHazelcastInstance();
-        HazelcastInstance hz2 = Hazelcast.newHazelcastInstance();
-        IQueue<String> q1 = hz1.getQueue("q");
-        IQueue<String> q2 = hz2.getQueue("q");
-        q1.add("foo");
-        System.out.println("q1.size: "+q1.size()+ " q2.size:"+q2.size());
-        q1.destroy();
-        System.out.println("q1.size: " + q1.size() + " q2.size:" + q2.size());
-```
+<CodeBlock language="java">{Ex_MapMember_java_tag_mapmember}</CodeBlock>
 
 If you start the member, you see the following output:
 
@@ -126,35 +122,7 @@ When a partition occurs, all members remain available but some might return an o
 
 Here is an example of how you can retrieve existing AP data structure instances and how you can listen for instance events, such as an instance being created or destroyed.
 
-```java
-public class ExampleDOL implements DistributedObjectListener {
-
-    public static void main(String[] args) {
-        ExampleDOL example = new ExampleDOL();
-        Config config = new Config();
-
-        HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
-        hazelcastInstance.addDistributedObjectListener(example);
-
-        Collection<DistributedObject> distributedObjects = hazelcastInstance.getDistributedObjects();
-        for (DistributedObject distributedObject : distributedObjects) {
-            System.out.println(distributedObject.getName());
-        }
-    }
-
-    @Override
-    public void distributedObjectCreated(DistributedObjectEvent event) {
-        DistributedObject instance = event.getDistributedObject();
-        System.out.println("Created " + instance.getName());
-    }
-
-    @Override
-    public void distributedObjectDestroyed(DistributedObjectEvent event) {
-        Object objectName = event.getObjectName();
-        System.out.println("Destroyed " + objectName);
-    }
-}
-```
+<CodeBlock language="java">{Ex_ExampleDOL_java_tag_sampledol}</CodeBlock>
 
 :::note
 
@@ -175,18 +143,4 @@ The CP data structures differ from AP data structures in two aspects:
 
 ### Example Code {/* #example-code */}
 
-```java
-        CPSubsystem cpSubsystem = hazelcastInstance.getCPSubsystem();
-
-        IAtomicLong atomicLong = cpSubsystem.getAtomicLong(name);
-
-        IAtomicReference atomicRef = cpSubsystem.getAtomicReference(name);
-
-        FencedLock lock = cpSubsystem.getLock(name);
-
-        ISemaphore semaphore = cpSubsystem.getSemaphore(name);
-
-        ICountDownLatch latch = cpSubsystem.getCountDownLatch(name);
-
-        CPMap map = cpSubsystem.getMap(name);
-```
+<CodeBlock language="java">{Ex_cp_CpSubsystemAPI_java_tag_apisample}</CodeBlock>

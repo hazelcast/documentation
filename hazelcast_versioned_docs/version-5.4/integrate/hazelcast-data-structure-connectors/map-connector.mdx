@@ -6,6 +6,8 @@ slug: /integrate/map-connector
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_dds_EventJournalConfiguration_java_tag_ejc from '../../examples/dds/EventJournalConfiguration.java?tag=ejc';
 
 A map is a distributed in-memory key-value data structure that can be used as a batch or streaming data source as well as a data sink. See [Distributed Map](../../develop-build/distributed-data-structures/map/map.mdx).
 
@@ -89,21 +91,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java
-        EventJournalConfig eventJournalMapConfig = new EventJournalConfig()
-                .setEnabled(true)
-                .setCapacity(5000)
-                .setTimeToLiveSeconds(20);
-
-        EventJournalConfig eventJournalCacheConfig = new EventJournalConfig()
-                .setEnabled(true)
-                .setCapacity(10000)
-                .setTimeToLiveSeconds(0);
-
-        Config config = new Config();
-        config.getMapConfig("myMap").setEventJournalConfig(eventJournalMapConfig);
-        config.getCacheConfig("myCache").setEventJournalConfig(eventJournalCacheConfig);
-```
+<CodeBlock language="java">{Ex_dds_EventJournalConfiguration_java_tag_ejc}</CodeBlock>
 
 </TabItem>
 </Tabs>

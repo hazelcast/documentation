@@ -7,6 +7,10 @@ slug: /clusters/network-configuration
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_settingupclusters_AdvancedNetworkConfig_java_tag_advNetConf from '../../examples/settingupclusters/AdvancedNetworkConfig.java?tag=advNetConf';
+import Ex_settingupclusters_AdvancedNetworkConfig_java_tag_memberServerSocket from '../../examples/settingupclusters/AdvancedNetworkConfig.java?tag=memberServerSocket';
+import Ex_settingupclusters_AdvancedNetworkConfig_java_tag_restServerSocket from '../../examples/settingupclusters/AdvancedNetworkConfig.java?tag=restServerSocket';
 
 All network related configurations are performed via the `network` element in the Hazelcast XML configuration file or the class `NetworkConfig` when using programmatic configuration. Following subsections describe the available configurations that you can perform under the `network` element.
 
@@ -603,15 +607,7 @@ You can also configure the Hazelcast members with separate server sockets using 
 
 In the following example we introduce the advanced network configuration for a member to listen for member-to-member connections on the default port `5701` while listening for client connections on the port `9090`:
 
-```java
-        Config config = new Config();
-        config.getAdvancedNetworkConfig().setEnabled(true);
-        config.getAdvancedNetworkConfig().setClientEndpointConfig(
-                new ServerSocketEndpointConfig().setPort(9090)
-        );
-        HazelcastInstance instance = Hazelcast.newHazelcastInstance(config);
-        System.out.println(instance.getCluster().getLocalMember().getAddressMap());
-```
+<CodeBlock language="java">{Ex_settingupclusters_AdvancedNetworkConfig_java_tag_advNetConf}</CodeBlock>
 
 Running this example prints something similar to the following output, indicating that the member listens for the specified protocols on the respective configured ports:
 
@@ -797,29 +793,13 @@ When using the declarative configuration, specific element names introduce the s
 
 When using the programmatic configuration, corresponding methods set the respective server socket endpoint configuration:
 
-```java
-        config.getAdvancedNetworkConfig().setMemberEndpointConfig(
-                new ServerSocketEndpointConfig()
-                    .setPort(5701)
-                    .setPortAutoIncrement(false)
-                    .setSSLConfig(new SSLConfig())
-                    .setReuseAddress(true)
-                    .setSocketTcpNoDelay(true)
-        );
-```
+<CodeBlock language="java">{Ex_settingupclusters_AdvancedNetworkConfig_java_tag_memberServerSocket}</CodeBlock>
 
 ### Setting Up REST Server Socket Endpoint Configuration
 
 In addition to the common server socket configuration described above, the REST endpoint configuration includes certain additional elements which are used to enable/disable the REST functionality groups.
 
-```java
-        config.getAdvancedNetworkConfig().setRestEndpointConfig(
-                new RestServerEndpointConfig()
-                    .setPort(8080)
-                    .setPortAutoIncrement(false)
-                    .enableGroups(WAN, CLUSTER_READ, HEALTH_CHECK)
-        );
-```
+<CodeBlock language="java">{Ex_settingupclusters_AdvancedNetworkConfig_java_tag_restServerSocket}</CodeBlock>
 
 The following is the equivalent declarative configuration:
 

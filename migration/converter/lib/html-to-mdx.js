@@ -1767,7 +1767,16 @@ function inlineTag ($, node, st, opt) {
         const absHref = kind === 'internal' ? floatCrossComponentLatest(resolved.href, st) : resolved.href
         return anchorEl + `<a href=${jsxAttr(absHref)}>${label}</a>`
       }
-      const safeLabel = label.replace(/\]/g, '\\]')
+      // Only an UNESCAPED `]` needs escaping. The label has already been through
+      // mdEscape, which escapes both brackets, so a blanket replace turns its
+      // `\]` into `\\]` -- an escaped BACKSLASH followed by a live `]`, which
+      // ends the label early and leaves the link rendering as literal source.
+      // Real case: 5.3 data-structures/priority-queue says `<<configuring-queue>>`
+      // against an anchor that is not on the page, and Asciidoctor renders an
+      // unresolved internal xref with the id in square brackets as its LABEL --
+      // `<a href="#configuring-queue">[configuring-queue]</a>`. Same lookbehind
+      // idiom as escapeCellPipes, and for the same reason.
+      const safeLabel = label.replace(/(?<!\\)\]/g, '\\]')
       const safeHref = /[()\s]/.test(href) ? `<${href}>` : href
       return anchorEl + `[${safeLabel}](${safeHref})`
     }

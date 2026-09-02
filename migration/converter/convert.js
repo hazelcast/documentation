@@ -151,6 +151,17 @@ const SINGLE_SOURCE_ATTRS = {
     'page-latest-supported-cplusplus-client', 'page-latest-supported-csharp-client',
     'page-latest-supported-python-client', 'page-latest-supported-nodejs-client',
     'page-latest-supported-go-client',
+    // {page-latest-supported-java-client} exists ONLY at 5.4 and 5.3 (5.4.0 and
+    // 5.3.5): hz-docs renamed it to -java-client-new at 5.5, so the set assembled
+    // while 5.5+ were the only live versions had no reason to carry it and every
+    // occurrence baked -- clients/java, sql/sql-overview and 5.3's release note.
+    // It also makes the collision in this family three-way rather than two: at 5.4
+    // java, cplusplus AND csharp are all `5.4.0`. That costs nothing here because
+    // every reference to it is inside a link href, where attrHrefTemplates reads
+    // the `{name}` out of the SOURCE's own target and so cannot confuse same-valued
+    // siblings -- which is also why leaving it OUT was what let the value map
+    // mis-assign a java occurrence to csharp (refcheck's `extra` on sql-overview).
+    'page-latest-supported-java-client',
   ],
 }
 

@@ -7,6 +7,9 @@ enterprise: true
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_wan_ExampleWANReplicationConfiguration_java_tag_wrc from '../../examples/wan/ExampleWANReplicationConfiguration.java?tag=wrc';
+import Ex_wan_ExampleWANReplicationDiscoveryConfiguration_java_tag_wrdc from '../../examples/wan/ExampleWANReplicationDiscoveryConfiguration.java?tag=wrdc';
 
 WAN Replication is defined and configured using the `wan-replication` configuration element as can be seen in the above examples.
 
@@ -91,25 +94,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java-member-api" label="Java Member API">
 
-```java
-        Config config = new Config();
-        WanBatchPublisherConfig batchPublisherConfig = new WanBatchPublisherConfig()
-                .setClusterName("london")
-                .setTargetEndpoints("10.3.5.1:5701,10.3.5.2:5701");
-
-        WanConsumerConfig consumerConfig = new WanConsumerConfig()
-                .setPersistWanReplicatedData(false);
-
-        WanReplicationConfig wrConfig = new WanReplicationConfig()
-                .setName("london-wan-rep")
-                .addBatchReplicationPublisherConfig(batchPublisherConfig)
-                .setConsumerConfig(consumerConfig);
-
-        config.addWanReplicationConfig(wrConfig);
-
-        config.getMapConfig("replicatedMap").setWanReplicationRef(new WanReplicationRef().setName("london-wan-rep"));
-        config.getCacheConfig("replicatedCache").setWanReplicationRef(new WanReplicationRef().setName("london-wan-rep"));
-```
+<CodeBlock language="java">{Ex_wan_ExampleWANReplicationConfiguration_java_tag_wrc}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -206,35 +191,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java-member-api" label="Java Member API">
 
-```java
-        Config config = new Config();
-
-        WanBatchPublisherConfig batchPublisherConfig = new WanBatchPublisherConfig()
-                .setClusterName("london");
-
-        DiscoveryStrategyConfig discoveryStrategyConfig = new DiscoveryStrategyConfig("com.hazelcast.aws.AwsDiscoveryStrategy");
-        discoveryStrategyConfig.addProperty("access-key","test-access-key");
-        discoveryStrategyConfig.addProperty("secret-key","test-secret-key");
-        discoveryStrategyConfig.addProperty("region","test-region");
-        discoveryStrategyConfig.addProperty("iam-role","test-iam-role");
-        discoveryStrategyConfig.addProperty("host-header","ec2.test-host-header");
-        discoveryStrategyConfig.addProperty("security-group-name","test-security-group-name");
-        discoveryStrategyConfig.addProperty("tag-key","test-tag-key");
-        discoveryStrategyConfig.addProperty("tag-value","test-tag-value");
-        discoveryStrategyConfig.addProperty("hz-port",5702);
-
-        DiscoveryConfig discoveryConfig = new DiscoveryConfig()
-                .addDiscoveryStrategyConfig(discoveryStrategyConfig);
-        batchPublisherConfig.setDiscoveryConfig(discoveryConfig);
-
-        WanReplicationConfig wrConfig = new WanReplicationConfig()
-                .setName("london-wan-rep")
-                .addBatchReplicationPublisherConfig(batchPublisherConfig);
-        config.addWanReplicationConfig(wrConfig);
-
-        config.getMapConfig("replicatedMap").setWanReplicationRef(new WanReplicationRef().setName("london-wan-rep"));
-        config.getCacheConfig("replicatedCache").setWanReplicationRef(new WanReplicationRef().setName("london-wan-rep"));
-```
+<CodeBlock language="java">{Ex_wan_ExampleWANReplicationDiscoveryConfiguration_java_tag_wrdc}</CodeBlock>
 
 </TabItem>
 </Tabs>
