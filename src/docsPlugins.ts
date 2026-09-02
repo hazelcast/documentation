@@ -16,8 +16,16 @@ import fs from 'fs';
 import path from 'path';
 import type {PluginConfig} from '@docusaurus/types';
 import type {Options} from '@docusaurus/plugin-content-docs';
+import latestLinks, {type LatestSegs} from './remark/latestLinks';
 
 const siteDir = path.resolve(__dirname, '..');
+
+// Which version segment each component's `/latest/` alias resolves to, filled in
+// by versionedDocs() as the instances are built and read by the latestLinks
+// remark plugin at compile time (see that file for why the timing works, and why
+// those links need resolving at all). Unversioned components are absent: with no
+// version segment there is no alias to resolve.
+const latestSegs: LatestSegs = {};
 
 // Asciidoctor's `caution`/`important` are not Docusaurus admonition keywords, so
 // every instance extends the defaults with them — the fidelity Layer-2 check
@@ -35,7 +43,10 @@ const admonitions = {keywords: ['caution', 'important'], extendDefaults: true};
 // sidebarPath here. Autogeneration reproduces the Antora nav order because the
 // folder tree and each _category_.json mirror nav.adoc.
 function contentDocs(options: Options): PluginConfig {
-  return ['@docusaurus/plugin-content-docs', options];
+  return [
+    '@docusaurus/plugin-content-docs',
+    {...options, remarkPlugins: [...(options.remarkPlugins ?? []), [latestLinks, {latest: latestSegs}]]},
+  ];
 }
 
 // An unversioned component: the only version is served at the base path, with no
@@ -91,6 +102,10 @@ export function versionedDocs({
     );
   }
   ensureVersionedSidebars(id, releases);
+  // `/<id>/latest/` points at whichever version is `lastVersion` below — the
+  // newest release, or main's own segment where main IS the newest release. Same
+  // expression, so the alias cannot drift from what Docusaurus marks `isLast`.
+  latestSegs[id] = defaultVersion === 'current' ? currentSeg : releases[0]!;
   return contentDocs({
     id,
     path: id,

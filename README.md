@@ -53,12 +53,20 @@ the corpus's only Antora *attachment* (from `hz-docs`
 `docs/modules/pipelines/attachments/`), a data file the `map-join` tutorial
 tells the reader to download. Attachments are a different Antora resource
 family from images, so nothing in the converter places them — with a single
-file corpus-wide, adding a subsystem for it was not worth it. It sits at
-Antora's published URL so the production URL is preserved and the converter's
-generated link resolves unchanged, with one copy per live version to match the
-per-version image rule.
+file corpus-wide, adding a subsystem for it was not worth it. One copy per live
+version, matching the per-version image rule.
 
-Because it lives in `static/` rather than being co-located, the broken-link
-checker (which only sees routes) still warns on each referring page, and
-webpack never verifies the file, so deleting it 404s silently instead of
-failing the build. Both are acceptable while the Antora sources stay pinned.
+Note what actually happens to the link. The converter emits Antora's published
+absolute URL, and for an ABSOLUTE asset path Docusaurus searches the static
+dirs (mdx-loader `remark/transformLinks`, `getLocalFileAbsolutePath`); finding
+the file there, it rewrites the link to a content-hashed
+`/assets/files/nasdaqlisted-<hash>.txt` require. So the referring pages link to
+the hashed asset, webpack DOES verify it (deleting it fails the build, as with
+a co-located image), and the copies under `static/` serve only to keep Antora's
+production URL alive for inbound links and bookmarks.
+
+The trade-off is duplication: six static copies plus one hashed asset for a
+195 KB file. To make the pages use the production URL instead, the link would
+need Docusaurus's `pathname://` prefix to opt out of asset processing — at the
+cost of the build-time verification and of a broken-link warning, since the
+checker only sees routes.
