@@ -1194,6 +1194,38 @@ function retargetRedirect (resolved, st) {
   return relativeDocLink(to, resolved.hash, st) || (to + (resolved.hash || ''))
 }
 
+// A same-component link that Antora resolved into ANOTHER version, because the
+// source wrote a component-QUALIFIED versionless xref: hz-docs'
+// `xref:hazelcast:maintain-cluster:rolling-upgrades.adoc` from inside hz-docs, and
+// the operator tutorials' `xref:operator:ROOT:get-started.adoc` from inside the
+// operator repo. Antora reads the component coordinate as cross-component and
+// resolves versionless -> that component's LATEST RELEASE, so every version's copy
+// of the page sends the reader out of the version they are reading: the 5.18
+// tutorials link into 5.19. Retarget to the same page in the page's OWN version.
+//
+// A DELIBERATE DIVERGENCE from the golden -- production has the same jump today --
+// and one NO GATE CAN SEE: Layer 3 checks that a link resolves, not that it
+// resolves where the golden's did, and the link TEXT is unchanged so Layers 1/2
+// are blind too. Recorded here because an accept-list entry would never fire.
+//
+// Three guards keep it off deliberate cross-version pins:
+//   - same component only; a genuine cross-component xref is the float's business.
+//   - the target must be the component's CURRENT LATEST RELEASE. That is the
+//     fingerprint of the versionless resolution -- an author who pins an older
+//     version (`xref:5.5@hazelcast:…`) means it, and is left alone.
+//   - the page must EXIST at the page's own version (membership in urlToRelFile,
+//     which relativeDocLink tests): with nothing to retarget to, the golden's
+//     target beats a 404.
+function sameComponentOwnVersion (resolved, st) {
+  if (!st.seg || st.component == null) return null
+  const m = resolved.path.match(/^\/([^/]+)\/([^/]+)(\/.*)?$/)
+  if (!m) return null
+  const [, comp, ver, rest] = m
+  if (comp !== st.component || ver === st.seg) return null
+  if (!st.latestVersions || st.latestVersions[comp] !== ver) return null
+  return relativeDocLink(`/${comp}/${st.seg}${rest || '/'}`, resolved.hash, st)
+}
+
 // The emitted FORM of a resolved internal href: the redirect target if the page
 // is redirected away, else a relative .mdx path to this component+version's file
 // (which survives a version cut), else the absolute route with a versionless
@@ -1207,6 +1239,7 @@ function docLinkHref (resolved, st) {
   if (resolved.kind !== 'internal') return resolved.href
   return retargetRedirect(resolved, st) ||
     relativeDocLink(resolved.path, resolved.hash, st) ||
+    sameComponentOwnVersion(resolved, st) ||
     floatCrossComponentLatest(resolved.href, st)
 }
 

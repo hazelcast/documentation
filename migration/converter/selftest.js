@@ -353,6 +353,52 @@ const renderedCode = (md) => {
   ok('link form follows the target, not the label: code-labelled links relativize like plain ones')
 }
 
+// --- a same-component link into ANOTHER version comes back to this one -------
+// A component-QUALIFIED versionless xref (`xref:operator:ROOT:get-started.adoc`)
+// is read by Antora as cross-component and resolved to the component's LATEST
+// RELEASE, so a 5.18 page's golden href points into 5.19. The reader must stay in
+// the version they are reading. Stated three ways, because the RULE is "undo the
+// versionless resolution", not "rewrite any cross-version link": an explicit pin
+// to a non-latest version, and a target absent from this version, must survive.
+{
+  const ctx = {
+    pageUrl: '/operator/5.18/tutorials/operator-tutorial-tls',
+    component: 'operator',
+    seg: '5.18',
+    relFile: 'operate-and-manage/security/tls/operator-tutorial-tls.mdx',
+    latestVersions: { operator: '5.19' },
+    urlToRelFile: new Map([
+      ['/operator/5.18/get-started', 'install-and-upgrade/get-started/overview.mdx'],
+      ['/operator/5.18/tls', 'operate-and-manage/security/tls/tls.mdx'],
+    ]),
+  }
+  const hrefOf = (body) => (body.match(/\]\(([^)]*)\)/) || [])[1]
+  const at = (href, c = ctx) => hrefOf(convertBody(`<p>see <a href="${href}">x</a>.</p>`, c).body)
+
+  assert.strictEqual(at('/operator/5.19/get-started'), '../../../install-and-upgrade/get-started/overview.mdx',
+    'a link Antora floated to the latest release comes back to the page\'s own version')
+  assert.strictEqual(at('/operator/5.19/tls#truststore'), './tls.mdx#truststore',
+    'the anchor rides along with the retarget')
+
+  // An explicit pin to a version that is NOT the latest release is an author
+  // decision: leave it exactly where it points.
+  assert.strictEqual(at('/operator/5.16/get-started'), '/operator/5.16/get-started',
+    'a deliberate pin to a non-latest version is left alone')
+
+  // Latest-release shape, but the page does not exist at this version -> nothing
+  // to retarget to, so the golden's target beats inventing a 404.
+  assert.strictEqual(at('/operator/5.19/brand-new-page'), '/operator/5.19/brand-new-page',
+    'a target absent from this version keeps the golden href')
+
+  // The page's OWN version is never touched by this rule (it is relativeDocLink's
+  // job), and an unversioned component has no own-version to come back to.
+  assert.strictEqual(at('/operator/5.18/tls'), './tls.mdx', 'a same-version target still relativizes')
+  assert.strictEqual(
+    at('/cloud/5.19/get-started', { ...ctx, component: 'cloud', seg: null, urlToRelFile: new Map() }),
+    '/cloud/5.19/get-started', 'an unversioned component is not retargeted')
+  ok('same-component cross-version links return to the page\'s own version, deliberate pins do not')
+}
+
 // --- heal a `link:`-macro doc ref (foo.adoc/.html -> the real page) -----------
 // Antora leaves an unresolved `link:clc-script.adoc[…]` as a literal `.adoc`
 // href (dead in prod). When the extensionless target is a real page, the
