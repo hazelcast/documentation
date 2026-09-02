@@ -1,0 +1,58 @@
+name: Compile Java source files
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'hazelcast/examples/**'
+      - 'pom.xml'
+      - 'src/variables.ts'
+      - '.github/workflows/maven-pr-builder.yaml'
+  schedule:
+    - cron: '15 2 * * 0'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Get doc properties
+        id: get-doc-properties
+        run: |
+          extract_variable() {
+            node -e "console.log(require('./src/variables.ts').versionedVariables.hazelcast.current['$1'])"
+          }
+
+          echo "full-version=$(extract_variable full-version)" >> ${GITHUB_OUTPUT}
+          echo "minimum-java-version=$(extract_variable minimum-java-version)" >> ${GITHUB_OUTPUT}
+
+      - uses: actions/setup-java@v5
+        with:
+          java-version: '${{ steps.get-doc-properties.outputs.minimum-java-version }}'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Maven compile
+        run: |
+          mvn \
+            test \
+            --show-version \
+            --batch-mode \
+            --no-transfer-progress \
+            "-Dversion.hazelcast=${{ steps.get-doc-properties.outputs.full-version }}" \
+            "-Dmaven.compiler.release=${{ steps.get-doc-properties.outputs.minimum-java-version }}"
+
+      - name: Slack notification
+        uses: hazelcast/docker-actions/slack-notification@master
+        if: failure() && github.event_name == 'schedule'
+        with:
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK }}
+          slack-channel: "#docs-notifications"
+          status: failure
