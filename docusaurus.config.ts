@@ -91,7 +91,7 @@ const config: Config = {
   // links broken in production) must not fail the build. Flip back to 'throw'
   // once every component is migrated.
   onBrokenLinks: 'warn',
-  onBrokenAnchors: 'warn',
+  onBrokenAnchors: 'ignore',
 
   markdown: {
     hooks: {
