@@ -5,6 +5,7 @@ sidebar_position: 1
 slug: /getting-started/get-started-docker
 ---
 
+import PartialDeployDockerIpWarning from '@site/hazelcast_versioned_docs/version-5.5/_partials/deploy-docker-ip-warning.mdx';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
@@ -47,11 +48,7 @@ In this step, you use the Hazelcast Docker image to start a local single-member 
    Docker networks make it easier for you to connect to your cluster and add other services that need to communicate with your cluster.
 2. To start a member, execute the Docker `run` command.
 
-   :::warning
-
-   These methods open Hazelcast members to the public. Anybody who can reach the Docker host over the network can connect to Hazelcast ports of the running members and perform actions - such as data manipulation or shutting down the members.
-
-   :::
+   <PartialDeployDockerIpWarning/>
 
    Replace the `<host_ip>` placeholder with the IP address of your Docker host.
 

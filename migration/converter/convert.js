@@ -1305,7 +1305,7 @@ function convertVersion (ver, ctx) {
 
   // Audit trail (internal, under build/), suffixed by version so versions of the
   // same component do not overwrite each other.
-  writePartialsReport(opts, component, seg, report, decisions)
+  writePartialsReport(opts, component, seg, report, new Set(pages.map((p) => p.url)))
 
   return { seg, kind, outDir, written, dropped, cats, partialsWritten, orphans, problems, partialProblems, spliced, spliceSkips, duplicates: plan.duplicates, imagePlacement }
 }
@@ -1313,7 +1313,7 @@ function convertVersion (ver, ctx) {
 // Per-version partials audit: what was factored, declined, or left inline
 // (unmarked). The 100%-coverage cross-check against partials-registry.json is
 // what catches an included fragment that produced no sentinel.
-function writePartialsReport (opts, component, seg, report, decisions) {
+function writePartialsReport (opts, component, seg, report, pageUrls) {
   const factored = report.filter((r) => r.decision === 'factored')
   const declined = report.filter((r) => r.decision === 'declined')
   const reportIds = new Set(report.map((r) => r.id))
@@ -1323,7 +1323,14 @@ function writePartialsReport (opts, component, seg, report, decisions) {
     const registry = JSON.parse(fs.readFileSync(regPath, 'utf8'))
     const byId = new Map()
     for (const row of registry.includes || []) {
-      if (!row.id.startsWith(component + ':')) continue
+      // The registry is corpus-wide: every component AND every version. This
+      // report is one component-version, so scope by the pages this run actually
+      // converted -- not by the id's component prefix, which counted a partial's
+      // sites in EVERY version (an unmarked row read `occurrences: 48` next to
+      // per-version factored rows) and reported ids that do not exist on this
+      // branch at all as unmarked here (5.3 showed 11 unmarked, 5 of them
+      // partials introduced in later versions).
+      if (!pageUrls.has(row.page)) continue
       if (!byId.has(row.id)) byId.set(row.id, { id: row.id, family: row.family, pages: [] })
       byId.get(row.id).pages.push(row.page)
     }

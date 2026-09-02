@@ -82,19 +82,33 @@ function createPartialMarker () {
       // The page's own source identity. Top-level (page-authored) blocks report
       // this as their source file; included blocks report the included file.
       const pageFile = file && file.path != null ? String(file.path) : null
-      // Line numbers of the page's own `include::` directives. Asciidoctor
-      // attributes the FINAL block of an include back to the page at the line of
+      const contents = file && file.contents ? file.contents.toString() : ''
+      const pageSrc = file && file.src
+      // The page's own `include::` directive lines, keyed by line number, with
+      // the resolved partial$/page$ id where the target is one we factor (null
+      // for any other include, e.g. `example$`). Asciidoctor attributes the
+      // FINAL paragraph-like block of an include back to the PAGE at the line of
       // the include directive itself, so a page-attributed block sitting exactly
       // on an include line is that boundary artifact -- genuine partial content,
-      // not fused page content. isPure uses this to tell the two apart.
-      const includeLines = new Set()
-      const contents = file && file.contents ? file.contents.toString() : ''
-      contents.split('\n').forEach((ln, i) => { if (/^\s*include::/.test(ln)) includeLines.add(i + 1) })
+      // not fused page content. Two places rely on this: isPure, to tell the
+      // artifact apart from real fusion, and wrappable via boundaryIdOf, to
+      // attribute such a block to the include it actually came from. Without the
+      // latter a SINGLE-block include (a one-line admonition partial) has no
+      // correctly-attributed block at all and could never be marked, and a
+      // multi-block include whose last block is a paragraph got factored without
+      // it (verified against asciidoctor 2.2.9: a trailing paragraph or
+      // admonition is misattributed, a trailing list or section is not).
+      const includeLines = new Map()
+      contents.split('\n').forEach((ln, i) => {
+        if (!/^\s*include::/.test(ln)) return
+        const m = ln.match(INCLUDE_RE)
+        const parsed = m ? parseIncludeTarget(m[1], pageSrc) : null
+        includeLines.set(i + 1, parsed ? parsed.id : null)
+      })
 
       // Registry: every partial$/page$ include this page names in source (the
       // 100%-coverage denominator), plus the set the tree-processor ends up
       // marking. Recorded now; markedIds is filled as wrap() emits sentinels.
-      const pageSrc = file && file.src
       const pageId = (file && file.pub && file.pub.url) ||
         (pageSrc ? `${pageSrc.component}:${pageSrc.module || 'ROOT'}:${pageSrc.relative}` : String(pageFile))
       const markedIds = new Set()
@@ -167,13 +181,38 @@ function createPartialMarker () {
             return pure
           }
 
+          // The include a PAGE-attributed block belongs to when it is really the
+          // include-boundary artifact: a block whose source line is exactly one of
+          // the page's include:: lines (see includeLines). Line 0 is excluded -- that
+          // is the synthetic position of a page-authored delimited block wrapping an
+          // include, whose chrome genuinely is the page's.
+          //
+          // LEAF blocks only, and only the paragraph-like contexts the artifact
+          // actually affects. A page-authored CONTAINER can share an include's line
+          // too -- a preamble whose first block is an include starts at the include
+          // line -- and its chrome (`<div id="preamble">`) is the page's, so wrapping
+          // it would pull page markup into the fragment. Containers are also never
+          // misattributed in the first place: a trailing list or section reports
+          // against the included file, only a trailing paragraph or admonition does
+          // not (verified against asciidoctor 2.2.9).
+          const BOUNDARY_CONTEXTS = new Set(['paragraph', 'admonition', 'listing', 'literal', 'quote', 'verse', 'pass', 'image'])
+          const boundaryIdOf = (block) => {
+            const f = fileOf(block)
+            if (f == null || pageFile == null || String(f) !== pageFile) return null
+            const ln = lineOf(block)
+            if (ln == null || ln === 0 || !includeLines.has(ln)) return null
+            if (((block.getBlocks && block.getBlocks()) || []).length) return null
+            if (!BOUNDARY_CONTEXTS.has(block.getContext && block.getContext())) return null
+            return includeLines.get(ln) || null
+          }
+
           const wrap = (node) => {
             const blocks = (node.getBlocks && node.getBlocks()) || []
             if (!blocks.length) return
             const out = []
             let i = 0
             const wrappable = (b) => {
-              const id = includeIdOf(b)
+              const id = includeIdOf(b) || boundaryIdOf(b)
               // line 0 is the synthetic include-boundary position Asciidoctor
               // gives a PAGE-authored delimited block (e.g. a [%collapsible]
               // example) that merely wraps an include: its chrome is the page's,

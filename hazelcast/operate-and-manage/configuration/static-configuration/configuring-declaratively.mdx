@@ -6,6 +6,7 @@ slug: /configuration/configuring-declaratively
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import PartialConfigurationWarningOverride from '@site/hazelcast/_partials/configuration-warning-override.mdx';
 
 You can declare settings for Hazelcast members, using a YAML or XML configuration file. Although Hazelcast members read from a single configuration file, you can store settings in multiple files and import them into a single root file to enable reuse.
 
@@ -188,11 +189,7 @@ hazelcast:
 
 You can override the settings in a configuration file without having to modify it. For example, you may want to make some configuration changes for a specific environment. In this case, you can use system properties or environment variables to override the settings in the file.
 
-:::important
-
-If you override a value in a configuration file, the other values in the same block are reset to their defaults. For example, if you override the `hazelcast.map.backup-count` value, all other settings within the `map` block are reset to their defaults. To avoid the other values being reset to their defaults, you must override all values in the block.
-
-:::
+<PartialConfigurationWarningOverride/>
 
 See [Configuring with System Properties and Environment Variables](./configuring-with-system-properties.mdx).
 

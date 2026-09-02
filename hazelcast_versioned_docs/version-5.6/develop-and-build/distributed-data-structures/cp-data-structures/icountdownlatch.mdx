@@ -5,17 +5,14 @@ slug: /data-structures/icountdownlatch
 enterprise: true
 ---
 
+import PartialDataStructuresWarningCpUnsafe from '@site/hazelcast_versioned_docs/version-5.6/_partials/data-structures-warning-cp-unsafe.mdx';
 import CodeBlock from '@theme/CodeBlock';
 import Ex_dds_countdownlatch_Leader_java_tag_leader from '../../../examples/dds/countdownlatch/Leader.java?tag=leader';
 import Ex_dds_countdownlatch_Follower_java_tag_follower from '../../../examples/dds/countdownlatch/Follower.java?tag=follower';
 
 Hazelcast `ICountDownLatch` is the distributed implementation of `java.util.concurrent.CountDownLatch`. But unlike Java's implementation, Hazelcast's `ICountDownLatch` count can be reset after a countdown has finished, but not during an active count.
 
-:::warning
-
-This data structure is a member of the CP Subsystem. By default, the CP Subsystem is in [unsafe mode](../../../operate-and-manage/cp-subsystem/cp-subsystem.mdx#unsafe-mode), which provides weaker consistency guarantees. You can [enable the CP Subsystem](../../../operate-and-manage/cp-subsystem/configuration.mdx#quickstart) in the member configuration.
-
-:::
+<PartialDataStructuresWarningCpUnsafe/>
 
 ## Gate-Keeping Concurrent Activities
 

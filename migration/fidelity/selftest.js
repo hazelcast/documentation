@@ -20,7 +20,7 @@ const {
   canonicalize, diffSegments, normalizeProse, normalizeCode, segKey,
   GOLDEN_STRIP, GOLDEN_TABLE, DOCUSAURUS_STRIP,
 } = require('./lib/layer1')
-const { stripSentinels } = require('../antora-extension/mark-partials')
+const { stripSentinels, createPartialMarker } = require('../antora-extension/mark-partials')
 const { wrapConditionals, markability, stripConditionalSentinels, START, END } = require('../antora-extension/mark-conditionals')
 const { literalizeMonospace } = require('../antora-extension/normalize-monospace')
 const { lockfileKey } = require('./lockfile-key')
@@ -149,6 +149,113 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
   const markedIf = `<p>before</p>\n${START}\n<p>inside</p>\n${END}\n<p>after</p>\n`
   assert.strictEqual(stripConditionalSentinels(markedIf), cleanIf, 'mark-conditionals: strip reproduces golden byte-for-byte')
   ok('mark-conditionals: rendered-sentinel strip is byte-exact')
+}
+
+// --- mark-partials: an include's content lands INSIDE its sentinels ----------
+//
+// The spec the marker exists to meet: for every include site the page does not
+// fuse its own content into, the HTML between that id's sentinels is the whole
+// of the included fragment -- nothing of the partial left outside, nothing of
+// the page dragged inside. The oracle is independent: render the partial's
+// source on its own with Asciidoctor and compare.
+//
+// This is the gate on Asciidoctor's include attribution, which is NOT uniform:
+// the final paragraph-like block of an include (a paragraph, an admonition) is
+// reported against the PAGE at the include-directive line, while a trailing list
+// or section is reported against the included file. Reading that attribution
+// literally silently under-wrapped -- a single-block partial (a one-line
+// admonition, the commonest shared fragment there is) had NO correctly-attributed
+// block and so could never be factored, and a two-paragraph partial was factored
+// with its second paragraph left duplicated on every consuming page.
+{
+  const marked = (pageSrc, fixtures) => {
+    const marker = createPartialMarker()
+    const reg = adoc.Extensions.create()
+    // Stand in for Antora's include processor: resolve `partial$x.adoc` from the
+    // fixture map and push it with the `.src`-augmented cursor file Antora uses
+    // (include-processor.js), which is what makes the sentinel ids manifest-stable.
+    reg.includeProcessor(function () {
+      this.handles((t) => t in fixtures)
+      this.process((doc, reader, target, attrs) => {
+        const file = Object.assign(new String(target), {
+          src: { component: 'test', module: 'ROOT', family: 'partial', relative: target.slice(target.indexOf('$') + 1) },
+        })
+        reader.pushInclude(fixtures[target], file, target, 1, attrs)
+      })
+    })
+    marker.register(reg, {
+      file: {
+        path: 'page.adoc',
+        contents: Buffer.from(pageSrc),
+        src: { component: 'test', module: 'ROOT', family: 'page', relative: 'page.adoc' },
+      },
+    })
+    // docfile must match the marker's pageFile: page-authored blocks are told
+    // apart from included ones by source file.
+    const doc = adoc.load(pageSrc, { sourcemap: true, safe: 'safe', extension_registry: reg, attributes: { docfile: 'page.adoc' } })
+    return { html: doc.convert(), registry: marker.getRegistry() }
+  }
+  const between = (html, id) => {
+    const s = `<!--hz-partial:start ${id}-->`
+    const i = html.indexOf(s)
+    return i === -1 ? null : html.slice(i + s.length, html.indexOf(`<!--hz-partial:end ${id}-->`)).trim()
+  }
+
+  // Each fragment on its own page: `partial$` content that is itself a SECTION
+  // absorbs whatever follows the include (it becomes that section's body), so a
+  // trailing page paragraph is only meaningful for the others.
+  const cases = [
+    // the regression: a partial that is ONE paragraph-like block, so its only
+    // block is also its misattributed last one (no trailing newline either, as
+    // nearly every hz-docs admonition partial is authored -- incidental, the
+    // attribution is the same both ways)
+    { target: 'partial$admon.adoc', src: 'IMPORTANT: One-line admonition, no trailing newline.', tail: true },
+    { target: 'partial$twopara.adoc', src: 'Para one.\n\nPara two, trailing, no newline.', tail: true },
+    { target: 'partial$listtail.adoc', src: 'Intro:\n\n- alpha\n- beta', tail: true },
+    { target: 'partial$section.adoc', src: '== A Heading\n\nA paragraph under the heading.', tail: false },
+  ]
+  for (const c of cases) {
+    const page = ['= P', '', `include::${c.target}[]`, ''].concat(c.tail ? ['Page tail.', ''] : []).join('\n')
+    const { html, registry } = marked(page, { [c.target]: c.src })
+    const id = `test:ROOT:${c.target}`
+    assert.strictEqual(between(html, id), renderAdoc(c.src).trim(),
+      `${c.target}: sentinels enclose exactly the fragment's own rendering`)
+    assert.ok(registry.every((r) => r.marked), `${c.target}: the include site reports marked`)
+    assert.strictEqual(stripSentinels(html).includes('hz-partial'), false, `${c.target}: no sentinel survives the strip`)
+    if (c.tail) {
+      assert.strictEqual(between(html, id).includes('Page tail.'), false, `${c.target}: page content stays outside the sentinels`)
+    }
+  }
+  ok('mark-partials: wraps single-block, trailing-paragraph, section and list partials whole')
+
+  // The trap in reading "page-attributed block on an include line" too loosely: a
+  // page whose PREAMBLE opens with an include shares that include's line, so the
+  // preamble itself looks like the boundary artifact. Its `<div id="preamble">`
+  // chrome is the page's, and wrapping it would bake page markup into the shared
+  // fragment (and vary it by consumer).
+  {
+    const admon = 'IMPORTANT: Shared caution.'
+    const { html } = marked(['= P', '', 'include::partial$admon.adoc[]', '', '== S', '', 'Section body.', ''].join('\n'),
+      { 'partial$admon.adoc': admon })
+    const inner = between(html, 'test:ROOT:partial$admon.adoc')
+    assert.strictEqual(inner, renderAdoc(admon).trim(), 'preamble-leading include: sentinels hold the fragment, not the preamble')
+    assert.strictEqual(/preamble|sectionbody/.test(inner), false, 'preamble-leading include: no page chrome inside the sentinels')
+    ok('mark-partials: a page container sharing an include line is not mistaken for the fragment')
+  }
+
+  // Fusion is the one case that must NOT be wrapped wholesale: a `+` list
+  // continuation appends page content into the same list item. Wrapping the item
+  // would swallow the page's own paragraph (and, on a single-use include, delete
+  // it). The partial still gets sentinels, but only around its own block.
+  const fused = marked(
+    ['= P', '', '. Do the thing:', '+', 'include::partial$admon.adoc[]', '+', 'Page-authored follow-up.', ''].join('\n'),
+    { 'partial$admon.adoc': 'IMPORTANT: Shared caution.' })
+  assert.strictEqual(between(fused.html, 'test:ROOT:partial$admon.adoc'), renderAdoc('IMPORTANT: Shared caution.').trim(),
+    'fused site: sentinels hold the partial only')
+  assert.ok(fused.html.includes('Page-authored follow-up.'), 'fused site: the page\'s own continuation content survives')
+  assert.strictEqual(between(fused.html, 'test:ROOT:partial$admon.adoc').includes('Page-authored follow-up.'), false,
+    'fused site: page content is NOT dragged inside the sentinels')
+  ok('mark-partials: a `+`-fused include keeps page content outside the sentinels')
 }
 
 // --- mark-conditionals: source wrap correctness ------------------------------
