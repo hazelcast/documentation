@@ -1,0 +1,113 @@
+---
+title: "Configure external access to Management Center"
+sidebar_position: 2
+slug: /management-center-external-access
+---
+
+You can expose Management Center outside Kubernetes to remotely manage your Hazelcast deployment.
+
+Management Center supports several options for external access.
+
+## Configure external access
+
+Operator supports the following configuration for Management Center external access.
+
+<table>
+<colgroup>
+<col style={{width:'30%'}}/>
+<col style={{width:'70%'}}/>
+</colgroup>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`externalConnectivity.type`</td>
+<td>
+
+Management Center external access methods:
+
+- `LoadBalancer` (default): On cloud providers that support external load balancers, setting `LoadBalancer` provisions a load balancer for your Management Center.
+- `NodePort`: If you set `NodePort`, the Kubernetes control plane allocates a port from a reserved range (default: 30000-32767). Each node proxies that port (the same port number on every node) into your Kubernetes service.
+- `ClusterIP`: Assigns an IP address from a pool of internal IP addresses that your Kubernetes cluster has reserved for that purpose.
+
+</td>
+</tr>
+<tr>
+<td>`externalConnectivity.ingress`</td>
+<td>Ingress exposes HTTP and HTTPS routes from outside the Kubernetes cluster to Management Center. Traffic routing is controlled by rules defined on the [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) resource.</td>
+</tr>
+<tr>
+<td>`externalConnectivity.route`</td>
+<td>An OpenShift Container Platform [Route](https://docs.openshift.com/container-platform/4.13/networking/routes/route-configuration.html) exposes a service at a host name so that external clients can reach it by name.</td>
+</tr>
+</tbody>
+</table>
+
+### Example Management Center load balancer configuration
+
+The following example exposes Management Center using a dedicated load balancer.
+
+```yaml
+apiVersion: hazelcast.com/v1alpha1
+kind: ManagementCenter
+metadata:
+  name: managementcenter
+spec:
+  repository: "hazelcast/management-center"
+  licenseKeySecretName: hazelcast-license-key
+  externalConnectivity:
+    type: LoadBalancer
+  hazelcastClusters:
+    - address: hazelcast
+      name: dev
+```
+
+### Example Management Center ingress configuration
+
+The following example exposes Management Center using [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/).
+
+```yaml
+apiVersion: hazelcast.com/v1alpha1
+kind: ManagementCenter
+metadata:
+  name: managementcenter
+spec:
+  repository: "hazelcast/management-center"
+  licenseKeySecretName: hazelcast-license-key
+  externalConnectivity:
+    type: ClusterIP
+    ingress:
+      hostname: "example.hostname"
+      ingressClassName: nginx
+      path: "/mancenter"
+      annotations:
+        nginx.ingress.kubernetes.io/enable-opentelemetry: "true"
+  hazelcastClusters:
+    - address: hazelcast
+      name: dev
+```
+
+### Example Management Center route configuration
+
+The following example exposes Management Center using the default OpenShift Container Platform [Route](https://docs.openshift.com/container-platform/4.13/networking/routes/route-configuration.html).
+
+```yaml
+apiVersion: hazelcast.com/v1alpha1
+kind: ManagementCenter
+metadata:
+  name: managementcenter
+spec:
+  repository: "hazelcast/management-center"
+  licenseKeySecretName: hazelcast-license-key
+  externalConnectivity:
+    type: ClusterIP
+    route:
+      hostname: ""
+  hazelcastClusters:
+    - address: hazelcast
+      name: dev
+```

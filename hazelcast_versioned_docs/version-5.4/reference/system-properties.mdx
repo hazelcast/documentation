@@ -1055,6 +1055,48 @@ Setting this value too low may cause members to be evicted from the cluster when
 <td>When set to any non-null value, security recommendations are logged at the `INFO` level during the member startup.</td>
 </tr>
 <tr>
+<td>`hazelcast.serialization.compact.allowlist.classes`</td>
+<td></td>
+<td>string</td>
+<td>Comma-separated list of fully qualified class names to allow for [zero-config Compact serialization](../develop-build/serialization/compact-serialization/overview.mdx) (ZCCS). If set, only classes on this list (and not on the blocklist) are eligible for ZCCS. Default is empty.</td>
+</tr>
+<tr>
+<td>`hazelcast.serialization.compact.allowlist.packages`</td>
+<td></td>
+<td>string</td>
+<td>Comma-separated list of package names to allow for ZCCS. Only classes in the exact package (not sub-packages) are matched.</td>
+</tr>
+<tr>
+<td>`hazelcast.serialization.compact.allowlist.prefixes`</td>
+<td></td>
+<td>string</td>
+<td>Comma-separated list of class-name prefixes to allow for ZCCS.</td>
+</tr>
+<tr>
+<td>`hazelcast.serialization.compact.blocklist.classes`</td>
+<td></td>
+<td>string</td>
+<td>Comma-separated list of fully qualified class names to block from ZCCS. Default is empty.</td>
+</tr>
+<tr>
+<td>`hazelcast.serialization.compact.blocklist.defaults`</td>
+<td>true</td>
+<td>bool</td>
+<td>Controls whether the default blocklist of known-problematic classes is applied for ZCCS. Note that this property is `defaults`, not `defaultsDisabled` as seen for other configuration options.</td>
+</tr>
+<tr>
+<td>`hazelcast.serialization.compact.blocklist.packages`</td>
+<td></td>
+<td>string</td>
+<td>Comma-separated list of package names to block from ZCCS. Only classes in the exact package (not sub-packages) are matched.</td>
+</tr>
+<tr>
+<td>`hazelcast.serialization.compact.blocklist.prefixes`</td>
+<td></td>
+<td>string</td>
+<td>Comma-separated list of class-name prefixes to block from ZCCS.</td>
+</tr>
+<tr>
 <td>`hazelcast.serialization.version`</td>
 <td></td>
 <td>long</td>

@@ -16,9 +16,9 @@ export const variablesBySource: Record<string, Record<string, string>> = {
   },
   // hazelcast/cloud-docs — docs/antora.yml
   "cloud": {
-    "full-version": "5.6.0",
+    "full-version": "5.7.1",
     "page-cloud-console": "https://cloud.hazelcast.com/",
-    "page-cloud-platform-version": "5.6",
+    "page-cloud-platform-version": "5.7",
     "page-cloud-signup": "https://cloud.hazelcast.com/sign-up"
   },
 };
@@ -79,44 +79,44 @@ export const versionedVariables: Record<string, Record<string, Record<string, st
     }
   },
   "hazelcast": {
-    "current": {
-      "ee-version": "5.8.0-SNAPSHOT",
+    "6.0-snapshot": {
+      "ee-version": "6.0.0-SNAPSHOT",
       "enterprise-product-name": "Enterprise Edition",
-      "full-version": "5.8.0-SNAPSHOT",
+      "full-version": "6.0.0-SNAPSHOT",
       "hazelcast-cloud": "Cloud",
       "hz-repo-swagger-branch": "master",
       "java-client": "Java Client and Embedded Server",
       "jet-version": "4.5.4",
       "minimum-java-version": "17",
       "minimum-maven-version": "3.9",
-      "minor-version": "5.8-SNAPSHOT",
+      "minor-version": "6.0-SNAPSHOT",
       "open-source-product-name": "Community Edition",
-      "os-version": "5.8.0-SNAPSHOT",
+      "os-version": "6.0.0-SNAPSHOT",
       "page-latest-supported-clc": "5.5.1",
       "page-latest-supported-cplusplus-client": "5.7.0",
       "page-latest-supported-csharp-client": "5.7.0",
       "page-latest-supported-go-client": "1.6.0",
       "page-latest-supported-mc": "5.12-snapshot",
       "page-latest-supported-mc-installer": "latest-snapshot",
-      "page-latest-supported-nodejs-client": "5.6.0",
+      "page-latest-supported-nodejs-client": "5.7.0",
       "page-latest-supported-po": "latest-snapshot",
       "page-latest-supported-python-client": "5.7.0",
       "ucd": "User Code Deployment",
       "ucn": "User Code Namespaces",
       "url-cloud-signup": "https://cloud.hazelcast.com/sign-up?utm_source=docs-website",
-      "version": "5.8-SNAPSHOT"
+      "version": "6.0-SNAPSHOT"
     },
     "5.7": {
-      "ee-version": "5.7.0",
+      "ee-version": "5.7.1",
       "enterprise-product-name": "Enterprise Edition",
-      "full-version": "5.7.0",
+      "full-version": "5.7.1",
       "hazelcast-cloud": "Cloud",
       "hz-repo-swagger-branch": "master",
       "java-client": "Java Client and Embedded Server",
       "jet-version": "4.5.4",
       "minimum-java-version": "17",
       "minimum-maven-version": "3.9",
-      "minor-version": "5.7-SNAPSHOT",
+      "minor-version": "5.7",
       "open-source-product-name": "Community Edition",
       "os-version": "5.7.0",
       "page-latest-supported-clc": "5.5.1",
@@ -131,7 +131,7 @@ export const versionedVariables: Record<string, Record<string, Record<string, st
       "ucd": "User Code Deployment",
       "ucn": "User Code Namespaces",
       "url-cloud-signup": "https://cloud.hazelcast.com/sign-up?utm_source=docs-website",
-      "version": "5.7-SNAPSHOT"
+      "version": "5.7"
     },
     "5.6": {
       "ee-version": "5.6.1",
@@ -272,12 +272,12 @@ export const versionedVariables: Record<string, Record<string, Record<string, st
       "mc-repo-swagger-branch": "master",
       "open-source-product-name": "Community Edition",
       "page-latest-supported-clc": "5.5.1",
-      "page-latest-supported-hazelcast": "5.8-snapshot"
+      "page-latest-supported-hazelcast": "6.0-snapshot"
     },
     "5.11": {
       "enterprise-product-name": "Enterprise Edition",
-      "full-version": "5.11.0",
-      "mc-repo-swagger-branch": "5.11.0",
+      "full-version": "5.11.1",
+      "mc-repo-swagger-branch": "5.11.1",
       "open-source-product-name": "Community Edition",
       "page-latest-supported-clc": "5.5.1",
       "page-latest-supported-hazelcast": "5.7"
@@ -381,9 +381,14 @@ export const versionedVariables: Record<string, Record<string, Record<string, st
   },
   "operator": {
     "current": {
-      "operator-chart-version": "5.19.0-snapshot",
-      "page-latest-supported-hazelcast": "5.7.0",
-      "page-latest-supported-mc": "5.11.0"
+      "operator-chart-version": "5.20.0-snapshot",
+      "page-latest-supported-hazelcast": "5.7.1",
+      "page-latest-supported-mc": "5.11.1"
+    },
+    "5.19": {
+      "operator-chart-version": "5.19.0",
+      "page-latest-supported-hazelcast": "5.7.1",
+      "page-latest-supported-mc": "5.11.1"
     },
     "5.18": {
       "operator-chart-version": "5.18.0",

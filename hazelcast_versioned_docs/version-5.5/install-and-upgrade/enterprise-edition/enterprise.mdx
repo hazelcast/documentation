@@ -23,6 +23,7 @@ For help downloading Hazelcast <Variable name="enterprise-product-name"/>, see [
 - **Fixed unrestricted attribute access during query lookups:** Resolved an issue where query lookups could access attributes that should not be exposed during query evaluation. The fix adds configurable restrictions on which attributes can be accessed, improving security and giving users more control over query behavior.
 - **Enforced stricter checks on classes in SQL:** Resolved an issue where restrictions on classnames used in SQL mappings and types were not checked in some cases.
 - **Enforced checks on classes in JsonUtil deserialization**: Some classes, which are unlikely to be used, are no longer allowed to be deserialized using JsonUtil.
+- **Blocked Jackson serializable classes**: Prevented serializable Jackson classes from exposing information.
 - **Ensured SQL is enabled before deserializing messages:** Applied additional hardening to prevent SQL parameters from being deserialized when SQL is not enabled.
 - **Enforced checks on classes used in client protocol:** In some situations it was possible to instantiate arbitrary classes in client protocol error conditions. Strict filtering has been implemented to prevent this issue.
 - **Improved validation for serializable Jet functions:** Added additional validation to prevent serializable functions from connecting to attacker-controlled clusters or arbitrary addresses without a valid execution context.
@@ -40,7 +41,7 @@ For help downloading Hazelcast <Variable name="enterprise-product-name"/>, see [
 - **Fixed IndexOutOfBoundsException in HD IMap `SetOperation` with MapStore and TTL:** Resolved an issue where a slow MapStore store operation could outlive an entry TTL and cause an `IndexOutOfBoundsException` while returning the old value for an HD IMap update. The fix prevents unexpected operation failures in this scenario.
 - **Fixed failures and inconsistent results in `IMap.containsValue()` for maps in HD Memory with TTL:** Resolved an issue where entry expiration during iteration could interfere with map traversal, causing operation failures and missed values. The fix ensures stable iteration by checking expiration instead of modifying entries during traversal, resulting in reliable results.
 - **Fixed Kafka sink failures caused by duplicate transactional IDs:** Resolved an issue where Jet jobs writing to Kafka could suspend with `ProducerFencedException` when a newer producer with the same transactional ID fenced the current producer.
-- **Fixed deduplication pipeline data inconsistency after ungraceful topology changes:** Resolved an issue where ungraceful member changes during deduplication pipeline execution could leave the map and backing database with different row counts, potentially causing data loss in the database.
+- **Fixed potential MapStore data loss when a member fails during a flush:** Resolved an issue where manual flush operations could clear queues before the entries were persisted.
 - **Added shared `HttpClient` cache for `RestClient`:** Introduced a static cache to enable reuse of `HttpClient` instances across multiple `RestClient` instances, reducing overhead from repeated client creation.
 
 ### Contributors

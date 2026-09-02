@@ -144,6 +144,20 @@ Note that, most of Hazelcast's distributed objects are created lazily: A distrib
 
 If you want to use an object you loaded in other places, you can safely reload it using its reference without creating a new Hazelcast instance.
 
+## Naming Data Structures
+
+We recommend that you only use letters, digits, and the `-`, `_`, and `.` characters in the names of data structures.
+
+Special characters will be accepted, but can cause problems for the REST API or [Management Center](/management-center/latest/getting-started/overview).
+
+The <Variable name="open-source-product-name"/> and <Variable name="enterprise-product-name"/> REST APIs get the data structure name from the request URL. A name containing a forward slash (`/`) will cause a `400 Bad Request` error when using the <a href="/hazelcast/5.7/maintain-cluster/enterprise-rest-api"><Variable name="enterprise-product-name"/> REST API</a>, but can fail silently or return the wrong data structure when using the <a href="/hazelcast/5.7/maintain-cluster/rest-api"><Variable name="open-source-product-name"/> REST API</a>.
+
+Management Center uses data structure names in its request URLs. Special characters can prevent it from displaying the configuration of a data structure. See [Management Center troubleshooting](/management-center/latest/troubleshoot/management-center).
+
+Asterisks (`*`) in data structure names are especially problematic: configurations for these will treat the asterisk as a wildcard, and could match multiple data structures.
+
+Data structures can't be renamed after creation.
+
 ## Availability and Partition Tolerance {/* #ap-data */}
 
 AP data structures prefer availability over consistency.

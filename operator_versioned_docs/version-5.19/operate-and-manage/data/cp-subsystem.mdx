@@ -1,0 +1,55 @@
+---
+title: "Enable the CP Subsystem"
+sidebar_position: 5
+slug: /cp-subsystem
+---
+
+The CP Subsystem is a component of a Hazelcast cluster that builds a strongly consistent layer for a set of distributed data structures. The CP Subsystem prefers consistency to availability during network partitions. Other Hazelcast data structures are AP, preferring availability.
+
+See [CP Subsystem](/hazelcast/latest/cp-subsystem/cp-subsystem) for more information.
+
+## Configure the CP Subsystem
+
+To enable the CP Subsystem you must configure the `cpSubsystem` section in the Hazelcast custom resource. By default, all the cluster members will be configured as CP members.
+
+```yaml title="Example CP Subsystem configuration"
+apiVersion: hazelcast.com/v1alpha1
+kind: Hazelcast
+metadata:
+  name: hazelcast
+spec:
+  clusterSize: 3
+  repository: 'docker.io/hazelcast/hazelcast-enterprise'
+  licenseKeySecretName: hazelcast-license-key
+  cpSubsystem:
+    sessionTTLSeconds: 30
+    pvc:
+      accessModes: ["ReadWriteOnce"]
+      requestStorage: 8Gi
+```
+
+When the CP Subsystem is enabled, it always enables CP Subsystem persistence. This means that a persistent volume claim (PVC) must be configured before enabling CP Subsystem.
+
+When the `pvc` section is configured in `cpSubsystem`, a PVC is created and mounted for the CP Subsystem. If you want to use the same PVC for both [persistence](../resilience/backup-restore/overview.mdx) and CP Subsytem, configure persistence but do not configure `pvc` for the CP Subsystem.
+
+```yaml title="Example CP Subsystem configuration with Persistence"
+apiVersion: hazelcast.com/v1alpha1
+kind: Hazelcast
+metadata:
+  name: hazelcast
+spec:
+  clusterSize: 3
+  repository: 'docker.io/hazelcast/hazelcast-enterprise'
+  licenseKeySecretName: hazelcast-license-key
+  persistence:
+    pvc:
+      accessModes: ["ReadWriteOnce"]
+      requestStorage: 8Gi
+  cpSubsystem: {}
+```
+
+:::note
+
+The cluster cannot be scaled up or down if the CP Subsystem is enabled. You can pause the cluster by scaling it to 0 when starting the cluster. When scaling up again, you must only scale to the original cluster size or the cluster will fail to start. For example, after scaling a cluster with an original size of 3 to a size of 0, you can only scale it up to 3; if you scale up to a different size, the cluster will not start.
+
+:::

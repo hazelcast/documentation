@@ -25,6 +25,12 @@ The entry point for the clustered REST API is `/rest`. This resource does not ha
 
 All parameters that are used in the REST endpoints, such as cluster names and distributed data structure names, must be [URL encoded](https://en.wikipedia.org/wiki/Percent-encoding). Such parameters are marked in braces (`{` and `}`) in the URL description for each endpoint. For example, `name.with/special@chars` parameter value would be encoded as `name.with%2Fspecial%40chars`.
 
+:::important
+
+Encoding does not make every character usable: a name that contains a percent sign (`%`, encoded as `%25`) or a backslash (`\`, encoded as `%5C`) will be rejected with `400 Bad Request`. For guidance on choosing names, see [Naming Data Structures](/hazelcast/latest/data-structures/distributed-data-structures#naming-data-structures).
+
+:::
+
 If no data can be found for an endpoint, that endpoint returns a 404 HTTP status code.
 
 ## Authentication

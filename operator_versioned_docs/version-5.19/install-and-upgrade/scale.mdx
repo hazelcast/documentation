@@ -1,0 +1,80 @@
+---
+title: "Scale a Hazelcast deployment"
+sidebar_position: 4
+slug: /scale
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+To scale an existing Hazelcast deployment, there are two options:
+
+- Modify the YAML definition you used to deploy Hazelcast cluster by updating `clusterSize` field and re-apply it again:
+
+  For example, if the existing configuration has a cluster size of three:
+
+  ```yaml
+  apiVersion: hazelcast.com/v1alpha1
+  kind: Hazelcast
+  metadata:
+    name: hazelcast-sample
+  spec:
+    clusterSize: 3
+  ```
+
+  You can scale your deployment to five replicas by updating the `clusterSize` field and applying:
+
+  ```yaml
+  apiVersion: hazelcast.com/v1alpha1
+  kind: Hazelcast
+  metadata:
+    name: hazelcast-sample
+  spec:
+    clusterSize: 5
+  ```
+
+```shell title="For Kubernetes"
+kubectl apply -f hazelcast-sample.yaml
+```
+
+```shell title="For Openshift"
+oc apply -f hazelcast-sample.yaml
+```
+
+- Alternatively, you can use the `scale` command:
+
+  ```shell
+  kubectl scale hazelcast <name> --replicas <replica-count>
+  ```
+
+  For example:
+
+  ```shell
+  kubectl scale hazelcast hazelcast-sample --replicas 5
+  ```
+
+## Check the cluster status
+
+You can check that the operation has completed by checking the cluster status:
+
+<Tabs groupId="k8s-platform">
+<TabItem value="kubernetes" label="Kubernetes">
+
+```shell
+kubectl get hazelcast
+```
+
+</TabItem>
+<TabItem value="openshift" label="Openshift">
+
+```shell
+oc get hazelcast
+```
+
+</TabItem>
+</Tabs>
+
+```none
+NAME               STATUS    MEMBERS
+hazelcast-sample   Running   5/5
+```

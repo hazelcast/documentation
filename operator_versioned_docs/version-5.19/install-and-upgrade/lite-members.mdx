@@ -1,0 +1,112 @@
+---
+title: "Deploy Lite members"
+sidebar_position: 2
+slug: /lite-members
+---
+
+Lite members are Hazelcast cluster members that do not store data or have partitions. They are mainly used to execute tasks and register listeners.
+
+You can use Operator to deploy [Lite members](https://docs.hazelcast.com/hazelcast/latest/maintain-cluster/lite-members). Lite members use the separate `liteMember` section in the [Hazelcast custom resource (CR)](../reference/api-ref.mdx#litemember).
+
+:::note
+
+Configuring `jvm`, `env`, `resources` or `scheduling` sections in the Hazelcast CR does not affect Lite member configuration. Lite members are configured separately.
+
+:::
+
+## Deploy Lite members
+
+To set the number of Lite members you want to deploy in the Hazelcast CR, use the `count` field in the `liteMember` section of the [Hazelcast CR](../reference/api-ref.mdx#litemember).
+
+```yaml title="Example Lite member count configuration"
+apiVersion: hazelcast.com/v1alpha1
+kind: Hazelcast
+metadata:
+  name: hazelcast
+spec:
+  repository: 'docker.io/hazelcast/hazelcast-enterprise'
+  licenseKeySecretName: hazelcast-license-key
+  clusterSize: 3
+  liteMember:
+    count: 2
+```
+
+This example deploys three data members and two Lite members. Note that `clusterSize` represents the number of data members only.
+
+## Configure JVM parameters
+
+To configure JVM Parameters for Lite members, use the `jvm` field in the `liteMember` section of the [Hazelcast CR](../reference/api-ref.mdx#litemember).
+
+```yaml title="Example Lite member JVM configuration"
+apiVersion: hazelcast.com/v1alpha1
+kind: Hazelcast
+metadata:
+  name: hazelcast
+spec:
+  repository: 'docker.io/hazelcast/hazelcast-enterprise'
+  licenseKeySecretName: hazelcast-license-key
+  clusterSize: 3
+  liteMember:
+    count: 2
+    jvm:
+      memory:
+        initialRAMPercentage: "10"
+        maxRAMPercentage: "20"
+        minRAMPercentage: "10"
+```
+
+## Configure resource limits
+
+To configure resource limits for Lite members, use the `resources` field in the `liteMember` section of the [Hazelcast CR](../reference/api-ref.mdx#litemember).
+
+```yaml title="Example Lite member resource limits configuration"
+apiVersion: hazelcast.com/v1alpha1
+kind: Hazelcast
+metadata:
+  name: hazelcast
+spec:
+  repository: 'docker.io/hazelcast/hazelcast-enterprise'
+  licenseKeySecretName: hazelcast-license-key
+  clusterSize: 3
+  liteMember:
+    count: 2
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "250m"
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+```
+
+## Configure scheduling
+
+To configure scheduling for Lite members, use the `scheduling` field in the `liteMember` section of the [Hazelcast CR](../reference/api-ref.mdx#litemember).
+
+```yaml title="Example Lite member scheduling configuration"
+apiVersion: hazelcast.com/v1alpha1
+kind: Hazelcast
+metadata:
+  name: hazelcast
+spec:
+  repository: 'docker.io/hazelcast/hazelcast-enterprise'
+  licenseKeySecretName: hazelcast-license-key
+  clusterSize: 3
+  liteMember:
+    count: 2
+    scheduling:
+      nodeSelector:
+        topology.kubernetes.io/region: us-west1
+```
+
+## Configure environment variables
+
+To configure environment variables for Lite members, use the `env` field in the `liteMember` section of the [Hazelcast CR](../reference/api-ref.mdx#litemember).
+
+The `env` field uses the [Kubernetes' EnvVar format](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#envvar-v1-core/).
+
+:::note
+
+You cannot use the `env` field to configure Hazelcast environment variables, which are prefixed `HZ_`. To configure the Hazelcast environment variables, use [Custom configuration](../operate-and-manage/configuration-properties/custom-config.mdx).
+
+:::

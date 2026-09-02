@@ -27,6 +27,7 @@ This document was generated from comments in the Go code in the api/ directory.
 - [BatchSetting](#batchsetting)
 - [BitmapIndexOptionsConfig](#bitmapindexoptionsconfig)
 - [BucketConfiguration](#bucketconfiguration)
+- [BucketSource](#bucketsource)
 - [ByteOrder](#byteorder)
 - [CPSubsystem](#cpsubsystem)
 - [Cache](#cache)
@@ -65,7 +66,8 @@ This document was generated from comments in the Go code in the api/ directory.
 - [ExternalConnectivityConfiguration](#externalconnectivityconfiguration)
 - [ExternalConnectivityIngress](#externalconnectivityingress)
 - [ExternalConnectivityRoute](#externalconnectivityroute)
-- [ExternalConnectivityType](#externalconnectivitytype)
+- [ExternalConnectivityServiceType](#externalconnectivityservicetype)
+- [ExternalConnectivityType](#ExternalConnectivityType)
 - [FullBehaviorSetting](#fullbehaviorsetting)
 - [GCType](#gctype)
 - [GlobalSerializer](#globalserializer)
@@ -99,6 +101,7 @@ This document was generated from comments in the Go code in the api/ directory.
 - [JAASPropertiesSource](#JAASPropertiesSource)
 - [JAASPropertyFromSource](#jaaspropertyfromsource)
 - [JVMConfiguration](#jvmconfiguration)
+- [JVMDebugConfiguration](#jvmdebugconfiguration)
 - [JVMGCConfiguration](#jvmgcconfiguration)
 - [JVMMemoryConfiguration](#jvmmemoryconfiguration)
 - [JavaFilterConfig](#javafilterconfig)
@@ -299,13 +302,24 @@ This document was generated from comments in the Go code in the api/ directory.
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
 | `secretName` | Name of the secret with credentials for cloud providers. | `string` | false | - |
-| `bucketURI` | URL of the bucket to download HotBackup folders. AWS S3, GCP Bucket and Azure Blob storage buckets are supported. Example bucket URIs: - AWS S3 → s3://bucket-name/path/to/folder - GCP Bucket → gs://bucket-name/path/to/folder - Azure Blob → azblob://bucket-name/path/to/folder | `string` | true | - |
+| `bucketURI` | URL of the bucket to download folders. AWS S3, GCP Bucket and Azure Blob storage buckets are supported. Example bucket URIs: - AWS S3 → s3://bucket-name/path/to/folder - GCP Bucket → gs://bucket-name/path/to/folder - Azure Blob → azblob://bucket-name/path/to/folder | `string` | true | - |
 
 #### Deprecated
 
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
 | `secret` | secret is a deprecated alias for secretName. | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### BucketSource
+
+BucketSource defines the configuration for a single cloud storage bucket.
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `secretName` | Name of the secret with credentials for cloud providers. | `string` | false | - |
+| `bucketURI` | URL of the bucket to download folders. AWS S3, GCP Bucket and Azure Blob storage buckets are supported. Example bucket URIs: - AWS S3 → s3://bucket-name/path/to/folder - GCP Bucket → gs://bucket-name/path/to/folder - Azure Blob → azblob://bucket-name/path/to/folder | `string` | true | - |
 
 [Back to TOC](#table-of-contents)
 
@@ -624,9 +638,15 @@ ExternalConnectivityConfiguration defines how to expose Management Center pod.
 
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
-| `type` | How Management Center is exposed. Valid values are: - "ClusterIP" - "NodePort" - "LoadBalancer" (default) | [`ExternalConnectivityType`](#externalconnectivitytype) | false | "LoadBalancer" |
+| `serviceType` | How Management Center is exposed. Valid values are: - "ClusterIP" - "NodePort" - "LoadBalancer" (default) | [`ExternalConnectivityServiceType`](#externalconnectivityservicetype) | false | - |
 | `ingress` | Ingress configuration of Management Center | [`*ExternalConnectivityIngress`](#externalconnectivityingress) | false | - |
 | `route` | OpenShift Route configuration of Management Center | [`*ExternalConnectivityRoute`](#externalconnectivityroute) | false | - |
+
+#### Deprecated {/* #deprecated-3 */}
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `type` | type is a deprecated alias for serviceType. | [`ExternalConnectivityServiceType`](#externalconnectivityservicetype) | false | - |
 
 [Back to TOC](#table-of-contents)
 
@@ -787,7 +807,7 @@ HazelcastPersistenceConfiguration contains the configuration for Hazelcast Persi
 | `pvcName` | PVCName is the name of the mounted PVC | `string` | false | - |
 | `restore` | Restore configuration | [`RestoreConfiguration`](#restoreconfiguration) | false | \{\} |
 
-#### Deprecated {/* #deprecated-3 */}
+#### Deprecated {/* #deprecated-4 */}
 
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
@@ -804,7 +824,7 @@ HazelcastSpec defines the desired state of Hazelcast
 | --- | --- | --- | --- | --- |
 | `clusterSize` | Number of Hazelcast members in the cluster. | `*int32` | false | 3 |
 | `repository` | Repository to pull the Hazelcast Platform image from. | `string` | false | "docker.io/hazelcast/hazelcast-enterprise" |
-| `version` | Version of Hazelcast Platform. | `string` | false | "5.8.0-SNAPSHOT" |
+| `version` | Version of Hazelcast Platform. | `string` | false | "6.0.0-SNAPSHOT" |
 | `imagePullPolicy` | Pull policy for the Hazelcast Platform image | [`corev1.PullPolicy`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#pullpolicy-v1-core) | false | "IfNotPresent" |
 | `imagePullSecrets` | Image pull secrets for the Hazelcast Platform image | [`[]corev1.LocalObjectReference`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#localobjectreference-v1-core) | false | - |
 | `licenseKeySecretName` | Name of the secret with Hazelcast Enterprise License Key. | `string` | true | - |
@@ -847,7 +867,7 @@ HazelcastSpec defines the desired state of Hazelcast
 | `ipFamily` | IPFamily selects the network stack for Hazelcast members. | [`IPFamily`](#ipfamily) | false | IPv4 |
 | `moduleDeployment` | ModuleDeployment defines the modules to Download into CLASSPATH | [`*ModuleDeploymentConfiguration`](#moduledeploymentconfiguration) | false | - |
 
-#### Deprecated {/* #deprecated-4 */}
+#### Deprecated {/* #deprecated-5 */}
 
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
@@ -906,7 +926,7 @@ HotBackupSpec defines the Spec of HotBackup
 | `bucketURI` | URL of the bucket to download HotBackup folders. AWS S3, GCP Bucket and Azure Blob storage buckets are supported. Example bucket URIs: - AWS S3 → s3://bucket-name/path/to/folder - GCP Bucket → gs://bucket-name/path/to/folder - Azure Blob → azblob://bucket-name/path/to/folder | `string` | false | - |
 | `secretName` | Name of the secret with credentials for cloud providers. | `string` | false | - |
 
-#### Deprecated {/* #deprecated-5 */}
+#### Deprecated {/* #deprecated-6 */}
 
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
@@ -986,6 +1006,20 @@ JVMConfiguration is a Hazelcast JVM configuration
 | `memory` | Memory is a JVM memory configuration | [`*JVMMemoryConfiguration`](#jvmmemoryconfiguration) | false | - |
 | `gc` | GC is for configuring JVM Garbage Collector | [`*JVMGCConfiguration`](#jvmgcconfiguration) | false | - |
 | `args` | Args is for arbitrary JVM arguments | `[]string` | false | - |
+| `debug` | Debug configures remote JVM debugging. | [`*JVMDebugConfiguration`](#jvmdebugconfiguration) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### JVMDebugConfiguration
+
+JVMDebugConfiguration configures remote JVM debugging via JDWP.
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `enabled` | Enabled turns on JVM debug mode. | `*bool` | false | - |
+| `port` | Port is the TCP port the JVM listens on for debugger connections (listen mode) | `*int32` | false | 5005 |
+| `suspend` | Suspend when true blocks JVM startup until a debugger connects. Pods may remain NotReady until a debugger attaches | `*bool` | false | - |
+| `attach` | Attach is the host:port of a listening debugger (attach mode). When set, the JVM connects out to the debugger instead of listening in the pod | `string` | false | - |
 
 [Back to TOC](#table-of-contents)
 
@@ -1037,7 +1071,7 @@ JVMMemoryConfiguration is a JVM memory configuration
 | --- | --- | --- | --- | --- |
 | `enabled` | When false, disables Jet Engine. | `*bool` | false | true |
 | `resourceUploadEnabled` | When true, enables resource uploading for Jet jobs. | `bool` | false | false |
-| `bucketConfig` | Bucket config from where the JAR files will be downloaded. | [`*BucketConfiguration`](#bucketconfiguration) | false | - |
+| `bucketConfigs` | Bucket configs from where the JAR files will be downloaded. | [`[]BucketSource`](#bucketsource) | false | - |
 | `configMaps` | Names of the list of ConfigMaps. Files in each ConfigMap will be downloaded. | `[]string` | false | - |
 | `remoteURLs` | List of URLs from where the files will be downloaded. | `[]string` | false | - |
 | `instance` | Jet Instance Configuration | [`*JetInstance`](#jetinstance) | false | \{\} |
@@ -1231,7 +1265,7 @@ MCClientTLS is used by Management Center CR, MC has nothing to do with MemberAut
 | `secretName` | Name of the secret with TLS certificate and key. | `string` | true | - |
 | `clientAuthentication` | Mutual authentication configuration for the client. It is None by default which means the client side of connection is not authenticated. | [`MutualAuthentication`](#mutualauthentication) | false | "None" |
 
-#### Deprecated {/* #deprecated-6 */}
+#### Deprecated {/* #deprecated-7 */}
 
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
@@ -1305,7 +1339,7 @@ ManagementCenterSpec defines the desired state of ManagementCenter.
 | `imagePullSecrets` | Image pull secrets for the Management Center image | [`[]corev1.LocalObjectReference`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#localobjectreference-v1-core) | false | - |
 | `licenseKeySecretName` | Name of the secret with Hazelcast Enterprise License Key. | `string` | true | - |
 | `hazelcastClusters` | Connection configuration for the Hazelcast clusters that Management Center will monitor. | [`[]HazelcastClusterConfig`](#hazelcastclusterconfig) | false | - |
-| `externalConnectivity` | Configuration to expose Management Center to outside. | [`*ExternalConnectivityConfiguration`](#externalconnectivityconfiguration) | false | \{type: "LoadBalancer"\} |
+| `externalConnectivity` | Configuration to expose Management Center to outside. | [`*ExternalConnectivityConfiguration`](#externalconnectivityconfiguration) | false | \{serviceType: "LoadBalancer"\} |
 | `persistence` | Configuration for Management Center persistence. | [`*MCPersistenceConfiguration`](#mcpersistenceconfiguration) | false | \{enabled: true, size: "10Gi"\} |
 | `scheduling` | Scheduling details | [`*SchedulingConfiguration`](#schedulingconfiguration) | false | \{\} |
 | `resources` | Compute Resources required by the MC container. | [`*corev1.ResourceRequirements`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core) | false | \{\} |
@@ -1421,7 +1455,7 @@ MapStatus defines the observed state of Map
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
 | `triggerSequence` | A string for triggering a rolling restart for re-downloading the user code. | `string` | false | - |
-| `bucketConfig` | Bucket config from where the JAR files will be downloaded. | [`*BucketConfiguration`](#bucketconfiguration) | false | - |
+| `bucketConfigs` | Bucket configs from where the JAR files will be downloaded. | [`[]BucketSource`](#bucketsource) | false | - |
 | `configMaps` | Names of the list of ConfigMaps. Files in each ConfigMap will be downloaded. | `[]string` | false | - |
 | `remoteURLs` | List of URLs from where the files will be downloaded. | `[]string` | false | - |
 
@@ -1669,9 +1703,15 @@ QueueStatus defines the observed state of Queue
 
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
-| `bucketConfig` | Bucket config from where the JAR files will be downloaded. | [`*BucketConfiguration`](#bucketconfiguration) | false | - |
+| `bucketConfigs` | Bucket configs from where the JAR files will be downloaded. | [`[]BucketSource`](#bucketsource) | false | - |
 | `configMaps` | Names of the list of ConfigMaps. Files in each ConfigMap will be downloaded. | `[]string` | false | - |
 | `remoteURLs` | List of URLs from where the files will be downloaded. | `[]string` | false | - |
+
+#### Deprecated {/* #deprecated-8 */}
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `bucketConfig` | bucketConfig is deprecated. Use bucketConfigs instead. Bucket config from where the JAR files will be downloaded. | [`*BucketConfiguration`](#bucketconfiguration) | false | - |
 
 [Back to TOC](#table-of-contents)
 
@@ -1956,7 +1996,7 @@ UserCodeDeploymentConfig contains the configuration for User Code download opera
 | --- | --- | --- | --- | --- |
 | `clientEnabled` | When true, allows user code deployment from clients. | `*bool` | false | - |
 | `triggerSequence` | A string for triggering a rolling restart for re-downloading the user code. | `string` | false | - |
-| `bucketConfig` | Bucket config from where the JAR files will be downloaded. | [`*BucketConfiguration`](#bucketconfiguration) | false | - |
+| `bucketConfigs` | Bucket configs from where the JAR files will be downloaded. | [`[]BucketSource`](#bucketsource) | false | - |
 | `configMaps` | Names of the list of ConfigMaps. Files in each ConfigMap will be downloaded. | `[]string` | false | - |
 | `remoteURLs` | List of URLs from where the files will be downloaded. | `[]string` | false | - |
 
@@ -2083,7 +2123,7 @@ VectorCollectionStatus defines the observed state of VectorCollection
 | `serviceType` |  | [`WANServiceType`](#wanservicetype) | false | "LoadBalancer" |
 | `name` |  | `string` | false | "default" |
 
-#### Deprecated {/* #deprecated-7 */}
+#### Deprecated {/* #deprecated-9 */}
 
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
@@ -2328,9 +2368,9 @@ ExposeExternallyType describes how Hazelcast members are exposed.
 
 [Back to TOC](#table-of-contents)
 
-### ExternalConnectivityType
+### ExternalConnectivityServiceType
 
-ExternalConnectivityType describes how Management Center is exposed.
+ExternalConnectivityServiceType describes how Management Center is exposed.
 
 | Value | Description |
 | --- | --- |
