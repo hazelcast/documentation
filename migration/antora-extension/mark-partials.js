@@ -147,7 +147,8 @@ function createPartialMarker () {
           // CpSubsystemAPI.java's 11 include sites were silently left inline),
           // and the partial held a COPY of rendered output rather than a live
           // slice of the file. example$ has its own mechanism now -- co-located
-          // source files sliced at build (plugins/tag-slice-loader.js).
+          // source files sliced at build
+          // (plugins/example-attributes/tag-slice-loader.js).
           const includeIdOf = (block) => {
             const f = fileOf(block)
             if (f == null || (pageFile != null && String(f) === pageFile)) return null

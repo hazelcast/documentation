@@ -7,7 +7,7 @@
 //   import Ex from '../examples/dds/map/LoadAll.java?tag=loadall&indent=0';
 //   import Ex from '../examples/distributedcomputing/FibonacciCallable.java?lines=36..47';
 //
-// Runs FIRST in the examples rule (before example-attributes-loader and
+// Runs FIRST in the examples rule (before attributes-loader and
 // raw-loader), so it sees the raw file text and the rest of the chain operates
 // on the slice.
 //
@@ -19,7 +19,7 @@
 // With NO query the file passes through untouched. That is the operator
 // whole-file path, and it stays byte-for-byte what it is today.
 
-const { sliceRegion } = require('./lib/slice-region')
+const { sliceRegion } = require('../lib/slice-region')
 
 module.exports = function tagSliceLoader (source) {
   const q = new URLSearchParams(this.resourceQuery || '')

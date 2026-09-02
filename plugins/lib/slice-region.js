@@ -1,11 +1,11 @@
 'use strict'
 
 // The ONE implementation of Antora/Asciidoctor `include::…[tag=…]` region
-// slicing. Shared by the build-time tag-slice webpack loader (plugins/
-// tag-slice-loader.js) and, during the migration, by the converter's
-// content-addressed example index -- the same arrangement as
-// substitute-attributes.js, so the two cannot drift and disagree about what a
-// given slice contains.
+// slicing. Shared by the build-time tag-slice webpack loader
+// (plugins/example-attributes/tag-slice-loader.js) and, during the migration,
+// by the converter's content-addressed example index -- the same arrangement
+// as substitute-attributes.js, so the two cannot drift and disagree about what
+// a given slice contains.
 //
 // Platform's examples are complete, compilable .java files: the `package` and
 // `import` lines sit OUTSIDE the tag markers so the file stays a valid

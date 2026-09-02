@@ -4,7 +4,7 @@
 // in co-located example files at build. The co-located files stay BYTE-FAITHFUL
 // to the engineers' source (placeholders intact — no baking at extract time),
 // while the rendered code block shows the resolved, per-version value. It runs
-// before raw-loader (see example-attributes-plugin.js) so it sees the raw file
+// before raw-loader (see index.js) so it sees the raw file
 // text and raw-loader then stringifies the result.
 //
 // Values come from loader OPTIONS ({ variables, versionedVariables }), which the
@@ -16,7 +16,7 @@
 // undefined attributes.
 
 const path = require('node:path')
-const substitute = require('./lib/substitute-attributes')
+const substitute = require('../lib/substitute-attributes')
 
 // component + Docusaurus version name from the imported file's absolute path.
 function scopeFromPath (resourcePath) {

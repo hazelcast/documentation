@@ -15,7 +15,7 @@
 //   link:           <Variable href="{NAME}" text="{NAME} console"/>
 //   code:           ```shell vars … {NAME} …```
 //   example:        {NAME} in an imported example file (substituted at build by
-//                   plugins/example-attributes-loader.js)
+//                   plugins/example-attributes/attributes-loader.js)
 // so a page's count is `name="NAME"` occurrences plus unescaped `{NAME}` tokens --
 // with `{NAME}` inside a fence that does NOT carry the `vars` flag excluded,
 // because Docusaurus renders such a fence literally and the converter only writes
@@ -75,7 +75,7 @@ function importsOf (text, file, siteRoot) {
       partials.push({ id, file: path.join(siteRoot, spec.slice('@site/'.length)) })
     } else if (/(^|\/)examples\//.test(spec) && (spec.startsWith('.') || spec.startsWith('@site/'))) {
       // An example import may carry a region selector (`?tag=…`, `?lines=…`,
-      // `&indent=0`), read at build by plugins/tag-slice-loader.js. Split it off
+      // `&indent=0`), read at build by the tag-slice loader. Split it off
       // the path — what the page renders is that SLICE, not the whole file.
       const q = spec.indexOf('?')
       const bare = q === -1 ? spec : spec.slice(0, q)

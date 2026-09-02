@@ -2,7 +2,7 @@
 
 const path = require('node:path')
 
-// Attaches the example-attributes loader (see example-attributes-loader.js) to
+// Attaches the example-attributes loader (see attributes-loader.js) to
 // co-located example files via a scoped webpack module rule, so the converter
 // can import them plainly:
 //
@@ -34,7 +34,7 @@ module.exports = function exampleAttributesPlugin (context, options) {
               use: [
                 'raw-loader',
                 {
-                  loader: path.resolve(__dirname, 'example-attributes-loader.js'),
+                  loader: path.resolve(__dirname, 'attributes-loader.js'),
                   options: { variables, versionedVariables },
                 },
                 path.resolve(__dirname, 'tag-slice-loader.js'),

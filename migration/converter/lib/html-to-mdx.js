@@ -938,8 +938,8 @@ function emitExampleCodeBlock ($, pre, hit, title, st) {
   const spec = file + (query || '')
   const varName = exampleVar(spec, st)
   st.imports.add("import CodeBlock from '@theme/CodeBlock';")
-  // Plain import: a scoped webpack rule (example-attributes-plugin) runs the
-  // tag-slice loader, the example-attributes loader and raw-loader on files
+  // Plain import: a scoped webpack rule (plugins/example-attributes) runs the
+  // tag-slice loader, the attributes loader and raw-loader on files
   // under examples/. The query selects the region (absent = the whole file, the
   // operator case); {attribute} placeholders in the byte-faithful file are then
   // substituted per version at build (no-op for files without placeholders).

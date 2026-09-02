@@ -145,7 +145,7 @@ const config: Config = {
     // Registers the example-attributes loader so co-located example files keep
     // their Antora {attribute} placeholders (byte-faithful, single-sourced) and
     // have them substituted per-version at build. Fed from src/variables.ts.
-    ['./plugins/example-attributes-plugin.js', {variables, versionedVariables}],
+    ['./plugins/example-attributes', {variables, versionedVariables}],
 
     // Platform docs — migration target #5 and the biggest by a wide margin: 439
     // pages over 46 Antora modules. The plugin id is the Antora component name
