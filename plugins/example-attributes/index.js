@@ -16,7 +16,11 @@ const path = require('node:path')
 //
 // Scoped to files under an `examples/` dir of a docs component so it never
 // touches unrelated YAML/XML elsewhere in the build.
-const EXAMPLES_RE = /[\\/]examples[\\/].+\.(ya?ml|xml|java|properties|txt|sh|json|conf|cfg)$/
+// `.tutorial-examples/` is matched too: the tutorials' staged files are client
+// programs in six languages, and an unmatched `.js`/`.py` import would be parsed
+// as a MODULE rather than read as text (webpack then tries to resolve the
+// example's own `require('hazelcast-client')` and fails the build).
+const EXAMPLES_RE = /[\\/](?:examples|\.tutorial-examples)[\\/].+\.(ya?ml|xml|java|properties|txt|sh|json|conf|cfg|js|py|go|cs|ps1|ini|tf)$/
 
 module.exports = function exampleAttributesPlugin (context, options) {
   const { variables = {}, versionedVariables = {} } = options || {}
@@ -28,6 +32,11 @@ module.exports = function exampleAttributesPlugin (context, options) {
           rules: [
             {
               test: EXAMPLES_RE,
+              // Without this webpack still applies its BUILT-IN JSON parser to a
+              // `.json` example after these loaders have turned it into
+              // `export default "…"`, and the build dies on "JSON parse error:
+              // Unexpected character e". Two of the guides' examples are .json.
+              type: 'javascript/auto',
               // Applied right-to-left: slice the region out of the file, then
               // substitute {attribute} placeholders in the slice, then let
               // raw-loader turn the result into a string module.

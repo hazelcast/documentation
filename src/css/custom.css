@@ -252,3 +252,20 @@
      collapses to a couple of pixels. */
   width: 100%;
 }
+
+/* Block-image captions (a `.Title` on an Antora `image::`, emitted as
+   <figure>/<figcaption> by the converter). Antora renders these as a muted
+   caption under a centred image; without a rule they read as body prose. */
+.markdown figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 1.1rem 0 0;
+}
+
+.markdown figure figcaption {
+  align-self: stretch;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 1rem;
+  margin-bottom: 6px;
+}

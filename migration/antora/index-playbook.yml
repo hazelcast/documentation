@@ -27,10 +27,12 @@ runtime:
 content:
   sources:
     - url: .sources/hazelcast-docs.git
-      # 'tutorials' is a RESOLUTION-ONLY component (not migrated): built so the
-      # migrated set's xrefs into it resolve to /tutorials/... URLs as production
-      # does. It is assembled from hazelcast-docs/tutorials + cloud-docs/tutorials.
-      start_paths: [home, privacy, tutorials]
+      # 'tutorials' is assembled from hazelcast-docs/tutorials + cloud-docs/tutorials
+      # + the 56 guide repos below. 'templates' is RESOLUTION-ONLY and supplies the
+      # 4 page$ prose partials the guides include as {templates-url} (start-hz-cluster,
+      # microservices/*); it merges with hazelcast-code-samples, which declares the
+      # same component name and supplies the example$ files operator pulls.
+      start_paths: [home, privacy, tutorials, templates]
       branches: [main]
     - url: .sources/hz-docs.git
       branches: [main, v/*]
@@ -80,176 +82,180 @@ content:
       branches: [master]
       start_path: docs
     # --- 'tutorials' component: the 56 hazelcast-guides/* repos (each declares
-    # name: tutorials). REMOTE + resolution-only: cloned once into .cache under
-    # fetch:false and frozen (nobody edits them). Present so the migrated set's
-    # xref:tutorials:* links resolve as production does; their pages are NOT
-    # migrated (see build-snapshot.js migrated-component allowlist). ---
-    - url: https://github.com/hazelcast-guides/user-code-namespaces
+    # name: tutorials), one page per repo. MIGRATED as of 2026-09-03: pinned
+    # .sources mirrors like every other migrated component, and in the
+    # build-snapshot.js allowlist, so the four gates cover them.
+    #
+    # The component is assembled from these 56 plus hazelcast-docs/tutorials
+    # (the landing page, which does NOT migrate -- it is replaced by a React
+    # page) and cloud-docs/tutorials. Their code stays in the guide repos; only
+    # the prose moves. ---
+    - url: .sources/user-code-namespaces.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/cpsubsystem
+    - url: .sources/cpsubsystem.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/stream-processing-fundamentals
+    - url: .sources/stream-processing-fundamentals.git
       branches: [main]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/airline-connections
+    - url: .sources/airline-connections.git
       branches: [main]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/Generating-Data-using-SQL
+    - url: .sources/Generating-Data-using-SQL.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/sql_stock_ticker_cloud
+    - url: .sources/sql_stock_ticker_cloud.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/Stream-Processing-Intro
+    - url: .sources/Stream-Processing-Intro.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/client-failover
+    - url: .sources/client-failover.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/spring-boot-sample
+    - url: .sources/spring-boot-sample.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/serverless-fraud-detection
+    - url: .sources/serverless-fraud-detection.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/write-through-cache-mongodb-mapstore
+    - url: .sources/write-through-cache-mongodb-mapstore.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/standard-deviation-parallel-processing
+    - url: .sources/standard-deviation-parallel-processing.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/stream-to-stream-joins
+    - url: .sources/stream-to-stream-joins.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/caching-springboot-jcache
+    - url: .sources/caching-springboot-jcache.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/hazelcast-embedded-springboot
+    - url: .sources/hazelcast-embedded-springboot.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/springboot-hibernate
+    - url: .sources/springboot-hibernate.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/hibernate-jcache
+    - url: .sources/hibernate-jcache.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/istio
+    - url: .sources/istio.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/caching-micronaut
+    - url: .sources/caching-micronaut.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/kubernetes-embedded
+    - url: .sources/kubernetes-embedded.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/hazelcast-embedded-microprofile
+    - url: .sources/hazelcast-embedded-microprofile.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/hazelcast-client-quarkus
+    - url: .sources/hazelcast-client-quarkus.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/springboot-webfilter-session-replication
+    - url: .sources/springboot-webfilter-session-replication.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/caching-springboot
+    - url: .sources/caching-springboot.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/ecs-embedded
+    - url: .sources/ecs-embedded.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/springboot-tomcat-session-replication
+    - url: .sources/springboot-tomcat-session-replication.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/terraform-quickstarts
+    - url: .sources/terraform-quickstarts.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/kubernetes-external-client
+    - url: .sources/kubernetes-external-client.git
       branches: [main]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/active-directory-authentication
+    - url: .sources/active-directory-authentication.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/kubernetes-sidecar
+    - url: .sources/kubernetes-sidecar.git
       branches: [main]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/kubernetes-hpa
+    - url: .sources/kubernetes-hpa.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/kubernetes-ssl
+    - url: .sources/kubernetes-ssl.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/kubernetes-wan
+    - url: .sources/kubernetes-wan.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/kubernetes
+    - url: .sources/kubernetes.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/spring-session-hazelcast
+    - url: .sources/spring-session-hazelcast.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/ec2-cluster
+    - url: .sources/ec2-cluster.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/Hazelcast-Embedded-with-Eureka-discovery
+    - url: .sources/Hazelcast-Embedded-with-Eureka-discovery.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/linkerd
+    - url: .sources/linkerd.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/consul
+    - url: .sources/consul.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/openfaas-hz-client
+    - url: .sources/openfaas-hz-client.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/hazelcast-platform-operator-expose-externally
+    - url: .sources/hazelcast-platform-operator-expose-externally.git
       branches: [main]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/hazelcast-platform-operator-external-backup-restore
+    - url: .sources/hazelcast-platform-operator-external-backup-restore.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/hazelcast-platform-operator-wan-replication
+    - url: .sources/hazelcast-platform-operator-wan-replication.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/hazelcast-platform-operator-wan-sync
+    - url: .sources/hazelcast-platform-operator-wan-sync.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/hazelcast-platform-operator-jet
+    - url: .sources/hazelcast-platform-operator-jet.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/hazelcast-platform-operator-jet-job-snapshot
+    - url: .sources/hazelcast-platform-operator-jet-job-snapshot.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/hazelcast-platform-operator-tls
+    - url: .sources/hazelcast-platform-operator-tls.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/hazelcast-platform-operator-user-code-namespace
+    - url: .sources/hazelcast-platform-operator-user-code-namespace.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/kafka-kerberos
+    - url: .sources/kafka-kerberos.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/serverless-trade-monitor-dashboard
+    - url: .sources/serverless-trade-monitor-dashboard.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/csharp-client-getting-started
+    - url: .sources/csharp-client-getting-started.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/python-client-getting-started
+    - url: .sources/python-client-getting-started.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/java-client-getting-started
+    - url: .sources/java-client-getting-started.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/nodejs-client-getting-started
+    - url: .sources/nodejs-client-getting-started.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/go-client-getting-started
+    - url: .sources/go-client-getting-started.git
       branches: [master]
       start_path: docs
-    - url: https://github.com/hazelcast-guides/cpp-client-getting-started
+    - url: .sources/cpp-client-getting-started.git
       branches: [master]
       start_path: docs
 asciidoc:

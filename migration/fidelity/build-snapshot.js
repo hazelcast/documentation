@@ -41,13 +41,14 @@ const { markedAttrsFor } = require('../lib/layout')
 const { lockfileKey, lockfileKeyFromFile } = require('./lockfile-key')
 
 // Components we actually migrate (convert + emit to the golden tree). Everything
-// else in the build (imdg, tutorials + its 56 guide repos, ...) is
-// resolution-only: kept in the catalog + manifest so cross-component xrefs
-// resolve as production does, but never emitted here. An allowlist is used (not
-// a denylist) so any resolution-only component is excluded regardless of the
-// component name its repo declares.
+// else in the build (imdg, templates, ...) is resolution-only: kept in the
+// catalog + manifest so cross-component xrefs resolve as production does, but
+// never emitted here. An allowlist is used (not a denylist) so any
+// resolution-only component is excluded regardless of the component name its
+// repo declares.
 const MIGRATED = new Set([
   'hazelcast', 'management-center', 'clc', 'operator', 'cloud', 'jdbc-driver', 'home', 'privacy',
+  'tutorials',
 ])
 
 function parseArgs (argv) {

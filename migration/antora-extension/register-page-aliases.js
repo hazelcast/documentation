@@ -90,13 +90,18 @@ function registerPageAliases (contentCatalog, siteAsciiDocConfig = {}) {
       continue
     }
     if (meta.doctitle) titles.set(resourceId(page.src), meta.doctitle)
-    // Collect any page-level badge attributes set on this page. Mirrors the old
-    // UI gate (attribute present and not explicitly "false"); the value is
-    // typically "true".
+    // Collect any page-level badge attributes set on this page. Mirrors the UI
+    // gate EXACTLY -- article.hbs renders the page-level class from
+    // `{{#if (eq @root.page.attributes.enterprise 'true')}}`, a strict compare,
+    // so an attribute set to the EMPTY string is not a badge. The product repos
+    // only ever write `true`/`false` and so cannot tell the two apart, but the
+    // guide repos write `:page-enterprise:` with no value on 11 tutorials, where
+    // "set, therefore badged" is wrong. NB the tutorials LANDING page uses a
+    // different gate (plain Handlebars truthiness, so its cards treat the string
+    // "false" as enterprise); that is card data, not a page badge.
     const pageBadges = []
     for (const [attr, key] of Object.entries(BADGE_ATTRIBUTES)) {
-      const v = meta.attributes[attr]
-      if (v != null && v !== 'false') pageBadges.push(key)
+      if (meta.attributes[attr] === 'true') pageBadges.push(key)
     }
     if (pageBadges.length) badges.set(resourceId(page.src), pageBadges)
     // Capture the cloud-* console-index attributes on any page that opts in via

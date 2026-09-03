@@ -82,6 +82,9 @@ function convertBody (html, ctx) {
     // root, so imageSrc() must strip this segment too — see imageSrc().
     seg: ctx.seg || null,
     slugger: new GithubSlugger(),
+    // Import prefix for example files. Absent = the co-located `examples/` dir
+    // next to the page; set for components whose examples stay in their own repo.
+    exampleImportBase: ctx.exampleImportBase || null,
     partials: ctx.partials || new Map(),
     linkVars: ctx.linkVars || new Map(),
     // Single-sourced examples: content -> co-located file path (from convert.js
@@ -943,7 +946,12 @@ function emitExampleCodeBlock ($, pre, hit, title, st) {
   // under examples/. The query selects the region (absent = the whole file, the
   // operator case); {attribute} placeholders in the byte-faithful file are then
   // substituted per version at build (no-op for files without placeholders).
-  st.imports.add(`import ${varName} from '${examplesRelPath(st.relFile)}/${spec}';`)
+  // `exampleImportBase` overrides the co-located default for components whose
+  // examples are NOT in this repo: tutorials' live in the guide repos and are
+  // staged at build (plugins/tutorial-examples), so their import is site-absolute
+  // into the staging dir rather than relative to the page.
+  const importBase = st.exampleImportBase || examplesRelPath(st.relFile)
+  st.imports.add(`import ${varName} from '${importBase}/${spec}';`)
   // Files carrying native `<N>` conum markers get the `conums` metastring so the
   // swizzled CodeBlock strips the markers and renders callout badges.
   const info = (lang ? ` language=${jsxAttr(lang)}` : '') + (title ? ` title=${jsxAttr(title)}` : '') +

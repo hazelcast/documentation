@@ -163,6 +163,14 @@ const config: Config = {
     // at the base path with no version segment, and routeBasePath === the Antora
     // component name, so URLs match production exactly (/cloud/<page>).
     docs('cloud'),
+    // Tutorials — migration target #6. Unversioned, and the first NAV-LESS
+    // component: its 57 pages are one flat set reached from the /tutorials index,
+    // never a sidebar (Antora serves them through a TOC-only layout with no nav
+    // tree), so nothing here declares a sidebar and the pages carry no
+    // sidebar_position. The component is assembled from 56 hazelcast-guides
+    // repos plus one bespoke page in cloud-docs; only the prose is migrated,
+    // the runnable code stays in the guide repos.
+    docs('tutorials'),
     // Operator docs — migration target #2 and the VERSIONED warm-up before
     // Platform (same `main + v/*` Antora branch model). Antora serves main at
     // `/operator/latest-snapshot/` and the dropdown lands on the newest release;
@@ -202,6 +210,10 @@ const config: Config = {
     // from the product repo that owns it at the branch that version's
     // {…-swagger-branch} attribute names. See plugins/openapi-specs.
     ['./plugins/openapi-specs', {variables, versionedVariables, docs: [managementCenter, platform]}],
+    // Stages the example files the tutorial pages import. Their source of truth is
+    // the guide repo that owns each one — nothing is copied into this repo, only
+    // referenced from tutorials/examples.json at a pinned commit. See that plugin.
+    './plugins/tutorial-examples',
   ],
 
   themeConfig: {
@@ -251,6 +263,15 @@ const config: Config = {
           sidebarId: 'defaultSidebar',
           position: 'left',
           label: 'CLC',
+        },
+        // Tutorials, last in the row. A plain link rather than a `docSidebar`
+        // item: the component is nav-less (its pages are one flat set reached
+        // from the index, as Antora serves them), so there is no sidebar to
+        // open and a docSidebar item would have nothing to point at.
+        {
+          to: '/tutorials',
+          position: 'left',
+          label: 'Tutorials',
         },
         // Version dropdown for the hazelcast (Platform) instance: the
         // 6.0-SNAPSHOT current version plus the live releases.

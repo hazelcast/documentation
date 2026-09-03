@@ -70,7 +70,7 @@ const { branchesAt } = require('../antora-extension/mark-conditionals')
 // emitted (VERSIONS / currentSegFor), and the version/path helpers.
 const {
   NAV_SOURCES, currentSegFor, VERSIONS, markedAttrsFor,
-  isVersioned, refFor, versionsToProcess, outDirFor, urlToSlug,
+  isNavless, isVersioned, refFor, versionsToProcess, outDirFor, urlToSlug,
 } = require('../lib/layout')
 const yaml2 = require('js-yaml')
 
@@ -469,6 +469,22 @@ const keyOf = (r) => pageKey(r.module, String(r.relative || '').replace(/\.adoc$
 // substitute attributes with this version's values (`lookup`), then rewrite a
 // trailing `<N>` conum marker to `(N)`. `conums` is read off the SLICE, not the
 // file: a file may carry callouts in one region and none in another.
+// Where a component's example files live, and how a page imports them.
+// Default: co-located in an `examples/` dir under the component's own out tree.
+// TUTORIALS are the exception -- their examples are the guide repos' RUNNABLE
+// project files (the repos symlink `src/`, `client/` etc. into Antora's
+// examples dir), so there is no committed copy here: plugins/tutorial-examples
+// stages them from the pinned repo on every build, and pages import them
+// site-absolutely out of that staging dir.
+const EXAMPLES_STAGING = '.tutorial-examples'
+
+function examplesConfig (component, outRoot, outDir) {
+  if (component === 'tutorials') {
+    return { dir: path.join(outRoot, EXAMPLES_STAGING), importBase: `@site/${EXAMPLES_STAGING}` }
+  }
+  return { dir: path.join(outDir, 'examples'), importBase: null }
+}
+
 function loadExamples (examplesDir, lookup) {
   const byContent = new Map()
   if (!fs.existsSync(examplesDir)) return byContent
@@ -831,7 +847,7 @@ function proseVarsFor (pageVars, proseNames, marked) {
 // come from the census render's tokens, so nothing is ever matched on a real
 // value, and it counts occurrences rather than warning on presence.
 
-function frontmatter (title, { derived, slug, sidebarLabel, sidebarPosition, unlisted, badges, cloud } = {}) {
+function frontmatter (title, { derived, slug, sidebarLabel, sidebarPosition, unlisted, noSidebar, badges, cloud } = {}) {
   const lines = ['---', `title: ${yaml(title)}`]
   if (sidebarLabel) lines.push(`sidebar_label: ${yaml(sidebarLabel)}`)
   if (sidebarPosition != null) lines.push(`sidebar_position: ${sidebarPosition}`)
@@ -850,6 +866,12 @@ function frontmatter (title, { derived, slug, sidebarLabel, sidebarPosition, unl
   // nav. `unlisted` mirrors that exactly -- the URL still resolves, but the page
   // is kept out of the sidebar, search, and sitemap.
   if (unlisted) lines.push('unlisted: true')
+  // A NAV-LESS component has no sidebar to show, and Antora serves its pages
+  // through a TOC-only layout with neither a nav tree nor prev/next. Setting
+  // `displayed_sidebar: null` reproduces both at once: plugin-content-docs
+  // resolves a null sidebar name to emptySidebarNavigation(), which drops the
+  // sidebar AND the pagination that is derived from it.
+  if (noSidebar) lines.push('displayed_sidebar: null')
   if (derived) lines.push('hide_title: true')
   lines.push('---')
   return lines.join('\n')
@@ -1061,7 +1083,8 @@ function convertVersion (ver, ctx) {
   // to import. The converter content-matches a code block's text to one of these
   // and emits a raw-loader import instead of baking the fence. Scanned from the
   // co-located dir so the match is against exactly what will be imported.
-  const examples = loadExamples(path.join(outDir, 'examples'), exampleLookup)
+  const exCfg = examplesConfig(component, opts.outRoot, outDir)
+  const examples = loadExamples(exCfg.dir, exampleLookup)
 
   // Reverse-map single-sourced attributes (no-baking): which attrs each page's
   // source references, so a value is only ever matched on a page that uses it.
@@ -1196,7 +1219,7 @@ function convertVersion (ver, ctx) {
 
     let body, imports
     try {
-      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageExampleFiles, pageVars, proseVars, hrefVars, codeVars, codeValueVars, latestVersions: ctx.latestVersions, urlToRelFile, redirectRetargets, imagePlacement }))
+      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, exampleImportBase: exCfg.importBase, partials: decisions, linkVars: ctx.linkVars, examples, pageExampleFiles, pageVars, proseVars, hrefVars, codeVars, codeValueVars, latestVersions: ctx.latestVersions, urlToRelFile, redirectRetargets, imagePlacement }))
       body = withBothConditionalBranches(body, { page: p, rec, relFile, pageVars, proseVars, hrefVars, codeVars, codeValueVars })
     } catch (err) {
       problems.push({ url: p.url, error: err.message })
@@ -1210,7 +1233,11 @@ function convertVersion (ver, ctx) {
       slug: urlToSlug(p.url, component, seg),
       sidebarLabel: entry ? entry.sidebarLabel : null,
       sidebarPosition: entry ? entry.sidebarPosition : null,
-      unlisted: !entry, // orphan (not in nav)
+      // Orphan = in Antora but absent from the nav. A NAV-LESS component has no
+      // nav to be absent from, and production sitemaps every one of its pages, so
+      // the distinction does not apply there.
+      unlisted: !entry && !isNavless(component),
+      noSidebar: isNavless(component),
       badges: rec && rec.badges,
       cloud: rec && rec.cloud,
     })

@@ -276,12 +276,23 @@ function urlToSlug (url, component, seg) {
   return s.startsWith('/') ? s : '/' + s
 }
 
+// Components with no Antora nav at all. Their pages are reached from an index
+// page rather than a sidebar, so "absent from nav" is the normal state, not an
+// orphan -- and production serves AND sitemaps every one of them (all 58
+// tutorials are in sitemap-tutorials.xml), so they must not be emitted
+// `unlisted`, which would drop them from the sidebar, search and sitemap alike.
+const NAVLESS = new Set(['tutorials'])
+
+const isNavless = (component) => NAVLESS.has(component)
+
 module.exports = {
   CURRENT_SEG,
   NAV_SOURCES,
+  NAVLESS,
   VERSIONS,
   MARKED_ATTRS,
   markedAttrsFor,
+  isNavless,
   isVersioned,
   currentSegFor,
   refFor,

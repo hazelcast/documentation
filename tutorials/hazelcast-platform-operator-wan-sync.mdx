@@ -1,0 +1,594 @@
+---
+title: "Synchronize Data between Two Hazelcast Clusters using WAN Sync"
+slug: /hazelcast-platform-operator-wan-sync
+displayed_sidebar: null
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_platform_operator_wan_sync_operator_wan_sync_java_src_main_java_com_hazelcast_Main_java from '@site/.tutorial-examples/hazelcast-platform-operator-wan-sync/operator-wan-sync/java/src/main/java/com/hazelcast/Main.java';
+import Ex_hazelcast_platform_operator_wan_sync_operator_wan_sync_nodejs_client_js from '@site/.tutorial-examples/hazelcast-platform-operator-wan-sync/operator-wan-sync/nodejs/client.js';
+import Ex_hazelcast_platform_operator_wan_sync_operator_wan_sync_go_main_go from '@site/.tutorial-examples/hazelcast-platform-operator-wan-sync/operator-wan-sync/go/main.go';
+import Ex_hazelcast_platform_operator_wan_sync_operator_wan_sync_python_main_py from '@site/.tutorial-examples/hazelcast-platform-operator-wan-sync/operator-wan-sync/python/main.py';
+
+Learn how to synchronize data across two Hazelcast clusters using WAN Sync.
+
+## Context
+
+In this tutorial, you'll do the following:
+
+- Deploy two Hazelcast clusters.
+- Create a Hazelcast map configuration on one of the clusters.
+- Synchronize map data between the two Hazelcast clusters using Full and Delta WAN Sync.
+
+## Before you Begin
+
+Before starting this tutorial, make sure you have the following:
+
+- A running [Kubernetes](https://kubernetes.io/) cluster
+- The Kubernetes command-line tool, [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
+- A deployed [Hazelcast Platform Operator](/operator/latest/get-started)
+
+## Step 1. Start the Hazelcast Clusters
+
+In this step, you'll start two Hazelcast clusters, one called `hazelcast-first` and one called `hazelcast-second`.
+
+1. Create a secret with your [Hazelcast Enterprise License](http://trialrequest.hazelcast.com/).
+
+   ```shell
+   kubectl create secret generic hazelcast-license-key --from-literal=license-key=<hz-license-key>
+   ```
+2. Start the first Hazelcast cluster.
+
+   ```shell
+   kubectl apply -f - <<EOF
+   apiVersion: hazelcast.com/v1alpha1
+   kind: Hazelcast
+   metadata:
+     name: hazelcast-first
+   spec:
+     licenseKeySecretName: hazelcast-license-key
+     exposeExternally:
+       type: Unisocket
+       discoveryServiceType: LoadBalancer
+   EOF
+   ```
+3. Check the status of the cluster to ensure it is running.
+
+   ```shell
+   kubectl get hazelcast
+   ```
+
+   ```shell
+   NAME               STATUS    MEMBERS
+   hazelcast-first    Running   3/3
+   ```
+4. Start the second cluster
+
+   ```shell
+   kubectl apply -f - <<EOF
+   apiVersion: hazelcast.com/v1alpha1
+   kind: Hazelcast
+   metadata:
+     name: hazelcast-second
+   spec:
+     licenseKeySecretName: hazelcast-license-key
+     exposeExternally:
+       type: Unisocket
+       discoveryServiceType: LoadBalancer
+   EOF
+   ```
+5. Check the status to ensure that both clusters are running.
+
+   ```shell
+   kubectl get hazelcast
+   ```
+
+   ```shell
+   NAME               STATUS    MEMBERS
+   hazelcast-first     Running   3/3
+   hazelcast-second    Running   3/3
+   ```
+
+## Step 2. Create and Populate a Map for WAN Replication
+
+In this step, you will create and populate a map on the `hazelcast-first` cluster. This map will be the source for WAN Replication.
+
+1. Create the configuration for a map called `map-sync` on the `hazelcast-first` cluster.
+
+   If you need **Full WAN Synchronization**, use the following command.
+
+   ```shell
+   kubectl apply -f - <<EOF
+   apiVersion: hazelcast.com/v1alpha1
+   kind: Map
+   metadata:
+     name: map-sync
+   spec:
+     hazelcastResourceName: hazelcast-first
+   EOF
+   ```
+
+   If you need **Delta WAN Synchronization**, use the following command.
+
+   ```shell
+   kubectl apply -f - <<EOF
+   apiVersion: hazelcast.com/v1alpha1
+   kind: Map
+   metadata:
+     name: map-sync
+   spec:
+     hazelcastResourceName: hazelcast-first
+     merkleTree:
+       depth: 10
+   EOF
+   ```
+
+   :::note
+
+   Aren't sure whether you need Full or Delta? See [Full WAN Synchronization](https://docs.hazelcast.com/hazelcast/5.5/wan/advanced-features#synchronizing-wan-target-cluster) and [Delta WAN Synchronization](https://docs.hazelcast.com/hazelcast/5.5/wan/advanced-features#delta-wan-synchronization) for details.
+
+   :::
+2. Find the address of the first cluster.
+
+   ```shell
+   kubectl get hazelcastendpoint --selector="app.kubernetes.io/instance in (hazelcast-first)"
+   ```
+
+   ```shell
+   NAME                   TYPE        ADDRESS
+   hazelcast-first        Discovery   34.123.9.149:5701
+   hazelcast-first-wan    WAN         34.123.9.149:5710
+   ```
+
+   The `ADDRESS` column displays the external address of the first Hazelcast cluster.
+3. If you want to use a client other than Hazelcast CLC, download the repository for the client code:
+
+   ```shell
+   git clone https://github.com/hazelcast-guides/hazelcast-platform-operator-wan-sync.git
+   cd hazelcast-platform-operator-wan-sync
+   ```
+
+   You will find language-specific client code in the `docs/modules/ROOT/examples/operator-wan-sync` directory.
+4. Configure the Hazelcast client to connect to the first cluster using its address. <Anchor id="configure-client"/>
+
+   <Tabs groupId="client-language">
+   <TabItem value="clc" label="CLC">
+
+   :::note
+
+   Before using CLC, it should be installed on your system. Check the installation instructions for CLC: [Installing the Hazelcast CLC](/clc/latest/install-clc).
+
+   :::
+
+   Run the following command to add the first cluster config to the CLC.
+
+   ```bash
+   clc config add hz-1 cluster.name=dev cluster.address=<FIRST-CLUSTER-EXTERNAL-IP>
+   ```
+
+   </TabItem>
+   <TabItem value="java" label="Java">
+
+   <CodeBlock language="java">{Ex_hazelcast_platform_operator_wan_sync_operator_wan_sync_java_src_main_java_com_hazelcast_Main_java}</CodeBlock>
+
+   </TabItem>
+   <TabItem value="nodejs" label="NodeJS">
+
+   <CodeBlock language="javascript">{Ex_hazelcast_platform_operator_wan_sync_operator_wan_sync_nodejs_client_js}</CodeBlock>
+
+   </TabItem>
+   <TabItem value="go" label="Go">
+
+   <CodeBlock language="go">{Ex_hazelcast_platform_operator_wan_sync_operator_wan_sync_go_main_go}</CodeBlock>
+
+   </TabItem>
+   <TabItem value="python" label="Python">
+
+   <CodeBlock language="python">{Ex_hazelcast_platform_operator_wan_sync_operator_wan_sync_python_main_py}</CodeBlock>
+
+   </TabItem>
+   <TabItem value="net" label=".NET">
+
+   ```cs
+   using System;
+   using System.Threading.Tasks;
+   using Hazelcast;
+   using Microsoft.Extensions.Logging;
+
+   namespace Client
+   {
+       public class Program
+       {
+           static async Task Main(string[] args)
+           {
+               if (args.Length != 2)
+               {
+                   Console.WriteLine("You need to pass two arguments. The first argument must be `fill` or `size`. The second argument must be `mapName`.");
+                   return;
+               }
+               if (!(args[0] == "fill" || args[0] == "size"))
+               {
+                   Console.WriteLine("Wrong argument, you should pass: fill or size");
+                   return;
+               }
+
+               var mapName = args[1];
+               var options = new HazelcastOptionsBuilder()                
+                   .With(args)                
+                   .With((configuration, options) =>
+                   {
+                       options.LoggerFactory.Creator = () => LoggerFactory.Create(loggingBuilder =>
+                           loggingBuilder
+                               .AddConsole());
+
+                       options.Networking.UsePublicAddresses = true;
+                       options.Networking.SmartRouting = false;
+                       options.Networking.Addresses.Add("<EXTERNAL-IP>:5701");
+                       
+                   })
+                   .Build();
+
+
+
+               await using var client = await HazelcastClientFactory.StartNewClientAsync(options);
+               
+               Console.WriteLine("Successful connection!");
+               Console.WriteLine("Starting to fill the map with random entries.");
+
+               var map = await client.GetMapAsync<string, string>(mapName);
+               var random = new Random();
+
+               if (args[0] == "fill")
+               {
+                   Console.WriteLine("Starting to fill the map with random entries.");
+                   while (true)
+                   {
+                       var num = random.Next(100);
+                       var key = $"key-{num}";
+                       var value = $"value-{num}";
+                       await map.PutAsync(key, value);
+                       var mapSize = await map.GetSizeAsync();
+                       Console.WriteLine($"Current map size: {mapSize}");
+                   }
+               }
+               else
+               {
+                   var mapSize = await map.GetSizeAsync();
+                   Console.WriteLine($"Current map size: {mapSize}");
+                   await client.DisposeAsync();
+               }
+           }
+       } 
+   }
+   ```
+
+   </TabItem>
+   </Tabs>
+5. Add entries to the map.
+
+   <Tabs groupId="client-language">
+   <TabItem value="clc" label="CLC">
+
+   Execute the following command to populate the map with entries, replacing `<MAP-NAME>` with the actual map name, `map-sync`.
+
+   ```bash
+   for i in {1..10};
+   do
+      clc -c hz-1 map set --name <MAP-NAME> key-$i value-$i;
+   done
+   ```
+
+   Verify that the map has the expected number of entries.
+
+   ```bash
+   clc -c hz-1 map size --name <MAP-NAME>
+   ```
+
+   </TabItem>
+   <TabItem value="java" label="Java">
+
+   Start the application to populate the map with entries, replacing `<MAP-NAME>` with the actual map name, `map-sync`.
+
+   ```bash
+   cd java
+   mvn package
+   java -jar target/*jar-with-dependencies*.jar fill <MAP-NAME>
+   ```
+
+   You should see the following output.
+
+   ```shell
+   Successful connection!
+   Starting to fill the map (<MAP-NAME>) with random entries.
+   Current map size: 2
+   Current map size: 3
+   Current map size: 4
+   ....
+   ....
+   ```
+
+   </TabItem>
+   <TabItem value="nodejs" label="NodeJS">
+
+   Start the application to populate the map with entries, replacing `<MAP-NAME>` with the actual map name, `map-sync`.
+
+   ```bash
+   cd nodejs
+   npm install
+   npm start fill <MAP-NAME>
+   ```
+
+   You should see the following output.
+
+   ```shell
+   Successful connection!
+   Starting to fill the map (<MAP-NAME>) with random entries.
+   Current map size: 2
+   Current map size: 3
+   Current map size: 4
+   ....
+   ....
+   ```
+
+   </TabItem>
+   <TabItem value="go" label="Go">
+
+   Start the application to populate the map with entries, replacing `<MAP-NAME>` with the actual map name, `map-sync`.
+
+   ```bash
+   cd go
+   go run main.go fill <MAP-NAME>
+   ```
+
+   You should see the following output.
+
+   ```shell
+   Successful connection!
+   Starting to fill the map (<MAP-NAME>) with random entries.
+   Current map size: 2
+   Current map size: 3
+   Current map size: 4
+   ....
+   ....
+   ```
+
+   </TabItem>
+   <TabItem value="python" label="Python">
+
+   Start the application to populate the map with entries, replacing `<MAP-NAME>` with the actual map name, `map-sync`.
+
+   ```bash
+   cd python
+   pip install -r requirements.txt
+   python main.py fill <MAP-NAME>
+   ```
+
+   You should see the following output.
+
+   ```shell
+   Successful connection!
+   Starting to fill the map (<MAP-NAME>) with random entries.
+   Current map size: 2
+   Current map size: 3
+   Current map size: 4
+   ....
+   ....
+   ```
+
+   </TabItem>
+   <TabItem value="net" label=".NET">
+
+   Start the application to populate the map with entries, replacing `<MAP-NAME>` with the actual map name, `map-sync`.
+
+   ```bash
+   cd dotnet
+   dotnet build
+   dotnet run fill <MAP-NAME>
+   ```
+
+   You should see the following output.
+
+   ```shell
+   Successful connection!
+   Starting to fill the map (<MAP-NAME>) with random entries.
+   Current map size: 2
+   Current map size: 3
+   Current map size: 4
+   ....
+   ....
+   ```
+
+   </TabItem>
+   </Tabs>
+
+## Step 3. Enable WAN Replication and Replicate Entries
+
+In this step, you'll first verify that the second cluster does not contain a `map-sync` structure. You'll then enable WAN Replication and verify that the map and all entries have been copied to the second cluster.
+
+1. Find the address of the second cluster.
+
+   ```shell
+   kubectl get hazelcastendpoint --selector="app.kubernetes.io/instance in (hazelcast-second)"
+   ```
+
+   ```shell
+   NAME                   TYPE        ADDRESS
+   hazelcast-second       Discovery   34.16.0.16:5701
+   hazelcast-second-wan   WAN         34.16.0.16:5710
+   ```
+
+   The `ADDRESS` column displays the external address of the second Hazelcast cluster.
+2. Repeat steps 2.3 to 2.4, using the address of the second cluster to enable the client to connect.
+3. Connect to the second cluster and verify that the map named `map-sync` contains no data.
+
+   <Tabs groupId="client-language">
+   <TabItem value="clc" label="CLC">
+
+   ```bash
+   clc -c hz-2 map size --name <MAP-NAME>
+   ```
+
+   </TabItem>
+   <TabItem value="java" label="Java">
+
+   ```bash
+   cd clients/java
+   mvn package
+   java -jar target/*jar-with-dependencies*.jar size <MAP-NAME>
+   ```
+
+   You should see the following output:
+
+   ```shell
+   Successful connection!
+   Current map (<MAP-NAME>) size: 0
+   ```
+
+   </TabItem>
+   <TabItem value="nodejs" label="NodeJS">
+
+   ```bash
+   cd clients/nodejs
+   npm install
+   npm start size <MAP-NAME>
+   ```
+
+   You should see the following output:
+
+   ```shell
+   Successful connection!
+   Current map (<MAP-NAME>) size: 0
+   ```
+
+   </TabItem>
+   <TabItem value="go" label="Go">
+
+   ```bash
+   cd clients/go
+   go run main.go size <MAP-NAME>
+   ```
+
+   You should see the following output:
+
+   ```shell
+   Successful connection!
+   Current map (<MAP-NAME>) size: 0
+   ```
+
+   </TabItem>
+   <TabItem value="python" label="Python">
+
+   ```bash
+   cd clients/python
+   pip install -r requirements.txt
+   python main.py size <MAP-NAME>
+   ```
+
+   You should see the following output:
+
+   ```shell
+   Successful connection!
+   Current map (<MAP-NAME>) size: 0
+   ```
+
+   </TabItem>
+   <TabItem value="net" label=".NET">
+
+   ```bash
+   cd clients/dotnet
+   dotnet build
+   dotnet run size <MAP-NAME>
+   ```
+
+   You should see the following output:
+
+   ```shell
+   Successful connection!
+   Current map (<MAP-NAME>) size: 0
+   ```
+
+   </TabItem>
+   </Tabs>
+4. Modify the configuration of the first cluster to add the address of the second cluster as the WAN Replication event target.
+
+   If you need a **Full WAN Sync**, run the following command to apply the configuration.
+
+   ```shell
+   kubectl apply -f - <<EOF
+   apiVersion: hazelcast.com/v1alpha1
+   kind: WanReplication
+   metadata:
+     name: wan-replication
+   spec:
+     resources:
+       - name: hazelcast-first
+         kind: Hazelcast
+     targetClusterName: dev
+     endpoints: "<SECOND-CLUSTER-EXTERNAL-IP>"
+   EOF
+   ```
+
+   If you need a **Delta WAN Sync**, run the following command to apply the configuration.
+
+   ```shell
+   kubectl apply -f - <<EOF
+   apiVersion: hazelcast.com/v1alpha1
+   kind: WanReplication
+   metadata:
+     name: wan-replication
+   spec:
+     resources:
+       - name: hazelcast-first
+         kind: Hazelcast
+     targetClusterName: dev
+     syncConsistencyCheckStrategy: "MERKLE_TREES"
+     endpoints: "<SECOND-CLUSTER-EXTERNAL-IP>"
+   EOF
+   ```
+5. Create a WAN Sync resource within the Kubernetes cluster, using the existing `WanReplication` CR.
+
+   ```shell
+   kubectl apply -f - <<EOF
+   apiVersion: hazelcast.com/v1alpha1
+   kind: WanSync
+   metadata:
+     name: wan-sync
+   spec:
+     wanReplicationResourceName: wan-replication
+   EOF
+   ```
+
+   :::note
+
+   WAN Sync ensures data consistency between the two Hazelcast clusters. Full WAN Sync transmits all data from the source cluster to the target cluster, aligning the state of the target `IMap` with the source `IMap`. This method is particularly beneficial when the synchronization between two remote clusters is lost due to WAN queue overflows or cluster restarts.
+
+   :::
+6. Run the following command to see the WAN synchronization status:
+
+   ```shell
+   kubectl get wansync wan-sync
+   ```
+
+   The output should be similar to the following:
+
+   ```shell
+   NAME       STATUS
+   wan-sync   Completed
+   ```
+7. Repeat step 3.3 to verify that the `map-sync` structure on the `hazelcast-second` cluster now contains data.
+
+## Clean Up
+
+To remove all custom resources, run the following commands:
+
+```shell
+kubectl delete secret hazelcast-license-key
+kubectl delete $(kubectl get wansync,wanreplications,map,hazelcast -o name)
+```
+
+## See Also
+
+- [Configure WAN replication](/operator/latest/wan-replication)
+- [Connect to Hazelcast from Outside Kubernetes](/tutorials/hazelcast-platform-operator-expose-externally)

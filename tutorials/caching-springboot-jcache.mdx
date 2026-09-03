@@ -1,0 +1,144 @@
+---
+title: "Cache Data in Spring Boot with Hazelcast and JCache"
+slug: /caching-springboot-jcache
+displayed_sidebar: null
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Ex_caching_springboot_jcache_caching_springboot_jcache_src_main_java_com_hazelcast_springboot_caching_BookController_java_tag_BookController from '@site/.tutorial-examples/caching-springboot-jcache/caching-springboot-jcache/src/main/java/com/hazelcast/springboot/caching/BookController.java?tag=BookController';
+import Ex_caching_springboot_jcache_caching_springboot_jcache_src_main_java_com_hazelcast_springboot_caching_BookService_java_tag_BookService from '@site/.tutorial-examples/caching-springboot-jcache/caching-springboot-jcache/src/main/java/com/hazelcast/springboot/caching/BookService.java?tag=BookService';
+import Ex_caching_springboot_jcache_caching_springboot_jcache_pom_xml_tag_hazelcast_indent_0 from '@site/.tutorial-examples/caching-springboot-jcache/caching-springboot-jcache/pom.xml?tag=hazelcast&indent=0';
+import Ex_caching_springboot_jcache_caching_springboot_jcache_src_main_resources_hazelcast_yaml from '@site/.tutorial-examples/caching-springboot-jcache/caching-springboot-jcache/src/main/resources/hazelcast.yaml';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import Ex_caching_springboot_jcache_caching_springboot_jcache_src_main_resources_application_properties from '@site/.tutorial-examples/caching-springboot-jcache/caching-springboot-jcache/src/main/resources/application.properties';
+import Ex_caching_springboot_jcache_caching_springboot_jcache_src_main_resources_application_embedded_properties from '@site/.tutorial-examples/caching-springboot-jcache/caching-springboot-jcache/src/main/resources/application-embedded.properties';
+
+## What You'll Learn
+
+This guide will get you started with Hazelcast as a JCache provider for your Spring Boot application.
+
+## Before you Begin
+
+- JDK 17+
+- Apache Maven 3.8+
+
+## Spring Boot Application
+
+To leverage JCache in your Spring Boot application, you will need to do the following:
+
+- Add `org.springframework.boot:spring-boot-starter-cache` dependency
+- Add `@EnableCaching` annotation to your main class
+- Add `@CacheResult(cacheName = "books")` annotation to every method you want to cache
+- Add `spring.cache.type=jcache` to your `application.properties` file
+
+For more explanation on the Spring Boot and JCache topic, please check the related Spring Boot blog post: [Cache Abstraction: JCache](https://spring.io/blog/2014/04/14/cache-abstraction-jcache-jsr-107-annotations-support).
+
+The application will be a simple web service with two classes defined as follows:
+
+<CodeBlock language="java" title="BookController.java">{Ex_caching_springboot_jcache_caching_springboot_jcache_src_main_java_com_hazelcast_springboot_caching_BookController_java_tag_BookController}</CodeBlock>
+
+<CodeBlock language="java" title="BookService.java">{Ex_caching_springboot_jcache_caching_springboot_jcache_src_main_java_com_hazelcast_springboot_caching_BookService_java_tag_BookService}</CodeBlock>
+
+The idea is that every call to the endpoint `/books/<isbn>` goes to the `findBookNameByIsbn()` method, which would attempt to return cached results.
+
+If there's no cached value, this method is executed and results cached.
+
+## Use Hazelcast as JCache Provider
+
+To use Hazelcast as the JCache provider, all you have to do is to add Hazelcast to your classpath:
+
+<CodeBlock language="xml" title="pom.xml">{Ex_caching_springboot_jcache_caching_springboot_jcache_pom_xml_tag_hazelcast_indent_0}</CodeBlock>
+
+Then, you need to create a Hazelcast configuration with the `books` map configured. You can define it as `src/main/resources/hazelcast.yaml`.
+
+<CodeBlock language="yaml" title="hazelcast.yaml">{Ex_caching_springboot_jcache_caching_springboot_jcache_src_main_resources_hazelcast_yaml}</CodeBlock>
+
+Finally, you can configure your application to use Hazelcast. You can use either client-server or embedded topology.
+
+### Configure for Client-Server
+
+You first need to start a Hazelcast server with the Hazelcast configuration defined in the previous step.
+
+<Tabs groupId="cli--docker">
+<TabItem value="docker" label="Docker">
+
+```bash
+docker run --rm -p 5701:5701 -v $(pwd)/modules/ROOT/examples/src/main/resources:/hazelcast -e JAVA_OPTS="-Dhazelcast.config=/hazelcast/hazelcast.yaml" hazelcast/hazelcast
+```
+
+</TabItem>
+<TabItem value="cli" label="CLI">
+
+```bash
+# Install Hazelcast CLI as described at
+# https://github.com/hazelcast/hazelcast-command-line#installation
+# and then run:
+
+wget https://repo1.maven.org/maven2/javax/cache/cache-api/1.1.1/cache-api-1.1.1.jar
+hz start -c src/main/resources/hazelcast.yaml -j cache-api-1.1.1.jar
+```
+
+</TabItem>
+</Tabs>
+
+Then, use the following `application.properties` for your Spring Boot application.
+
+<CodeBlock language="properties" title="application.properties">{Ex_caching_springboot_jcache_caching_springboot_jcache_src_main_resources_application_properties}</CodeBlock>
+
+To start the application, run the following command from the `modules/ROOT/examples` directory.
+
+```
+mvn spring-boot:run
+```
+
+### Configure for Embedded
+
+If you prefer to run Hazelcast embedded in your Spring Boot application, then you need to use the following `application-embedded.properties` file.
+
+<CodeBlock language="properties" title="application-embedded.properties">{Ex_caching_springboot_jcache_caching_springboot_jcache_src_main_resources_application_embedded_properties}</CodeBlock>
+
+To start the application, run the following command from the `modules/ROOT/examples` directory.
+
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=embedded
+```
+
+## Test the Application
+
+You should see that your application is successfully connected to Hazelcast.
+
+```
+Members {size:1, ver:1} [
+        Member [172.30.63.9]:5701 - 75cd0b19-ee36-4e0a-9d9c-38c49f67f842 this
+]
+```
+
+Then, you can test the application by executing the following command.
+
+```bash
+curl -w '\nTotal: %{time_total}s\n' localhost:8080/books/12345
+```
+
+You should see the following:
+
+```none
+Sample Book Name
+Total: 3.090784s
+```
+
+The first time you execute this command, it should take some time to get the response. However, when you try it again, it should be instant:
+
+```bash
+curl -w '\nTotal: %{time_total}s\n' localhost:8080/books/12345
+Sample Book Name
+Total: 0.009667s
+```
+
+That means that the cache is used.
+
+## Related Resources
+
+If you want to learn more about the topics in this tutorial, see the following resources:
+
+- [Hazelcast JCache](/hazelcast/latest/jcache/jcache)

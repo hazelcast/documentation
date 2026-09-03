@@ -1,0 +1,235 @@
+---
+title: "Configure TLS with Hazelcast Platform Operator tutorial"
+slug: /hazelcast-platform-operator-tls
+displayed_sidebar: null
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_platform_operator_tls_java_src_main_java_com_hazelcast_example_java from '@site/.tutorial-examples/hazelcast-platform-operator-tls/java/src/main/java/com/hazelcast/example.java';
+import Ex_hazelcast_platform_operator_tls_nodejs_example_js from '@site/.tutorial-examples/hazelcast-platform-operator-tls/nodejs/example.js';
+import Ex_hazelcast_platform_operator_tls_go_example_go from '@site/.tutorial-examples/hazelcast-platform-operator-tls/go/example.go';
+import Ex_hazelcast_platform_operator_tls_python_example_py from '@site/.tutorial-examples/hazelcast-platform-operator-tls/python/example.py';
+
+Learn how to secure Hazelcast cluster with TLS and Hazelcast Kubernetes Operator.
+
+## Context
+
+In this tutorial, you'll do the following:
+
+- Create Kubernetes Secret with TLS certificate and key.
+- Deploy Hazelcast cluster with TLS (mTLS) encryption enforced between members.
+- Deploy Management Center to monitor your Hazelcast cluster.
+- Connect to your cluster using TLS to encrypt member to client network traffic.
+
+## Before you Begin
+
+Before starting this tutorial, make sure that you meet the following prerequisites:
+
+- Up and running [Kubernetes](https://kubernetes.io/) cluster
+- Kubernetes command-line tool, [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
+- Deployed [Hazelcast Platform Operator version 5.8 or above](/operator/latest/get-started)
+- OpenSSL command-line tool, [openssl](https://www.openssl.org/)
+
+## Step 1. Create Kubernetes Secret with TLS certificate and key
+
+1. Generate TLS certificate and key in PEM format using OpenSSL
+
+   ```shell
+   openssl req -x509 -sha256 -nodes -days 3650 -subj '/CN=example' -addext "subjectAltName=DNS:example" -newkey rsa:2048 -outform pem -keyout example.key -out example.crt -addext "extendedKeyUsage=serverAuth,clientAuth"
+   ```
+2. Create Kubernetes Secret with TLS certificate and key
+
+   ```shell
+   kubectl create secret generic example \
+     --from-file=tls.crt=example.crt \
+     --from-file=tls.key=example.key
+   ```
+
+   :::note
+
+   You can also set `ca.crt` to create a truststore. For more information, see [TLS](/operator/latest/tls).
+
+   :::
+
+## Step 2. Deploy Hazelcast cluster with TLS
+
+1. Create a secret with your [Hazelcast Enterprise License](http://trialrequest.hazelcast.com/).
+
+   ```shell
+   kubectl create secret generic hazelcast-license-key --from-literal=license-key=<hz-license-key>
+   ```
+2. Create the Hazelcast cluster with TLS configured.
+
+   ```yaml
+   kubectl apply -f - <<EOF
+   apiVersion: hazelcast.com/v1alpha1
+   kind: Hazelcast
+   metadata:
+     name: hazelcast
+   spec:
+     clusterSize: 3
+     licenseKeySecretName: hazelcast-license-key
+     tls:
+       secretName: example
+     exposeExternally:
+       type: Smart
+       discoveryServiceType: LoadBalancer
+       memberAccess: LoadBalancer
+   EOF
+   ```
+3. Run the following commands to check cluster status
+
+   ```shell
+   kubectl get hazelcast hazelcast
+   NAME        STATUS    MEMBERS
+   hazelcast   Running   3/3
+   ```
+4. Run the following commands to fetch external addresses of the cluster:
+
+   ```shell
+   kubectl get hazelcastendpoint --selector="app.kubernetes.io/instance=hazelcast"
+   NAME            TYPE        ADDRESS
+   hazelcast       Discovery   35.184.21.18:5701
+   hazelcast-0     Member      35.188.131.33:5701
+   hazelcast-1     Member      34.122.242.55:5701
+   hazelcast-2     Member      35.194.44.37:5701
+   hazelcast-wan   WAN         35.184.21.18:5710
+   ```
+
+## Step 3. Deploy Management Center
+
+Enabling TLS for a Hazelcast cluster adds an essential layer of security to protect data during communication. When TLS is enabled, all clients, including the Management Center, must be configured with the appropriate TLS certificates to establish a secure connection with the Hazelcast cluster.
+
+Apply the Management Center custom resource:
+
+```yaml
+kubectl apply -f - <<EOF
+apiVersion: hazelcast.com/v1alpha1
+kind: ManagementCenter
+metadata:
+  name: managementcenter
+spec:
+  repository: 'hazelcast/management-center'
+  licenseKeySecretName: hazelcast-license-key
+  externalConnectivity:
+    type: LoadBalancer
+  hazelcastClusters:
+    - address: hazelcast
+      name: dev
+      tls:
+        secretName: example
+EOF
+```
+
+## Step 4. Connect to Hazelcast cluster over TLS
+
+1. Clone the examples repository to access all sample clients:
+
+   ```shell
+   git clone https://github.com/hazelcast-guides/hazelcast-platform-operator-tls.git
+   cd hazelcast-platform-operator-tls
+   ```
+
+   The sample code(excluding CLC) for this tutorial is in the [`docs/modules/ROOT/examples/`](https://github.com/hazelcast-guides/hazelcast-platform-operator-tls/tree/master/docs/modules/ROOT/examples) directory.
+2. Configure the Hazelcast client with the TLS certificate:
+
+   <Tabs groupId="client-language">
+   <TabItem value="clc" label="CLC">
+
+   :::note
+
+   Before using CLC, it should be installed in your system. Check the installation instructions for CLC: [Installing the Hazelcast CLC](/clc/latest/install-clc).
+
+   :::
+
+   Run the following command for adding the cluster config to the CLC.
+
+   ```shell
+   clc config add hz cluster.name=dev cluster.address=<EXTERNAL-IP> ssl.enabled=true ssl.server=example ssl.ca-path=<PATH/TO/example.crt>
+   ```
+
+   </TabItem>
+   <TabItem value="java" label="Java">
+
+   <CodeBlock language="java">{Ex_hazelcast_platform_operator_tls_java_src_main_java_com_hazelcast_example_java}</CodeBlock>
+
+   </TabItem>
+   <TabItem value="nodejs" label="NodeJS">
+
+   <CodeBlock language="javascript">{Ex_hazelcast_platform_operator_tls_nodejs_example_js}</CodeBlock>
+
+   </TabItem>
+   <TabItem value="go" label="Go">
+
+   <CodeBlock language="go">{Ex_hazelcast_platform_operator_tls_go_example_go}</CodeBlock>
+
+   </TabItem>
+   <TabItem value="python" label="Python">
+
+   <CodeBlock language="python">{Ex_hazelcast_platform_operator_tls_python_example_py}</CodeBlock>
+
+   </TabItem>
+   </Tabs>
+3. Build and run the Hazelcast client example:
+
+   <Tabs groupId="client-language">
+   <TabItem value="clc" label="CLC">
+
+   ```shell
+   clc -c hz map size
+   ```
+
+   </TabItem>
+   <TabItem value="java" label="Java">
+
+   ```bash
+   cd java
+   mvn package
+   java -jar target/*.jar
+   ```
+
+   </TabItem>
+   <TabItem value="nodejs" label="NodeJS">
+
+   ```bash
+   cd nodejs
+   npm install
+   npm start
+   ```
+
+   </TabItem>
+   <TabItem value="go" label="Go">
+
+   ```bash
+   cd go
+   go run example.go
+   ```
+
+   </TabItem>
+   <TabItem value="python" label="Python">
+
+   ```bash
+   cd python
+   pip install -r requirements.txt
+   python example.py
+   ```
+
+   </TabItem>
+   </Tabs>
+
+## Step 5. Clean Up
+
+To clean up the created resources remove the all Custom Resources and secrets:
+
+```shell
+kubectl delete $(kubectl get hazelcast,managementcenter -o name)
+kubectl delete secret example
+```
+
+## See Also
+
+- [Install Operator and deploy a Hazelcast cluster](/operator/latest/get-started)
+- [Deploy Management Center](/operator/latest/deploy-management-center)
+- [Configure TLS](/operator/latest/tls)
