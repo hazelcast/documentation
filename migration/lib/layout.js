@@ -283,16 +283,29 @@ function urlToSlug (url, component, seg) {
 // `unlisted`, which would drop them from the sidebar, search and sitemap alike.
 const NAVLESS = new Set(['tutorials'])
 
+// URLs served by a hand-written React page in src/pages rather than by converted
+// content -- the same arrangement /privacy already has (src/pages/privacy.tsx).
+// The converter must not emit an .mdx for these: a doc claiming the route would
+// win over the site page. The tutorials landing page is a filterable card index
+// that Antora builds from its content catalog at render time; there is no
+// catalog here, so it is rebuilt as a component reading the card frontmatter the
+// converter writes onto each tutorial (see plugins/tutorials-index).
+const SITE_PAGES = new Set(['/tutorials/'])
+
+const isSitePage = (url) => SITE_PAGES.has(url)
+
 const isNavless = (component) => NAVLESS.has(component)
 
 module.exports = {
   CURRENT_SEG,
   NAV_SOURCES,
   NAVLESS,
+  SITE_PAGES,
   VERSIONS,
   MARKED_ATTRS,
   markedAttrsFor,
   isNavless,
+  isSitePage,
   isVersioned,
   currentSegFor,
   refFor,

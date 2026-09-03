@@ -47,6 +47,16 @@ const BADGE_ATTRIBUTES = {
 // Kept as raw strings (a `|` splits one page into multiple entries downstream).
 const CLOUD_ATTRIBUTES = ['cloud-tags', 'cloud-title', 'cloud-order', 'cloud-url-video', 'cloud-anchor']
 
+// Header attributes the tutorials LANDING PAGE renders each card from. Antora's
+// landing page reads them off the content catalog at render time; nothing here
+// keeps a catalog, so they are carried into the page's own frontmatter and read
+// back by plugins/tutorials-index. A page is a card if it declares
+// `page-layout: tutorial`, which is exactly the gate get-tutorial-pages.js
+// applies in production. Values are kept RAW -- `page-categories` is a
+// comma-list, `page-lang` too, and both are inconsistent across the 57 guides;
+// normalising them here would be a content change, not a migration.
+const TUTORIAL_ATTRIBUTES = ['page-est-time', 'page-product', 'page-lang', 'page-categories', 'page-enterprise', 'description']
+
 function registerPageAliases (contentCatalog, siteAsciiDocConfig = {}) {
   let registered = 0
   const problems = []
@@ -56,6 +66,8 @@ function registerPageAliases (contentCatalog, siteAsciiDocConfig = {}) {
   // resource id -> raw cloud-* attribute strings, for pages that carry
   // `cloud-tags` (the api/cloud.json console index). See CLOUD_ATTRIBUTES.
   const cloudMeta = new Map()
+  // resource id -> raw card attributes, for pages declaring page-layout: tutorial.
+  const tutorialMeta = new Map()
   // The header must be parsed with the page's OWN component-version asciidoc
   // config, the one classifyContent resolved from that component's antora.yml —
   // not the site config. A doctitle may reference a component attribute
@@ -114,6 +126,15 @@ function registerPageAliases (contentCatalog, siteAsciiDocConfig = {}) {
       }
       cloudMeta.set(resourceId(page.src), cm)
     }
+    // Capture the card attributes of any page that declares itself a tutorial.
+    if (meta.attributes['page-layout'] === 'tutorial') {
+      const tm = {}
+      for (const attr of TUTORIAL_ATTRIBUTES) {
+        const v = meta.attributes[attr]
+        if (v != null) tm[attr] = v
+      }
+      tutorialMeta.set(resourceId(page.src), tm)
+    }
     // Prime the page's asciidoc metadata so xref link-text resolves to this
     // page's xreftext when another page links to it (see the note above).
     if (!page.asciidoc) page.asciidoc = meta
@@ -130,7 +151,7 @@ function registerPageAliases (contentCatalog, siteAsciiDocConfig = {}) {
       }
     }
   }
-  return { registered, problems, titles, badges, cloudMeta }
+  return { registered, problems, titles, badges, cloudMeta, tutorialMeta }
 }
 
 // The manifest resource id form (kept in sync with emit-manifest's buildManifest):

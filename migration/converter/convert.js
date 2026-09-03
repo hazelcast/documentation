@@ -70,7 +70,7 @@ const { branchesAt } = require('../antora-extension/mark-conditionals')
 // emitted (VERSIONS / currentSegFor), and the version/path helpers.
 const {
   NAV_SOURCES, currentSegFor, VERSIONS, markedAttrsFor,
-  isNavless, isVersioned, refFor, versionsToProcess, outDirFor, urlToSlug,
+  isNavless, isSitePage, isVersioned, refFor, versionsToProcess, outDirFor, urlToSlug,
 } = require('../lib/layout')
 const yaml2 = require('js-yaml')
 
@@ -847,7 +847,7 @@ function proseVarsFor (pageVars, proseNames, marked) {
 // come from the census render's tokens, so nothing is ever matched on a real
 // value, and it counts occurrences rather than warning on presence.
 
-function frontmatter (title, { derived, slug, sidebarLabel, sidebarPosition, unlisted, noSidebar, badges, cloud } = {}) {
+function frontmatter (title, { derived, slug, sidebarLabel, sidebarPosition, unlisted, noSidebar, badges, cloud, tutorial } = {}) {
   const lines = ['---', `title: ${yaml(title)}`]
   if (sidebarLabel) lines.push(`sidebar_label: ${yaml(sidebarLabel)}`)
   if (sidebarPosition != null) lines.push(`sidebar_position: ${sidebarPosition}`)
@@ -862,6 +862,27 @@ function frontmatter (title, { derived, slug, sidebarLabel, sidebarPosition, unl
   // strings (a `|` splits one page into multiple console entries). This seeds the
   // data into new-docs so cloud.json survives deletion of the migration tooling.
   if (cloud) for (const [attr, val] of Object.entries(cloud)) lines.push(`${attr.replace(/-/g, '_')}: ${yaml(val)}`)
+  // Tutorial card metadata, carried from the page header so the landing page can
+  // render a card without an Antora content catalog to read it off. `description`
+  // is Docusaurus's own frontmatter field, which is where it belongs; the rest are
+  // namespaced. Values stay RAW (comma-lists, inconsistent casing and all) --
+  // normalising is a content change, not a migration. `tutorial_enterprise`
+  // follows the LANDING PAGE's gate, not the page-badge one: production's card
+  // template is `{{#if page-enterprise}}`, plain Handlebars truthiness, so an
+  // empty value is false and the string "false" is TRUE. That differs from the
+  // page badge (a strict `eq 'true'`), and both are reproduced as they are.
+  if (tutorial) {
+    const attrs = tutorial.attrs || {}
+    if (attrs.description) lines.push(`description: ${yaml(attrs.description)}`)
+    for (const [attr, key] of Object.entries(TUTORIAL_FRONTMATTER)) {
+      const v = attrs[attr]
+      if (v != null && v !== '') lines.push(`${key}: ${yaml(v)}`)
+    }
+    lines.push(`tutorial_enterprise: ${attrs['page-enterprise'] ? 'true' : 'false'}`)
+    if (tutorial.source && tutorial.source.webUrl) {
+      lines.push(`tutorial_source: ${yaml(tutorial.source.webUrl + '/tree/' + (tutorial.source.branch || 'main'))}`)
+    }
+  }
   // Orphan pages: present in Antora (served at their URL) but absent from the
   // nav. `unlisted` mirrors that exactly -- the URL still resolves, but the page
   // is kept out of the sidebar, search, and sitemap.
@@ -878,6 +899,15 @@ function frontmatter (title, { derived, slug, sidebarLabel, sidebarPosition, unl
 }
 
 const yaml = (s) => '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'
+
+// Card attributes -> frontmatter keys. `description` is handled separately: it is
+// a Docusaurus frontmatter field in its own right, not a namespaced one.
+const TUTORIAL_FRONTMATTER = {
+  'page-est-time': 'tutorial_time',
+  'page-product': 'tutorial_product',
+  'page-lang': 'tutorial_lang',
+  'page-categories': 'tutorial_categories',
+}
 
 // A page title as a READER sees it, not as HTML. Both sources of a title are
 // already-converted HTML and so carry entities: Antora's manifest stores
@@ -1183,6 +1213,8 @@ function convertVersion (ver, ctx) {
   const orphans = []
   const problems = []
   for (const p of pages) {
+    // A URL owned by a hand-written src/pages component is not converted content.
+    if (isSitePage(p.url)) continue
     // Stem/entry/relFile via the shared derivation (see relFileForPage), so the
     // emitted file matches the URL->file map used for relative-link resolution.
     const { key, stem, rec, entry, relFile } = relFileForPage(p, byUrl, plan)
@@ -1240,6 +1272,7 @@ function convertVersion (ver, ctx) {
       noSidebar: isNavless(component),
       badges: rec && rec.badges,
       cloud: rec && rec.cloud,
+      tutorial: rec && rec.tutorial ? { attrs: rec.tutorial, source: rec.tutorialSource } : null,
     })
     const importBlock = imports.size ? [...imports].join('\n') + '\n\n' : ''
     const mdx = fm + '\n\n' + importBlock + body + '\n'

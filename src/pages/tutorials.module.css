@@ -1,0 +1,112 @@
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2.5rem 1rem 4rem;
+}
+
+.intro {
+  margin-bottom: 2rem;
+}
+
+.intro h1 {
+  margin-bottom: 0.5rem;
+}
+
+.intro p {
+  color: var(--ifm-color-emphasis-700);
+  margin: 0;
+  max-width: 60ch;
+}
+
+.filters {
+  padding: 1.25rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  margin-bottom: 1.25rem;
+}
+
+/* The segmented control sizes to its options — five products need ~560px, far
+   more than a grid track — so it gets its own full-width row rather than
+   overflowing the field beside it. */
+.product {
+  margin-bottom: 1rem;
+}
+
+/* Fields align at the TOP, not the bottom: the three HIVE field types have
+   different heights (AutocompleteField reserves a row for an error message that
+   TextField does not), so bottom-alignment scatters their labels. */
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem 1.25rem;
+  align-items: start;
+}
+
+/* SegmentedControl and Toggle each ship their own label element, in a different
+   colour and size from the FieldHeader that TextField and AutocompleteField use.
+   Ours is suppressed on those two and replaced with this, so every filter reads
+   the same. */
+.filterLabel {
+  display: block;
+  color: var(--hive-color-text-secondary);
+  font-size: 14px;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.edition {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--ifm-color-emphasis-200);
+}
+
+/* The Toggle's label is part of the control, not a field header, so it cannot be
+   replaced the way the SegmentedControl's is. Recolour it to match instead. */
+.edition [class*='labelText'] {
+  color: var(--hive-color-text-secondary);
+}
+
+.count {
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Each card is a flex column so the actions row pins to the bottom and cards in
+   a row stay the same height regardless of blurb length. */
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.blurb {
+  color: var(--ifm-color-emphasis-800);
+  flex: 1 1 auto;
+  margin: 0 0 1rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.meta {
+  color: var(--hive-color-text-secondary);
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+}

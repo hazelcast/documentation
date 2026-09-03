@@ -214,6 +214,10 @@ const config: Config = {
     // the guide repo that owns each one — nothing is copied into this repo, only
     // referenced from tutorials/examples.json at a pinned commit. See that plugin.
     './plugins/tutorial-examples',
+    // Collects the `tutorial_*` card frontmatter the converter writes onto each
+    // tutorial and hands it to src/pages/tutorials.tsx as global data — the
+    // replacement for Antora's landing page, which read the content catalog.
+    './plugins/tutorials-index',
   ],
 
   themeConfig: {
