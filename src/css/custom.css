@@ -67,6 +67,19 @@
   background-color: transparent;
 }
 
+/* Inline code: Infima's base `code` rule sets `vertical-align: middle`, which
+ * aligns the chip's midpoint to the baseline plus half the parent's x-height —
+ * with a monospace ascent taller than Open Sans's that drops the code below the
+ * surrounding text (measured 0.68px at 16px body). The Antora UI never set
+ * vertical-align, so restoring the CSS default matches the old site exactly.
+ * Padding is Antora's own `0.125em 0.25em` (doc.css `.doc p code`); Infima's
+ * 0.1rem on all four sides left the chip hugging the text horizontally. Both
+ * scoped off `pre` so code blocks keep Infima's treatment untouched. */
+:not(pre) > code {
+  vertical-align: baseline;
+  padding: 0.125em 0.25em;
+}
+
 /* Tables: translate HIVE's v4 SimpleTable (@hazelcast/ui SimpleTable.module.css,
  * the "surface" variant) onto native markdown tables — bordered + rounded, a
  * tinted header, and row separator lines (SimpleTable uses separators, not
