@@ -242,6 +242,18 @@ const currentSegFor = (component) =>
 // resolver has to be able to open them, but it publishes nothing. Unversioned, so
 // a plain `ref`; `modulesRoot` is explicit because there is no nav.adoc to derive
 // it from.
+//
+// NOTE `templates` is a MERGED component: hazelcast-docs/templates and
+// hazelcast-code-samples/docs both declare `name: templates`, and Antora unions
+// them. Only the code-samples half is modelled here, because that is the half
+// anything RESOLVES into -- all 290 references to the component are
+// `example$` includes from operator's tutorial pages, and every one lands in
+// code-samples. The hazelcast-docs half is reached only through `{templates-url}`
+// includes in the guide repos, which the converter takes from the golden rather
+// than resolving here. If a `page$`/`partial$` reference into that half ever needs
+// resolving, this entry has to become a LIST of mirrors tried in order -- today it
+// would simply find nothing, which is the same answer it gave before code-samples
+// was pinned at all.
 const READ_ONLY_SOURCES = {
   templates: { repo: 'hazelcast-code-samples.git', ref: 'master', modulesRoot: 'docs/modules' },
 }
