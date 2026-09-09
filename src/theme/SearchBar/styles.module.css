@@ -1,0 +1,53 @@
+/* The injected strip. The buttons are HIVE's own, so nothing here styles them --
+   this is the row they sit in, coloured from DocSearch's custom properties so it
+   tracks the modal in both themes without a second set of dark-mode rules. */
+.host {
+  border-block-end: 1px solid var(--docsearch-subtle-color);
+  flex-shrink: 0;
+}
+
+.bar {
+  padding: 10px var(--docsearch-spacing, 12px);
+}
+
+/* HIVE's ButtonGroup is `inline-flex` and does not wrap, so the row scrolls
+   rather than letting the group overrun the modal or squash its labels. */
+.filters {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filters::-webkit-scrollbar {
+  display: none;
+}
+
+/* Says what the buttons cannot: the index holds only the latest RELEASE of each
+   product, so a hit is never from an older version -- nor from the snapshot --
+   even though the site serves both. */
+.scope {
+  color: var(--docsearch-muted-color);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  margin: 8px 0 0;
+}
+
+/* HIVE ships no dark palette (see the note in src/css/custom.css), so its
+   outlined buttons come out white inside the dark modal. Rather than override
+   HIVE's own rules, re-point the tokens its outlined variant READS.
+   Only reads can be redirected from here: `--button-bg` and
+   `--button-color-fg-on-light` are set by HIVE on the button element itself, so
+   a value inherited from this strip would lose to them. The tokens behind them
+   are inherited, so those are what these rules move. */
+[data-theme='dark'] .host {
+  --hive-color-neutral-white-v4: var(--docsearch-modal-background);
+  --hive-color-surface-hover-v4: var(--docsearch-searchbox-focus-background);
+  --hive-color-surface-active-v4: var(--docsearch-searchbox-focus-background);
+}
+
+/* The label colour, on the outlined buttons ONLY. `--hive-color-text-v4` also
+   feeds the contained button's label, and that one sits on brand green in both
+   themes and must stay dark -- so this cannot go on the strip. */
+[data-theme='dark'] .outlined {
+  --hive-color-text-v4: var(--docsearch-text-color);
+}
