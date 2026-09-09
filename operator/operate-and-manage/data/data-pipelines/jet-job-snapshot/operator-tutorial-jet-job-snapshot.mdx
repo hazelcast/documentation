@@ -4,6 +4,13 @@ sidebar_position: 1
 slug: /tutorials/operator-tutorial-jet-job-snapshot
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_job_snapshot_docs_modules_ROOT_examples_operator_jet_job_snapshot_hz_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-jet-job-snapshot/docs/modules/ROOT/examples/operator-jet-job-snapshot/hz.yaml';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_job_snapshot_docs_modules_ROOT_examples_operator_jet_job_snapshot_map_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-jet-job-snapshot/docs/modules/ROOT/examples/operator-jet-job-snapshot/map.yaml';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_job_snapshot_docs_modules_ROOT_examples_operator_jet_job_snapshot_job_v1_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-jet-job-snapshot/docs/modules/ROOT/examples/operator-jet-job-snapshot/job-v1.yaml';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_job_snapshot_docs_modules_ROOT_examples_operator_jet_job_snapshot_snapshot_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-jet-job-snapshot/docs/modules/ROOT/examples/operator-jet-job-snapshot/snapshot.yaml';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_job_snapshot_docs_modules_ROOT_examples_operator_jet_job_snapshot_job_v2_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-jet-job-snapshot/docs/modules/ROOT/examples/operator-jet-job-snapshot/job-v2.yaml';
+
 Learn how to save the state of your data pipelines and initiate a job from a snapshot using Operator.
 
 ## Overview
@@ -39,20 +46,7 @@ If you're unsure about how to submit Jet jobs using Operator, follow the [Jet](.
    ```
 2. Create a Hazelcast cluster with the Jet engine configured.
 
-   ```shell
-   kubectl apply -f - <<EOF
-   apiVersion: hazelcast.com/v1alpha1
-   kind: Hazelcast
-   metadata:
-     name: hazelcast
-   spec:
-     clusterSize: 3
-     licenseKeySecretName: hazelcast-license-key
-     jet:
-       enabled: true
-       resourceUploadEnabled: true
-   EOF
-   ```
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_job_snapshot_docs_modules_ROOT_examples_operator_jet_job_snapshot_hz_yaml + 'EOF'}</CodeBlock>
 
    :::note
 
@@ -75,52 +69,13 @@ Before submitting the Jet job, you need to create a map from which the Jet job w
 
 1. Create the Map, which will serve as the source for the Jet job.
 
-   ```shell
-   kubectl apply -f - <<EOF
-   apiVersion: hazelcast.com/v1alpha1
-   kind: Map
-   metadata:
-     name: transaction
-   spec:
-     hazelcastResourceName: hazelcast
-     eventJournal:
-       capacity: 9000
-   EOF
-   ```
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_job_snapshot_docs_modules_ROOT_examples_operator_jet_job_snapshot_map_yaml + 'EOF'}</CodeBlock>
 2. Now you can submit the Jet job that processes transactions from the map. This pipeline retrieves transaction entries from the map and logs them. The code should be packaged and deployed to cloud storage. If you are unfamiliar with submitting jobs with Operator, refer to the [Jet tutorial](../jet-job-configuration/operator-tutorial-jet.mdx).
 
-   ```java
-   apiVersion: hazelcast.com/v1alpha1
-   kind: JetJob
-   metadata:
-     name: transaction-v1
-   spec:
-     hazelcastResourceName: hazelcast
-     state: Running
-     jarName: jet-pipelines-1.0-SNAPSHOT.jar
-     mainClass: org.examples.jet.snapshot.JobV1
-     bucketConfig:
-       bucketURI: '<BUCKET-URI>'
-       secretName: '<SECRET-NAME>'
-   ```
+   <CodeBlock language="java">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_job_snapshot_docs_modules_ROOT_examples_operator_jet_job_snapshot_job_v1_yaml}</CodeBlock>
 3. Submit the Jet job.
 
-   ```shell
-   kubectl apply -f - <<EOF
-   apiVersion: hazelcast.com/v1alpha1
-   kind: JetJob
-   metadata:
-     name: transaction-v1
-   spec:
-     hazelcastResourceName: hazelcast
-     state: Running
-     jarName: jet-pipelines-1.0-SNAPSHOT.jar
-     mainClass: org.examples.jet.snapshot.JobV1
-     bucketConfig:
-       bucketURI: '<BUCKET-URI>'
-       secretName: '<SECRET-NAME>'
-   EOF
-   ```
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_job_snapshot_docs_modules_ROOT_examples_operator_jet_job_snapshot_job_v1_yaml + 'EOF'}</CodeBlock>
 4. Check the status of the Jet job you have submitted.
 
    ```shell
@@ -144,17 +99,7 @@ In data pipelines, saving and using computation process state is vital for accur
 
 1. Export a Snapshot from the Jet job.
 
-   ```shell
-   kubectl apply -f - <<EOF
-   apiVersion: hazelcast.com/v1alpha1
-   kind: JetJobSnapshot
-   metadata:
-     name: snapshot-transaction
-   spec:
-     jetJobResourceName: transaction-v1
-     cancelJob: true
-   EOF
-   ```
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_job_snapshot_docs_modules_ROOT_examples_operator_jet_job_snapshot_snapshot_yaml + 'EOF'}</CodeBlock>
 2. Check the status of the exported JetJobSnapshot.
 
    ```shell
@@ -182,40 +127,10 @@ When creating a new version of a data pipeline, it's essential to initialize the
 
 1. Continuing with the example, we will now create a new version of the previous Jet job. For simplicity, the new version is similar to the old one: it takes entries from the 'transaction' map and logs them.
 
-   ```java
-   apiVersion: hazelcast.com/v1alpha1
-   kind: JetJob
-   metadata:
-     name: transaction-v2
-   spec:
-     hazelcastResourceName: hazelcast
-     state: Running
-     jarName: jet-pipelines-1.0-SNAPSHOT.jar
-     mainClass: org.examples.jet.snapshot.JobV2
-     initialSnapshotResourceName: snapshot-transaction
-     bucketConfig:
-       bucketURI: '<BUCKET-URI>'
-       secretName: '<SECRET-NAME>'
-   ```
+   <CodeBlock language="java">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_job_snapshot_docs_modules_ROOT_examples_operator_jet_job_snapshot_job_v2_yaml}</CodeBlock>
 2. In contrast to the previous Jet job definition, we will set the 'initialSnapshotResourceName' field to refer to the snapshot exported in the preceding step. Submit the new Jet job.
 
-   ```shell
-   kubectl apply -f - <<EOF
-   apiVersion: hazelcast.com/v1alpha1
-   kind: JetJob
-   metadata:
-     name: transaction-v2
-   spec:
-     hazelcastResourceName: hazelcast
-     state: Running
-     jarName: jet-pipelines-1.0-SNAPSHOT.jar
-     mainClass: org.examples.jet.snapshot.JobV2
-     initialSnapshotResourceName: snapshot-transaction
-     bucketConfig:
-       bucketURI: '<BUCKET-URI>'
-       secretName: '<SECRET-NAME>'
-   EOF
-   ```
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_job_snapshot_docs_modules_ROOT_examples_operator_jet_job_snapshot_job_v2_yaml + 'EOF'}</CodeBlock>
 
    This Jet job, named 'transaction-v2', will seamlessly resume processing entries from the state we exported in the snapshot. This means transaction entries are processed only once within the pipeline.
 3. Check the new Jet job status is `Running`.

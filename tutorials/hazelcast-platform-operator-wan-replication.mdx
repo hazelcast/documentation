@@ -11,13 +11,18 @@ tutorial_source: "https://github.com/hazelcast-guides/hazelcast-platform-operato
 displayed_sidebar: null
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_platform_operator_wan_sync_operator_wan_sync_hazelcast_first_yaml from '@site/.tutorial-examples/hazelcast-platform-operator-wan-sync/operator-wan-sync/hazelcast-first.yaml';
+import Ex_hazelcast_platform_operator_wan_sync_operator_wan_sync_hazelcast_second_yaml from '@site/.tutorial-examples/hazelcast-platform-operator-wan-sync/operator-wan-sync/hazelcast-second.yaml';
+import Ex_hazelcast_platform_operator_wan_replication_operator_wan_map_yaml from '@site/.tutorial-examples/hazelcast-platform-operator-wan-replication/operator-wan/map.yaml';
+import Ex_hazelcast_platform_operator_wan_sync_operator_wan_sync_full_sync_wanreplication_yaml from '@site/.tutorial-examples/hazelcast-platform-operator-wan-sync/operator-wan-sync/full-sync-wanreplication.yaml';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import CodeBlock from '@theme/CodeBlock';
 import Ex_hazelcast_platform_operator_wan_replication_operator_wan_java_src_main_java_com_hazelcast_Main_java from '@site/.tutorial-examples/hazelcast-platform-operator-wan-replication/operator-wan/java/src/main/java/com/hazelcast/Main.java';
 import Ex_hazelcast_platform_operator_wan_replication_operator_wan_nodejs_client_js from '@site/.tutorial-examples/hazelcast-platform-operator-wan-replication/operator-wan/nodejs/client.js';
 import Ex_hazelcast_platform_operator_wan_replication_operator_wan_go_main_go from '@site/.tutorial-examples/hazelcast-platform-operator-wan-replication/operator-wan/go/main.go';
 import Ex_hazelcast_platform_operator_wan_sync_operator_wan_sync_python_main_py from '@site/.tutorial-examples/hazelcast-platform-operator-wan-sync/operator-wan-sync/python/main.py';
+import Ex_hazelcast_platform_operator_wan_replication_operator_wan_dotnet_Program_cs from '@site/.tutorial-examples/hazelcast-platform-operator-wan-replication/operator-wan/dotnet/Program.cs';
 
 Learn how to keep data in sync across two Hazelcast clusters.
 
@@ -48,34 +53,10 @@ Before starting this tutorial, make sure that you have the following:
 
    1. Run the following command to create the first cluster.
 
-      ```shell
-      kubectl apply -f - <<EOF
-      apiVersion: hazelcast.com/v1alpha1
-      kind: Hazelcast
-      metadata:
-        name: hazelcast-first
-      spec:
-        licenseKeySecretName: hazelcast-license-key
-        exposeExternally:
-          type: Unisocket
-          discoveryServiceType: LoadBalancer
-      EOF
-      ```
+      <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_platform_operator_wan_sync_operator_wan_sync_hazelcast_first_yaml + '\nEOF'}</CodeBlock>
    2. Run the following command to create the second cluster.
 
-      ```shell
-      kubectl apply -f - <<EOF
-      apiVersion: hazelcast.com/v1alpha1
-      kind: Hazelcast
-      metadata:
-        name: hazelcast-second
-      spec:
-        licenseKeySecretName: hazelcast-license-key
-        exposeExternally:
-          type: Unisocket
-          discoveryServiceType: LoadBalancer
-      EOF
-      ```
+      <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_platform_operator_wan_sync_operator_wan_sync_hazelcast_second_yaml + '\nEOF'}</CodeBlock>
 3. Check the status of the clusters to make sure that both clusters are running.
 
    ```shell
@@ -110,23 +91,7 @@ Before starting this tutorial, make sure that you have the following:
    - `map-1`
    - `map-2`.
 
-     ```shell
-     kubectl apply -f - <<EOF
-     apiVersion: hazelcast.com/v1alpha1
-     kind: Map
-     metadata:
-       name: map-1
-     spec:
-       hazelcastResourceName: hazelcast-first
-     ---
-     apiVersion: hazelcast.com/v1alpha1
-     kind: Map
-     metadata:
-       name: map-2
-     spec:
-       hazelcastResourceName: hazelcast-first
-     EOF
-     ```
+     <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_platform_operator_wan_replication_operator_wan_map_yaml + '\nEOF'}</CodeBlock>
 2. Create the configuration for WAN replication:
 
    - Use the first cluster as the source cluster by adding its name as a resource in the WAN Replication configuration. Adding the cluster name as a resource starts WAN replication for both the maps that you created earlier.
@@ -134,20 +99,7 @@ Before starting this tutorial, make sure that you have the following:
 
      Run the following command to apply the configuration.
 
-     ```shell
-     kubectl apply -f - <<EOF
-     apiVersion: hazelcast.com/v1alpha1
-     kind: WanReplication
-     metadata:
-       name: wan-replication
-     spec:
-       resources:
-         - name: hazelcast-first
-           kind: Hazelcast
-       targetClusterName: dev
-       endpoints: "<SECOND-CLUSTER-EXTERNAL-IP>"
-     EOF
-     ```
+     <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_platform_operator_wan_sync_operator_wan_sync_full_sync_wanreplication_yaml + '\nEOF'}</CodeBlock>
 
 ## Step 3. Put Entries to the Maps on the First Cluster
 
@@ -202,78 +154,7 @@ In this step, you'll fill the maps on the first, source cluster.
    </TabItem>
    <TabItem value="net" label=".NET">
 
-   ```cs
-   using System;
-   using System.Threading.Tasks;
-   using Hazelcast;
-   using Microsoft.Extensions.Logging;
-
-   namespace Client
-   {
-       public class Program
-       {
-           static async Task Main(string[] args)
-           {
-               if (args.Length != 2)
-               {
-                   Console.WriteLine("You need to pass two arguments. The first argument must be `fill` or `size`. The second argument must be `mapName`.");
-                   return;
-               }
-               if (!(args[0] == "fill" || args[0] == "size"))
-               {
-                   Console.WriteLine("Wrong argument, you should pass: fill or size");
-                   return;
-               }
-
-               var mapName = args[1];
-               var options = new HazelcastOptionsBuilder()                
-                   .With(args)                
-                   .With((configuration, options) =>
-                   {
-                       options.LoggerFactory.Creator = () => LoggerFactory.Create(loggingBuilder =>
-                           loggingBuilder
-                               .AddConsole());
-
-                       options.Networking.UsePublicAddresses = true;
-                       options.Networking.SmartRouting = false;
-                       options.Networking.Addresses.Add("<EXTERNAL-IP>:5701");
-                       
-                   })
-                   .Build();
-
-
-
-               await using var client = await HazelcastClientFactory.StartNewClientAsync(options);
-               
-               Console.WriteLine("Successful connection!");
-               Console.WriteLine("Starting to fill the map with random entries.");
-
-               var map = await client.GetMapAsync<string, string>(mapName);
-               var random = new Random();
-
-               if (args[0] == "fill")
-               {
-                   Console.WriteLine("Starting to fill the map with random entries.");
-                   while (true)
-                   {
-                       var num = random.Next(100_000);
-                       var key = $"key-{num}";
-                       var value = $"value-{num}";
-                       await map.PutAsync(key, value);
-                       var mapSize = await map.GetSizeAsync();
-                       Console.WriteLine($"Current map size: {mapSize}");
-                   }
-               }
-               else
-               {
-                   var mapSize = await map.GetSizeAsync();
-                   Console.WriteLine($"Current map size: {mapSize}");
-                   await client.DisposeAsync();
-               }
-           }
-       } 
-   }
-   ```
+   <CodeBlock language="cs">{Ex_hazelcast_platform_operator_wan_replication_operator_wan_dotnet_Program_cs}</CodeBlock>
 
    </TabItem>
    </Tabs>

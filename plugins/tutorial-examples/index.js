@@ -29,8 +29,40 @@ const STAGING_DIR = '.tutorial-examples'
 // webpack rule, and a cache.json in there would be pulled through the loader
 // chain as if it were an example.
 const CACHE_FILE = '.fetch-cache'
-const MANIFEST = path.join('tutorials', 'examples.json')
 const CONCURRENCY = 8
+
+// Every component that stages examples by reference writes `<component>/examples.json`,
+// and the presence of that file is the declaration -- so this discovers them rather
+// than naming them. Two today: `tutorials` (the guide repos' project files) and
+// `operator`, whose tutorial pages include example$ files from hazelcast-code-samples.
+// Only top-level component dirs are scanned; a versioned tree never holds one,
+// because these sources are not versioned per release.
+function manifestFiles (siteDir) {
+  return fs.readdirSync(siteDir, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && !e.name.startsWith('.') && e.name !== 'node_modules')
+    .map((e) => path.join(siteDir, e.name, 'examples.json'))
+    .filter((f) => fs.existsSync(f))
+}
+
+// Merge the manifests into one fetch list. Ids are namespaced by source repo, so
+// two components referencing the same upstream file share one staged copy and one
+// fetch. If they ever disagree about its BYTES that is a real conflict -- one of
+// them would silently overwrite the other's -- so it fails rather than picking.
+function mergeManifests (files) {
+  const byId = new Map()
+  for (const file of files) {
+    const { files: entries } = JSON.parse(fs.readFileSync(file, 'utf8'))
+    for (const entry of entries || []) {
+      const prev = byId.get(entry.id)
+      if (prev && prev.sha256 !== entry.sha256) {
+        throw new Error(`[tutorial-examples] ${entry.id} is declared by two manifests with different content ` +
+          `(${prev.sha256.slice(0, 12)} vs ${entry.sha256.slice(0, 12)}); one would overwrite the other`)
+      }
+      if (!prev) byId.set(entry.id, entry)
+    }
+  }
+  return [...byId.values()]
+}
 
 async function fetchFile ({ repo, sha, path: filePath }, token) {
   const url = `https://raw.githubusercontent.com/${repo}/${sha}/${filePath.split('/').map(encodeURIComponent).join('/')}`
@@ -78,15 +110,15 @@ module.exports = function tutorialExamplesPlugin (context) {
   const siteDir = context.siteDir
   const stagingDir = path.join(siteDir, STAGING_DIR)
   const cachePath = path.join(stagingDir, CACHE_FILE)
-  const manifestPath = path.join(siteDir, MANIFEST)
 
   return {
     name: 'tutorial-examples',
 
     async loadContent () {
-      if (!fs.existsSync(manifestPath)) return
-      const { files } = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
-      if (!files || !files.length) return
+      const manifests = manifestFiles(siteDir)
+      if (!manifests.length) return
+      const files = mergeManifests(manifests)
+      if (!files.length) return
 
       fs.mkdirSync(stagingDir, { recursive: true })
       let cache = {}

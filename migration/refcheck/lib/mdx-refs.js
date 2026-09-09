@@ -25,6 +25,8 @@ const fs = require('node:fs')
 const path = require('node:path')
 
 const { urlToSlug } = require('../../lib/layout')
+// Staged-example addressing, shared with the converter.
+const { stagedRel, EXAMPLES_STAGING } = require('../../lib/staged-examples')
 // The ONE slicer, shared with the converter and the build-time loader.
 const { sliceRegion } = require('../../../plugins/lib/slice-region')
 
@@ -73,7 +75,7 @@ function importsOf (text, file, siteRoot) {
     const [, id, spec] = m
     if (spec.startsWith('@site/') && spec.includes('/_partials/') && spec.endsWith('.mdx')) {
       partials.push({ id, file: path.join(siteRoot, spec.slice('@site/'.length)) })
-    } else if (/(^|\/)examples\//.test(spec) && (spec.startsWith('.') || spec.startsWith('@site/'))) {
+    } else if ((/(^|\/)examples\//.test(spec) || spec.includes(`/${EXAMPLES_STAGING}/`)) && (spec.startsWith('.') || spec.startsWith('@site/'))) {
       // An example import may carry a region selector (`?tag=…`, `?lines=…`,
       // `&indent=0`), read at build by the tag-slice loader. Split it off
       // the path — what the page renders is that SLICE, not the whole file.
@@ -213,9 +215,14 @@ function countExampleRefs (text, name) {
 // How many times an import's identifier is USED in a body: a partial as the JSX
 // component `<PartialFoo/>`, an example as the expression `{Ex_foo}`.
 function usageCount (body, id, kind) {
-  return kind === 'partial'
-    ? countMatches(body, new RegExp(`<${escRe(id)}(?![A-Za-z0-9_])`, 'g'))
-    : countMatches(body, new RegExp(`\\{\\s*${escRe(id)}\\s*\\}`, 'g'))
+  if (kind === 'partial') return countMatches(body, new RegExp(`<${escRe(id)}(?![A-Za-z0-9_])`, 'g'))
+  // An example is used inside a JSX expression, but not always alone in it: a block
+  // that renders an example INSIDE a fixed wrapper composes the two, as
+  // `{'kubectl apply -f - <<EOF\n' + Ex_foo + 'EOF'}`. Matching only `{Ex_foo}`
+  // scored those zero, which reads as "the page baked it" -- the exact opposite of
+  // what it did. So: the identifier as a whole token anywhere in a brace-delimited
+  // expression, with no nested braces so a match cannot span blocks.
+  return countMatches(body, new RegExp(`\\{[^{}]*(?<![A-Za-z0-9_])${escRe(id)}(?![A-Za-z0-9_])[^{}]*\\}`, 'g'))
 }
 
 // Total references to each of `names` that a converted page renders: its own body
@@ -299,6 +306,11 @@ function exampleImports (pageFile, siteRoot) {
 
 // `…/hazelcast/examples/cp/CpSubsystemAPI.java` -> `cp/CpSubsystemAPI.java`.
 function exampleRel (file) {
+  // Staged imports first: a staged path usually contains `/examples/` too -- it is
+  // a path inside the OWNING repo's docs tree -- so the split below would reduce
+  // it to a bare filename that matches nothing the page asked for.
+  const staged = stagedRel(file)
+  if (staged) return staged
   const parts = file.split(path.sep).join('/').split('/examples/')
   return parts.length > 1 ? parts[parts.length - 1] : file
 }

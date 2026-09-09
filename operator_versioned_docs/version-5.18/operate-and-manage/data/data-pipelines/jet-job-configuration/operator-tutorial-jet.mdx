@@ -6,6 +6,10 @@ slug: /tutorials/operator-tutorial-jet
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_docs_modules_ROOT_examples_hazelcast_jet_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-jet/docs/modules/ROOT/examples/hazelcast-jet.yaml';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_docs_modules_ROOT_examples_jet_running_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-jet/docs/modules/ROOT/examples/jet-running.yaml';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_docs_modules_ROOT_examples_jet_canceled_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-jet/docs/modules/ROOT/examples/jet-canceled.yaml';
 
 Learn how to run a data pipeline in Hazelcast using Jet.
 
@@ -135,19 +139,7 @@ If you want to learn more about other authentication methods, see [Authorization
    ```
 2. Create a Hazelcast cluster with the Jet engine configured.
 
-   ```shell
-   kubectl apply -f - <<EOF
-   apiVersion: hazelcast.com/v1alpha1
-   kind: Hazelcast
-   metadata:
-     name: my-hazelcast
-   spec:
-     licenseKeySecretName: hazelcast-license-key
-     clusterSize: 3
-     jet:
-       resourceUploadEnabled: true
-   EOF
-   ```
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_docs_modules_ROOT_examples_hazelcast_jet_yaml + 'EOF'}</CodeBlock>
 
    :::note
 
@@ -174,21 +166,7 @@ In this step, you'll start, check and cancel the Jet job that runs the data pipe
    - gs://hazelcast-jet-pipeline
    - azblob://hazelcast-jet-pipeline
 
-   ```shell
-   kubectl apply -f - <<EOF
-   apiVersion: hazelcast.com/v1alpha1
-   kind: JetJob
-   metadata:
-     name: my-jet-job
-   spec:
-     hazelcastResourceName: my-hazelcast
-     state: Running
-     jarName: jet-pipeline-run-1.0.0.jar
-     bucketConfig:
-       bucketURI: "<BUCKET-URI>"
-       secretName: <SECRET-NAME>
-   EOF
-   ```
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_docs_modules_ROOT_examples_jet_running_yaml + 'EOF'}</CodeBlock>
 2. Check status of the Jet job.
 
    ```bash
@@ -225,21 +203,7 @@ In this step, you'll start, check and cancel the Jet job that runs the data pipe
 
    1. Cancel the Jet job using `kubectl apply`:
 
-      ```shell
-      kubectl apply -f - <<EOF
-      apiVersion: hazelcast.com/v1alpha1
-      kind: JetJob
-      metadata:
-        name: my-jet-job
-      spec:
-        hazelcastResourceName: my-hazelcast
-        state: Canceled
-        jarName: jet-pipeline-run-1.0.0.jar
-        bucketConfig:
-          bucketURI: "<BUCKET-URI>"
-          secretName: <SECRET-NAME>
-      EOF
-      ```
+      <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_docs_modules_ROOT_examples_jet_canceled_yaml + 'EOF'}</CodeBlock>
    2. Cancel the Jet job using `kubectl patch`:
 
       ```bash

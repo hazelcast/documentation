@@ -5,8 +5,15 @@ sidebar_position: 6
 slug: /tutorials/operator-tutorial-tls
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_tls_docs_modules_ROOT_examples_hazelcast_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-tls/docs/modules/ROOT/examples/hazelcast.yaml';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_tls_docs_modules_ROOT_examples_managementcenter_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-tls/docs/modules/ROOT/examples/managementcenter.yaml';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_tls_docs_modules_ROOT_examples_java_src_main_java_com_hazelcast_example_java from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-tls/docs/modules/ROOT/examples/java/src/main/java/com/hazelcast/example.java';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_tls_docs_modules_ROOT_examples_nodejs_example_js from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-tls/docs/modules/ROOT/examples/nodejs/example.js';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_tls_docs_modules_ROOT_examples_go_example_go from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-tls/docs/modules/ROOT/examples/go/example.go';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_tls_docs_modules_ROOT_examples_python_example_py from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-tls/docs/modules/ROOT/examples/python/example.py';
 
 Learn how to secure Hazelcast cluster with TLS and Hazelcast Platform Operator.
 
@@ -61,23 +68,7 @@ Before you begin, make sure that you have:
    ```
 2. Create the Hazelcast cluster with TLS configured
 
-   ```yaml
-   kubectl apply -f - <<EOF
-   apiVersion: hazelcast.com/v1alpha1
-   kind: Hazelcast
-   metadata:
-     name: hazelcast
-   spec:
-     clusterSize: 3
-     licenseKeySecretName: hazelcast-license-key
-     tls:
-       secretName: example
-     exposeExternally:
-       type: Smart
-       discoveryServiceType: LoadBalancer
-       memberAccess: LoadBalancer
-   EOF
-   ```
+   <CodeBlock language="yaml">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_tls_docs_modules_ROOT_examples_hazelcast_yaml + 'EOF'}</CodeBlock>
 3. Check cluster status:
 
    ```shell
@@ -103,24 +94,7 @@ Enabling TLS for a Hazelcast cluster adds an essential layer of security to prot
 
 Apply the Management Center custom resource:
 
-```yaml
-kubectl apply -f - <<EOF
-apiVersion: hazelcast.com/v1alpha1
-kind: ManagementCenter
-metadata:
-  name: managementcenter
-spec:
-  repository: 'hazelcast/management-center'
-  licenseKeySecretName: hazelcast-license-key
-  externalConnectivity:
-    type: LoadBalancer
-  hazelcastClusters:
-    - address: hazelcast
-      name: dev
-      tls:
-        secretName: example
-EOF
-```
+<CodeBlock language="yaml">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_tls_docs_modules_ROOT_examples_managementcenter_yaml + 'EOF'}</CodeBlock>
 
 ## Connect to Hazelcast cluster over TLS
 
@@ -151,118 +125,22 @@ EOF
    </TabItem>
    <TabItem value="java" label="Java">
 
-   ```java
-   package com.hazelcast;
-
-   import com.hazelcast.client.HazelcastClient;
-   import com.hazelcast.client.config.ClientConfig;
-   import com.hazelcast.config.SSLConfig;
-   import com.hazelcast.core.HazelcastInstance;
-
-   import java.util.Properties;
-
-   public class example {
-     public static void main(String[] args) throws Exception {
-       ClientConfig config = new ClientConfig();
-       config.getNetworkConfig().addAddress("<EXTERNAL-IP>");
-
-       Properties clientSSLProps = new Properties();
-       clientSSLProps.setProperty("trustStore", "example.jks");
-       clientSSLProps.setProperty("trustStorePassword", "hazelcast");
-       config.getNetworkConfig().setSSLConfig(new SSLConfig()
-         .setEnabled(true)
-         .setProperties(clientSSLProps));
-
-       HazelcastInstance client = HazelcastClient.newHazelcastClient(config);
-       System.out.println("Successful connection!");
-     }
-   }
-   ```
+   <CodeBlock language="java">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_tls_docs_modules_ROOT_examples_java_src_main_java_com_hazelcast_example_java}</CodeBlock>
 
    </TabItem>
    <TabItem value="nodejs" label="NodeJS">
 
-   ```javascript
-   'use strict';
-
-   const { Client } = require('hazelcast-client');
-
-   const clientConfig = {
-     network: {
-       clusterMembers: [
-         '<EXTERNAL-IP>'
-       ],
-       ssl: {
-         enabled: true,
-         sslOptionsFactoryProperties: {
-           caPath: 'example.crt',
-           servername: 'example',
-         }
-       }
-     }
-   };
-
-   (async () => {
-     try {
-       const client = await Client.newHazelcastClient(clientConfig);
-       console.log('Successful connection!');
-     } catch (err) {
-       console.error('Error occurred:', err);
-     }
-   })();
-   ```
+   <CodeBlock language="javascript">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_tls_docs_modules_ROOT_examples_nodejs_example_js}</CodeBlock>
 
    </TabItem>
    <TabItem value="go" label="Go">
 
-   ```go
-   package main
-
-   import (
-   	"context"
-   	"crypto/tls"
-   	"fmt"
-
-   	"github.com/hazelcast/hazelcast-go-client"
-   	"github.com/hazelcast/hazelcast-go-client/cluster"
-   )
-
-   func main() {
-   	var clusterConfig cluster.Config
-   	clusterConfig.Network.SetAddresses("<EXTERNAL-IP>")
-   	clusterConfig.Discovery.UsePublicIP = true
-   	clusterConfig.Network.SSL.Enabled = true
-   	clusterConfig.Network.SSL.SetTLSConfig(&tls.Config{InsecureSkipVerify: true})
-
-   	ctx := context.Background()
-   	config := hazelcast.Config{Cluster: clusterConfig}
-   	client, err := hazelcast.StartNewClientWithConfig(ctx, config)
-   	if err != nil {
-   		panic(err)
-   	}
-   	fmt.Println("Successful connection!", client)
-   }
-   ```
+   <CodeBlock language="go">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_tls_docs_modules_ROOT_examples_go_example_go}</CodeBlock>
 
    </TabItem>
    <TabItem value="python" label="Python">
 
-   ```python
-   import logging
-
-   import hazelcast
-
-   logging.basicConfig(level=logging.INFO)
-
-   client = hazelcast.HazelcastClient(
-       cluster_members=["<EXTERNAL-IP>"],
-       use_public_ip=True,
-       ssl_enabled=True,
-       ssl_cafile="example.crt",
-   )
-
-   print("Successful connection!", flush=True)
-   ```
+   <CodeBlock language="python">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_tls_docs_modules_ROOT_examples_python_example_py}</CodeBlock>
 
    </TabItem>
    </Tabs>

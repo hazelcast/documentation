@@ -11,13 +11,16 @@ tutorial_source: "https://github.com/hazelcast-guides/hazelcast-platform-operato
 displayed_sidebar: null
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_platform_operator_expose_externally_operator_expose_externally_hazelcast_unisocket_yaml from '@site/.tutorial-examples/hazelcast-platform-operator-expose-externally/operator-expose-externally/hazelcast-unisocket.yaml';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import CodeBlock from '@theme/CodeBlock';
 import Ex_hazelcast_platform_operator_expose_externally_operator_expose_externally_java_unisocket_src_main_java_com_hazelcast_Main_java from '@site/.tutorial-examples/hazelcast-platform-operator-expose-externally/operator-expose-externally/java-unisocket/src/main/java/com/hazelcast/Main.java';
 import Ex_hazelcast_platform_operator_expose_externally_operator_expose_externally_nodejs_unisocket_client_js from '@site/.tutorial-examples/hazelcast-platform-operator-expose-externally/operator-expose-externally/nodejs-unisocket/client.js';
 import Ex_hazelcast_platform_operator_expose_externally_operator_expose_externally_go_unisocket_main_go from '@site/.tutorial-examples/hazelcast-platform-operator-expose-externally/operator-expose-externally/go-unisocket/main.go';
 import Ex_hazelcast_platform_operator_expose_externally_operator_expose_externally_python_unisocket_main_py from '@site/.tutorial-examples/hazelcast-platform-operator-expose-externally/operator-expose-externally/python-unisocket/main.py';
+import Ex_hazelcast_platform_operator_expose_externally_operator_expose_externally_dotnet_unisocket_csharp_example_cs from '@site/.tutorial-examples/hazelcast-platform-operator-expose-externally/operator-expose-externally/dotnet-unisocket/csharp_example.cs';
+import Ex_hazelcast_platform_operator_expose_externally_operator_expose_externally_hazelcast_smart_yaml from '@site/.tutorial-examples/hazelcast-platform-operator-expose-externally/operator-expose-externally/hazelcast-smart.yaml';
 import Ex_hazelcast_platform_operator_expose_externally_operator_expose_externally_java_src_main_java_com_hazelcast_Main_java from '@site/.tutorial-examples/hazelcast-platform-operator-expose-externally/operator-expose-externally/java/src/main/java/com/hazelcast/Main.java';
 import Ex_hazelcast_platform_operator_expose_externally_operator_expose_externally_nodejs_client_js from '@site/.tutorial-examples/hazelcast-platform-operator-expose-externally/operator-expose-externally/nodejs/client.js';
 import Ex_hazelcast_platform_operator_expose_externally_operator_expose_externally_go_main_go from '@site/.tutorial-examples/hazelcast-platform-operator-expose-externally/operator-expose-externally/go/main.go';
@@ -71,19 +74,7 @@ The first option is to use the `Unisocket` type. This option will use the standa
 
 Run the following command to create the Hazelcast cluster with Expose Externally feature enabled using Unisocket type.
 
-```shell
-kubectl apply -f - <<EOF
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: my-hazelcast-unisocket
-spec:
-  licenseKeySecretName: hazelcast-license-key
-  exposeExternally:
-    type: Unisocket
-    discoveryServiceType: LoadBalancer
-EOF
-```
+<CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_platform_operator_expose_externally_operator_expose_externally_hazelcast_unisocket_yaml + 'EOF'}</CodeBlock>
 
 For `discoveryServiceType` you can use:
 
@@ -161,42 +152,7 @@ clc config add hz cluster.name=dev cluster.address=<EXTERNAL-IP>
 </TabItem>
 <TabItem value="net" label=".NET">
 
-```cs
-using Hazelcast;
-using Microsoft.Extensions.Logging;
-
-
-class CsharpExample
-{
-    static async Task Main(string[] args)
-    {
-
-        var options = new HazelcastOptionsBuilder()
-            .With(args)
-            .With((configuration, options) =>
-            {
-                options.LoggerFactory.Creator = () => LoggerFactory.Create(loggingBuilder => loggingBuilder.AddConfiguration(configuration.GetSection("logging")).AddConsole());
-                options.Networking.Addresses.Add("<EXTERNAL-IP>");
-                options.Networking.SmartRouting = false;
-            })
-            .Build();
-        var client = await HazelcastClientFactory.StartNewClientAsync(options);
-
-
-        Console.WriteLine("Successful connection!");
-        Console.WriteLine("Starting to fill the map with random entries.");
-
-        var map = await client.GetMapAsync<string, string>("map");
-        var random = new Random();
-        while (true)
-        {
-            var randomKey = random.Next(100_000);
-            await map.PutAsync("key-" + randomKey, "value-" + randomKey);
-            Console.WriteLine("Current map size: " + await map.GetSizeAsync());
-        }
-    }
-}
-```
+<CodeBlock language="cs">{Ex_hazelcast_platform_operator_expose_externally_operator_expose_externally_dotnet_unisocket_csharp_example_cs}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -338,20 +294,7 @@ The second option is to use the `Smart` type. With this option, each Hazelcast m
 
 Run the following command to create the Hazelcast cluster with Expose Externally feature enabled using Smart type.
 
-```shell
-kubectl apply -f - <<EOF
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: my-hazelcast-smart
-spec:
-  licenseKeySecretName: hazelcast-license-key
-  exposeExternally:
-    type: Smart
-    discoveryServiceType: LoadBalancer
-    memberAccess: LoadBalancer
-EOF
-```
+<CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_platform_operator_expose_externally_operator_expose_externally_hazelcast_smart_yaml + '\nEOF'}</CodeBlock>
 
 This will create the Hazelcast cluster and one `LoadBalancer` service for discovery and one `LoadBalancer` service for each pod.
 
@@ -432,42 +375,7 @@ clc config add hz cluster.name=dev cluster.address=<EXTERNAL-IP>
 </TabItem>
 <TabItem value="net" label=".Net">
 
-```cs
-using Hazelcast;
-using Microsoft.Extensions.Logging;
-
-
-class CsharpExample
-{
-    static async Task Main(string[] args)
-    {
-
-        var options = new HazelcastOptionsBuilder()
-            .With(args)
-            .With((configuration, options) =>
-            {
-                options.LoggerFactory.Creator = () => LoggerFactory.Create(loggingBuilder => loggingBuilder.AddConfiguration(configuration.GetSection("logging")).AddConsole());
-                options.Networking.Addresses.Add("<EXTERNAL-IP>");
-                options.Networking.SmartRouting = false;
-            })
-            .Build();
-        var client = await HazelcastClientFactory.StartNewClientAsync(options);
-
-
-        Console.WriteLine("Successful connection!");
-        Console.WriteLine("Starting to fill the map with random entries.");
-
-        var map = await client.GetMapAsync<string, string>("map");
-        var random = new Random();
-        while (true)
-        {
-            var randomKey = random.Next(100_000);
-            await map.PutAsync("key-" + randomKey, "value-" + randomKey);
-            Console.WriteLine("Current map size: " + await map.GetSizeAsync());
-        }
-    }
-}
-```
+<CodeBlock language="cs">{Ex_hazelcast_platform_operator_expose_externally_operator_expose_externally_dotnet_unisocket_csharp_example_cs}</CodeBlock>
 
 </TabItem>
 </Tabs>

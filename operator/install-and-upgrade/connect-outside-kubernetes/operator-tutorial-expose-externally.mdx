@@ -4,8 +4,16 @@ sidebar_position: 1
 slug: /tutorials/operator-tutorial-expose-externally
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_hazelcast_unisocket_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-expose-externally/docs/modules/ROOT/examples/operator-expose-externally/hazelcast-unisocket.yaml';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_java_src_main_java_com_hazelcast_Main_java from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-expose-externally/docs/modules/ROOT/examples/operator-expose-externally/java/src/main/java/com/hazelcast/Main.java';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_nodejs_client_js from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-expose-externally/docs/modules/ROOT/examples/operator-expose-externally/nodejs/client.js';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_go_main_go from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-expose-externally/docs/modules/ROOT/examples/operator-expose-externally/go/main.go';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_python_main_py from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-expose-externally/docs/modules/ROOT/examples/operator-expose-externally/python/main.py';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_dotnet_unisocket_csharp_example_cs from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-expose-externally/docs/modules/ROOT/examples/operator-expose-externally/dotnet-unisocket/csharp_example.cs';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_hazelcast_smart_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-expose-externally/docs/modules/ROOT/examples/operator-expose-externally/hazelcast-smart.yaml';
 
 Learn how to connect to a Hazelcast cluster running in Kubernetes from outside of the Kubernetes environment.
 
@@ -45,19 +53,7 @@ The first option is to use the `Unisocket` type. This option uses the standard K
 
 Create the Hazelcast cluster and enable exposing externally using the unisocket type:
 
-```shell
-kubectl apply -f - <<EOF
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: my-hazelcast-unisocket
-spec:
-  licenseKeySecretName: hazelcast-license-key
-  exposeExternally:
-    type: Unisocket
-    discoveryServiceType: LoadBalancer
-EOF
-```
+<CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_hazelcast_unisocket_yaml + 'EOF'}</CodeBlock>
 
 For `discoveryServiceType` you can use:
 
@@ -105,193 +101,27 @@ clc config add hz cluster.name=dev cluster.address=<EXTERNAL-IP>
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java
-package com.hazelcast;
-
-import com.hazelcast.client.HazelcastClient;
-import com.hazelcast.client.config.ClientConfig;
-import com.hazelcast.client.properties.ClientProperty;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
-import java.util.Random;
-
-public class Main {
-    public static void main(String[] args) throws Exception {
-        ClientConfig config = new ClientConfig();
-        config.getNetworkConfig().addAddress("<EXTERNAL-IP>");
-        config.getProperties().setProperty(ClientProperty.DISCOVERY_SPI_PUBLIC_IP_ENABLED.toString(), "true");
-        HazelcastInstance client = HazelcastClient.newHazelcastClient(config);
-
-        System.out.println("Successful connection!");
-        System.out.println("Starting to fill the map with random entries.");
-
-        IMap<String, String> map = client.getMap("map");
-        Random random = new Random();
-        while (true) {
-            int randomKey = random.nextInt(100_000);
-            map.put("key-" + randomKey, "value-" + randomKey);
-            System.out.println("Current map size: " + map.size());
-        }
-    }
-}
-```
+<CodeBlock language="java">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_java_src_main_java_com_hazelcast_Main_java}</CodeBlock>
 
 </TabItem>
 <TabItem value="nodejs" label="NodeJS">
 
-```javascript
-'use strict';
-
-const { Client } = require('hazelcast-client');
-
-const clientConfig = {
-    network: {
-        clusterMembers: [
-            '<EXTERNAL-IP>'
-        ]
-    },
-    properties: {
-        ['hazelcast.discovery.public.ip.enabled']: true
-    }
-};
-
-(async () => {
-    try {
-        const client = await Client.newHazelcastClient(clientConfig);
-        const map = await client.getMap('map');
-        await map.put('key', 'value');
-        const res = await map.get('key');
-        if (res !== 'value') {
-            throw new Error('Connection failed, check your configuration.');
-        }
-        console.log('Successful connection!');
-        console.log('Starting to fill the map with random entries.');
-        while (true) {
-            const randomKey = Math.floor(Math.random() * 100000);
-            await map.put('key' + randomKey, 'value' + randomKey);
-            const size = await map.size();
-            console.log(`Current map size: ${size}`);
-        }
-    } catch (err) {
-        console.error('Error occurred:', err);
-    }
-})();
-```
+<CodeBlock language="javascript">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_nodejs_client_js}</CodeBlock>
 
 </TabItem>
 <TabItem value="go" label="Go">
 
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"math/rand"
-
-	"github.com/hazelcast/hazelcast-go-client"
-)
-
-func main() {
-	config := hazelcast.Config{}
-	cc := &config.Cluster
-	cc.Network.SetAddresses("<EXTERNAL-IP>")
-	cc.Discovery.UsePublicIP = true
-	ctx := context.TODO()
-	client, err := hazelcast.StartNewClientWithConfig(ctx, config)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Successful connection!")
-	fmt.Println("Starting to fill the map with random entries.")
-	m, err := client.GetMap(ctx, "map")
-	if err != nil {
-		panic(err)
-	}
-	for {
-		num := rand.Intn(100_000)
-		key := fmt.Sprintf("key-%d", num)
-		value := fmt.Sprintf("value-%d", num)
-		if _, err = m.Put(ctx, key, value); err != nil {
-			fmt.Println("ERR:", err.Error())
-		} else {
-			if mapSize, err := m.Size(ctx); err != nil {
-				fmt.Println("ERR:", err.Error())
-			} else {
-				fmt.Println("Current map size:", mapSize)
-			}
-		}
-	}
-}
-```
+<CodeBlock language="go">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_go_main_go}</CodeBlock>
 
 </TabItem>
 <TabItem value="python" label="Python">
 
-```python
-import logging
-import random
-
-import hazelcast
-
-logging.basicConfig(level=logging.INFO)
-
-client = hazelcast.HazelcastClient(
-    cluster_members=["<EXTERNAL-IP>"],
-    use_public_ip=True,
-)
-
-print("Successful connection!", flush=True)
-print("Starting to fill the map with random entries.", flush=True)
-
-m = client.get_map("map").blocking()
-
-while True:
-    random_number = str(random.randrange(0, 100000))
-    m.put("key-" + random_number, "value-" + random_number)
-    print("Current map size:", m.size())
-```
+<CodeBlock language="python">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_python_main_py}</CodeBlock>
 
 </TabItem>
 <TabItem value="net" label=".NET">
 
-```cs
-using Hazelcast;
-using Microsoft.Extensions.Logging;
-
-
-class CsharpExample
-{
-    static async Task Main(string[] args)
-    {
-
-        var options = new HazelcastOptionsBuilder()
-            .With(args)
-            .With((configuration, options) =>
-            {
-                options.LoggerFactory.Creator = () => LoggerFactory.Create(loggingBuilder => loggingBuilder.AddConfiguration(configuration.GetSection("logging")).AddConsole());
-                options.Networking.Addresses.Add("<EXTERNAL-IP>");
-                options.Networking.SmartRouting = false;
-            })
-            .Build();
-        var client = await HazelcastClientFactory.StartNewClientAsync(options);
-
-
-        Console.WriteLine("Successful connection!");
-        Console.WriteLine("Starting to fill the map with random entries.");
-
-        var map = await client.GetMapAsync<string, string>("map");
-        var random = new Random();
-        while (true)
-        {
-            var randomKey = random.Next(100_000);
-            await map.PutAsync("key-" + randomKey, "value-" + randomKey);
-            Console.WriteLine("Current map size: " + await map.GetSizeAsync());
-        }
-    }
-}
-```
+<CodeBlock language="cs">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_dotnet_unisocket_csharp_example_cs}</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -431,20 +261,7 @@ The second option is to use the `Smart` type. With this option, each Hazelcast m
 
 Create the Hazelcast cluster and enable exposing externally using the smart type:
 
-```shell
-kubectl apply -f - <<EOF
-apiVersion: hazelcast.com/v1alpha1
-kind: Hazelcast
-metadata:
-  name: my-hazelcast-smart
-spec:
-  licenseKeySecretName: hazelcast-license-key
-  exposeExternally:
-    type: Smart
-    discoveryServiceType: LoadBalancer
-    memberAccess: LoadBalancer
-EOF
-```
+<CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_hazelcast_smart_yaml + '\nEOF'}</CodeBlock>
 
 This creates the Hazelcast cluster along with one `LoadBalancer` service for discovery and one `LoadBalancer` service for each pod.
 
@@ -497,193 +314,27 @@ clc config add hz cluster.name=dev cluster.address=<EXTERNAL-IP>
 </TabItem>
 <TabItem value="java" label="Java">
 
-```java
-package com.hazelcast;
-
-import com.hazelcast.client.HazelcastClient;
-import com.hazelcast.client.config.ClientConfig;
-import com.hazelcast.client.properties.ClientProperty;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
-import java.util.Random;
-
-public class Main {
-    public static void main(String[] args) throws Exception {
-        ClientConfig config = new ClientConfig();
-        config.getNetworkConfig().addAddress("<EXTERNAL-IP>");
-        config.getProperties().setProperty(ClientProperty.DISCOVERY_SPI_PUBLIC_IP_ENABLED.toString(), "true");
-        HazelcastInstance client = HazelcastClient.newHazelcastClient(config);
-
-        System.out.println("Successful connection!");
-        System.out.println("Starting to fill the map with random entries.");
-
-        IMap<String, String> map = client.getMap("map");
-        Random random = new Random();
-        while (true) {
-            int randomKey = random.nextInt(100_000);
-            map.put("key-" + randomKey, "value-" + randomKey);
-            System.out.println("Current map size: " + map.size());
-        }
-    }
-}
-```
+<CodeBlock language="java">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_java_src_main_java_com_hazelcast_Main_java}</CodeBlock>
 
 </TabItem>
 <TabItem value="nodejs" label="NodeJS">
 
-```javascript
-'use strict';
-
-const { Client } = require('hazelcast-client');
-
-const clientConfig = {
-    network: {
-        clusterMembers: [
-            '<EXTERNAL-IP>'
-        ]
-    },
-    properties: {
-        ['hazelcast.discovery.public.ip.enabled']: true
-    }
-};
-
-(async () => {
-    try {
-        const client = await Client.newHazelcastClient(clientConfig);
-        const map = await client.getMap('map');
-        await map.put('key', 'value');
-        const res = await map.get('key');
-        if (res !== 'value') {
-            throw new Error('Connection failed, check your configuration.');
-        }
-        console.log('Successful connection!');
-        console.log('Starting to fill the map with random entries.');
-        while (true) {
-            const randomKey = Math.floor(Math.random() * 100000);
-            await map.put('key' + randomKey, 'value' + randomKey);
-            const size = await map.size();
-            console.log(`Current map size: ${size}`);
-        }
-    } catch (err) {
-        console.error('Error occurred:', err);
-    }
-})();
-```
+<CodeBlock language="javascript">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_nodejs_client_js}</CodeBlock>
 
 </TabItem>
 <TabItem value="go" label="Go">
 
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"math/rand"
-
-	"github.com/hazelcast/hazelcast-go-client"
-)
-
-func main() {
-	config := hazelcast.Config{}
-	cc := &config.Cluster
-	cc.Network.SetAddresses("<EXTERNAL-IP>")
-	cc.Discovery.UsePublicIP = true
-	ctx := context.TODO()
-	client, err := hazelcast.StartNewClientWithConfig(ctx, config)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Successful connection!")
-	fmt.Println("Starting to fill the map with random entries.")
-	m, err := client.GetMap(ctx, "map")
-	if err != nil {
-		panic(err)
-	}
-	for {
-		num := rand.Intn(100_000)
-		key := fmt.Sprintf("key-%d", num)
-		value := fmt.Sprintf("value-%d", num)
-		if _, err = m.Put(ctx, key, value); err != nil {
-			fmt.Println("ERR:", err.Error())
-		} else {
-			if mapSize, err := m.Size(ctx); err != nil {
-				fmt.Println("ERR:", err.Error())
-			} else {
-				fmt.Println("Current map size:", mapSize)
-			}
-		}
-	}
-}
-```
+<CodeBlock language="go">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_go_main_go}</CodeBlock>
 
 </TabItem>
 <TabItem value="python" label="Python">
 
-```python
-import logging
-import random
-
-import hazelcast
-
-logging.basicConfig(level=logging.INFO)
-
-client = hazelcast.HazelcastClient(
-    cluster_members=["<EXTERNAL-IP>"],
-    use_public_ip=True,
-)
-
-print("Successful connection!", flush=True)
-print("Starting to fill the map with random entries.", flush=True)
-
-m = client.get_map("map").blocking()
-
-while True:
-    random_number = str(random.randrange(0, 100000))
-    m.put("key-" + random_number, "value-" + random_number)
-    print("Current map size:", m.size())
-```
+<CodeBlock language="python">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_python_main_py}</CodeBlock>
 
 </TabItem>
 <TabItem value="net" label=".Net">
 
-```cs
-using Hazelcast;
-using Microsoft.Extensions.Logging;
-
-
-class CsharpExample
-{
-    static async Task Main(string[] args)
-    {
-
-        var options = new HazelcastOptionsBuilder()
-            .With(args)
-            .With((configuration, options) =>
-            {
-                options.LoggerFactory.Creator = () => LoggerFactory.Create(loggingBuilder => loggingBuilder.AddConfiguration(configuration.GetSection("logging")).AddConsole());
-                options.Networking.Addresses.Add("<EXTERNAL-IP>");
-                options.Networking.SmartRouting = false;
-            })
-            .Build();
-        var client = await HazelcastClientFactory.StartNewClientAsync(options);
-
-
-        Console.WriteLine("Successful connection!");
-        Console.WriteLine("Starting to fill the map with random entries.");
-
-        var map = await client.GetMapAsync<string, string>("map");
-        var random = new Random();
-        while (true)
-        {
-            var randomKey = random.Next(100_000);
-            await map.PutAsync("key-" + randomKey, "value-" + randomKey);
-            Console.WriteLine("Current map size: " + await map.GetSizeAsync());
-        }
-    }
-}
-```
+<CodeBlock language="cs">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_dotnet_unisocket_csharp_example_cs}</CodeBlock>
 
 </TabItem>
 </Tabs>

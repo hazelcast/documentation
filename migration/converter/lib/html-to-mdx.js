@@ -82,9 +82,6 @@ function convertBody (html, ctx) {
     // root, so imageSrc() must strip this segment too — see imageSrc().
     seg: ctx.seg || null,
     slugger: new GithubSlugger(),
-    // Import prefix for example files. Absent = the co-located `examples/` dir
-    // next to the page; set for components whose examples stay in their own repo.
-    exampleImportBase: ctx.exampleImportBase || null,
     partials: ctx.partials || new Map(),
     linkVars: ctx.linkVars || new Map(),
     // Single-sourced examples: content -> co-located file path (from convert.js
@@ -856,8 +853,12 @@ function convertListing ($, node, st) {
   // instead of baking the fence -- keeps the example file the single source.
   if (st.examples && st.examples.size) {
     const codeEl = $(pre).find('code')[0]
-    const hit = chooseExample(st.examples.get(normalizeCode($(codeEl || pre).text())), st.pageExampleFiles)
+    const text = $(codeEl || pre).text()
+    const hit = chooseExample(st.examples.get(normalizeCode(text)), st.pageExampleFiles)
     if (hit) return emitExampleCodeBlock($, pre, hit, title, st)
+    // Not the whole block, but possibly the whole block MINUS a fixed wrapper.
+    const wrapped = matchWrappedExample(text, st)
+    if (wrapped) return emitExampleCodeBlock($, pre, wrapped.hit, title, st, wrapped.wrap)
   }
   return preToFence($, pre, title, st)
 }
@@ -865,6 +866,38 @@ function convertListing ($, node, st) {
 // Match key for code content: strip trailing newlines/blank lines (mirrors
 // convert.js normalizeCode and preToFence's trailing-newline trim).
 const normalizeCode = (s) => s.replace(/\n+$/, '')
+
+// An example file included INSIDE a fixed wrapper, rather than as the whole block.
+//
+// Operator's tutorials show their YAML as something to pipe straight into kubectl:
+// the AsciiDoc is `kubectl apply -f - <<EOF` / the include / `EOF`, so the rendered
+// block is wrapper-plus-file and the file is only a slice of it. Whole-block
+// matching correctly declines, and the file used to bake -- 27 include sites per
+// version, the same YAML duplicated into the page five times over.
+//
+// Deliberately ONE literal wrapper, not a general partial-match: a rule that hunts
+// for any example file inside any block would fire on coincidences, and a wrong
+// region renders as plausible code that no downstream gate can catch. Every one of
+// the 27 sites is this exact shape. Anything else keeps baking.
+//
+// The reconstruction is VERIFIED, not assumed: whatever we would emit is rebuilt
+// here and compared to the golden's own text, so a file whose trailing newline (or
+// anything else) does not compose back to the block is left alone.
+const HEREDOC_OPEN = 'kubectl apply -f - <<EOF\n'
+const HEREDOC_CLOSE = 'EOF'
+
+function matchWrappedExample (text, st) {
+  const t = normalizeCode(text)
+  if (!t.startsWith(HEREDOC_OPEN) || !t.endsWith(HEREDOC_CLOSE)) return null
+  const inner = t.slice(HEREDOC_OPEN.length, t.length - HEREDOC_CLOSE.length)
+  const hit = chooseExample(st.examples.get(normalizeCode(inner)), st.pageExampleFiles)
+  if (!hit) return null
+  // 16 of the 27 files end with a newline and 11 do not; the wrapper's closing
+  // line has to supply the break in the second case.
+  const wrap = { before: HEREDOC_OPEN, after: (hit.endsWithNewline ? '' : '\n') + HEREDOC_CLOSE }
+  const rebuilt = wrap.before + (hit.endsWithNewline ? inner : normalizeCode(inner)) + wrap.after
+  return rebuilt === t ? { hit, wrap } : null
+}
 
 // Choose which example file a matched code block imports.
 //
@@ -886,6 +919,9 @@ function chooseExample (candidates, pageExampleFiles) {
   const file = pool[pool.length - 1].file
   return pool.find((c) => c.file === file)
 }
+
+// A single-quoted JS string literal for embedding fixed text in a JSX expression.
+const jsString = (s) => "'" + s.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r') + "'"
 
 // A stable, unique JS identifier for a page's import of one example SLICE. Keyed
 // on file + query, not file alone: a page may show several regions of the same
@@ -926,7 +962,7 @@ function normalizeLang (lang) {
   return PRISM_ALIASES[l] || l
 }
 
-function emitExampleCodeBlock ($, pre, hit, title, st) {
+function emitExampleCodeBlock ($, pre, hit, title, st, wrap = null) {
   const { file, query, conums } = hit
   const codeEl = $(pre).find('code')[0]
   let lang = ''
@@ -946,17 +982,22 @@ function emitExampleCodeBlock ($, pre, hit, title, st) {
   // under examples/. The query selects the region (absent = the whole file, the
   // operator case); {attribute} placeholders in the byte-faithful file are then
   // substituted per version at build (no-op for files without placeholders).
-  // `exampleImportBase` overrides the co-located default for components whose
-  // examples are NOT in this repo: tutorials' live in the guide repos and are
-  // staged at build (plugins/tutorial-examples), so their import is site-absolute
-  // into the staging dir rather than relative to the page.
-  const importBase = st.exampleImportBase || examplesRelPath(st.relFile)
+  // The base comes from the MATCHED FILE, not the page: a component can have both
+  // kinds at once. Absent = the co-located `examples/` dir, imported relative to
+  // the page. Set = the file is NOT in this repo (tutorials' live in the guide
+  // repos, operator's templates ones in hazelcast-code-samples); it is staged at
+  // build by plugins/tutorial-examples, so the import is site-absolute.
+  const importBase = hit.importBase || examplesRelPath(st.relFile)
   st.imports.add(`import ${varName} from '${importBase}/${spec}';`)
   // Files carrying native `<N>` conum markers get the `conums` metastring so the
   // swizzled CodeBlock strips the markers and renders callout badges.
   const info = (lang ? ` language=${jsxAttr(lang)}` : '') + (title ? ` title=${jsxAttr(title)}` : '') +
     (conums ? ' metastring="conums"' : '')
-  return `<CodeBlock${info}>{${varName}}</CodeBlock>`
+  // Concatenation, not a template literal: the wrapper is fixed text we control,
+  // but the FILE is not -- a backtick or a `${` in it would otherwise break the
+  // page, and that hazard should not depend on today's file contents.
+  const expr = wrap ? `${jsString(wrap.before)} + ${varName} + ${jsString(wrap.after)}` : varName
+  return `<CodeBlock${info}>{${expr}}</CodeBlock>`
 }
 
 function convertPre ($, node, st) {

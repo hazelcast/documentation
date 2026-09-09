@@ -11,9 +11,11 @@ tutorial_source: "https://github.com/hazelcast-guides/hazelcast-platform-operato
 displayed_sidebar: null
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_platform_operator_tls_hazelcast_yaml from '@site/.tutorial-examples/hazelcast-platform-operator-tls/hazelcast.yaml';
+import Ex_hazelcast_platform_operator_tls_managementcenter_yaml from '@site/.tutorial-examples/hazelcast-platform-operator-tls/managementcenter.yaml';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import CodeBlock from '@theme/CodeBlock';
 import Ex_hazelcast_platform_operator_tls_java_src_main_java_com_hazelcast_example_java from '@site/.tutorial-examples/hazelcast-platform-operator-tls/java/src/main/java/com/hazelcast/example.java';
 import Ex_hazelcast_platform_operator_tls_nodejs_example_js from '@site/.tutorial-examples/hazelcast-platform-operator-tls/nodejs/example.js';
 import Ex_hazelcast_platform_operator_tls_go_example_go from '@site/.tutorial-examples/hazelcast-platform-operator-tls/go/example.go';
@@ -69,23 +71,7 @@ Before starting this tutorial, make sure that you meet the following prerequisit
    ```
 2. Create the Hazelcast cluster with TLS configured.
 
-   ```yaml
-   kubectl apply -f - <<EOF
-   apiVersion: hazelcast.com/v1alpha1
-   kind: Hazelcast
-   metadata:
-     name: hazelcast
-   spec:
-     clusterSize: 3
-     licenseKeySecretName: hazelcast-license-key
-     tls:
-       secretName: example
-     exposeExternally:
-       type: Smart
-       discoveryServiceType: LoadBalancer
-       memberAccess: LoadBalancer
-   EOF
-   ```
+   <CodeBlock language="yaml">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_platform_operator_tls_hazelcast_yaml + 'EOF'}</CodeBlock>
 3. Run the following commands to check cluster status
 
    ```shell
@@ -111,24 +97,7 @@ Enabling TLS for a Hazelcast cluster adds an essential layer of security to prot
 
 Apply the Management Center custom resource:
 
-```yaml
-kubectl apply -f - <<EOF
-apiVersion: hazelcast.com/v1alpha1
-kind: ManagementCenter
-metadata:
-  name: managementcenter
-spec:
-  repository: 'hazelcast/management-center'
-  licenseKeySecretName: hazelcast-license-key
-  externalConnectivity:
-    type: LoadBalancer
-  hazelcastClusters:
-    - address: hazelcast
-      name: dev
-      tls:
-        secretName: example
-EOF
-```
+<CodeBlock language="yaml">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_platform_operator_tls_managementcenter_yaml + 'EOF'}</CodeBlock>
 
 ## Step 4. Connect to Hazelcast cluster over TLS
 

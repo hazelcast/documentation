@@ -26,7 +26,12 @@
 const { execFileSync } = require('node:child_process')
 const path = require('node:path')
 
-const { NAV_SOURCES, refFor } = require('../../lib/layout')
+const { gitShowThroughLinks } = require('../../lib/git-links')
+
+// sourceMirrorFor, not NAV_SOURCES: the question here is always "can I open this
+// component's files", which includes the read-only sources (templates =
+// hazelcast-code-samples) that publish nothing but are included FROM.
+const { sourceMirrorFor, refFor } = require('../../lib/layout')
 // The same substituter the converter and <Variable> use, for `{attr}`s in an
 // include target (Antora substitutes them there).
 const substitute = require('../../../plugins/lib/substitute-attributes')
@@ -136,7 +141,7 @@ function resolveTarget (target, from) {
     const relative = parts[parts.length - 1]
     const module = parts[parts.length - 2] || from.module || 'ROOT'
     const component = parts.length >= 3 ? (parts[parts.length - 3] || from.component) : from.component
-    if (!NAV_SOURCES[component]) return null
+    if (!sourceMirrorFor(component)) return null
     return { component, module, family: from.family, version, relative }
   }
   const coord = t.slice(0, dollar)
@@ -148,15 +153,17 @@ function resolveTarget (target, from) {
   let module = from.module || 'ROOT'
   if (parts.length === 2) module = parts[0] || module
   else if (parts.length >= 3) { component = parts[parts.length - 3] || component; module = parts[parts.length - 2] || module }
-  if (!NAV_SOURCES[component]) return null // no mirror for this component (resolution-only)
+  if (!sourceMirrorFor(component)) return null // no mirror for this component (resolution-only)
   return { component, module, family, version, relative }
 }
 
 // The mirror repo dir + branch + in-repo path for a resolved coord at `seg`.
 function locate (coord, seg, sourcesDir) {
-  const src = NAV_SOURCES[coord.component]
+  const src = sourceMirrorFor(coord.component)
   if (!src) return null
-  const modulesRoot = path.posix.dirname(path.posix.dirname(src.file)) // docs/modules
+  // Derived from the nav.adoc path for a published component; stated outright for
+  // a read-only source, which has no nav to derive it from.
+  const modulesRoot = src.modulesRoot || path.posix.dirname(path.posix.dirname(src.file)) // docs/modules
   const repoPath = path.posix.join(modulesRoot, coord.module || 'ROOT', FAMILY_DIR[coord.family], coord.relative)
   // A coord carrying its own version wins: `seg` is the INCLUDING page's version,
   // which is meaningless for a cross-component include. An unresolved `{attr}`
@@ -171,7 +178,9 @@ function locate (coord, seg, sourcesDir) {
 const textCache = new Map()
 function cachedText (loc) {
   const key = `${loc.repoDir}\u0000${loc.ref}\u0000${loc.repoPath}`
-  if (!textCache.has(key)) textCache.set(key, gitShow(loc.repoDir, loc.ref, loc.repoPath))
+  // Through links: code-samples reaches its example files via a symlinked first
+  // path segment, so a plain `git show` on the resolved path finds nothing.
+  if (!textCache.has(key)) textCache.set(key, gitShowThroughLinks(loc.repoDir, loc.ref, loc.repoPath))
   return textCache.get(key)
 }
 
@@ -197,7 +206,10 @@ function walkPageSources (resource, seg, sourcesDir, visit, attrs = null) {
     const raw = cachedText(loc)
     if (raw == null) return
     const text = stripComments(sliceByTags(raw, tag))
-    visit(coord, text)
+    // The tag reaches the visitor too: the converter needs the SELECTOR a page
+    // asks an example for, not just which file, because a tag list or negation
+    // cannot be guessed from the file (see pageTagSelectors).
+    visit(coord, text, tag)
     for (const inc of includesIn(text)) {
       const child = resolveTarget(attrs ? substitute(inc.target, attrs) : inc.target, coord)
       if (!child) continue
@@ -211,8 +223,8 @@ function walkPageSources (resource, seg, sourcesDir, visit, attrs = null) {
 // The `example$` includes a page reaches.
 function collectPageExamples (resource, seg, sourcesDir) {
   const examples = []
-  walkPageSources(resource, seg, sourcesDir, (coord) => {
-    if (coord.family === 'example') examples.push(coord)
+  walkPageSources(resource, seg, sourcesDir, (coord, _text, tag) => {
+    if (coord.family === 'example') examples.push({ ...coord, tag: tag || null })
   })
   return examples
 }

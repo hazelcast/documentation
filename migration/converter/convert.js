@@ -73,6 +73,10 @@ const {
   isNavless, isSitePage, isVersioned, refFor, versionsToProcess, outDirFor, urlToSlug,
 } = require('../lib/layout')
 const yaml2 = require('js-yaml')
+// Staged (fetched-at-build) examples: the staging dir, the manifest and the
+// path->id mapping, shared with refcheck so the two agree about what a staged
+// import addresses.
+const { EXAMPLES_STAGING, referenceManifest, stagedIdsByPath, manifestSelectors } = require('../lib/staged-examples')
 
 // Antora attributes whose resolved value we single-source as a doc variable
 // instead of baking it into every page (the firm no-baking principle: an
@@ -476,32 +480,66 @@ const keyOf = (r) => pageKey(r.module, String(r.relative || '').replace(/\.adoc$
 // examples dir), so there is no committed copy here: plugins/tutorial-examples
 // stages them from the pinned repo on every build, and pages import them
 // site-absolutely out of that staging dir.
-const EXAMPLES_STAGING = '.tutorial-examples'
 
+// A component can have MORE THAN ONE example root, and operator has two: its own
+// files, committed per version and imported relative to the page; and the ones it
+// includes from another component (`templates` = hazelcast-code-samples, pulled in
+// by its tutorial pages), which are staged at build and imported site-absolutely.
+// So the import base belongs to the MATCHED FILE, not to the page -- one page can
+// import from both.
 function examplesConfig (component, outRoot, outDir) {
-  if (component === 'tutorials') {
-    return { dir: path.join(outRoot, EXAMPLES_STAGING), importBase: `@site/${EXAMPLES_STAGING}` }
-  }
-  return { dir: path.join(outDir, 'examples'), importBase: null }
+  const staged = { dir: path.join(outRoot, EXAMPLES_STAGING), importBase: `@site/${EXAMPLES_STAGING}` }
+  if (component === 'tutorials') return [staged]
+  const own = { dir: path.join(outDir, 'examples'), importBase: null }
+  // Only where a manifest says this component stages examples by reference --
+  // otherwise the staging dir's contents are another component's, and a chance
+  // content match would import a file this page never included.
+  return fs.existsSync(referenceManifest(component, outRoot)) ? [own, staged] : [own]
 }
 
-function loadExamples (examplesDir, lookup) {
-  const byContent = new Map()
-  if (!fs.existsSync(examplesDir)) return byContent
-  const walk = (dir) => {
-    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-      const p = path.join(dir, e.name)
-      if (e.isDirectory()) { walk(p); continue }
-      const raw = fs.readFileSync(p, 'utf8')
-      const rel = path.relative(examplesDir, p).split(path.sep).join('/')
-      for (const { query, content } of allRegions(raw)) {
-        const key = exampleKey(content, lookup)
-        if (!byContent.has(key)) byContent.set(key, [])
-        byContent.get(key).push({ file: rel, query, conums: CONUM_LINE.test(content) })
-      }
+
+// The tag specs this version's pages ask for that allRegions cannot guess.
+//
+// It offers every SINGLE tag a file defines, which covers almost everything. What
+// it cannot offer is a combination -- `tags=a;b` is one of 2^n subsets, and `!a`
+// is a whole-file variant per tag. So the pages' own includes supply them: exactly
+// the selectors something actually asks for, nothing speculative. Two in the corpus
+// today (springboot-hibernate's pair, client-failover's negation), and both baked
+// until now because the index held no entry that could match them.
+function pageTagSelectors (pages, byUrl, plan, seg, sourcesDir) {
+  const specs = new Set()
+  for (const p of pages) {
+    let rec
+    try { ({ rec } = relFileForPage(p, byUrl, plan)) } catch { continue }
+    if (!rec) continue
+    for (const c of collectPageExamples(rec, seg, sourcesDir)) {
+      if (c.tag && /[;,!]/.test(c.tag)) specs.add(c.tag)
     }
   }
-  walk(examplesDir)
+  return [...specs]
+}
+
+function loadExamples (roots, lookup, extraSelectors = []) {
+  const byContent = new Map()
+  for (const { dir: examplesDir, importBase } of roots) {
+    if (!fs.existsSync(examplesDir)) continue
+    const walk = (dir) => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const p = path.join(dir, e.name)
+        if (e.isDirectory()) { walk(p); continue }
+        const raw = fs.readFileSync(p, 'utf8')
+        const rel = path.relative(examplesDir, p).split(path.sep).join('/')
+        for (const { query, content } of allRegions(raw, extraSelectors)) {
+          const key = exampleKey(content, lookup)
+          if (!byContent.has(key)) byContent.set(key, [])
+          // endsWithNewline: a wrapper-matched block has to be rebuilt exactly, and
+          // whether the file supplies the break before the closing line decides it.
+          byContent.get(key).push({ file: rel, query, importBase, conums: CONUM_LINE.test(content), endsWithNewline: /\n$/.test(content) })
+        }
+      }
+    }
+    walk(examplesDir)
+  }
   // Shortest query first WITHIN a file: two queries only ever land on the same
   // key when they yield identical text, and then the simpler selector is the
   // honest one (a whole-file include should not be recorded as `?indent=0`).
@@ -1113,8 +1151,16 @@ function convertVersion (ver, ctx) {
   // to import. The converter content-matches a code block's text to one of these
   // and emits a raw-loader import instead of baking the fence. Scanned from the
   // co-located dir so the match is against exactly what will be imported.
-  const exCfg = examplesConfig(component, opts.outRoot, outDir)
-  const examples = loadExamples(exCfg.dir, exampleLookup)
+  const exampleRoots = examplesConfig(component, opts.outRoot, outDir)
+  const examples = loadExamples(exampleRoots, exampleLookup, [
+    // Two sources, because two kinds of component. Pages reachable through a
+    // source mirror are read directly; a component assembled from repos that are
+    // not mirrored (tutorials) has its selectors recorded by extract-examples,
+    // which is what does read them.
+    ...manifestSelectors(component, opts.outRoot),
+    ...pageTagSelectors(pages, byUrl, plan, seg, opts.sourcesDir),
+  ])
+  const stagedIds = stagedIdsByPath(component, opts.outRoot)
 
   // Reverse-map single-sourced attributes (no-baking): which attrs each page's
   // source references, so a value is only ever matched on a page that uses it.
@@ -1243,7 +1289,13 @@ function convertVersion (ver, ctx) {
     // `example$/foo.java` (the corpus writes the leading slash) resolves to a
     // coord whose relative keeps it; the co-located tree is keyed without.
     const pageExampleFiles = rec
-      ? new Set(collectPageExamples(rec, seg, opts.sourcesDir).map((c) => String(c.relative).replace(/^\/+/, '')))
+      ? new Set(collectPageExamples(rec, seg, opts.sourcesDir)
+        .map((c) => String(c.relative).replace(/^\/+/, ''))
+        // A cross-component include names the file by its path in the OTHER repo;
+        // the staged copy is addressed by manifest id. Same file, two names, and
+        // the tie-breaker only works if the page's list speaks the same one the
+        // index does.
+        .map((rel) => stagedIds.get(rel) || rel))
       : new Set()
     const hrefVars = tpl.hrefs
     const codeVars = tpl.code
@@ -1251,7 +1303,7 @@ function convertVersion (ver, ctx) {
 
     let body, imports
     try {
-      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, exampleImportBase: exCfg.importBase, partials: decisions, linkVars: ctx.linkVars, examples, pageExampleFiles, pageVars, proseVars, hrefVars, codeVars, codeValueVars, latestVersions: ctx.latestVersions, urlToRelFile, redirectRetargets, imagePlacement }))
+      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageExampleFiles, pageVars, proseVars, hrefVars, codeVars, codeValueVars, latestVersions: ctx.latestVersions, urlToRelFile, redirectRetargets, imagePlacement }))
       body = withBothConditionalBranches(body, { page: p, rec, relFile, pageVars, proseVars, hrefVars, codeVars, codeValueVars })
     } catch (err) {
       problems.push({ url: p.url, error: err.message })

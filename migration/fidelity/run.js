@@ -23,6 +23,7 @@ const path = require('node:path')
 const { goldenPages, resolveConverted, readGolden } = require('./lib/pairing')
 const { buildIndex } = require('./lib/manifest-index')
 const { loadDispositions, unpublishedUrls } = require('../lib/dispositions')
+const { isSitePage } = require('../lib/layout')
 const { loadAccepted } = require('../lib/accepted')
 const { loadAnchorIndex } = require('./lib/anchor-index')
 const { loadInventoryIndex } = require('./lib/inventory-index')
@@ -90,6 +91,16 @@ function main () {
   // do, and it can never go green.
   const unpublished = unpublishedUrls(loadDispositions(), manifest)
   pages = pages.filter((p) => !unpublished.has(p.url))
+  // A SITE PAGE is a hand-written React component that owns its URL outright
+  // (src/pages/tutorials.tsx replaces the Antora tutorials landing page). The
+  // converter already skips these -- isSitePage, converter/convert.js -- and there
+  // is nothing here to compare: the golden is the page we deliberately replaced, so
+  // every line of the replacement reads as a regression. Out of scope, not
+  // accepted: an accept entry is for a difference we understand and still want to
+  // watch, and a whole page of them would drown the list while telling us nothing.
+  // Counted and reported, so narrowing the scope stays visible.
+  const siteOwned = pages.filter((p) => isSitePage(p.url)).length
+  pages = pages.filter((p) => !isSitePage(p.url))
   if (opts.component) pages = pages.filter((p) => p.component === opts.component)
   if (opts.id) pages = pages.filter((p) => p.url === opts.id)
 
@@ -152,7 +163,7 @@ function main () {
       (!opts.id || k.includes(` ${opts.id} `)))
     .sort()
 
-  writeReport(opts, meta, { total: pages.length, converted, pending, regressed },
+  writeReport(opts, meta, { total: pages.length, converted, pending, regressed, siteOwned },
     report, { accepted: acceptedDiffs, stale, acceptErrors })
   process.exit(regressed > 0 || stale.length > 0 || acceptErrors.length > 0 ? 1 : 0)
 }
@@ -193,7 +204,8 @@ function writeReport (opts, meta, counts, report, acceptance) {
 
   const scope = opts.id ? `id=${opts.id}` : opts.component ? `component=${opts.component}` : 'all components'
   console.log(`\n[fidelity] ${scope}  layers=${[...opts.layers].join(',')}  pin ${meta.lockfileKey.slice(0, 12)} OK`)
-  console.log(`[fidelity] golden pages in scope: ${counts.total} | converted found: ${counts.converted} | not yet converted: ${counts.pending}`)
+  console.log(`[fidelity] golden pages in scope: ${counts.total} | converted found: ${counts.converted} | not yet converted: ${counts.pending}` +
+    (counts.siteOwned ? ` | ${counts.siteOwned} site page(s) excluded (a hand-written component owns the URL)` : ''))
   if (counts.converted === 0) {
     console.log('[fidelity] nothing converted in scope yet -- harness is ready; convert pages then re-run.')
     return

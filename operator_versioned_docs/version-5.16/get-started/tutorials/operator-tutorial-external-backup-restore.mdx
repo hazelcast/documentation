@@ -5,8 +5,18 @@ sidebar_position: 1
 slug: /tutorials/operator-tutorial-external-backup-restore
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_external_backup_restore_docs_modules_ROOT_examples_operator_external_backup_hazelcast_persistence_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-external-backup-restore/docs/modules/ROOT/examples/operator-external-backup/hazelcast-persistence.yaml';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_external_backup_restore_docs_modules_ROOT_examples_operator_external_backup_map_persistence_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-external-backup-restore/docs/modules/ROOT/examples/operator-external-backup/map-persistence.yaml';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_external_backup_restore_docs_modules_ROOT_examples_operator_external_backup_java_src_main_java_com_hazelcast_Main_java from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-external-backup-restore/docs/modules/ROOT/examples/operator-external-backup/java/src/main/java/com/hazelcast/Main.java';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_external_backup_restore_docs_modules_ROOT_examples_operator_external_backup_nodejs_client_js from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-external-backup-restore/docs/modules/ROOT/examples/operator-external-backup/nodejs/client.js';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_external_backup_restore_docs_modules_ROOT_examples_operator_external_backup_go_main_go from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-external-backup-restore/docs/modules/ROOT/examples/operator-external-backup/go/main.go';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_external_backup_restore_docs_modules_ROOT_examples_operator_external_backup_python_main_py from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-external-backup-restore/docs/modules/ROOT/examples/operator-external-backup/python/main.py';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_external_backup_restore_docs_modules_ROOT_examples_operator_external_backup_dotnet_Program_cs from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-external-backup-restore/docs/modules/ROOT/examples/operator-external-backup/dotnet/Program.cs';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_external_backup_restore_docs_modules_ROOT_examples_operator_external_backup_hot_backup_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-external-backup-restore/docs/modules/ROOT/examples/operator-external-backup/hot-backup.yaml';
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_external_backup_restore_docs_modules_ROOT_examples_operator_external_backup_hazelcast_persistence_restore_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-external-backup-restore/docs/modules/ROOT/examples/operator-external-backup/hazelcast-persistence-restore.yaml';
 
 Learn how to back up data in Hazelcast maps to cloud storage and restore a cluster from that backup data.
 
@@ -44,24 +54,7 @@ Before you begin, make sure that you have:
 
    Create the Hazelcast cluster with Persistence enabled:
 
-   ```shell
-   kubectl apply -f - <<EOF
-   apiVersion: hazelcast.com/v1alpha1
-   kind: Hazelcast
-   metadata:
-     name: my-hazelcast
-   spec:
-     clusterSize: 3
-     licenseKeySecretName: hazelcast-license-key
-     persistence:
-       pvc:
-         accessModes: ["ReadWriteOnce"]
-         requestStorage: 8Gi
-     exposeExternally:
-       type: Unisocket
-       discoveryServiceType: LoadBalancer
-   EOF
-   ```
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_external_backup_restore_docs_modules_ROOT_examples_operator_external_backup_hazelcast_persistence_yaml + 'EOF'}</CodeBlock>
 3. Check the cluster status
 
    Run the following commands to see the cluster status:
@@ -99,17 +92,7 @@ Before you begin, make sure that you have:
 
    Create the Map resource with Persistence enabled:
 
-   ```shell
-   kubectl apply -f - <<EOF
-   apiVersion: hazelcast.com/v1alpha1
-   kind: Map
-   metadata:
-     name: persistent-map
-   spec:
-     hazelcastResourceName: my-hazelcast
-     persistenceEnabled: true
-   EOF
-   ```
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_external_backup_restore_docs_modules_ROOT_examples_operator_external_backup_map_persistence_yaml + 'EOF'}</CodeBlock>
 2. Check the status of the backup
 
    Check the status of the map configuration:
@@ -152,278 +135,27 @@ Before you begin, make sure that you have:
    </TabItem>
    <TabItem value="java" label="Java">
 
-   ```java
-   package com.hazelcast;
-
-   import com.hazelcast.client.HazelcastClient;
-   import com.hazelcast.client.config.ClientConfig;
-   import com.hazelcast.client.config.ClientNetworkConfig;
-   import com.hazelcast.client.impl.connection.tcp.RoutingMode;
-   import com.hazelcast.core.HazelcastInstance;
-   import com.hazelcast.map.IMap;
-
-   import java.util.Random;
-
-   public class Main {
-       public static void main(String[] args) throws Exception {
-           if(args.length == 0) {
-               System.out.println("You should pass an argument to run: fill or size");
-           } else if (!((args[0].equals("fill") || args[0].equals("size")))) {
-               System.out.println("Wrong argument, you should pass: fill or size");
-           } else{
-               ClientConfig clientConfig = new ClientConfig();
-               ClientNetworkConfig networkConfig = clientConfig.getNetworkConfig();
-               networkConfig.addAddress("<EXTERNAL-IP>");
-               networkConfig.getClusterRoutingConfig().setRoutingMode(RoutingMode.SINGLE_MEMBER);
-               HazelcastInstance client = HazelcastClient.newHazelcastClient(clientConfig);
-               System.out.println("Successful connection!");
-
-               IMap<String, String> map = client.getMap("persistent-map");
-
-               if (args[0].equals("fill")) {
-                   System.out.println("Starting to fill the map with random entries.");
-
-                   Random random = new Random();
-                   while (true) {
-                       int randomKey = random.nextInt(100_000);
-                       map.put("key-" + randomKey, "value-" + randomKey);
-                       System.out.println("Current map size: " + map.size());
-                   }
-               } else {
-                   System.out.println("Current map size: " + map.size());
-                   client.shutdown();
-               }
-           }
-
-       }
-   }
-   ```
+   <CodeBlock language="java">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_external_backup_restore_docs_modules_ROOT_examples_operator_external_backup_java_src_main_java_com_hazelcast_Main_java}</CodeBlock>
 
    </TabItem>
    <TabItem value="nodejs" label="NodeJS">
 
-   ```javascript
-   'use strict';
-
-   const { Client } = require('hazelcast-client');
-
-   const clientConfig = {
-       network: {
-           clusterMembers: [
-               '<EXTERNAL-IP>'
-           ],
-           smartRouting: false
-       }
-   };
-
-   (async () => {
-       try {
-           if (process.argv.length === 2) {
-               console.error('You should pass an argument to run: fill or size');
-           } else if (!(process.argv[2] === 'fill' || process.argv[2] === 'size')) {
-               console.error('Wrong argument, you should pass: fill or size');
-           } else {
-               const client = await Client.newHazelcastClient(clientConfig);
-               const map = await client.getMap('persistent-map');
-               await map.put('key', 'value');
-               const res = await map.get('key');
-               if (res !== 'value') {
-                   throw new Error('Connection failed, check your configuration.');
-               }
-               console.log('Successful connection!');
-               if (process.argv[2] === 'fill'){
-                   console.log('Starting to fill the map with random entries.');
-                   while (true) {
-                       const randomKey = Math.floor(Math.random() * 100000);
-                       await map.put('key' + randomKey, 'value' + randomKey);
-                       const size = await map.size();
-                       console.log(`Current map size: ${size}`);
-                   }
-               } else {
-                   const size = await map.size();
-                   console.log(`Current map size: ${size}`);
-               }
-           }
-       } catch (err) {
-           console.error('Error occurred:', err);
-       }
-   })();
-   ```
+   <CodeBlock language="javascript">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_external_backup_restore_docs_modules_ROOT_examples_operator_external_backup_nodejs_client_js}</CodeBlock>
 
    </TabItem>
    <TabItem value="go" label="Go">
 
-   ```go
-   package main
-
-   import (
-   	"context"
-   	"fmt"
-   	"math/rand"
-   	"os"
-
-   	"github.com/hazelcast/hazelcast-go-client"
-   )
-
-   func main() {
-   	if len(os.Args) != 2 {
-   		fmt.Println("You should pass an argument to run: fill or size")
-   		return
-   	}
-   	if !(os.Args[1] == "fill" || os.Args[1] == "size") {
-   		fmt.Println("Wrong argument, you should pass: fill or size")
-   		return
-   	}
-
-   	config := hazelcast.Config{}
-   	cc := &config.Cluster
-   	cc.Network.SetAddresses("<EXTERNAL-IP>:5701")
-   	cc.Unisocket = true
-   	ctx := context.TODO()
-   	client, err := hazelcast.StartNewClientWithConfig(ctx, config)
-   	if err != nil {
-   		panic(err)
-   	}
-   	fmt.Println("Successful connection!")
-   	m, err := client.GetMap(ctx, "persistent-map")
-   	if err != nil {
-   		panic(err)
-   	}
-   	if os.Args[1] == "fill" {
-   		fmt.Println("Starting to fill the map with random entries.")
-   		for {
-   			num := rand.Intn(100_000)
-   			key := fmt.Sprintf("key-%d", num)
-   			value := fmt.Sprintf("value-%d", num)
-   			if _, err = m.Put(ctx, key, value); err != nil {
-   				fmt.Println("ERR:", err.Error())
-   				continue
-   			}
-   			mapSize, err := m.Size(ctx)
-   			if err != nil {
-   				fmt.Println("ERR:", err.Error())
-   				continue
-   			}
-   			fmt.Println("Current map size:", mapSize)
-   		}
-   		return
-   	}
-   	mapSize, err := m.Size(ctx)
-   	if err != nil {
-   		fmt.Println("ERR:", err.Error())
-   		return
-   	}
-   	fmt.Println("Current map size:", mapSize)
-
-   }
-   ```
+   <CodeBlock language="go">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_external_backup_restore_docs_modules_ROOT_examples_operator_external_backup_go_main_go}</CodeBlock>
 
    </TabItem>
    <TabItem value="python" label="Python">
 
-   ```python
-   import logging
-   import random
-   import sys
-
-   import hazelcast
-
-   logging.basicConfig(level=logging.INFO)
-
-   if len(sys.argv) != 2:
-       print("You should pass an argument to run: fill or size")
-   elif not (sys.argv[1] == "fill" or sys.argv[1] == "size"):
-       print("Wrong argument, you should pass: fill or size")
-   else:
-       client = hazelcast.HazelcastClient(
-           cluster_members=["<EXTERNAL-IP>"],
-           smart_routing=False,
-       )
-       print("Successful connection!", flush=True)
-       m = client.get_map("persistent-map").blocking()
-
-       if sys.argv[1] == "fill":
-           print("Starting to fill the map with random entries.", flush=True)
-           while True:
-               random_number = str(random.randrange(0, 100000))
-               m.put("key-" + random_number, "value-" + random_number)
-               print("Current map size:", m.size())
-       else:
-           print("Current map size:", m.size())
-   ```
+   <CodeBlock language="python">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_external_backup_restore_docs_modules_ROOT_examples_operator_external_backup_python_main_py}</CodeBlock>
 
    </TabItem>
    <TabItem value="net" label=".NET">
 
-   ```cs
-   using System;
-   using System.Threading.Tasks;
-   using Hazelcast;
-   using Microsoft.Extensions.Logging;
-
-   namespace Client
-   {
-       public class Program
-       {
-           static async Task Main(string[] args)
-           {
-               if (args.Length != 1)
-               {
-                   Console.WriteLine("You should pass an argument to run: fill or size");
-                   return;
-               }
-               if (!(args[0] == "fill" || args[0] == "size"))
-               {
-                   Console.WriteLine("Wrong argument, you should pass: fill or size");
-                   return;
-               }
-               var options = new HazelcastOptionsBuilder()                
-                   .With(args)                
-                   .With((configuration, options) =>
-                   {
-                       options.LoggerFactory.Creator = () => LoggerFactory.Create(loggingBuilder =>
-                           loggingBuilder
-                               .AddConfiguration(configuration.GetSection("logging"))
-                               .AddConsole());
-
-                       options.Networking.Addresses.Add("<EXTERNAL-IP>:5701");
-                       options.Networking.SmartRouting = false;
-                       
-                   })
-                   .Build();
-
-
-               await using var client = await HazelcastClientFactory.StartNewClientAsync(options);
-
-               Console.WriteLine("Successful connection!");
-               Console.WriteLine("Starting to fill the map with random entries.");
-
-               var map = await client.GetMapAsync<string, string>("persistent-map");
-               var random = new Random();
-
-               if (args[0] == "fill")
-               {
-                   Console.WriteLine("Starting to fill the map with random entries.");
-                   while (true)
-                   {
-                       var num = random.Next(100_000);
-                       var key = $"key-{num}";
-                       var value = $"value-{num}";
-                       await map.PutAsync(key, value);
-                       var mapSize = await map.GetSizeAsync();
-                       Console.WriteLine($"Current map size: {mapSize}");
-                   }
-               }
-               else
-               {
-                   var mapSize = await map.GetSizeAsync();
-                   Console.WriteLine($"Current map size: {mapSize}");
-                   await client.DisposeAsync();
-               }
-           }
-       } 
-   }
-   ```
+   <CodeBlock language="cs">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_external_backup_restore_docs_modules_ROOT_examples_operator_external_backup_dotnet_Program_cs}</CodeBlock>
 
    </TabItem>
    </Tabs>
@@ -591,18 +323,7 @@ For triggering backup, you need `bucketURI` where backup data will be stored in,
 
    Run the following command to trigger backup:
 
-   ```shell
-   kubectl apply -f - <<EOF
-   apiVersion: hazelcast.com/v1alpha1
-   kind: HotBackup
-   metadata:
-     name: hot-backup
-   spec:
-     hazelcastResourceName: my-hazelcast
-     bucketURI: "s3://operator-backup"
-     secret: "br-secret-s3"
-   EOF
-   ```
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_external_backup_restore_docs_modules_ROOT_examples_operator_external_backup_hot_backup_yaml + '\nEOF'}</CodeBlock>
 
    **Example URI → "s3://operator-backup?prefix=hazelcast/2022-06-08-17-01-20/"**
 3. Check the status of the backup
@@ -654,26 +375,7 @@ For triggering backup, you need `bucketURI` where backup data will be stored in,
 
    Create the Hazelcast cluster. Before the Hazelcast cluster is started, the Operator starts the agent (as InitContainer) which restores the backup data from the external bucket.
 
-   ```shell
-   kubectl apply -f - <<EOF
-   apiVersion: hazelcast.com/v1alpha1
-   kind: Hazelcast
-   metadata:
-     name: my-hazelcast
-   spec:
-     clusterSize: 3
-     licenseKeySecretName: hazelcast-license-key
-     persistence:
-       pvc:
-         accessModes: ["ReadWriteOnce"]
-         requestStorage: 8Gi
-       restore:
-         hotBackupResourceName: hot-backup
-     exposeExternally:
-       type: Unisocket
-       discoveryServiceType: LoadBalancer
-   EOF
-   ```
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_external_backup_restore_docs_modules_ROOT_examples_operator_external_backup_hazelcast_persistence_restore_yaml + 'EOF'}</CodeBlock>
 
    As you may see, the agent configuration is not set. Thus, the Operator directly uses the latest stable version of the agent.
 4. Check the cluster status

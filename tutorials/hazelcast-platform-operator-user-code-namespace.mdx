@@ -12,8 +12,12 @@ tutorial_source: "https://github.com/hazelcast-guides/hazelcast-platform-operato
 displayed_sidebar: null
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import Ex_hazelcast_platform_operator_user_code_namespace_operator_user_code_namespace_hazelcast_yaml from '@site/.tutorial-examples/hazelcast-platform-operator-user-code-namespace/operator-user-code-namespace/hazelcast.yaml';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import Ex_hazelcast_platform_operator_user_code_namespace_operator_user_code_namespace_ucn_yaml from '@site/.tutorial-examples/hazelcast-platform-operator-user-code-namespace/operator-user-code-namespace/ucn.yaml';
+import Ex_hazelcast_platform_operator_user_code_namespace_operator_user_code_namespace_map_yaml from '@site/.tutorial-examples/hazelcast-platform-operator-user-code-namespace/operator-user-code-namespace/map.yaml';
 
 Learn how to deploy custom classes with the User Code Namespace
 
@@ -50,20 +54,7 @@ You need the following:
 
    Run the following command to create the Hazelcast cluster with Persistence enabled using External type.
 
-   ```shell
-   kubectl apply -f - <<EOF
-   apiVersion: hazelcast.com/v1alpha1
-   kind: Hazelcast
-   metadata:
-     name: hazelcast
-   spec:
-     clusterSize: 1
-     repository: "docker.io/hazelcast/hazelcast-enterprise"
-     version: "5.5.4"
-     licenseKeySecretName: hazelcast-license-key
-     userCodeNamespaces: {}
-   EOF
-   ```
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_platform_operator_user_code_namespace_operator_user_code_namespace_hazelcast_yaml + 'EOF'}</CodeBlock>
 3. Check the Cluster Status
 
    Run the following commands to see the cluster status
@@ -168,19 +159,7 @@ In this step, you'll build the EntryListener JAR from the tutorial's GitHub repo
 
    Run the following command to create the UserCodeNamespace, referencing to the bucket where the EntryLister JAR is located.
 
-   ```shell
-   kubectl apply -f - <<EOF
-   apiVersion: hazelcast.com/v1alpha1
-   kind: UserCodeNamespace
-   metadata:
-     name: my-ucn
-   spec:
-     hazelcastResourceName: hazelcast
-     bucketConfig:
-       secretName: <SECRET_NAME>
-       bucketURI: <BUCKET_URI>
-   EOF
-   ```
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_platform_operator_user_code_namespace_operator_user_code_namespace_ucn_yaml + 'EOF'}</CodeBlock>
 2. Check the status of the UserCodeNamespace resource
 
    Run the following command to check the status of the UserCodeNamespace resource
@@ -203,19 +182,7 @@ In this step, you'll build the EntryListener JAR from the tutorial's GitHub repo
 
    Run the following command to create the Map with the SimpleEntryListener class in the `my-ucn` namespace.
 
-   ```shell
-   kubectl apply -f - <<EOF
-   apiVersion: hazelcast.com/v1alpha1
-   kind: Map
-   metadata:
-     name: my-map
-   spec:
-     hazelcastResourceName: hazelcast
-     userCodeNamespace: my-ucn
-     entryListeners:
-       - className: com.hazelcast.tutorial.SimpleEntryListener
-   EOF
-   ```
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_platform_operator_user_code_namespace_operator_user_code_namespace_map_yaml + 'EOF'}</CodeBlock>
 2. Check the status of the Map
 
    Run the following command to check the status of the Map

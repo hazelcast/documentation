@@ -71,14 +71,15 @@ content:
     - url: .sources/jdbc-driver-docs.git
       branches: [main]
       start_path: docs
-    # 'templates' component (RESOLUTION-ONLY): hazelcast-code-samples declares
-    # name: templates and provides the example$ files that operator TUTORIAL
-    # pages pull via include::templates:ROOT:example$/platform-operator/<guide>/...
-    # (merges with hazelcast-docs/templates). REMOTE + fetch:false: large repo,
-    # cloned once into .cache and frozen; not user-edited. NOTE it was initially
-    # excluded on the basis of 0 inbound XREFS -- but it is an INCLUDE source,
-    # not an xref source, which that audit missed.
-    - url: https://github.com/hazelcast/hazelcast-code-samples
+    # 'templates' component: hazelcast-code-samples declares name: templates and
+    # provides the example$ files that operator TUTORIAL pages pull via
+    # include::templates:ROOT:example$/platform-operator/<guide>/... (merges with
+    # hazelcast-docs/templates). NOTE it was initially excluded on the basis of 0
+    # inbound XREFS -- but it is an INCLUDE source, not an xref source, which that
+    # audit missed. Now a pinned .sources mirror like every other content source:
+    # operator single-sources those examples, so the exact bytes the converter
+    # matched have to be reproducible, which a bare remote URL cannot promise.
+    - url: .sources/hazelcast-code-samples.git
       branches: [master]
       start_path: docs
     # --- 'tutorials' component: the 56 hazelcast-guides/* repos (each declares

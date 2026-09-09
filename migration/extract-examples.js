@@ -36,7 +36,12 @@ const crypto = require('node:crypto')
 const buildPlaybook = require('@antora/playbook-builder')
 const yaml = require('js-yaml')
 
-const { currentSegFor, refFor, versionsToProcess, outDirFor } = require('./lib/layout')
+const { currentSegFor, refFor, versionsToProcess, outDirFor, sourceMirrorFor } = require('./lib/layout')
+// The symlink-aware reads, shared with refcheck so the two cannot disagree about
+// what a path through a git symlink resolves to.
+const { gitShow, resolveGitLinks } = require('./lib/git-links')
+// The staging dir name, shared with the converter and refcheck.
+const { EXAMPLES_STAGING } = require('./lib/staged-examples')
 
 // Example-file source per component: which mirror holds them, where the tree
 // lives in that repo, and how to place them here. `pagesGlob` is only read in
@@ -44,9 +49,16 @@ const { currentSegFor, refFor, versionsToProcess, outDirFor } = require('./lib/l
 const REPOS = {
   operator: {
     repo: 'hazelcast-platform-operator-docs.git',
-    examplesDir: 'docs/modules/ROOT/examples',
-    pagesGlob: 'docs/modules/ROOT/pages',
+    modulesDir: 'docs/modules',
     mode: 'usage',
+    // Operator's tutorial pages include example$ files from ANOTHER component --
+    // `templates`, which is hazelcast-code-samples. Those are staged BY REFERENCE
+    // (manifest + build-time fetch) rather than copied: they are that repo's
+    // runnable sample projects, with their own CI, and they are byte-identical
+    // across every operator version, so copying would commit the same 51 files
+    // five times over. The mirror they come from is not restated here --
+    // lib/layout's READ_ONLY_SOURCES owns that, so the resolver and this agree.
+    crossComponent: true,
   },
   hazelcast: {
     repo: 'hz-docs.git',
@@ -86,39 +98,107 @@ function parseArgs (argv) {
 
 const outExamplesDir = (outRoot, component, ver) => path.join(outDirFor(outRoot, component, ver), 'examples')
 
-// Gitignored staging dir for MULTI-mode examples, at the site root. Must match
-// EXAMPLES_STAGING in converter/convert.js and plugins/tutorial-examples.
-const EXAMPLES_STAGING = '.tutorial-examples'
 
 // `https://github.com/hazelcast-guides/istio.git` -> `hazelcast-guides/istio`
 const originSlug = (url) => (url || '').replace(/^.*github\.com[:/]/, '').replace(/\.git$/, '') || null
 
-function gitShow (repoDir, ref, file) {
-  try {
-    // stderr silenced: a miss is signalled by the null return, and multi mode
-    // probes a direct path before falling back to the symlink walk.
-    return execFileSync('git', ['-C', repoDir, 'show', `${ref}:${file}`], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] })
-  } catch {
-    return null
+// Clear what THIS component staged last run, read from its own previous
+// manifest.
+//
+// Deliberately not a wipe of the staging dir: it is shared -- tutorials stages
+// the guide repos' files there, operator stages code-samples' -- and a wipe by
+// whichever component ran second would delete the other's bytes, leaving the
+// converter unable to content-match them and silently baking those blocks again.
+// Clearing by manifest also does the job the wipe was there for: a file the
+// component no longer references is dropped, because it was in the old manifest
+// and will not be in the new one.
+function clearPreviouslyStaged (stagingDir, manifestFile, dry) {
+  let prev
+  try { prev = JSON.parse(fs.readFileSync(manifestFile, 'utf8')) } catch { return }
+  for (const f of prev.files || []) {
+    if (!dry) fs.rmSync(path.join(stagingDir, f.id), { force: true })
   }
 }
 
-// Every distinct `example$/…` file referenced by the branch's pages (usage mode).
-function referencedExampleFiles (repoDir, ref, pagesGlob) {
+// One manifest row: where the build re-fetches the file from, and a hash of the
+// exact bytes the converter content-matched against, so a page can never publish
+// code the migration did not see. `content` is carried alongside for staging and
+// dropped before the manifest is written.
+const manifestEntry = (id, content, { origin, ref, sha, path: filePath }) => ({
+  id,
+  repo: originSlug(origin),
+  ref,
+  sha,
+  path: filePath,
+  sha256: crypto.createHash('sha256').update(content).digest('hex'),
+  content,
+})
+
+// Write the staged bytes + the reference manifest for one component. Shared by
+// the two modes that stage by reference (tutorials' multi, operator's cross-
+// component templates) so they cannot disagree about the manifest's shape --
+// plugins/tutorial-examples reads both.
+function writeStaged (entries, { stagingDir, manifestFile, note, selectors = [], dry }) {
+  entries.sort((a, b) => a.id.localeCompare(b.id))
+  if (dry) return
+  for (const e of entries) {
+    const f = path.join(stagingDir, e.id)
+    fs.mkdirSync(path.dirname(f), { recursive: true })
+    fs.writeFileSync(f, e.content)
+  }
+  fs.mkdirSync(path.dirname(manifestFile), { recursive: true })
+  fs.writeFileSync(manifestFile, JSON.stringify({
+    note,
+    // Tag specs the pages ask for that cannot be enumerated from a file's own
+    // markers (lists, negations). The converter's content index needs them to be
+    // able to match those blocks at all.
+    ...(selectors.length ? { selectors } : {}),
+    files: entries.map(({ content, ...rest }) => rest),
+  }, null, 2) + '\n')
+}
+
+// Every `example$` include the branch's pages make, as {component, module, rel}
+// (usage mode).
+//
+// Scans EVERY module, not just ROOT. Operator has two -- its 7 tutorial pages
+// live in `tutorials`, and a ROOT-only scan never saw their 58 includes at all:
+// not misresolved, never looked up, so not even reported as missing.
+//
+// Keeps the coordinate rather than flattening to a path. The module is a
+// directory level, so a bare `example$foo` in module `m` means
+// `modules/m/examples/foo` and reading it as ROOT's finds nothing; and the
+// COMPONENT decides which repo to open, which is the whole point for operator's
+// `templates:` includes (hazelcast-code-samples, not the operator docs repo).
+function referencedExamples (repoDir, ref, modulesDir) {
   let out
   try {
-    out = execFileSync('git', ['-C', repoDir, 'grep', '-h', '-oE', 'example\\$/?[^][]+', ref, '--', `${pagesGlob}/*.adoc`], { encoding: 'utf8' })
+    out = execFileSync('git', ['-C', repoDir, 'grep', '-oE', 'include::[^[]*example\\$[^][]+', ref, '--', modulesDir], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
   } catch {
     return []
   }
-  const rels = new Set()
-  for (const m of out.split('\n')) {
+  const seen = new Set()
+  const refs = []
+  for (const line of out.split('\n')) {
+    // `<ref>:<path>:<match>` -- the path holds no colon, the match holds several.
+    const m = /^[^:]*:([^:]+):(include::.*)$/.exec(line)
     if (!m) continue
-    // strip the `example$` marker and any leading slash -> path under examples/
-    const rel = m.replace(/^.*example\$\/?/, '').trim()
-    if (rel) rels.add(rel)
+    const pageModule = /modules\/([^/]+)\//.exec(m[1])
+    const target = m[2].slice('include::'.length)
+    const i = target.indexOf('example$')
+    const rel = target.slice(i + 'example$'.length).replace(/^\/+/, '').trim()
+    if (!rel) continue
+    // What precedes `example$` is `[component:][module:]` -- the family itself is
+    // already cut off, so the LAST remaining segment is the module and the one
+    // before it the component. No segments at all means the page's own module.
+    const parts = target.slice(0, i).split(':').filter(Boolean)
+    const component = parts.length >= 2 ? parts[parts.length - 2] : null
+    const module = parts.length >= 1 ? parts[parts.length - 1] : (pageModule ? pageModule[1] : 'ROOT')
+    const key = `${component || ''}\u0000${module}\u0000${rel}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    refs.push({ component, module, rel })
   }
-  return [...rels]
+  return refs
 }
 
 function gitConfig (repoDir, key) {
@@ -135,33 +215,6 @@ function gitRevParse (repoDir, ref) {
   } catch {
     return null
   }
-}
-
-// Resolve a path whose leading segments may be git symlinks (mode 120000), as
-// Antora does when it walks the worktree. Guides symlink their runnable source
-// tree into the Antora examples dir -- `docs/modules/<m>/examples/src` ->
-// `../../../../src` -- so `example$src/main/…` addresses real project code that
-// exists nowhere under examples/. Returns null if a segment dead-ends.
-function resolveGitLinks (repoDir, ref, p) {
-  const segs = p.split('/')
-  let cur = ''
-  for (let i = 0; i < segs.length; i++) {
-    cur = cur ? `${cur}/${segs[i]}` : segs[i]
-    for (let hops = 0; ; hops++) {
-      if (hops > 10) return null
-      let entry
-      try {
-        entry = execFileSync('git', ['-C', repoDir, 'ls-tree', ref, '--', cur], { encoding: 'utf8' })
-      } catch {
-        return null
-      }
-      if (!entry.startsWith('120000')) break
-      const target = gitShow(repoDir, ref, cur)
-      if (target == null) return null
-      cur = path.posix.normalize(path.posix.join(path.posix.dirname(cur), target.trim()))
-    }
-  }
-  return cur
 }
 
 // The repos making up a MULTI-mode component, read from the playbook so the list
@@ -220,13 +273,17 @@ function referencedExamplesByModule (repoDir, ref, modulesDir) {
   for (const f of files) {
     const txt = gitShow(repoDir, ref, f)
     if (txt == null) continue
-    for (const m of txt.matchAll(/include::([^[]*example\$[^[]+)\[/g)) {
+    for (const m of txt.matchAll(/include::([^[]*example\$[^[]+)\[([^\]]*)\]/g)) {
       const i = m[1].indexOf('example$')
       const rel = m[1].slice(i + 'example$'.length).replace(/^\/+/, '').trim()
       if (!rel) continue
       // [component:][module:] -- the LAST coordinate is the module; none means ROOT.
       const parts = m[1].slice(0, i).split(':').filter(Boolean)
-      out.push({ module: parts.length ? parts[parts.length - 1] : 'ROOT', rel })
+      // The SELECTOR matters as well as the file: a tag list or negation cannot be
+      // guessed from the file's own markers, so the converter is told which ones
+      // are actually asked for (see the manifest's `selectors`).
+      const tm = (m[2] || '').match(/\btags?=([^,\]]+)/)
+      out.push({ module: parts.length ? parts[parts.length - 1] : 'ROOT', rel, tag: tm ? tm[1].trim() : null })
     }
   }
   return out
@@ -264,14 +321,14 @@ function allExampleFiles (repoDir, ref, examplesDir) {
 // matching needs the bytes, and the golden has already inlined them.
 function multiMain (opts) {
   const stagingDir = path.join(opts.outRoot, EXAMPLES_STAGING)
-  // This mode owns the staging dir: a guide dropped from the playbook must not
-  // leave its examples behind for the converter to match.
-  if (!opts.dry) fs.rmSync(stagingDir, { recursive: true, force: true })
+  const manifestFile = path.join(outDirFor(opts.outRoot, opts.component, opts.versions[0]), 'examples.json')
+  clearPreviouslyStaged(stagingDir, manifestFile, opts.dry)
 
   const sources = multiRepoSources(opts.playbookFile, opts.component, opts.sourcesDir)
   const staged = new Map()
   const entries = []
   const missing = []
+  const selectors = new Set()
   let sites = 0
   let repos = 0
 
@@ -279,8 +336,9 @@ function multiMain (opts) {
     const refs = referencedExamplesByModule(s.repoDir, s.ref, `${s.startPath}/modules`)
     if (!refs.length) continue
     repos++
-    for (const { module, rel } of refs) {
+    for (const { module, rel, tag } of refs) {
       sites++
+      if (tag && /[;,!]/.test(tag)) selectors.add(tag)
       const from = `${s.startPath}/modules/${module}/examples/${rel}`
       // Always resolve links rather than reading `from` directly: `git show` on a
       // symlink returns the LINK TEXT, so a direct read of one succeeds with
@@ -299,34 +357,17 @@ function multiMain (opts) {
       }
       if (prev !== undefined) continue
       staged.set(id, raw)
-      entries.push({
-        id,
-        repo: originSlug(s.origin),
-        ref: s.ref,
-        sha: s.sha,
-        path: real,
-        // Hash of the exact bytes the converter content-matched against. The
-        // build re-fetches from `sha` and verifies against this, so a page can
-        // never publish code the migration did not see.
-        sha256: crypto.createHash('sha256').update(raw).digest('hex'),
-      })
-      if (!opts.dry) {
-        const f = path.join(stagingDir, id)
-        fs.mkdirSync(path.dirname(f), { recursive: true })
-        fs.writeFileSync(f, raw)
-      }
+      entries.push(manifestEntry(id, raw, { origin: s.origin, ref: s.ref, sha: s.sha, path: real }))
     }
   }
 
-  entries.sort((a, b) => a.id.localeCompare(b.id))
-  const manifestFile = path.join(outDirFor(opts.outRoot, opts.component, opts.versions[0]), 'examples.json')
-  if (!opts.dry) {
-    fs.mkdirSync(path.dirname(manifestFile), { recursive: true })
-    fs.writeFileSync(manifestFile, JSON.stringify({
-      note: 'Generated by migration/extract-examples.js. Example files are NOT stored in this repo -- they are the guide repos\' runnable project files. plugins/tutorial-examples fetches each from `repo` at `sha` into the gitignored staging dir on every build.',
-      files: entries,
-    }, null, 2) + '\n')
-  }
+  writeStaged(entries, {
+    stagingDir,
+    manifestFile,
+    selectors: [...selectors].sort(),
+    note: 'Generated by migration/extract-examples.js. Example files are NOT stored in this repo -- they are the guide repos\' runnable project files. plugins/tutorial-examples fetches each from `repo` at `sha` into the gitignored staging dir on every build.',
+    dry: opts.dry,
+  })
 
   console.log(`[extract-examples] ${opts.component}: ${entries.length} example file(s) from ${repos} repo(s), ${sites} include site(s)`)
   console.log(`[extract-examples]   manifest -> ${path.relative(process.cwd(), manifestFile)}`)
@@ -344,12 +385,21 @@ function main () {
   const repoDir = path.join(opts.sourcesDir, cfg.repo)
   const tree = cfg.mode === 'tree'
 
+  const stagingDir = path.join(opts.outRoot, EXAMPLES_STAGING)
+  const crossManifest = path.join(outDirFor(opts.outRoot, opts.component, opts.versions[0]), 'examples.json')
+  if (cfg.crossComponent) clearPreviouslyStaged(stagingDir, crossManifest, opts.dry)
+  // Cross-component files are the same bytes on every operator branch, so they are
+  // collected across ALL versions into ONE manifest -- keyed by id, which carries
+  // the source repo, so a second version contributing the same file is a no-op.
+  const crossById = new Map()
+  const crossSites = { total: 0, missing: [] }
+
   let total = 0
   for (const ver of opts.versions) {
     const ref = refFor(opts.component, ver.seg)
-    const rels = tree
-      ? allExampleFiles(repoDir, ref, cfg.examplesDir)
-      : referencedExampleFiles(repoDir, ref, cfg.pagesGlob)
+    const refs = tree
+      ? allExampleFiles(repoDir, ref, cfg.examplesDir).map((rel) => ({ component: null, module: 'ROOT', rel }))
+      : referencedExamples(repoDir, ref, cfg.modulesDir)
     const dir = outExamplesDir(opts.outRoot, opts.component, ver)
 
     // Tree mode owns the directory: clear it so an upstream deletion is not
@@ -358,8 +408,15 @@ function main () {
 
     let written = 0
     const missing = []
-    for (const rel of rels) {
-      const raw = gitShow(repoDir, ref, `${cfg.examplesDir}/${rel}`)
+    for (const { component, module, rel } of refs) {
+      if (component && component !== opts.component) {
+        collectCrossComponent({ component, rel }, { opts, crossById, crossSites, cfg })
+        continue
+      }
+      // Tree mode addresses its one examplesDir; usage mode addresses the module
+      // the include named, which is a directory level in the path.
+      const from = tree ? `${cfg.examplesDir}/${rel}` : `${cfg.modulesDir}/${module}/examples/${rel}`
+      const raw = gitShow(repoDir, ref, from)
       if (raw == null) { missing.push(rel); continue }
       if (!opts.dry) {
         const f = path.join(dir, rel)
@@ -373,6 +430,54 @@ function main () {
       (missing.length ? `  (${missing.length} not found: ${missing.slice(0, 5).join(', ')}${missing.length > 5 ? '…' : ''})` : ''))
   }
   console.log(`[extract-examples] ${total} file(s) across ${opts.versions.length} version(s)`)
+
+  if (cfg.crossComponent) {
+    const entries = [...crossById.values()]
+    writeStaged(entries, {
+      stagingDir,
+      manifestFile: crossManifest,
+      note: 'Generated by migration/extract-examples.js. These example files are NOT stored in this repo -- they belong to another component (see `repo`), whose own CI builds and maintains them. plugins/tutorial-examples fetches each from `repo` at `sha` into the gitignored staging dir on every build. Shared by every version of this component: the source is not versioned per release.',
+      dry: opts.dry,
+    })
+    console.log(`[extract-examples] ${opts.component} cross-component: ${entries.length} file(s), ${crossSites.total} include site(s)`)
+    console.log(`[extract-examples]   manifest -> ${path.relative(process.cwd(), crossManifest)}`)
+    console.log(`[extract-examples]   staged   -> ${path.relative(process.cwd(), stagingDir)} (gitignored, re-fetched on every site build)`)
+    if (crossSites.missing.length) {
+      console.error(`[extract-examples] ABORT: ${crossSites.missing.length} cross-component example(s) could not be read:\n  ${crossSites.missing.slice(0, 10).join('\n  ')}`)
+      process.exit(1)
+    }
+  }
+}
+
+// Resolve one cross-component `example$` include and collect it for staging.
+//
+// The mirror is looked up in lib/layout's READ_ONLY_SOURCES rather than restated
+// here, so this and refcheck's resolver can never disagree about which repo (or
+// which branch) a component's files come from.
+//
+// The path always goes through resolveGitLinks: code-samples reaches these files
+// via a symlinked first segment (`docs/modules/ROOT/examples/platform-operator`
+// -> the repo root), which a plain `git show` cannot follow.
+function collectCrossComponent ({ component, rel }, { opts, crossById, crossSites, cfg }) {
+  const src = sourceMirrorFor(component)
+  if (!src) return
+  crossSites.total++
+  const repoDir = path.join(opts.sourcesDir, src.repo)
+  const from = `${src.modulesRoot}/ROOT/examples/${rel}`
+  const real = resolveGitLinks(repoDir, src.ref, from)
+  const raw = real == null ? null : gitShow(repoDir, src.ref, real)
+  if (raw == null) { crossSites.missing.push(`${component}:${rel}`); return }
+  // First segment is the source repo, matching how multi mode namespaces its ids
+  // -- so two components staging into the shared dir cannot collide, even when
+  // they reference byte-identical copies of the same file from different repos.
+  const id = path.posix.join(src.repo.replace(/\.git$/, ''), real)
+  if (crossById.has(id)) return
+  crossById.set(id, manifestEntry(id, raw, {
+    origin: gitConfig(repoDir, 'remote.origin.url'),
+    ref: src.ref,
+    sha: gitRevParse(repoDir, src.ref),
+    path: real,
+  }))
 }
 
 main()

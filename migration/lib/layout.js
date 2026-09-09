@@ -234,9 +234,27 @@ const isVersioned = (component) => Object.prototype.hasOwnProperty.call(VERSIONS
 const currentSegFor = (component) =>
   (VERSIONS[component] && VERSIONS[component].current) || CURRENT_SEG
 
+// Components we only ever READ from. NAV_SOURCES doubles as the MIGRATED set --
+// every gate iterates its keys and the converter emits a tree per entry -- so a
+// component that has no nav, no pages of its own here, and must never appear in a
+// gate's component list cannot live there. `templates` (hazelcast-code-samples) is
+// exactly that: operator's tutorial pages include its example$ files, so the
+// resolver has to be able to open them, but it publishes nothing. Unversioned, so
+// a plain `ref`; `modulesRoot` is explicit because there is no nav.adoc to derive
+// it from.
+const READ_ONLY_SOURCES = {
+  templates: { repo: 'hazelcast-code-samples.git', ref: 'master', modulesRoot: 'docs/modules' },
+}
+
+// Where a component's SOURCE FILES are read from -- the migrated set plus the
+// read-only ones. Use this (not NAV_SOURCES) whenever the question is "can I open
+// this component's files", and NAV_SOURCES when the question is "is this component
+// one we publish".
+const sourceMirrorFor = (component) => NAV_SOURCES[component] || READ_ONLY_SOURCES[component] || null
+
 // The branch (git ref) a component's source is read from for a version segment.
 const refFor = (component, seg) => {
-  const src = NAV_SOURCES[component]
+  const src = sourceMirrorFor(component)
   if (!src) return null
   return src.refFor ? src.refFor(seg) : src.ref
 }
@@ -299,6 +317,8 @@ const isNavless = (component) => NAVLESS.has(component)
 module.exports = {
   CURRENT_SEG,
   NAV_SOURCES,
+  READ_ONLY_SOURCES,
+  sourceMirrorFor,
   NAVLESS,
   SITE_PAGES,
   VERSIONS,

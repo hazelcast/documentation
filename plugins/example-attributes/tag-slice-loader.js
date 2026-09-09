@@ -19,14 +19,17 @@
 // With NO query the file passes through untouched. That is the operator
 // whole-file path, and it stays byte-for-byte what it is today.
 
-const { sliceRegion } = require('../lib/slice-region')
+const { sliceRegion, stripBom } = require('../lib/slice-region')
 
 module.exports = function tagSliceLoader (source) {
   const q = new URLSearchParams(this.resourceQuery || '')
   const tag = q.get('tag') || q.get('tags')
   const lines = q.get('lines')
   const indent = q.get('indent')
-  if (tag == null && lines == null && indent == null) return source
+  // Even untouched, the BOM comes off: Asciidoctor dropped it, so a page that
+  // renders one differs from what it replaced. stripBom is the slicer's, so the
+  // whole-file path and the sliced path cannot disagree.
+  if (tag == null && lines == null && indent == null) return stripBom(source)
 
   const selector = {}
   if (tag != null) selector.tag = tag

@@ -141,11 +141,88 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
     /F\.java: no region tagged "gone"/, 'an absent tag throws and names the file')
   assert.throws(() => sliceRegion('//tag::a[]\nx\n', { tag: 'a' }), /never closed/,
     'an unterminated region throws rather than running to EOF')
-  assert.throws(() => sliceRegion('//tag::a[]\nx\n//end::a[]\n', { tag: 'a;!b' }), /not supported/,
-    'tag lists and negation are refused rather than mis-sliced')
+  assert.throws(() => sliceRegion('//tag::a[]\nx\n//end::a[]\n', { tag: 'a;*' }), /wildcards are not supported/,
+    'tag wildcards are refused rather than mis-sliced')
+  assert.throws(() => sliceRegion('//tag::a[]\nx\n//end::a[]\n', { tag: 'a;b' }), /no region tagged "b"/,
+    'a list naming an absent region throws, as a single absent tag does')
+  assert.throws(() => sliceRegion('//tag::a[]\nx\n//end::a[]\n', { tag: '!gone' }), /no region tagged "gone"/,
+    'a negation naming an absent region throws rather than silently excluding nothing')
   assert.throws(() => sliceRegion('a\nb\n', { lines: 'nope' }), /unparseable/,
     'an unparseable lines= range throws')
-  ok('errors: absent tag, unterminated region, tag list and bad range all throw')
+  ok('errors: absent tag, unterminated region, wildcard, absent list/negation member, bad range all throw')
+}
+
+// --- tag lists and negation ------------------------------------------------
+// Both occur in the corpus (springboot-hibernate asks for two regions,
+// client-failover for everything except one), and both used to be refused, so
+// both baked. Semantics per Asciidoctor: a list is the UNION in file order, a
+// bare negation is everything outside that region, and the two combine.
+{
+  const src = [
+    'intro',
+    '//tag::a[]', 'A', '//end::a[]',
+    'middle',
+    '//tag::b[]', 'B', '//end::b[]',
+    'tail',
+  ].join('\n') + '\n'
+
+  assert.strictEqual(sliceRegion(src, { tag: 'a;b' }), 'A\nB\n',
+    'a list is the union of its regions, in file order')
+  assert.strictEqual(sliceRegion(src, { tag: 'b;a' }), 'A\nB\n',
+    'order of the list does not reorder the output -- file order wins')
+  assert.strictEqual(sliceRegion(src, { tag: 'a,b' }), 'A\nB\n',
+    'a comma separates a list exactly as a semicolon does')
+  assert.strictEqual(sliceRegion(src, { tag: '!a' }), 'intro\nmiddle\nB\ntail\n',
+    'a bare negation keeps everything outside that region')
+  assert.strictEqual(sliceRegion(src, { tag: '!a;!b' }), 'intro\nmiddle\ntail\n',
+    'negations accumulate')
+  assert.strictEqual(sliceRegion(src, { tag: 'a;!a' }), '',
+    'a region both selected and excluded yields nothing')
+
+  // Nesting: a line inside two regions is a member of both, so excluding the
+  // inner one must not drop the lines of the outer.
+  const nested = [
+    '//tag::outer[]', 'O1',
+    '//tag::inner[]', 'I', '//end::inner[]',
+    'O2', '//end::outer[]',
+  ].join('\n') + '\n'
+  assert.strictEqual(sliceRegion(nested, { tag: 'outer;!inner' }), 'O1\nO2\n',
+    'excluding a nested region keeps the rest of its parent')
+  ok('tags: list is a union, negation is an exclusion, and they nest')
+}
+
+// --- import queries are safe as webpack requests ---------------------------
+// The query allRegions reports is pasted straight into an `import ... from` path.
+// webpack reads `!` in a request as the inline-loader separator, so a bare one
+// splits the path and the build dies with "Can't resolve 'intro-comments'". Every
+// selector character that means something to webpack has to arrive percent-encoded
+// -- and decode back to the exact spec, or the loader slices something else.
+{
+  // Untagged lines around the regions, so the union and the negation each yield
+  // content no single-tag entry already offers -- otherwise allRegions dedupes
+  // them away and the test passes without exercising anything.
+  const src = [
+    'intro',
+    '//tag::a[]', 'A', '//end::a[]',
+    'middle',
+    '//tag::b[]', 'B', '//end::b[]',
+    'tail',
+  ].join('\n') + '\n'
+
+  const queries = allRegions(src, ['!a', 'a;b']).map((r) => r.query).filter(Boolean)
+  assert.ok(queries.length, 'the extra selectors are offered at all')
+  for (const q of queries) {
+    assert.ok(!q.includes('!'), `query ${JSON.stringify(q)} carries a bare ! and would split the webpack request`)
+  }
+  // Every query that names a tag must parse back to one; `?indent=0` names none.
+  for (const q of queries.filter((x) => /[?&]tags?=/.test(x))) {
+    const p = new URLSearchParams(q)
+    assert.ok((p.get('tags') || p.get('tag')) != null, `query ${JSON.stringify(q)} parses back to a tag selector`)
+  }
+  const decoded = queries.map((q) => new URLSearchParams(q).get('tags')).filter(Boolean)
+  assert.ok(decoded.includes('!a'), 'a negation round-trips through the query back to its exact spec')
+  assert.ok(decoded.includes('a;b'), 'a list round-trips through the query back to its exact spec')
+  ok('queries: webpack-hostile characters are encoded and decode back exactly')
 }
 
 // --- partial-name safety ---------------------------------------------------

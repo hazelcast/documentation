@@ -38,6 +38,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 
 const { NAV_SOURCES, versionsToProcess, outDirFor } = require('../lib/layout')
+const { stagedIdsByPath } = require('../lib/staged-examples')
 const { collectPageExamples } = require('./lib/source-refs')
 const { indexOutput, refCounts, exampleImports, frontmatterTokens, urlToSlug } = require('./lib/mdx-refs')
 const { scanCensusPage, unmaskGuard, hiddenBranchComponents } = require('./lib/census-ledger')
@@ -131,6 +132,8 @@ function main () {
 
   for (const component of components) {
     if (!NAV_SOURCES[component]) { console.error(`[refcheck] unknown component: ${component}`); process.exit(2) }
+    // One manifest per component, shared by all its versions.
+    const stagedIds = stagedIdsByPath(component, opts.outRoot)
     for (const ver of versionsToProcess(component)) {
       const seg = ver.seg // null (unversioned), CURRENT_SEG, or a release
       const outDir = outDirFor(opts.outRoot, component, ver)
@@ -215,7 +218,14 @@ function main () {
         // carry the guarantee.
         const examples = collectPageExamples(resource, seg, opts.sourcesDir)
         if (examples.length) {
-          const wanted = new Set(examples.map((c) => String(c.relative).replace(/^\/+/, '')))
+          // A cross-component include names the file by its path in the repo that
+          // owns it; the staged copy the page imports is addressed by manifest id.
+          // Same file, two names -- translate, or every staged import reads as one
+          // the page never asked for.
+          const wanted = new Set(examples.map((c) => {
+            const rel = String(c.relative).replace(/^\/+/, '')
+            return stagedIds.get(rel) || rel
+          }))
           const imported = exampleImports(pageFile, opts.outRoot)
           let uses = 0
           const foreign = []
