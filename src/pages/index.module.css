@@ -1,0 +1,80 @@
+/* Infima leaves `--ifm-background-color` TRANSPARENT in light mode, so with no
+   rule here the page ground is whatever sits behind the document — which reads
+   grey. Painted on the layout wrapper (the full-width flex child between navbar
+   and footer) rather than on `.page`, which is a centred 1440px column and would
+   leave the margins unpainted. One token covers both themes: white in light, the
+   theme's own dark surface in dark.
+   Production's equivalent ground is #f2f5f9, a cool light grey; swap the token
+   below for `--hive-color-neutral-lighter` (#fafafa) or
+   `--hive-color-surface-hover-v4` (~#f5f5f5) to move back that way. */
+.wrapper {
+  background-color: var(--ifm-background-surface-color);
+}
+
+.page {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 1rem 4rem;
+}
+
+/* Text only. Production sets the heading over a photographic background with a
+   gradient text fill and a forced dark body; with the search box and Ask AI
+   button gone that band is mostly empty space, so the type stands on the normal
+   page background instead. */
+.hero {
+  padding: 3.5rem 0 2.5rem;
+  text-align: center;
+}
+
+.hero h1 {
+  margin: 0;
+}
+
+.hero p {
+  color: var(--ifm-color-emphasis-700);
+  margin: 1rem auto 0;
+  max-width: 60ch;
+}
+
+/* Production's card breakpoints, which are not a symmetrical set: one column
+   below 480px, two up to 1400px, and four only above it — so the eight cards
+   land as 4x2 on a wide screen and 2x4 for most of the range. */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 480px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1400px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Production's card list sits 10px below the heading. Own heading means own
+   spacing: HIVE's is tuned for its 1rem title. */
+.links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.links li {
+  margin: 0;
+}
+
+/* Production's card heading: 1.3rem, weight 500. */
+.cardTitle {
+  font-size: 1.3rem;
+  font-weight: 500;
+  margin: 0;
+}

@@ -25,7 +25,14 @@ const siteDir = path.resolve(__dirname, '..');
 // remark plugin at compile time (see that file for why the timing works, and why
 // those links need resolving at all). Unversioned components are absent: with no
 // version segment there is no alias to resolve.
-const latestSegs: LatestSegs = {};
+//
+// Exported so docusaurus.config.ts can pass it through `customFields` to the
+// landing page, whose card links are written as `/<comp>/latest/...` too but
+// never see remark. Handed over by REFERENCE, as the remark plugin gets it: this
+// module fills the map while the plugins array is being built, and both readers
+// run after config evaluation has finished, so key order in the config literal
+// does not matter.
+export const latestSegs: LatestSegs = {};
 
 // Asciidoctor's `caution`/`important` are not Docusaurus admonition keywords, so
 // every instance extends the defaults with them — the fidelity Layer-2 check

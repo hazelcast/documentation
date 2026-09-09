@@ -54,7 +54,12 @@ const LATEST_RE = /^\/([^/]+)\/latest(\/.*)?$/;
 // alias serves as the version root — hence the '/' default. Any `#frag` or
 // `?query` rides along inside `rest` untouched: it is the referrer's content,
 // not ours to rewrite.
-function resolve(url: string, latest: LatestSegs): string | null {
+//
+// Exported because the remark plugin is not the only caller: the landing page
+// (src/pages/index.tsx) is a React page, so its card links never pass through
+// MDX and have to resolve the same alias themselves. One rule, one place — a
+// second copy of the regex is how the two drift apart.
+export function resolveLatest(url: string, latest: LatestSegs): string | null {
   const m = LATEST_RE.exec(url);
   if (!m) return null;
   const seg = latest[m[1]];
@@ -72,7 +77,7 @@ export default function latestLinks({latest}: {latest: LatestSegs}) {
       // A Markdown link. These are the 505: the theme renders them through
       // <Link>, which is what collects the href for the checker.
       if (node.type === 'link' && typeof node.url === 'string') {
-        const to = resolve(node.url, latest);
+        const to = resolveLatest(node.url, latest);
         if (to) node.url = to;
       }
 
@@ -90,7 +95,7 @@ export default function latestLinks({latest}: {latest: LatestSegs}) {
         for (const attr of node.attributes ?? []) {
           if (attr.type !== 'mdxJsxAttribute' || attr.name !== 'href') continue;
           if (typeof attr.value !== 'string') continue;
-          const to = resolve(attr.value, latest);
+          const to = resolveLatest(attr.value, latest);
           if (to) attr.value = to;
         }
       }

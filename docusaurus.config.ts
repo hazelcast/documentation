@@ -5,7 +5,7 @@ import {redirects} from './src/redirects';
 // The docs plugin instances. One shared factory per kind (unversioned /
 // versioned) holds everything the components have in common, and derives each
 // versioned component's version set from its <id>_versions.json.
-import {docs, versionedDocs} from './src/docsPlugins';
+import {docs, versionedDocs, latestSegs} from './src/docsPlugins';
 // The single source of doc variables, also handed to the example-attributes
 // build loader so co-located example files resolve their {attribute}
 // placeholders per version at build (one file, no generated twin).
@@ -199,7 +199,15 @@ const config: Config = {
     [
       '@docusaurus/plugin-client-redirects',
       {
-        redirects,
+        // The generated table plus one entry that is not the migration's to
+        // generate. Antora served the landing page at `/home/` and bounced `/`
+        // to it (playbook `site.start_page: home::index.adoc`); here the page IS
+        // `/` (src/pages/index.tsx), so the bounce reverses. It lives out here
+        // rather than in src/redirects.ts because that file is regenerated whole
+        // from the manifest on every converter run, and this pair comes from
+        // neither a page-alias nor an orphan decision -- it is the site's own
+        // shape, and has to outlive the migration tooling.
+        redirects: [...redirects, {from: '/home', to: '/'}],
       },
     ],
     // Emits /api/cloud.json at build time from the cloud docs' cloud_* frontmatter
@@ -219,6 +227,15 @@ const config: Config = {
     // replacement for Antora's landing page, which read the content catalog.
     './plugins/tutorials-index',
   ],
+
+  // Handed to the client bundle for the landing page's card links, which are
+  // written as `/<comp>/latest/...` and resolved at render by resolveLatest
+  // (src/remark/latestLinks.ts). A React page gets no remark pass, so without
+  // this the twenty `/latest/` hrefs on `/` would each be reported broken --
+  // <Link> collects its href for the checker, and the alias is host
+  // infrastructure rather than a route. Same contract as the MDX side: a version
+  // cut re-points every one of them with no content change.
+  customFields: {latestSegs},
 
   themeConfig: {
     colorMode: {

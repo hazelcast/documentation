@@ -308,7 +308,15 @@ const NAVLESS = new Set(['tutorials'])
 // that Antora builds from its content catalog at render time; there is no
 // catalog here, so it is rebuilt as a component reading the card frontmatter the
 // converter writes onto each tutorial (see plugins/tutorials-index).
-const SITE_PAGES = new Set(['/tutorials/'])
+//
+// `/home/` is the site landing page, and the clearest case of the pair: its
+// Antora source (home/modules/ROOT/pages/index.adoc) is four lines of attributes
+// with NO body -- every card lives in the UI template, so the golden HTML for it
+// is literally one byte. There is no content to convert and nothing to compare,
+// and the replacement (src/pages/index.tsx) is a deliberate redesign besides.
+// The key is the Antora URL, which is what fidelity joins on; the page itself is
+// served at `/`, with `/home` redirecting in (docusaurus.config.ts).
+const SITE_PAGES = new Set(['/tutorials/', '/home/'])
 
 const isSitePage = (url) => SITE_PAGES.has(url)
 
