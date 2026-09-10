@@ -749,11 +749,20 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
   assert.strictEqual(urlFromGoldenRel(path.join('hazelcast', '5.7', 'index.html')), '/hazelcast/5.7/',
     'versioned directory index -> trailing-slash URL')
 
+  // Both disk shapes are offered for every URL, because which one a build uses
+  // is a `trailingSlash` decision the harness must not encode. Under false a
+  // directory-index URL like /cloud/ is build/cloud.html, not cloud/index.html.
   assert.deepStrictEqual(convertedCandidates('/b', '/cloud/install'),
     [path.join('/b', 'cloud', 'install.html'), path.join('/b', 'cloud', 'install', 'index.html')],
     'page URL -> flat file + index-file candidates (trailingSlash-agnostic)')
   assert.deepStrictEqual(convertedCandidates('/b', '/cloud/'),
-    [path.join('/b', 'cloud', 'index.html')], 'directory URL -> index-file candidate')
+    [path.join('/b', 'cloud.html'), path.join('/b', 'cloud', 'index.html')],
+    'directory URL -> flat file + index-file candidates (trailingSlash-agnostic)')
+  assert.deepStrictEqual(convertedCandidates('/b', '/hazelcast/5.7/'),
+    [path.join('/b', 'hazelcast', '5.7.html'), path.join('/b', 'hazelcast', '5.7', 'index.html')],
+    'version root -> flat file beside its own directory of children')
+  assert.deepStrictEqual(convertedCandidates('/b', '/'),
+    [path.join('/b', 'index.html')], 'site root -> index.html only, never ".html"')
   ok('urlFromGoldenRel / convertedCandidates: URL derivation and file candidates')
 }
 

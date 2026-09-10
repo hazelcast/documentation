@@ -52,27 +52,32 @@ const config: Config = {
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
 
-  // `trailingSlash` is deliberately UNSET, and the choice is not yet made.
+  // Emit `page.html`, not `page/index.html`, so a page's URL carries no
+  // trailing slash. This reproduces the Antora site's URL shape on the host
+  // that serves it (Netlify behind Cloudflare), measured against production
+  // rather than inferred.
   //
-  // The Antora site has no single convention: under `html_extension_style:
-  // drop` a page is a file (`cloud/overview.html` -> `/cloud/overview`, no
-  // slash) but a component, version or site root is a directory index
-  // (`privacy/index.html` -> `/privacy/`, slash). The host 301s the other form
-  // to the canonical one in BOTH directions, and canonical tags and sitemap
-  // agree with it.
+  // Netlify has no site-wide slash convention: it derives the canonical form
+  // per path from the file layout, and 301s the other form to it in BOTH
+  // directions. Under Antora's `html_extension_style: drop` a page is a file,
+  // so `/cloud/overview` is canonical and `/cloud/overview/` 301s to it. That
+  // is what `false` reproduces, for ~3,355 of ~3,375 URLs byte-for-byte, and
+  // it is the form the sitemap and canonical tags already advertise -- leaving
+  // this unset made every canonical URL a redirect.
   //
-  // Docusaurus can only pick one form for the whole site:
-  //   false        -> `page.html`; matches the ~3,355 content pages exactly,
-  //                   but a root like `/cloud/` becomes a directory with no
-  //                   index.html, which some hosts 404 rather than resolve.
-  //   unset / true -> `page/index.html`; matches the ~20 roots, but every
-  //                   content URL gains a slash.
+  // `false` does create 27 places where a file sits next to a directory of the
+  // same name (`hazelcast/5.7.html` beside `hazelcast/5.7/`), which is the one
+  // shape worth checking before trusting a host. Production already contains
+  // it -- `/management-center/5.10/getting-started` is a file with a directory
+  // of children beside it -- and Netlify resolves it correctly: the file wins
+  // for the bare path, the slash form 301s to it, the children are unaffected.
+  // So no explicit trailing-slash redirects are needed for those 27 roots.
   //
-  // Leaving it unset serves both forms today, so nothing is broken while the
-  // migration is in progress. Before launch, pick a form, add redirects for
-  // whichever set of URLs it does not preserve, and verify on the TARGET HOST
-  // -- trailing-slash canonicalization is host behaviour, not framework
-  // behaviour, and hosts differ.
+  // The ~27 root URLs whose canonical form flips from slashed to unslashed
+  // (component roots, version roots, the Management Center module roots,
+  // `/privacy`) keep working via that automatic 301. Purge the Cloudflare
+  // cache at cutover: it is holding 200s for them.
+  trailingSlash: false,
 
   // '.api-specs' is where plugins/openapi-specs stages the OpenAPI specs it
   // fetches from the product repos: gitignored, rebuilt every run, and listed

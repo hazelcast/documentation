@@ -71,20 +71,19 @@ function goldenPages (goldenDir) {
   })
 }
 
-// Candidate paths for a URL in a Docusaurus static build. trailingSlash: false
-// emits "/cloud/install" as build/cloud/install.html, and a directory URL
-// "/cloud/" as build/cloud/index.html. We return both plausible forms and let
-// the caller pick whichever exists, so we are not brittle to a trailingSlash
-// config change.
+// Candidate paths for a URL in a Docusaurus static build. Which form a URL
+// takes on disk depends on `trailingSlash`: false emits "/cloud/install" as
+// build/cloud/install.html and the directory URL "/cloud/" as build/cloud.html,
+// while true/unset emits both as <route>/index.html. A golden directory-index
+// URL therefore has no fixed shape either. We return both plausible forms for
+// every URL and let the caller pick whichever exists, so we are not brittle to
+// a trailingSlash config change. The site root is index.html under either.
 function convertedCandidates (buildDir, url) {
   const trimmed = url.replace(/^\//, '')
+  const bare = trimmed.replace(/\/$/, '')
   const candidates = []
-  if (url.endsWith('/')) {
-    candidates.push(path.join(buildDir, trimmed, 'index.html'))
-  } else {
-    candidates.push(path.join(buildDir, trimmed + '.html'))
-    candidates.push(path.join(buildDir, trimmed, 'index.html'))
-  }
+  if (bare) candidates.push(path.join(buildDir, bare + '.html'))
+  candidates.push(path.join(buildDir, bare, 'index.html'))
   return candidates
 }
 
