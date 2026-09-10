@@ -5,7 +5,7 @@ import {redirects} from './src/redirects';
 // The docs plugin instances. One shared factory per kind (unversioned /
 // versioned) holds everything the components have in common, and derives each
 // versioned component's version set from its <id>_versions.json.
-import {docs, versionedDocs, latestSegs} from './src/docsPlugins';
+import {docs, versionedDocs, latestSegs, isSnapshotUrl} from './src/docsPlugins';
 // The single source of doc variables, also handed to the example-attributes
 // build loader so co-located example files resolve their {attribute}
 // placeholders per version at build (one file, no generated twin).
@@ -127,6 +127,19 @@ const config: Config = {
         // `cloud` plugin below), and the site has no blog.
         docs: false,
         blog: false,
+        // Snapshot versions are dropped from the sitemap. Their pages already
+        // canonical to the latest release, so listing them would ask Google to
+        // index pages we have just told it to treat as duplicates of another
+        // URL. This changes nothing else: snapshot docs stay built, linked,
+        // navigable and reachable — a sitemap is a crawl invitation, not an
+        // access control. Which segments count is derived from the version
+        // config, so a release or an archived version needs no edit here.
+        sitemap: {
+          createSitemapItems: async ({defaultCreateSitemapItems, ...params}) => {
+            const items = await defaultCreateSitemapItems(params);
+            return items.filter((item) => !isSnapshotUrl(item.url));
+          },
+        },
         theme: {
           // HIVE v4 design tokens (:root CSS custom props) + brand fonts, both
           // shipped by @hazelcast/ui. v4 components read var(--hive-*) and the

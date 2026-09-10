@@ -34,6 +34,29 @@ const siteDir = path.resolve(__dirname, '..');
 // does not matter.
 export const latestSegs: LatestSegs = {};
 
+// Which version segment is each component's unreleased snapshot line, filled in
+// by versionedDocs() alongside latestSegs. `defaultVersion: 'latest-release'` is
+// exactly the statement "main is an unreleased snapshot", so this needs no naming
+// convention: a component whose main IS its newest release (clc) contributes
+// nothing, and neither do unversioned components.
+const snapshotSegs: {[id: string]: string} = {};
+
+// True for a sitemap URL under a component's snapshot segment. Used to keep
+// snapshots out of the sitemap: the cross-version canonical sends their pages to
+// the latest release, so inviting Google to index them would contradict it.
+//
+// Reads the registry at CALL time rather than expanding it when the sitemap
+// options are built — `presets` is evaluated before `plugins` in
+// docusaurus.config.ts, so the map is still EMPTY then and any eager expansion
+// (a precomputed ignorePatterns list, say) would capture nothing. Same reason
+// latestSegs is handed to the remark plugin by reference.
+export function isSnapshotUrl(url: string): boolean {
+  const {pathname} = new URL(url);
+  return Object.entries(snapshotSegs).some(
+    ([id, seg]) => pathname === `/${id}/${seg}` || pathname.startsWith(`/${id}/${seg}/`),
+  );
+}
+
 // Asciidoctor's `caution`/`important` are not Docusaurus admonition keywords, so
 // every instance extends the defaults with them — the fidelity Layer-2 check
 // compares admonition type names, so those types must survive the round-trip.
@@ -113,6 +136,9 @@ export function versionedDocs({
   // newest release, or main's own segment where main IS the newest release. Same
   // expression, so the alias cannot drift from what Docusaurus marks `isLast`.
   latestSegs[id] = defaultVersion === 'current' ? currentSeg : releases[0]!;
+  if (defaultVersion === 'latest-release') {
+    snapshotSegs[id] = currentSeg;
+  }
   return contentDocs({
     id,
     path: id,
