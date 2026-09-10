@@ -244,6 +244,13 @@ const config: Config = {
     // tutorial and hands it to src/pages/tutorials.tsx as global data — the
     // replacement for Antora's landing page, which read the content catalog.
     './plugins/tutorials-index',
+    // Emits /llms.txt — the index an LLM or coding agent reads to find its way
+    // around the docs. Covers the current release of each component only (the
+    // version Docusaurus marks `isLast`, so snapshots are excluded exactly as
+    // they are from the sitemap). Written in postBuild from the docs plugins'
+    // own loaded content; see plugins/llms-txt for why that hook, and for where
+    // the later llms-full.txt / per-page .md pass will attach.
+    './plugins/llms-txt',
   ],
 
   // Handed to the client bundle for the landing page's card links, which are
