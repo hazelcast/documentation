@@ -362,6 +362,10 @@ const config: Config = {
         {
           items: [
             {
+              label: 'Hazelcast.com',
+              href: 'https://hazelcast.com/?utm_source=docs-website',
+            },
+            {
               label: 'Terms of Service',
               href: 'https://hazelcast.com/terms-of-use/?utm_source=docs-website',
             },
@@ -372,6 +376,10 @@ const config: Config = {
             {
               label: 'Contact us',
               href: 'https://hazelcast.com/contact/?utm_source=docs-website',
+            },
+            {
+              label: 'Support',
+              href: 'https://support.hazelcast.com/s/?utm_source=docs-website',
             },
           ],
         },
