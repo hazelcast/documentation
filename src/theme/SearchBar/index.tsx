@@ -21,6 +21,7 @@ import {ButtonGroup} from '@hazelcast/ui/lib/components/ButtonGroup';
 import AskAiIcon from '@site/src/components/NavbarAskAi/AskAiIcon';
 import type SearchBarType from '@theme/SearchBar';
 import type {WrapperProps} from '@docusaurus/types';
+import {pushDataLayer} from '@site/src/lib/analytics';
 import styles from './styles.module.css';
 
 type Props = WrapperProps<typeof SearchBarType>;
@@ -51,6 +52,10 @@ const PRODUCTS = [
 ] as const;
 
 const ALL_TAGS = PRODUCTS.map(({tag}) => `tags:${tag}`);
+
+// What `search_component` carries when no product filter is applied. The string
+// is the Antora build's, so the two sites report into the same value space.
+const ALL_COMPONENTS = 'All';
 
 // An Algolia facetFilters value: the outer array ANDs, a nested array ORs. One
 // nested element, so selecting nothing ORs every product and selecting one
@@ -249,11 +254,70 @@ export default function SearchBarWrapper(props: Props): ReactNode {
   const onAskAi = useCallback(() => {
     const input = document.querySelector<HTMLInputElement>('.DocSearch-Input');
     const current = input?.value ?? '';
+    pushDataLayer('search_ask_ai_click', {
+      search_provider: 'algolia',
+      search_term: current,
+      search_component: selected ?? ALL_COMPONENTS,
+    });
     window.Kapa?.('open', current ? {query: current} : undefined);
     input?.dispatchEvent(
       new KeyboardEvent('keydown', {key: 'Escape', code: 'Escape', bubbles: true}),
     );
-  }, []);
+  }, [selected]);
+
+  // search_performed. Debounced and de-duplicated the same way the Antora build
+  // reports it, so the two are comparable: at least two characters, 700ms after
+  // typing settles, and never the same query twice running. Changing the product
+  // filter re-runs this effect but not the event -- the query has not changed.
+  //
+  // The count is of RENDERED hits, which is what maxResultsPerGroup leaves on
+  // screen rather than everything Algolia returned.
+  const lastReported = useRef('');
+  useEffect(() => {
+    if (query.trim().length < 2) {
+      lastReported.current = '';
+      return undefined;
+    }
+    const timer = setTimeout(() => {
+      if (query === lastReported.current) {
+        return;
+      }
+      lastReported.current = query;
+      pushDataLayer('search_performed', {
+        search_provider: 'algolia',
+        search_term: query,
+        search_results_count: document.querySelectorAll('.DocSearch-Hit').length,
+        search_component: selected ?? ALL_COMPONENTS,
+      });
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [query, selected]);
+
+  // search_result_click. Delegated on the modal and bound in the CAPTURE phase,
+  // so it runs before DocSearch handles the click and navigates away.
+  useEffect(() => {
+    if (!modal) {
+      return undefined;
+    }
+    const onClick = (event: MouseEvent) => {
+      const target = event.target instanceof Element ? event.target : null;
+      const link = target?.closest<HTMLAnchorElement>('.DocSearch-Hit a');
+      if (!link) {
+        return;
+      }
+      const links = [...modal.querySelectorAll('.DocSearch-Hit a')];
+      pushDataLayer('search_result_click', {
+        search_provider: 'algolia',
+        search_term:
+          document.querySelector<HTMLInputElement>('.DocSearch-Input')?.value ?? '',
+        link_url: link.getAttribute('href'),
+        link_position: links.indexOf(link) + 1,
+        search_component: selected ?? ALL_COMPONENTS,
+      });
+    };
+    modal.addEventListener('click', onClick, true);
+    return () => modal.removeEventListener('click', onClick, true);
+  }, [modal, selected]);
 
   return (
     <>

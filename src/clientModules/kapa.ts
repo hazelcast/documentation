@@ -1,4 +1,5 @@
 import ExecutionEnvironment from '@docusaurus/ExecutionEnvironment';
+import {registerKapaAnalytics} from './kapaAnalytics';
 
 declare global {
   interface Window {
@@ -200,6 +201,9 @@ function watchConsent(): void {
 
 if (ExecutionEnvironment.canUseDOM) {
   installStub();
+  // Straight after the stub, so the callbacks are queued and replayed when the
+  // widget drains the queue.
+  registerKapaAnalytics();
   if (!analyticsGranted()) {
     deleteKapaCookie();
   }
