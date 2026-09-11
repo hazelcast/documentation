@@ -3,6 +3,7 @@ import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import {Card} from '@hazelcast/ui/lib/components/Card';
+import PromoBanner from '@site/src/components/PromoBanner';
 import {resolveLatest, type LatestSegs} from '../remark/latestLinks';
 import styles from './index.module.css';
 
@@ -17,7 +18,7 @@ import styles from './index.module.css';
 // Popular" cards, the centred search box and Ask AI button (the navbar carries
 // those), the hero's photographic background and gradient-fill heading, the
 // per-card icons, the two linked card titles, and the "Was this helpful?"
-// footer. Production's WordPress-fed promo banner slot is a separate work item.
+// footer. The WordPress-fed promo bar IS reproduced -- see <PromoBanner/>.
 //
 // Antora served this page at `/home/` with `/` bouncing to it; here the page is
 // `/` and `/home` redirects in (see the client-redirects entry in
@@ -125,6 +126,16 @@ export default function Home(): ReactNode {
     <Layout
       description="Find user guides, code samples, tutorials, API reference, and more."
       wrapperClassName={styles.wrapper}>
+      {/* Outside `.page` so the bar spans the viewport, as production's does --
+          `.page` is a centred 1440px column with its own padding, and breaking
+          out of it would need a 100vw trick that overflows when a scrollbar is
+          present. The one departure from production is vertical order: there the
+          bar sits below a photographic hero band and above the cards, whereas
+          this page's hero is plain text on the page ground, where a bar wedged
+          between the title and the cards reads as a stray element rather than a
+          site banner. To match production's order instead, move this inside
+          <main> between <header> and the grid. */}
+      <PromoBanner />
       <main className={styles.page}>
         <header className={styles.hero}>
           <h1>Hazelcast Documentation</h1>

@@ -1,0 +1,126 @@
+/* Styling for markup this repo does not own. The bar's HTML comes from
+   WordPress, so its classes are literal strings we have to match rather than
+   module-hashed names — hence `:global()` throughout, scoped under the one
+   hashed class (`.host`) we do control, so none of it leaks past the slot.
+
+   Ported from the Antora UI's home.css (.promo-banner block). Three of
+   production's four hardcoded colours are HIVE tokens exactly
+   (#c6ff3a / #0080a9 / #0b2b39), so those are named rather than repeated; the
+   deep navy #051a27 has no token and stays literal. */
+
+.host :global(.promo-banner) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 0.25em;
+  width: 100%;
+  padding: 10px 24px;
+  background: var(--hive-color-brand-primary);
+  color: #051a27;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  /* The bar is one nowrap row, so a long promo scrolls sideways inside itself
+     rather than pushing the page wider. */
+  overflow-x: auto;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 8%);
+  transition: background 0.8s ease, color 0.6s ease;
+}
+
+.host :global(.promo-banner strong) {
+  font-weight: 500;
+  transition: color 0.8s ease;
+}
+
+.host :global(.promo-banner a) {
+  margin-left: 8px;
+  color: #051a27;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.8s ease, text-decoration 0.8s ease;
+}
+
+.host :global(.promo-banner:hover) {
+  background: linear-gradient(
+    90deg,
+    var(--hive-color-brand-primary) 0%,
+    #fff 100%
+  );
+  color: var(--hive-color-auth-secondary);
+  text-decoration: none;
+}
+
+.host :global(.promo-banner:hover strong),
+.host :global(.promo-banner:hover a) {
+  color: var(--hive-color-auth-secondary);
+}
+
+/* The call-to-action inside the bar, with the arrow that slides on hover. */
+.host :global(.promo-banner .p-btn) {
+  position: relative;
+  display: inline-block;
+  margin-left: 8px;
+  padding-right: 1em; /* room for the arrow */
+  color: var(--hive-color-brand-ocean);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.host :global(.promo-banner .p-btn::after) {
+  content: '→';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.95em;
+  transition: transform 0.3s ease;
+}
+
+.host :global(.promo-banner:hover .p-btn) {
+  color: var(--hive-color-auth-secondary);
+  text-decoration: underline;
+}
+
+.host :global(.promo-banner:hover .p-btn::after) {
+  transform: translateY(-50%) translateX(4px);
+}
+
+/* The gradient text treatment the bar currently in WordPress actually uses. It
+   is a sibling of the `strong`/`.p-btn` shapes above, not a replacement: the
+   .promo-banner class has outlived several markup shapes and the stylesheet
+   carries all of them, so whichever one marketing publishes lands styled. */
+.host :global(.promo-banner .grad-text) {
+  display: inline-block;
+  background: linear-gradient(
+    90deg,
+    var(--hive-color-brand-ocean),
+    var(--hive-color-auth-secondary)
+  );
+  background-size: 200% auto;
+  background-position: left center;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-weight: 500;
+  transition: background-position 0.6s ease;
+}
+
+.host :global(.promo-banner .grad-text:hover),
+.host :global(.promo-banner:hover .grad-text) {
+  background-position: right center;
+}
+
+/* The bar is a fixed lime panel in both themes, as production has it, so the
+   dark-mode ground behind it never shows through and needs no override.
+
+   One quirk worth knowing rather than fixing: the banner WordPress publishes
+   carries an inline `style="display: block"`, which beats the `display: flex`
+   above and makes the flex properties inert — centring then comes from
+   `text-align`. Production's stylesheet loses the same fight to the same inline
+   style, so this renders as production does; do not add `!important` to "fix"
+   it, or this bar stops matching the live site. */
