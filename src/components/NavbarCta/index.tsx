@@ -16,10 +16,32 @@ const DEFAULT_CTA = {
   href: 'https://hazelcast.com/get-started/?utm_source=docs-website&utm_term=get-started',
 };
 
-export default function NavbarCta(): ReactNode {
+// `mobile` is passed by the burger sidebar, whose items live in a
+// <ul class="menu__list">: a bare <a> there is invalid markup and lays out as an
+// inline pill instead of a menu row, so that form brings its own <li> and fills
+// the width. The navbar copy is hidden below 996px in custom.css.
+export default function NavbarCta({mobile}: {mobile?: boolean}): ReactNode {
   const {pathname} = useLocation();
   const onCloud = pathname === '/cloud' || pathname.startsWith('/cloud/');
   const {label, href} = onCloud ? CLOUD_CTA : DEFAULT_CTA;
+  if (mobile) {
+    return (
+      <li className="menu__list-item">
+        <Button
+          component="a"
+          href={href}
+          target="_blank"
+          rel="noopener"
+          variant="contained"
+          color="primary"
+          className="navbar-cta"
+          fullWidth
+        >
+          {label}
+        </Button>
+      </li>
+    );
+  }
   return (
     <Button
       component="a"

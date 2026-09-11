@@ -238,6 +238,20 @@
   isolation: isolate;
 }
 
+/* Below Infima's navbar breakpoint the burger menu takes over: Infima hides the
+ * nav items with `.navbar__item { display: none }`, and Docusaurus hides the
+ * colour toggle, leaving only the burger, the brand and search in the bar. The
+ * HIVE buttons are raw <button>/<a> and never carry `.navbar__item`, so they
+ * survive that rule and overlap the search box. Hide them here instead; the
+ * burger sidebar renders its own full-width copies (see NavbarAskAi/NavbarCta,
+ * which switch markup on the `mobile` prop). */
+@media (max-width: 996px) {
+  .navbar__items--right > .navbar-ask-ai,
+  .navbar__items--right > .navbar-cta {
+    display: none;
+  }
+}
+
 /* Search button label: DocSearch hardcodes `font-size: 1rem` on the placeholder
  * and inherits weight 400, exposing no --docsearch-* variable for either, so
  * "Search" renders 16px/400 next to the 14px/500 HIVE buttons beside it. Match
