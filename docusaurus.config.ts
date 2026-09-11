@@ -127,6 +127,31 @@ const config: Config = {
         // `cloud` plugin below), and the site has no blog.
         docs: false,
         blog: false,
+        // Google Tag Manager container GTM-MQ59XD6, the same one the Antora site
+        // loads. The container is the ONLY thing this repo declares about
+        // analytics or consent, deliberately: the Enzuzo cookie banner is a tag
+        // inside it (the "Enzuzo Cookie Manager" template, on the Consent
+        // Initialization trigger), which is both Enzuzo's documented install and
+        // what production already runs.
+        //
+        // The Antora theme ALSO hardcodes the Enzuzo bundle in <head>, so every
+        // production page loads the banner twice and the bundle says so:
+        // "[enzuzo] more than one cookie banner was attempted to be loaded".
+        // That second copy is `defer`red and sits after the GTM snippet, so it
+        // could never set Consent Mode defaults in time and is pure liability --
+        // Enzuzo's own guidance is to deploy via GTM and NOT hardcode, because
+        // hardcoding creates conflicting sources of truth. Not reproducing it is
+        // the fix; there is deliberately no Enzuzo <script> anywhere in this repo.
+        //
+        // Consequences worth knowing. The plugin is a NO-OP unless
+        // NODE_ENV=production, so neither GTM nor the banner appears under
+        // `docusaurus start` -- use `build` + `serve` to see either. And a reader
+        // blocking googletagmanager.com gets no banner and an inert
+        // `#manage_cookies` link on /privacy; accepted, since that reader is
+        // blocking every tag the banner exists to gate.
+        googleTagManager: {
+          containerId: 'GTM-MQ59XD6',
+        },
         // Snapshot versions are dropped from the sitemap. Their pages already
         // canonical to the latest release, so listing them would ask Google to
         // index pages we have just told it to treat as duplicates of another
