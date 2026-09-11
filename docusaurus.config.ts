@@ -287,6 +287,11 @@ const config: Config = {
   // cut re-points every one of them with no content change.
   customFields: {latestSegs},
 
+  // Loads the Kapa AI widget and keeps its cookie in step with Enzuzo's consent
+  // state. Not prod-gated like the GTM container: the widget is a feature of the
+  // site, so it runs on the dev server too.
+  clientModules: [require.resolve('./src/clientModules/kapa.ts')],
+
   themeConfig: {
     colorMode: {
       respectPrefersColorScheme: true,
@@ -400,6 +405,16 @@ const config: Config = {
           docsPluginId: 'management-center',
           position: 'right',
         },
+        // Search, declared EXPLICITLY rather than left to Docusaurus. With no
+        // `search` item the theme auto-appends the search bar after every other
+        // navbar item, which would put it past the CTA; naming it here fixes its
+        // position and lets Ask AI sit next to it, as the Antora header does.
+        {type: 'search', position: 'right'},
+        // Ask AI, immediately after search. Opens the Kapa modal; the widget
+        // itself is loaded by src/clientModules/kapa.ts and its own floating
+        // launcher is suppressed, so this button is the only way in.
+        // Registered in src/theme/NavbarItem/ComponentTypes.tsx.
+        {type: 'custom-ask-ai', position: 'right'},
         // CTA, rendered as a HIVE Button (Try Free on Cloud pages,
         // Try Hazelcast elsewhere). Registered in
         // src/theme/NavbarItem/ComponentTypes.tsx.

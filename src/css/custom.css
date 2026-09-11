@@ -177,13 +177,74 @@
   margin: 0;
 }
 
-/* Navbar CTA (HIVE Button): Docusaurus always renders the color-mode toggle
- * (and search) after the right-aligned navbar items, so the CTA would sit to
- * the toggle's left. The right item list is a flex row, so an order bump moves
- * the CTA to the very end — rightmost, past the toggle — matching production. */
+/* Right-hand navbar order. Docusaurus renders the configured right items in
+ * order and then appends the color-mode toggle after all of them, which strands
+ * the toggle between Ask AI and the CTA. The row is a flex container, so `order`
+ * sets the intended sequence instead:
+ *
+ *   version selector | theme toggle | search | Ask AI | CTA
+ *
+ * Only the items that have to move carry a value — search and Ask AI keep the
+ * default 0 and fall between them in DOM order. The toggle's class is a CSS
+ * module, so match its stable source-name prefix, not the hashed suffix.
+ *
+ * Spacing is left alone deliberately: every neighbour already contributes 12px
+ * of its own (the version dropdown's and the search container's outer padding,
+ * the CTA's margin), so the row reads evenly. Giving the toggle a margin too
+ * stacks with the search container's and opens a 24px hole beside it. The CTA's
+ * margin IS needed — Ask AI's padding is inside its background, so without it
+ * the two buttons touch. */
+.navbar__items--right > .navbar__item.dropdown {
+  order: -2;
+}
+.navbar__items--right > [class*='colorModeToggle'] {
+  order: -1;
+
+  /* The toggle is a 32px hit target around an 18px glyph, so it carries ~7px of
+   * invisible space on each side. Every other control here has a border or a
+   * filled background, so its box edge IS what the eye measures to, and the row
+   * otherwise runs on 12px; uncorrected, the gaps flanking the toggle read as
+   * 19px. Negative margin rather than a smaller button, so the 32px target
+   * survives. The left side then adds a deliberate extra gap, separating the
+   * toggle from the version dropdown -- the only two controls here with no
+   * border or fill, which otherwise run together. */
+  --toggle-optical: -7px;
+  --toggle-extra-left: 8px;
+
+  margin-right: var(--toggle-optical);
+  margin-left: calc(var(--toggle-optical) + var(--toggle-extra-left));
+}
 .navbar__items--right .navbar-cta {
   order: 1;
   margin-left: var(--ifm-navbar-item-padding-horizontal);
+}
+
+/* Kapa widget: give its host a stacking context of its own.
+ *
+ * Kapa mounts into a `position: static; z-index: auto` div, which establishes no
+ * stacking context, so the widget's internal z-indexes compete directly with the
+ * page's -- and the navbar sits at --ifm-z-index-fixed (200). Kapa's answer is
+ * `data-modal-z-index`, which lifts the modal but NOT Mantine's popover layer
+ * (modal 200 / popover 300 by default), so raising it above 300 renders every
+ * tooltip inside the modal beneath the modal.
+ *
+ * Lifting the HOST instead fixes both halves: the widget as a whole clears the
+ * navbar, and Mantine's internal 200 < 300 ordering is left intact, so tooltips
+ * land on top of the modal where they belong. See src/clientModules/kapa.ts,
+ * which deliberately passes no `data-modal-z-index`. */
+#kapa-widget-container {
+  position: relative;
+  z-index: 10001;
+  isolation: isolate;
+}
+
+/* Search button label: DocSearch hardcodes `font-size: 1rem` on the placeholder
+ * and inherits weight 400, exposing no --docsearch-* variable for either, so
+ * "Search" renders 16px/400 next to the 14px/500 HIVE buttons beside it. Match
+ * the tokens those buttons use. */
+.navbar .DocSearch-Button-Placeholder {
+  font-size: var(--hive-font-size-button-small);
+  font-weight: var(--hive-font-weight-text-medium);
 }
 
 /* Doc sidebar (scoped to .theme-doc-sidebar-menu so the mobile navbar menu,
