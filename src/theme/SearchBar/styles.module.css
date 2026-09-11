@@ -22,6 +22,16 @@
   display: none;
 }
 
+/* Caption and the Ask AI action share a row, so the action costs no extra
+   height. The caption yields first when space is short. */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-block-start: 8px;
+}
+
 /* Says what the buttons cannot: the index holds only the latest RELEASE of each
    product, so a hit is never from an older version -- nor from the snapshot --
    even though the site serves both. */
@@ -29,7 +39,15 @@
   color: var(--docsearch-muted-color);
   font-size: 0.75rem;
   line-height: 1.4;
-  margin: 8px 0 0;
+  margin: 0;
+  min-width: 0;
+}
+
+/* The label carries the whole query, which has no length limit -- cap it so a
+   long one truncates (HIVE's `truncate`) instead of pushing the caption out. */
+.askAi {
+  flex-shrink: 0;
+  max-width: 55%;
 }
 
 /* HIVE ships no dark palette (see the note in src/css/custom.css), so its

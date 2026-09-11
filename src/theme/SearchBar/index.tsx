@@ -14,9 +14,11 @@
 // forwards props to DocSearch, which is enough for everything here.
 import React, {useCallback, useEffect, useRef, useState, type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
+import clsx from 'clsx';
 import SearchBar from '@theme-original/SearchBar';
 import {Button} from '@hazelcast/ui/lib/components/Button';
 import {ButtonGroup} from '@hazelcast/ui/lib/components/ButtonGroup';
+import AskAiIcon from '@site/src/components/NavbarAskAi/AskAiIcon';
 import type SearchBarType from '@theme/SearchBar';
 import type {WrapperProps} from '@docusaurus/types';
 import styles from './styles.module.css';
@@ -79,9 +81,13 @@ function requery(): void {
 function ProductFilters({
   selected,
   onSelect,
+  query,
+  onAskAi,
 }: {
   selected: string | null;
   onSelect: (id: string | null) => void;
+  query: string;
+  onAskAi: () => void;
 }) {
   return (
     // A real HIVE ButtonGroup: it is the segmented control the design system
@@ -109,9 +115,23 @@ function ProductFilters({
           ))}
         </ButtonGroup>
       </div>
-      <p className={styles.scope}>
-        Results come from the latest released version of each product.
-      </p>
+      <div className={styles.footer}>
+        <p className={styles.scope}>
+          Results come from the latest released version of each product.
+        </p>
+        {/* Hands the typed query straight to Kapa, so the reader does not retype
+            it. Naming the query in the label is what makes that legible. */}
+        <Button
+          type="button"
+          variant="outlined"
+          iconLeft={AskAiIcon}
+          iconLeftAriaLabel="Ask AI"
+          truncate
+          className={clsx(styles.outlined, styles.askAi)}
+          onClick={onAskAi}>
+          {query ? `Ask AI about "${query}"` : 'Ask AI'}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -194,10 +214,60 @@ export default function SearchBarWrapper(props: Props): ReactNode {
     };
   }, [modal]);
 
+  // Mirror what has been typed, so the Ask AI label can name it. DocSearch owns
+  // the input, so this listens rather than controls; `input` is what React fires
+  // for a keystroke and what requery() above dispatches.
+  const [query, setQuery] = useState('');
+  useEffect(() => {
+    const input = modal?.querySelector<HTMLInputElement>('.DocSearch-Input');
+    if (!input) {
+      setQuery('');
+      return undefined;
+    }
+    const sync = () => setQuery(input.value);
+    sync();
+    input.addEventListener('input', sync);
+    return () => input.removeEventListener('input', sync);
+  }, [modal]);
+
+  // Hand the query to Kapa and dismiss the search modal, so the two do not sit
+  // open on top of each other.
+  //
+  // Read off the DOM rather than from `query`: DocSearch owns the input, and this
+  // has to send what is in it at the moment of the click even if a keystroke has
+  // not round-tripped through state yet.
+  //
+  // Escape is how the modal closes: DocSearch exposes no imperative close. Both
+  // `key` AND `code` are set because two different handlers read the event and
+  // they disagree -- autocomplete-core dismisses its results panel on
+  // `event.key`, while useDocSearchKeyboardEvents, the window-bound hook that
+  // actually closes the MODAL, tests `event.code`. Setting only one leaves the
+  // search open behind the Kapa modal.
+  //
+  // A plain onClick suffices: the strip is INSIDE .DocSearch-Modal, so clicking
+  // it is not the outside click that would dismiss the modal by itself.
+  const onAskAi = useCallback(() => {
+    const input = document.querySelector<HTMLInputElement>('.DocSearch-Input');
+    const current = input?.value ?? '';
+    window.Kapa?.('open', current ? {query: current} : undefined);
+    input?.dispatchEvent(
+      new KeyboardEvent('keydown', {key: 'Escape', code: 'Escape', bubbles: true}),
+    );
+  }, []);
+
   return (
     <>
       <SearchBar {...props} searchParameters={searchParameters} maxResultsPerGroup={4} />
-      {host && createPortal(<ProductFilters selected={selected} onSelect={onSelect} />, host)}
+      {host &&
+        createPortal(
+          <ProductFilters
+            selected={selected}
+            onSelect={onSelect}
+            query={query}
+            onAskAi={onAskAi}
+          />,
+          host,
+        )}
     </>
   );
 }
