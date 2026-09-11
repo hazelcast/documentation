@@ -290,7 +290,17 @@ const config: Config = {
   // Loads the Kapa AI widget and keeps its cookie in step with Enzuzo's consent
   // state. Not prod-gated like the GTM container: the widget is a feature of the
   // site, so it runs on the dev server too.
-  clientModules: [require.resolve('./src/clientModules/kapa.ts')],
+  clientModules: [
+    require.resolve('./src/clientModules/kapa.ts'),
+    // Defines the PushFeedback widget's custom elements. The button itself is
+    // rendered in the docs TOC rail by src/components/FeedbackButton, which is
+    // also where the widget's configuration lives and why three of its
+    // attributes are set the way they are (they are privacy settings, not
+    // styling). The vendor's own Docusaurus plugin is deliberately NOT used: it
+    // appends the button to document.body with no way to place it, and loads
+    // the bundle from jsDelivr at @latest.
+    require.resolve('./src/clientModules/pushfeedback.ts'),
+  ],
 
   themeConfig: {
     colorMode: {

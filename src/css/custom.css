@@ -43,6 +43,28 @@
   --ifm-tabs-color-active-border: var(--hive-color-brand-v4);
 }
 
+/* Feedback widget (PushFeedback): its own tokens, pointed at HIVE's.
+ *
+ * `html:root` rather than `:root` on purpose. The widget's defaults come from
+ * pushfeedback.css, which src/components/FeedbackButton imports, and which
+ * declares them on `:root` too — webpack does not guarantee which of the two
+ * stylesheets it emits last, so equal specificity would make this a coin toss.
+ * The extra element selector settles it whatever the order. */
+html:root {
+  /* Functional as well as visual: the widget is configured with custom-font so
+   * it no longer pulls Inter from Google Fonts, and without this it would fall
+   * back to Tahoma. */
+  --feedback-font-family: var(--hive-font-family-text);
+  --feedback-modal-header-font-family: var(--hive-font-family-heading);
+  --feedback-modal-content-font-family: var(--hive-font-family-text);
+  /* Drives the modal's Send button and its selected-rating accents. The
+   * widget's own button tokens are not set: that button is not rendered, the
+   * trigger is an outlined secondary HIVE Button (src/components/FeedbackButton),
+   * deliberately quieter than the teal so the rail does not compete with the
+   * page. */
+  --feedback-primary-color: var(--hive-color-primary-v4);
+}
+
 /* Dark mode: unchanged stock Docusaurus palette (HIVE has no dark tokens). */
 [data-theme='dark'] {
   --ifm-color-primary: #25c2a0;

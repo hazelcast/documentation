@@ -10,6 +10,7 @@ import DocItemTOCDesktop from '@theme/DocItem/TOC/Desktop';
 import DocItemContent from '@theme/DocItem/Content';
 import DocBreadcrumbs from '@theme/DocBreadcrumbs';
 import ContentVisibility from '@theme/ContentVisibility';
+import FeedbackButton from '@site/src/components/FeedbackButton';
 import type {Props} from '@theme/DocItem/Layout';
 import {ApiTocProvider, useApiTocState} from '@site/src/components/ApiReference/apiToc';
 
@@ -54,6 +55,27 @@ export default function DocItemLayout({children}: Props): ReactNode {
   const apiToc = useApiTocState();
   const docTOC = useDocTOC(apiToc.items);
   const {metadata} = useDoc();
+  const windowSize = useWindowSize();
+
+  // The rail carries the TOC and, under it, the feedback button — so unlike
+  // stock it has to render on a page whose TOC is empty, which is how
+  // production behaves (Antora's main.hbs includes the toc partial
+  // unconditionally, and the feedback block is a sibling of the TOC aside
+  // inside .toc-container, not a child of it). ~690 of our pages have no
+  // headings, so keying the rail on the TOC would lose the button on about a
+  // fifth of the docs.
+  //
+  // `hide_table_of_contents` still suppresses the whole rail: a page that has
+  // asked for the full width gets it, feedback button included. Nothing sets
+  // that today, and the content column is capped at 75% whenever it is unset
+  // (styles.module.css), so the space the rail now always occupies was already
+  // reserved — this widens nothing and narrows nothing.
+  //
+  // Desktop only, as the rail always was. That leaves phones and tablets with
+  // no feedback button, which matches production, where .toc.sidebar is hidden
+  // below 1024px.
+  const showRail =
+    !docTOC.hidden && (windowSize === 'desktop' || windowSize === 'ssr');
   return (
     <ApiTocProvider items={apiToc.items} publish={apiToc.publish}>
       <div className="row">
@@ -70,7 +92,12 @@ export default function DocItemLayout({children}: Props): ReactNode {
             <DocItemPaginator />
           </div>
         </div>
-        {docTOC.desktop && <div className="col col--3">{docTOC.desktop}</div>}
+        {showRail && (
+          <div className="col col--3">
+            {docTOC.desktop}
+            <FeedbackButton />
+          </div>
+        )}
       </div>
     </ApiTocProvider>
   );
