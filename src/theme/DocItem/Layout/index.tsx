@@ -93,9 +93,11 @@ export default function DocItemLayout({children}: Props): ReactNode {
           </div>
         </div>
         {showRail && (
-          <div className="col col--3">
-            {docTOC.desktop}
-            <FeedbackButton />
+          <div className={clsx('col col--3', styles.railCol)}>
+            <div className={styles.rail}>
+              {docTOC.desktop}
+              <FeedbackButton />
+            </div>
           </div>
         )}
       </div>

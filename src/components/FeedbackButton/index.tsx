@@ -1,4 +1,5 @@
-import React, {useRef, type ReactNode} from 'react';
+import React, {useEffect, useRef, useState, type ReactNode} from 'react';
+import {createPortal} from 'react-dom';
 import {Button} from '@hazelcast/ui/lib/components/Button';
 import {Edit3} from 'react-feather';
 
@@ -21,6 +22,13 @@ import styles from './styles.module.css';
 // widget supplies the modal and the site supplies the control — the same split
 // as the Ask AI button, which opens Kapa with its own launcher suppressed
 // (src/components/NavbarAskAi).
+//
+// The modal is portalled to document.body and MUST stay there. The rail it
+// would otherwise render into is `position: sticky` (DocItem/Layout's
+// styles.module.css), and a sticky element creates a stacking context — so the
+// drawer's own z-index (300) resolved inside the rail instead of against the
+// page, and the navbar (Infima's --ifm-z-index-fixed: 200) painted over the top
+// of it. body is also where the vendor's own plugin appends it.
 //
 // Worth knowing if this is ever reverted to <feedback-button>: the random id
 // the widget writes to localStorage (`pushfeedback_sessionid`) is written in
@@ -75,6 +83,11 @@ declare module 'react' {
 
 export default function FeedbackButton(): ReactNode {
   const modal = useRef<FeedbackModalElement>(null);
+  // The portal needs a DOM to target, so the modal is client-only. It renders
+  // nothing visible until opened, and the trigger below is optional-called, so
+  // the gap before hydration costs nothing.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
     <div className={styles.feedback}>
@@ -93,14 +106,18 @@ export default function FeedbackButton(): ReactNode {
         }}>
         Feedback
       </Button>
-      <feedback-modal
-        ref={modal}
-        project={PROJECT}
-        modal-position="sidebar-right"
-        fetch-data="false"
-        custom-font="true"
-        hide-email="true"
-      />
+      {mounted &&
+        createPortal(
+          <feedback-modal
+            ref={modal}
+            project={PROJECT}
+            modal-position="sidebar-right"
+            fetch-data="false"
+            custom-font="true"
+            hide-email="true"
+          />,
+          document.body,
+        )}
     </div>
   );
 }

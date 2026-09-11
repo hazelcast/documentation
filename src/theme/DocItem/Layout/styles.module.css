@@ -4,7 +4,61 @@
 }
 
 @media (min-width: 997px) {
+  /* 73%, not stock's 75%: the remaining 2% widens the channel between the prose
+   * and the TOC rail, which also pads itself from the left (see .rail below).
+   * Both sides give up space, so neither the measure nor the TOC carries the
+   * whole cost. */
   .docItemCol {
-    max-width: 75% !important;
+    max-width: 73% !important;
+  }
+}
+
+/* Anchors the rail to the row's right edge. Infima's columns pack left, so the
+ * 2% the content column gives up above would otherwise open as dead space at
+ * the END of the row and drag the rail left with it — the channel between prose
+ * and TOC would not grow at all (measured: it stayed at 56px with 23px stranded
+ * on the right). `margin-left: auto` puts that slack between the two columns,
+ * which is where it was wanted. */
+@media (min-width: 997px) {
+  .railCol {
+    margin-left: auto;
+  }
+}
+
+/* The rail pins the TOC *and* the feedback button under it.
+ *
+ * Stock Docusaurus makes the TOC itself `position: sticky` with its own
+ * max-height and internal scroll, so anything rendered after it in the column
+ * is in normal flow and scrolls out of view. Production keeps both pinned
+ * (.feedback-prompt is sticky at `top: calc(var(--toc-top) + var(--toc-height))`),
+ * so the sticky context moves up to this wrapper and the TOC becomes an
+ * ordinary flow child of it.
+ *
+ * The offsets are stock's own — theme-classic TOC/styles.module.css — so the
+ * rail pins exactly where the TOC used to. Re-check them on upgrade. */
+@media (min-width: 997px) {
+  .rail {
+    /* Extra breathing room between the prose and the rail: Infima's two column
+     * paddings alone leave 32px, which reads as cramped at this measure. Taken
+     * from the rail as well as the content column (73% above), so neither the
+     * measure nor the TOC carries the whole cost. */
+    padding-left: calc(var(--hive-grid) * 3);
+
+    position: sticky;
+    top: calc(var(--ifm-navbar-height) + 1rem);
+    max-height: calc(100vh - (var(--ifm-navbar-height) + 2rem));
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* min-height:0 is what lets a long TOC shrink inside the flex column instead
+   * of pushing the button past the bottom of the pinned area; it then scrolls
+   * internally, as it did when it owned the sticky itself. */
+  .rail :global(.theme-doc-toc-desktop) {
+    position: static;
+    top: auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
   }
 }
