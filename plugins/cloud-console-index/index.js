@@ -17,19 +17,25 @@ const { Globby, parseMarkdownFile, DEFAULT_PARSE_FRONT_MATTER } = require('@docu
 // tooling), this survives deletion of migration/.
 //
 // The tag allowlist doubles as build-time validation (a page tag outside it
-// fails the build, exactly as upstream). `data` holds entries with no doc page
-// of their own — the two hardcoded videos, plus the one tutorials entry whose
-// source page is not yet migrated into new-docs (move it to that page's
-// cloud_tags frontmatter once tutorials migrates).
+// fails the build, exactly as upstream). `data` holds the entries with no doc
+// page of their own — the two hardcoded videos.
 //
 // Mirrors hazelcast-docs/antora-playbook.yml (the api-json.js config block).
 
-// Where the cloud docs live and the route base they are served under. The URL of
-// a page = CLOUD_ROUTE_BASE + its `slug` frontmatter (every migrated cloud page
-// carries an explicit slug preserving its flat Antora URL). Matches the
-// content-docs instance in docusaurus.config.ts (path/routeBasePath 'cloud').
-const CLOUD_DOCS_DIR = 'cloud'
-const CLOUD_ROUTE_BASE = '/cloud'
+// The content trees scanned for cloud_* frontmatter, and the route base each is
+// served under. A page's URL = its source's base + its `slug` frontmatter, so
+// every page that opts in needs an explicit slug; both instances here are
+// unversioned, which is what makes that one-line reconstruction sound.
+//
+// `tutorials` is in the list because a tutorial can be a console entry too: one
+// is (the MongoDB write-through cache, a Favorite). It used to be hardcoded in
+// DATA while tutorials was still unmigrated; now that the page is here and
+// carries its own cloud_tags, this is what reads it. Match each entry to its
+// content-docs instance in docusaurus.config.ts (path/routeBasePath).
+const DOC_SOURCES = [
+  { dir: 'cloud', base: '/cloud' },
+  { dir: 'tutorials', base: '/tutorials' },
+]
 const OUT_PATH = 'api/cloud.json'
 
 const TAGS = [
@@ -42,33 +48,33 @@ const TAGS = [
 const DATA = [
   { title: 'What is a client?', url: 'https://www.youtube.com/embed/lkQEAdgxvbE', type: 'video', order: 8, tags: 'Videos, Get Started' },
   { title: 'What is the Hazelcast Platform?', url: 'https://www.youtube.com/embed/UpIgHzKbMp0', type: 'video', order: 9, tags: 'Videos, Get Started' },
-  // TODO: remove once the tutorials component migrates into new-docs — its page
-  // will then carry cloud_tags frontmatter and be picked up automatically.
-  { title: 'Use Cloud Standard as a Write-Through Cache with MongoDB Atlas', url: '/tutorials/write-through-cache-serverless-mapstore', type: 'article', order: 1, tags: 'Favorites' },
 ]
 
-// Read every cloud page's frontmatter from disk, returning {frontMatter, url}
-// for each. Self-contained (no dependency on content-docs internals): the URL is
-// reconstructed from the page's slug, which the migration guarantees on every
-// cloud page. Uses Docusaurus's own frontmatter parser for consistency.
+// Read the frontmatter of every page that opts in, across DOC_SOURCES, returning
+// {frontMatter, permalink, title} for each. Self-contained (no dependency on
+// content-docs internals): the URL is reconstructed from the page's slug, which
+// the migration guarantees on every page carrying cloud_tags. Uses Docusaurus's
+// own frontmatter parser for consistency.
 async function readCloudDocs (siteDir) {
-  const docsDir = path.join(siteDir, CLOUD_DOCS_DIR)
-  const files = await Globby('**/*.{md,mdx}', { cwd: docsDir })
   const docs = []
-  for (const rel of files) {
-    const filePath = path.join(docsDir, rel)
-    const fileContent = fs.readFileSync(filePath, 'utf8')
-    const { frontMatter } = await parseMarkdownFile({
-      filePath,
-      fileContent,
-      parseFrontMatter: DEFAULT_PARSE_FRONT_MATTER,
-    })
-    if (!frontMatter || frontMatter.cloud_tags == null) continue
-    if (!frontMatter.slug) {
-      throw new Error(`[cloud-console-index] ${rel} has cloud_tags but no slug — cannot resolve its URL`)
+  for (const { dir, base } of DOC_SOURCES) {
+    const docsDir = path.join(siteDir, dir)
+    const files = await Globby('**/*.{md,mdx}', { cwd: docsDir })
+    for (const rel of files) {
+      const filePath = path.join(docsDir, rel)
+      const fileContent = fs.readFileSync(filePath, 'utf8')
+      const { frontMatter } = await parseMarkdownFile({
+        filePath,
+        fileContent,
+        parseFrontMatter: DEFAULT_PARSE_FRONT_MATTER,
+      })
+      if (!frontMatter || frontMatter.cloud_tags == null) continue
+      if (!frontMatter.slug) {
+        throw new Error(`[cloud-console-index] ${dir}/${rel} has cloud_tags but no slug — cannot resolve its URL`)
+      }
+      const url = (base + frontMatter.slug).replace(/\/{2,}/g, '/')
+      docs.push({ frontMatter, permalink: url, title: frontMatter.title })
     }
-    const url = (CLOUD_ROUTE_BASE + frontMatter.slug).replace(/\/{2,}/g, '/')
-    docs.push({ frontMatter, permalink: url, title: frontMatter.title })
   }
   return docs
 }
