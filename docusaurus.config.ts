@@ -297,6 +297,14 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
 
+    // Search Console ownership
+    metadata: [
+      {
+        name: 'google-site-verification',
+        content: '3gaMIo4Cp94mol0v1ae9PNYw9xYLbP4O_IrQxSvnS7E',
+      },
+    ],
+
     // Search. Points at `prod_hazelcast_docs` -- the index the ANTORA site's
     // scraper still builds (hazelcast-docs/.github/workflows/index-site.yml, from
     // search-config.json), reused as-is for cutover rather than re-crawled first.
