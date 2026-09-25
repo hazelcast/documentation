@@ -245,6 +245,7 @@ module.exports = function openapiSpecsPlugin (context, options) {
       const missingWithoutToken = []
       let updated = 0
       let unchanged = 0
+      let unchecked = 0
 
       await Promise.all(
         [...byUpstream.values()].map(async ({ key, request, targets }) => {
@@ -256,7 +257,7 @@ module.exports = function openapiSpecsPlugin (context, options) {
           if (!token) {
             if (present) {
               targets.forEach((t) => staged.add(t))
-              unchanged++
+              unchecked++
             } else {
               missingWithoutToken.push(key)
             }
@@ -424,9 +425,16 @@ module.exports = function openapiSpecsPlugin (context, options) {
       const anchorCount = Object.values(anchorsByUrl).reduce((n, a) => n + a.length, 0)
       console.log(
         `[openapi-specs] ${requests.length} spec reference(s) staged from ${byUpstream.size} upstream file(s)` +
-          ` (${updated} updated, ${unchanged} unchanged); ${anchorCount} anchor(s) registered;` +
-          ` ${Object.keys(specs).length} distinct spec(s) embedded`,
+          ` (${updated} updated, ${unchanged} unchanged${unchecked ? `, ${unchecked} not checked` : ''});` +
+          ` ${anchorCount} anchor(s) registered; ${Object.keys(specs).length} distinct spec(s) embedded`,
       )
+      if (!token && !isBuild && unchecked) {
+        console.warn(
+          '[openapi-specs] no GitHub token set, so the staged specs were not checked against the' +
+          ' repos that own them and may be out of date. To check them:' +
+          '\n    GITHUB_TOKEN=$(gh auth token) npm start',
+        )
+      }
       return { anchorsByUrl, specs, specHashByUrl }
     },
 
