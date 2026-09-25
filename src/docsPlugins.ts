@@ -17,6 +17,7 @@ import path from 'path';
 import type {PluginConfig} from '@docusaurus/types';
 import type {Options} from '@docusaurus/plugin-content-docs';
 import latestLinks, {type LatestSegs} from './remark/latestLinks';
+import headingVariables from './remark/headingVariables';
 
 const siteDir = path.resolve(__dirname, '..');
 
@@ -75,7 +76,14 @@ const admonitions = {keywords: ['caution', 'important'], extendDefaults: true};
 function contentDocs(options: Options): PluginConfig {
   return [
     '@docusaurus/plugin-content-docs',
-    {...options, remarkPlugins: [...(options.remarkPlugins ?? []), [latestLinks, {latest: latestSegs}]]},
+    {
+      ...options,
+      beforeDefaultRemarkPlugins: [
+        ...(options.beforeDefaultRemarkPlugins ?? []),
+        [headingVariables, {pluginId: options.id}],
+      ],
+      remarkPlugins: [...(options.remarkPlugins ?? []), [latestLinks, {latest: latestSegs}]],
+    },
   ];
 }
 
