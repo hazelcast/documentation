@@ -14,11 +14,11 @@ import styles from './index.module.css';
 // in migration/lib/layout.js SITE_PAGES to say so.
 //
 // Reproduces production's eight cards and their thirty-two links verbatim.
-// Deliberately NOT reproduced (Miranda's call): the Tutorials and "New and
-// Popular" cards, the centred search box and Ask AI button (the navbar carries
-// those), the hero's photographic background and gradient-fill heading, the
-// per-card icons, the two linked card titles, and the "Was this helpful?"
-// footer. The WordPress-fed promo bar IS reproduced -- see <PromoBanner/>.
+// Deliberately NOT reproduced: the Tutorials and "New and Popular" cards, the
+// centred search box and Ask AI button (the navbar carries those), the per-card
+// icons, the two linked card titles, and the "Was this helpful?" footer. The
+// hero's background image and gradient-fill heading, and the WordPress-fed promo
+// bar, ARE reproduced -- see <PromoBanner/>.
 //
 // Antora served this page at `/home/` with `/` bouncing to it; here the page is
 // `/` and `/home` redirects in (see the client-redirects entry in
@@ -126,22 +126,17 @@ export default function Home(): ReactNode {
     <Layout
       description="Find user guides, code samples, tutorials, API reference, and more."
       wrapperClassName={styles.wrapper}>
-      {/* Outside `.page` so the bar spans the viewport, as production's does --
-          `.page` is a centred 1440px column with its own padding, and breaking
-          out of it would need a 100vw trick that overflows when a scrollbar is
-          present. The one departure from production is vertical order: there the
-          bar sits below a photographic hero band and above the cards, whereas
-          this page's hero is plain text on the page ground, where a bar wedged
-          between the title and the cards reads as a stray element rather than a
-          site banner. To match production's order instead, move this inside
-          <main> between <header> and the grid. */}
+      {/* The hero and the promo bar are outside `.page` so both span the
+          viewport, as production's do -- `.page` is a centred 1440px column
+          with its own padding, and breaking out of it would need a 100vw trick
+          that overflows when a scrollbar is present. Same order as production:
+          hero band, then bar, then cards. */}
+      <header className={styles.hero}>
+        <h1>Hazelcast Documentation</h1>
+        <p>Find user guides, code samples, tutorials, API reference, and more.</p>
+      </header>
       <PromoBanner />
       <main className={styles.page}>
-        <header className={styles.hero}>
-          <h1>Hazelcast Documentation</h1>
-          <p>Find user guides, code samples, tutorials, API reference, and more.</p>
-        </header>
-
         <div className={styles.grid}>
           {CARDS.map((card) => (
             // The heading is rendered here rather than through HIVE's `title`
@@ -152,6 +147,7 @@ export default function Home(): ReactNode {
             <Card
               key={card.title}
               variant="bordered"
+              className={styles.card}
               headingContent={<h4 className={styles.cardTitle}>{card.title}</h4>}>
               <ul className={styles.links}>
                 {card.links.map((link) => (

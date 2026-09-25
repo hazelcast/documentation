@@ -449,6 +449,10 @@ const config: Config = {
               href: 'https://hazelcast.com/?utm_source=docs-website',
             },
             {
+              label: 'GitHub',
+              href: 'https://github.com/hazelcast/hazelcast'
+            },
+            {
               label: 'Terms of Service',
               href: 'https://hazelcast.com/terms-of-use/?utm_source=docs-website',
             },
