@@ -27,7 +27,7 @@
 }
 
 :global([data-theme='dark']) .wrapper {
-  background-color: #061626;
+  background-color: var(--hive-color-brand-secondary);
 }
 
 :global([data-theme='dark']) .wrapper::before {
@@ -99,6 +99,18 @@
    regardless of stylesheet order. */
 .grid .card {
   background: var(--ifm-background-surface-color);
+}
+
+/* Dark mode: the theme's neutral grey surface and HIVE's light border clash
+   with the navy image, so the cards become solid navy with a faint edge, and
+   the links are lifted to stay readable on them. */
+:global([data-theme='dark']) .grid .card {
+  background: var(--hive-color-brand-accent);
+  border-color: rgb(255 255 255 / 0.14);
+}
+
+:global([data-theme='dark']) .grid .card a {
+  color: color-mix(in oklch, var(--ifm-link-color), white 35%);
 }
 
 /* Production's card list sits 10px below the heading. Own heading means own
