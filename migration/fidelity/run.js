@@ -7,7 +7,12 @@
 //
 //   node fidelity/run.js [--component X] [--id /url] [--layer 1,2,3]
 //                        [--build-dir ../build] [--golden build/golden]
-//                        [--manifest build/manifest] [--json]
+//                        [--manifest build/manifest] [--json] [--strict]
+//
+// --strict adds the cutover completeness check: every page of the live set
+// (lib/live-set.js) must have a golden AND a converted page, and the snapshot
+// must be the full corpus. Without it a missing page is only counted, because
+// mid-migration most of the corpus is legitimately not converted yet.
 //
 // Reads three things: the golden snapshot (the "before"), the manifest/lockfile
 // (the pin + link table), and the root Docusaurus static build (the "after",
@@ -24,6 +29,7 @@ const { goldenPages, resolveConverted, readGolden } = require('./lib/pairing')
 const { buildIndex } = require('./lib/manifest-index')
 const { loadDispositions, unpublishedUrls } = require('../lib/dispositions')
 const { isSitePage } = require('../lib/layout')
+const { expectedPages, renderId } = require('../lib/live-set')
 const { loadAccepted } = require('../lib/accepted')
 const { loadAnchorIndex } = require('./lib/anchor-index')
 const { loadInventoryIndex } = require('./lib/inventory-index')
@@ -48,6 +54,7 @@ function parseArgs (argv) {
     manifestDir: path.resolve(val('--manifest', 'build/manifest')),
     buildDir: path.resolve(val('--build-dir', '../build')),
     json: has('--json'),
+    strict: has('--strict'),
   }
 }
 
@@ -84,12 +91,14 @@ function main () {
   const baseline = loadBaseline(opts.goldenDir, l3deps, currentKey, path.join(opts.goldenDir, 'layer3-baseline.json'))
 
   // --- scope ---------------------------------------------------------------
-  let pages = goldenPages(opts.goldenDir)
+  const allGolden = goldenPages(opts.goldenDir)
+  let pages = allGolden
   // A page an orphan triage decision does not publish (drop-404 or redirect) is
   // deliberately not converted, so it is out of scope rather than "not yet
   // converted" -- counting it as pending would overstate the work still left to
   // do, and it can never go green.
-  const unpublished = unpublishedUrls(loadDispositions(), manifest)
+  const dispositions = loadDispositions()
+  const unpublished = unpublishedUrls(dispositions, manifest)
   pages = pages.filter((p) => !unpublished.has(p.url))
   // A SITE PAGE is a hand-written React component that owns its URL outright
   // (src/pages/tutorials.tsx replaces the Antora tutorials landing page). The
@@ -103,6 +112,8 @@ function main () {
   pages = pages.filter((p) => !isSitePage(p.url))
   if (opts.component) pages = pages.filter((p) => p.component === opts.component)
   if (opts.id) pages = pages.filter((p) => p.url === opts.id)
+
+  const completeness = opts.strict ? checkCompleteness(opts, meta, manifest, dispositions, allGolden) : null
 
   // --- per-page comparison -------------------------------------------------
   const { accept, errors: acceptErrors } = loadAccepted(path.join(__dirname, 'accepted.json'))
@@ -164,8 +175,36 @@ function main () {
     .sort()
 
   writeReport(opts, meta, { total: pages.length, converted, pending, regressed, siteOwned },
-    report, { accepted: acceptedDiffs, stale, acceptErrors })
-  process.exit(regressed > 0 || stale.length > 0 || acceptErrors.length > 0 ? 1 : 0)
+    report, { accepted: acceptedDiffs, stale, acceptErrors }, completeness)
+  process.exit(regressed > 0 || stale.length > 0 || acceptErrors.length > 0 ||
+    (completeness && !completeness.ok) ? 1 : 0)
+}
+
+// Strict mode: judged against the live set from the manifest, not the golden, so
+// a page that failed to render (absent from the golden, listed in
+// snapshot-errors.json) is a failure rather than invisible.
+function checkCompleteness (opts, meta, manifest, dispositions, allGolden) {
+  let expected = expectedPages(manifest, dispositions)
+  if (opts.component) expected = expected.filter((r) => r.component === opts.component)
+  if (opts.id) expected = expected.filter((r) => r.url === opts.id)
+
+  const errorsFile = path.join(opts.goldenDir, 'snapshot-errors.json')
+  const renderErrors = new Map(fs.existsSync(errorsFile)
+    ? JSON.parse(fs.readFileSync(errorsFile, 'utf8')).map((e) => [e.id, e.message])
+    : [])
+  const goldenUrls = new Set(allGolden.map((p) => p.url))
+
+  const missingGolden = []
+  const notConverted = []
+  for (const r of expected) {
+    if (!goldenUrls.has(r.url)) missingGolden.push({ url: r.url, error: renderErrors.get(renderId(r)) || null })
+    else if (!resolveConverted(opts.buildDir, r.url)) notConverted.push(r.url)
+  }
+  const scopedSnapshot = meta.component || null
+  return {
+    ok: !scopedSnapshot && !missingGolden.length && !notConverted.length,
+    expected: expected.length, scopedSnapshot, missingGolden, notConverted,
+  }
 }
 
 // One flat list of a page's diffs, tagged by layer, for accept-list matching.
@@ -185,7 +224,7 @@ function acceptKey (url, d) {
   return `fidelity:L1: ${url} ${d.op} ${JSON.stringify(d.text)}`
 }
 
-function writeReport (opts, meta, counts, report, acceptance) {
+function writeReport (opts, meta, counts, report, acceptance, completeness) {
   const outDir = path.resolve('build/diff')
   fs.mkdirSync(outDir, { recursive: true })
   fs.writeFileSync(path.join(outDir, 'fidelity-report.json'),
@@ -198,14 +237,16 @@ function writeReport (opts, meta, counts, report, acceptance) {
       accepted: acceptance.accepted.map((a) => ({ key: a.key, url: a.url, ...a.entry })),
       staleAcceptedKeys: acceptance.stale,
       acceptErrors: acceptance.acceptErrors,
+      completeness,
     }, null, 2) + '\n')
 
-  if (opts.json) { console.log(JSON.stringify({ counts, report, ...acceptance })); return }
+  if (opts.json) { console.log(JSON.stringify({ counts, report, ...acceptance, completeness })); return }
 
   const scope = opts.id ? `id=${opts.id}` : opts.component ? `component=${opts.component}` : 'all components'
   console.log(`\n[fidelity] ${scope}  layers=${[...opts.layers].join(',')}  pin ${meta.lockfileKey.slice(0, 12)} OK`)
   console.log(`[fidelity] golden pages in scope: ${counts.total} | converted found: ${counts.converted} | not yet converted: ${counts.pending}` +
     (counts.siteOwned ? ` | ${counts.siteOwned} site page(s) excluded (a hand-written component owns the URL)` : ''))
+  if (completeness) printCompleteness(completeness)
   if (counts.converted === 0) {
     console.log('[fidelity] nothing converted in scope yet -- harness is ready; convert pages then re-run.')
     return
@@ -248,6 +289,29 @@ function writeReport (opts, meta, counts, report, acceptance) {
 
   console.log(`\n[fidelity] ${counts.regressed} page(s) with regressions; ${counts.converted - counts.regressed} clean` +
     (acceptance.accepted.length ? `; ${acceptance.accepted.length} accepted difference(s)` : '') + '.')
+}
+
+function printCompleteness (c) {
+  const LIMIT = 50
+  const list = (rows, fmt) => {
+    for (const r of rows.slice(0, LIMIT)) console.log(`      ${fmt(r)}`)
+    if (rows.length > LIMIT) console.log(`      ... +${rows.length - LIMIT} more (build/diff/fidelity-report.json)`)
+  }
+  if (c.ok) {
+    console.log(`[fidelity] strict: all ${c.expected} live page(s) have a golden and a converted page`)
+    return
+  }
+  if (c.scopedSnapshot) {
+    console.log(`\n[fidelity] ✗ strict: the golden snapshot is scoped to component=${c.scopedSnapshot}, not the full corpus`)
+  }
+  if (c.missingGolden.length) {
+    console.log(`\n[fidelity] ✗ strict: ${c.missingGolden.length} live page(s) have NO golden -- every layer skips them:`)
+    list(c.missingGolden, (r) => `${r.url}${r.error ? `  (render failed: ${r.error})` : ''}`)
+  }
+  if (c.notConverted.length) {
+    console.log(`\n[fidelity] ✗ strict: ${c.notConverted.length} live page(s) have no converted page in the build:`)
+    list(c.notConverted, (u) => u)
+  }
 }
 
 main()

@@ -17,6 +17,7 @@ const SUITES = [
   { name: 'slice-region', script: 'lib/slice-region-selftest.js' },
   { name: 'accepted', script: 'lib/accepted-selftest.js' },
   { name: 'dispositions', script: 'lib/dispositions-selftest.js' },
+  { name: 'live-set', script: 'lib/live-set-selftest.js' },
   { name: 'converter', script: 'converter/selftest.js' },
   { name: 'fidelity', script: 'fidelity/selftest.js' },
   { name: 'refs', script: 'refcheck/selftest.js' },

@@ -30,14 +30,19 @@
 //   node refcheck/run.js [--component cloud|operator] [--id /url]
 //                        [--census build/census] [--golden build/golden]
 //                        [--manifest build/manifest] [--out-root ..]
-//                        [--sources .sources] [--json]
+//                        [--sources .sources] [--json] [--strict]
 //
 // Exit non-zero on any finding: this is a gate, not a report.
+//
+// --strict adds the cutover completeness check: a live page with no converted
+// MDX, no census page or no golden (each otherwise silently skipped), a scoped
+// census, or a migrated component this gate does not cover, all fail.
 
 const fs = require('node:fs')
 const path = require('node:path')
 
 const { NAV_SOURCES, versionsToProcess, outDirFor } = require('../lib/layout')
+const { MIGRATED_COMPONENTS } = require('../lib/live-set')
 const { stagedIdsByPath } = require('../lib/staged-examples')
 const { collectPageExamples } = require('./lib/source-refs')
 const { indexOutput, refCounts, exampleImports, frontmatterTokens, urlToSlug } = require('./lib/mdx-refs')
@@ -60,6 +65,7 @@ function parseArgs (argv) {
     outRoot: path.resolve(val('--out-root', '..')),
     sourcesDir: path.resolve(val('--sources', '.sources')),
     json: has('--json'),
+    strict: has('--strict'),
   }
 }
 
@@ -126,6 +132,8 @@ function main () {
   const guardFails = []     // unmasking the census did not reproduce the golden
   const exampleFindings = []
   const dispositionTally = new Map()
+  // Strict-mode completeness: the pages each silent `continue` below skips.
+  const missing = { notConverted: [], noCensus: [], noGolden: [] }
   const counts = { pages: 0, checked: 0, pending: 0, noCensus: 0, anchorDerived: 0, exPages: 0, exSites: 0, exUses: 0, exOver: 0 }
   const dispositions = loadDispositions()
   const { accept, errors: acceptErrors } = loadAccepted(path.join(__dirname, 'accepted.json'))
@@ -144,9 +152,9 @@ function main () {
         counts.pages++
         const slug = urlToSlug(resource.url, component, seg)
         const pageFile = bySlug.get(slug)
-        if (!pageFile) { counts.pending++; continue } // not converted yet -- not a regression
+        if (!pageFile) { counts.pending++; missing.notConverted.push(resource.url); continue } // not converted yet -- not a regression
         const censusFile = censusByUrl.get(resource.url)
-        if (!censusFile) { counts.noCensus++; continue } // census not rendered for this scope
+        if (!censusFile) { counts.noCensus++; missing.noCensus.push(resource.url); continue } // census not rendered for this scope
         counts.checked++
 
         const scope = { component, seg, url: resource.url }
@@ -184,6 +192,7 @@ function main () {
         // real values back does not reproduce the golden (beyond derived anchor
         // ids), the ledger above was read off an untrustworthy render.
         const goldenFile = goldenByUrl.get(resource.url)
+        if (!goldenFile) missing.noGolden.push(resource.url)
         if (goldenFile) {
           const { verdict, residual } = unmaskGuard(censusFile, goldenFile, census.tokens)
           if (verdict === 'anchor-derived') counts.anchorDerived++
@@ -278,12 +287,40 @@ function main () {
     stale,
     acceptErrors,
   }
-  report(opts, counts, findings, dispositionTally)
+  const completeness = opts.strict ? {
+    ...missing,
+    scopedCensus: census.component || null,
+    uncovered: MIGRATED_COMPONENTS.filter((c) => !NAV_SOURCES[c] && (!opts.component || c === opts.component)),
+  } : null
+  if (completeness) {
+    completeness.ok = !completeness.scopedCensus && !completeness.uncovered.length &&
+      !missing.notConverted.length && !missing.noCensus.length && !missing.noGolden.length
+  }
+  report(opts, counts, findings, dispositionTally, completeness)
   process.exit(blocking.length + unknownCtx.length + guardFails.length +
-    stale.length + acceptErrors.length > 0 ? 1 : 0)
+    stale.length + acceptErrors.length > 0 || (completeness && !completeness.ok) ? 1 : 0)
 }
 
-function report (opts, counts, f, dispositionTally) {
+function printCompleteness (c) {
+  const LIMIT = 50
+  const list = (label, urls) => {
+    if (!urls.length) return
+    console.log(`\n[refcheck] ✗ strict: ${urls.length} live page(s) ${label}:`)
+    for (const u of urls.slice(0, LIMIT)) console.log(`      ${u}`)
+    if (urls.length > LIMIT) console.log(`      ... +${urls.length - LIMIT} more (build/refcheck-report.json)`)
+  }
+  if (c.ok) { console.log('[refcheck] strict: every live page was converted, censused and checked'); return }
+  if (c.scopedCensus) console.log(`\n[refcheck] ✗ strict: the census is scoped to component=${c.scopedCensus}, not the full corpus`)
+  if (c.uncovered.length) {
+    console.log(`\n[refcheck] ✗ strict: migrated component(s) this gate does not check: ${c.uncovered.join(', ')}` +
+      ' (not in lib/layout.js NAV_SOURCES)')
+  }
+  list('have no converted MDX', c.notConverted)
+  list('have no census page', c.noCensus)
+  list('have no golden, so the census guard never ran', c.noGolden)
+}
+
+function report (opts, counts, f, dispositionTally, completeness) {
   const outFile = path.resolve('build/refcheck-report.json')
   fs.mkdirSync(path.dirname(outFile), { recursive: true })
   fs.writeFileSync(outFile, JSON.stringify({
@@ -302,10 +339,11 @@ function report (opts, counts, f, dispositionTally) {
     accepted: f.accepted.map((a) => ({ key: a.key, ...a.entry, finding: a.finding })),
     staleAcceptedKeys: f.stale,
     acceptErrors: f.acceptErrors,
+    completeness,
   }, null, 2) + '\n')
 
   if (opts.json) {
-    console.log(JSON.stringify({ counts, ...f }))
+    console.log(JSON.stringify({ counts, ...f, completeness }))
     return
   }
 
@@ -314,6 +352,7 @@ function report (opts, counts, f, dispositionTally) {
   console.log(`[refcheck] pages in scope: ${counts.pages} | converted & checked: ${counts.checked}` +
     ` | not yet converted: ${counts.pending}` +
     (counts.noCensus ? ` | no census page: ${counts.noCensus}` : ''))
+  if (completeness) printCompleteness(completeness)
 
   // Recorded dispositions: positions where a reference CANNOT be preserved. Not
   // findings -- printed so the cost of those decisions stays visible.
