@@ -12,12 +12,14 @@
 //     target lacks is `dropped-anchor-cross`: the golden index answers "was this
 //     ever a real target", the converted one "is it still one". Without the
 //     second, a converted page that loses an id passes every inbound deep link.
+//     With `isBuilt` (see builtTargetLookup), a target the manifest knows but our
+//     build does not serve is `dead-link-built`.
 //   - external / mailto / tel: not checked here.
 // Returns a list of problems, each tagged so the report can rank them.
 
 const { extractLinks } = require('./links')
 
-function checkPage ({ html, pageUrl, ids: ownIds, fragment = true }, { manifestIndex, anchorIndex, siteHost, convertedAnchors }) {
+function checkPage ({ html, pageUrl, ids: ownIds, fragment = true }, { manifestIndex, anchorIndex, siteHost, convertedAnchors, isBuilt }) {
   const { ids, links } = extractLinks(html, pageUrl, siteHost, { fragment })
   const selfIds = ownIds || ids
   const problems = []
@@ -37,6 +39,10 @@ function checkPage ({ html, pageUrl, ids: ownIds, fragment = true }, { manifestI
     const canonical = manifestIndex.resolve(p)
     if (!canonical) {
       problems.push({ type: 'dead-link', path: p, anchor: link.anchor || null })
+      continue
+    }
+    if (isBuilt && !isBuilt(canonical)) {
+      problems.push({ type: 'dead-link-built', path: canonical, anchor: link.anchor || null })
       continue
     }
     if (link.anchor) {

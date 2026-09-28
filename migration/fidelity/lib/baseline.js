@@ -21,6 +21,7 @@ function problemKey (pr) {
     case 'dead-link': return `dead-link|${pr.path}`
     case 'dead-anchor-self': return `dead-anchor-self|${pr.anchor}`
     case 'dead-anchor-cross': return `dead-anchor-cross|${pr.path}|${pr.anchor}`
+    case 'dead-link-built': return `dead-link-built|${pr.path}`
     case 'dropped-anchor-cross': return `dropped-anchor-cross|${pr.path}|${pr.anchor}`
     case 'malformed-href': return `malformed-href|${pr.href}`
     default: return `${pr.type}|${JSON.stringify(pr)}`

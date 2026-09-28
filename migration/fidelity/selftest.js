@@ -30,7 +30,7 @@ const { compareInventory, compareTitle, compareLinkTargets } = require('./lib/la
 const { linkTargets, linkDeps } = require('./lib/link-targets')
 const { extractMain, extractPage } = require('./lib/extract-main')
 const { checkPage } = require('./lib/layer3')
-const { convertedAnchorLookup } = require('./lib/anchor-index')
+const { convertedAnchorLookup, builtTargetLookup } = require('./lib/anchor-index')
 const { problemKey, novelProblems } = require('./lib/baseline')
 const { urlFromGoldenRel, convertedCandidates } = require('./lib/pairing')
 const adoc = require('@asciidoctor/core')()
@@ -882,6 +882,49 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
   assert.strictEqual(look('/cloud/missing'), null, 'no built page -> null')
   fs.rmSync(dir, { recursive: true })
   ok('convertedAnchorLookup: quote-agnostic ids from the whole built page, null when unbuilt')
+}
+
+// --- built targets: a link the manifest resolves must be served by OUR build ---
+// The spec: in a live version, a page or alias URL with nothing in the build is
+// dead-link-built; outside the live set it is never a failure, only tallied.
+{
+  const fs = require('node:fs')
+  const os = require('node:os')
+  const path = require('node:path')
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fid-built-'))
+  fs.mkdirSync(path.join(dir, 'hz', '5.7'), { recursive: true })
+  fs.writeFileSync(path.join(dir, 'hz', '5.7', 'here.html'), '<html></html>')
+  fs.writeFileSync(path.join(dir, 'hz', '5.7', 'old-name.html'), '<meta http-equiv="refresh">') // a client redirect
+  const manifest = { resources: [
+    { url: '/hz/5.7/here', family: 'page', component: 'hz', version: '5.7' },
+    { url: '/hz/5.7/gone', family: 'page', component: 'hz', version: '5.7' },
+    { url: '/hz/5.7/old-name', family: 'alias', component: 'hz', version: '5.7' },
+    { url: '/hz/5.7/_images/a.png', family: 'image', component: 'hz', version: '5.7' },
+    { url: '/hz/5.2/frozen', family: 'page', component: 'hz', version: '5.2' },
+    { url: '/imdg/4.2/x', family: 'page', component: 'imdg', version: '4.2' },
+  ] }
+  const { isBuilt, outside } = builtTargetLookup(dir, manifest, new Map([['hz', new Set(['5.7'])]]))
+  assert.strictEqual(isBuilt('/hz/5.7/here'), true, 'a built page')
+  assert.strictEqual(isBuilt('/hz/5.7/gone'), false, 'a live page with nothing built')
+  assert.strictEqual(isBuilt('/hz/5.7/old-name'), true, 'an alias served by its client-redirect file')
+  assert.strictEqual(isBuilt('/hz/5.7/_images/a.png'), true, 'not a page: out of scope here')
+  assert.strictEqual(isBuilt('/hz/5.2/frozen'), true, 'a non-live version is not judged...')
+  isBuilt('/imdg/4.2/x'); isBuilt('/imdg/4.2/x')
+  assert.deepStrictEqual([...outside].sort(), [['hz@5.2', 1], ['imdg@4.2', 2]], '...but every link into one is counted')
+
+  const deps = {
+    manifestIndex: { resolve: (p) => p },
+    anchorIndex: new Map([['/hz/5.7/gone', new Set(['s'])]]),
+    siteHost: 'docs.hazelcast.com',
+    isBuilt,
+    convertedAnchors: () => null,
+  }
+  const problems = checkPage({ html: '<a href="/hz/5.7/gone#s">x</a><a href="/hz/5.7/here">y</a>', pageUrl: '/hz/5.7/here' }, deps)
+  assert.deepStrictEqual(problems, [{ type: 'dead-link-built', path: '/hz/5.7/gone', anchor: 's' }],
+    'checkPage reports the unbuilt target once, and nothing for the built one')
+  assert.strictEqual(problemKey(problems[0]), 'dead-link-built|/hz/5.7/gone', 'keyed by target, not fragment')
+  fs.rmSync(dir, { recursive: true })
+  ok('builtTargetLookup / dead-link-built: live targets must be built; others are tallied, not failed')
 }
 
 // --- baseline: subtract known-broken golden problems -------------------------

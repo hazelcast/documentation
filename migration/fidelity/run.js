@@ -29,9 +29,9 @@ const { goldenPages, resolveConverted, readGolden } = require('./lib/pairing')
 const { buildIndex } = require('./lib/manifest-index')
 const { loadDispositions, unpublishedUrls } = require('../lib/dispositions')
 const { isSitePage } = require('../lib/layout')
-const { expectedPages, renderId } = require('../lib/live-set')
+const { expectedPages, renderId, liveVersions } = require('../lib/live-set')
 const { loadAccepted } = require('../lib/accepted')
-const { loadAnchorIndex, convertedAnchorLookup } = require('./lib/anchor-index')
+const { loadAnchorIndex, convertedAnchorLookup, builtTargetLookup } = require('./lib/anchor-index')
 const { loadInventoryIndex } = require('./lib/inventory-index')
 const { loadBaseline, novelProblems } = require('./lib/baseline')
 const { checkPage } = require('./lib/layer3')
@@ -92,7 +92,8 @@ function main () {
   // The baseline is golden-only, so it gets the deps WITHOUT the converted
   // anchors: a dropped anchor must never be subtracted away as pre-existing.
   const baseline = loadBaseline(opts.goldenDir, l3deps, currentKey, path.join(opts.goldenDir, 'layer3-baseline.json'))
-  const pageL3deps = { ...l3deps, convertedAnchors: convertedAnchorLookup(opts.buildDir) }
+  const built = builtTargetLookup(opts.buildDir, manifest, liveVersions())
+  const pageL3deps = { ...l3deps, convertedAnchors: convertedAnchorLookup(opts.buildDir), isBuilt: built.isBuilt }
   const titles = new Map(manifest.resources.filter((r) => r.family === 'page').map((r) => [r.url, r.title]))
 
   // --- scope ---------------------------------------------------------------
@@ -185,7 +186,7 @@ function main () {
     .sort()
 
   writeReport(opts, meta, { total: pages.length, converted, pending, regressed, siteOwned },
-    report, { accepted: acceptedDiffs, stale, acceptErrors }, completeness)
+    report, { accepted: acceptedDiffs, stale, acceptErrors }, completeness, built.outside)
   process.exit(regressed > 0 || stale.length > 0 || acceptErrors.length > 0 ||
     (completeness && !completeness.ok) ? 1 : 0)
 }
@@ -234,7 +235,7 @@ function acceptKey (url, d) {
   return `fidelity:L1: ${url} ${d.op} ${JSON.stringify(d.text)}`
 }
 
-function writeReport (opts, meta, counts, report, acceptance, completeness) {
+function writeReport (opts, meta, counts, report, acceptance, completeness, outside = new Map()) {
   const outDir = path.resolve('build/diff')
   fs.mkdirSync(outDir, { recursive: true })
   fs.writeFileSync(path.join(outDir, 'fidelity-report.json'),
@@ -248,6 +249,7 @@ function writeReport (opts, meta, counts, report, acceptance, completeness) {
       staleAcceptedKeys: acceptance.stale,
       acceptErrors: acceptance.acceptErrors,
       completeness,
+      linksOutsideLiveSet: Object.fromEntries([...outside].sort()),
     }, null, 2) + '\n')
 
   if (opts.json) { console.log(JSON.stringify({ counts, report, ...acceptance, completeness })); return }
@@ -295,6 +297,15 @@ function writeReport (opts, meta, counts, report, acceptance, completeness) {
     console.log(`\n[fidelity] ✗ ${acceptance.stale.length} STALE accepted entr${acceptance.stale.length === 1 ? 'y' : 'ies'}` +
       ' — the difference no longer occurs, so the file now claims a discrepancy that is fixed. Prune it:')
     for (const k of acceptance.stale) console.log(`      ${k}`)
+  }
+
+  // Links into versions we do not migrate: not a regression, but they resolve
+  // for a reader only once frozen versions are hosted, so they are shown every run.
+  if (outside.size) {
+    const total = [...outside.values()].reduce((a, b) => a + b, 0)
+    console.log(`\n[fidelity] ${total} link(s) point into ${outside.size} version(s) outside the live set` +
+      ' -- they work only once frozen versions are hosted:')
+    console.log('      ' + [...outside].sort().map(([k, n]) => `${k} (${n})`).join(', '))
   }
 
   console.log(`\n[fidelity] ${counts.regressed} page(s) with regressions; ${counts.converted - counts.regressed} clean` +

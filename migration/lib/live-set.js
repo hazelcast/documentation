@@ -13,15 +13,21 @@ const { isUnpublished } = require('./dispositions')
 // converted without a nav source.
 const MIGRATED_COMPONENTS = [...Object.keys(NAV_SOURCES), ...NAVLESS]
 
+// component -> the Set of its live version segments ('' for an unversioned one).
+const liveVersions = (components = MIGRATED_COMPONENTS) =>
+  new Map(components.map((c) => [c, new Set(versionsToProcess(c).map((v) => v.seg || ''))]))
+
+const isLiveResource = (live, r) => live.has(r.component) && live.get(r.component).has(r.version || '')
+
 function expectedPages (manifest, dispositions, components = MIGRATED_COMPONENTS) {
-  const live = new Map(components.map((c) => [c, new Set(versionsToProcess(c).map((v) => v.seg || ''))]))
+  const live = liveVersions(components)
   return (manifest.resources || []).filter((r) =>
     r.family === 'page' && r.url &&
-    live.has(r.component) && live.get(r.component).has(r.version || '') &&
+    isLiveResource(live, r) &&
     !isUnpublished(dispositions, r) && !isSitePage(r.url))
 }
 
 // The id build-snapshot.js records a failed render under (snapshot-errors.json).
 const renderId = (r) => `${r.version || ''}@${r.component}:${r.module}:${r.relative}`
 
-module.exports = { MIGRATED_COMPONENTS, expectedPages, renderId }
+module.exports = { MIGRATED_COMPONENTS, expectedPages, renderId, liveVersions, isLiveResource }
