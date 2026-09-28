@@ -87,11 +87,6 @@ const config: Config = {
   // links to.
   staticDirectories: ['static', '.api-specs'],
 
-  // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'facebook', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
-
   // Migration in progress: links to not-yet-converted components (and the few
   // links broken in production) must not fail the build. Flip back to 'throw'
   // once every component is migrated.
