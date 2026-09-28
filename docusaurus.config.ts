@@ -87,15 +87,12 @@ const config: Config = {
   // links to.
   staticDirectories: ['static', '.api-specs'],
 
-  // Migration in progress: links to not-yet-converted components (and the few
-  // links broken in production) must not fail the build. Flip back to 'throw'
-  // once every component is migrated.
-  onBrokenLinks: 'warn',
+  onBrokenLinks: 'throw',
   onBrokenAnchors: 'ignore',
 
   markdown: {
     hooks: {
-      onBrokenMarkdownLinks: 'warn',
+      onBrokenMarkdownLinks: 'throw',
       // Images are co-located with the pages that use them and referenced by a
       // relative path, so webpack resolves and fingerprints each one. A missing
       // image is a real error (a page migrated without its assets), so fail the
