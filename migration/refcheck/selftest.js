@@ -13,7 +13,7 @@ const os = require('node:os')
 const path = require('node:path')
 
 const {
-  poisonAttributes, poisonedValueFor, unmask, residualTokens, tokenFor,
+  poisonAttributes, poisonComponentVersions, poisonedValueFor, unmask, residualTokens, tokenFor,
 } = require('../antora-extension/poison-attributes')
 const { isReserved } = require('../lib/reserved-attrs')
 const { scanCensusPage, maskDerivedIds, unmaskGuard, hiddenBranchComponents } = require('./lib/census-ledger')
@@ -52,6 +52,33 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
   assert.notStrictEqual(attrs['hazelcast-cloud'], 'Cloud', 'a content value is replaced IN PLACE')
   assert.strictEqual(new Set(entries.map((e) => e.token)).size, entries.length, 'tokens are unique')
   ok('poisonAttributes: poisons content only; records why each skip was skipped')
+}
+
+// --- poisoning: component versions that share one table -----------------------
+// Antora hands a component version with no `asciidoc` of its own the SITE config
+// by reference. Each version must still come out with its own token whose
+// recorded value is the REAL value, and the site table must stay unpoisoned.
+{
+  const site = { attributes: { 'hazelcast-cloud': 'Cloud' } }
+  const components = [
+    { name: 'home', versions: [{ version: '', asciidoc: site }] },
+    { name: 'tutorials', versions: [{ version: '', asciidoc: site }] },
+    { name: 'imdg', versions: [{ version: '4.2', asciidoc: site }] },
+  ]
+  let seq = 0
+  const { entries } = poisonComponentVersions(components, (c) => c !== 'imdg', () => ++seq)
+  assert.deepStrictEqual(entries.map((e) => `${e.component}:${e.value}`), ['home:Cloud', 'tutorials:Cloud'],
+    'every sharer records the real value, not a previous sharer\'s token')
+  const [home, tutorials] = entries
+  assert.notStrictEqual(home.token, tutorials.token, 'each sharer gets its own token')
+  assert.strictEqual(components[0].versions[0].asciidoc.attributes['hazelcast-cloud'], home.rendered,
+    'home renders its own token')
+  assert.strictEqual(components[1].versions[0].asciidoc.attributes['hazelcast-cloud'], tutorials.rendered,
+    'tutorials renders its own token')
+  assert.strictEqual(site.attributes['hazelcast-cloud'], 'Cloud', 'the shared site table is not poisoned')
+  assert.strictEqual(components[2].versions[0].asciidoc.attributes['hazelcast-cloud'], 'Cloud',
+    'an out-of-scope component is not poisoned')
+  ok('poisonComponentVersions: a shared table is poisoned once per version, never cumulatively')
 }
 
 // --- poisoning: shape preservation -------------------------------------------

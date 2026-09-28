@@ -28,13 +28,16 @@ function variants (url) {
 
 function buildIndex (manifest) {
   const byFamily = { page: new Set(), image: new Set(), attachment: new Set(), alias: new Set() }
-  const all = new Set()
-  for (const r of manifest.resources || []) {
-    if (!r.url) continue
+  // variant -> the resource's own URL. A resource's exact URL is never taken over
+  // by another resource's slash variant.
+  const all = new Map()
+  const resources = (manifest.resources || []).filter((r) => r.url)
+  for (const r of resources) all.set(r.url, r.url)
+  for (const r of resources) {
     const bucket = byFamily[r.family]
     for (const v of variants(r.url)) {
       if (bucket) bucket.add(v)
-      all.add(v)
+      if (!all.has(v)) all.set(v, r.url)
     }
   }
 
@@ -53,9 +56,9 @@ function buildIndex (manifest) {
   // can still hit the trailing-slash/.html variants).
   function resolve (p) {
     if (!p) return null
-    if (all.has(p)) return p
+    if (all.has(p)) return all.get(p)
     const noHtml = p.replace(/\.html$/, '')
-    if (noHtml !== p && all.has(noHtml)) return noHtml
+    if (noHtml !== p && all.has(noHtml)) return all.get(noHtml)
     const m = p.match(/^\/([^/]+)\/(latest|latest-dev)(\/.*)?$/)
     if (m) {
       const targets = aliasTargets.get(m[1])

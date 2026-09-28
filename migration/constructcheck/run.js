@@ -24,10 +24,11 @@
 const fs = require('node:fs')
 const path = require('node:path')
 
-const { NAV_SOURCES, versionsToProcess, outDirFor } = require('../lib/layout')
+const { versionsToProcess, outDirFor, isSitePage } = require('../lib/layout')
+const { MIGRATED_COMPONENTS } = require('../lib/live-set')
 const { loadDispositions, isUnpublished } = require('../lib/dispositions')
 const { indexOutput, urlToSlug } = require('../refcheck/lib/mdx-refs')
-const { locate, includesIn, resolveTarget, sliceByTags, stripComments } = require('../refcheck/lib/source-refs')
+const { locate, includesIn, resolveTarget, sliceByTags, stripComments, pageSourceFound } = require('../refcheck/lib/source-refs')
 const { detectLexical, detectAst, gitShow } = require('./lib/detect')
 
 function parseArgs (argv) {
@@ -51,7 +52,7 @@ function pagesFor (manifest, component, seg, dispositions) {
   const key = seg == null ? '' : seg
   return (manifest.resources || []).filter((r) =>
     r.family === 'page' && r.component === component && (r.version || '') === key && r.url &&
-    !(dispositions && isUnpublished(dispositions, r)))
+    !(dispositions && isUnpublished(dispositions, r)) && !isSitePage(r.url))
 }
 
 function loadAllowlist () {
@@ -82,12 +83,18 @@ function collectPageConstructs (resource, seg, sourcesDir, useAst, url, seen) {
     if (rawText == null) return
     const scanText = stripComments(sliceByTags(rawText, tag))
 
-    for (const c of detectLexical(scanText)) record(c, `${loc.repoPath}:${c.line}`)
+    const lexical = detectLexical(scanText)
+    for (const c of lexical) record(c, `${loc.repoPath}:${c.line}`)
+    // A file included only inside listing/literal/passthrough blocks renders as
+    // code: its text is never parsed as AsciiDoc, so it has no constructs to
+    // scan (krb5.ini's `[libdefaults]` is an INI section, not a block style).
+    const parsedTargets = new Set(lexical.filter((c) => c.category === 'include' && !c.verbatim).map((c) => c.target))
     // AST parses the whole (unsliced) file so fragments do not mis-parse; it only
     // ever adds block-level kinds, never removes a lexical finding.
     if (useAst) for (const c of detectAst(stripComments(rawText))) record(c, loc.repoPath)
 
     for (const inc of includesIn(scanText)) {
+      if (!parsedTargets.has(inc.target)) continue
       const child = resolveTarget(inc.target, coord)
       if (child) walk(child, inc.tag)
     }
@@ -101,13 +108,15 @@ function main () {
   const manifest = JSON.parse(fs.readFileSync(path.join(opts.manifestDir, 'manifest.json'), 'utf8'))
   const allow = loadAllowlist()
   const dispositions = loadDispositions()
-  const components = opts.component ? [opts.component] : Object.keys(NAV_SOURCES)
+  const components = opts.component ? [opts.component] : MIGRATED_COMPONENTS
 
   const seen = new Map() // category:token -> {url, where, raw}
   const counts = { pages: 0, checked: 0, pending: 0 }
+  // A converted page whose source cannot be opened would scan as construct-free.
+  const noSource = []
 
   for (const component of components) {
-    if (!NAV_SOURCES[component]) { console.error(`[constructcheck] unknown component: ${component}`); process.exit(2) }
+    if (!MIGRATED_COMPONENTS.includes(component)) { console.error(`[constructcheck] unknown component: ${component}`); process.exit(2) }
     for (const ver of versionsToProcess(component)) {
       const seg = ver.seg
       const bySlug = indexOutput(outDirFor(opts.outRoot, component, ver))
@@ -116,6 +125,7 @@ function main () {
         const slug = urlToSlug(resource.url, component, seg)
         if (!bySlug.has(slug)) { counts.pending++; continue } // not converted yet -- out of scope
         counts.checked++
+        if (!pageSourceFound(resource, seg, opts.sourcesDir)) { noSource.push(resource.url); continue }
         collectPageConstructs(resource, seg, opts.sourcesDir, opts.ast, resource.url, seen)
       }
     }
@@ -126,28 +136,32 @@ function main () {
     .map(([key, info]) => ({ key, ...info }))
     .sort((a, b) => a.key.localeCompare(b.key))
 
-  report(opts, counts, unclassified, allow.size, seen.size)
-  process.exit(unclassified.length > 0 ? 1 : 0)
+  report(opts, counts, unclassified, allow.size, seen.size, noSource)
+  process.exit(unclassified.length > 0 || noSource.length > 0 ? 1 : 0)
 }
 
-function report (opts, counts, unclassified, allowSize, total) {
+function report (opts, counts, unclassified, allowSize, total, noSource) {
   const outFile = path.resolve('build/constructcheck-report.json')
   fs.mkdirSync(path.dirname(outFile), { recursive: true })
   fs.writeFileSync(outFile, JSON.stringify({
     generatedAt: new Date().toISOString(),
     scope: { component: opts.component, ast: opts.ast },
-    counts, allowlisted: allowSize, distinctConstructs: total, unclassified,
+    counts, allowlisted: allowSize, distinctConstructs: total, unclassified, noSource,
   }, null, 2) + '\n')
 
-  if (opts.json) { console.log(JSON.stringify({ counts, unclassified })); return }
+  if (opts.json) { console.log(JSON.stringify({ counts, unclassified, noSource })); return }
 
-  const scope = opts.component ? `component=${opts.component}` : 'all migrated components (cloud, operator)'
+  const scope = opts.component ? `component=${opts.component}` : 'all migrated components'
   console.log(`\n[constructcheck] ${scope}`)
   console.log(`[constructcheck] pages in scope: ${counts.pages} | converted & scanned: ${counts.checked} | not yet converted: ${counts.pending}`)
   console.log(`[constructcheck] distinct constructs seen: ${total} | allowlisted (verified): ${allowSize} | unclassified: ${unclassified.length}`)
+  if (noSource.length) {
+    console.log(`\n[constructcheck] ✗ ${noSource.length} converted page(s) whose source cannot be opened -- not scanned:`)
+    for (const u of noSource) console.log(`      ${u}`)
+  }
 
   if (!unclassified.length) {
-    console.log('[constructcheck] every construct in the migrated set is verified & allowlisted. ✓')
+    if (!noSource.length) console.log('[constructcheck] every construct in the migrated set is verified & allowlisted. ✓')
     return
   }
 

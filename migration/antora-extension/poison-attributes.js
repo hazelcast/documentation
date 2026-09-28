@@ -140,6 +140,33 @@ function poisonAttributes (attributes, nextToken) {
   return { entries, skipped }
 }
 
+// Poison every in-scope component version's table. A version without its own
+// `asciidoc` config is handed the SITE config by reference -- home, privacy,
+// tutorials and templates all are -- so poisoning in place would re-poison one
+// shared table once per sharer, each pass recording the previous pass's token as
+// the "real" value, and the unmask guard could then never recover the render.
+// Each version gets its own table before any is touched.
+// `components` is Antora-shaped: [{ name, versions: [{ version, asciidoc }] }].
+function poisonComponentVersions (components, inScope, nextToken) {
+  const entries = []
+  const skipped = []
+  const targets = []
+  for (const comp of components) {
+    if (!inScope(comp.name)) continue
+    for (const v of comp.versions) {
+      if (!v.asciidoc || !v.asciidoc.attributes) continue
+      v.asciidoc = { ...v.asciidoc, attributes: { ...v.asciidoc.attributes } }
+      targets.push([comp.name, v])
+    }
+  }
+  for (const [component, v] of targets) {
+    const r = poisonAttributes(v.asciidoc.attributes, nextToken)
+    for (const e of r.entries) entries.push({ component, version: v.version, ...e })
+    for (const s of r.skipped) skipped.push({ component, version: v.version, ...s })
+  }
+  return { entries, skipped }
+}
+
 // Put the real values back. Longest `rendered` first so no entry can be eaten by
 // another's prefix. Only unmask-safe entries are substituted; the caller must
 // exclude pages carrying an unsafe entry from the byte-equality guard.
@@ -156,6 +183,6 @@ function unmask (html, entries) {
 const residualTokens = (html) => [...new Set(html.match(TOKEN_RE) || [])]
 
 module.exports = {
-  poisonAttributes, poisonedValueFor, preResolveTargets, unmask, residualTokens, tokenFor, TOKEN_RE,
+  poisonAttributes, poisonComponentVersions, poisonedValueFor, preResolveTargets, unmask, residualTokens, tokenFor, TOKEN_RE,
   SKIP_RESERVED, SKIP_FLAG, SKIP_EMPTY,
 }

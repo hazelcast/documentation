@@ -45,6 +45,16 @@ function stagedIdsByPath (component, outRoot) {
   return byPath
 }
 
+// The same ids keyed by `<repo name>:<path>`. A path alone is ambiguous once a
+// component stages from several repos: six tutorials guides each stage a
+// top-level `pom.xml`, and a path-keyed map keeps only the last.
+function stagedIdsByRepoPath (component, outRoot) {
+  const byRepoPath = new Map()
+  const manifest = readManifest(component, outRoot)
+  for (const f of (manifest && manifest.files) || []) byRepoPath.set(`${path.posix.basename(f.repo)}:${f.path}`, f.id)
+  return byRepoPath
+}
+
 // Tag specs recorded by extract-examples that a file's own markers cannot reveal
 // (lists, negations) -- the converter's content index needs them to match at all.
 const manifestSelectors = (component, outRoot) => {
@@ -63,4 +73,4 @@ function stagedRel (file) {
   return i === -1 ? null : norm.slice(i + marker.length)
 }
 
-module.exports = { EXAMPLES_STAGING, referenceManifest, stagedIdsByPath, manifestSelectors, stagedRel }
+module.exports = { EXAMPLES_STAGING, referenceManifest, stagedIdsByPath, stagedIdsByRepoPath, manifestSelectors, stagedRel }

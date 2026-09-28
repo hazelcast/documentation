@@ -119,7 +119,7 @@ function detectLexical (text) {
   for (let i = 0; i < lines.length; i++) {
     const s = lines[i]
     const t = s.trim()
-    const push = (category, token) => out.push({ category, token, line: i + 1, raw: s.trim().slice(0, 100) })
+    const push = (category, token, extra) => out.push({ category, token, line: i + 1, raw: s.trim().slice(0, 100), ...extra })
 
     if (verbatim !== null) {
       // Inside verbatim content. Only the PREPROCESSOR directives are still live
@@ -134,8 +134,9 @@ function detectLexical (text) {
       let mv = s.match(RE_COND)
       if (mv) { push('conditional', `${mv[1]}::${mv[2]}`); continue }
       if (RE_ENDIF.test(s)) { push('conditional', 'endif::'); continue }
+      // `verbatim`: the included file lands as code, never parsed as AsciiDoc.
       mv = s.match(RE_INCLUDE)
-      if (mv) push('include', includeFamily(mv[1]))
+      if (mv) push('include', includeFamily(mv[1]), { target: mv[1], verbatim: true })
       continue
     }
 
@@ -151,7 +152,7 @@ function detectLexical (text) {
     if (RE_ENDIF.test(s)) { push('conditional', 'endif::'); continue }
 
     m = s.match(RE_INCLUDE)
-    if (m) push('include', includeFamily(m[1]))
+    if (m) push('include', includeFamily(m[1]), { target: m[1], verbatim: false })
 
     m = s.match(RE_BLOCKMAC)
     if (m && !['include', 'ifdef', 'ifndef', 'ifeval', 'endif'].includes(m[1])) push('block-macro', `${m[1]}::`)

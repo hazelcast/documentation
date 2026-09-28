@@ -26,12 +26,13 @@
 const { execFileSync } = require('node:child_process')
 const path = require('node:path')
 
-const { gitShowThroughLinks } = require('../../lib/git-links')
+const { gitShowThroughLinks, resolveGitLinks } = require('../../lib/git-links')
 
 // sourceMirrorFor, not NAV_SOURCES: the question here is always "can I open this
 // component's files", which includes the read-only sources (templates =
 // hazelcast-code-samples) that publish nothing but are included FROM.
 const { sourceMirrorFor, refFor } = require('../../lib/layout')
+const { hasLockedSources, locateLocked } = require('../../lib/locked-sources')
 // The same substituter the converter and <Variable> use, for `{attr}`s in an
 // include target (Antora substitutes them there).
 const substitute = require('../../../plugins/lib/substitute-attributes')
@@ -141,7 +142,7 @@ function resolveTarget (target, from) {
     const relative = parts[parts.length - 1]
     const module = parts[parts.length - 2] || from.module || 'ROOT'
     const component = parts.length >= 3 ? (parts[parts.length - 3] || from.component) : from.component
-    if (!sourceMirrorFor(component)) return null
+    if (!canOpen(component)) return null
     return { component, module, family: from.family, version, relative }
   }
   const coord = t.slice(0, dollar)
@@ -153,12 +154,19 @@ function resolveTarget (target, from) {
   let module = from.module || 'ROOT'
   if (parts.length === 2) module = parts[0] || module
   else if (parts.length >= 3) { component = parts[parts.length - 3] || component; module = parts[parts.length - 2] || module }
-  if (!sourceMirrorFor(component)) return null // no mirror for this component (resolution-only)
+  if (!canOpen(component)) return null // no source for this component (resolution-only)
   return { component, module, family, version, relative }
 }
 
+const canOpen = (component) => !!sourceMirrorFor(component) || hasLockedSources(component)
+
 // The mirror repo dir + branch + in-repo path for a resolved coord at `seg`.
 function locate (coord, seg, sourcesDir) {
+  if (hasLockedSources(coord.component)) {
+    const rel = path.posix.join('modules', coord.module || 'ROOT', FAMILY_DIR[coord.family], coord.relative)
+    const hit = locateLocked(coord.component, rel, sourcesDir)
+    if (hit) return hit
+  }
   const src = sourceMirrorFor(coord.component)
   if (!src) return null
   // Derived from the nav.adoc path for a published component; stated outright for
@@ -220,6 +228,23 @@ function walkPageSources (resource, seg, sourcesDir, visit, attrs = null) {
   walk(start, null)
 }
 
+// Whether the page's own source file can be opened. Every walk above returns
+// quietly when it cannot, so callers check this first and fail on a miss.
+function pageSourceFound (resource, seg, sourcesDir) {
+  const loc = locate({ component: resource.component, module: resource.module || 'ROOT', family: 'page', relative: resource.relative }, seg, sourcesDir)
+  return !!loc && cachedText(loc) != null
+}
+
+// The staged id of the exact file an example coord reaches: its repo, and its
+// path through any symlink, as extract-examples recorded them. `byRepoPath` is
+// staged-examples' stagedIdsByRepoPath. Null when the file is not staged.
+function stagedIdOf (coord, seg, sourcesDir, byRepoPath) {
+  const loc = locate(coord, seg, sourcesDir)
+  if (!loc) return null
+  const real = resolveGitLinks(loc.repoDir, loc.ref, loc.repoPath) || loc.repoPath
+  return byRepoPath.get(`${path.basename(loc.repoDir, '.git')}:${real}`) || null
+}
+
 // The `example$` includes a page reaches.
 function collectPageExamples (resource, seg, sourcesDir) {
   const examples = []
@@ -239,6 +264,6 @@ function collectPageTexts (resource, seg, sourcesDir, attrs = null) {
 }
 
 module.exports = {
-  collectPageExamples, collectPageTexts, walkPageSources,
+  collectPageExamples, collectPageTexts, walkPageSources, pageSourceFound, stagedIdOf,
   includesIn, resolveTarget, locate, sliceByTags, stripComments,
 }

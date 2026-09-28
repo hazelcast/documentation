@@ -36,7 +36,7 @@ const { createPartialMarker } = require('../antora-extension/mark-partials')
 const { wrapRefs, spanify, hasSentinelResidue, hasAttrSpanLeak } = require('../antora-extension/mark-attributes')
 const { wrapConditionals } = require('../antora-extension/mark-conditionals')
 const { literalizeMonospace } = require('../antora-extension/normalize-monospace')
-const { poisonAttributes, preResolveTargets } = require('../antora-extension/poison-attributes')
+const { poisonComponentVersions, preResolveTargets } = require('../antora-extension/poison-attributes')
 const { markedAttrsFor } = require('../lib/layout')
 const { lockfileKey, lockfileKeyFromFile } = require('./lockfile-key')
 
@@ -292,16 +292,9 @@ async function main () {
     if (coords) console.log(`[census] pre-resolved ${coords} attribute reference(s) in xref/include targets`)
 
     let seq = 0
-    for (const comp of contentCatalog.getComponents()) {
-      if (!inScope(comp.name)) continue
-      for (const v of comp.versions) {
-        const attrs = v.asciidoc && v.asciidoc.attributes
-        if (!attrs) continue
-        const { entries, skipped } = poisonAttributes(attrs, () => ++seq)
-        for (const e of entries) censusEntries.push({ component: comp.name, version: v.version, ...e })
-        for (const s of skipped) censusSkipped.push({ component: comp.name, version: v.version, ...s })
-      }
-    }
+    const { entries, skipped } = poisonComponentVersions(contentCatalog.getComponents(), inScope, () => ++seq)
+    censusEntries.push(...entries)
+    censusSkipped.push(...skipped)
     console.log(`[census] poisoned ${censusEntries.length} attribute value(s) across ` +
       `${new Set(censusEntries.map((e) => `${e.component}@${e.version}`)).size} component-version(s); ` +
       `${censusSkipped.length} left real (reserved/flag/empty)`)

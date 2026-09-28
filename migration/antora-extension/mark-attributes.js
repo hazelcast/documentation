@@ -130,7 +130,10 @@ function descriptionRendered (text) {
 function transform (text, names, onRef) {
   if (!names || !names.length) return text
   const alt = names.map((n) => n.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&')).join('|')
-  const RE = new RegExp(`(\\\\?)\\{(${alt})\\}`, 'g')
+  // Case-insensitive, as Asciidoctor resolves references: `{Hazelcast-cloud}`
+  // renders {hazelcast-cloud}'s value. `onRef` gets the canonical name.
+  const RE = new RegExp(`(\\\\?)\\{(${alt})\\}`, 'gi')
+  const canonical = new Map(names.map((n) => [n.toLowerCase(), n]))
   const descUsed = descriptionRendered(text)
   const lines = text.split('\n')
   let verbatim = null
@@ -174,7 +177,7 @@ function transform (text, names, onRef) {
       // span used for headings would render literally inside code.
       if (inCode && context === 'heading') return whole
       if (skipRanges.some(([a, b]) => offset >= a && offset < b)) return whole // image alt / link target
-      return onRef(name, whole, inCode ? 'code' : context)
+      return onRef(canonical.get(name.toLowerCase()), whole, inCode ? 'code' : context)
     })
   }
   return lines.join('\n')

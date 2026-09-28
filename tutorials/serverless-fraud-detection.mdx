@@ -37,7 +37,7 @@ If transaction A is made in London and transaction B is made in New York, and th
 
 ![An invalid transaction made in New York airport](./images/transaction-declined.png)
 
-Every time a new transaction is made, the airport's coordinates are read and used as input in the haversine formula. If the data is slow to read, the whole process takes longer, which delays the transaction. To make sure that this data is always available and fast to read, it is cached in a Cloud Standard cluster because it offers fast-access in-memory storage.
+Every time a new transaction is made, the airport's coordinates are read and used as input in the haversine formula. If the data is slow to read, the whole process takes longer, which delays the transaction. To make sure that this data is always available and fast to read, it is cached in a <Variable name="hazelcast-cloud"/> Standard cluster because it offers fast-access in-memory storage.
 
 ### Architecture
 
@@ -46,10 +46,10 @@ The whole stack is in the same AWS region to ensure the shortest network paths b
 ![A banking client sends a POST request to the serverless fraud detection application](./images/architecture.png)
 
 - The S3 bucket stores the airport data.
-- The `ImportAirportsFn` Lambda function ingests the airport data into the Cloud Standard cluster so that it can be queried with the lowest latency. This function is triggered by uploads to the S3 bucket so that any new data is ingested to the Cloud Standard cluster.
-- The `ValidateFn` Lambda function implements the fraud detection logic to validate the transactions. This function communicates with the Cloud Standard cluster to read airport data.
+- The `ImportAirportsFn` Lambda function ingests the airport data into the <Variable name="hazelcast-cloud"/> Standard cluster so that it can be queried with the lowest latency. This function is triggered by uploads to the S3 bucket so that any new data is ingested to the <Variable name="hazelcast-cloud"/> Standard cluster.
+- The `ValidateFn` Lambda function implements the fraud detection logic to validate the transactions. This function communicates with the <Variable name="hazelcast-cloud"/> Standard cluster to read airport data.
 - The Amazon API Gateway exposes the `ValidateFn` Lambda function to a REST API resource at the `/validate` path.
-- The Cloud Standard cluster stores a copy of the airport data so that the `ValidateFn` Lambda function can read it faster than if it were in the S3 bucket.
+- The <Variable name="hazelcast-cloud"/> Standard cluster stores a copy of the airport data so that the `ValidateFn` Lambda function can read it faster than if it were in the S3 bucket.
 
 ## Before you Begin
 
@@ -60,17 +60,17 @@ You need the following:
 - An [AWS account](https://aws.amazon.com/resources/create-account/)
 - [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 - The [HTTPie CLI](https://httpie.io/cli)
-- A [Cloud Standard cluster](/cloud/create-serverless-cluster).
+- A <a href="/cloud/create-serverless-cluster"><Variable name="hazelcast-cloud"/> Standard cluster</a>.
 
   :::note
 
-  This tutorial assumes that your Cloud cluster is hosted in the us-west-2 (Oregon) region. For best performance, it's important to host the AWS services in a region that's closest to your cluster. If you choose to host your Serverless cluster in a different region, edit the `--region` flag of the AWS CLI commands in this tutorial.
+  This tutorial assumes that your <Variable name="hazelcast-cloud"/> cluster is hosted in the us-west-2 (Oregon) region. For best performance, it's important to host the AWS services in a region that's closest to your cluster. If you choose to host your Serverless cluster in a different region, edit the `--region` flag of the AWS CLI commands in this tutorial.
 
   :::
 
 ## Step 1. Set Up the Project Files
 
-To set up the project, you need to download the code from GitHub, install the dependencies, and get the TLS certificate files to allow the Hazelcast client to connect to your Cloud Standard cluster.
+To set up the project, you need to download the code from GitHub, install the dependencies, and get the TLS certificate files to allow the Hazelcast client to connect to your <Variable name="hazelcast-cloud"/> Standard cluster.
 
 1. Clone the GitHub repository.
 
@@ -97,7 +97,7 @@ To set up the project, you need to download the code from GitHub, install the de
    ```none
    npm i
    ```
-3. Open the Cloud console. Next to **Connect Client**, select **Advanced** and download the keystore files using the **Download keystore file** link.
+3. Open the <Variable name="hazelcast-cloud"/> console. Next to **Connect Client**, select **Advanced** and download the keystore files using the **Download keystore file** link.
 4. Save your files to the `code/` directory.
 
 ## Step 2. Set Up the AWS CLI
@@ -193,7 +193,7 @@ You need an S3 bucket and an IAM role that you can attach to the Lambda function
 
 ## Step 4. Ingest Airport Data {/* #ingest */}
 
-The code that ingests airport data from the S3 bucket into your Cloud Standard cluster uses the following resources in the `code/` directory:
+The code that ingests airport data from the S3 bucket into your <Variable name="hazelcast-cloud"/> Standard cluster uses the following resources in the `code/` directory:
 
 - `hazelcast.js`: Creates a Hazelcast client to connect to the cluster.
 - `import.js`: Ingests the airport data from the S3 bucket into the cluster where it can be read faster. This code uses the client in the `hazelcast.js` file to communicate with the cluster.
@@ -268,7 +268,7 @@ The code that ingests airport data from the S3 bucket into your Cloud Standard c
      ```bash
      aws s3api put-bucket-notification-configuration --bucket $S3_BUCKET_NAME --notification-configuration file://aws/s3_notification.json --region us-west-2
      ```
-  6. Open the Cloud console. Next to **Connect Client**, select **Advanced** to view cluster token and certificate password. Leave this window open. You'll need some of these details in the next step.
+  6. Open the <Variable name="hazelcast-cloud"/> console. Next to **Connect Client**, select **Advanced** to view cluster token and certificate password. Leave this window open. You'll need some of these details in the next step.
   7. Configure the `ImportAirportsFn` function with the environment variables that the Hazelcast client needs to connect to your cluster.
 
      ```bash
@@ -337,7 +337,7 @@ The code that ingests airport data from the S3 bucket into your Cloud Standard c
      ![The logs show that the client connected to the cluster](./images/cloudwatch-connected.png)
 
      The logs show that the Lambda function was invoked when the airport data was uploaded.
-  10. Open the Cloud console and go to **Management Center** \> **SQL Browser**.
+  10. Open the <Variable name="hazelcast-cloud"/> console and go to **Management Center** \> **SQL Browser**.
 
       You can see that the Lambda function ingested the airport data into Hazelcast, using the following SQL queries:
 
@@ -516,14 +516,14 @@ To allow applications to validate new transactions, you need to expose the `Vali
 In this tutorial, you learned how to do the following:
 
 - Deploy a Hazelcast client to AWS Lambda.
-- Ingest data into a Cloud Standard cluster from an S3 bucket.
+- Ingest data into a <Variable name="hazelcast-cloud"/> Standard cluster from an S3 bucket.
 - Use Hazelcast as a fast cache.
 
 ## Learn More
 
 Try another [tutorial](https://docs.hazelcast.com/tutorials?product=cloud).
 
-Learn more about Hazelcast Cloud Standard:
+Learn more about Hazelcast <Variable name="hazelcast-cloud"/> Standard:
 
 - [Cloud Standard Clusters](/cloud/serverless-cluster)
 - [Developer Guide for Cloud](/cloud/developer-guide)

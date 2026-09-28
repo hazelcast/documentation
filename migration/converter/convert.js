@@ -44,7 +44,8 @@ const { attrCodeTemplates, buildCodeTemplates, resolveTemplates } = require('./l
 // pulls its brew/apt/yum commands from install-hazelcast, and those name
 // {os-version} where the page itself names {full-version} -- same value, so only
 // the source line can tell them apart.
-const { collectPageTexts, collectPageExamples } = require('../refcheck/lib/source-refs')
+const { collectPageTexts, collectPageExamples, stagedIdOf } = require('../refcheck/lib/source-refs')
+const { hasLockedSources, lockedRoots } = require('../lib/locked-sources')
 const { parseNav, buildPlan, injectNavEntries, resolveNavIncludes, pageKey } = require('./lib/nav')
 const { decodeHTML } = require('entities')
 const { loadDispositions, isUnpublished, redirectRoute, urlBase, redirectPairs, publishedPageUrls, navInjectionsFor } = require('../lib/dispositions')
@@ -76,7 +77,7 @@ const yaml2 = require('js-yaml')
 // Staged (fetched-at-build) examples: the staging dir, the manifest and the
 // path->id mapping, shared with refcheck so the two agree about what a staged
 // import addresses.
-const { EXAMPLES_STAGING, referenceManifest, stagedIdsByPath, manifestSelectors } = require('../lib/staged-examples')
+const { EXAMPLES_STAGING, referenceManifest, stagedIdsByPath, stagedIdsByRepoPath, manifestSelectors } = require('../lib/staged-examples')
 
 // Antora attributes whose resolved value we single-source as a doc variable
 // instead of baking it into every page (the firm no-baking principle: an
@@ -96,6 +97,8 @@ const SINGLE_SOURCE_ATTRS = {
   // of a link URL/label (release-notes) — both must stay variables (no baking).
   cloud: ['page-cloud-console', 'page-cloud-signup', 'page-cloud-platform-version', 'full-version'],
   operator: ['page-latest-supported-hazelcast', 'page-latest-supported-mc', 'operator-chart-version'],
+  // The Cloud tutorials link to the console, as cloud's own pages do.
+  tutorials: ['page-cloud-console'],
   // clc version numbers: full-version (its own release, per version) and
   // page-latest-supported-mc (curated per version). Distinctive values -> value
   // reverse-map, single-sourced per version like operator's.
@@ -214,6 +217,12 @@ function collectVariables (manifest) {
       for (const name of names) {
         const value = attrs[name]
         if (value == null) continue
+        // One namespace for every unversioned component, so a name two of them
+        // carry must mean the same thing (tutorials and cloud share the
+        // playbook's cloud attributes).
+        if (flat.has(name) && flat.get(name) !== String(value)) {
+          throw new Error(`[convert] unversioned variable {${name}} is ${JSON.stringify(flat.get(name))} in ${flatComponents.get(name)} but ${JSON.stringify(String(value))} in ${comp.name}`)
+        }
         flat.set(name, String(value))
         flatComponents.set(name, comp.name)
         if (single.includes(name)) valueToName.set(String(value), name) // link reverse-map: SINGLE_SOURCE only
@@ -640,15 +649,23 @@ function loadNavAdoc (component, seg, sourcesDir) {
 // pages live. Scoping the grep to ROOT's own `pages/` would silently find nothing
 // on a multi-module component like MC, whose 102 pages are spread over 11 modules
 // — every single-sourced attribute would then look unreferenced and bake.
+//
+// A component assembled from several repos (tutorials, and cloud's second repo)
+// is scanned in every one of them, at the lockfile's pinned SHAs.
 function scanPageAttrs (component, seg, sourcesDir) {
   const names = SINGLE_SOURCE_ATTRS[component] || []
-  const src = NAV_SOURCES[component]
   const byKey = new Map()
-  if (!names.length || !src) return byKey
-  const ref = src.refFor ? src.refFor(seg) : src.ref
-  const repoDir = path.join(sourcesDir, src.repo)
-  // `docs/modules/ROOT/nav.adoc` -> `docs/modules`: every module's tree.
-  const modulesGlob = path.posix.dirname(path.posix.dirname(src.file))
+  if (!names.length) return byKey
+  const src = NAV_SOURCES[component]
+  const roots = hasLockedSources(component)
+    ? lockedRoots(component, sourcesDir)
+    // `docs/modules/ROOT/nav.adoc` -> `docs/modules`: every module's tree.
+    : src ? [{ repoDir: path.join(sourcesDir, src.repo), ref: src.refFor ? src.refFor(seg) : src.ref, modulesRoot: path.posix.dirname(path.posix.dirname(src.file)) }] : []
+  for (const root of roots) scanRootAttrs(root, names, byKey)
+  return byKey
+}
+
+function scanRootAttrs ({ repoDir, ref, modulesRoot: modulesGlob }, names, byKey) {
   // `<modulesGlob>/<module>/pages/<relative>.adoc` -> the page's plan key.
   const PAGE_PATH = new RegExp(`^${modulesGlob}/([^/]+)/pages/(.+)\\.adoc$`)
   const textCache = new Map()
@@ -682,7 +699,6 @@ function scanPageAttrs (component, seg, sourcesDir) {
       for (const t of attrHrefTemplates(textOf(file))) rec.hrefs.add(t)
     }
   }
-  return byKey
 }
 
 // value->name map of the attrs a page references (source-scoped), resolved to
@@ -1161,6 +1177,7 @@ function convertVersion (ver, ctx) {
     ...pageTagSelectors(pages, byUrl, plan, seg, opts.sourcesDir),
   ])
   const stagedIds = stagedIdsByPath(component, opts.outRoot)
+  const stagedIdsByRepo = stagedIdsByRepoPath(component, opts.outRoot)
 
   // Reverse-map single-sourced attributes (no-baking): which attrs each page's
   // source references, so a value is only ever matched on a page that uses it.
@@ -1288,14 +1305,17 @@ function convertVersion (ver, ctx) {
     // several files hold identical content (see chooseExample).
     // `example$/foo.java` (the corpus writes the leading slash) resolves to a
     // coord whose relative keeps it; the co-located tree is keyed without.
+    // A staged include names the file by its path in the repo that owns it; the
+    // staged copy is addressed by manifest id. Same file, two names, and the
+    // tie-breaker only works if the page's list speaks the same one the index
+    // does. By repo AND path: six tutorials guides each stage a `pom.xml`, and
+    // identical files in two guides (wan-replication / wan-sync) must still
+    // resolve to the page's own repo.
     const pageExampleFiles = rec
-      ? new Set(collectPageExamples(rec, seg, opts.sourcesDir)
-        .map((c) => String(c.relative).replace(/^\/+/, ''))
-        // A cross-component include names the file by its path in the OTHER repo;
-        // the staged copy is addressed by manifest id. Same file, two names, and
-        // the tie-breaker only works if the page's list speaks the same one the
-        // index does.
-        .map((rel) => stagedIds.get(rel) || rel))
+      ? new Set(collectPageExamples(rec, seg, opts.sourcesDir).map((c) => {
+        const rel = String(c.relative).replace(/^\/+/, '')
+        return stagedIdOf(c, seg, opts.sourcesDir, stagedIdsByRepo) || stagedIds.get(rel) || rel
+      }))
       : new Set()
     const hrefVars = tpl.hrefs
     const codeVars = tpl.code

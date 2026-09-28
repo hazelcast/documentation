@@ -151,4 +151,20 @@ const astKeys = (text) => new Set(detectAst(text).map((c) => `${c.category}:${c.
   ok('detectAst: best-effort (never throws) and reads context/roles from the tree')
 }
 
+// --- includes: is the included file parsed as AsciiDoc? --------------------------
+// A file included inside a listing lands as code. Oracle: Asciidoctor, given an
+// INI section line through a listing include, renders it verbatim rather than as
+// a block style.
+{
+  const adoc = require('@asciidoctor/core')()
+  const html = adoc.convert('[source,ini]\n----\n[libdefaults]\n----', { safe: 'safe' })
+  assert(html.includes('[libdefaults]'), 'oracle: listing content is not parsed as markup')
+  const inc = (text) => detectLexical(text).filter((c) => c.category === 'include')
+  assert.deepStrictEqual(inc('[source,ini]\n----\ninclude::example$krb5.ini[]\n----').map((c) => [c.target, c.verbatim]),
+    [['example$krb5.ini', true]], 'an include inside a listing is verbatim')
+  assert.deepStrictEqual(inc('include::partial$shared.adoc[]').map((c) => [c.target, c.verbatim]),
+    [['partial$shared.adoc', false]], 'an include at block level is parsed')
+  ok('detectLexical: records whether an include lands as code or as parsed AsciiDoc')
+}
+
 console.log(`\n[constructcheck selftest] ${n} groups passed.`)

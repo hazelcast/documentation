@@ -1,0 +1,82 @@
+
+[refcheck] all migrated components
+[refcheck] pages in scope: 3593 | converted & checked: 3593 | not yet converted: 0
+[refcheck] strict: every live page was converted, censused and checked
+[refcheck] 609 occurrence(s) correctly baked (structurally unpreservable):
+      enterprise-product-name  bake:badge-label × 185
+      enterprise-product-name  bake:anchor-id × 168
+      hazelcast-cloud  bake:anchor-id × 104
+      open-source-product-name  bake:anchor-id × 74
+      enterprise-product-name  bake:tab-label × 28
+      open-source-product-name  bake:tab-label × 28
+      ucn  bake:anchor-id × 20
+      hazelcast-cloud  bake:badge-label × 1
+      hazelcast-cloud  bake:image-alt × 1
+[refcheck] census guard: 94 page(s) differ from golden only in derived anchor ids (expected)
+[refcheck] examples: 2323/2278 example$ include site(s) single-sourced across 802 page(s)  (20 page(s) render an example more often than the source includes it — expected where a conditional branch is spliced)
+
+[refcheck] 1 accepted finding(s) — understood, not blocking (refcheck/accepted.json):
+      [wont-fix] refs:baked:cloud@ /cloud/maven-plugin-hazelcast {page-cloud-console} 2->1
+          One of the two links is `https://cloud.hazelcast.com/settings/developer` — the attribute's value with a PATH appended. The converter's link-mode <Variable href> only reverse-maps a WHOLE-href match, so a value used as a URL prefix bakes. Accepted 2026-08-17: one occurrence in the corpus, and the console origin is not expected to move. If it ever does, this link needs editing by hand — the accept-list entry is the record of that.
+
+[refcheck] ✗ 13 baked reference(s) on 9 page(s) — fewer references than the source resolved:
+
+  tutorials  /tutorials/airline-connections
+      {hazelcast-cloud}  expected 6, found 0
+
+  tutorials  /tutorials/compute-standard-deviation
+      {hazelcast-cloud}  expected 12, found 1
+      {page-cloud-console}  expected 2, found 0
+
+  tutorials  /tutorials/create-materialized-view-from-kafka
+      {hazelcast-cloud}  expected 9, found 0
+      {page-cloud-console}  expected 1, found 0
+
+  tutorials  /tutorials/failover-clients-with-hazelcast-cloud
+      {hazelcast-cloud}  expected 4, found 0
+
+  tutorials  /tutorials/join-two-streams
+      {hazelcast-cloud}  expected 4, found 0
+
+  tutorials  /tutorials/serverless-fraud-detection
+      {hazelcast-cloud}  expected 14, found 0
+
+  tutorials  /tutorials/serverless-trade-monitor-dashboard
+      {hazelcast-cloud}  expected 15, found 0
+      {page-cloud-console}  expected 1, found 0
+
+  tutorials  /tutorials/spring-boot-client
+      {hazelcast-cloud}  expected 7, found 0
+
+  tutorials  /tutorials/write-through-cache-serverless-mapstore
+      {hazelcast-cloud}  expected 18, found 1
+      {page-cloud-console}  expected 1, found 0
+
+[refcheck] baked occurrences by attribute:
+      {hazelcast-cloud} × 87
+      {page-cloud-console} × 5
+
+[refcheck] ✗ census guard FAILED on 18 page(s) — poisoning changed the render itself, so the expectations read off it cannot be trusted:
+      /tutorials/airline-connections  unmasked census != golden
+      /tutorials/airline-connections  unrecoverable token(s): HZREF0019X
+      /tutorials/compute-standard-deviation  unmasked census != golden
+      /tutorials/compute-standard-deviation  unrecoverable token(s): HZREF0019X, HZREF0020X
+      /tutorials/create-materialized-view-from-kafka  unmasked census != golden
+      /tutorials/create-materialized-view-from-kafka  unrecoverable token(s): HZREF0019X, HZREF0020X
+      /tutorials/failover-clients-with-hazelcast-cloud  unmasked census != golden
+      /tutorials/failover-clients-with-hazelcast-cloud  unrecoverable token(s): HZREF0019X
+      /tutorials/join-two-streams  unmasked census != golden
+      /tutorials/join-two-streams  unrecoverable token(s): HZREF0019X
+      /tutorials/serverless-fraud-detection  unmasked census != golden
+      /tutorials/serverless-fraud-detection  unrecoverable token(s): HZREF0019X
+      /tutorials/serverless-trade-monitor-dashboard  unmasked census != golden
+      /tutorials/serverless-trade-monitor-dashboard  unrecoverable token(s): HZREF0019X, HZREF0020X
+      /tutorials/spring-boot-client  unmasked census != golden
+      /tutorials/spring-boot-client  unrecoverable token(s): HZREF0019X
+      /tutorials/write-through-cache-serverless-mapstore  unmasked census != golden
+      /tutorials/write-through-cache-serverless-mapstore  unrecoverable token(s): HZREF0019X, HZREF0020X
+
+[refcheck] ✗ 1 page(s) do not single-source their example$ includes:
+      tutorials  /tutorials/hazelcast-platform-operator-wan-replication  imports example(s) the page does not include: hazelcast-platform-operator-wan-sync/operator-wan-sync/hazelcast-first.yaml, hazelcast-platform-operator-wan-sync/operator-wan-sync/hazelcast-second.yaml, hazelcast-platform-operator-wan-sync/operator-wan-sync/full-sync-wanreplication.yaml
+
+[refcheck] report -> build/refcheck-report.json

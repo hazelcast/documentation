@@ -1118,6 +1118,25 @@ const renderedCode = (md) => {
   ok('mark-attributes: inline code marked in flow text, skipped in headings')
 }
 
+// --- mark-attributes: references match as Asciidoctor resolves them ---------
+// Asciidoctor resolves an attribute reference case-insensitively, so a source
+// writing `{Hazelcast-cloud}` renders the value, and a marker that missed it
+// would leave that occurrence to bake (serverless-trade-monitor-dashboard).
+{
+  const adoc = require('@asciidoctor/core')()
+  const html = adoc.convert('your {Hazelcast-cloud} cluster', { attributes: { 'hazelcast-cloud': 'Cloud' } })
+  assert.ok(html.includes('your Cloud cluster'), 'oracle: Asciidoctor resolves a mixed-case reference')
+  const names = ['hazelcast-cloud']
+  assert.deepStrictEqual([...wrappableRefs('your {Hazelcast-cloud} cluster', names)], ['hazelcast-cloud'],
+    'a mixed-case reference is found, under the canonical name')
+  const wrapped = wrapRefs('your {Hazelcast-cloud} cluster', names)
+  assert.ok(wrapped.includes('hazelcast-cloud') && wrapped.includes('{Hazelcast-cloud}'),
+    'the marker names the canonical attribute and keeps the source reference')
+  assert.strictEqual(wrapRefs('== About {HAZELCAST-CLOUD}', names), '== About [.hz-attr-hazelcast-cloud]#{HAZELCAST-CLOUD}#',
+    'a heading role span uses the canonical name too')
+  ok('mark-attributes: references match case-insensitively, as Asciidoctor resolves them')
+}
+
 // --- prose-eligibility: wrappableRefs gates the PROSE reverse-map -------------
 // convert.js scanPageAttrs asks this predicate "does the page reference the attr
 // in a context that renders into flow text?", and only then may the attribute's

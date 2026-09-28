@@ -1,9 +1,4 @@
 {
   "description": "Accepted findings for refcheck/run.js (see lib/accepted.js). DENY BY DEFAULT: a finding blocks the gate unless its exact key appears here. Keys are OCCURRENCE-EXACT and are printed by the gate itself — `refs:{class}:{component}@{version} {url} {{attribute}} {expected}->{actual}` — so accepting \"expected 12, found 11\" does NOT accept \"found 10\": a second baked occurrence on the same page changes the key and fails. Each entry needs a `disposition` (wont-fix | upstream | harness-limit | deferred) and a non-empty `note` saying why it is understood and why it stays; a malformed entry fails the gate. Accepted findings are still PRINTED on every run and written to build/refcheck-report.json — the point is to stop them blocking, not to hide them. A STALE entry (its finding no longer occurs) FAILS the gate, so the file cannot quietly become a record of what used to be broken. Only known conversion gaps are acceptable: `unknownContexts` and `guardFailures` can never be accepted, because they mean the gate could not judge the page at all.",
-  "accept": {
-    "refs:baked:cloud@ /cloud/maven-plugin-hazelcast {page-cloud-console} 2->1": {
-      "disposition": "wont-fix",
-      "note": "One of the two links is `https://cloud.hazelcast.com/settings/developer` — the attribute's value with a PATH appended. The converter's link-mode <Variable href> only reverse-maps a WHOLE-href match, so a value used as a URL prefix bakes. Accepted 2026-08-17: one occurrence in the corpus, and the console origin is not expected to move. If it ever does, this link needs editing by hand — the accept-list entry is the record of that."
-    }
-  }
+  "accept": {}
 }

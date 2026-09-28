@@ -31,7 +31,7 @@ To build a write-through cache in Hazelcast, you can use the `MapStore` API. The
 
 ![A MapStore connecting a database to a Hazelcast Cluster](./images/maploader.png)
 
-In this tutorial, you'll deploy the following to a Cloud Standard cluster:
+In this tutorial, you'll deploy the following to a <Variable name="hazelcast-cloud"/> Standard cluster:
 
 - A MapStore that connects to a MongoDB Atlas database and is integrated into the lifecycle of a map.
 - A `Person` class that you will store in the cache.
@@ -48,7 +48,7 @@ The code in this tutorial is available as a [sample app on GitHub](https://githu
 
 You'll need the following to complete this tutorial:
 
-- A [Cloud Standard cluster](/cloud/create-serverless-cluster).
+- A <a href="/cloud/create-serverless-cluster"><Variable name="hazelcast-cloud"/> Standard cluster</a>.
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - [Maven](https://maven.apache.org/install.html)
 - JDK 17 or later installed and set up as the `JAVA_HOME` environment variable.
@@ -62,25 +62,25 @@ If you already have a MongoDB database that is accessible to the Internet, you c
 1. [Sign up to a MongoDB Atlas account](https://account.mongodb.com/account/register) if you don't have one already.
 2. Create an organization and a new project inside that organization.
 3. Click **Build a Database** and select the free **Shared** option.
-4. Select the **AWS** cloud provider and the region that's closest to the one that you chose when you created your Cloud Serverless cluster. The closer the database is to Serverless, the faster the connection.
+4. Select the **AWS** cloud provider and the region that's closest to the one that you chose when you created your <Variable name="hazelcast-cloud"/> Serverless cluster. The closer the database is to Serverless, the faster the connection.
 5. Leave the other options as the defaults and click **Create Cluster**.
 6. Enter a username and password for your database and click **Create User**.
 
    :::tip
 
-   Make a note of these credentials because you will need to give them to Cloud Standard later.
+   Make a note of these credentials because you will need to give them to <Variable name="hazelcast-cloud"/> Standard later.
 
    :::
 7. Go to **Database** in the left navigation under **Deployment**.
 8. Go to the **Collections** tab, click **Add My Own Data**, and create a database called **Hazelcast** with a collection called **person**.
 
-   Your Cloud Standard cluster will store your data in this **person** collection.
+   Your <Variable name="hazelcast-cloud"/> Standard cluster will store your data in this **person** collection.
 
    ![Set up a database on MongoDB](./images/mongo-db-atlas-setup.gif)
 9. Go to **Network Access** in the left navigation under **Security**, and click **Add IP Address**.
 10. Select **Allow Access From Anywhere** and click **Confirm**.
 
-Now your database is ready. Your Cloud Standard cluster will be able to connect to it and write data to your collection.
+Now your database is ready. Your <Variable name="hazelcast-cloud"/> Standard cluster will be able to connect to it and write data to your collection.
 
 ## Step 2. Clone the Sample Project {/* #step-two */}
 
@@ -144,7 +144,7 @@ This class declares the trigger methods for the MapStore that will work with a m
 
 The class implements the `MapLoaderLifecycleSupport` interface to manage the connection to the database, using the `init()` and `destroy()` methods.
 
-The `init()` method reads the database connection credentials from the Java properties. You'll provide these in the Cloud console when you configure the MapStore.
+The `init()` method reads the database connection credentials from the Java properties. You'll provide these in the <Variable name="hazelcast-cloud"/> console when you configure the MapStore.
 
 <CodeBlock language="java">{Ex_write_through_cache_mongodb_mapstore_src_main_java_sample_com_hz_demos_mapstore_mongo_MongoPersonMapStore_java_tag_class}</CodeBlock>
 
@@ -154,7 +154,7 @@ The `init()` method reads the database connection credentials from the Java prop
 
 ## Step 3. Deploy the Classes to the Cluster {/* #step-three */}
 
-In this step, you'll use the [Hazelcast Cloud Maven plugin](/cloud/maven-plugin-hazelcast) to package the project into a single JAR file and upload that file to your cluster.
+In this step, you'll use the <a href="/cloud/maven-plugin-hazelcast">Hazelcast <Variable name="hazelcast-cloud"/> Maven plugin</a> to package the project into a single JAR file and upload that file to your cluster.
 
 1. Open the `pom.xml` file.
 2. Configure the Maven plugin with values for the following elements:
@@ -167,7 +167,7 @@ In this step, you'll use the [Hazelcast Cloud Maven plugin](/cloud/maven-plugin-
    <thead>
    <tr>
    <th>Element</th>
-   <th>Location in the Cloud console</th>
+   <th>Location in the <Variable name="hazelcast-cloud"/> console</th>
    </tr>
    </thead>
    <tbody>
@@ -187,7 +187,7 @@ In this step, you'll use the [Hazelcast Cloud Maven plugin](/cloud/maven-plugin-
 
    To create a set of API credentials, do the following:
 
-   1. Sign into the <a href="https://cloud.hazelcast.com/"><Variable name="hazelcast-cloud"/> console</a>
+   1. Sign into the <Variable href="{page-cloud-console}" text="{hazelcast-cloud} console"/>
    2. Select **Account** from the side navigation bar
    3. Select **Developer** from the **Account** options
 
@@ -204,7 +204,7 @@ In this step, you'll use the [Hazelcast Cloud Maven plugin](/cloud/maven-plugin-
    </table>
 
    <CodeBlock language="xml">{Ex_write_through_cache_mongodb_mapstore_pom_xml_tag_maven_plugin_indent_0}</CodeBlock>
-3. Execute the following goal of the Maven plugin to package the project into a JAR file and deploy that file to your Cloud Standard cluster:
+3. Execute the following goal of the Maven plugin to package the project into a JAR file and deploy that file to your <Variable name="hazelcast-cloud"/> Standard cluster:
 
    ```bash
    mvn clean package hazelcast-cloud:deploy
@@ -218,14 +218,14 @@ BUILD SUCCESS
 
 ## Step 4. Configure the MapStore {/* #step-four */}
 
-To use a MapStore, it must be configured for a specific map in your Cloud Standard cluster. When a map is configured with a MapStore, Hazelcast plugs the MapStore implementation into the lifecycle of the map so that the MapStore is triggered when certain map operations are invoked.
+To use a MapStore, it must be configured for a specific map in your <Variable name="hazelcast-cloud"/> Standard cluster. When a map is configured with a MapStore, Hazelcast plugs the MapStore implementation into the lifecycle of the map so that the MapStore is triggered when certain map operations are invoked.
 
-1. Open the Cloud console.
+1. Open the <Variable name="hazelcast-cloud"/> console.
 2. Click **Add +** under **Data Structures** on the cluster dashboard.
 3. Click **Add New Configuration** in the top right corner.
 4. Enter **person** in the **Map Name** field.
 5. In the bottom left corner, select **Enable MapStore**.
-6. Select the **sample.com.hazelcast.cloud.mapstore5.mongo.MongoPersonMapStore** classname from the dropdown. If you don't see a classname, you need to [deploy the MapStore to your Cloud Standard cluster](#step-three).
+6. Select the **sample.com.hazelcast.cloud.mapstore5.mongo.MongoPersonMapStore** classname from the dropdown. If you don't see a classname, you need to <a href="#step-three">deploy the MapStore to your <Variable name="hazelcast-cloud"/> Standard cluster</a>.
 7. Leave the **Write Delay Seconds** field set to 0 to configure a write-through cache.
 
    In this configuration, when you add new entries to the **person** map, Hazelcast will invoke the MapStore's `store()` method before adding the entry to the map.
@@ -269,7 +269,7 @@ To use a MapStore, it must be configured for a specific map in your Cloud Standa
 
 To test that the MapStore is working, you need to create a map, add some entries to it, and check that those entries are replicated to your MongoDB database.
 
-1. Sign into the Cloud console.
+1. Sign into the <Variable name="hazelcast-cloud"/> console.
 2. Click **Management Center**.
 3. Click **SQL Browser** in the toolbar at the top of the page.
 4. Execute the following queries to set up a connection to the map and add an entry to it.
@@ -303,8 +303,8 @@ If your test fails, do the following:
 
 In this tutorial, you learned how to do the following:
 
-- Use a Mapstore to write changes made in a Cloud Standard cluster back to a MongoDB Atlas database.
-- Deploy the MapStore to a Cloud Standard cluster, using the Hazelcast Cloud Maven plugin.
+- Use a Mapstore to write changes made in a <Variable name="hazelcast-cloud"/> Standard cluster back to a MongoDB Atlas database.
+- Deploy the MapStore to a <Variable name="hazelcast-cloud"/> Standard cluster, using the Hazelcast <Variable name="hazelcast-cloud"/> Maven plugin.
 - Trigger the MapStore by adding data to a map, using SQL.
 
 ## Learn More

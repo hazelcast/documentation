@@ -487,11 +487,17 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
       { family: 'image', url: '/cloud/img/x.png' },
       { family: 'alias', url: '/cloud/old' },
       { family: 'page', url: '/hazelcast/5.7/intro' },
+      { family: 'page', url: '/operator/5.19/' },
     ],
     components: [{ name: 'hazelcast', latestVersion: '5.7', versions: [{ version: '5.8', prerelease: true }] }],
   })
   assert.strictEqual(idx.resolve('/cloud/install'), '/cloud/install', 'direct hit')
   assert(idx.has('/cloud/install/'), 'trailing-slash variant resolves')
+  // The CANONICAL URL, not the variant as given: anchor lookups and the
+  // baseline's problem keys join on it. A version root is served at `/x/5.19/`
+  // in Antora but linked as `/x/5.19` by the trailingSlash:false site.
+  assert.strictEqual(idx.resolve('/cloud/install/'), '/cloud/install', 'a slash variant resolves to the canonical URL')
+  assert.strictEqual(idx.resolve('/operator/5.19'), '/operator/5.19/', 'a slashless version root resolves to the canonical URL')
   assert.strictEqual(idx.resolve('/cloud/install.html'), '/cloud/install', '.html suffix stripped to canonical')
   assert.strictEqual(idx.has('/nope'), false, 'unknown path is not served')
   assert.strictEqual(idx.kindOf('/cloud/install'), 'page', 'page family')

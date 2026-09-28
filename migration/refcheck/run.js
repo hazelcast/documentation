@@ -36,15 +36,15 @@
 //
 // --strict adds the cutover completeness check: a live page with no converted
 // MDX, no census page or no golden (each otherwise silently skipped), a scoped
-// census, or a migrated component this gate does not cover, all fail.
+// census, all fail.
 
 const fs = require('node:fs')
 const path = require('node:path')
 
-const { NAV_SOURCES, versionsToProcess, outDirFor } = require('../lib/layout')
+const { versionsToProcess, outDirFor, isSitePage } = require('../lib/layout')
 const { MIGRATED_COMPONENTS } = require('../lib/live-set')
-const { stagedIdsByPath } = require('../lib/staged-examples')
-const { collectPageExamples } = require('./lib/source-refs')
+const { stagedIdsByPath, stagedIdsByRepoPath } = require('../lib/staged-examples')
+const { collectPageExamples, pageSourceFound, stagedIdOf } = require('./lib/source-refs')
 const { indexOutput, refCounts, exampleImports, frontmatterTokens, urlToSlug } = require('./lib/mdx-refs')
 const { scanCensusPage, unmaskGuard, hiddenBranchComponents } = require('./lib/census-ledger')
 const { loadDispositions, isUnpublished } = require('../lib/dispositions')
@@ -77,7 +77,7 @@ function pagesFor (manifest, component, seg, dispositions) {
   const key = seg == null ? '' : seg
   return (manifest.resources || []).filter((r) =>
     r.family === 'page' && r.component === component && (r.version || '') === key && r.url &&
-    !(dispositions && isUnpublished(dispositions, r)))
+    !(dispositions && isUnpublished(dispositions, r)) && !isSitePage(r.url))
 }
 
 // url -> HTML file, for a census or golden pages tree.
@@ -119,7 +119,7 @@ function main () {
   const censusByUrl = byUrl(opts.censusDir)
   const goldenByUrl = byUrl(opts.goldenDir)
 
-  const components = opts.component ? [opts.component] : Object.keys(NAV_SOURCES)
+  const components = opts.component ? [opts.component] : MIGRATED_COMPONENTS
 
   // Every attribute name the census knows about, for the frontmatter scan (a
   // token there is inert wherever it appears, not only on pages that reference it).
@@ -134,14 +134,18 @@ function main () {
   const dispositionTally = new Map()
   // Strict-mode completeness: the pages each silent `continue` below skips.
   const missing = { notConverted: [], noCensus: [], noGolden: [] }
+  // A converted page whose source cannot be opened: the examples walk would
+  // find nothing and pass. A gate blind spot, so it fails with or without --strict.
+  const noSource = []
   const counts = { pages: 0, checked: 0, pending: 0, noCensus: 0, anchorDerived: 0, exPages: 0, exSites: 0, exUses: 0, exOver: 0 }
   const dispositions = loadDispositions()
   const { accept, errors: acceptErrors } = loadAccepted(path.join(__dirname, 'accepted.json'))
 
   for (const component of components) {
-    if (!NAV_SOURCES[component]) { console.error(`[refcheck] unknown component: ${component}`); process.exit(2) }
+    if (!MIGRATED_COMPONENTS.includes(component)) { console.error(`[refcheck] unknown component: ${component}`); process.exit(2) }
     // One manifest per component, shared by all its versions.
     const stagedIds = stagedIdsByPath(component, opts.outRoot)
+    const stagedIdsByRepo = stagedIdsByRepoPath(component, opts.outRoot)
     for (const ver of versionsToProcess(component)) {
       const seg = ver.seg // null (unversioned), CURRENT_SEG, or a release
       const outDir = outDirFor(opts.outRoot, component, ver)
@@ -156,6 +160,7 @@ function main () {
         const censusFile = censusByUrl.get(resource.url)
         if (!censusFile) { counts.noCensus++; missing.noCensus.push(resource.url); continue } // census not rendered for this scope
         counts.checked++
+        if (!pageSourceFound(resource, seg, opts.sourcesDir)) noSource.push(resource.url)
 
         const scope = { component, seg, url: resource.url }
         const censusHtml = fs.readFileSync(censusFile, 'utf8')
@@ -233,7 +238,7 @@ function main () {
           // the page never asked for.
           const wanted = new Set(examples.map((c) => {
             const rel = String(c.relative).replace(/^\/+/, '')
-            return stagedIds.get(rel) || rel
+            return stagedIdOf(c, seg, opts.sourcesDir, stagedIdsByRepo) || stagedIds.get(rel) || rel
           }))
           const imported = exampleImports(pageFile, opts.outRoot)
           let uses = 0
@@ -287,17 +292,14 @@ function main () {
     stale,
     acceptErrors,
   }
-  const completeness = opts.strict ? {
-    ...missing,
-    scopedCensus: census.component || null,
-    uncovered: MIGRATED_COMPONENTS.filter((c) => !NAV_SOURCES[c] && (!opts.component || c === opts.component)),
-  } : null
+  const completeness = opts.strict ? { ...missing, scopedCensus: census.component || null } : null
   if (completeness) {
-    completeness.ok = !completeness.scopedCensus && !completeness.uncovered.length &&
+    completeness.ok = !completeness.scopedCensus &&
       !missing.notConverted.length && !missing.noCensus.length && !missing.noGolden.length
   }
+  findings.noSource = noSource
   report(opts, counts, findings, dispositionTally, completeness)
-  process.exit(blocking.length + unknownCtx.length + guardFails.length +
+  process.exit(blocking.length + unknownCtx.length + guardFails.length + noSource.length +
     stale.length + acceptErrors.length > 0 || (completeness && !completeness.ok) ? 1 : 0)
 }
 
@@ -311,10 +313,6 @@ function printCompleteness (c) {
   }
   if (c.ok) { console.log('[refcheck] strict: every live page was converted, censused and checked'); return }
   if (c.scopedCensus) console.log(`\n[refcheck] ✗ strict: the census is scoped to component=${c.scopedCensus}, not the full corpus`)
-  if (c.uncovered.length) {
-    console.log(`\n[refcheck] ✗ strict: migrated component(s) this gate does not check: ${c.uncovered.join(', ')}` +
-      ' (not in lib/layout.js NAV_SOURCES)')
-  }
   list('have no converted MDX', c.notConverted)
   list('have no census page', c.noCensus)
   list('have no golden, so the census guard never ran', c.noGolden)
@@ -333,6 +331,7 @@ function report (opts, counts, f, dispositionTally, completeness) {
     unknownContexts: f.unknownCtx,
     guardFailures: f.guardFails,
     examples: f.examples,
+    noSource: f.noSource,
     dispositions: [...dispositionTally].map(([k, n]) => ({ disposition: k, count: n })),
     // Accepted findings are IN the report as well as on the console: the record of
     // what is known-broken has to be readable without re-running the gate.
@@ -353,6 +352,10 @@ function report (opts, counts, f, dispositionTally, completeness) {
     ` | not yet converted: ${counts.pending}` +
     (counts.noCensus ? ` | no census page: ${counts.noCensus}` : ''))
   if (completeness) printCompleteness(completeness)
+  if (f.noSource.length) {
+    console.log(`\n[refcheck] ✗ ${f.noSource.length} converted page(s) whose source cannot be opened -- the examples check saw nothing:`)
+    for (const u of f.noSource) console.log(`      ${u}`)
+  }
 
   // Recorded dispositions: positions where a reference CANNOT be preserved. Not
   // findings -- printed so the cost of those decisions stays visible.

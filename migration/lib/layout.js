@@ -142,6 +142,9 @@ const MARKED_ATTRS = {
   // ambiguous prose word as in cloud (a page also says "Confluent Cloud"), so it
   // must be MARKED, not value-reverse-mapped.
   clc: ['hazelcast-cloud', 'full-version'],
+  // The tutorials that run on Cloud say {hazelcast-cloud} in prose: the same
+  // ambiguous "Cloud" as above.
+  tutorials: ['hazelcast-cloud'],
   // Platform marks two classes of attribute, both cases where a value reverse-map
   // structurally cannot decide:
   //
