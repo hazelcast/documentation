@@ -18,6 +18,7 @@ import type {PluginConfig} from '@docusaurus/types';
 import type {Options} from '@docusaurus/plugin-content-docs';
 import latestLinks, {type LatestSegs} from './remark/latestLinks';
 import headingVariables from './remark/headingVariables';
+import imageAltUnescape from './remark/imageAltUnescape';
 
 const siteDir = path.resolve(__dirname, '..');
 
@@ -82,7 +83,11 @@ function contentDocs(options: Options): PluginConfig {
         ...(options.beforeDefaultRemarkPlugins ?? []),
         [headingVariables, {pluginId: options.id}],
       ],
-      remarkPlugins: [...(options.remarkPlugins ?? []), [latestLinks, {latest: latestSegs}]],
+      remarkPlugins: [
+        ...(options.remarkPlugins ?? []),
+        [latestLinks, {latest: latestSegs}],
+        imageAltUnescape,
+      ],
     },
   ];
 }

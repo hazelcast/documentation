@@ -15,6 +15,7 @@ const SUITES = [
   { name: 'layout', script: 'lib/selftest.js' },
   { name: 'image-placement', script: 'lib/image-placement-selftest.js' },
   { name: 'slice-region', script: 'lib/slice-region-selftest.js' },
+  { name: 'image-alt', script: 'lib/image-alt-unescape-selftest.js' },
   { name: 'accepted', script: 'lib/accepted-selftest.js' },
   { name: 'dispositions', script: 'lib/dispositions-selftest.js' },
   { name: 'live-set', script: 'lib/live-set-selftest.js' },
