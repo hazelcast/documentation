@@ -31,14 +31,14 @@ const { loadDispositions, unpublishedUrls } = require('../lib/dispositions')
 const { isSitePage } = require('../lib/layout')
 const { expectedPages, renderId } = require('../lib/live-set')
 const { loadAccepted } = require('../lib/accepted')
-const { loadAnchorIndex } = require('./lib/anchor-index')
+const { loadAnchorIndex, convertedAnchorLookup } = require('./lib/anchor-index')
 const { loadInventoryIndex } = require('./lib/inventory-index')
 const { loadBaseline, novelProblems } = require('./lib/baseline')
 const { checkPage } = require('./lib/layer3')
 const { inventory, ASCIIDOC_PROFILE, DOCUSAURUS_PROFILE } = require('./lib/structure')
-const { compareInventory } = require('./lib/layer2')
+const { compareInventory, compareTitle } = require('./lib/layer2')
 const { canonicalize, diffSegments, GOLDEN_STRIP, DOCUSAURUS_STRIP, DOCUSAURUS_STRIP_IF, GOLDEN_TABLE, DOCUSAURUS_TABLE } = require('./lib/layer1')
-const { extractMain } = require('./lib/extract-main')
+const { extractPage } = require('./lib/extract-main')
 const { lockfileKeyFromFile } = require('./lockfile-key')
 
 function parseArgs (argv) {
@@ -88,7 +88,11 @@ function main () {
   const anchorIndex = loadAnchorIndex(opts.goldenDir, currentKey, path.join(opts.goldenDir, 'anchor-index.json'))
   const inventoryIndex = loadInventoryIndex(opts.goldenDir, currentKey, path.join(opts.goldenDir, 'inventory-index.json'))
   const l3deps = { manifestIndex, anchorIndex, siteHost }
+  // The baseline is golden-only, so it gets the deps WITHOUT the converted
+  // anchors: a dropped anchor must never be subtracted away as pre-existing.
   const baseline = loadBaseline(opts.goldenDir, l3deps, currentKey, path.join(opts.goldenDir, 'layer3-baseline.json'))
+  const pageL3deps = { ...l3deps, convertedAnchors: convertedAnchorLookup(opts.buildDir) }
+  const titles = new Map(manifest.resources.filter((r) => r.family === 'page').map((r) => [r.url, r.title]))
 
   // --- scope ---------------------------------------------------------------
   const allGolden = goldenPages(opts.goldenDir)
@@ -129,7 +133,7 @@ function main () {
     if (!convertedFile) { pending++; continue }
     converted++
     const fullHtml = fs.readFileSync(convertedFile, 'utf8')
-    const fragment = extractMain(fullHtml)
+    const { fragment, title } = extractPage(fullHtml)
     const entry = { url: p.url, l1: [], l2: [], l3: [] }
     if (fragment == null) {
       entry.error = 'no main-content container found'
@@ -145,10 +149,10 @@ function main () {
     if (opts.layers.has('2')) {
       const g = inventoryIndex.get(p.url) || inventory(goldenHtml, ASCIIDOC_PROFILE)
       const c = inventory(fragment, DOCUSAURUS_PROFILE)
-      entry.l2 = compareInventory(g, c)
+      entry.l2 = [...compareTitle(titles.get(p.url), title), ...compareInventory(g, c)]
     }
     if (opts.layers.has('3')) {
-      const problems = checkPage({ html: fragment, pageUrl: p.url, fragment: true }, l3deps)
+      const problems = checkPage({ html: fragment, pageUrl: p.url, fragment: true }, pageL3deps)
       entry.l3 = novelProblems(p.url, problems, baseline)
     }
     // Accepted diffs (fidelity/accepted.json): understood, still reported, not

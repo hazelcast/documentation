@@ -11,6 +11,8 @@
 // title h1 so h1 compares equal; until it does, h1 is compared leniently here
 // (converted may have exactly one more).
 
+const cheerio = require('cheerio')
+
 function compareInventory (golden, converted) {
   const diffs = []
   const push = (field, g, c) => { if (g !== c) diffs.push({ field, golden: g, converted: c }) }
@@ -54,7 +56,35 @@ function compareInventory (golden, converted) {
       converted: at.map(([i, , c]) => `#${i} ${c}`).join(', '),
     })
   }
+
+  // The alt text for each image, by position, under the same counts-agree rule.
+  // Alt is the only form of an image a screen reader or a search engine gets,
+  // and no other layer reads it.
+  const gAlts = golden.imageAlts || []
+  const cAlts = converted.imageAlts || []
+  if (golden.imageAlts && converted.imageAlts && gAlts.length === cAlts.length && gAlts.some((a, i) => a !== cAlts[i])) {
+    const at = gAlts.map((a, i) => [i, a, cAlts[i]]).filter(([, g, c]) => g !== c)
+    diffs.push({
+      field: 'imageAlts',
+      golden: at.map(([i, g]) => `#${i} ${JSON.stringify(g)}`).join(', '),
+      converted: at.map(([i, , c]) => `#${i} ${JSON.stringify(c)}`).join(', '),
+    })
+  }
   return diffs
 }
 
-module.exports = { compareInventory }
+// The page title. The golden body fragment has no title at all (Antora renders
+// it in chrome), so the reference is the manifest's doctitle, which is
+// Asciidoctor-converted HTML (`C&#43;&#43; Client`, `What&#8217;s New`): both
+// sides are reduced to visible text before comparing. A page whose manifest
+// carries no doctitle has no reference to compare against and is skipped.
+const titleText = (s) => cheerio.load(s, null, false).root().text().replace(/\s+/g, ' ').trim()
+
+function compareTitle (goldenTitle, convertedTitle) {
+  if (!goldenTitle) return []
+  const g = titleText(goldenTitle)
+  const c = convertedTitle == null ? null : titleText(convertedTitle)
+  return g === c ? [] : [{ field: 'title', golden: g, converted: c }]
+}
+
+module.exports = { compareInventory, compareTitle }

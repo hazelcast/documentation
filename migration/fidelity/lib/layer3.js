@@ -7,12 +7,17 @@
 //     anchor index). A target that is a known URL but has no anchor entry
 //     (e.g. an image, an alias, or a resolution-only page we did not snapshot)
 //     is treated as URL-valid with anchors unverifiable, not a failure.
+//     With `convertedAnchors` (url -> Set of ids on OUR built page, or null when
+//     the target is not converted), an anchor the golden target has but our
+//     target lacks is `dropped-anchor-cross`: the golden index answers "was this
+//     ever a real target", the converted one "is it still one". Without the
+//     second, a converted page that loses an id passes every inbound deep link.
 //   - external / mailto / tel: not checked here.
 // Returns a list of problems, each tagged so the report can rank them.
 
 const { extractLinks } = require('./links')
 
-function checkPage ({ html, pageUrl, ids: ownIds, fragment = true }, { manifestIndex, anchorIndex, siteHost }) {
+function checkPage ({ html, pageUrl, ids: ownIds, fragment = true }, { manifestIndex, anchorIndex, siteHost, convertedAnchors }) {
   const { ids, links } = extractLinks(html, pageUrl, siteHost, { fragment })
   const selfIds = ownIds || ids
   const problems = []
@@ -39,6 +44,11 @@ function checkPage ({ html, pageUrl, ids: ownIds, fragment = true }, { manifestI
         anchorIndex.get(canonical.replace(/\/$/, '')) || anchorIndex.get(canonical + '/')
       if (targetAnchors && !targetAnchors.has(link.anchor)) {
         problems.push({ type: 'dead-anchor-cross', path: canonical, anchor: link.anchor })
+      } else if (targetAnchors && convertedAnchors) {
+        const ours = convertedAnchors(canonical)
+        if (ours && !ours.has(link.anchor)) {
+          problems.push({ type: 'dropped-anchor-cross', path: canonical, anchor: link.anchor })
+        }
       }
     }
   }

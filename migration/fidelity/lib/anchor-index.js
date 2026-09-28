@@ -11,7 +11,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 const cheerio = require('cheerio')
 
-const { goldenPages, readGolden } = require('./pairing')
+const { goldenPages, readGolden, resolveConverted } = require('./pairing')
 
 function buildAnchorIndex (goldenDir) {
   const index = new Map()
@@ -45,4 +45,26 @@ function loadAnchorIndex (goldenDir, lockfileKey, cacheFile) {
   return index
 }
 
-module.exports = { buildAnchorIndex, loadAnchorIndex }
+// The converted side: url -> Set of ids on OUR built page, or null when the URL
+// has no converted page (not migrated yet, or deliberately unpublished). Read
+// from the WHOLE built page, not the main fragment -- a browser resolves "#frag"
+// against any id on the page. Lazy and memoized: only link targets are parsed.
+// Not cached to disk, since the build changes without the lockfile changing.
+function convertedAnchorLookup (buildDir) {
+  const memo = new Map()
+  return (url) => {
+    if (memo.has(url)) return memo.get(url)
+    const file = resolveConverted(buildDir, url)
+    let ids = null
+    if (file) {
+      const $ = cheerio.load(fs.readFileSync(file, 'utf8'))
+      ids = new Set()
+      $('[id]').each((_, el) => ids.add($(el).attr('id')))
+      $('a[name]').each((_, el) => ids.add($(el).attr('name')))
+    }
+    memo.set(url, ids)
+    return ids
+  }
+}
+
+module.exports = { buildAnchorIndex, loadAnchorIndex, convertedAnchorLookup }

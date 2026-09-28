@@ -26,9 +26,10 @@ const { literalizeMonospace } = require('../antora-extension/normalize-monospace
 const { lockfileKey } = require('./lockfile-key')
 const { buildIndex, variants } = require('./lib/manifest-index')
 const { inventory, ASCIIDOC_PROFILE, DOCUSAURUS_PROFILE } = require('./lib/structure')
-const { compareInventory } = require('./lib/layer2')
-const { extractMain } = require('./lib/extract-main')
+const { compareInventory, compareTitle } = require('./lib/layer2')
+const { extractMain, extractPage } = require('./lib/extract-main')
 const { checkPage } = require('./lib/layer3')
+const { convertedAnchorLookup } = require('./lib/anchor-index')
 const { problemKey, novelProblems } = require('./lib/baseline')
 const { urlFromGoldenRel, convertedCandidates } = require('./lib/pairing')
 const adoc = require('@asciidoctor/core')()
@@ -691,6 +692,38 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
   ok('inventory: image names normalise across the golden and Docusaurus profiles')
 }
 
+// --- image alt text -----------------------------------------------------------
+// What a reader without the picture gets. Compared as the DECODED attribute value
+// on both sides, so a double-escaped alt (`&amp;#39;` in the HTML, which a
+// screen reader reads out as "ampersand hash 39") is a diff, not a match.
+{
+  const alts = (html, profile) => inventory(html, profile).imageAlts
+  const golden = '<div class="imageblock"><img src="../_images/a.png" alt="the name \'hello\'"></div>'
+  assert.deepStrictEqual(alts(golden, ASCIIDOC_PROFILE), ["the name 'hello'"], 'alt is the decoded attribute value')
+  const same = '<img src="/assets/images/a-a103b50b234f1db0ff303c271242b05c.png" alt="the name &#39;hello&#39;">'
+  const doubled = '<img src="/assets/images/a-a103b50b234f1db0ff303c271242b05c.png" alt="the name &amp;#39;hello&amp;#39;">'
+  const g = inventory(golden, ASCIIDOC_PROFILE)
+  assert.deepStrictEqual(compareInventory(g, inventory(same, DOCUSAURUS_PROFILE)), [],
+    'the same text, entity-encoded differently, is equal')
+  const d = compareInventory(g, inventory(doubled, DOCUSAURUS_PROFILE))
+  assert.deepStrictEqual(d.map((x) => x.field), ['imageAlts'], 'a double-escaped alt is reported')
+  assert(d[0].converted.includes('&#39;'), 'and the diff shows the text a reader would actually get')
+  const inlined = '<img src="data:image/png;base64,iVBORw0KGgo=" alt="other">'
+  assert.deepStrictEqual(compareInventory(g, inventory(inlined, DOCUSAURUS_PROFILE)).map((x) => x.field), ['imageAlts'],
+    'an inlined image still has its alt compared (the name is skipped, the alt is not)')
+  const two = inventory(golden + golden, ASCIIDOC_PROFILE)
+  assert.deepStrictEqual(compareInventory(two, inventory(same, DOCUSAURUS_PROFILE)).map((x) => x.field), ['images'],
+    'a dropped image is reported by the count only')
+  const curly = inventory('<img src="x.png" alt="Center\u2019s  browser">', ASCIIDOC_PROFILE)
+  const straight = inventory('<img src="x.png" alt="Center\'s browser">', DOCUSAURUS_PROFILE)
+  assert.deepStrictEqual(compareInventory(curly, straight), [],
+    'typographic quotes and whitespace fold exactly as Layer 1 prose does')
+  const legacy = { ...g }; delete legacy.imageAlts
+  assert.deepStrictEqual(compareInventory(legacy, inventory(doubled, DOCUSAURUS_PROFILE)), [],
+    'an inventory predating the field -> no diff')
+  ok('inventory/compareInventory: image alt text compared by position, decoded, counts-agree only')
+}
+
 // --- extract-main: pull the comparable fragment from a full page -------------
 {
   const page = '<html><body><nav class="theme-doc-breadcrumbs">crumbtrail</nav>' +
@@ -699,12 +732,41 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
     '</div></article></main></body></html>'
   const main = extractMain(page)
   assert(main.includes('<p>Body'), 'keeps the body content')
-  assert(!/<h1/.test(main), 'drops the page-title h1 (checked via frontmatter, not here)')
+  assert(!/<h1/.test(main), 'drops the page-title h1')
   assert(!main.includes('popover_Tx9d'), 'drops the inline-badge popover')
   assert(!main.includes('crumbtrail'), 'chrome outside .theme-doc-markdown is excluded')
   assert.strictEqual(extractMain('<html><body><div>no doc container</div></body></html>'), null,
     'an unrecognisable page -> null')
   ok('extractMain: isolates .theme-doc-markdown minus title/popover, null when absent')
+
+  assert.strictEqual(extractPage(page).title, 'Title', 'extractPage returns the dropped title h1 as text')
+  assert.strictEqual(extractPage(page).fragment, main, 'and the same fragment extractMain does')
+  const badged = '<main><div class="theme-doc-markdown"><h1>Maps <span class="popover_x">Learn more</span></h1></div></main>'
+  assert.strictEqual(extractPage(badged).title, 'Maps ', 'a badge popover inside the title is not title text')
+  assert.strictEqual(extractPage('<main><div class="theme-doc-markdown"><p>x</p></div></main>').title, null,
+    'no title h1 -> null')
+  ok('extractPage: returns the page title separately from the comparable fragment')
+}
+
+// --- layer2.compareTitle: page title against the Antora doctitle -------------
+// The manifest title is what Asciidoctor made of the `= Title` line, so
+// Asciidoctor is the oracle for that side; the other side is what a reader sees
+// in the built h1.
+{
+  const doctitle = (src) => adoc.load(src).getDocumentTitle()
+  assert.deepStrictEqual(compareTitle(doctitle('= C++ Client'), 'C++ Client'), [],
+    'entity-encoded doctitle equals the rendered text')
+  assert.deepStrictEqual(compareTitle(doctitle("= What's New"), 'What\u2019s New'), [],
+    'a typographic apostrophe compares as the character Asciidoctor produced')
+  assert.deepStrictEqual(compareTitle(doctitle('= The `map` API'), 'The map API'), [],
+    'inline markup in the doctitle is reduced to its text')
+  assert.deepStrictEqual(compareTitle('Install  Hazelcast', 'Install Hazelcast\n'), [], 'whitespace-insensitive')
+  assert.deepStrictEqual(compareTitle(doctitle('= Deploy on AWS'), 'Deploy on Azure'),
+    [{ field: 'title', golden: 'Deploy on AWS', converted: 'Deploy on Azure' }], 'a different title is reported')
+  assert.deepStrictEqual(compareTitle('Deploy on AWS', null),
+    [{ field: 'title', golden: 'Deploy on AWS', converted: null }], 'a missing title h1 is reported')
+  assert.deepStrictEqual(compareTitle(undefined, 'Anything'), [], 'no doctitle in the manifest -> nothing to compare')
+  ok('compareTitle: compares visible text of the Antora doctitle and the built h1')
 }
 
 // --- layer3.checkPage: link/anchor integrity ---------------------------------
@@ -730,6 +792,39 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
     ['dead-anchor-cross', 'dead-anchor-self', 'dead-link'],
     'reports the three real breakages; valid links + external are silent')
   ok('checkPage: dead self-anchor, dead link, dead cross-anchor; skips valid + external')
+
+  // The converted side: a golden-valid deep link whose target OUR page lost.
+  const ours = new Map([['/cloud/other', new Set(['kept'])]])
+  const withOurs = { ...deps, anchorIndex: new Map([['/cloud/other', new Set(['kept', 'lost'])]]),
+    convertedAnchors: (u) => ours.get(u) || null }
+  const cross = (href) => checkPage({ html: `<a href="${href}">x</a>`, pageUrl: '/cloud/page' }, withOurs)
+  assert.deepStrictEqual(cross('/cloud/other#lost'), [{ type: 'dropped-anchor-cross', path: '/cloud/other', anchor: 'lost' }],
+    'an anchor the golden target has and our target lacks is dropped-anchor-cross')
+  assert.deepStrictEqual(cross('/cloud/other#kept'), [], 'an anchor both sides have is clean')
+  assert.deepStrictEqual(cross('/cloud/other#ghost').map((p) => p.type), ['dead-anchor-cross'],
+    'an anchor the golden never had stays dead-anchor-cross (baseline territory), not both')
+  withOurs.convertedAnchors = () => null
+  assert.deepStrictEqual(cross('/cloud/other#lost'), [], 'an unconverted target falls back to the golden check')
+  ok('checkPage: dropped-anchor-cross judges golden-valid anchors against the converted target')
+}
+
+// --- convertedAnchorLookup: ids read from the built page ---------------------
+// Docusaurus's minifier drops quotes around simple attribute values, so the
+// lookup must parse, not pattern-match the quoted form.
+{
+  const fs = require('node:fs')
+  const os = require('node:os')
+  const path = require('node:path')
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fid-anchors-'))
+  fs.mkdirSync(path.join(dir, 'cloud'))
+  fs.writeFileSync(path.join(dir, 'cloud', 'other.html'),
+    '<html><body><nav id=navbar></nav><main><h2 id="quoted">Q</h2><span id=unquoted></span><a name="named"></a></main></body></html>')
+  const look = convertedAnchorLookup(dir)
+  const ids = look('/cloud/other')
+  for (const id of ['quoted', 'unquoted', 'named', 'navbar']) assert(ids.has(id), `collects ${id}`)
+  assert.strictEqual(look('/cloud/missing'), null, 'no built page -> null')
+  fs.rmSync(dir, { recursive: true })
+  ok('convertedAnchorLookup: quote-agnostic ids from the whole built page, null when unbuilt')
 }
 
 // --- baseline: subtract known-broken golden problems -------------------------
@@ -737,6 +832,8 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
   assert.strictEqual(problemKey({ type: 'dead-link', path: '/x' }), 'dead-link|/x', 'dead-link key')
   assert.strictEqual(problemKey({ type: 'dead-anchor-cross', path: '/p', anchor: 'a' }), 'dead-anchor-cross|/p|a',
     'cross-anchor key includes path + anchor')
+  assert.strictEqual(problemKey({ type: 'dropped-anchor-cross', path: '/p', anchor: 'a' }), 'dropped-anchor-cross|/p|a',
+    'dropped-anchor key includes path + anchor')
 
   const baseline = new Map([['/p', new Set(['dead-link|/x'])]])
   const problems = [{ type: 'dead-link', path: '/x' }, { type: 'dead-link', path: '/y' }]

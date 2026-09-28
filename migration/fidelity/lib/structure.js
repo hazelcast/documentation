@@ -19,6 +19,7 @@ const cheerio = require('cheerio')
 // restated so the comparator and the conversion cannot drift about it (see the
 // `links` count below).
 const { isPlaceholderUrl } = require('../../converter/lib/mdx')
+const { normalizeProse } = require('./layer1')
 
 const ADMONITION_TYPES = ['note', 'tip', 'warning', 'caution', 'important']
 
@@ -26,7 +27,7 @@ const ADMONITION_TYPES = ['note', 'tip', 'warning', 'caution', 'important']
 // CACHED to disk keyed by the source pin (see inventory-index.js), which cannot
 // notice that this file changed -- so without this a new field would compare an
 // old cache's `undefined` against a freshly extracted value on every page.
-const INVENTORY_VERSION = 5 // 4: `links` excludes placeholder-URL anchors; 5: `codeBlocks` excludes CONTENT-table cells only
+const INVENTORY_VERSION = 6 // 4: `links` excludes placeholder-URL anchors; 5: `codeBlocks` excludes CONTENT-table cells only; 6: `imageAlts`
 
 // An image's identity for comparison purposes: its file name. Both sides lose
 // the directory anyway -- Docusaurus flattens every imported asset into
@@ -97,7 +98,11 @@ function inventory (html, profile = ASCIIDOC_PROFILE, { fragment = true } = {}) 
   // which would silently shift every position after an inlined image and make
   // the comparison misalign instead of skip.
   const imageNames = []
-  $('img').each((_, el) => { imageNames.push(profile.imageName($(el).attr('src'))) })
+  const imageAlts = []
+  $('img').each((_, el) => {
+    imageNames.push(profile.imageName($(el).attr('src')))
+    imageAlts.push(normalizeProse($(el).attr('alt') || ''))
+  })
 
   return {
     headings,
@@ -131,6 +136,11 @@ function inventory (html, profile = ASCIIDOC_PROFILE, { fragment = true } = {}) 
     // mode of computing image placement (a swapped path still resolves, so
     // `onBrokenMarkdownImages: 'throw'` stays silent too).
     imageNames,
+    // Each image's alt text, in the same order. Unlike the name it survives
+    // webpack inlining (the alt attribute is untouched), so every position is
+    // comparable. Normalised exactly as Layer 1 normalises prose, since the
+    // converter folds typographic quotes in alt text as it does in prose.
+    imageAlts,
     // Navigable links only. Asciidoctor auto-links a bare `http://…` URL even
     // inside backticks, so a monospaced PLACEHOLDER pseudo-URL like
     // `http://<mc-ip-address>:8080` renders as `<code><a class="bare">…</a></code>`
