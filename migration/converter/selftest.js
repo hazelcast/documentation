@@ -2001,4 +2001,36 @@ const renderedCode = (md) => {
   ok('fence info strings: a flag never gets read as the language')
 }
 
+// --- a heading keeps its golden id -------------------------------------------
+// The spec: the id a reader's deep link hits on OUR page equals the golden's.
+// Oracle is Docusaurus's own slugger (@docusaurus/utils createSlugger) run over
+// the heading's MDX text as Docusaurus sees it -- a JSX component contributes no
+// text -- unless the id is pinned with `{/* #id */}`. Golden shapes are the real
+// ones from hz-docs jet-configuration and the 5.4 enterprise page.
+{
+  const { convertBody } = require('./lib/html-to-mdx')
+  const { createSlugger } = require(require.resolve('@docusaurus/utils', { paths: [require('node:path').resolve(__dirname, '../..')] }))
+  const badge = '<strong class="enterprise"><span class="hz-attr-enterprise-product-name">Enterprise Edition</span></strong>'
+  const effectiveId = (md) => {
+    const line = md.split('\n').find((l) => /^#{1,6} /.test(l))
+    const pinned = /\{\/\* #(\S+) \*\/\}\s*$/.exec(line)
+    if (pinned) return { id: pinned[1], pinned: true }
+    const text = line.replace(/^#+ /, '').replace(/<[A-Z][^>]*\/>/g, '')
+    return { id: createSlugger().slug(text), pinned: false }
+  }
+  const cases = [
+    ['job-placement-control-enterprise-edition', `Job Placement Control ${badge}`, true],
+    ['enterprise-security', `${badge} Security`, true],
+    ['plain-heading', 'Plain Heading', false],
+    ['prereqs', 'Prerequisites', true],
+  ]
+  for (const [id, inner, expectPin] of cases) {
+    const { body } = convertBody(`<div class="sect2"><h3 id="${id}">${inner}</h3></div>`, {})
+    const got = effectiveId(body)
+    assert.strictEqual(got.id, id, `the rendered id is the golden id for ${JSON.stringify(inner)} (got ${got.id})`)
+    assert.strictEqual(got.pinned, expectPin, `pinned only when Docusaurus would otherwise differ: ${id}`)
+  }
+  ok('heading ids: a Badge heading pins the golden id; a plain one stays unpinned')
+}
+
 console.log(`\n[converter selftest] ${n} groups passed.`)

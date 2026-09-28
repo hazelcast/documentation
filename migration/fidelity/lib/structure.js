@@ -82,6 +82,11 @@ const DOCUSAURUS_PROFILE = {
     : imageBasename(src).replace(/-[0-9a-f]{32}(\.[^.]+)$/i, '$1')),
 }
 
+// The navigable-link predicate behind the `links` count (see the comment there),
+// shared with the link-destination comparison so the two always count the same
+// anchors.
+const isCountedLink = (href) => !/[<>]/.test(href || '') && !isPlaceholderUrl(href || '')
+
 function inventory (html, profile = ASCIIDOC_PROFILE, { fragment = true } = {}) {
   const $ = cheerio.load(html, null, !fragment)
 
@@ -165,14 +170,11 @@ function inventory (html, profile = ASCIIDOC_PROFILE, { fragment = true } = {}) 
     // a time; those carried an UPSTREAM REPORT note — the sources should write
     // `` `\http://…` `` so Asciidoctor stops autolinking them — which the
     // normalisation makes cosmetic rather than a fidelity matter.
-    links: $('a[href]').filter((_, el) => {
-      const href = $(el).attr('href') || ''
-      return !/[<>]/.test(href) && !isPlaceholderUrl(href)
-    }).length,
+    links: $('a[href]').filter((_, el) => isCountedLink($(el).attr('href'))).length,
     listItems: $(profile.listItemSelector).length,
     tabSets: $(profile.tabSetSelector).length,
     tabItems: $(profile.tabItemSelector).length,
   }
 }
 
-module.exports = { inventory, ASCIIDOC_PROFILE, DOCUSAURUS_PROFILE, ADMONITION_TYPES, INVENTORY_VERSION }
+module.exports = { inventory, isCountedLink, ASCIIDOC_PROFILE, DOCUSAURUS_PROFILE, ADMONITION_TYPES, INVENTORY_VERSION }

@@ -36,7 +36,8 @@ const { loadInventoryIndex } = require('./lib/inventory-index')
 const { loadBaseline, novelProblems } = require('./lib/baseline')
 const { checkPage } = require('./lib/layer3')
 const { inventory, ASCIIDOC_PROFILE, DOCUSAURUS_PROFILE } = require('./lib/structure')
-const { compareInventory, compareTitle } = require('./lib/layer2')
+const { compareInventory, compareTitle, compareLinkTargets } = require('./lib/layer2')
+const { linkTargets, linkDeps } = require('./lib/link-targets')
 const { canonicalize, diffSegments, GOLDEN_STRIP, DOCUSAURUS_STRIP, DOCUSAURUS_STRIP_IF, GOLDEN_TABLE, DOCUSAURUS_TABLE } = require('./lib/layer1')
 const { extractPage } = require('./lib/extract-main')
 const { lockfileKeyFromFile } = require('./lockfile-key')
@@ -102,6 +103,7 @@ function main () {
   // converted" -- counting it as pending would overstate the work still left to
   // do, and it can never go green.
   const dispositions = loadDispositions()
+  const targetDeps = linkDeps(manifest, dispositions)
   const unpublished = unpublishedUrls(dispositions, manifest)
   pages = pages.filter((p) => !unpublished.has(p.url))
   // A SITE PAGE is a hand-written React component that owns its URL outright
@@ -149,7 +151,11 @@ function main () {
     if (opts.layers.has('2')) {
       const g = inventoryIndex.get(p.url) || inventory(goldenHtml, ASCIIDOC_PROFILE)
       const c = inventory(fragment, DOCUSAURUS_PROFILE)
-      entry.l2 = [...compareTitle(titles.get(p.url), title), ...compareInventory(g, c)]
+      entry.l2 = [
+        ...compareTitle(titles.get(p.url), title),
+        ...compareInventory(g, c),
+        ...compareLinkTargets(linkTargets(goldenHtml, p.url, targetDeps), linkTargets(fragment, p.url, targetDeps)),
+      ]
     }
     if (opts.layers.has('3')) {
       const problems = checkPage({ html: fragment, pageUrl: p.url, fragment: true }, pageL3deps)

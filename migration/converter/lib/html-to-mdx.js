@@ -590,15 +590,19 @@ function heading ($, node, st) {
   const autoId = st.slugger.slug($(node).text().replace(/\s+/g, ' ').trim())
   // Pin the id explicitly when it would otherwise differ (custom ids like
   // #prereqs, or case like #Troubleshooting), OR when the heading carries a
-  // <Variable> (a marked attribute reference): Docusaurus derives the slug from
-  // the heading TEXT, which it cannot read through the component, so the id must
-  // be pinned even though it matches the golden text's slug. Where neither holds,
+  // component whose text the golden heading has -- a <Variable> (a marked
+  // attribute reference) or an inline <Badge> ("Enterprise Edition"):
+  // Docusaurus derives the slug from the heading's MDX TEXT, which it cannot read
+  // through a component, so the id must be pinned even though it matches the
+  // golden text's slug. Unpinned, `### Job Placement Control <Badge/>` became
+  // #job-placement-control- instead of #job-placement-control-enterprise-edition.
+  // <Anchor> is the exception: it renders no text on either side. Where neither holds,
   // the explicit form is pure noise, so we drop it. Pinned via Docusaurus's
   // MDX-safe explicit-id syntax -- an MDX comment `{/* #id */}` (the classic
   // `{#id}` cannot be used: in .mdx `{` opens a JS expression and `#id` is not
   // parseable, which breaks the build).
-  const hasVariable = text.includes('<Variable')
-  const suffix = id && (id !== autoId || hasVariable) ? ` {/* #${id} */}` : ''
+  const hasTextComponent = /<(?!Anchor\b)[A-Z]/.test(text)
+  const suffix = id && (id !== autoId || hasTextComponent) ? ` {/* #${id} */}` : ''
   return '#'.repeat(level) + ' ' + text + suffix
 }
 
@@ -1252,10 +1256,10 @@ function retargetRedirect (resolved, st) {
 // of the page sends the reader out of the version they are reading: the 5.18
 // tutorials link into 5.19. Retarget to the same page in the page's OWN version.
 //
-// A DELIBERATE DIVERGENCE from the golden -- production has the same jump today --
-// and one NO GATE CAN SEE: Layer 3 checks that a link resolves, not that it
-// resolves where the golden's did, and the link TEXT is unchanged so Layers 1/2
-// are blind too. Recorded here because an accept-list entry would never fire.
+// A DELIBERATE DIVERGENCE from the golden -- production has the same jump today.
+// Layer 2's linkTargets comparison sees it, and recognises exactly this rule under
+// these guards (fidelity/lib/link-targets.js ownVersion), so a change to either
+// side shows up as a diff.
 //
 // Three guards keep it off deliberate cross-version pins:
 //   - same component only; a genuine cross-component xref is the float's business.

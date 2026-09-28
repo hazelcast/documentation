@@ -73,6 +73,18 @@ function compareInventory (golden, converted) {
   return diffs
 }
 
+// WHERE each link goes (link-targets.js), by position, under the same
+// counts-agree rule: a length difference is already the `links` diff.
+function compareLinkTargets (golden, converted) {
+  if (golden.length !== converted.length || golden.every((t, i) => t === converted[i])) return []
+  const at = golden.map((t, i) => [i, t, converted[i]]).filter(([, g, c]) => g !== c)
+  return [{
+    field: 'linkTargets',
+    golden: at.map(([i, g]) => `#${i} ${g}`).join(', '),
+    converted: at.map(([i, , c]) => `#${i} ${c}`).join(', '),
+  }]
+}
+
 // The page title. The golden body fragment has no title at all (Antora renders
 // it in chrome), so the reference is the manifest's doctitle, which is
 // Asciidoctor-converted HTML (`C&#43;&#43; Client`, `What&#8217;s New`): both
@@ -87,4 +99,4 @@ function compareTitle (goldenTitle, convertedTitle) {
   return g === c ? [] : [{ field: 'title', golden: g, converted: c }]
 }
 
-module.exports = { compareInventory, compareTitle }
+module.exports = { compareInventory, compareTitle, compareLinkTargets }

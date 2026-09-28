@@ -26,7 +26,8 @@ const { literalizeMonospace } = require('../antora-extension/normalize-monospace
 const { lockfileKey } = require('./lockfile-key')
 const { buildIndex, variants } = require('./lib/manifest-index')
 const { inventory, ASCIIDOC_PROFILE, DOCUSAURUS_PROFILE } = require('./lib/structure')
-const { compareInventory, compareTitle } = require('./lib/layer2')
+const { compareInventory, compareTitle, compareLinkTargets } = require('./lib/layer2')
+const { linkTargets, linkDeps } = require('./lib/link-targets')
 const { extractMain, extractPage } = require('./lib/extract-main')
 const { checkPage } = require('./lib/layer3')
 const { convertedAnchorLookup } = require('./lib/anchor-index')
@@ -767,6 +768,62 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
     [{ field: 'title', golden: 'Deploy on AWS', converted: null }], 'a missing title h1 is reported')
   assert.deepStrictEqual(compareTitle(undefined, 'Anything'), [], 'no doctitle in the manifest -> nothing to compare')
   ok('compareTitle: compares visible text of the Antora doctitle and the built h1')
+}
+
+// --- link destinations: same place, whatever the spelling ---------------------
+// The spec: two links compare equal exactly when a reader who follows them ends
+// up on the same page and section. So every spelling of one destination must
+// fold together, and every different destination must stay apart. The manifest
+// is a small real one, run through the real manifest index.
+{
+  const res = (url, family = 'page', extra = {}) => ({ url, family, component: url.split('/')[1], ...extra })
+  const manifest = {
+    site: { url: 'https://docs.hazelcast.com' },
+    components: [{ name: 'op', latestVersion: '5.19', versions: [] }, { name: 'hz', latestVersion: '5.7', versions: [] }],
+    resources: [
+      res('/op/5.19/tls'), res('/op/5.18/tls'), res('/op/5.19/only-latest'), res('/op/5.17/tls'),
+      res('/hz/5.7/page'), res('/hz/5.7/other'), res('/hz/5.6/page'),
+      res('/hz/5.7/old-name', 'alias', { aliasTo: '/hz/5.7/page' }),
+      res('/hz/5.7/_attachments/data.txt', 'attachment'),
+      res('/clc/5.5/clc-script'),
+    ],
+  }
+  const deps = linkDeps(manifest, null)
+  const t = (href, page = '/hz/5.7/here') => linkTargets(`<a href="${href}">x</a>`, page, deps)[0]
+  const same = (a, b, page, why) => assert.strictEqual(t(a, page), t(b, page), `same destination: ${why}`)
+  const differ = (a, b, page, why) => assert.notStrictEqual(t(a, page), t(b, page), `different destination: ${why}`)
+
+  same('../page', '/hz/5.7/page', '/hz/5.7/sub/here', 'relative vs absolute')
+  same('/hz/latest/page', '/hz/5.7/page', undefined, 'the /latest/ alias vs the version it serves')
+  same('/hz/5.7/page.html', '/hz/5.7/page', undefined, '.html suffix')
+  same('https://docs.hazelcast.com/hz/5.7/page', '/hz/5.7/page', undefined, 'absolute site URL')
+  same('/hz/5.7/old-name#s', '/hz/5.7/page#s', undefined, 'a page alias vs the page it redirects to')
+  same('/hz/5.7/_attachments/data.txt', '/assets/files/data-0123456789abcdef0123456789abcdef.txt', undefined,
+    'an attachment vs its content-hashed asset URL')
+  same('https://ex.org/a%E2%80%94b', 'https://ex.org/a—b', undefined, 'percent-encoding of an external URL')
+  same('#sec', '#sec', undefined, 'same-page anchor')
+
+  // The two converter divergences, inside their guards...
+  same('/op/5.19/tls', '/op/5.18/tls', '/op/5.18/tut', 'own-version retarget from a latest-release link')
+  same('clc-script.adoc', 'clc-script', '/clc/5.5/here', 'a healed link:foo.adoc')
+  // ...and not outside them.
+  differ('/op/5.17/tls', '/op/5.18/tls', '/op/5.18/tut', 'a pin to an older, non-latest version is kept')
+  differ('/op/5.19/only-latest', '/op/5.18/only-latest', '/op/5.18/tut', 'no own-version page -> the golden target stands')
+  differ('/hz/5.7/page', '/hz/5.6/page', '/op/5.18/tut', 'a cross-component link is not retargeted')
+  differ('nope.adoc', 'nope', '/clc/5.5/here', 'an .adoc link that is not a real page is not healed')
+
+  differ('/hz/5.7/page', '/hz/5.7/other', undefined, 'another page')
+  differ('/hz/5.7/page#a', '/hz/5.7/page#b', undefined, 'another section')
+  differ('https://github.com/x/blob/master/f', 'https://github.com/x/tree/v5.6.0/f', undefined, 'another external URL')
+  assert.deepStrictEqual(linkTargets('<a href="http://localhost:8080">l</a><a href="http://<host>/">p</a>', '/hz/5.7/here', deps), [],
+    'placeholder URLs are skipped, exactly as the `links` count skips them')
+  ok('linkTargets: every spelling of one destination folds together, different destinations stay apart')
+
+  assert.deepStrictEqual(compareLinkTargets(['/a', '/b'], ['/a', '/b']), [], 'same targets -> no diff')
+  const d = compareLinkTargets(['/a', '/b'], ['/a', '/c'])
+  assert.deepStrictEqual(d, [{ field: 'linkTargets', golden: '#1 /b', converted: '#1 /c' }], 'names only the differing position')
+  assert.deepStrictEqual(compareLinkTargets(['/a', '/b'], ['/a']), [], 'a count difference is left to the `links` field')
+  ok('compareLinkTargets: position-exact, counts-agree only')
 }
 
 // --- layer3.checkPage: link/anchor integrity ---------------------------------
