@@ -30,6 +30,7 @@ const { execFileSync } = require('node:child_process')
 
 const { goldenPages } = require('../fidelity/lib/pairing')
 const { convertBody } = require('./lib/html-to-mdx')
+const { foldTypographic } = require('./lib/mdx')
 const { collectOccurrences, decide, consumerAttrs } = require('./lib/partials')
 // Link targets written with an `{attribute}` in them — the exact-match href path
 // (see buildTemplates); shared with the selftest so the grammar has one definition.
@@ -902,8 +903,9 @@ function proseVarsFor (pageVars, proseNames, marked) {
 // value, and it counts occurrences rather than warning on presence.
 
 function frontmatter (title, { derived, slug, sidebarLabel, sidebarPosition, unlisted, noSidebar, badges, cloud, tutorial } = {}) {
-  const lines = ['---', `title: ${yaml(title)}`]
-  if (sidebarLabel) lines.push(`sidebar_label: ${yaml(sidebarLabel)}`)
+  // Visible text (the h1, the nav, <title>), so the same typographic fold as prose.
+  const lines = ['---', `title: ${yaml(foldTypographic(title))}`]
+  if (sidebarLabel) lines.push(`sidebar_label: ${yaml(foldTypographic(sidebarLabel))}`)
   if (sidebarPosition != null) lines.push(`sidebar_position: ${sidebarPosition}`)
   if (slug) lines.push(`slug: ${slug}`)
   // Page-level badges (e.g. `dedicated: true`), carried from the page header via

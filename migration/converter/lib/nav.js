@@ -20,6 +20,7 @@
 // a `slug` on every page.
 
 const path = require('node:path')
+const { foldTypographic } = require('./mdx')
 
 const CATEGORY_RE = /^\.(\S.*)$/
 const ITEM_RE = /^(\*+)\s+xref:([^[\]]+?)\[(.*)\]\s*$/
@@ -267,7 +268,7 @@ function buildPlan (roots, titles = new Map()) {
     // folder would otherwise be auto-adopted as the category's link and vanish
     // as a child item). In the Overview pattern the content always lives in an
     // `overview.mdx` child, never on the category itself.
-    categories.push({ relFile: path.join(relDir, '_category_.json'), content: { label, position, link: null } })
+    categories.push({ relFile: path.join(relDir, '_category_.json'), content: { label: label && foldTypographic(label), position, link: null } })
   }
 
   // Returns true if this node produced any output (a placed page or an emitted

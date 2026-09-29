@@ -27,7 +27,7 @@ const ADMONITION_TYPES = ['note', 'tip', 'warning', 'caution', 'important']
 // CACHED to disk keyed by the source pin (see inventory-index.js), which cannot
 // notice that this file changed -- so without this a new field would compare an
 // old cache's `undefined` against a freshly extracted value on every page.
-const INVENTORY_VERSION = 6 // 4: `links` excludes placeholder-URL anchors; 5: `codeBlocks` excludes CONTENT-table cells only; 6: `imageAlts`
+const INVENTORY_VERSION = 7 // 4: `links` excludes placeholder-URL anchors; 5: `codeBlocks` excludes CONTENT-table cells only; 6: `imageAlts`; 7: alts keep dashes/ellipsis (normalizeProse)
 
 // An image's identity for comparison purposes: its file name. Both sides lose
 // the directory anyway -- Docusaurus flattens every imported asset into

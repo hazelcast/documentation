@@ -25,7 +25,7 @@
 const fs = require('node:fs')
 const path = require('node:path')
 
-const { goldenPages, resolveConverted, readGolden } = require('./lib/pairing')
+const { goldenPages, resolveConverted, readGolden, walkHtml } = require('./lib/pairing')
 const { buildIndex } = require('./lib/manifest-index')
 const { loadDispositions, unpublishedUrls } = require('../lib/dispositions')
 const { isSitePage } = require('../lib/layout')
@@ -38,6 +38,7 @@ const { checkPage } = require('./lib/layer3')
 const { inventory, ASCIIDOC_PROFILE, DOCUSAURUS_PROFILE } = require('./lib/structure')
 const { compareInventory, compareTitle, compareLinkTargets } = require('./lib/layer2')
 const { linkTargets, linkDeps } = require('./lib/link-targets')
+const { entityText, compareEntityText } = require('./lib/entity-text')
 const { canonicalize, diffSegments, GOLDEN_STRIP, DOCUSAURUS_STRIP, DOCUSAURUS_STRIP_IF, GOLDEN_TABLE, DOCUSAURUS_TABLE } = require('./lib/layer1')
 const { extractPage } = require('./lib/extract-main')
 const { lockfileKeyFromFile } = require('./lockfile-key')
@@ -128,12 +129,14 @@ function main () {
   const matchedKeys = new Set()
 
   const report = []
+  const pairedFiles = new Set()
   let converted = 0
   let pending = 0
   let regressed = 0
   for (const p of pages) {
     const convertedFile = resolveConverted(opts.buildDir, p.url)
     if (!convertedFile) { pending++; continue }
+    pairedFiles.add(convertedFile)
     converted++
     const fullHtml = fs.readFileSync(convertedFile, 'utf8')
     const { fragment, title } = extractPage(fullHtml)
@@ -156,6 +159,9 @@ function main () {
         ...compareTitle(titles.get(p.url), title),
         ...compareInventory(g, c),
         ...compareLinkTargets(linkTargets(goldenHtml, p.url, targetDeps), linkTargets(fragment, p.url, targetDeps)),
+        // Our WHOLE page, chrome included: the golden has no chrome, and entity
+        // text is never right there.
+        ...compareEntityText(entityText(goldenHtml), entityText(fullHtml, { fragment: false })),
       ]
     }
     if (opts.layers.has('3')) {
@@ -177,6 +183,18 @@ function main () {
 
     if (entry.l1.length || entry.l2.length || entry.l3.length) { regressed++; report.push(entry) }
   }
+
+  // Strict: every OTHER built HTML file (site pages, client-redirect stubs, the
+  // 404) has no golden to compare against, so it is held to the absolute rule --
+  // no entity text outside code.
+  const unpairedEntityText = opts.strict && opts.layers.has('2') && !opts.component && !opts.id
+    ? walkHtml(opts.buildDir).filter((f) => !pairedFiles.has(f)).map((f) => {
+      const hits = [...entityText(fs.readFileSync(f, 'utf8'), { fragment: false })].filter(([k]) => !k.startsWith('code '))
+      return hits.length ? { file: path.relative(opts.buildDir, f), hits: hits.map(([k, n]) => `${k} x${n}`) } : null
+    }).filter(Boolean)
+    : []
+  if (completeness) completeness.unpairedEntityText = unpairedEntityText
+  if (completeness && unpairedEntityText.length) completeness.ok = false
 
   // Only judge staleness for entries this run could have matched.
   const stale = Object.keys(accept)
@@ -313,6 +331,10 @@ function writeReport (opts, meta, counts, report, acceptance, completeness, outs
 }
 
 function printCompleteness (c) {
+  if (c.unpairedEntityText && c.unpairedEntityText.length) {
+    console.log(`\n[fidelity] ✗ strict: ${c.unpairedEntityText.length} other built file(s) show literal entity text (a double escape):`)
+    for (const r of c.unpairedEntityText.slice(0, 50)) console.log(`      ${r.file}: ${r.hits.join(', ')}`)
+  }
   const LIMIT = 50
   const list = (rows, fmt) => {
     for (const r of rows.slice(0, LIMIT)) console.log(`      ${fmt(r)}`)

@@ -7,9 +7,11 @@
 //
 // Normalization is deliberately only the fidelity-SAFE kind (see
 // [[docusaurus-migration-tooling]] prose-unwrap + final-newline decisions):
-//   - prose: collapse all whitespace runs to one space, trim, and fold
-//     typographic glyphs Asciidoctor introduces (curly quotes, en/em dashes,
-//     ellipsis, nbsp) back to ASCII so they do not read as content changes.
+//   - prose: collapse all whitespace runs to one space, trim, and fold the
+//     glyphs the converter deliberately folds (curly quotes, nbsp -- see
+//     foldTypographic in converter/lib/mdx.js) back to ASCII. En/em dashes and
+//     the ellipsis are NOT folded: the converter keeps them, so a converter that
+//     mangled one must read as a change.
 //     Intra-paragraph line breaks are meaningless in both AsciiDoc and MD, so
 //     collapsing them is byte-safe on the rendered output.
 //   - code: preserved verbatim (whitespace is significant), only trailing
@@ -67,8 +69,6 @@ function normalizeProse (s) {
   return s
     .replace(/[‘’‚‛]/g, "'")
     .replace(/[“”„‟]/g, '"')
-    .replace(/[–—]/g, '-')
-    .replace(/…/g, '...')
     .replace(/ /g, ' ')
     .replace(/[​‌‍﻿]/g, '')
     .replace(/\s+/g, ' ')

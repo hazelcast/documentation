@@ -21,7 +21,7 @@ const cheerio = require('cheerio')
 const GithubSlugger = require('github-slugger')
 const {
   mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode,
-  breakAutolinks, isPlaceholderUrl, PROSE_URL,
+  breakAutolinks, isPlaceholderUrl, PROSE_URL, foldTypographic,
 } = require('./mdx')
 const { resolveHref, repairApiDeepLink } = require('./links')
 const { normalizeValues, groupIdFor } = require('./tabs')
@@ -308,8 +308,11 @@ const markerName = (node) => {
 // directly, so every `link:…/{os-version}/jar[artifact]` in a monospace table
 // column baked its version — 14 occurrences over 3 hazelcast pages, invisible to
 // fidelity because a baked value renders identically.
-function singleSourcedLink (rawHref, href, tokenText, st, { code = false } = {}) {
+function singleSourcedLink (rawHref, href, rawTokenText, st, { code = false } = {}) {
   const flag = code ? ' code' : ''
+  // The label is visible prose unless the link is code-wrapped, so it takes the
+  // same typographic fold as any other prose run (jsxAttr does not fold).
+  const tokenText = code ? rawTokenText : foldTypographic(rawTokenText)
   const labelVars = st.proseVars || st.pageVars
   const varName = st.linkVars.get(rawHref)
   if (varName) return `<Variable href=${jsxAttr(`{${varName}}`)} text=${jsxAttr(tokenText)}${flag}/>`

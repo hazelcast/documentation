@@ -12,6 +12,7 @@
 // (converted may have exactly one more).
 
 const cheerio = require('cheerio')
+const { normalizeProse } = require('./layer1')
 
 function compareInventory (golden, converted) {
   const diffs = []
@@ -90,7 +91,9 @@ function compareLinkTargets (golden, converted) {
 // Asciidoctor-converted HTML (`C&#43;&#43; Client`, `What&#8217;s New`): both
 // sides are reduced to visible text before comparing. A page whose manifest
 // carries no doctitle has no reference to compare against and is skipped.
-const titleText = (s) => cheerio.load(s, null, false).root().text().replace(/\s+/g, ' ').trim()
+// Normalised as Layer 1 normalises prose: the converter folds curly quotes in
+// titles as it does in prose.
+const titleText = (s) => normalizeProse(cheerio.load(s, null, false).root().text())
 
 function compareTitle (goldenTitle, convertedTitle) {
   if (!goldenTitle) return []

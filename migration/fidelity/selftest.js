@@ -43,8 +43,15 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
 // --- normalizeProse: fidelity-safe folds only --------------------------------
 {
   assert.strictEqual(normalizeProse('“curly” ‘quotes’'), '"curly" \'quotes\'', 'curly quotes -> ASCII')
-  assert.strictEqual(normalizeProse('en–dash em—dash'), 'en-dash em-dash', 'en/em dash -> hyphen')
-  assert.strictEqual(normalizeProse('more…'), 'more...', 'ellipsis -> ...')
+  // Exactly what the converter folds (its foldTypographic is the oracle) compares
+  // equal; typography the converter KEEPS stays distinct, so mangling it is a diff.
+  const { foldTypographic } = require('../converter/lib/mdx')
+  const glyphs = '‘single’ “double” a\u00a0b en–dash em—dash more…'
+  assert.strictEqual(normalizeProse(foldTypographic(glyphs)), normalizeProse(glyphs),
+    'what the converter folds compares equal to the unfolded golden')
+  assert.notStrictEqual(normalizeProse('en–dash'), normalizeProse('en-dash'), 'an en dash is not a hyphen')
+  assert.notStrictEqual(normalizeProse('em—dash'), normalizeProse('em-dash'), 'an em dash is not a hyphen')
+  assert.notStrictEqual(normalizeProse('more…'), normalizeProse('more...'), 'an ellipsis is not three dots')
   assert.strictEqual(normalizeProse('a b'), 'a b', 'nbsp -> space')
   assert.strictEqual(normalizeProse('a​b'), 'ab', 'zero-width chars removed')
   assert.strictEqual(normalizeProse('  spaced   \n  out  '), 'spaced out', 'whitespace collapsed + trimmed')
@@ -759,6 +766,10 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
     'entity-encoded doctitle equals the rendered text')
   assert.deepStrictEqual(compareTitle(doctitle("= What's New"), 'What\u2019s New'), [],
     'a typographic apostrophe compares as the character Asciidoctor produced')
+  const { foldTypographic } = require('../converter/lib/mdx')
+  assert.deepStrictEqual(compareTitle(doctitle("= What's New"), foldTypographic('What\u2019s New')), [],
+    'the converter\'s folded title equals the curly golden doctitle')
+  assert.notStrictEqual(compareTitle(doctitle('= A -- B'), 'A - B').length, 0, 'an em dash in a title is not a hyphen')
   assert.deepStrictEqual(compareTitle(doctitle('= The `map` API'), 'The map API'), [],
     'inline markup in the doctitle is reduced to its text')
   assert.deepStrictEqual(compareTitle('Install  Hazelcast', 'Install Hazelcast\n'), [], 'whitespace-insensitive')
@@ -824,6 +835,33 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
   assert.deepStrictEqual(d, [{ field: 'linkTargets', golden: '#1 /b', converted: '#1 /c' }], 'names only the differing position')
   assert.deepStrictEqual(compareLinkTargets(['/a', '/b'], ['/a']), [], 'a count difference is left to the `links` field')
   ok('compareLinkTargets: position-exact, counts-agree only')
+}
+
+// --- entity text: a value escaped twice ---------------------------------------
+// The spec: text and attributes a reader gets never contain a character
+// reference as literal characters, unless the golden shows the same. Oracle:
+// escape-html itself -- a value escaped ONCE into HTML must come out clean, and
+// the same value escaped TWICE must be caught, whatever the characters.
+{
+  const { entityText, compareEntityText } = require('./lib/entity-text')
+  const escapeHtml = require(require.resolve('escape-html', { paths: [require('node:path').resolve(__dirname, '../..')] }))
+  const values = ["it's", 'a < b', 'Tom & Jerry', 'say "hi"', 'plain']
+  const page = (esc) => values.map((v) =>
+    `<img alt="${esc(v)}"><span title="${esc(v)}" aria-label="${esc(v)}">${esc(v)}</span><meta name="description" content="${esc(v)}">`).join('')
+  const once = entityText(page(escapeHtml), { fragment: false })
+  assert.strictEqual(once.size, 0, 'values escaped once decode clean in text, alt, title, aria-label and meta')
+  const twice = entityText(page((v) => escapeHtml(escapeHtml(v))), { fragment: false })
+  for (const attr of ['@alt', '@title', '@aria-label', '@content', 'text']) {
+    assert([...twice.keys()].some((k) => k.startsWith(attr + ' ')), `a double escape is caught in ${attr}`)
+  }
+  assert.strictEqual(entityText('<a href="/x?a=1&amp;amp;b=2">x</a>').size, 0, 'URL-valued attributes are not judged')
+  const doc = '<pre><code>&amp;lt;tag&amp;gt;</code></pre>'
+  assert.deepStrictEqual(compareEntityText(entityText(doc), entityText(doc)), [],
+    'entity text the golden also shows (a code sample about escaping) compares equal')
+  const d = compareEntityText(entityText('<p>x</p>'), entityText('<img alt="it&amp;#39;s">'))
+  assert.deepStrictEqual(d.map((x) => x.field), ['entityText'], 'a surplus on our side is one entityText diff')
+  assert(d[0].converted.includes("@alt &#39; x1"), 'naming where and what')
+  ok('entityText: a value escaped twice is caught in text and attributes; escaped once is clean')
 }
 
 // --- layer3.checkPage: link/anchor integrity ---------------------------------

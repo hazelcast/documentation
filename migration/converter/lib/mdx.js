@@ -147,4 +147,4 @@ function fencedCode (code, lang = '') {
 }
 
 module.exports = {
-  breakAutolinks, isPlaceholderUrl, PROSE_URL, mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode }
+  breakAutolinks, isPlaceholderUrl, PROSE_URL, foldTypographic, mdEscape, mdEscapeCell, jsxText, jsxAttr, inlineCode, fencedCode }
