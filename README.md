@@ -82,6 +82,35 @@ GIT_USER=<Your GitHub username> npm run deploy
 
 If you are using GitHub Pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
 
+## Releasing a version
+
+When a product is released, its docs version changes: the release's version numbers, and for a major or minor release a new version of the docs and a new version for `main`. One script, `.github/scripts/version-update`, makes those changes for every versioned product, and a PR carries them to `main`.
+
+There are three ways to run it:
+
+- **Platform releases** run it through `package.yml` (opens a draft PR) and `promote.yml` (merges it), which the Hazelcast release pipeline calls. You only need the other two for a Platform release if the pipeline can't be used.
+- **The Version update workflow** (`version-update.yml`) runs it from the Actions tab for any product and opens a PR. Tick **merge** to have it merge the PR once its checks pass. A product's own release workflow can call it the same way: `gh workflow run version-update.yml -R hazelcast/documentation -f component=clc -f version=5.5.2`.
+- **Locally**, from the repo root on an up-to-date `main`. Add `--dry-run` to see the changes without making them.
+
+| Product | Patch release | Major or minor release |
+| --- | --- | --- |
+| Platform | `node .github/scripts/version-update hazelcast 5.7.2` | `node .github/scripts/version-update hazelcast 6.0.0 --next 6.1.0-SNAPSHOT` |
+| Management Center | `node .github/scripts/version-update management-center 5.11.2` | `node .github/scripts/version-update management-center 5.12.0 --next 5.13.0-SNAPSHOT` |
+| Operator | `node .github/scripts/version-update operator 5.19.1 --next 5.20.0` | `node .github/scripts/version-update operator 5.20.0 --next 5.21.0 --hazelcast 5.7.1 --mc 5.11.1` |
+| CLC | `node .github/scripts/version-update clc 5.5.2` | `node .github/scripts/version-update clc 5.6.0` |
+
+`--next` is the version `main` moves to: the product's next development version for a Platform or Management Center major or minor release, and the upcoming release for Operator (needed on every Operator release). In the Version update workflow these are two separate inputs, `next-snapshot` and `next-release`. `--hazelcast` and `--mc` (`supported-hazelcast` and `supported-mc` in the workflow) set Operator's latest supported Platform and Management Center versions, and are left unchanged when omitted.
+
+What a release changes:
+
+- **Patch release**: that version's variables in `src/variables.ts`. For Management Center, also its `mc-repo-swagger-branch` and a `release-notes/X-Y-Z` redirect to the release notes page, which the downloads page links to.
+- **Major or minor release**: a copy of the product's current docs becomes the new version (`<product>_versioned_docs/version-X.Y`, `<product>_versions.json`, its variables, redirects and `static/` files), and `main` moves on: `src/currentVersions.json`, `main`'s variables, and the `latest`/`latest-dev` rules in `static/_redirects`. Links in the copy that pointed at `main`'s version now point at the new one. Operator's `main` is always `latest-snapshot`, so it isn't renamed.
+- **CLC**: `main` is always CLC's newest release, so every CLC release copies `main` to a version named after the outgoing release and renames `main` to the new one. Merge the new release's content after the version update, so the outgoing copy keeps the outgoing content.
+
+Platform and Management Center releases also update each other's "latest supported" pointer (`page-latest-supported-mc`, `page-latest-supported-hazelcast`).
+
+The script refuses a release it can't make, such as a beta, a line other than the one `main` is on, or a version that already exists, and refuses to rewrite a file it would have to reformat. It doesn't change the search index's version list (the crawler config in Algolia), release notes, Operator's API reference, or compatibility values it isn't given. The tests run with `npm run test:version-update`.
+
 ## Static assets
 
 Images are co-located with the pages that use them and placed by

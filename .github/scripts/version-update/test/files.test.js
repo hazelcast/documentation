@@ -7,7 +7,7 @@ const os = require('node:os')
 const path = require('node:path')
 const {execFileSync} = require('node:child_process')
 const {flagsFromEnv, planBump} = require('../rules')
-const {readState, applyOps, parseVariables, parseRedirects} = require('../files')
+const {readState, applySteps, parseVariables, parseRedirects} = require('../files')
 
 const siteRoot = path.resolve(__dirname, '..', '..', '..', '..')
 
@@ -57,7 +57,7 @@ const FILES = {
 }
 
 function makeSite () {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'version-bump-'))
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'version-update-'))
   for (const [file, text] of Object.entries(FILES)) {
     fs.mkdirSync(path.dirname(path.join(dir, file)), {recursive: true})
     fs.writeFileSync(path.join(dir, file), text)
@@ -78,7 +78,7 @@ const release = (overrides) => flagsFromEnv({
 
 test('a major/minor release cuts the new version and moves main', () => {
   const dir = makeSite()
-  applyOps(dir, planBump(release(), readState(dir)).ops)
+  applySteps(dir, planBump(release(), readState(dir)).steps)
   const copy = 'hazelcast_versioned_docs/version-6.0'
 
   assert.deepEqual(JSON.parse(read(dir, 'hazelcast_versions.json')), ['6.0', '5.7'])
@@ -136,7 +136,7 @@ test('a patch changes only the variables', () => {
   const dir = makeSite()
   const patch = release({RELEASE_VERSION: '5.7.2', REL_MAJOR_MINOR: '5.7', MASTER_VERSION: '6.0.0-SNAPSHOT',
     MASTER_MAJOR_MINOR: '6.0', IS_PATCH_RELEASE: 'true', IS_REL_MAJOR_MINOR: 'false'})
-  applyOps(dir, planBump(patch, readState(dir)).ops)
+  applySteps(dir, planBump(patch, readState(dir)).steps)
   for (const [file, text] of Object.entries(FILES)) {
     if (file !== 'src/variables.ts') assert.equal(read(dir, file), text, `${file} unchanged`)
   }
@@ -146,7 +146,7 @@ test('a patch changes only the variables', () => {
 test('refuses a cut when a copy of that version already exists', () => {
   const dir = makeSite()
   fs.mkdirSync(path.join(dir, 'hazelcast_versioned_docs/version-6.0'), {recursive: true})
-  assert.throws(() => applyOps(dir, planBump(release(), readState(dir)).ops), /already exists/)
+  assert.throws(() => applySteps(dir, planBump(release(), readState(dir)).steps), /already exists/)
 })
 
 test('refuses files it would reformat', () => {

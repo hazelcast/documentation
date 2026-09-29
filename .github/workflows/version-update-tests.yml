@@ -1,15 +1,16 @@
-name: Version bump tests
+name: Version update tests
 
-# Also on changes to the files the bump rewrites: the tests check they still round-trip.
+# Also on changes to the files the version update rewrites: the tests check they still round-trip.
 on:
   pull_request:
     branches:
       - main
     paths:
-      - '.github/scripts/version-bump/**'
+      - '.github/scripts/version-update/**'
       - '.github/workflows/package.yml'
       - '.github/workflows/promote.yml'
-      - '.github/workflows/version-bump-tests.yml'
+      - '.github/workflows/version-update.yml'
+      - '.github/workflows/version-update-tests.yml'
       - 'src/variables.ts'
       - 'src/redirects.ts'
       - 'src/currentVersions.json'
@@ -26,4 +27,4 @@ jobs:
         with:
           node-version: 24
 
-      - run: npm run test:version-bump
+      - run: npm run test:version-update

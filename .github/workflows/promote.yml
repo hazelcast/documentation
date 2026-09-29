@@ -65,7 +65,7 @@ jobs:
       - name: Check there is nothing to release
         if: steps.find-pr.outputs.number == ''
         run: |
-          node .github/scripts/version-bump --dry-run | tee dry-run.log
+          node .github/scripts/version-update --dry-run | tee dry-run.log
           if ! grep -q "^Nothing to change for ${VERSION}.$" dry-run.log; then
             echo "::error::No open PR titled '${TITLE}', but ${VERSION} still has changes to make. Re-run Package Release."
             exit 1
@@ -81,7 +81,7 @@ jobs:
           IS_LATEST_STABLE_RELEASE: ${{ steps.get-rel-info.outputs.is-latest-stable-release }}
           IS_BETA_RELEASE: ${{ steps.get-rel-info.outputs.is-beta-release }}
 
-      # Checks must pass: a red check on a version bump means a broken site would go live.
+      # Checks must pass: a red check on a version update means a broken site would go live.
       - name: Merge the PR
         if: steps.find-pr.outputs.number != ''
         run: |
