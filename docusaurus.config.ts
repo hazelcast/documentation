@@ -315,29 +315,24 @@ const config: Config = {
       },
     ],
 
-    // Search. Points at `prod_hazelcast_docs` -- the index the ANTORA site's
-    // scraper still builds (hazelcast-docs/.github/workflows/index-site.yml, from
-    // search-config.json), reused as-is for cutover rather than re-crawled first.
-    // That works because the migration preserved URLs and heading anchors, and
-    // because the scraper already sets `hierarchy.lvl0` to the product name, which
-    // is what DocSearch groups results by.
+    // Search. The index is built by an Algolia crawler from this site, and holds
+    // only the latest release of each product: the crawler's URL patterns name
+    // those versions, so they are what to bump when a version is cut. Its
+    // extractor also writes a versionless `product` attribute, which the product
+    // filter in the swizzled SearchBar facets on.
     //
-    // Two consequences that a re-crawl will reverse, both handled in the swizzled
-    // SearchBar rather than here:
-    //   - the only facetable attribute is Antora's `tags`, not `docusaurus_tag`,
-    //     so `contextualSearch` MUST stay off: left on, every query would filter
-    //     on a facet the index does not have and return nothing.
-    //   - the index holds every published version, so the product filter names the
-    //     latest release of each component explicitly to keep old versions out.
+    // `contextualSearch` MUST stay off: it filters on the `docusaurus_tag` of the
+    // version being read, so on any older version every query would match
+    // nothing.
     //
-    // AT CUTOVER: disable that scraper workflow. It runs on the 1st and 15th
-    // against docs.hazelcast.com with Antora selectors (`.doc h1`, XPath nav
-    // lookups for lvl0); once that hostname serves this site those match nothing,
-    // and the next scheduled run replaces a working index with empty records.
+    // AT CUTOVER: disable the Antora site's scraper workflow
+    // (hazelcast-docs/.github/workflows/index-site.yml). It still builds the old
+    // `prod_hazelcast_docs` index with Antora selectors, which match nothing once
+    // docs.hazelcast.com serves this site.
     algolia: {
       appId: 'QK2EAH8GB0',
-      apiKey: 'ef7bd9485eafbd75d6e8425949eda1f5',
-      indexName: 'prod_hazelcast_docs',
+      apiKey: 'eafe0734c70b14ab7e856b7e248eb415',
+      indexName: 'mir-test-new-docs-test',
       contextualSearch: false,
       // No `/search` route: Antora serves no search page, so adding one would be a
       // new URL rather than a preserved one. Also suppresses the modal's "See all

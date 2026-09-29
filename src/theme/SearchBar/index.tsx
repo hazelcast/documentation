@@ -21,37 +21,30 @@ import {ButtonGroup} from '@hazelcast/ui/lib/components/ButtonGroup';
 import AskAiIcon from '@site/src/components/NavbarAskAi/AskAiIcon';
 import type SearchBarType from '@theme/SearchBar';
 import type {WrapperProps} from '@docusaurus/types';
+import type {DocSearchHit} from '@docsearch/react';
+import {useSearchResultUrlProcessor} from '@docusaurus/theme-search-algolia/client';
 import {pushDataLayer} from '@site/src/lib/analytics';
 import styles from './styles.module.css';
 
 type Props = WrapperProps<typeof SearchBarType>;
 
-// The products, and the Algolia facet value each one selects.
-//
-// These are the ANTORA index's shape, not this site's: `prod_hazelcast_docs` is
-// still the index the Antora site's scraper builds, and the only attribute it
-// declares facetable is `tags` (`attributesForFaceting: ["searchable(tags)"]`),
-// whose values are `<component>` or `<component>-<version>`. The site's own
-// `docusaurus_tag` is not in there at all — which is also why `contextualSearch`
-// is off in docusaurus.config.ts.
-//
-// Naming the LATEST release per product is what keeps old versions out of the
-// results: the index holds every version the Antora site publishes, so "All"
-// below is an OR over exactly these six and nothing older can surface.
-//
-// When the index is re-crawled from this site, this table is the thing to
-// change: `tags` becomes whatever stable per-product attribute the crawler's
-// recordExtractor writes, and the version suffixes disappear with it.
+// The products the filter bar offers. Each `id` is a value of the index's
+// `product` facet, which the crawler writes onto every record from the docs
+// plugin the page belongs to — so it carries no version. The index holds only
+// the latest release of each product (the crawler's URL patterns decide which),
+// so nothing here changes when a version is cut.
 const PRODUCTS = [
-  {id: 'hazelcast', label: 'Platform', tag: 'hazelcast-5.7'},
-  {id: 'cloud', label: 'Cloud', tag: 'cloud'},
-  {id: 'management-center', label: 'Management Center', tag: 'management-center-5.11'},
-  {id: 'operator', label: 'Operator', tag: 'operator-5.18'},
-  {id: 'clc', label: 'CLC', tag: 'clc-5.5.1'},
-  {id: 'tutorials', label: 'Tutorials', tag: 'tutorials'},
+  {id: 'hazelcast', label: 'Platform'},
+  {id: 'cloud', label: 'Cloud'},
+  {id: 'management-center', label: 'Management Center'},
+  {id: 'operator', label: 'Operator'},
+  {id: 'clc', label: 'CLC'},
+  {id: 'tutorials', label: 'Tutorials'},
 ] as const;
 
-const ALL_TAGS = PRODUCTS.map(({tag}) => `tags:${tag}`);
+// "All" is an OR over the products rather than no filter, which keeps pages
+// outside every product (`/privacy`) out of the results.
+const ALL_PRODUCTS = PRODUCTS.map(({id}) => `product:${id}`);
 
 // What `search_component` carries when no product filter is applied. The string
 // is the Antora build's, so the two sites report into the same value space.
@@ -60,8 +53,57 @@ const ALL_COMPONENTS = 'All';
 // An Algolia facetFilters value: the outer array ANDs, a nested array ORs. One
 // nested element, so selecting nothing ORs every product and selecting one
 // narrows to it.
-const filtersFor = (id: string | null): string[] =>
-  id ? [`tags:${PRODUCTS.find((p) => p.id === id)!.tag}`] : ALL_TAGS;
+const filtersFor = (id: string | null): string[] => (id ? [`product:${id}`] : ALL_PRODUCTS);
+
+// How many hits each product shows under "All". A single product is uncapped.
+const ALL_PER_PRODUCT = 4;
+
+const HITS_PER_PAGE = 60;
+
+// DocSearch's own list of attributes to fetch, plus the crawler's `breadcrumb`.
+// Passing any `attributesToRetrieve` replaces DocSearch's default rather than
+// adding to it, so its list is repeated here (read off @docsearch/react 4.6.3).
+const ATTRIBUTES_TO_RETRIEVE = [
+  'hierarchy.lvl0',
+  'hierarchy.lvl1',
+  'hierarchy.lvl2',
+  'hierarchy.lvl3',
+  'hierarchy.lvl4',
+  'hierarchy.lvl5',
+  'hierarchy.lvl6',
+  'content',
+  'type',
+  'url',
+  'breadcrumb',
+];
+
+const escapeHtml = (s: string): string =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+// The grey line under a section or content hit, as the page's place in the nav
+// ("Operate and manage › Maintaining a cluster › Monitoring") rather than
+// DocSearch's page title alone. `breadcrumb` is the page's breadcrumb bar,
+// which the crawler records on every record.
+//
+// DocSearch renders that line from `_snippetResult.hierarchy.lvl1.value` (as
+// HTML, falling back to the raw `hierarchy.lvl1`), so the path is written there,
+// escaped. Page-level hits keep their own line: for them lvl1 is the title and
+// the line is a content snippet.
+function withNavPath(item: DocSearchHit): DocSearchHit {
+  const {breadcrumb} = item as DocSearchHit & {breadcrumb?: string[]};
+  if (item.type === 'lvl1' || !breadcrumb?.length) return item;
+  const snippets = item._snippetResult;
+  return {
+    ...item,
+    _snippetResult: {
+      ...snippets,
+      hierarchy: {
+        ...snippets?.hierarchy,
+        lvl1: {...snippets?.hierarchy?.lvl1, value: escapeHtml(breadcrumb.join(' › '))},
+      },
+    },
+  } as DocSearchHit;
+}
 
 // Re-run the current query after the filters change.
 //
@@ -122,7 +164,8 @@ function ProductFilters({
       </div>
       <div className={styles.footer}>
         <p className={styles.scope}>
-          Results come from the latest released version of each product.
+          Results are from the latest released version of each product.<br/>
+          Use the AI search tool for information about older versions.
         </p>
         {/* Hands the typed query straight to Kapa, so the reader does not retype
             it. Naming the query in the label is what makes that legible. */}
@@ -162,18 +205,54 @@ export default function SearchBarWrapper(props: Props): ReactNode {
   // and the smaller products show one hit or none -- which reads as "Cloud has
   // nothing about this" when filtering to Cloud plainly shows otherwise.
   //
-  // A deeper pool gets every product into the running; the per-group cap (DocSearch
-  // sets none of its own) stops Platform filling the panel again once it is there.
-  const searchParameters = useRef({facetFilters, hitsPerPage: 60}).current;
+  // A deeper pool gets every product into the running; the per-product cap in
+  // transformItems below stops Platform filling the panel again once it is there.
+  const searchParameters = useRef({
+    facetFilters,
+    hitsPerPage: HITS_PER_PAGE,
+    attributesToRetrieve: ATTRIBUTES_TO_RETRIEVE,
+  }).current;
   const [selected, setSelected] = useState<string | null>(null);
+  const selectedRef = useRef<string | null>(null);
 
   const onSelect = useCallback(
     (id: string | null) => {
       setSelected(id);
+      selectedRef.current = id;
       facetFilters[0] = filtersFor(id);
       requery();
     },
     [facetFilters],
+  );
+
+  // The per-product cap, applied only under "All".
+  //
+  // DocSearch's own `maxResultsPerGroup` cannot do this: it is a number captured
+  // when the modal first opens, so it would cap a single product too. Instead it
+  // is set to the whole pool, and this does the capping. DocSearch runs
+  // transformItems on the hits BEFORE grouping them by `hierarchy.lvl0` (the
+  // product name, per the crawler), and it too is captured once — hence it reads
+  // the selection from a ref at query time rather than closing over `selected`.
+  //
+  // Passing transformItems replaces the stock one, which makes each hit's URL
+  // site-relative (so results open on whatever host is serving the site, not
+  // the one the index was crawled from); the same processor does that here. It
+  // also rewrites each hit's subtitle to its nav path (withNavPath).
+  const processUrl = useSearchResultUrlProcessor();
+  const transformItems = useCallback(
+    (items: DocSearchHit[]): DocSearchHit[] => {
+      const counts = new Map<string, number>();
+      return items
+        .filter((item) => {
+          if (selectedRef.current !== null) return true;
+          const group = item.hierarchy.lvl0;
+          const n = counts.get(group) ?? 0;
+          counts.set(group, n + 1);
+          return n < ALL_PER_PRODUCT;
+        })
+        .map((item) => withNavPath({...item, url: processUrl(item.url)}));
+    },
+    [processUrl],
   );
 
   // The modal mounts and unmounts outside our tree (DocSearch portals it into a
@@ -270,7 +349,7 @@ export default function SearchBarWrapper(props: Props): ReactNode {
   // typing settles, and never the same query twice running. Changing the product
   // filter re-runs this effect but not the event -- the query has not changed.
   //
-  // The count is of RENDERED hits, which is what maxResultsPerGroup leaves on
+  // The count is of RENDERED hits, which is what the per-product cap leaves on
   // screen rather than everything Algolia returned.
   const lastReported = useRef('');
   useEffect(() => {
@@ -321,7 +400,12 @@ export default function SearchBarWrapper(props: Props): ReactNode {
 
   return (
     <>
-      <SearchBar {...props} searchParameters={searchParameters} maxResultsPerGroup={4} />
+      <SearchBar
+        {...props}
+        searchParameters={searchParameters}
+        transformItems={transformItems}
+        maxResultsPerGroup={HITS_PER_PAGE}
+      />
       {host &&
         createPortal(
           <ProductFilters
