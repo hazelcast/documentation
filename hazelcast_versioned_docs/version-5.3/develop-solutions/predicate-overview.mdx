@@ -4,12 +4,12 @@ sidebar_position: 7
 slug: /query/predicate-overview
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import CodeBlock from '@theme/CodeBlock';
-import Ex_distributedquery_SimpleFastAggregationsDemo_java_tag_fademo from '../examples/distributedquery/SimpleFastAggregationsDemo.java?tag=fademo';
-import Ex_distributedquery_CQC_java_tag_cqc from '../examples/distributedquery/CQC.java?tag=cqc';
-import Ex_distributedquery_CQCClient_java_tag_cqcclient from '../examples/distributedquery/CQCClient.java?tag=cqcclient';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import CodeBlock from "@theme/CodeBlock";
+import Ex_distributedquery_SimpleFastAggregationsDemo_java_tag_fademo from "../examples/distributedquery/SimpleFastAggregationsDemo.java?tag=fademo";
+import Ex_distributedquery_CQC_java_tag_cqc from "../examples/distributedquery/CQC.java?tag=cqc";
+import Ex_distributedquery_CQCClient_java_tag_cqcclient from "../examples/distributedquery/CQCClient.java?tag=cqcclient";
 
 The Predicates API is a programming interface for querying data in Hazelcast, which is similar to the Java Persistence Query Language (JPQL).
 
@@ -113,7 +113,7 @@ The `Predicates` class includes many operators for your query requirements. The 
 
 :::note
 
-See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/query/Predicates.html" text="Predicates Javadoc"/> for all predicates provided.
+See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/query/Predicates.html" text="Predicates Javadoc" /> for all predicates provided.
 
 :::
 
@@ -321,7 +321,7 @@ values = map.values( pagingPredicate );
 
 If a comparator is not specified for `PagingPredicate`, but you want to get a collection of keys or values page by page, keys or values must be instances of `Comparable` (i.e., they must implement `java.lang.Comparable`). Otherwise, the `java.lang.IllegalArgument` exception is thrown.
 
-You can also access a specific page more easily with the help of the `setPage()` method. This way, if you make a query for the hundredth page, for example, it gets all 100 pages at once instead of reaching the hundredth page one by one using the `nextPage()` method. Note that this feature tires the memory and see the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/query/PagingPredicate.html" text="PagingPredicate Javadoc"/>.
+You can also access a specific page more easily with the help of the `setPage()` method. This way, if you make a query for the hundredth page, for example, it gets all 100 pages at once instead of reaching the hundredth page one by one using the `nextPage()` method. Note that this feature tires the memory and see the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/query/PagingPredicate.html" text="PagingPredicate Javadoc" />.
 
 :::note
 
@@ -429,7 +429,7 @@ A custom attribute is a "synthetic" attribute that does not exist as a field or 
 
 In order to implement a `ValueExtractor`, implement the `com.hazelcast.query.extractor.ValueExtractor` interface and the `extract()` method. This method does not return any values since the extracted value is collected by the `ValueCollector`. In order to return multiple results from a single extraction, invoke the `ValueCollector.collect()` method multiple times, so that the collector collects all results.
 
-See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/query/extractor/ValueExtractor.html" text="ValueExtractor"/> and <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/query/extractor/ValueCollector.html" text="ValueCollector"/> Javadocs.
+See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/query/extractor/ValueExtractor.html" text="ValueExtractor" /> and <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/query/extractor/ValueCollector.html" text="ValueCollector" /> Javadocs.
 
 :::note
 
@@ -444,7 +444,7 @@ Portable serialization is a special kind of serialization where there is no need
 - `read(String path, ValueCollector<T> collector)` - enables passing all results directly to the `ValueCollector`.
 - `read(String path, ValueCallback<T> callback)` - enables filtering, transforming and grouping the result of the read operation and manually passing it to the `ValueCollector`.
 
-See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/query/extractor/ValueReader.html" text="ValueReader"/> Javadoc.
+See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/query/extractor/ValueReader.html" text="ValueReader" /> Javadoc.
 
 #### Returning Multiple Values from a Single Extraction
 
@@ -752,7 +752,7 @@ In order to make the query unambiguous, extra conditions would have to be added,
 
 Aggregations allow you to compute a value of some function (e.g sum or max) over the stored map entries. The computation is performed in a fully distributed manner, so no data other than the computed function value is transferred to a caller, making the computation fast.
 
-Aggregations are available on `com.hazelcast.map.IMap` only. IMap offers the method `aggregate` to apply the aggregation logic on the map entries. This method can be called with or without a predicate. You can refer to its <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/IMap.html#aggregate-com.hazelcast.aggregation.Aggregator-" text="Javadoc"/> to see the method details.
+Aggregations are available on `com.hazelcast.map.IMap` only. IMap offers the method `aggregate` to apply the aggregation logic on the map entries. This method can be called with or without a predicate. You can refer to its <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/IMap.html#aggregate-com.hazelcast.aggregation.Aggregator-" text="Javadoc" /> to see the method details.
 
 :::note
 
@@ -775,7 +775,7 @@ There are also the following callbacks:
 
 These callbacks enable releasing the state that might have been initialized and stored in the Aggregator - to reduce the network traffic.
 
-Each phase is described below. See also the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/aggregation/Aggregator.html" text="Aggregator Javadoc"/> for the API's details.
+Each phase is described below. See also the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/aggregation/Aggregator.html" text="Aggregator Javadoc" /> for the API's details.
 
 **Accumulation:**
 
@@ -841,11 +841,11 @@ There are cases where instead of sending all the data returned by a query from a
 
 For example, you select all employees based on some criteria, but you just want to return their name instead of the whole Employee object. It is easily doable with the Projection API.
 
-Projections are available on `com.hazelcast.map.IMap` only. IMap offers the method `project` to apply the projection logic on the map entries. This method can be called with or without a predicate. See its <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/IMap.html#project-com.hazelcast.projection.Projection-" text="Javadoc"/> to see the method details.
+Projections are available on `com.hazelcast.map.IMap` only. IMap offers the method `project` to apply the projection logic on the map entries. This method can be called with or without a predicate. See its <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/IMap.html#project-com.hazelcast.projection.Projection-" text="Javadoc" /> to see the method details.
 
 ### Projection API
 
-The Projection API provides the method `transform()` which is called on each result object. Its result is then gathered as the final query result entity. You can refer to the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/projection/Projection.html" text="Projection Javadoc"/> for the API's details.
+The Projection API provides the method `transform()` which is called on each result object. Its result is then gathered as the final query result entity. You can refer to the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/projection/Projection.html" text="Projection Javadoc" /> for the API's details.
 
 ### Example implementation {/* #example-implementation-2 */}
 

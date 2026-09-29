@@ -6,16 +6,16 @@ slug: /kubernetes/helm-hazelcast-enterprise-chart
 enterprise: true
 ---
 
-This chart bootstraps a <a href="https://github.com/hazelcast/hazelcast-docker/tree/master/hazelcast-enterprise">Hazelcast <Variable name="enterprise-product-name"/></a> and [Management Center](https://github.com/hazelcast/management-center-docker) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+This chart bootstraps a <a href="https://github.com/hazelcast/hazelcast-docker/tree/master/hazelcast-enterprise">Hazelcast <Variable name="enterprise-product-name" /></a> and [Management Center](https://github.com/hazelcast/management-center-docker) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
 | Prerequisites | Useful resources |
 | --- | --- |
 | Kubernetes 1.14+ | [Kubernetes version](https://kubernetes.io/releases/) |
-| Hazelcast Platform <Variable name="enterprise-product-name"/> license key | [Hazelcast website](https://hazelcast.com/trial-request/?utm_source=docs-website) |
+| Hazelcast Platform <Variable name="enterprise-product-name" /> license key | [Hazelcast website](https://hazelcast.com/trial-request/?utm_source=docs-website) |
 
 ## Quickstart
 
-To get started, add the `hazelcast` Helm chart repository and install Hazelcast with your <Variable name="enterprise-product-name"/> license key:
+To get started, add the `hazelcast` Helm chart repository and install Hazelcast with your <Variable name="enterprise-product-name" /> license key:
 
 ```shell
 helm repo add hazelcast https://hazelcast-charts.s3.amazonaws.com/
@@ -72,7 +72,7 @@ You can use the default `values.yaml` with the `hazelcast.license` parameter fil
 
 :::
 
-Some Hazelcast <Variable name="enterprise-product-name"/> features requires setting `securityContext.readOnlyRootFilesystem` parameter to `false`. This is the case for the Hot Restart feature or enabling security with OpenSSL. In such cases where `readOnlyRootFilesystem` needs to be set to `true` (i.e. a Pod Security Policy requirement), the JVM parameter `-Djava.io.tmpdir` should be set to a writable location (for example a [custom volume](./helm-adding-custom-jar.mdx)) for Hot Restart to work.
+Some Hazelcast <Variable name="enterprise-product-name" /> features requires setting `securityContext.readOnlyRootFilesystem` parameter to `false`. This is the case for the Hot Restart feature or enabling security with OpenSSL. In such cases where `readOnlyRootFilesystem` needs to be set to `true` (i.e. a Pod Security Policy requirement), the JVM parameter `-Djava.io.tmpdir` should be set to a writable location (for example a [custom volume](./helm-adding-custom-jar.mdx)) for Hot Restart to work.
 
 ## Notable changes
 
@@ -97,7 +97,7 @@ To upgrade, complete the following steps:
 
 ### 5.9.0 {/* #5-9-0 */}
 
-The section `mcm` is no longer available so the chart will not create required resources to list Hazelcast Platform <Variable name="enterprise-product-name"/> at IBM CP4MCM (Cloud Pak for Multicloud Management).
+The section `mcm` is no longer available so the chart will not create required resources to list Hazelcast Platform <Variable name="enterprise-product-name" /> at IBM CP4MCM (Cloud Pak for Multicloud Management).
 
 ### 5.8.0 {/* #5-8-0 */}
 

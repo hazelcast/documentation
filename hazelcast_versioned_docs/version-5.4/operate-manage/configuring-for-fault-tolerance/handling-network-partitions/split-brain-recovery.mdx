@@ -4,18 +4,18 @@ sidebar_position: 5
 slug: /network-partitioning/split-brain-recovery
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import CodeBlock from '@theme/CodeBlock';
-import Ex_networkpartitioning_MergePolicy_java_tag_mp from '../../../examples/networkpartitioning/MergePolicy.java?tag=mp';
-import Ex_networkpartitioning_MergeIntegerValuesMergePolicy_java_tag_mivmp from '../../../examples/networkpartitioning/MergeIntegerValuesMergePolicy.java?tag=mivmp';
-import Ex_networkpartitioning_MergeCollectionOfIntegerValuesMergePolicy_java_tag_mc from '../../../examples/networkpartitioning/MergeCollectionOfIntegerValuesMergePolicy.java?tag=mc';
-import Ex_networkpartitioning_MergeIntegerValuesMergePolicy2_java_tag_mivmp2 from '../../../examples/networkpartitioning/MergeIntegerValuesMergePolicy2.java?tag=mivmp2';
-import Ex_networkpartitioning_UserContextMergePolicy_java_tag_ucmp from '../../../examples/networkpartitioning/UserContextMergePolicy.java?tag=ucmp';
-import Ex_networkpartitioning_ComposedHitsAndCreationTimeMergePolicy_java_tag_ch from '../../../examples/networkpartitioning/ComposedHitsAndCreationTimeMergePolicy.java?tag=ch';
-import Ex_networkpartitioning_MapEntryCostsMergePolicy_java_tag_me from '../../../examples/networkpartitioning/MapEntryCostsMergePolicy.java?tag=me';
-import Ex_networkpartitioning_AtomicReferenceMergeIntegerValuesMergePolicy_java_tag_ar from '../../../examples/networkpartitioning/AtomicReferenceMergeIntegerValuesMergePolicy.java?tag=ar';
-import PartialClientsRestDeprecation from '@site/hazelcast_versioned_docs/version-5.4/_partials/clients-rest-deprecation.mdx';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import CodeBlock from "@theme/CodeBlock";
+import Ex_networkpartitioning_MergePolicy_java_tag_mp from "../../../examples/networkpartitioning/MergePolicy.java?tag=mp";
+import Ex_networkpartitioning_MergeIntegerValuesMergePolicy_java_tag_mivmp from "../../../examples/networkpartitioning/MergeIntegerValuesMergePolicy.java?tag=mivmp";
+import Ex_networkpartitioning_MergeCollectionOfIntegerValuesMergePolicy_java_tag_mc from "../../../examples/networkpartitioning/MergeCollectionOfIntegerValuesMergePolicy.java?tag=mc";
+import Ex_networkpartitioning_MergeIntegerValuesMergePolicy2_java_tag_mivmp2 from "../../../examples/networkpartitioning/MergeIntegerValuesMergePolicy2.java?tag=mivmp2";
+import Ex_networkpartitioning_UserContextMergePolicy_java_tag_ucmp from "../../../examples/networkpartitioning/UserContextMergePolicy.java?tag=ucmp";
+import Ex_networkpartitioning_ComposedHitsAndCreationTimeMergePolicy_java_tag_ch from "../../../examples/networkpartitioning/ComposedHitsAndCreationTimeMergePolicy.java?tag=ch";
+import Ex_networkpartitioning_MapEntryCostsMergePolicy_java_tag_me from "../../../examples/networkpartitioning/MapEntryCostsMergePolicy.java?tag=me";
+import Ex_networkpartitioning_AtomicReferenceMergeIntegerValuesMergePolicy_java_tag_ar from "../../../examples/networkpartitioning/AtomicReferenceMergeIntegerValuesMergePolicy.java?tag=ar";
+import PartialClientsRestDeprecation from "@site/hazelcast_versioned_docs/version-5.4/_partials/clients-rest-deprecation.mdx";
 
 Hazelcast deploys a background task that periodically searches for split clusters. When a split is detected, the side that will initiate the merge process is decided. This decision is based on the cluster size; the smaller cluster, by member count, merges into the bigger one. If they have an equal number of members, then a hashing algorithm determines the merging cluster. When deciding the merging side, both sides ensure that there's no overlap in their member lists. In some cases, recovery from split-brain may be problematic due to discovery issues; see [Eliminating Unsuccessful Cluster Merges](#eliminating-unsuccessful-cluster-merges) on how to overcome these issues.
 
@@ -301,8 +301,8 @@ And the following table shows the merge types provided by each data structure:
 
 <table>
 <colgroup>
-<col style={{width:'25%'}}/>
-<col style={{width:'75%'}}/>
+<col style={{width:'25%'}} />
+<col style={{width:'75%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -560,4 +560,4 @@ For these requests to work, you need to enable the `CLUSTER_READ` and `CLUSTER_W
 
 By using this REST endpoint, you are able to add the missing addresses of the members from the other cluster to your members. Therefore, one cluster master member will find the other cluster's master member.
 
-<PartialClientsRestDeprecation/>
+<PartialClientsRestDeprecation />

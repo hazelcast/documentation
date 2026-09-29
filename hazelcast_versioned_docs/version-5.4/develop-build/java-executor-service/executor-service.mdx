@@ -4,19 +4,19 @@ sidebar_position: 1
 slug: /computing/executor-service
 ---
 
-import CodeBlock from '@theme/CodeBlock';
-import Ex_distributedcomputing_SumTask_java_tag_st from '../../examples/distributedcomputing/SumTask.java?tag=st';
-import Ex_distributedcomputing_Echo_java_tag_echo from '../../examples/distributedcomputing/Echo.java?tag=echo';
-import Ex_distributedcomputing_MasterMember_java_tag_mm from '../../examples/distributedcomputing/MasterMember.java?tag=mm';
-import Ex_distributedcomputing_EchoTask_java_tag_et from '../../examples/distributedcomputing/EchoTask.java?tag=et';
-import Ex_distributedcomputing_RunnableMasterMember_java_tag_rmm from '../../examples/distributedcomputing/RunnableMasterMember.java?tag=rmm';
-import Ex_distributedcomputing_FibonacciCallable_java_tag_fc from '../../examples/distributedcomputing/FibonacciCallable.java?tag=fc';
-import Ex_distributedcomputing_FibonacciCallable_java_tag_fib from '../../examples/distributedcomputing/FibonacciCallable.java?tag=fib';
-import Ex_distributedcomputing_Fibonacci2_java_tag_ec from '../../examples/distributedcomputing/Fibonacci2.java?tag=ec';
-import Ex_distributedcomputing_MasterMemberCallback_java_tag_mmc from '../../examples/distributedcomputing/MasterMemberCallback.java?tag=mmc';
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import Ex_distributedcomputing_ExecutorConfiguration_java_tag_execconf from '../../examples/distributedcomputing/ExecutorConfiguration.java?tag=execconf';
+import CodeBlock from "@theme/CodeBlock";
+import Ex_distributedcomputing_SumTask_java_tag_st from "../../examples/distributedcomputing/SumTask.java?tag=st";
+import Ex_distributedcomputing_Echo_java_tag_echo from "../../examples/distributedcomputing/Echo.java?tag=echo";
+import Ex_distributedcomputing_MasterMember_java_tag_mm from "../../examples/distributedcomputing/MasterMember.java?tag=mm";
+import Ex_distributedcomputing_EchoTask_java_tag_et from "../../examples/distributedcomputing/EchoTask.java?tag=et";
+import Ex_distributedcomputing_RunnableMasterMember_java_tag_rmm from "../../examples/distributedcomputing/RunnableMasterMember.java?tag=rmm";
+import Ex_distributedcomputing_FibonacciCallable_java_tag_fc from "../../examples/distributedcomputing/FibonacciCallable.java?tag=fc";
+import Ex_distributedcomputing_FibonacciCallable_java_tag_fib from "../../examples/distributedcomputing/FibonacciCallable.java?tag=fib";
+import Ex_distributedcomputing_Fibonacci2_java_tag_ec from "../../examples/distributedcomputing/Fibonacci2.java?tag=ec";
+import Ex_distributedcomputing_MasterMemberCallback_java_tag_mmc from "../../examples/distributedcomputing/MasterMemberCallback.java?tag=mmc";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import Ex_distributedcomputing_ExecutorConfiguration_java_tag_execconf from "../../examples/distributedcomputing/ExecutorConfiguration.java?tag=execconf";
 
 One of the coolest features of Java is the Executor framework, which allows you to asynchronously execute your tasks (logical units of work), such as database queries, complex calculations and image rendering.
 
@@ -266,7 +266,7 @@ Executor service configuration has the following elements:
 
 - `pool-size`: The number of executor threads per Member for the Executor. By default, Executor is configured to have 16 threads in the pool. You can change that with this element.
 - `queue-capacity`: Executor's task queue capacity; the number of tasks this queue can hold.
-- `statistics-enabled`: Specifies whether the statistics gathering is enabled for your Executor Service. If set to `false`, you cannot collect statistics in your implementation (using `getLocalExecutorStats()`) and also <Variable href="/management-center/{page-latest-supported-mc}/data-structures/overview#monitoring-executors" text="Hazelcast Management Center"/> will not show them. Its default value is `true`.
+- `statistics-enabled`: Specifies whether the statistics gathering is enabled for your Executor Service. If set to `false`, you cannot collect statistics in your implementation (using `getLocalExecutorStats()`) and also <Variable href="/management-center/{page-latest-supported-mc}/data-structures/overview#monitoring-executors" text="Hazelcast Management Center" /> will not show them. Its default value is `true`.
 - `split-brain-protection-ref`: Name of the split-brain protection configuration that you want this Executor Service to use. See the [Split-Brain Protection for IExecutorService section](#split-brain-protection-for-iexecutorservice).
 
 ## Split-Brain Protection for IExecutorService
@@ -292,7 +292,7 @@ The following is a list of methods, grouped by the operations, that support spli
 
 **Configuring Split-Brain Protection**
 
-Split-brain protection for Executor Service can be configured programmatically using the method <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/ExecutorConfig.html" text="setSplitBrainProtectionName()"/>, or declaratively using the element `split-brain-protection-ref`. Following is an example declarative configuration:
+Split-brain protection for Executor Service can be configured programmatically using the method <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/ExecutorConfig.html" text="setSplitBrainProtectionName()" />, or declaratively using the element `split-brain-protection-ref`. Following is an example declarative configuration:
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">

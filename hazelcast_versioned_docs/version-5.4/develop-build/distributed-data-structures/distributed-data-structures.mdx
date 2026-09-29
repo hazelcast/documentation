@@ -5,10 +5,10 @@ sidebar_position: 1
 slug: /data-structures/distributed-data-structures
 ---
 
-import CodeBlock from '@theme/CodeBlock';
-import Ex_MapMember_java_tag_mapmember from '../../examples/MapMember.java?tag=mapmember';
-import Ex_ExampleDOL_java_tag_sampledol from '../../examples/ExampleDOL.java?tag=sampledol';
-import Ex_cp_CpSubsystemAPI_java_tag_apisample from '../../examples/cp/CpSubsystemAPI.java?tag=apisample';
+import CodeBlock from "@theme/CodeBlock";
+import Ex_MapMember_java_tag_mapmember from "../../examples/MapMember.java?tag=mapmember";
+import Ex_ExampleDOL_java_tag_sampledol from "../../examples/ExampleDOL.java?tag=sampledol";
+import Ex_cp_CpSubsystemAPI_java_tag_apisample from "../../examples/cp/CpSubsystemAPI.java?tag=apisample";
 
 Hazelcast offers distributed implementations of many common data structures. For each of the client languages, Hazelcast mimics as closely as possible the natural interface of the structure. For example in Java, the map follows `java.util.Map` semantics. All of these structures are available in Java, .NET, C++, Node.js, Python, and Go.
 
@@ -113,7 +113,7 @@ AP data structures prefer availability over consistency.
 
 When a partition occurs, all members remain available but some might return an older version of data than others. When the partition is resolved, the members usually resynchronize to repair any inconsistencies:
 
-<Anchor id="common-features-of-all-hazelcast-data-structures"/>
+<Anchor id="common-features-of-all-hazelcast-data-structures" />
 
 - If a member goes down, its backup replica (which holds the same data) dynamically redistributes the data, including the ownership and locks on them, to the remaining live members. As a result, there will not be any data loss.
 - There is no single cluster master that can be a single point of failure. Every member in the cluster has equal rights and responsibilities. No single member is superior.

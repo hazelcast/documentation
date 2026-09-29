@@ -59,7 +59,7 @@ function componentNameFor (slug) {
 // from current must import ITS OWN copy — pointing every version at the current
 // `@site/<component>/_partials/` bleeds current's content into older releases.
 function importStmtFor (slug, componentName, baseDir) {
-  return `import ${componentName} from '@site/${baseDir}/_partials/${slug}.mdx';`
+  return `import ${componentName} from "@site/${baseDir}/_partials/${slug}.mdx";`
 }
 
 // Every sentinel region in one page's golden HTML -> { id, inner, blockLevel }.

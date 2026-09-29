@@ -5,8 +5,8 @@ slug: /getting-started/blue-green
 enterprise: true
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 This tutorial introduces you to blue-green cluster deployments. At the end of this tutorial, you'll know how to set up a client to operate continuously even when its connected to a cluster that fails.
 
@@ -17,11 +17,11 @@ You can use a blue-green deployment in the following scenarios:
 - To manually redirect client traffic to a secondary cluster while you perform maintenance or software updates.
 - To automatically redirect client traffic to a secondary cluster during a disaster recovery scenario.
 
-In both cases, you will need to manually deploy a <Variable href="/management-center/{page-latest-supported-mc}/clusters/client-filtering" text="client filter"/> to the secondary cluster to force clients to reconnect to the original, primary cluster when it is back online.
+In both cases, you will need to manually deploy a <Variable href="/management-center/{page-latest-supported-mc}/clusters/client-filtering" text="client filter" /> to the secondary cluster to force clients to reconnect to the original, primary cluster when it is back online.
 
 This tutorial focuses on the disaster recovery scenario, where you will complete the following steps:
 
-1. Start two <Variable name="enterprise-product-name"/> clusters: One for the blue deployment, one for the green deployment.
+1. Start two <Variable name="enterprise-product-name" /> clusters: One for the blue deployment, one for the green deployment.
 2. Configure a client to use the blue-green deployment as a failover.
 3. Connect the client to the blue cluster.
 4. Shut down the blue cluster and see that the client connects to the green one.
@@ -38,12 +38,12 @@ To complete this tutorial, you need the following:
 
 | Prerequisites | Useful resources |
 | --- | --- |
-| Docker image for Hazelcast <Variable name="enterprise-product-name"/> and an <Variable name="enterprise-product-name"/> license | [Get Started with Hazelcast Enterprise](./overview.mdx) |
+| Docker image for Hazelcast <Variable name="enterprise-product-name" /> and an <Variable name="enterprise-product-name" /> license | [Get Started with Hazelcast Enterprise](./overview.mdx) |
 | Docker network with the name `hazelcast-network` | Use the `docker network create hazelcast-network` command |
 
-## Step 1. Start the Blue <Variable name="enterprise-product-name"/> Cluster {/* #step-1-start-the-blue-enterprise-edition-cluster */}
+## Step 1. Start the Blue <Variable name="enterprise-product-name" /> Cluster {/* #step-1-start-the-blue-enterprise-edition-cluster */}
 
-In this step, you use the Hazelcast <Variable name="enterprise-product-name"/><Variable name="enterprise-product-name"/> Docker image to start a local single-member cluster called `blue`. This step also installs your <Variable name="enterprise-product-name"/> license key.
+In this step, you use the Hazelcast <Variable name="enterprise-product-name" /><Variable name="enterprise-product-name" /> Docker image to start a local single-member cluster called `blue`. This step also installs your <Variable name="enterprise-product-name" /> license key.
 
 Run the following command on the terminal:
 
@@ -60,7 +60,7 @@ docker run \
 <CodeCallouts>
 
 1. Replace the `<host_ip>` placeholder with the IP address of your Docker host.
-2. Replace the `<your license key>` placeholder with your Hazelcast <Variable name="enterprise-product-name"/> license key.
+2. Replace the `<your license key>` placeholder with your Hazelcast <Variable name="enterprise-product-name" /> license key.
 
 </CodeCallouts>
 
@@ -76,7 +76,7 @@ Members {size:1, ver:1} [
 2021-12-01 18:26:42,384 [ INFO] [main] [c.h.c.LifecycleService]: [172.18.0.2]:5701 [blue] [{full-version}] [172.18.0.2]:5701 is STARTED
 ```
 
-## Step 2. Start the Green <Variable name="enterprise-product-name"/> Cluster {/* #step-2-start-the-green-enterprise-edition-cluster */}
+## Step 2. Start the Green <Variable name="enterprise-product-name" /> Cluster {/* #step-2-start-the-green-enterprise-edition-cluster */}
 
 Start another local single-member cluster called `green`.
 
@@ -93,7 +93,7 @@ docker run \
 <CodeCallouts>
 
 1. Replace the `<host_ip>` placeholder with the IP address of your Docker host.
-2. Replace the `<your license key>` placeholder with your Hazelcast <Variable name="enterprise-product-name"/> license key.
+2. Replace the `<your license key>` placeholder with your Hazelcast <Variable name="enterprise-product-name" /> license key.
 
 </CodeCallouts>
 
@@ -109,7 +109,7 @@ Members {size:1, ver:1} [
 2021-12-01 18:28:46,321 [ INFO] [main] [c.h.c.LifecycleService]: [172.18.0.3]:5701 [green] [{full-version}] [172.18.0.3]:5701 is STARTED
 ```
 
-Now, you have two separate Hazelcast <Variable name="enterprise-product-name"/> clusters running locally.
+Now, you have two separate Hazelcast <Variable name="enterprise-product-name" /> clusters running locally.
 
 ## Step 3. Configure the Client {/* #step-3 */}
 
@@ -392,4 +392,4 @@ Shut down the cluster you've created in this tutorial so that you can start a fr
 If you're interested in learning more about the topics introduced in this tutorial, see:
 
 - [Blue-Green Deployment](../../clients-apis/java.mdx#blue-green-deployment-and-disaster-recovery.adoc).
-- <Variable href="/management-center/{page-latest-supported-mc}/clusters/client-filtering" text="Filtering Client Connections"/>.
+- <Variable href="/management-center/{page-latest-supported-mc}/clusters/client-filtering" text="Filtering Client Connections" />.

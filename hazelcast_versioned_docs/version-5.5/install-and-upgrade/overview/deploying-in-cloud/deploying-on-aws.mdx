@@ -4,8 +4,8 @@ sidebar_position: 1
 slug: /deploy/deploying-on-aws
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 Deploy Hazelcast clusters on Amazon AWS EC2 and AWS ECS/Fargate environments and allow them to discover each other automatically.
 
@@ -96,7 +96,7 @@ config.getNetworkConfig().getJoin().getAwsConfig().setEnabled(true) <2>
 
 </CodeCallouts>
 
-The following are the optional properties to be configured<Anchor id="ec2_properties"/>:
+The following are the optional properties to be configured<Anchor id="ec2_properties" />:
 
 - `access-key`, `secret-key`: Access and secret keys of your AWS account; if not set, `iam-role` is used.
 - `iam-role`: [IAM Role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) attached to the EC2 instance used to fetch credentials (if `access-key`/`secret-key` are not specified); if not set, the default IAM Role attached to the EC2 instance is used.
@@ -282,7 +282,7 @@ For the detailed description, check out [Hazelcast Guides: Getting Started with 
 
 ### ECS Hazelcast Member Discovery
 
-Make sure that your IAM Task Role has the following permissions<Anchor id="ecs_permissions"/>:
+Make sure that your IAM Task Role has the following permissions<Anchor id="ecs_permissions" />:
 
 - `ecs:ListTasks`
 - `ecs:DescribeTasks`
@@ -336,7 +336,7 @@ config.getNetworkConfig().getInterfaces().setEnabled(true).addInterface("10.0.*.
 </TabItem>
 </Tabs>
 
-The following optional properties can be configured<Anchor id="ecs_properties"/>:
+The following optional properties can be configured<Anchor id="ecs_properties" />:
 
 - `access-key`, `secret-key`: access and secret keys of AWS your account; if not set, IAM Task Role is used
 - `region`: region where Hazelcast members are running; default is the current region

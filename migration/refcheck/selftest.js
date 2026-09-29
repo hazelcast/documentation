@@ -476,10 +476,13 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
     "import Ex_hazelcast_yaml from '../examples/hazelcast.yaml';",
     "import Ex_cp_tag_apisample from '../examples/cp/CpSubsystemAPI.java?tag=apisample&indent=0';",
     "import CodeBlock from '@theme/CodeBlock';",
+    'import PartialDq from "@site/cloud/_partials/dq.mdx";',
   ].join('\n')
   const { partials, examples } = importsOf(mdx, '/root/cloud/manage/x.mdx', '/root')
-  assert.deepStrictEqual(partials, [{ id: 'PartialClusterData', file: '/root/cloud/_partials/cluster-data.mdx' }],
-    'resolves an @site partial import and keeps its identifier')
+  assert.deepStrictEqual(partials, [
+    { id: 'PartialClusterData', file: '/root/cloud/_partials/cluster-data.mdx' },
+    { id: 'PartialDq', file: '/root/cloud/_partials/dq.mdx' },
+  ], 'resolves @site partial imports in either quote style and keeps their identifiers')
   assert.deepStrictEqual(examples[0], { id: 'Ex_hazelcast_yaml', query: '', file: '/root/cloud/examples/hazelcast.yaml' },
     'resolves a relative example import and keeps its identifier')
   // A region selector must not end up glued to the path, or the file cannot be

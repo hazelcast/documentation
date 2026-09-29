@@ -4,11 +4,11 @@ sidebar_position: 12
 slug: /data-structures/entry-processor
 ---
 
-import CodeBlock from '@theme/CodeBlock';
-import Ex_distributedcomputing_IncrementingEntryProcessor_java_tag_iep from '../../../../examples/distributedcomputing/IncrementingEntryProcessor.java?tag=iep';
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import Ex_distributedcomputing_OffloadableReadOnlyEntryProcessor_java_tag_oroep from '../../../../examples/distributedcomputing/OffloadableReadOnlyEntryProcessor.java?tag=oroep';
+import CodeBlock from "@theme/CodeBlock";
+import Ex_distributedcomputing_IncrementingEntryProcessor_java_tag_iep from "../../../../examples/distributedcomputing/IncrementingEntryProcessor.java?tag=iep";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import Ex_distributedcomputing_OffloadableReadOnlyEntryProcessor_java_tag_oroep from "../../../../examples/distributedcomputing/OffloadableReadOnlyEntryProcessor.java?tag=oroep";
 
 An entry processor is a function that executes your code on a map entry in an atomic way.
 
@@ -44,7 +44,7 @@ When `in-memory-format` is `OBJECT`, the old value of the updated entry will be 
 
 ### Processing Entries
 
-The <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/IMap.html" text="IMap interface"/> provides the following methods for entry processing:
+The <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/IMap.html" text="IMap interface" /> provides the following methods for entry processing:
 
 - `executeOnKey` processes an entry mapped by a key, blocking until the processing is complete and the result is returned.
 - `executeOnKeys` processes entries mapped by a collection of keys, blocking until the processing is complete and the results are returned.
@@ -52,9 +52,9 @@ The <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/haz
 - `executeOnEntries` processes all entries in a map, blocking until the processing is complete and the results are returned.
 - `executeOnEntries` also processes all entries in a map matching the provided predicate, blocking until the processing is complete and the results are returned.
 
-When using the `executeOnEntries` method, if the number of entries is high and you do not need the results, then returning null with the `process()` method is a good practice. This method is offered by the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/EntryProcessor.html" text="EntryProcessor interface"/>. By returning null, results of the processing are not collected and thus out of memory errors are eliminated.
+When using the `executeOnEntries` method, if the number of entries is high and you do not need the results, then returning null with the `process()` method is a good practice. This method is offered by the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/EntryProcessor.html" text="EntryProcessor interface" />. By returning null, results of the processing are not collected and thus out of memory errors are eliminated.
 
-If you do not need to read or modify the entry in any way but would like to execute a task on the member owning the entry with that key (i.e. the member is the partition owner for that key), you can also use `executeOnKeyOwner` provided by <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/core/IExecutorService.html#executeOnKeyOwner-java.lang.Runnable-java.lang.Object-" text="IExecutorService"/>. You need to make sure that the runnable can be serialized (using any of the available serialization techniques in Hazelcast). The runnable will not receive the map entry key or value and is not running on the same thread as operations reading the map data so operations such as `map.get()` or `map.put()` will not be blocked.
+If you do not need to read or modify the entry in any way but would like to execute a task on the member owning the entry with that key (i.e. the member is the partition owner for that key), you can also use `executeOnKeyOwner` provided by <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/core/IExecutorService.html#executeOnKeyOwner-java.lang.Runnable-java.lang.Object-" text="IExecutorService" />. You need to make sure that the runnable can be serialized (using any of the available serialization techniques in Hazelcast). The runnable will not receive the map entry key or value and is not running on the same thread as operations reading the map data so operations such as `map.get()` or `map.put()` will not be blocked.
 
 You can also use entry processors to remove entries from your map simply by setting the value(s) of a single entry or multiple entries to `null`. See the following example code snippet:
 
@@ -113,7 +113,7 @@ if (ttlSeconds > 0) {
 entry.setValue(newValue, 10, TimeUnit.SECONDS);
 ```
 
-The interface also provides the ability to update the entry value without changing the entry's TTL. See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/ExtendedMapEntry.html" text="interface documentation"/> for method descriptions.
+The interface also provides the ability to update the entry value without changing the entry's TTL. See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/ExtendedMapEntry.html" text="interface documentation" /> for method descriptions.
 
 ## Creating an Entry Processor
 
@@ -154,7 +154,7 @@ We have a slow user code detector which can be used to log a warning controlled 
 
 :::caution
 
-<Variable name="ucd"/> has been deprecated and will be removed in the next major version. To continue deploying your user code after this time, <Variable name="open-source-product-name"/> users can either upgrade to <Variable name="enterprise-product-name"/>, or add their resources to the Hazelcast member class paths. Hazelcast recommends that <Variable name="enterprise-product-name"/> users migrate their user code to use <Variable name="ucn"/>. For further information on migrating from <Variable name="ucd"/> to <Variable name="ucn"/>, see [Migrate from User Code Deployment](../../../distributed-computing/user-code-namespaces/ucn-migrate-ucd.mdx).
+<Variable name="ucd" /> has been deprecated and will be removed in the next major version. To continue deploying your user code after this time, <Variable name="open-source-product-name" /> users can either upgrade to <Variable name="enterprise-product-name" />, or add their resources to the Hazelcast member class paths. Hazelcast recommends that <Variable name="enterprise-product-name" /> users migrate their user code to use <Variable name="ucn" />. For further information on migrating from <Variable name="ucd" /> to <Variable name="ucn" />, see [Migrate from User Code Deployment](../../../distributed-computing/user-code-namespaces/ucn-migrate-ucd.mdx).
 
 :::
 
@@ -185,10 +185,10 @@ In this case the threading looks as follows:
 2. execution thread (process(entry) method)
 3. partition thread (set new value & unlock key, or just unlock key if the entry has not been modified)
 
-The method `getExecutorName()` method may also return two constants defined in the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/core/Offloadable.html" text="Offloadable interface"/>:
+The method `getExecutorName()` method may also return two constants defined in the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/core/Offloadable.html" text="Offloadable interface" />:
 
-- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/core/Offloadable.html#NO_OFFLOADING" text="NO_OFFLOADING"/>: Processing is not offloaded if the method `getExecutorName()` returns this constant; it is executed as if it does not implement the `Offloadable` interface.
-- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/core/Offloadable.html#OFFLOADABLE_EXECUTOR" text="OFFLOADABLE_EXECUTOR"/>: Processing is offloaded to the default `ExecutionService.OFFLOADABLE_EXECUTOR`.
+- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/core/Offloadable.html#NO_OFFLOADING" text="NO_OFFLOADING" />: Processing is not offloaded if the method `getExecutorName()` returns this constant; it is executed as if it does not implement the `Offloadable` interface.
+- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/core/Offloadable.html#OFFLOADABLE_EXECUTOR" text="OFFLOADABLE_EXECUTOR" />: Processing is offloaded to the default `ExecutionService.OFFLOADABLE_EXECUTOR`.
 
 Note that if the method `getExecutorName()` cannot find an executor whose name matches the one called by this method, then the default executor service is used. Here is the configuration for the "default" executor:
 

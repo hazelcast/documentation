@@ -4,10 +4,10 @@ sidebar_position: 4
 slug: /performance/near-cache
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import CodeBlock from '@theme/CodeBlock';
-import Ex_performance_ExampleNearCacheConfiguration_java_tag_nearcacheconfig from '../../examples/performance/ExampleNearCacheConfiguration.java?tag=nearcacheconfig';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import CodeBlock from "@theme/CodeBlock";
+import Ex_performance_ExampleNearCacheConfiguration_java_tag_nearcacheconfig from "../../examples/performance/ExampleNearCacheConfiguration.java?tag=nearcacheconfig";
 
 Map or Cache entries in Hazelcast are partitioned across the cluster members. Hazelcast clients do not have local data at all. Suppose you read the key `k` a number of times from a Hazelcast client or `k` is owned by another member in your cluster. Then each `map.get(k)` or `cache.get(k)` will be a remote operation, which creates a lot of network trips. If you have a data structure that is mostly read, then you should consider creating a local Near Cache, so that reads are sped up and less network traffic is created.
 
@@ -120,7 +120,7 @@ The element `<near-cache>` has an optional attribute `name` whose default value 
 
 <CodeBlock language="java">{Ex_performance_ExampleNearCacheConfiguration_java_tag_nearcacheconfig}</CodeBlock>
 
-The class <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/NearCacheConfig.html" text="NearCacheConfig"/> is used for all supported Hazelcast data structures on members and clients.
+The class <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/NearCacheConfig.html" text="NearCacheConfig" /> is used for all supported Hazelcast data structures on members and clients.
 
 The following are the descriptions of all configuration elements and attributes:
 

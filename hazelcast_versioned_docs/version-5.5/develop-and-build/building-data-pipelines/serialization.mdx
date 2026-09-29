@@ -4,8 +4,8 @@ sidebar_position: 7
 slug: /pipelines/serialization
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 To be able to send object state over a network or store it in a file you have to first serialize it into raw bytes. Similarly, to be able to fetch an object state over a wire or read it from a persistent storage you have to deserialize it from raw bytes first. As Hazelcast is a distributed system by nature, serialization is integral part of it. Understanding, when it is involved, how does it support the pipelines and knowing differences between supported strategies is crucial to efficient usage of Hazelcast.
 
@@ -190,9 +190,9 @@ Currently, Hazelcast supports five interfaces to serialize custom types:
 
 - [java.io.Serializable](https://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html)
 - [java.io.Externalizable](https://docs.oracle.com/javase/8/docs/api/java/io/Externalizable.html)
-- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/nio/serialization/Portable.html" text="com.hazelcast.nio.serialization.Portable"/>
-- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/nio/serialization/StreamSerializer.html" text="com.hazelcast.nio.serialization.StreamSerializer"/>
-- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/nio/serialization/compact/CompactSerializer.html" text="com.hazelcast.nio.serialization.compact.CompactSerializer"/>
+- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/nio/serialization/Portable.html" text="com.hazelcast.nio.serialization.Portable" />
+- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/nio/serialization/StreamSerializer.html" text="com.hazelcast.nio.serialization.StreamSerializer" />
+- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/nio/serialization/compact/CompactSerializer.html" text="com.hazelcast.nio.serialization.compact.CompactSerializer" />
 
 :::caution[Deprecation Notice for Portable Serialization]
 
@@ -257,7 +257,7 @@ You can see that using plain `Serializable` can easily become a bottleneck in yo
 
 ## Write a Custom Serializer
 
-For the best performance and simplest implementation we recommend using the Hazelcast <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/nio/serialization/StreamSerializer.html" text="StreamSerializer"/> mechanism. Here is a sample implementation for a `Person` class:
+For the best performance and simplest implementation we recommend using the Hazelcast <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/nio/serialization/StreamSerializer.html" text="StreamSerializer" /> mechanism. Here is a sample implementation for a `Person` class:
 
 ```java
 class PersonSerializer implements StreamSerializer<Person> {

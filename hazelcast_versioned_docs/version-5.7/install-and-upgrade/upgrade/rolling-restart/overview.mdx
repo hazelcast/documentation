@@ -5,30 +5,30 @@ sidebar_position: 0
 slug: /migrate/rolling-restart
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
-You can upgrade your <Variable name="open-source-product-name"/> cluster to an <Variable name="enterprise-product-name"/> cluster using an in-place rolling restart to change each member in turn.
+You can upgrade your <Variable name="open-source-product-name" /> cluster to an <Variable name="enterprise-product-name" /> cluster using an in-place rolling restart to change each member in turn.
 
 This approach ensures that you can move your cluster without interruption to the service. Similar to the rolling upgrade process, a rolling restart allows you to move one member at a time.
 
-To use a rolling restart to upgrade your cluster to <Variable name="enterprise-product-name"/>, the codebase of your <Variable name="open-source-product-name"/> cluster must match the target <Variable name="enterprise-product-name"/> release.
+To use a rolling restart to upgrade your cluster to <Variable name="enterprise-product-name" />, the codebase of your <Variable name="open-source-product-name" /> cluster must match the target <Variable name="enterprise-product-name" /> release.
 
-For example, you can use a rolling restart to upgrade your cluster from <Variable name="open-source-product-name"/> 5.5 to <Variable name="enterprise-product-name"/> 5.5. However, you cannot use a rolling restart to move to <Variable name="enterprise-product-name"/> 5.5 from an earlier <Variable name="open-source-product-name"/> release, such as 5.3. To move from an earlier <Variable name="open-source-product-name"/> release, you must migrate your <Variable name="open-source-product-name"/> data and make any other associated updates, then set up <Variable name="enterprise-product-name"/>. You might find the Data Migration Tool (DMT) suitable for migrating your data — see [Using the Data Migration Tool](./data-migration-tool.mdx).
+For example, you can use a rolling restart to upgrade your cluster from <Variable name="open-source-product-name" /> 5.5 to <Variable name="enterprise-product-name" /> 5.5. However, you cannot use a rolling restart to move to <Variable name="enterprise-product-name" /> 5.5 from an earlier <Variable name="open-source-product-name" /> release, such as 5.3. To move from an earlier <Variable name="open-source-product-name" /> release, you must migrate your <Variable name="open-source-product-name" /> data and make any other associated updates, then set up <Variable name="enterprise-product-name" />. You might find the Data Migration Tool (DMT) suitable for migrating your data — see [Using the Data Migration Tool](./data-migration-tool.mdx).
 
 ## Best practices
 
 Before starting a rolling restart, consider the following best practices:
 
 - Back up your IMap and ReplicatedMap data structures using your usual method. This is not essential, but it is recommended.
-- Ensure that the version of JDK meets the minimum required for the target <Variable name="enterprise-product-name"/> release.
+- Ensure that the version of JDK meets the minimum required for the target <Variable name="enterprise-product-name" /> release.
 - Plan sufficient time for the rolling restart to complete, and remember that the member cannot change during the move.
 
 ## Perform a rolling restart
 
-Before starting, ensure you have your <Variable name="enterprise-product-name"/> license key ready to add to the member configuration. See [Manage Enterprise Edition license keys](../../enterprise-edition/enterprise-licenses.mdx).
+Before starting, ensure you have your <Variable name="enterprise-product-name" /> license key ready to add to the member configuration. See [Manage Enterprise Edition license keys](../../enterprise-edition/enterprise-licenses.mdx).
 
-To move your <Variable name="open-source-product-name"/> cluster to <Variable name="enterprise-product-name"/>, complete the following steps:
+To move your <Variable name="open-source-product-name" /> cluster to <Variable name="enterprise-product-name" />, complete the following steps:
 
 1. Gracefully shut down the first member:
 
@@ -60,8 +60,8 @@ To move your <Variable name="open-source-product-name"/> cluster to <Variable na
    </TabItem>
    </Tabs>
 2. Wait until all partition migrations are completed. You can monitor the progress of migrations on the [cluster dashboard](/management-center/latest/clusters/dashboard) in Management Center.
-3. Upgrade the member's codebase to match the <Variable name="enterprise-product-name"/> version and add your <Variable name="enterprise-product-name"/> license key to the configuration.
-4. Start a new member and wait until it joins the <Variable name="enterprise-product-name"/> cluster.
+3. Upgrade the member's codebase to match the <Variable name="enterprise-product-name" /> version and add your <Variable name="enterprise-product-name" /> license key to the configuration.
+4. Start a new member and wait until it joins the <Variable name="enterprise-product-name" /> cluster.
 
    <Tabs groupId="cli--docker">
    <TabItem value="cli" label="CLI">
@@ -79,6 +79,6 @@ To move your <Variable name="open-source-product-name"/> cluster to <Variable na
 
    </TabItem>
    </Tabs>
-5. Repeat this process for each member in the <Variable name="open-source-product-name"/> cluster.
+5. Repeat this process for each member in the <Variable name="open-source-product-name" /> cluster.
 
-When all members on the <Variable name="open-source-product-name"/> cluster have been moved to the <Variable name="enterprise-product-name"/> cluster, you can start configuring the <Variable name="enterprise-product-name"/> features that you want to use. See [Hazelcast editions and distributions](../../../get-started/editions.mdx).
+When all members on the <Variable name="open-source-product-name" /> cluster have been moved to the <Variable name="enterprise-product-name" /> cluster, you can start configuring the <Variable name="enterprise-product-name" /> features that you want to use. See [Hazelcast editions and distributions](../../../get-started/editions.mdx).

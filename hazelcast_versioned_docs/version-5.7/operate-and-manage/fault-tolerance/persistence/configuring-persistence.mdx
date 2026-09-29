@@ -6,18 +6,18 @@ slug: /storage/configuring-persistence
 enterprise: true
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import CodeBlock from '@theme/CodeBlock';
-import Ex_storage_SampleEncryptionAtRestConfiguration_java_tag_keystore from '../../../examples/storage/SampleEncryptionAtRestConfiguration.java?tag=keystore';
-import Ex_storage_SampleEncryptionAtRestConfiguration_java_tag_vault from '../../../examples/storage/SampleEncryptionAtRestConfiguration.java?tag=vault';
-import Ex_storage_SamplePersistenceConfiguration_java_tag_hrconf from '../../../examples/storage/SamplePersistenceConfiguration.java?tag=hrconf';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import CodeBlock from "@theme/CodeBlock";
+import Ex_storage_SampleEncryptionAtRestConfiguration_java_tag_keystore from "../../../examples/storage/SampleEncryptionAtRestConfiguration.java?tag=keystore";
+import Ex_storage_SampleEncryptionAtRestConfiguration_java_tag_vault from "../../../examples/storage/SampleEncryptionAtRestConfiguration.java?tag=vault";
+import Ex_storage_SamplePersistenceConfiguration_java_tag_hrconf from "../../../examples/storage/SamplePersistenceConfiguration.java?tag=hrconf";
 
 You can configure clusters to persist data structures, job snapshots, and SQL metadata on disk. You can also implement configuration options to fine-tune backups, encryption, and auto-recovery.
 
 :::note
 
-For information on configuring persistence in Kubernetes environments, see <a href="/hazelcast/5.7/kubernetes/kubernetes-persistence">Running Hazelcast <Variable name="enterprise-product-name"/> with Persistence under Kubernetes</a>.
+For information on configuring persistence in Kubernetes environments, see <a href="/hazelcast/5.7/kubernetes/kubernetes-persistence">Running Hazelcast <Variable name="enterprise-product-name" /> with Persistence under Kubernetes</a>.
 
 :::
 
@@ -271,10 +271,10 @@ Use these configuration options to configure general Persistence options.
 
 <table>
 <colgroup>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'40%'}}/>
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'40%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -286,7 +286,7 @@ Use these configuration options to configure general Persistence options.
 </thead>
 <tbody>
 <tr>
-<td><Anchor id="persistence-base-dir"/>`base-dir`</td>
+<td><Anchor id="persistence-base-dir" />`base-dir`</td>
 <td>
 
 The parent directory in which to store persisted data.
@@ -339,13 +339,13 @@ config.setPersistenceConfig(PersistenceConfig);
 </td>
 </tr>
 <tr>
-<td><Anchor id="persistence-backup-dir"/>`backup-dir`</td>
+<td><Anchor id="persistence-backup-dir" />`backup-dir`</td>
 <td>The directory in which to store backups. The backup process creates sequenced subdirectories named `backup-<backupSeq>`, where `<backupSeq>` is an ascending sequence number.</td>
 <td>' ' (empty)</td>
 <td>Backups must be triggered manually, see [Backing Up the Persistence Store](./backing-up-persistence.mdx).</td>
 </tr>
 <tr>
-<td><Anchor id="persistence-parallelism"/>`parallelism`</td>
+<td><Anchor id="persistence-parallelism" />`parallelism`</td>
 <td>
 
 Number of I/O threads that are started concurrently for reading from and writing to files in the persistence store.
@@ -398,7 +398,7 @@ config.setPersistenceConfig(PersistenceConfig);
 </td>
 </tr>
 <tr>
-<td><Anchor id="persistence-validation-timeout-seconds"/>`validation-timeout-seconds`</td>
+<td><Anchor id="persistence-validation-timeout-seconds" />`validation-timeout-seconds`</td>
 <td>Number of seconds that the cluster allows for members to rejoin and send their partition table to the master member.</td>
 <td>`120`</td>
 <td>
@@ -445,7 +445,7 @@ config.setPersistenceConfig(PersistenceConfig);
 </td>
 </tr>
 <tr>
-<td><Anchor id="persistence-data-load-timeout-seconds"/>`data-load-timeout-seconds`</td>
+<td><Anchor id="persistence-data-load-timeout-seconds" />`data-load-timeout-seconds`</td>
 <td>Number of seconds that the cluster allows for members to finish restoring data from their local persistence store.</td>
 <td>`900`</td>
 <td>
@@ -492,7 +492,7 @@ config.setPersistenceConfig(PersistenceConfig);
 </td>
 </tr>
 <tr>
-<td><Anchor id="persistence-cluster-data-recovery-policy"/>`cluster-data-recovery-policy`</td>
+<td><Anchor id="persistence-cluster-data-recovery-policy" />`cluster-data-recovery-policy`</td>
 <td>
 
 The data recovery policy that is respected when the whole cluster restarts.
@@ -549,7 +549,7 @@ config.setPersistenceConfig(PersistenceConfig);
 </td>
 </tr>
 <tr>
-<td><Anchor id="persistence-auto-remove-stale-data"/>`auto-remove-stale-data`</td>
+<td><Anchor id="persistence-auto-remove-stale-data" />`auto-remove-stale-data`</td>
 <td>Enables a joining member to automatically remove its persistence store if the cluster's master member considers the persisted data to be stale. This option applies only to [single-member failures](#single-member).</td>
 <td>`true`</td>
 <td>
@@ -596,13 +596,13 @@ config.setPersistenceConfig(PersistenceConfig);
 </td>
 </tr>
 <tr>
-<td><Anchor id="persistence-encryption-at-rest"/>[`encryption-at-rest`](#encrypt)</td>
+<td><Anchor id="persistence-encryption-at-rest" />[`encryption-at-rest`](#encrypt)</td>
 <td>Enables encryption of data in the persistence store.</td>
 <td>`disabled`</td>
 <td>See [Encryption Options](#encrypt)</td>
 </tr>
 <tr>
-<td><Anchor id="persistence-rebalance-delay-seconds"/>`rebalance-delay-seconds`</td>
+<td><Anchor id="persistence-rebalance-delay-seconds" />`rebalance-delay-seconds`</td>
 <td>Number of seconds a cluster waits before repartitioning after a member leaves by means other than a graceful shutdown.</td>
 <td>`0`</td>
 <td>See [Delaying Repartitioning](#delaying-repartitioning).</td>
@@ -642,7 +642,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-Add configuration options to the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/EncryptionAtRestConfig.html" text="EncryptionAtRestConfig object"/>.
+Add configuration options to the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/EncryptionAtRestConfig.html" text="EncryptionAtRestConfig object" />.
 
 ```java
 Config config = new Config();
@@ -660,10 +660,10 @@ config.setPersistenceConfig(PersistenceConfig);
 
 <table>
 <colgroup>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'40%'}}/>
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'40%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -675,7 +675,7 @@ config.setPersistenceConfig(PersistenceConfig);
 </thead>
 <tbody>
 <tr>
-<td><Anchor id="encryption-at-rest-algorithm"/>`algorithm`</td>
+<td><Anchor id="encryption-at-rest-algorithm" />`algorithm`</td>
 <td>
 
 The symmetric cipher to use for encrypting persisted data.
@@ -1071,7 +1071,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-Add configuration options to the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/MapConfig.html" text="MapConfig object"/>.
+Add configuration options to the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/MapConfig.html" text="MapConfig object" />.
 
 ```java
 Config config = new Config();
@@ -1087,10 +1087,10 @@ config.addMapConfig(mapConfig);
 
 <table>
 <colgroup>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'40%'}}/>
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'40%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -1102,7 +1102,7 @@ config.addMapConfig(mapConfig);
 </thead>
 <tbody>
 <tr>
-<td><Anchor id="persistence-fsync"/>`fsync`</td>
+<td><Anchor id="persistence-fsync" />`fsync`</td>
 <td>
 
 Guarantees that data is persisted to disk when a write operation returns a successful response to the caller.
@@ -1167,14 +1167,14 @@ config.addMapConfig(mapConfig);
 </tbody>
 </table>
 
-<Anchor id="merkle"/>
+<Anchor id="merkle" />
 
 <table>
 <colgroup>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'40%'}}/>
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'40%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -1382,7 +1382,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-Use the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/config/JetConfig.html" text="JetConfig object"/>.
+Use the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/config/JetConfig.html" text="JetConfig object" />.
 
 ```java
 Config config = new Config();

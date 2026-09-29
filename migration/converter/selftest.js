@@ -290,7 +290,7 @@ const renderedCode = (md) => {
   const varLabel = convertBody(`<p>manage <a href="clc-cloud">${marked} clusters</a>.</p>`, ctx).body
   assert(varLabel.includes('<a href="/clc/5.5.1/clc-cloud">'),
     'Variable-labelled internal link emits a raw <a> with the site-absolute route')
-  assert(varLabel.includes('<Variable name="hazelcast-cloud"/>'),
+  assert(varLabel.includes('<Variable name="hazelcast-cloud" />'),
     'the marked attr stays a <Variable> in the label (not baked)')
   assert(!/\.mdx/.test(varLabel), 'a raw <a> never carries a .mdx href (Docusaurus would not resolve it)')
 
@@ -524,7 +524,7 @@ const renderedCode = (md) => {
   ], 'c')
   assert(shared.decisions.has('c:ROOT:partial$p.adoc'), 'identical block-level occurrences on 2 pages -> factored')
   assert.strictEqual(shared.decisions.get('c:ROOT:partial$p.adoc').importStmt,
-    "import PartialP from '@site/c/_partials/p.mdx';", 'factored id imports from the current version base')
+    'import PartialP from "@site/c/_partials/p.mdx";', 'factored id imports from the current version base')
 
   const varies = decide([
     { url: '/a', occ: [occ('c:ROOT:partial$p.adoc', '<p>one</p>')] },
@@ -554,7 +554,7 @@ const renderedCode = (md) => {
     { url: '/clc/5.5.0/y', occ: [occ('clc:ROOT:partial$global-parameters.adoc', '<p>same</p>')] },
   ], 'clc_versioned_docs/version-5.5.0')
   assert.strictEqual(versioned.decisions.get('clc:ROOT:partial$global-parameters.adoc').importStmt,
-    "import PartialGlobalParameters from '@site/clc_versioned_docs/version-5.5.0/_partials/global-parameters.mdx';",
+    'import PartialGlobalParameters from "@site/clc_versioned_docs/version-5.5.0/_partials/global-parameters.mdx";',
     'a release imports its partial from its own versioned_docs tree, not @site/<component>')
   ok('decide: version-scoped import base (no cross-version partial bleed)')
 }
@@ -851,9 +851,9 @@ const renderedCode = (md) => {
     `<div class="paragraph"><p><span class="icon ${role}"><i class="fa fa-${glyph} fa-lg"></i></span></p></div>`
 
   const { body: yes } = convertBody(iconCell('success', 'check-circle'), { pageUrl: '/x' })
-  assert.strictEqual(yes, '<Icon role="success"/>', 'icon:check-circle[role=success] -> <Icon role="success"/>')
+  assert.strictEqual(yes, '<Icon role="success" />', 'icon:check-circle[role=success] -> <Icon role="success" />')
   const { body: no } = convertBody(iconCell('error', 'times'), { pageUrl: '/x' })
-  assert.strictEqual(no, '<Icon role="error"/>', 'icon:times[role=error] -> <Icon role="error"/>')
+  assert.strictEqual(no, '<Icon role="error" />', 'icon:times[role=error] -> <Icon role="error" />')
 
   // No TEXT is emitted, which is the fidelity requirement: the golden's <i> holds
   // none, so a ✓/✗ character here would add content the source never rendered.
@@ -1063,13 +1063,13 @@ const renderedCode = (md) => {
   // the anchor sits INSIDE the cell's code span and inlineCode() read only text.
   const cell = '<p class="tableblock"><code><a id="hazelcast-mc-http-port"></a>hazelcast.mc.http.port</code></p>'
   const out = body(cell)
-  assert.ok(out.includes('<Anchor id="hazelcast-mc-http-port"/>'), 'an anchor nested in code is kept')
+  assert.ok(out.includes('<Anchor id="hazelcast-mc-http-port" />'), 'an anchor nested in code is kept')
   assert.ok(out.includes('`hazelcast.mc.http.port`'), 'and the content stays a Markdown code span')
   assert.ok(out.indexOf('<Anchor') < out.indexOf('`'), 'the anchor precedes the code it targets')
 
   // A bare anchor in prose: same component, so there is ONE anchor form.
   assert.ok(body('<div class="paragraph"><p><a id="step-5"></a>Then do this.</p></div>')
-    .includes('<Anchor id="step-5"/>'), 'a bare anchor in prose uses the same form')
+    .includes('<Anchor id="step-5" />'), 'a bare anchor in prose uses the same form')
   assert.ok(!/<span id=/.test(body('<div class="paragraph"><p><a id="step-5"></a>x</p></div>')),
     'no raw <span id> is emitted any more -- it would not be registered')
 
@@ -1094,7 +1094,7 @@ const renderedCode = (md) => {
 {
   const marked = '<div class="paragraph"><p>Get <code>clc-setup-v<span class="hz-attr-full-version">5.5.1</span>.exe</code> now.</p></div>'
   const out = convertBody(marked, { pageUrl: '/clc/5.5.1/install-clc', component: 'clc', seg: '5.5.1' }).body
-  assert.match(out, /<code>\{"clc-setup-v"\}<Variable name="full-version"\/>\{"\.exe"\}<\/code>/,
+  assert.match(out, /<code>\{"clc-setup-v"\}<Variable name="full-version" \/>\{"\.exe"\}<\/code>/,
     'the reference survives inside inline code, with the literal runs inert')
   assert.ok(!out.includes('5.5.1'), 'the resolved value is not baked anywhere in the output')
 
@@ -1275,7 +1275,7 @@ const renderedCode = (md) => {
     '</tbody></table>'
   const ctx = { pageUrl: '/operator/5.12/scaling-upgrading', component: 'operator', seg: '5.12', pageVars, proseVars }
   const out = convertBody(html, ctx).body
-  const refs = (out.match(/<Variable name="page-latest-supported-hazelcast"\/>/g) || []).length
+  const refs = (out.match(/<Variable name="page-latest-supported-hazelcast" \/>/g) || []).length
   assert.strictEqual(refs, 1,
     'exactly the ONE reference the source marked becomes a <Variable> — the table data does not')
   assert.strictEqual((out.match(/5\.4\.0/g) || []).length, 2,
@@ -1867,11 +1867,11 @@ const renderedCode = (md) => {
   const plain = convertBody(`<p><a href="${url}">hazelcast</a></p>`, st).body.trim()
   const coded = convertBody(`<p><code><a href="${url}">hazelcast</a></code></p>`, st).body.trim()
 
-  assert.strictEqual(plain, `<Variable href="${tpl}" text="hazelcast"/>`,
+  assert.strictEqual(plain, `<Variable href="${tpl}" text="hazelcast" />`,
     'the plain link keeps the source template as its href')
-  assert.strictEqual(coded, `<Variable href="${tpl}" text="hazelcast" code/>`,
+  assert.strictEqual(coded, `<Variable href="${tpl}" text="hazelcast" code />`,
     'and so does the code-wrapped link, plus `code` so the label stays monospace')
-  assert.strictEqual(coded.replace(' code/>', '/>'), plain,
+  assert.strictEqual(coded.replace(' code />', ' />'), plain,
     'the two forms differ ONLY by the code flag: neither may bake what the other keeps')
 
   // Nothing single-sourced about it -> the Markdown link with a code label, as before.

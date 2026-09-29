@@ -5,8 +5,8 @@ slug: /getting-started/deploy-blue-green-tutorial
 enterprise: true
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 This tutorial introduces you to blue-green cluster deployments. You'll learn know how to set up a client to operate continuously even when its connected to a cluster that fails.
 
@@ -24,7 +24,7 @@ A blue-green deployment is a client connection technique that reduces system dow
 
 In this tutorial, you'll do the following:
 
-1. Start separate blue and green <Variable name="enterprise-product-name"/> clusters.
+1. Start separate blue and green <Variable name="enterprise-product-name" /> clusters.
 2. Configure a client to use the blue-green deployment as a failover.
 3. Connect the client to the blue cluster.
 4. Shut down the blue cluster and confirm that the client connects to the green one.
@@ -43,7 +43,7 @@ Before you begin, ensure you have completed the following:
 
 ## Step 1: Start the blue cluster
 
-In this step, you'll use the Hazelcast <Variable name="enterprise-product-name"/> Docker image to start a local single member cluster called `blue`. This step also installs your <Variable name="enterprise-product-name"/> license key.
+In this step, you'll use the Hazelcast <Variable name="enterprise-product-name" /> Docker image to start a local single member cluster called `blue`. This step also installs your <Variable name="enterprise-product-name" /> license key.
 
 1. Run the following command on the terminal, replacing the `<YOUR_LICENSE_KEY>` placeholder:
 
@@ -59,7 +59,7 @@ In this step, you'll use the Hazelcast <Variable name="enterprise-product-name"/
    <CodeCallouts>
 
    1. You can replace `host.docker.internal` with a specific IP address if you prefer but make sure you adjust the following code examples accordingly.
-   2. Replace the `<YOUR_LICENSE_KEY>` placeholder with your Hazelcast <Variable name="enterprise-product-name"/> license key.
+   2. Replace the `<YOUR_LICENSE_KEY>` placeholder with your Hazelcast <Variable name="enterprise-product-name" /> license key.
 
    </CodeCallouts>
 
@@ -90,7 +90,7 @@ Members {size:1, ver:1} [
 
    <CodeCallouts>
 
-   1. Replace the `<YOUR_LICENSE_KEY>` placeholder with your Hazelcast <Variable name="enterprise-product-name"/> license key.
+   1. Replace the `<YOUR_LICENSE_KEY>` placeholder with your Hazelcast <Variable name="enterprise-product-name" /> license key.
 
    </CodeCallouts>
 
@@ -106,7 +106,7 @@ Members {size:1, ver:1} [
 2021-12-01 18:28:46,321 [ INFO] [main] [c.h.c.LifecycleService]: [localhost]:5701 [green] [{ee-version}] [localhost]:5701 is STARTED
 ```
 
-Now you have two separate Hazelcast <Variable name="enterprise-product-name"/> clusters running locally.
+Now you have two separate Hazelcast <Variable name="enterprise-product-name" /> clusters running locally.
 
 ## Step 3: Configure the client {/* #step-3 */}
 
@@ -375,7 +375,7 @@ In this step, you'll simulate a failure on the blue cluster and force the client
 
 :::note
 
-In this type of failover scenario, the client does not automatically reconnect to the `blue` cluster when it is back online. Instead, you need to deploy a deny list using <Variable href="/management-center/{page-latest-supported-mc}/clusters/client-filtering" text="client filtering"/> to block client connections to the `green` cluster. The client will then use the failover configuration (in [Step 3](#step-3)) to reconnect to the original cluster. When the client is reconnected, you can remove the client filter.
+In this type of failover scenario, the client does not automatically reconnect to the `blue` cluster when it is back online. Instead, you need to deploy a deny list using <Variable href="/management-center/{page-latest-supported-mc}/clusters/client-filtering" text="client filtering" /> to block client connections to the `green` cluster. The client will then use the failover configuration (in [Step 3](#step-3)) to reconnect to the original cluster. When the client is reconnected, you can remove the client filter.
 
 :::
 
@@ -387,7 +387,7 @@ To shut down the cluster, close the terminals in which the members are running o
 
 In this tutorial, you learned how to:
 
-1. Start separate blue and green <Variable name="enterprise-product-name"/> clusters.
+1. Start separate blue and green <Variable name="enterprise-product-name" /> clusters.
 2. Configure a client to use the blue-green deployment as a failover.
 3. Simulate a cluster failure and successful failover from blue to green.
 
@@ -396,4 +396,4 @@ In this tutorial, you learned how to:
 If you're interested in learning more about the topics introduced in this tutorial, see:
 
 - [clients:java.adoc\#blue-green-deployment-and-disaster-recovery.adoc](../../clients-and-apis/clients/java.mdx#blue-green-deployment-and-disaster-recovery.adoc)
-- <Variable href="/management-center/{page-latest-supported-mc}/clusters/client-filtering" text="Manage client connections"/>
+- <Variable href="/management-center/{page-latest-supported-mc}/clusters/client-filtering" text="Manage client connections" />

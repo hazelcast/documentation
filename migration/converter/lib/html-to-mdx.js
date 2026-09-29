@@ -315,15 +315,15 @@ function singleSourcedLink (rawHref, href, rawTokenText, st, { code = false } = 
   const tokenText = code ? rawTokenText : foldTypographic(rawTokenText)
   const labelVars = st.proseVars || st.pageVars
   const varName = st.linkVars.get(rawHref)
-  if (varName) return `<Variable href=${jsxAttr(`{${varName}}`)} text=${jsxAttr(tokenText)}${flag}/>`
+  if (varName) return `<Variable href=${jsxAttr(`{${varName}}`)} text=${jsxAttr(tokenText)}${flag} />`
   const hrefTpl = st.hrefVars.get(rawHref)
   if (hrefTpl) {
-    return `<Variable href=${jsxAttr(hrefTpl)} text=${jsxAttr(labelTemplate(tokenText, rawHref, hrefTpl, labelVars))}${flag}/>`
+    return `<Variable href=${jsxAttr(hrefTpl)} text=${jsxAttr(labelTemplate(tokenText, rawHref, hrefTpl, labelVars))}${flag} />`
   }
   if (st.pageVars && st.pageVars.size && !/[<>]/.test(href)) {
     const { code: hrefTpl2, replaced: hrefRep } = reverseCodeVars(href, st.pageVars)
     const textTpl = labelTemplate(tokenText, rawHref, hrefTpl2, labelVars)
-    if (hrefRep || textTpl !== tokenText) return `<Variable href=${jsxAttr(hrefTpl2)} text=${jsxAttr(textTpl)}${flag}/>`
+    if (hrefRep || textTpl !== tokenText) return `<Variable href=${jsxAttr(hrefTpl2)} text=${jsxAttr(textTpl)}${flag} />`
   }
   return null
 }
@@ -384,7 +384,7 @@ function jsxCode ($, node) {
   }
   walk(node)
   const body = parts.map((p) => (p.name
-    ? `<Variable name=${jsxAttr(p.name)}/>`
+    ? `<Variable name=${jsxAttr(p.name)} />`
     : `{${JSON.stringify(p.text)}}`)).join('')
   return `<code>${body}</code>`
 }
@@ -395,7 +395,7 @@ function jsxCode ($, node) {
 // broken-anchor validation learns an anchor exists. A bare `<span id>` resolves in
 // the browser but is invisible to that check, so every link to one was reported by
 // `onBrokenAnchors`; with hundreds of anchors that noise would hide a real break.
-const anchorJsx = (id) => `<Anchor id=${jsxAttr(id)}/>`
+const anchorJsx = (id) => `<Anchor id=${jsxAttr(id)} />`
 
 // Every bare anchor (an `<a id>` carrying no href) inside `node`, in document
 // order, as <Anchor> elements -- for the callers that flatten an element to its
@@ -444,7 +444,7 @@ function convertBlockInner ($, node, st, depth) {
     const d = st.partials.get(node.attribs['data-id'])
     if (!d) return ''
     st.imports.add(d.importStmt)
-    return `<${d.componentName}/>`
+    return `<${d.componentName} />`
   }
 
   // Snapshot-conditional region (see collapseSentinels): render its block content
@@ -983,7 +983,7 @@ function emitExampleCodeBlock ($, pre, hit, title, st, wrap = null) {
   lang = normalizeLang(lang)
   const spec = file + (query || '')
   const varName = exampleVar(spec, st)
-  st.imports.add("import CodeBlock from '@theme/CodeBlock';")
+  st.imports.add('import CodeBlock from "@theme/CodeBlock";')
   // Plain import: a scoped webpack rule (plugins/example-attributes) runs the
   // tag-slice loader, the attributes loader and raw-loader on files
   // under examples/. The query selects the region (absent = the whole file, the
@@ -995,7 +995,7 @@ function emitExampleCodeBlock ($, pre, hit, title, st, wrap = null) {
   // repos, operator's templates ones in hazelcast-code-samples); it is staged at
   // build by plugins/tutorial-examples, so the import is site-absolute.
   const importBase = hit.importBase || examplesRelPath(st.relFile)
-  st.imports.add(`import ${varName} from '${importBase}/${spec}';`)
+  st.imports.add(`import ${varName} from "${importBase}/${spec}";`)
   // Files carrying native `<N>` conum markers get the `conums` metastring so the
   // swizzled CodeBlock strips the markers and renders callout badges.
   const info = (lang ? ` language=${jsxAttr(lang)}` : '') + (title ? ` title=${jsxAttr(title)}` : '') +
@@ -1045,7 +1045,7 @@ const pageVarsSorted = (pageVars) => [...pageVars].sort((a, b) => b[0].length - 
 function reverseProseVars (text, pageVars) {
   if (!pageVars || !pageVars.size) return text
   let out = text
-  for (const [value, name] of pageVarsSorted(pageVars)) out = out.replace(varTokenRe(value), `<Variable name="${name}"/>`)
+  for (const [value, name] of pageVarsSorted(pageVars)) out = out.replace(varTokenRe(value), `<Variable name="${name}" />`)
   return out
 }
 
@@ -1371,8 +1371,8 @@ function imageSrc (raw, st) {
 // --- tabs ------------------------------------------------------------------
 
 function convertTabs ($, node, st, depth) {
-  st.imports.add("import Tabs from '@theme/Tabs';")
-  st.imports.add("import TabItem from '@theme/TabItem';")
+  st.imports.add('import Tabs from "@theme/Tabs";')
+  st.imports.add('import TabItem from "@theme/TabItem";')
   const labelList = $(node).children('.ulist.tabs').find('> ul > li').toArray()
   const panes = $(node).children('.content').children('.tab-pane').toArray()
   const labels = panes.map((pane, i) => {
@@ -1561,7 +1561,7 @@ function colgroupJsx ($, table) {
   })
   if (!widths.some(Boolean)) return null
   return '<colgroup>\n' +
-    widths.map((w) => (w ? `<col style={{width:'${w}'}}/>` : '<col/>')).join('\n') +
+    widths.map((w) => (w ? `<col style={{width:'${w}'}} />` : '<col />')).join('\n') +
     '\n</colgroup>'
 }
 
@@ -1710,14 +1710,14 @@ function inlineTag ($, node, st, opt) {
       const d = st.partials.get(node.attribs['data-id'])
       if (!d) return ''
       st.imports.add(d.importStmt)
-      return `<${d.componentName}/>`
+      return `<${d.componentName} />`
     }
     case 'strong': case 'b': {
       const badge = cls.find((c) => BADGE_CLASSES.has(c))
       // <Badge> is globally registered (MDXComponents), so no import is needed.
       // Self-closing: the label is single-sourced in the front-end registry, so
       // the authored text (e.g. "Enterprise Edition") is intentionally dropped.
-      if (badge) return `<Badge type=${jsxAttr(badge)}/>`
+      if (badge) return `<Badge type=${jsxAttr(badge)} />`
       return emphasis(kids(), '**')
     }
     case 'em': return emphasis(kids(), '*')
@@ -1815,7 +1815,7 @@ function inlineTag ($, node, st, opt) {
       // content as a Markdown code span avoids turning every such cell into JSX.
       return anchorsIn($, node) + inlineCode($(node).text())
     }
-    case 'br': return '<br/>'
+    case 'br': return '<br />'
     case 'a': {
       const id = node.attribs && node.attribs.id
       // Preserve a bare inline anchor target (`<a id="step-5"></a>`) so `#step-5`
@@ -1893,7 +1893,7 @@ function inlineTag ($, node, st, opt) {
     }
     case 'span': {
       const attr = markerName(node)
-      if (attr) return `<Variable name=${jsxAttr(attr)}/>` // marked {attr} reference -> <Variable>
+      if (attr) return `<Variable name=${jsxAttr(attr)} />` // marked {attr} reference -> <Variable>
       // A CONTENT icon: `icon:check-circle[role=success]` -> `<span class="icon
       // success"><i class="fa fa-check-circle"></i></span>`. The role is the
       // meaning (success = supported, error = not), and on management-center's
@@ -1903,7 +1903,7 @@ function inlineTag ($, node, st, opt) {
       // golden's <i> carries NO text: a character would ADD text the source never
       // rendered and fail the Layer-1 diff.
       const iconRole = cls.includes('icon') ? cls.find((c) => ICON_ROLES.has(c)) : null
-      if (iconRole) return `<Icon role=${jsxAttr(iconRole)}/>`
+      if (iconRole) return `<Icon role=${jsxAttr(iconRole)} />`
       if (cls.includes('image')) {
         const img = $(node).find('img')[0]
         return img ? imageMd($, img, st) : ''
@@ -1967,14 +1967,14 @@ function serNode ($, node, st) {
     const d = st.partials.get(node.attribs['data-id'])
     if (!d) return ''
     st.imports.add(d.importStmt)
-    return `<${d.componentName}/>`
+    return `<${d.componentName} />`
   }
 
   // Marked {attr} reference inside a raw-HTML/JSX block (e.g. a spanned table
   // cell): emit the global <Variable> rather than baking the resolved value.
   if (name === 'span') {
     const attr = markerName(node)
-    if (attr) return `<Variable name=${jsxAttr(attr)}/>`
+    if (attr) return `<Variable name=${jsxAttr(attr)} />`
   }
 
   // Skip empty heading self-anchors and presentational colgroups.
@@ -2000,7 +2000,7 @@ function serNode ($, node, st) {
   // the global <Badge> rather than a raw <strong className="enterprise">.
   if (name === 'strong' || name === 'b') {
     const badge = cls.find((c) => BADGE_CLASSES.has(c))
-    if (badge) return `<Badge type=${jsxAttr(badge)}/>`
+    if (badge) return `<Badge type=${jsxAttr(badge)} />`
   }
 
   const attrs = serAttrs(node, st)

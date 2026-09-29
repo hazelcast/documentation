@@ -4,10 +4,10 @@ sidebar_position: 7
 slug: /jcache/icache
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import CodeBlock from '@theme/CodeBlock';
-import Ex_jcache_PartitionLostListenerUsage_java_tag_pllu from '../../../../examples/jcache/PartitionLostListenerUsage.java?tag=pllu';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import CodeBlock from "@theme/CodeBlock";
+import Ex_jcache_PartitionLostListenerUsage_java_tag_pllu from "../../../../examples/jcache/PartitionLostListenerUsage.java?tag=pllu";
 
 Hazelcast provides extension methods to the Cache API through the interface `com.hazelcast.cache.ICache`.
 
@@ -413,7 +413,7 @@ hazelcast:
     - `FREE_NATIVE_MEMORY_PERCENTAGE`: Minimum free native memory size percentage for each Hazelcast instance. **Available on High-Density Memory cache record store only.**
   - `eviction-policy`: Eviction policy that compares values to find the best matching eviction candidate. Its default value is `LRU`.
 
-    - <Anchor id="jcache-lru"/>`LRU`: Less Recently Used - finds the best eviction candidate based on the `lastAccessTime`.
+    - <Anchor id="jcache-lru" />`LRU`: Less Recently Used - finds the best eviction candidate based on the `lastAccessTime`.
     - `LFU`: Less Frequently Used - finds the best eviction candidate based on the number of hits.
 - `partition-lost-listeners` : Defines listeners for dispatching partition lost events for the cache. For more information, see the [ICache Partition Lost Listener section](#icache-partition-lost-listener).
 - `split-brain-protection-ref` : Name of the split-brain protection configuration that you want this cache to use.
@@ -544,7 +544,7 @@ ICache also offers `setExpiryPolicy(key, expirePolicy)` method to associate cert
 
 ### JCache Eviction
 
-Caches are generally not expected to grow to an infinite size. Implementing an [expiry policy](#defining-a-custom-expirypolicy) is one way you can prevent infinite growth, but sometimes it is hard to define a meaningful expiration timeout. Therefore, Hazelcast JCache provides the eviction feature. Eviction offers the possibility of removing entries based on the cache size or amount of used memory (Hazelcast <Variable name="enterprise-product-name"/> Only) and not based on timeouts.
+Caches are generally not expected to grow to an infinite size. Implementing an [expiry policy](#defining-a-custom-expirypolicy) is one way you can prevent infinite growth, but sometimes it is hard to define a meaningful expiration timeout. Therefore, Hazelcast JCache provides the eviction feature. Eviction offers the possibility of removing entries based on the cache size or amount of used memory (Hazelcast <Variable name="enterprise-product-name" /> Only) and not based on timeouts.
 
 :::important
 
@@ -799,7 +799,7 @@ In addition to the operations explained in [ICache Async Methods](#icache-async-
 - `isDestroyed()`: Determines whether the ICache instance is destroyed or not.
 - `getLocalCacheStatistics()`: Returns a `com.hazelcast.cache.CacheStatistics` instance, both on Hazelcast members and clients, providing the same statistics data as the JMX beans.
 
-See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/cache/ICache.html" text="ICache Javadoc"/> to see all the methods provided by ICache.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/cache/ICache.html" text="ICache Javadoc" /> to see all the methods provided by ICache.
 
 ### Implementing BackupAwareEntryProcessor
 

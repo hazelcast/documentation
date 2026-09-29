@@ -11,8 +11,8 @@ tutorial_source: "https://github.com/hazelcast-guides/serverless-trade-monitor-d
 displayed_sidebar: null
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 Deploy a Java application that updates a trade monitoring dashboard in real-time.
 
@@ -27,25 +27,25 @@ In this tutorial, you'll create a dashboard for monitoring customer's trading ac
 
 ## Architecture
 
-The trade monitoring application runs locally. Application components create a streaming and static data source, submit stream processing jobs to the <Variable name="hazelcast-cloud"/> cluster, and serve data to the trade monitor dashboard.
+The trade monitoring application runs locally. Application components create a streaming and static data source, submit stream processing jobs to the <Variable name="hazelcast-cloud" /> cluster, and serve data to the trade monitor dashboard.
 
 ![Architecture of trade monitoring application](./images/trade_monitoring_architecture.png)
 
-Only the streaming data source is hosted on a Confluent Cloud Kafka cluster. All other trades data is hosted and processed on a <Variable name="hazelcast-cloud"/> Standard cluster.
+Only the streaming data source is hosted on a Confluent Cloud Kafka cluster. All other trades data is hosted and processed on a <Variable name="hazelcast-cloud" /> Standard cluster.
 
 ## Components
 
 - [**`TradeProducer.java`**](https://github.com/hazelcast-guides/serverless-trade-monitor-dashboard/blob/master/realtime-trade-monitor/trade-producer/src/main/java/TradeProducer.java): Sets up the streaming data source. This class sends a simulated feed of trades data to a Kafka topic on the Cloud Confluence cluster.
-- [**`LoadSymbols.java`**](https://github.com/hazelcast-guides/serverless-trade-monitor-dashboard/blob/master/realtime-trade-monitor/trade-queries/src/main/java/LoadSymbols.java): Creates the `symbols` map on the <Variable name="hazelcast-cloud"/> cluster that contains static stock information, which is used to enrich the streaming data after it is processed.
-- [**`IngestTrades.java`**](https://github.com/hazelcast-guides/serverless-trade-monitor-dashboard/blob/master/realtime-trade-monitor/trade-queries/src/main/java/IngestTrades.java): Submits the `ingestTrades` job to the <Variable name="hazelcast-cloud"/> cluster. The `ingestTrades` job creates a data pipeline that processes the stream of trade messages from the Kafka topic and writes them to the `trades` map (streaming data sink).
-- [**`AggregateQuery.java`**](https://github.com/hazelcast-guides/serverless-trade-monitor-dashboard/blob/master/realtime-trade-monitor/trade-queries/src/main/java/AggregateQuery.java): Submits the `AggregateQuery` job, which runs in parallel with the `ingestTrades` job on the <Variable name="hazelcast-cloud"/> cluster. The `AggregateQuery` job performs an aggregation on the trades data, grouping trades by stock symbol and keeping a running total of the quantity and values of trades. This data is written to the `query1_Results` map.
+- [**`LoadSymbols.java`**](https://github.com/hazelcast-guides/serverless-trade-monitor-dashboard/blob/master/realtime-trade-monitor/trade-queries/src/main/java/LoadSymbols.java): Creates the `symbols` map on the <Variable name="hazelcast-cloud" /> cluster that contains static stock information, which is used to enrich the streaming data after it is processed.
+- [**`IngestTrades.java`**](https://github.com/hazelcast-guides/serverless-trade-monitor-dashboard/blob/master/realtime-trade-monitor/trade-queries/src/main/java/IngestTrades.java): Submits the `ingestTrades` job to the <Variable name="hazelcast-cloud" /> cluster. The `ingestTrades` job creates a data pipeline that processes the stream of trade messages from the Kafka topic and writes them to the `trades` map (streaming data sink).
+- [**`AggregateQuery.java`**](https://github.com/hazelcast-guides/serverless-trade-monitor-dashboard/blob/master/realtime-trade-monitor/trade-queries/src/main/java/AggregateQuery.java): Submits the `AggregateQuery` job, which runs in parallel with the `ingestTrades` job on the <Variable name="hazelcast-cloud" /> cluster. The `AggregateQuery` job performs an aggregation on the trades data, grouping trades by stock symbol and keeping a running total of the quantity and values of trades. This data is written to the `query1_Results` map.
 - [**`WebServer.java`**](https://github.com/hazelcast-guides/serverless-trade-monitor-dashboard/blob/master/realtime-trade-monitor/webapp/src/main/java/WebServer.java): Combines data from the `trades`, `symbols`, and `query1_Results` map and serves it to the trade monitor dashboard.
 
 ## Before you Begin
 
 You need the following:
 
-- A <a href="/cloud/create-serverless-cluster"><Variable name="hazelcast-cloud"/> Standard cluster</a>. You can use either a development or production cluster.
+- A <a href="/cloud/create-serverless-cluster"><Variable name="hazelcast-cloud" /> Standard cluster</a>. You can use either a development or production cluster.
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - [Maven](https://maven.apache.org/install.html)
 - JDK 17 or later installed and set up as the `JAVA_HOME` environment variable
@@ -74,9 +74,9 @@ git clone git@github.com:hazelcast-guides/serverless-trade-monitor-dashboard.git
 
 ## Step 2. Set Up the Project Files {/* #step-two */}
 
-The sample project uses a Java client to connect to your <Variable name="hazelcast-cloud"/> Standard cluster. To allow this connection, download the TLS certificate files from the cluster and update the client configuration.
+The sample project uses a Java client to connect to your <Variable name="hazelcast-cloud" /> Standard cluster. To allow this connection, download the TLS certificate files from the cluster and update the client configuration.
 
-1. Sign into the <Variable href="{page-cloud-console}" text="{hazelcast-cloud} console"/> and select your cluster.
+1. Sign into the <Variable href="{page-cloud-console}" text="{hazelcast-cloud} console" /> and select your cluster.
 2. Next to **Connect Client**, select any client and then select the **Advanced Setup** tab.
 3. Download the keystore file. Keep the **Advanced Setup** tab open, you'll need it in later steps.
 4. Extract the files and copy both `client.keystore` and `client.truststore` into the following directories of your cloned project:
@@ -118,7 +118,7 @@ The sample project uses a Java client to connect to your <Variable name="hazelca
 To generate a streaming data source for the trade monitor dashboard, you need to create a Kafka topic on a Confluent cluster. The easiest way to do this is to use a free Confluent Cloud cluster.
 
 1. Create a [Confluent Cloud account](https://confluent.cloud/signup) if you don't have one already.
-2. Select the same cloud provider as your <Variable name="hazelcast-cloud"/> cluster and the region that's closest to the cluster. For example, AWS Oregon (us-west-2).
+2. Select the same cloud provider as your <Variable name="hazelcast-cloud" /> cluster and the region that's closest to the cluster. For example, AWS Oregon (us-west-2).
 3. Skip payment and launch the cluster.
 4. Select the name of your cluster in the breadcrumbs at the top of the page.
 
@@ -130,7 +130,7 @@ Next, create your Kafka topic.
 2. Enter **trades** in the **Topic name** box and **4** in the **Partitions** box.
 3. Click **Create with defaults**.
 4. Click **Clients** and select **Java**.
-5. Click **Create Kafka cluster API key**. Enter the **Cluster ID** of your <Variable name="hazelcast-cloud"/> cluster into the **Description** box. This helps you remember which API key this <Variable name="hazelcast-cloud"/> cluster is using.
+5. Click **Create Kafka cluster API key**. Enter the **Cluster ID** of your <Variable name="hazelcast-cloud" /> cluster into the **Description** box. This helps you remember which API key this <Variable name="hazelcast-cloud" /> cluster is using.
 6. Copy the code from your configuration snippet from the top to `acks=all`. You won't use the Schema Registry in this tutorial.
 
 ## Step 4. Add the Connection Details of the Confluent Cloud Cluster {/* #step-four */}
@@ -182,7 +182,7 @@ To allow the Java client to access the trades topic, add the connection details 
 
 In this step, you'll deploy application components to create the static and streaming data sources.
 
-1. Load the static stock information onto your <Variable name="hazelcast-cloud"/> cluster:
+1. Load the static stock information onto your <Variable name="hazelcast-cloud" /> cluster:
 
    ```bash
    java -jar trade-queries/target/trade-queries-5.0.jar load-symbols
@@ -197,7 +197,7 @@ In this step, you'll deploy application components to create the static and stre
 
    </details>
 
-You can check the stock data on your <Variable name="hazelcast-cloud"/> cluster using SQL.
+You can check the stock data on your <Variable name="hazelcast-cloud" /> cluster using SQL.
 
 1. Go back to the cluster console.
 2. Select **SQL** in the left navigation to open the SQL Browser.
@@ -250,7 +250,7 @@ Keep this terminal window open until you complete the final step of the tutorial
 
 ## Step 7. Process the Streaming Data {/* #step-seven */}
 
-In this step, you'll submit the `IngestTrades` and `AggregateQuery` stream processing jobs to your <Variable name="hazelcast-cloud"/> cluster. You'll also check that both jobs are running.
+In this step, you'll submit the `IngestTrades` and `AggregateQuery` stream processing jobs to your <Variable name="hazelcast-cloud" /> cluster. You'll also check that both jobs are running.
 
 1. In a new terminal window, change into the `realtime-trade-monitor/` directory.
 2. Execute the following command to submit and start the `IngestTrades` job:
@@ -315,7 +315,7 @@ In this tutorial, you learned how to do the following:
 
 - Generate a streaming data source using a Kafka topic.
 - Query data in a map from a SQL browser.
-- Submit and view stream processing jobs on a <Variable name="hazelcast-cloud"/> cluster.
+- Submit and view stream processing jobs on a <Variable name="hazelcast-cloud" /> cluster.
 
 ## Learn More
 

@@ -5,18 +5,18 @@ sidebar_position: 2
 slug: /tutorials/operator-tutorial-wan-replication
 ---
 
-import CodeBlock from '@theme/CodeBlock';
-import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_hazelcast_first_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/hazelcast-first.yaml';
-import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_hazelcast_second_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/hazelcast-second.yaml';
-import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_map_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/map.yaml';
-import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_wanreplication_yaml from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/wanreplication.yaml';
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_java_src_main_java_com_hazelcast_Main_java from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/java/src/main/java/com/hazelcast/Main.java';
-import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_nodejs_client_js from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/nodejs/client.js';
-import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_go_main_go from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/go/main.go';
-import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_python_main_py from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/python/main.py';
-import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_dotnet_Program_cs from '@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/dotnet/Program.cs';
+import CodeBlock from "@theme/CodeBlock";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_hazelcast_first_yaml from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/hazelcast-first.yaml";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_hazelcast_second_yaml from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/hazelcast-second.yaml";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_map_yaml from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/map.yaml";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_wanreplication_yaml from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/wanreplication.yaml";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_java_src_main_java_com_hazelcast_Main_java from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/java/src/main/java/com/hazelcast/Main.java";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_nodejs_client_js from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/nodejs/client.js";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_go_main_go from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/go/main.go";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_python_main_py from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/python/main.py";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_dotnet_Program_cs from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/dotnet/Program.cs";
 
 Learn how to keep data in sync across two Hazelcast clusters.
 
@@ -102,7 +102,7 @@ Before you begin, make sure that you have:
 
 In this step, you'll fill the maps on the first, source cluster.
 
-1. Configure the Hazelcast client to connect to the first cluster, using its address. <Anchor id="configure-client"/>
+1. Configure the Hazelcast client to connect to the first cluster, using its address. <Anchor id="configure-client" />
 
    Open the examples folder to access all sample clients:
 

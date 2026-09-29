@@ -4,16 +4,16 @@ sidebar_position: 4
 slug: /maintain-cluster/monitoring
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import CodeBlock from '@theme/CodeBlock';
-import Ex_management_ExampleLocalMapStats_java_tag_lms from '../../examples/management/ExampleLocalMapStats.java?tag=lms';
-import Ex_management_ExampleLocalIndexStats_java_tag_lis from '../../examples/management/ExampleLocalIndexStats.java?tag=lis';
-import Ex_management_ExampleNearCacheStats_java_tag_ncs from '../../examples/management/ExampleNearCacheStats.java?tag=ncs';
-import Ex_management_ExampleMultiMapStats_java_tag_mms from '../../examples/management/ExampleMultiMapStats.java?tag=mms';
-import Ex_management_ExampleQueueStats_java_tag_qs from '../../examples/management/ExampleQueueStats.java?tag=qs';
-import Ex_management_ExampleTopicStats_java_tag_ts from '../../examples/management/ExampleTopicStats.java?tag=ts';
-import Ex_management_ExampleExecutorStats_java_tag_es from '../../examples/management/ExampleExecutorStats.java?tag=es';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import CodeBlock from "@theme/CodeBlock";
+import Ex_management_ExampleLocalMapStats_java_tag_lms from "../../examples/management/ExampleLocalMapStats.java?tag=lms";
+import Ex_management_ExampleLocalIndexStats_java_tag_lis from "../../examples/management/ExampleLocalIndexStats.java?tag=lis";
+import Ex_management_ExampleNearCacheStats_java_tag_ncs from "../../examples/management/ExampleNearCacheStats.java?tag=ncs";
+import Ex_management_ExampleMultiMapStats_java_tag_mms from "../../examples/management/ExampleMultiMapStats.java?tag=mms";
+import Ex_management_ExampleQueueStats_java_tag_qs from "../../examples/management/ExampleQueueStats.java?tag=qs";
+import Ex_management_ExampleTopicStats_java_tag_ts from "../../examples/management/ExampleTopicStats.java?tag=ts";
+import Ex_management_ExampleExecutorStats_java_tag_es from "../../examples/management/ExampleExecutorStats.java?tag=es";
 
 ## Best practices {/* #monitoring-best-practices */}
 
@@ -57,7 +57,7 @@ Because Management Center is a client that connects to the cluster, you can cont
 
 ### Managing scripting support
 
-<Anchor id="toggle-scripting-support"/>
+<Anchor id="toggle-scripting-support" />
 
 Management Center allows you to execute scripts that can automate interactions with the cluster.
 
@@ -190,7 +190,7 @@ hazelcast:
 
 ## Instance tracking
 
-Instance tracking is a feature which, when enabled, writes a file on the instance startup at the configured location. The file contains metadata about the instance, such as version, product name and process ID. This file can then later be used by other programs to detect the kinds of Hazelcast instances that have been running on a particular machine by inspecting the file contents. This feature supports both <Variable name="open-source-product-name"/> and <Variable name="enterprise-product-name"/> members and clients, and is disabled by default. Failing to write the file only generates a warning, and the instance is allowed to start.
+Instance tracking is a feature which, when enabled, writes a file on the instance startup at the configured location. The file contains metadata about the instance, such as version, product name and process ID. This file can then later be used by other programs to detect the kinds of Hazelcast instances that have been running on a particular machine by inspecting the file contents. This feature supports both <Variable name="open-source-product-name" /> and <Variable name="enterprise-product-name" /> members and clients, and is disabled by default. Failing to write the file only generates a warning, and the instance is allowed to start.
 
 The name and content of the file are configurable and may contain placeholders. The placeholders used for instance tracking have a prefix so that they can be distinguished from the other ones like XML placeholders. We use the same style as the `EncryptionReplacer` by adding a "namespace" to the placeholder prefix; for example, `$HZ_INSTANCE_TRACKING{start_timestamp}` (the namespace here being `HZ_INSTANCE_TRACKING`).
 
@@ -434,11 +434,11 @@ For a guide on how to set up Prometheus server go to the [Prometheus website](ht
 
 #### Via Job API
 
-The `Job` class has a <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/Job.html#getMetrics--" text="getMetrics()"/> method which returns a <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/metrics/JobMetrics.html" text="JobMetrics"/> instance. It contains the latest known metric values for the job.
+The `Job` class has a <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/Job.html#getMetrics--" text="getMetrics()" /> method which returns a <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/metrics/JobMetrics.html" text="JobMetrics" /> instance. It contains the latest known metric values for the job.
 
 This functionality has been developed primarily to give access to metrics of finished jobs, but can in fact be used for jobs in any state.
 
-For details on how to use and filter the metric values consult the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/metrics/JobMetrics.html" text="JobMetrics API docs"/>. A simple example for computing the number of data items emitted by a certain vertex (let's call it vertexA), excluding items emitted to the snapshot, would look like this:
+For details on how to use and filter the metric values consult the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/metrics/JobMetrics.html" text="JobMetrics API docs" />. A simple example for computing the number of data items emitted by a certain vertex (let's call it vertexA), excluding items emitted to the snapshot, would look like this:
 
 ```java
 Predicate<Measurement> vertexOfInterest =
@@ -570,7 +570,7 @@ The following are some of the metrics that you can access via the `LocalMapStats
 - Number of get and put operations on the map (`getPutOperationCount()` and `getGetOperationCount()`).
 - Number of queries executed on the map (`getQueryCount()` and `getIndexedQueryCount()`) (it may be imprecise for queries involving partition predicates (`PartitionPredicate`) on the off-heap storage).
 
-See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/LocalMapStats.html" text="LocalMapStats Javadoc"/> to see all the metrics.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/LocalMapStats.html" text="LocalMapStats Javadoc" /> to see all the metrics.
 
 ### Map index statistics
 
@@ -589,7 +589,7 @@ The following are some of the metrics that you can obtain via the `LocalIndexSta
 - Total latencies of insert, update and remove operations (`getTotalInsertLatency()`, `getTotalUpdateLatency()`, `getTotalRemoveLatency()`): To compute an average latency divide the returned value by the number of operations of a corresponding type.
 - Memory cost of an index (`getMemoryCost()`): For on-heap storages, this memory cost metric value is a best-effort approximation and doesn't indicate a precise on-heap memory usage of an index.
 
-See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/query/LocalIndexStats.html" text="LocalIndexStats Javadoc"/> to see all the metrics.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/query/LocalIndexStats.html" text="LocalIndexStats Javadoc" /> to see all the metrics.
 
 To compute an aggregated value of `getAverageHitSelectivity()` for all cluster members, you can use a simple averaging computation as shown below:
 
@@ -628,7 +628,7 @@ The following are some of the metrics that you can access via the `NearCacheStat
 - memory cost (number of bytes) of owned entries in the Near Cache (`getOwnedEntryMemoryCost()`)
 - number of hits (reads) of the locally owned entries (`getHits()`)
 
-See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/nearcache/NearCacheStats.html" text="NearCacheStats Javadoc"/> to see all the metrics.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/nearcache/NearCacheStats.html" text="NearCacheStats Javadoc" /> to see all the metrics.
 
 ### MultiMap statistics
 
@@ -648,7 +648,7 @@ The following are some of the metrics that you can access via the `LocalMultiMap
 - number of hits (reads) of the locally owned entries (`getHits()`)
 - number of get and put operations on the map (`getPutOperationCount()` and `getGetOperationCount()`)
 
-See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/multimap/LocalMultiMapStats.html" text="LocalMultiMapStats Javadoc"/> to see all the metrics.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/multimap/LocalMultiMapStats.html" text="LocalMultiMapStats Javadoc" /> to see all the metrics.
 
 ### Queue statistics
 
@@ -665,7 +665,7 @@ The following are some of the metrics that you can access via the \`LocalQueueSt
 - minimum and maximum ages of the items in the member (`getMinAge()` and `getMaxAge()`)
 - number of offer, put and add operations (`getOfferOperationCount()`)
 
-See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/collection/LocalQueueStats.html" text="LocalQueueStats Javadoc"/> to see all the metrics.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/collection/LocalQueueStats.html" text="LocalQueueStats Javadoc" /> to see all the metrics.
 
 ### Topic statistics
 
@@ -681,7 +681,7 @@ The following are the metrics that you can access via the \`LocalTopicStats \` o
 - total number of published messages of the topic on the member (`getPublishOperationCount()`)
 - total number of received messages of the topic on the member (`getReceiveOperationCount()`)
 
-See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/topic/LocalTopicStats.html" text="LocalTopicStats Javadoc"/> to see all the metrics.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/topic/LocalTopicStats.html" text="LocalTopicStats Javadoc" /> to see all the metrics.
 
 :::note
 
@@ -703,7 +703,7 @@ The following are some of the metrics that you can access via the \`LocalExecuto
 - number of started operations of the executor service (`getStartedTaskCount()`)
 - number of completed operations of the executor service (`getCompletedTaskCount()`)
 
-See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/executor/LocalExecutorStats.html" text="LocalExecutorStats Javadoc"/> to see all the metrics.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/executor/LocalExecutorStats.html" text="LocalExecutorStats Javadoc" /> to see all the metrics.
 
 ## Health check and monitoring
 
@@ -717,17 +717,17 @@ The following options are provided for monitoring the health of your Hazelcast c
 
 ### Use the health check endpoint and script {/* #enable-hcheck */}
 
-How you enable the health check endpoint depends on whether you are using the <Variable name="open-source-product-name"/> or <Variable name="enterprise-product-name"/> REST API.
+How you enable the health check endpoint depends on whether you are using the <Variable name="open-source-product-name" /> or <Variable name="enterprise-product-name" /> REST API.
 
-**<Variable name="enterprise-product-name"/> REST API**
+**<Variable name="enterprise-product-name" /> REST API**
 
-If you are using the <Variable name="enterprise-product-name"/> REST API, see: [https://docs.hazelcast.com/hazelcast/latest/getting-started/get-started-rest-api-with-java](https://docs.hazelcast.com/hazelcast/latest/getting-started/get-started-rest-api-with-java) for information on how to enable the health check endpoint.
+If you are using the <Variable name="enterprise-product-name" /> REST API, see: [https://docs.hazelcast.com/hazelcast/latest/getting-started/get-started-rest-api-with-java](https://docs.hazelcast.com/hazelcast/latest/getting-started/get-started-rest-api-with-java) for information on how to enable the health check endpoint.
 
-After enabling the <Variable name="enterprise-product-name"/> REST API, you can reach all the endpoints — including the health check ones — without further configuration. To see the available endpoints, and learn more about how to make a request and the expected responses etc., refer to the [Swagger documentation](https://docs.hazelcast.com/hazelcast/latest/maintain-cluster/rest-api-swagger#tag/Health-Controller).
+After enabling the <Variable name="enterprise-product-name" /> REST API, you can reach all the endpoints — including the health check ones — without further configuration. To see the available endpoints, and learn more about how to make a request and the expected responses etc., refer to the [Swagger documentation](https://docs.hazelcast.com/hazelcast/latest/maintain-cluster/rest-api-swagger#tag/Health-Controller).
 
-**<Variable name="open-source-product-name"/> REST API**
+**<Variable name="open-source-product-name" /> REST API**
 
-If you are using the <Variable name="open-source-product-name"/> REST API, follow the steps below to enable the health check endpoint and use the health check script.
+If you are using the <Variable name="open-source-product-name" /> REST API, follow the steps below to enable the health check endpoint and use the health check script.
 
 :::caution[Deprecation Notice for the Community Edition REST API]
 
@@ -838,7 +838,7 @@ To use the HTTP-based health check:
 
 ### Use the hz-healthcheck script {/* #health-check-script */}
 
-The `hz-healthcheck` script comes with the Hazelcast package. Internally, it uses the HTTP-based health check endpoint (the <Variable name="open-source-product-name"/> REST API).
+The `hz-healthcheck` script comes with the Hazelcast package. Internally, it uses the HTTP-based health check endpoint (the <Variable name="open-source-product-name" /> REST API).
 
 To run the `hz-healthcheck` script:
 
@@ -853,9 +853,9 @@ You can use the following parameters to perform checks and operations on your Ha
 
 <table>
 <colgroup>
-<col style={{width:'22.2222%'}}/>
-<col style={{width:'22.2222%'}}/>
-<col style={{width:'55.5556%'}}/>
+<col style={{width:'22.2222%'}} />
+<col style={{width:'22.2222%'}} />
+<col style={{width:'55.5556%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -1449,7 +1449,7 @@ As it is stated in the introduction of this section and shown in the log file co
 
 #### BuildInfo
 
-It shows the detailed Hazelcast build information including the Hazelcast release number, `Git` revision number and whether you have Hazelcast <Variable name="enterprise-product-name"/> or not.
+It shows the detailed Hazelcast build information including the Hazelcast release number, `Git` revision number and whether you have Hazelcast <Variable name="enterprise-product-name" /> or not.
 
 #### SystemProperties
 
@@ -2117,7 +2117,7 @@ You can find the JMX API definition below with descriptions and the API methods 
   - Is shutdown ( `isShutdown` )
   - Is terminated ( `isTerminated` )
   - Completed task count ( `completedTaskCount` )
-- **Vector Query Executor ( `HazelcastInstance.ManagedExecutorService` )** <Badge type="enterprise"/>
+- **Vector Query Executor ( `HazelcastInstance.ManagedExecutorService` )** <Badge type="enterprise" />
 
   - Name ( `name` )
   - Work queue size ( `queueSize` )
@@ -2170,7 +2170,7 @@ To learn the possible actions on the alerts, see the [Actions and Remedies for A
 
 ## Integrating with third-party tools
 
-<Badge type="enterprise"/>
+<Badge type="enterprise" />
 
 Management Center monitors your entire Hazelcast cluster, making it much easier to integrate with third-party tools without needing to connect to individual members, manage changes from scaling and restarts, or collate metrics from all members.
 
@@ -2178,16 +2178,16 @@ Management Center monitors your entire Hazelcast cluster, making it much easier 
 
 Hazelcast Management Center can expose the metrics collected from cluster members to [Prometheus](https://prometheus.io/). This feature can be turned on by setting the `hazelcast.mc.prometheusExporter.enabled` system property to `true`.
 
-This is an <Variable name="enterprise-product-name"/> feature. See <Variable href="xref:{page-latest-supported-mc}@management-center:integrate:prometheus-monitoring.adoc" text="Prometheus Monitoring"/> for details.
+This is an <Variable name="enterprise-product-name" /> feature. See <Variable href="xref:{page-latest-supported-mc}@management-center:integrate:prometheus-monitoring.adoc" text="Prometheus Monitoring" /> for details.
 
 ### AppDynamics
 
 You can use the [Clustered JMX](/management-center/latest/integrate/jmx) interface to integrate the [Hazelcast Management Center](#management-center) with **AppDynamics**. To perform this integration, attach the AppDynamics Java agent to the Management Center.
 
-This is an <Variable name="enterprise-product-name"/> feature. See [Integrating JMX with AppDynamics](/management-center/latest/integrate/jmx#integrating-jmx-with-appdynamics) for details.
+This is an <Variable name="enterprise-product-name" /> feature. See [Integrating JMX with AppDynamics](/management-center/latest/integrate/jmx#integrating-jmx-with-appdynamics) for details.
 
 ### New Relic
 
 You can use the [Clustered JMX](/management-center/latest/integrate/jmx) interface to integrate the [Hazelcast Management Center](#management-center) with New Relic. To perform this integration, attach the New Relic Java agent and provide an extension file that describes which metrics will be sent to New Relic.
 
-This is an <Variable name="enterprise-product-name"/> feature. See [Integrating JMX with New Relic](/management-center/latest/integrate/jmx#integrating-jmx-with-new-relic) for details.
+This is an <Variable name="enterprise-product-name" /> feature. See [Integrating JMX with New Relic](/management-center/latest/integrate/jmx#integrating-jmx-with-new-relic) for details.

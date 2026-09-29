@@ -5,10 +5,10 @@ sidebar_position: 1
 slug: /data-structures/distributed-data-structures
 ---
 
-import CodeBlock from '@theme/CodeBlock';
-import Ex_MapMember_java_tag_mapmember from '../../examples/MapMember.java?tag=mapmember';
-import Ex_ExampleDOL_java_tag_sampledol from '../../examples/ExampleDOL.java?tag=sampledol';
-import Ex_cp_CpSubsystemAPI_java_tag_apisample from '../../examples/cp/CpSubsystemAPI.java?tag=apisample';
+import CodeBlock from "@theme/CodeBlock";
+import Ex_MapMember_java_tag_mapmember from "../../examples/MapMember.java?tag=mapmember";
+import Ex_ExampleDOL_java_tag_sampledol from "../../examples/ExampleDOL.java?tag=sampledol";
+import Ex_cp_CpSubsystemAPI_java_tag_apisample from "../../examples/cp/CpSubsystemAPI.java?tag=apisample";
 
 Hazelcast offers distributed implementations of many common data structures. For each of the client languages, Hazelcast mimics as closely as possible the natural interface of the structure. For example in Java, the map follows `java.util.Map` semantics.
 
@@ -34,12 +34,12 @@ Hazelcast offers distributed implementations of many common data structures. For
 
 | Data structure | Description | Partitioned/Non-partitioned | [AP/CP](../architecture/architecture.mdx#apcp) |
 | --- | --- | --- | --- |
-| [CPMap](./cp-data-structures/cpmap.mdx)<br/> <Badge type="enterprise"/> | A data structure for storing key-value pairs with support for atomic read, write and conditional write operations within a distributed environment. | [Non-partitioned](#partitioned) | [Consistency and partition tolerance](#cp-data) |
-| [Fenced Lock](./cp-data-structures/fencedlock.mdx)<br/> <Badge type="enterprise"/> | A lock that provides exclusive access to a shared resource; only one thread at a time can acquire the lock and all access to the shared resource requires that the lock be acquired first. | [Non-partitioned](#partitioned) | [Consistency and partition tolerance](#cp-data) |
-| [Atomic Long](./cp-data-structures/iatomiclong.mdx)<br/> <Badge type="enterprise"/> | A data structure for dealing with `long` values that can be updated atomically in a distributed environment. | [Non-partitioned](#partitioned) | [Consistency and partition tolerance](#cp-data) |
-| [Atomic Reference](./cp-data-structures/iatomicreference.mdx)<br/> <Badge type="enterprise"/> | A data structure for dealing with a reference in a distributed environment. | [Non-partitioned](#partitioned) | [Consistency and partition tolerance](#cp-data) |
-| [Countdown Latch](./cp-data-structures/icountdownlatch.mdx)<br/> <Badge type="enterprise"/> | A distributed gatekeeper for concurrent activities; it enables the threads to wait for other threads to complete their operations. | [Non-partitioned](#partitioned) | [Consistency and partition tolerance](#cp-data) |
-| [Semaphore](./cp-data-structures/isemaphore.mdx)<br/> <Badge type="enterprise"/> | A data structure that creates permits that control the thread counts when performing concurrent activities. | [Non-partitioned](#partitioned) | [Consistency and partition tolerance](#cp-data) |
+| [CPMap](./cp-data-structures/cpmap.mdx)<br /> <Badge type="enterprise" /> | A data structure for storing key-value pairs with support for atomic read, write and conditional write operations within a distributed environment. | [Non-partitioned](#partitioned) | [Consistency and partition tolerance](#cp-data) |
+| [Fenced Lock](./cp-data-structures/fencedlock.mdx)<br /> <Badge type="enterprise" /> | A lock that provides exclusive access to a shared resource; only one thread at a time can acquire the lock and all access to the shared resource requires that the lock be acquired first. | [Non-partitioned](#partitioned) | [Consistency and partition tolerance](#cp-data) |
+| [Atomic Long](./cp-data-structures/iatomiclong.mdx)<br /> <Badge type="enterprise" /> | A data structure for dealing with `long` values that can be updated atomically in a distributed environment. | [Non-partitioned](#partitioned) | [Consistency and partition tolerance](#cp-data) |
+| [Atomic Reference](./cp-data-structures/iatomicreference.mdx)<br /> <Badge type="enterprise" /> | A data structure for dealing with a reference in a distributed environment. | [Non-partitioned](#partitioned) | [Consistency and partition tolerance](#cp-data) |
+| [Countdown Latch](./cp-data-structures/icountdownlatch.mdx)<br /> <Badge type="enterprise" /> | A distributed gatekeeper for concurrent activities; it enables the threads to wait for other threads to complete their operations. | [Non-partitioned](#partitioned) | [Consistency and partition tolerance](#cp-data) |
+| [Semaphore](./cp-data-structures/isemaphore.mdx)<br /> <Badge type="enterprise" /> | A data structure that creates permits that control the thread counts when performing concurrent activities. | [Non-partitioned](#partitioned) | [Consistency and partition tolerance](#cp-data) |
 
 ## Streaming Data Structures
 
@@ -52,7 +52,7 @@ Hazelcast offers distributed implementations of many common data structures. For
 | Data structure | Description | Partitioned/Non-partitioned | [AP/CP](../architecture/architecture.mdx#apcp) |
 | --- | --- | --- | --- |
 | [Cardinality Estimator](./ai-ml-data-structures/cardinality-estimator-service.mdx) | A data structure that implements Flajolet's HyperLogLog algorithm. | [Non-partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
-| [Vector Collection](./ai-ml-data-structures/vector-collections/overview.mdx)<br/> <Badge type="enterprise"/> | A data structure for information about the vectors and associated metadata (user values). | [Partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
+| [Vector Collection](./ai-ml-data-structures/vector-collections/overview.mdx)<br /> <Badge type="enterprise" /> | A data structure for information about the vectors and associated metadata (user values). | [Partitioned](#partitioned) | [Availability and partition tolerance](#ap-data) |
 
 ## Partitioned vs Non-Partitioned {/* #partitioned */}
 
@@ -150,7 +150,7 @@ We recommend that you only use letters, digits, and the `-`, `_`, and `.` charac
 
 Special characters will be accepted, but can cause problems for the REST API or [Management Center](/management-center/latest/getting-started/overview).
 
-The <Variable name="open-source-product-name"/> and <Variable name="enterprise-product-name"/> REST APIs get the data structure name from the request URL. A name containing a forward slash (`/`) will cause a `400 Bad Request` error when using the <a href="/hazelcast/5.7/maintain-cluster/enterprise-rest-api"><Variable name="enterprise-product-name"/> REST API</a>, but can fail silently or return the wrong data structure when using the <a href="/hazelcast/5.7/maintain-cluster/rest-api"><Variable name="open-source-product-name"/> REST API</a>.
+The <Variable name="open-source-product-name" /> and <Variable name="enterprise-product-name" /> REST APIs get the data structure name from the request URL. A name containing a forward slash (`/`) will cause a `400 Bad Request` error when using the <a href="/hazelcast/5.7/maintain-cluster/enterprise-rest-api"><Variable name="enterprise-product-name" /> REST API</a>, but can fail silently or return the wrong data structure when using the <a href="/hazelcast/5.7/maintain-cluster/rest-api"><Variable name="open-source-product-name" /> REST API</a>.
 
 Management Center uses data structure names in its request URLs. Special characters can prevent it from displaying the configuration of a data structure. See [Management Center troubleshooting](/management-center/latest/troubleshoot/management-center).
 
@@ -164,7 +164,7 @@ AP data structures prefer availability over consistency.
 
 When a partition occurs, all members remain available but some might return an older version of data than others. When the partition is resolved, the members resynchronize to repair any inconsistencies:
 
-<Anchor id="common-features-of-all-hazelcast-data-structures"/>
+<Anchor id="common-features-of-all-hazelcast-data-structures" />
 
 - If a member goes down, its backup replica (which holds the same data) dynamically redistributes the data, including the ownership and locks on them, to the remaining live members. As a result, there will not be any data loss.
 - There is no single cluster master that can be a single point of failure. Every member in the cluster has equal rights and responsibilities. No single member is superior.

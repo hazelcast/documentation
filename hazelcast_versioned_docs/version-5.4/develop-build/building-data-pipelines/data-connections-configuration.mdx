@@ -4,9 +4,9 @@ sidebar_position: 15
 slug: /data-connections/data-connections-configuration
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import PartialDataConnectionsMongoDcConfiguration from '@site/hazelcast_versioned_docs/version-5.4/_partials/data-connections-mongo-dc-configuration.mdx';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import PartialDataConnectionsMongoDcConfiguration from "@site/hazelcast_versioned_docs/version-5.4/_partials/data-connections-mongo-dc-configuration.mdx";
 
 A data connection contains the metadata that Hazelcast needs to connect an external system. You can define a data connection in your members' configuration files, in the Java member API, or in SQL, and reuse the same connection details in the Pipeline API, SQL mappings, and MapStores.
 
@@ -96,7 +96,7 @@ config
 
 Data connections created in SQL behave differently to those defined in members' configuration files or in Java.
 
-- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../../operate-manage/configuring-for-fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name"/>.
+- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../../operate-manage/configuring-for-fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name" />.
 - You can create or drop a data connection using SQL commands. To update a data connection, you need to drop and then recreate it.
 
 ```sql conums
@@ -125,9 +125,9 @@ Default values are in milliseconds except for where indicated.
 
 <table>
 <colgroup>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'60%'}}/>
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'60%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -277,7 +277,7 @@ config
 
 Data connections created in SQL behave differently to those defined in members' configuration files or in Java.
 
-- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../../operate-manage/configuring-for-fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name"/>.
+- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../../operate-manage/configuring-for-fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name" />.
 - You can create or drop a data connection using SQL commands. To update a data connection, you need to drop and then recreate it.
 
 ```sql conums
@@ -303,11 +303,11 @@ OPTIONS (
 </TabItem>
 </Tabs>
 
-<PartialDataConnectionsMongoDcConfiguration/>
+<PartialDataConnectionsMongoDcConfiguration />
 
 ### Example Hazelcast Data Connection {/* #Hazelcast */}
 
-This example configuration shows a data connection to a remote Hazelcast cluster. You can use a Hazelcast data connection from the Pipeline API in <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/jet/pipeline/Sources.html#remoteMapJournal-java.lang.String-com.hazelcast.jet.pipeline.DataConnectionRef-com.hazelcast.jet.pipeline.JournalInitialPosition-com.hazelcast.function.FunctionEx-com.hazelcast.function.PredicateEx-" text="Sources#remoteMapJournal"/> source.
+This example configuration shows a data connection to a remote Hazelcast cluster. You can use a Hazelcast data connection from the Pipeline API in <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/jet/pipeline/Sources.html#remoteMapJournal-java.lang.String-com.hazelcast.jet.pipeline.DataConnectionRef-com.hazelcast.jet.pipeline.JournalInitialPosition-com.hazelcast.function.FunctionEx-com.hazelcast.function.PredicateEx-" text="Sources#remoteMapJournal" /> source.
 
 :::note
 
@@ -418,7 +418,7 @@ config
 
 Data connections created in SQL behave differently to those defined in members' configuration files or in Java.
 
-- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../../operate-manage/configuring-for-fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name"/>.
+- To retain SQL-defined data connections after a cluster restart, you must enable [SQL metadata persistence](../../operate-manage/configuring-for-fault-tolerance/persistence/configuring-persistence.mdx#sql). This feature is available in the <Variable name="enterprise-product-name" />.
 - You can create or drop a data connection using SQL commands. To update a data connection, you need to drop and then recreate it.
 
 ```sql conums vars
@@ -459,7 +459,7 @@ Data connections have the following configuration options.
 
 :::note
 
-If you are using Java to configure the Mapstore, use the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/DataConnectionConfig.html" text="DataConnectionConfig object"/>.
+If you are using Java to configure the Mapstore, use the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/DataConnectionConfig.html" text="DataConnectionConfig object" />.
 
 :::
 
@@ -469,7 +469,7 @@ If you are using Java to configure the Mapstore, use the <Variable href="https:/
 | `name` (required) | The unique identifier for the data connection. |
 | `type` (required) | The type of data connection required for your external system. The following types of connection are supported: `JDBC`, `Kafka`, `Mongo`, `Hz` (case-insensitive). |
 | `properties` | Any configuration properties that the data connection expects to receive. |
-| `shared` | Whether the data connection instance is reusable in different MapStores, jobs, and SQL mappings. This behavior depends on the implementation of the specific data connection. The default value is `true`. See the implementation of each data connection type for full details of reusability: <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/jet/kafka/KafkaDataConnection.html" text="KafkaDataConnection"/>, <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/jet/mongodb/dataconnection/MongoDataConnection.html" text="MongoDataConnection"/>, <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/dataconnection/HazelcastDataConnection.html" text="HazelcastDataConnection"/>. |
+| `shared` | Whether the data connection instance is reusable in different MapStores, jobs, and SQL mappings. This behavior depends on the implementation of the specific data connection. The default value is `true`. See the implementation of each data connection type for full details of reusability: <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/jet/kafka/KafkaDataConnection.html" text="KafkaDataConnection" />, <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/jet/mongodb/dataconnection/MongoDataConnection.html" text="MongoDataConnection" />, <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/dataconnection/HazelcastDataConnection.html" text="HazelcastDataConnection" />. |
 
 :::tip
 

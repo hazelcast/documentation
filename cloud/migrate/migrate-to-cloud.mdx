@@ -15,21 +15,21 @@ For the benefits of migrating your application from an embedded topology to a cl
 
 ## Refactoring Code for the Cloud
 
-Applications in <Variable name="hazelcast-cloud"/> are split into two parts:
+Applications in <Variable name="hazelcast-cloud" /> are split into two parts:
 
-- The cluster that runs on the Hazelcast <Variable name="hazelcast-cloud"/>.
+- The cluster that runs on the Hazelcast <Variable name="hazelcast-cloud" />.
 - The client that calls APIs on cluster.
 
 ![A Hazelcast client application communicating with a Cloud cluster](./images/serverless-app-server.svg)
 
 To separate your embedded application into these two parts, see the following checklist:
 
-- [ ] Deploy [cluster-side modules](../develop-applications/cluster-side-modules/overview.mdx) to <Variable name="hazelcast-cloud"/>. If you use classes such as MapStore or an entry processor, or if you store custom objects in Hazelcast, you need to add those classes to the classpath of the cluster by deploying them as cluster-side modules.
-- [ ] Copy any data structure configuration over to <Variable name="hazelcast-cloud"/>. Data structures are configured in the Hazelcast <Variable name="hazelcast-cloud"/> console.
+- [ ] Deploy [cluster-side modules](../develop-applications/cluster-side-modules/overview.mdx) to <Variable name="hazelcast-cloud" />. If you use classes such as MapStore or an entry processor, or if you store custom objects in Hazelcast, you need to add those classes to the classpath of the cluster by deploying them as cluster-side modules.
+- [ ] Copy any data structure configuration over to <Variable name="hazelcast-cloud" />. Data structures are configured in the Hazelcast <Variable name="hazelcast-cloud" /> console.
 
       :::warning[Heap memory limits]
 
-      <Variable name="hazelcast-cloud"/> Standard clusters have the following heap memory limits:
+      <Variable name="hazelcast-cloud" /> Standard clusters have the following heap memory limits:
 
       - Production clusters: 1 GB memory per cluster member
       - Development clusters: 300 MB per cluster
@@ -38,11 +38,11 @@ To separate your embedded application into these two parts, see the following ch
 
       Be aware that the following operations use heap memory: writing, caching, or replicating data to data structures other than IMap an JCache.
 
-      For further information on <Variable name="hazelcast-cloud"/> Standard clusters and their limits, see [Cloud Standard Clusters](../get-started/overview/serverless-cluster.mdx).
+      For further information on <Variable name="hazelcast-cloud" /> Standard clusters and their limits, see [Cloud Standard Clusters](../get-started/overview/serverless-cluster.mdx).
 
       :::
 - [ ] Remove member configuration from your code. Hazelcast configures the cluster for the best possible performance. All you need to do is configure the client and any data structures.
-- [ ] If you use the executor service, make sure that you are using the 'default' service in both uploaded executor services and client code. You cannot access named executor services in <Variable name="hazelcast-cloud"/>.
+- [ ] If you use the executor service, make sure that you are using the 'default' service in both uploaded executor services and client code. You cannot access named executor services in <Variable name="hazelcast-cloud" />.
 - [ ] Replace any instance of `HazelcastInstance newHazelcastInstance` with a client. `newHazelcastInstance` creates an instance of a Hazelcast member. Instead, you need to configure a client to [connect to the cluster](../develop-applications/connect-to-cluster.mdx).
 
 ## Migrating Stateful Data {/* #migrate */}

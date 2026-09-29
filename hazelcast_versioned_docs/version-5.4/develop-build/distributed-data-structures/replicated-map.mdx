@@ -4,12 +4,12 @@ sidebar_position: 21
 slug: /data-structures/replicated-map
 ---
 
-import CodeBlock from '@theme/CodeBlock';
-import Ex_dds_replicatedmap_FillMapMember_java_tag_fmm from '../../examples/dds/replicatedmap/FillMapMember.java?tag=fmm';
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import Ex_dds_replicatedmap_ReplicatedMapConfiguration_java_tag_rmc from '../../examples/dds/replicatedmap/ReplicatedMapConfiguration.java?tag=rmc';
-import Ex_dds_replicatedmap_ListeningMember_java_tag_lm from '../../examples/dds/replicatedmap/ListeningMember.java?tag=lm';
+import CodeBlock from "@theme/CodeBlock";
+import Ex_dds_replicatedmap_FillMapMember_java_tag_fmm from "../../examples/dds/replicatedmap/FillMapMember.java?tag=fmm";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import Ex_dds_replicatedmap_ReplicatedMapConfiguration_java_tag_rmc from "../../examples/dds/replicatedmap/ReplicatedMapConfiguration.java?tag=rmc";
+import Ex_dds_replicatedmap_ListeningMember_java_tag_lm from "../../examples/dds/replicatedmap/ListeningMember.java?tag=lm";
 
 A Replicated Map is a distributed key-value data structure where the data is replicated to all members in the cluster. It provides full replication of entries to all members for high-speed access.
 
@@ -134,7 +134,7 @@ A Replicated Map has the following configuration elements:
 
 - `in-memory-format`: Internal storage format. See the [In-Memory Format section](#in-memory-format-on-replicated-map). Its default value is `OBJECT`.
 - `async-fillup`: Specifies whether the Replicated Map is filled with entries asynchronously. The default value is `true`, in which case calls to the Replicated Map during the initial replication may return `null` values. If set to `false`, calls to the Replicated Map are blocked until the initial replication is complete, and no exceptions are thrown.
-- `statistics-enabled`: Specifies whether the statistics gathering is enabled for your Replicated Map. If set to `false`, you cannot collect statistics in your implementation (using `getLocalReplicatedMapStats()`) and also <Variable href="/management-center/{page-latest-supported-mc}/data-structures/overview#monitoring-replicated-maps" text="Hazelcast Management Center"/> will not show them. Its default value is `true`.
+- `statistics-enabled`: Specifies whether the statistics gathering is enabled for your Replicated Map. If set to `false`, you cannot collect statistics in your implementation (using `getLocalReplicatedMapStats()`) and also <Variable href="/management-center/{page-latest-supported-mc}/data-structures/overview#monitoring-replicated-maps" text="Hazelcast Management Center" /> will not show them. Its default value is `true`.
 - `entry-listener`: Full canonical classname of the `EntryListener` implementation.
 
   - `entry-listener#include-value`: Specifies whether the event includes the value or not. Sometimes the key is enough to react on an event. In those situations, setting this value to `false` saves a deserialization cycle. Its default value is `true`.
@@ -197,7 +197,7 @@ The following is a list of methods, grouped by the protection types, that suppor
 
 **Configuring Split-Brain Protection**
 
-Split-brain protection for Replicated Map can be configured programmatically using the method <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/ReplicatedMapConfig.html" text="setSplitBrainProtectionName()"/>, or declaratively using the element `split-brain-protection-ref`. Following is an example declarative configuration:
+Split-brain protection for Replicated Map can be configured programmatically using the method <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/ReplicatedMapConfig.html" text="setSplitBrainProtectionName()" />, or declaratively using the element `split-brain-protection-ref`. Following is an example declarative configuration:
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">

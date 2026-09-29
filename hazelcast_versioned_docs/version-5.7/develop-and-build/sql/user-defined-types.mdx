@@ -4,8 +4,8 @@ sidebar_position: 17
 slug: /sql/user-defined-types
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 User-Defined Types (also known as UDTs, nested types, or nested fields) allow you to create custom data types that can be referenced in the [CREATE MAPPING statement](./statements/create-mapping.mdx). UDTs are also useful for creating and accessing hierarchical data structures.
 
@@ -91,7 +91,7 @@ The name of a type can differ from the one specified in the Java class or Portab
 
 :::
 
-<Anchor id="organization-office-types"/>
+<Anchor id="organization-office-types" />
 
 ```sql
 CREATE TYPE Organization (
@@ -118,7 +118,7 @@ The `organization` column is explicitly specified as `Organization` to prevent i
 
 :::
 
-<Anchor id="users-mapping"/>
+<Anchor id="users-mapping" />
 
 ```sql
 CREATE MAPPING users (
@@ -207,7 +207,7 @@ Order of execution of these commands doesn't matter.
 
 :::
 
-<Anchor id="a-type"/>
+<Anchor id="a-type" />
 
 ```sql
 CREATE TYPE AType (
@@ -527,6 +527,6 @@ hz.getSql().execute("UPDATE users SET organization = ((organization).id, (organi
 
 ## Upgrade Notes
 
-<Badge type="enterprise"/>
+<Badge type="enterprise" />
 
 When performing a normal or rolling upgrade from version 5.3 to 5.4, you must drop all user-defined types and mappings with UDTs before the upgrade, and recreate them with the new semantics after upgrading.

@@ -5,8 +5,8 @@ sidebar_position: 4
 slug: /kubernetes/kubernetes-auto-discovery
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 Before you start a Hazelcast cluster in Kubernetes (K8s), it's important to configure settings to ensure that members can form a cluster and to prevent any unexpected data loss.
 
@@ -16,9 +16,9 @@ To make it easier to set up clusters in Kubernetes (K8s), Hazelcast allows membe
 
 <table>
 <colgroup>
-<col style={{width:'33.3333%'}}/>
-<col style={{width:'33.3333%'}}/>
-<col style={{width:'33.3334%'}}/>
+<col style={{width:'33.3333%'}} />
+<col style={{width:'33.3333%'}} />
+<col style={{width:'33.3334%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -337,7 +337,7 @@ All these properties are already set in [Hazelcast Operator](https://docs.hazelc
 - `-Dhazelcast.shutdownhook.policy=GRACEFUL`: in the JVM parameters
 - `-Dhazelcast.graceful.shutdown.max.wait`: in the JVM parameters; the value should be high enough to cover the data migration process
 - If you use Deployment (not StatefulSet), you need to set your strategy to [RollingUpdate](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#updating-a-deployment) and ensure Pods are updated one by one.
-- If you upgrade by the minor version, e.g., `3.11.4 ⇒ 3.12` (<Variable name="enterprise-product-name"/> feature), you need to set the `-Dhazelcast.cluster.version.auto.upgrade.enabled=true` JVM property to make sure the cluster version updates automatically.
+- If you upgrade by the minor version, e.g., `3.11.4 ⇒ 3.12` (<Variable name="enterprise-product-name" /> feature), you need to set the `-Dhazelcast.cluster.version.auto.upgrade.enabled=true` JVM property to make sure the cluster version updates automatically.
 
 ## Discovering Members from Hazelcast Clients
 
@@ -411,6 +411,6 @@ If your Hazelcast cluster is deployed on Kubernetes, but your Hazelcast client i
 
 :::note
 
-For information on configuring persistence in Kubernetes environments, see <a href="/hazelcast/6.0-snapshot/kubernetes/kubernetes-persistence">Running Hazelcast <Variable name="enterprise-product-name"/> with Persistence under Kubernetes</a>.
+For information on configuring persistence in Kubernetes environments, see <a href="/hazelcast/6.0-snapshot/kubernetes/kubernetes-persistence">Running Hazelcast <Variable name="enterprise-product-name" /> with Persistence under Kubernetes</a>.
 
 :::

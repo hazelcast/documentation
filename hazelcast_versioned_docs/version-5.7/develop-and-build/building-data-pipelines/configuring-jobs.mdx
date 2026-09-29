@@ -4,8 +4,8 @@ sidebar_position: 9
 slug: /pipelines/configuring-jobs
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 Before submitting a job to a cluster, you can configure its name, whether to record metrics, how it behaves when cluster members fail, and more.
 
@@ -15,10 +15,10 @@ These are the available configuration options for jobs.
 
 <table>
 <colgroup>
-<col style={{width:'42.8571%'}}/>
-<col style={{width:'28.5714%'}}/>
-<col style={{width:'14.2857%'}}/>
-<col style={{width:'14.2858%'}}/>
+<col style={{width:'42.8571%'}} />
+<col style={{width:'28.5714%'}} />
+<col style={{width:'14.2857%'}} />
+<col style={{width:'14.2858%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -83,7 +83,7 @@ Snapshots use additional in-memory storage.
 
 Sets what happens when a job execution fails.
 
-- If enabled, the job will be suspended on failure. A snapshot of the job's computational state will be preserved. You can update the configuration of a suspended job and resume it <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/config/DeltaJobConfig.html" text="programmatically"/> or [using SQL](../sql/statements/alter-job.mdx).
+- If enabled, the job will be suspended on failure. A snapshot of the job's computational state will be preserved. You can update the configuration of a suspended job and resume it <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/config/DeltaJobConfig.html" text="programmatically" /> or [using SQL](../sql/statements/alter-job.mdx).
 - If disabled, the job will be terminated and the job snapshots will be deleted.
 
 </td>
@@ -91,14 +91,14 @@ Sets what happens when a job execution fails.
 <td>`true`</td>
 </tr>
 <tr>
-<td><Anchor id="initialSnapshotName"/>initialSnapshotName</td>
+<td><Anchor id="initialSnapshotName" />initialSnapshotName</td>
 <td>Name the snapshot from which to start the job.</td>
 <td>`string`</td>
 <td>`''`</td>
 </tr>
 <tr>
 <td>userCodeNamespace</td>
-<td>The User Code Namespace to associate these jobs with for access to custom resources, or `null` if not associated with one. <a href="/hazelcast/5.7/clusters/user-code-namespaces"><Variable name="ucn"/></a> must be enabled and the provided namespace configured.</td>
+<td>The User Code Namespace to associate these jobs with for access to custom resources, or `null` if not associated with one. <a href="/hazelcast/5.7/clusters/user-code-namespaces"><Variable name="ucn" /></a> must be enabled and the provided namespace configured.</td>
 <td>`string`</td>
 <td>`null`</td>
 </tr>
@@ -196,13 +196,13 @@ The exact behavior of what happens when a node joins or leaves depends on whethe
 
 ## Configure a User Code Namespace
 
-Normal Jet jobs can be configured to use a [User Code Namespace](../distributed-computing/user-code-namespaces/overview.mdx) (UCN), which provides them access to custom resources associated with that UCN. <Variable name="ucn"/> must be enabled and a namespace configured with the desired resources created before it can be used in jobs. Any data structures used in these jobs should also have their UCN configured to ensure operations for that data structure also have access to the necessary custom resources. Light jobs do not support UCN.
+Normal Jet jobs can be configured to use a [User Code Namespace](../distributed-computing/user-code-namespaces/overview.mdx) (UCN), which provides them access to custom resources associated with that UCN. <Variable name="ucn" /> must be enabled and a namespace configured with the desired resources created before it can be used in jobs. Any data structures used in these jobs should also have their UCN configured to ensure operations for that data structure also have access to the necessary custom resources. Light jobs do not support UCN.
 
-<Variable name="ucn"/> are managed separately to the Jet system, so these resources persist between individual jobs. This support allows for jobs to be submitted and updated while still being able to use the same custom resources within pipelines.
+<Variable name="ucn" /> are managed separately to the Jet system, so these resources persist between individual jobs. This support allows for jobs to be submitted and updated while still being able to use the same custom resources within pipelines.
 
 :::warning
 
-<Variable name="ucn"/> can be dynamically updated at runtime, but it is recommended that namespaces associated with Jet jobs are not changed while those jobs are running. Doing so may cause job execution inconsistency between member nodes if jobs restart during the namespace update. If all related jobs are suspended, then the associated namespace can be safely updated before resuming jobs.
+<Variable name="ucn" /> can be dynamically updated at runtime, but it is recommended that namespaces associated with Jet jobs are not changed while those jobs are running. Doing so may cause job execution inconsistency between member nodes if jobs restart during the namespace update. If all related jobs are suspended, then the associated namespace can be safely updated before resuming jobs.
 
 :::
 

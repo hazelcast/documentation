@@ -5,8 +5,8 @@ sidebar_position: 2
 slug: /sql/mapping-to-a-file-system
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 To query data in files, you need to create a mapping to a file, using the unified file connector so that the SQL service knows how to access the data.
 
@@ -30,7 +30,7 @@ Depending on the [format of your files](#supported-file-formats), you may also n
 
 ## Permissions
 
-<Badge type="enterprise"/>
+<Badge type="enterprise" />
 
 If [security](../../../operate-manage/securing-a-cluster/enabling-jaas.mdx) is enabled, you can set up permissions to restrict clients' access to your files. For details, see [Securing Jobs](../../building-data-pipelines/job-security.mdx).
 
@@ -63,10 +63,10 @@ SELECT * FROM TABLE(
 
 <table>
 <colgroup>
-<col style={{width:'16.6666%'}}/>
-<col style={{width:'16.6666%'}}/>
-<col style={{width:'33.3333%'}}/>
-<col style={{width:'33.3335%'}}/>
+<col style={{width:'16.6666%'}} />
+<col style={{width:'16.6666%'}} />
+<col style={{width:'33.3333%'}} />
+<col style={{width:'33.3335%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -78,7 +78,7 @@ SELECT * FROM TABLE(
 </thead>
 <tbody>
 <tr>
-<td><Anchor id="path"/>`path` (required)</td>
+<td><Anchor id="path" />`path` (required)</td>
 <td>none</td>
 <td>
 
@@ -118,7 +118,7 @@ SELECT * FROM TABLE(
 </td>
 </tr>
 <tr>
-<td><Anchor id="format"/>`format` (required)</td>
+<td><Anchor id="format" />`format` (required)</td>
 <td>none</td>
 <td>
 
@@ -161,7 +161,7 @@ SELECT * FROM TABLE(
 </td>
 </tr>
 <tr>
-<td><Anchor id="glob"/>`glob`</td>
+<td><Anchor id="glob" />`glob`</td>
 <td>`*` (match all files)</td>
 <td>A filename pattern that uses wildcard characters such as `*` or `?` to filter the files in the `path` directory.</td>
 <td>
@@ -196,7 +196,7 @@ SELECT * FROM TABLE(
 </td>
 </tr>
 <tr>
-<td><Anchor id="ignoreFileNotFound"/>`ignoreFileNotFound`</td>
+<td><Anchor id="ignoreFileNotFound" />`ignoreFileNotFound`</td>
 <td>`false`</td>
 <td>
 
@@ -226,7 +226,7 @@ OPTIONS (
 </td>
 </tr>
 <tr>
-<td><Anchor id="options"/>*other options*</td>
+<td><Anchor id="options" />*other options*</td>
 <td>none</td>
 <td>Options to pass to the file system such as [authentication options](#authentication-for-remote-file-systems).</td>
 <td>
@@ -267,7 +267,7 @@ SELECT * FROM TABLE(
 </td>
 </tr>
 <tr>
-<td><Anchor id="sharedFileSystem"/>`sharedFileSystem`</td>
+<td><Anchor id="sharedFileSystem" />`sharedFileSystem`</td>
 <td>`false`</td>
 <td>
 
@@ -324,12 +324,12 @@ Any path that does not start with a schema is considered local or shared on the 
 | Storage system | Module | Example path |
 | --- | --- | --- |
 | Member Filesystems (both shared and local) | Included in both full and slim distributions of Hazelcast. | `path/to/a/directory` |
-| Hadoop Distributed File System (HDFS) | <Variable href="https://mvnrepository.com/artifact/com.hazelcast.jet/hazelcast-jet-hadoop-all/{full-version}" text="hazelcast-jet-hadoop-all" code/> | `hdfs://path/to/a/directory` |
-| Amazon S3 | <Variable href="https://mvnrepository.com/artifact/com.hazelcast.jet/hazelcast-jet-files-s3/{full-version}" text="hazelcast-jet-files-s3" code/> | `s3a://example-bucket/path/in/the/bucket` |
-| Google Cloud Storage | <Variable href="https://mvnrepository.com/artifact/com.hazelcast.jet/hazelcast-jet-files-gcs/{full-version}" text="hazelcast-jet-files-gcs" code/> | `gs://example-bucket/path/in/the/bucket` |
-| Windows Azure Blob Storage | <Variable href="https://mvnrepository.com/artifact/com.hazelcast.jet/hazelcast-jet-files-azure/{full-version}" text="hazelcast-jet-files-azure" code/> | `wasbs://example-container@examplestorageaccount.blob.core.windows.net/path/in/the/container` |
-| Azure Data Lake Generation 1 | <Variable href="https://mvnrepository.com/artifact/com.hazelcast.jet/hazelcast-jet-files-azure/{full-version}" text="hazelcast-jet-files-azure" code/> | `adl://exampledatalake.azuredatalakestore.net/path/in/the/container` |
-| Azure Data Lake Generation 2 | <Variable href="https://mvnrepository.com/artifact/com.hazelcast.jet/hazelcast-jet-files-azure/{full-version}" text="hazelcast-jet-files-azure" code/> | `abfs://example-container@exampledatalakeaccount.dfs.core.windows.net/path/in/the/container` |
+| Hadoop Distributed File System (HDFS) | <Variable href="https://mvnrepository.com/artifact/com.hazelcast.jet/hazelcast-jet-hadoop-all/{full-version}" text="hazelcast-jet-hadoop-all" code /> | `hdfs://path/to/a/directory` |
+| Amazon S3 | <Variable href="https://mvnrepository.com/artifact/com.hazelcast.jet/hazelcast-jet-files-s3/{full-version}" text="hazelcast-jet-files-s3" code /> | `s3a://example-bucket/path/in/the/bucket` |
+| Google Cloud Storage | <Variable href="https://mvnrepository.com/artifact/com.hazelcast.jet/hazelcast-jet-files-gcs/{full-version}" text="hazelcast-jet-files-gcs" code /> | `gs://example-bucket/path/in/the/bucket` |
+| Windows Azure Blob Storage | <Variable href="https://mvnrepository.com/artifact/com.hazelcast.jet/hazelcast-jet-files-azure/{full-version}" text="hazelcast-jet-files-azure" code /> | `wasbs://example-container@examplestorageaccount.blob.core.windows.net/path/in/the/container` |
+| Azure Data Lake Generation 1 | <Variable href="https://mvnrepository.com/artifact/com.hazelcast.jet/hazelcast-jet-files-azure/{full-version}" text="hazelcast-jet-files-azure" code /> | `adl://exampledatalake.azuredatalakestore.net/path/in/the/container` |
+| Azure Data Lake Generation 2 | <Variable href="https://mvnrepository.com/artifact/com.hazelcast.jet/hazelcast-jet-files-azure/{full-version}" text="hazelcast-jet-files-azure" code /> | `abfs://example-container@exampledatalakeaccount.dfs.core.windows.net/path/in/the/container` |
 
 Although these are the officially supported sources, you can also read from any file system that's compatible with Hadoop.
 

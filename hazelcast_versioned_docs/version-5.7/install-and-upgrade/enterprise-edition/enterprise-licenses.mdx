@@ -6,14 +6,14 @@ slug: /deploy/enterprise-licenses
 enterprise: true
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
-To use Hazelcast <Variable name="enterprise-product-name"/>, you need an <Variable name="enterprise-product-name"/> license key. This topic explains how to get a license key, install it on a member, and manage it.
+To use Hazelcast <Variable name="enterprise-product-name" />, you need an <Variable name="enterprise-product-name" /> license key. This topic explains how to get a license key, install it on a member, and manage it.
 
-## Get <Variable name="enterprise-product-name"/> license key {/* #get-enterprise-edition-license-key */}
+## Get <Variable name="enterprise-product-name" /> license key {/* #get-enterprise-edition-license-key */}
 
-Hazelcast <Variable name="enterprise-product-name"/> requires a license key. You can get a trial license from the [Hazelcast website](https://hazelcast.com/get-started?utm_source=docs-website).
+Hazelcast <Variable name="enterprise-product-name" /> requires a license key. You can get a trial license from the [Hazelcast website](https://hazelcast.com/get-started?utm_source=docs-website).
 
 1. Complete the form on the [Hazelcast website](https://hazelcast.com/get-started?utm_source=docs-website)
 2. Check your email for an automated email from [info@hazelcast.com](mailto:info@hazelcast.com)
@@ -27,11 +27,11 @@ Hazelcast <Variable name="enterprise-product-name"/> requires a license key. You
 
 ## Configure a license key on members
 
-To use Hazelcast <Variable name="enterprise-product-name"/>, you need to add a license key for all members in a cluster.
+To use Hazelcast <Variable name="enterprise-product-name" />, you need to add a license key for all members in a cluster.
 
 :::note
 
-Hazelcast <Variable name="enterprise-product-name"/> license keys are only required for members. You don't need to set a license key for Java clients that are connected to members.
+Hazelcast <Variable name="enterprise-product-name" /> license keys are only required for members. You don't need to set a license key for Java clients that are connected to members.
 
 :::
 
@@ -59,7 +59,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-Replace `<YOUR_LICENSE_KEY>` with your official license key. Add your license using the <Variable href="https://docs.hazelcast.org/docs/{ee-version}/javadoc/com/hazelcast/config/Config.html#setLicenseKey-java.lang.String-" text="setLicenseKey()"/> method:
+Replace `<YOUR_LICENSE_KEY>` with your official license key. Add your license using the <Variable href="https://docs.hazelcast.org/docs/{ee-version}/javadoc/com/hazelcast/config/Config.html#setLicenseKey-java.lang.String-" text="setLicenseKey()" /> method:
 
 ```java
 Config config = new Config();
@@ -117,7 +117,7 @@ To get details about your current license, you can use [Management Center](#mc),
 The MBean `HazelcastInstance.LicenseInfo` holds all license details and can be accessed through Hazelcast's JMX port (if enabled). The following parameters represent these details:
 
 - `maxNodeCountAllowed`: Maximum members allowed to form a cluster under the current license.
-- <Anchor id="expiry-date"/>`expiryDate`: Expiration date of the current license.
+- <Anchor id="expiry-date" />`expiryDate`: Expiration date of the current license.
 - `typeCode`: Type code of the current license.
 - `type`: Type of the current license.
 - `ownerEmail`: Email of the current license's owner.

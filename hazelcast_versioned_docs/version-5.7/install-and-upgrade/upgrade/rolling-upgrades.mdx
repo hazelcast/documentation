@@ -5,12 +5,12 @@ slug: /maintain-cluster/rolling-upgrades
 enterprise: true
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 You can use a rolling upgrade to upgrade the version of Hazelcast members in a running cluster without interrupting the operation of the cluster.
 
-If you are moving members from a <Variable name="open-source-product-name"/> cluster to an <Variable name="enterprise-product-name"/> cluster, use an in-place rolling restart instead of a rolling upgrade. See [Upgrade to Enterprise Edition](./rolling-restart/overview.mdx).
+If you are moving members from a <Variable name="open-source-product-name" /> cluster to an <Variable name="enterprise-product-name" /> cluster, use an in-place rolling restart instead of a rolling upgrade. See [Upgrade to Enterprise Edition](./rolling-restart/overview.mdx).
 
 If you used Hazelcast Operator to deploy your cluster, follow the upgrade procedure in the [Operator documentation](https://docs.hazelcast.com/operator/latest/scaling-upgrading#upgrading) instead.
 
@@ -22,7 +22,7 @@ Hazelcast uses semantic versioning, where versions appear in the following forma
 
 For example, in version `5.1.0`, `5` is the major version, `1` is the minor version, and `0` is the patch version.
 
-<Anchor id="terminology"/>
+<Anchor id="terminology" />
 
 | Term | Definition |
 | --- | --- |
@@ -34,10 +34,10 @@ To allow you to use rolling upgrades, Hazelcast provides the following GA (gener
 - Hazelcast members operating on the same major and minor cluster version are always compatible, regardless of patch version.
 - Each minor version is compatible with the previous one.
 
-As a result, you can use rolling upgrades to upgrade clusters to the following member codebase versions within the same edition (<Variable name="open-source-product-name"/> to <Variable name="open-source-product-name"/> or <Variable name="enterprise-product-name"/> to <Variable name="enterprise-product-name"/> only):
+As a result, you can use rolling upgrades to upgrade clusters to the following member codebase versions within the same edition (<Variable name="open-source-product-name" /> to <Variable name="open-source-product-name" /> or <Variable name="enterprise-product-name" /> to <Variable name="enterprise-product-name" /> only):
 
-- A new patch version of the same major and minor version (<Variable name="enterprise-product-name"/> only)
-- The next minor version of the same major version (<Variable name="enterprise-product-name"/> only)
+- A new patch version of the same major and minor version (<Variable name="enterprise-product-name" /> only)
+- The next minor version of the same major version (<Variable name="enterprise-product-name" /> only)
 
   This also includes the ability of rolling upgrade from Hazelcast IMDG 4.2 to Platform 5.0, since IMDG is part of the Platform and 5.0 is considered to be the next minor version after IMDG 4.2.
 
@@ -160,7 +160,7 @@ To upgrade your cluster, complete the following steps:
 
    </CodeCallouts>
 6. Repeat this process for each member in the cluster.
-7. <Anchor id="upgrading-cluster-version"/>When all members have been updated, trigger a rolling upgrade on the cluster using one of the following methods:
+7. <Anchor id="upgrading-cluster-version" />When all members have been updated, trigger a rolling upgrade on the cluster using one of the following methods:
 
    - [Management Center](/management-center/latest/clusters/administration#rolling-upgrade).
    - [hz-cluster-admin](../../operate-and-manage/maintaining-a-cluster/cluster-utilities.mdx#using-the-hz-cluster-admin-script) script.

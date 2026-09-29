@@ -6,8 +6,8 @@ slug: /cp-subsystem/configuration
 enterprise: true
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 You can configure clusters to enable the CP Subsystem and adjust other options such as CP groups sizes and persistence of CP state.
 
@@ -48,7 +48,7 @@ Running clusters must be [restarted](../maintaining-a-cluster/restart-cluster.md
    </TabItem>
    <TabItem value="java" label="Java">
 
-   Use the <Variable href="https://javadoc.io/doc/com.hazelcast/hazelcast/{full-version}/com/hazelcast/config/cp/CPSubsystemConfig.html" text="CPSubsystemConfig"/> object.
+   Use the <Variable href="https://javadoc.io/doc/com.hazelcast/hazelcast/{full-version}/com/hazelcast/config/cp/CPSubsystemConfig.html" text="CPSubsystemConfig" /> object.
 
    ```java
    Config config = new Config();
@@ -120,7 +120,7 @@ Only CP members that are part of a CP group can become leaders. CP members that 
 
 :::note
 
-This capability is only available in the <Variable name="enterprise-product-name"/>. Your license must include ADVANCED\_CP to activate this feature.
+This capability is only available in the <Variable name="enterprise-product-name" />. Your license must include ADVANCED\_CP to activate this feature.
 
 :::
 
@@ -158,7 +158,7 @@ This feature does not apply to the `METADATA` group, which is not sensitive to l
 
 By default, fenced locks are reentrant. This means that once a caller has acquired the lock, the same caller can acquire it again multiple times in a linearizable manner without releasing it first.
 
-You can configure the reentrancy behavior with the [`lock-acquire-limit`](#lock-acquire-limit) option. For example, reentrancy can be disabled by setting this option to `1`, making the lock a non-reentrant mutex. You can also set a custom reentrancy limit. When the reentrancy limit is reached, the fenced lock fails with <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/cp/lock/exception/LockAcquireLimitReachedException.html" text="LockAcquireLimitReachedException"/> or a specified return value.
+You can configure the reentrancy behavior with the [`lock-acquire-limit`](#lock-acquire-limit) option. For example, reentrancy can be disabled by setting this option to `1`, making the lock a non-reentrant mutex. You can also set a custom reentrancy limit. When the reentrancy limit is reached, the fenced lock fails with <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/cp/lock/exception/LockAcquireLimitReachedException.html" text="LockAcquireLimitReachedException" /> or a specified return value.
 
 ## Configure semaphores
 
@@ -168,7 +168,7 @@ To enable a permit to be released without acquiring it first, enable JDK compati
 
 :::warning
 
-When `jdk-compatibility` is set to `true`, Hazelcast does not auto-cleanup acquired permits upon caller failures. If a permit holder fails, its permits must be <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/cp/ISemaphore.html#release(int)" text="released manually"/>.
+When `jdk-compatibility` is set to `true`, Hazelcast does not auto-cleanup acquired permits upon caller failures. If a permit holder fails, its permits must be <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/cp/ISemaphore.html#release(int)" text="released manually" />.
 
 :::
 
@@ -199,10 +199,10 @@ Use these options to configure the CP Subsystem.
 
 <table>
 <colgroup>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'40%'}}/>
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'40%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -214,7 +214,7 @@ Use these options to configure the CP Subsystem.
 </thead>
 <tbody>
 <tr>
-<td><Anchor id="cp-member-count"/>`cp-member-count`</td>
+<td><Anchor id="cp-member-count" />`cp-member-count`</td>
 <td>Number of CP members to initialize the CP Subsystem. If set, must be greater than or equal to [`group-size`](#group-size).</td>
 <td>[`0 (disabled, running in unsafe mode)`](./cp-subsystem.mdx#unsafe-mode)</td>
 <td>
@@ -255,7 +255,7 @@ config.getCPSubsystemConfig()
 </td>
 </tr>
 <tr>
-<td><Anchor id="group-size"/>`group-size`</td>
+<td><Anchor id="group-size" />`group-size`</td>
 <td>Number of CP members to participate in each CP group. If set, this value must conform to the following rules: - Must be `3`, `5` or `7`. - Must be smaller than or equal to [`cp-member-count`](#cp-member-count).</td>
 <td>[`Same as cp-member-count`](#cp-member-count)</td>
 <td>
@@ -296,7 +296,7 @@ config.getCPSubsystemConfig()
 </td>
 </tr>
 <tr>
-<td><Anchor id="session-time-to-live-seconds"/>`session-time-to-live-seconds`</td>
+<td><Anchor id="session-time-to-live-seconds" />`session-time-to-live-seconds`</td>
 <td>
 
 Duration for a [CP session](#sessions) to be kept alive after the last received heartbeat. A CP session is closed if no session heartbeat is received during this duration.
@@ -343,7 +343,7 @@ config.getCPSubsystemConfig()
 </td>
 </tr>
 <tr>
-<td><Anchor id="session-heartbeat-interval-seconds"/>`session-heartbeat-interval-seconds`</td>
+<td><Anchor id="session-heartbeat-interval-seconds" />`session-heartbeat-interval-seconds`</td>
 <td>
 
 Interval in seconds for the periodically committed [CP session heartbeats](./cp-subsystem.mdx#sessions).
@@ -390,7 +390,7 @@ config.getCPSubsystemConfig()
 </td>
 </tr>
 <tr>
-<td><Anchor id="missing-cp-member-auto-removal-seconds"/>`missing-cp-member-auto-removal-seconds`</td>
+<td><Anchor id="missing-cp-member-auto-removal-seconds" />`missing-cp-member-auto-removal-seconds`</td>
 <td>
 
 Duration in seconds to wait before automatically removing a missing CP member from the CP Subsystem.
@@ -446,7 +446,7 @@ config.getCPSubsystemConfig()
 </td>
 </tr>
 <tr>
-<td><Anchor id="fail-on-indeterminate-operation-state"/>`fail-on-indeterminate-operation-state`</td>
+<td><Anchor id="fail-on-indeterminate-operation-state" />`fail-on-indeterminate-operation-state`</td>
 <td>Whether CP Subsystem operations use at-least-once and at-most-once execution guarantees. By default, operations use an at-least-once execution guarantee. If set to `true`, operations use an at-most-once execution guarantee. See [Handle indeterminate operation state](#IndeterminateOperationStateException)</td>
 <td>`false`</td>
 <td>
@@ -488,7 +488,7 @@ config.getCPSubsystemConfig()
 </td>
 </tr>
 <tr>
-<td><Anchor id="persistence-enabled"/>`persistence-enabled`</td>
+<td><Anchor id="persistence-enabled" />`persistence-enabled`</td>
 <td>Whether [CP Subsystem persistence](#persistence) is globally enabled for CP groups created in the CP Subsystem. If enabled, CP members persist their local CP data to stable storage and can recover from crashes.</td>
 <td>`false`</td>
 <td>
@@ -530,7 +530,7 @@ config.getCPSubsystemConfig()
 </td>
 </tr>
 <tr>
-<td><Anchor id="base-dir"/>`base-dir`</td>
+<td><Anchor id="base-dir" />`base-dir`</td>
 <td>
 
 Parent directory where persisted CP data is stored. This directory is created automatically if it does not exist.
@@ -578,7 +578,7 @@ config.getCPSubsystemConfig()
 </td>
 </tr>
 <tr>
-<td><Anchor id="data-load-timeout-seconds"/>`data-load-timeout-seconds`</td>
+<td><Anchor id="data-load-timeout-seconds" />`data-load-timeout-seconds`</td>
 <td>Timeout duration in seconds for CP members to restore their persisted data from disk. A CP member fails its startup if it cannot complete its CP data restore process in the configured duration.</td>
 <td>`120`</td>
 <td>
@@ -654,7 +654,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-Add configuration options to the <Variable href="https://javadoc.io/doc/com.hazelcast/hazelcast/{full-version}/com/hazelcast/config/cp/FencedLockConfig.html" text="FencedLockConfig object"/>.
+Add configuration options to the <Variable href="https://javadoc.io/doc/com.hazelcast/hazelcast/{full-version}/com/hazelcast/config/cp/FencedLockConfig.html" text="FencedLockConfig object" />.
 
 ```java
 Config config = new Config();
@@ -669,10 +669,10 @@ config.getCPSubsystemConfig().addLockConfig(lockConfig);
 
 <table>
 <colgroup>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'40%'}}/>
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'40%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -684,7 +684,7 @@ config.getCPSubsystemConfig().addLockConfig(lockConfig);
 </thead>
 <tbody>
 <tr>
-<td><Anchor id="name"/>`name`</td>
+<td><Anchor id="name" />`name`</td>
 <td>The name of the fenced lock to configure.</td>
 <td>`' ' (empty)`</td>
 <td>
@@ -731,7 +731,7 @@ config.getCPSubsystemConfig().addLockConfig(lockConfig);
 </td>
 </tr>
 <tr>
-<td><Anchor id="lock-acquire-limit"/>`lock-acquire-limit`</td>
+<td><Anchor id="lock-acquire-limit" />`lock-acquire-limit`</td>
 <td>Maximum number of reentrant lock acquisitions. Once a caller acquires the lock this many times, it will not be able to acquire the lock again, until it makes at least one `unlock()` call. If lock-acquire-limit is set to `1`, then the lock becomes non-reentrant.</td>
 <td>`0 (no limit)`</td>
 <td>
@@ -814,7 +814,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-Add configuration options to the <Variable href="https://javadoc.io/doc/com.hazelcast/hazelcast/{full-version}/com/hazelcast/config/cp/SemaphoreConfig.html" text="SemaphoreConfig object"/>.
+Add configuration options to the <Variable href="https://javadoc.io/doc/com.hazelcast/hazelcast/{full-version}/com/hazelcast/config/cp/SemaphoreConfig.html" text="SemaphoreConfig object" />.
 
 ```java
 Config config = new Config();
@@ -829,10 +829,10 @@ config.getCPSubsystemConfig().addSemaphoreConfig(semaphoreConfig);
 
 <table>
 <colgroup>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'40%'}}/>
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'40%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -844,7 +844,7 @@ config.getCPSubsystemConfig().addSemaphoreConfig(semaphoreConfig);
 </thead>
 <tbody>
 <tr>
-<td><Anchor id="semaphore-name"/>`name`</td>
+<td><Anchor id="semaphore-name" />`name`</td>
 <td>Name of the semaphore.</td>
 <td>`' ' (empty)`</td>
 <td>
@@ -891,7 +891,7 @@ config.getCPSubsystemConfig().addSemaphoreConfig(semaphoreConfig);
 </td>
 </tr>
 <tr>
-<td><Anchor id="jdk-compatible"/>`jdk-compatible`</td>
+<td><Anchor id="jdk-compatible" />`jdk-compatible`</td>
 <td>Whether JDK compatibility is enabled. See [Semaphores](#semaphores).</td>
 <td>`false`</td>
 <td>
@@ -940,7 +940,7 @@ config.getCPSubsystemConfig().addSemaphoreConfig(semaphoreConfig);
 </td>
 </tr>
 <tr>
-<td><Anchor id="initial-permits"/>`initial-permits`</td>
+<td><Anchor id="initial-permits" />`initial-permits`</td>
 <td>Number of permits to initialize the semaphore. If a positive value is set, the semaphore is initialized with the given number of permits.</td>
 <td>`0`</td>
 <td>
@@ -1023,7 +1023,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-Add configuration options to the <Variable href="https://javadoc.io/doc/com.hazelcast/hazelcast/{full-version}/com/hazelcast/config/cp/CPMapConfig.html" text="CPMap object"/>.
+Add configuration options to the <Variable href="https://javadoc.io/doc/com.hazelcast/hazelcast/{full-version}/com/hazelcast/config/cp/CPMapConfig.html" text="CPMap object" />.
 
 ```java
 Config config = new Config();
@@ -1038,10 +1038,10 @@ config.getCPSubsystemConfig().addCPMapConfig(cpMapConfig);
 
 <table>
 <colgroup>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'40%'}}/>
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'40%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -1053,7 +1053,7 @@ config.getCPSubsystemConfig().addCPMapConfig(cpMapConfig);
 </thead>
 <tbody>
 <tr>
-<td><Anchor id="cpmap-name"/>`name`</td>
+<td><Anchor id="cpmap-name" />`name`</td>
 <td>Name of the CPMap.</td>
 <td>`' ' (empty)`</td>
 <td>
@@ -1100,7 +1100,7 @@ config.getCPSubsystemConfig().addCPMapConfig(cpMapConfig);
 </td>
 </tr>
 <tr>
-<td><Anchor id="max-size-mb"/>`max-size-mb`</td>
+<td><Anchor id="max-size-mb" />`max-size-mb`</td>
 <td>Maximum permitted size in MB for the totality of key-value data. The maximum permitted size is 2000MB.</td>
 <td>`100`</td>
 <td>
@@ -1187,7 +1187,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-Add configuration options to the <Variable href="https://javadoc.io/doc/com.hazelcast/hazelcast/{full-version}/com/hazelcast/config/cp/RaftAlgorithmConfig.html" text="RaftAlgorithmConfig object"/>.
+Add configuration options to the <Variable href="https://javadoc.io/doc/com.hazelcast/hazelcast/{full-version}/com/hazelcast/config/cp/RaftAlgorithmConfig.html" text="RaftAlgorithmConfig object" />.
 
 ```java
 Config config = new Config();
@@ -1202,10 +1202,10 @@ config.getCPSubsystemConfig().setRaftAlgorithmConfig(raftConfig);
 
 <table>
 <colgroup>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'40%'}}/>
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'40%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -1217,7 +1217,7 @@ config.getCPSubsystemConfig().setRaftAlgorithmConfig(raftConfig);
 </thead>
 <tbody>
 <tr>
-<td><Anchor id="leader-election-timeout-in-millis"/>`leader-election-timeout-in-millis`</td>
+<td><Anchor id="leader-election-timeout-in-millis" />`leader-election-timeout-in-millis`</td>
 <td>Leader election timeout in milliseconds. If a candidate cannot win the majority of the votes in time, a new election round is initiated.</td>
 <td>`2000`</td>
 <td>
@@ -1262,7 +1262,7 @@ config.getCPSubsystemConfig().setRaftAlgorithmConfig(raftConfig);
 </td>
 </tr>
 <tr>
-<td><Anchor id="leader-heartbeat-period-in-millis"/>`leader-heartbeat-period-in-millis`</td>
+<td><Anchor id="leader-heartbeat-period-in-millis" />`leader-heartbeat-period-in-millis`</td>
 <td>Interval in milliseconds at which a CP group leader sends periodic heartbeat messages to its followers to indicate its liveness. Periodic heartbeat messages are actually append entries requests and can contain log entries for the lagging followers. If too small a value is set, heartbeat messages are sent from leaders to followers too frequently and it can cause an unnecessary usage of CPU and network bandwidth.</td>
 <td>`5000`</td>
 <td>
@@ -1307,7 +1307,7 @@ config.getCPSubsystemConfig().setRaftAlgorithmConfig(raftConfig);
 </td>
 </tr>
 <tr>
-<td><Anchor id="max-missed-leader-heartbeat-count"/>`max-missed-leader-heartbeat-count`</td>
+<td><Anchor id="max-missed-leader-heartbeat-count" />`max-missed-leader-heartbeat-count`</td>
 <td>Maximum number of missed CP group leader heartbeats for a follower to trigger a new leader election round. For example, if `leader-heartbeat-period-in-millis` is `1000` and this value is set to `5`, then a follower triggers a new leader election round if five seconds pass after the last heartbeat message of the current leader. If this duration is too small, new leader election rounds can be triggered unnecessarily if the current leader temporarily slows down or a network congestion occurs. If it is too large, it takes longer to detect failures of leaders.</td>
 <td>`5`</td>
 <td>
@@ -1352,7 +1352,7 @@ config.getCPSubsystemConfig().setRaftAlgorithmConfig(raftConfig);
 </td>
 </tr>
 <tr>
-<td><Anchor id="append-request-max-entry-count"/>`append-request-max-entry-count`</td>
+<td><Anchor id="append-request-max-entry-count" />`append-request-max-entry-count`</td>
 <td>Maximum number of Raft log entries that can be sent as a batch in a single append entries request. In Hazelcast's Raft consensus algorithm implementation, a leader maintains a separate replication pipeline for each follower. It sends a new batch of Raft log entries to a follower after the follower acknowledges the last append entries request sent by the leader.</td>
 <td>`100`</td>
 <td>
@@ -1397,7 +1397,7 @@ config.getCPSubsystemConfig().setRaftAlgorithmConfig(raftConfig);
 </td>
 </tr>
 <tr>
-<td><Anchor id="commit-index-advance-count-to-snapshot"/>`commit-index-advance-count-to-snapshot`</td>
+<td><Anchor id="commit-index-advance-count-to-snapshot" />`commit-index-advance-count-to-snapshot`</td>
 <td>Number of new commits to initiate a new snapshot after the last snapshot taken by the local CP group member. This value affects performance of the system in multiple ways. If a small value is set, it means that snapshots are taken too frequently and CP group members keep a very short Raft log. If snapshots are large and CP Subsystem persistence is enabled, this can create a high overhead on I/O performance. Moreover, a leader can send too many snapshots to followers and this can create a high overhead on network use. On the other hand, if a very large value is set, it can create a memory overhead since Raft log entries are going to be kept in memory until the next snapshot.</td>
 <td>`10000`</td>
 <td>
@@ -1442,7 +1442,7 @@ config.getCPSubsystemConfig().setRaftAlgorithmConfig(raftConfig);
 </td>
 </tr>
 <tr>
-<td><Anchor id="uncommitted-entry-count-to-reject-new-appends"/>`uncommitted-entry-count-to-reject-new-appends`</td>
+<td><Anchor id="uncommitted-entry-count-to-reject-new-appends" />`uncommitted-entry-count-to-reject-new-appends`</td>
 <td>Maximum number of uncommitted log entries in the leader's Raft log before temporarily rejecting new requests of callers. Because leaders send log entries to followers in batches, they accumulate incoming requests to improve the throughput. You can configure this field by considering your degree of concurrency in your callers. For instance, if you have at most `1000` threads sending requests to a CP group leader, you can set this field to `1000` so that callers do not get retry responses unnecessarily.</td>
 <td>`100`</td>
 <td>
@@ -1487,7 +1487,7 @@ config.getCPSubsystemConfig().setRaftAlgorithmConfig(raftConfig);
 </td>
 </tr>
 <tr>
-<td><Anchor id="append-request-backoff-timeout-in-millis"/>`append-request-backoff-timeout-in-millis`</td>
+<td><Anchor id="append-request-backoff-timeout-in-millis" />`append-request-backoff-timeout-in-millis`</td>
 <td>Timeout duration in milliseconds to apply backoff on append entries requests. After a CP group leader sends an append entries request to a follower, it will not send a subsequent append entries request either until the follower responds or this timeout occurs. Backoff durations are increased exponentially if followers remain unresponsive.</td>
 <td>`100`</td>
 <td>
@@ -1540,10 +1540,10 @@ Use these options to configure individual CP members.
 
 <table>
 <colgroup>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'40%'}}/>
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'40%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -1555,7 +1555,7 @@ Use these options to configure individual CP members.
 </thead>
 <tbody>
 <tr>
-<td><Anchor id="cp-member-priority"/>`cp-member-priority`</td>
+<td><Anchor id="cp-member-priority" />`cp-member-priority`</td>
 <td>The priority rating as a positive or negative integer. The leader role is eventually transferred to members with higher priorities within a CP group.</td>
 <td>`0`</td>
 <td>
@@ -1597,7 +1597,7 @@ config.getCPSubsystemConfig()
 </td>
 </tr>
 <tr>
-<td><Anchor id="auto-step-down-when-leader"/>`auto-step-down-when-leader`</td>
+<td><Anchor id="auto-step-down-when-leader" />`auto-step-down-when-leader`</td>
 <td>Whether this member should automatically step down if elected leader. If enabled, `cp-member-priority` must be set to zero or below. This can only be enabled on a minority of CP members in a group (`(N - 1) / 2`, for example, two out of five). Configuration that exceeds this limit will cause deployment exceptions.</td>
 <td>`false`</td>
 <td>

@@ -5,11 +5,11 @@ slug: /clusters/user-code-namespaces
 enterprise: true
 ---
 
-<Variable name="ucn"/> provide a container for Java classpath resources, such as user code and accompanying artifacts like property files. This provides namespace isolation to ensure that access to resources in different namespaces can be managed through configuration.
+<Variable name="ucn" /> provide a container for Java classpath resources, such as user code and accompanying artifacts like property files. This provides namespace isolation to ensure that access to resources in different namespaces can be managed through configuration.
 
 :::note
 
-This approach replaces the deprecated <Variable name="ucd"/> method of adding your resources to make them available for your user-defined functions. For information on migrating your <Variable name="ucd"/> to <Variable name="ucn"/>, see the [Migrate from User Code Deployment](./ucn-migrate-ucd.mdx) topic. The original <Variable name="ucd"/> information has been retained to support your migration in the [User Code Deployment](./legacy-ucd/overview.mdx) section.
+This approach replaces the deprecated <Variable name="ucd" /> method of adding your resources to make them available for your user-defined functions. For information on migrating your <Variable name="ucd" /> to <Variable name="ucn" />, see the [Migrate from User Code Deployment](./ucn-migrate-ucd.mdx) topic. The original <Variable name="ucd" /> information has been retained to support your migration in the [User Code Deployment](./legacy-ucd/overview.mdx) section.
 
 :::
 
@@ -19,9 +19,9 @@ Your resources can be run on a Hazelcast cluster to support your business logic.
 - Split brain events
 - `ExecutorService` runnable
 
-To use <Variable name="ucn"/>, you must enable it as described in the [Enable User Code Namespaces](./ucn-enable.mdx) topic.
+To use <Variable name="ucn" />, you must enable it as described in the [Enable User Code Namespaces](./ucn-enable.mdx) topic.
 
-User-defined functions are associated with <Variable name="ucn"/> using the namespace names. Named data structures each define a single namespace name; you can configure the same namespace name for multiple data structures. You can also configure the `default` namespace; for example, to provide resources for a user-defined function that is not associated with a data structure. For further information on the `default` namespace, see the [Non-associated Namespaces](./ucn-non-associated.mdx) topic. Your resources are located using an URL. For example, your resources could be located on your member or client with an URL such as *file:///opt/hz/lib/calc.jar* or *classpath:///com/acme/myClass*.
+User-defined functions are associated with <Variable name="ucn" /> using the namespace names. Named data structures each define a single namespace name; you can configure the same namespace name for multiple data structures. You can also configure the `default` namespace; for example, to provide resources for a user-defined function that is not associated with a data structure. For further information on the `default` namespace, see the [Non-associated Namespaces](./ucn-non-associated.mdx) topic. Your resources are located using an URL. For example, your resources could be located on your member or client with an URL such as *file:///opt/hz/lib/calc.jar* or *classpath:///com/acme/myClass*.
 
 :::warning
 
@@ -29,10 +29,10 @@ If your data structure is associated with a namespace that has not been configur
 
 :::
 
-You can configure <Variable name="ucn"/> in the following ways:
+You can configure <Variable name="ucn" /> in the following ways:
 
 - Static. This configuration must exist on start-up and is defined using XML or YAML files, or programmatically. For further information on static configuration, see the [Static Configuration](./ucn-static-config/overview.mdx) section
-- Dynamic. This configuration allows you to deploy resources from your client. This method allows you to update your <Variable name="ucn"/> at runtime, which means that the next call for a data structure associated with the namespace uses the updated resources. For further information on dynamic configuration, see the [Dynamic Configuration API](./ucn-dynamic-config/overview.mdx) section
+- Dynamic. This configuration allows you to deploy resources from your client. This method allows you to update your <Variable name="ucn" /> at runtime, which means that the next call for a data structure associated with the namespace uses the updated resources. For further information on dynamic configuration, see the [Dynamic Configuration API](./ucn-dynamic-config/overview.mdx) section
 
   :::note
 
@@ -48,6 +48,6 @@ You can configure <Variable name="ucn"/> in the following ways:
   | JAR | Use to to deploy a single JAR file; for example, `All_Entry_processors.jar`. You can include additional dependencies using shading when the JAR is produced. This is the best way to package non-trivial code for deployment. |
   | JARS IN ZIP | Use to deploy a ZIP containing multiple JAR files; for example, `All_Entry_Processors.zip`. This is the best way to package JAR files and dependencies for larger deployments, or where additional dependencies are used without repackaging. |
 
-You can define different <Variable name="ucn"/> by providing a name and the URLs used to locate the resources. Multiple data structures can reference the same namespace.
+You can define different <Variable name="ucn" /> by providing a name and the URLs used to locate the resources. Multiple data structures can reference the same namespace.
 
 You can follow the provided code examples to support your use of the API configuration, as described in the [Code Samples GitHub repo](https://github.com/hazelcast/hazelcast-code-samples/tree/master/enterprise/user-code-namespaces).

@@ -5,8 +5,8 @@ slug: /getting-started/wan
 enterprise: true
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 This tutorial introduces you to WAN Replication by replicating map entries across two clusters: London and Tokyo. At the end of this tutorial, you'll know how to synchronize a map from one cluster to another.
 
@@ -17,7 +17,7 @@ WAN Replication can work in two modes. This tutorial uses active-passive mode.
 
 In this tutorial, you will complete the following steps:
 
-1. Start a passive <Variable name="enterprise-product-name"/> cluster, without WAN Replication, which will receive updates from the active cluster.
+1. Start a passive <Variable name="enterprise-product-name" /> cluster, without WAN Replication, which will receive updates from the active cluster.
 2. Start an active cluster, with WAN Replication configured, which will send updates to the passive cluster.
 3. Create a map in the active cluster and see that the entries are replicated on the passive cluster.
 4. Modify some map entries in the active cluster and see the modifications appear in the passive one.
@@ -28,12 +28,12 @@ To complete this tutorial, you need the following:
 
 | Prerequisites | Useful resources |
 | --- | --- |
-| Docker image for Hazelcast <Variable name="enterprise-product-name"/> and an <Variable name="enterprise-product-name"/> license | [Get Started with Hazelcast Enterprise](./overview.mdx) |
+| Docker image for Hazelcast <Variable name="enterprise-product-name" /> and an <Variable name="enterprise-product-name" /> license | [Get Started with Hazelcast Enterprise](./overview.mdx) |
 | Docker network with the name `hazelcast-network` | Use the `docker network create hazelcast-network` command |
 
 ## Step 1. Start the Passive Cluster
 
-In this step you'll start an <Variable name="enterprise-product-name"/> cluster called `london` with a single member. This will be the **passive** cluster which means it does not need WAN Replication to be configured. Run the following Docker command in a terminal.
+In this step you'll start an <Variable name="enterprise-product-name" /> cluster called `london` with a single member. This will be the **passive** cluster which means it does not need WAN Replication to be configured. Run the following Docker command in a terminal.
 
 ```shell conums vars
 docker run \
@@ -47,7 +47,7 @@ docker run \
 <CodeCallouts>
 
 1. Replace the `<host_ip>` placeholder with the IP address of your Docker host.
-2. Replace the `<your license key>` placeholder with your Hazelcast <Variable name="enterprise-product-name"/> license key.
+2. Replace the `<your license key>` placeholder with your Hazelcast <Variable name="enterprise-product-name" /> license key.
 
 </CodeCallouts>
 
@@ -63,7 +63,7 @@ Members {size:1, ver:1} [
 
 ## Step 2. Start the Active Cluster
 
-Now you'll start another <Variable name="enterprise-product-name"/> cluster called `tokyo` with a single member. This will be the **active** cluster which means it needs WAN Replication to be configured.
+Now you'll start another <Variable name="enterprise-product-name" /> cluster called `tokyo` with a single member. This will be the **active** cluster which means it needs WAN Replication to be configured.
 
 Since the configuration for WAN Replication is a bit more detailed, you are going to use a Hazelcast configuration file and pass it to the Docker command, instead of giving all the configuration options in a single command.
 

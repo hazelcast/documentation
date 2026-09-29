@@ -65,14 +65,14 @@ function indexOutput (outDir) {
 // Import specifiers in an MDX file, with the local identifier each is bound to
 // (needed to count USES): partial (@site/…/_partials/….mdx) and example
 // (relative or @site …/examples/…) imports, resolved to absolute paths.
-const IMPORT_RE = /^\s*import\s+(\w+)\s+from\s+'([^']+)'/gm
+const IMPORT_RE = /^\s*import\s+(\w+)\s+from\s+(['"])([^'"]+)\2/gm
 function importsOf (text, file, siteRoot) {
   const partials = []
   const examples = []
   let m
   IMPORT_RE.lastIndex = 0
   while ((m = IMPORT_RE.exec(text)) !== null) {
-    const [, id, spec] = m
+    const [, id, , spec] = m
     if (spec.startsWith('@site/') && spec.includes('/_partials/') && spec.endsWith('.mdx')) {
       partials.push({ id, file: path.join(siteRoot, spec.slice('@site/'.length)) })
     } else if ((/(^|\/)examples\//.test(spec) || spec.includes(`/${EXAMPLES_STAGING}/`)) && (spec.startsWith('.') || spec.startsWith('@site/'))) {

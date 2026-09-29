@@ -4,19 +4,19 @@ sidebar_position: 3
 slug: /mapstore/implement-a-mapstore
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import CodeBlock from '@theme/CodeBlock';
-import Ex_dds_map_YourMapStoreImplementation_java_tag_ymsi from '../../examples/dds/map/YourMapStoreImplementation.java?tag=ymsi';
-import Ex_dds_map_LoadAll_java_tag_loadall_indent_0 from '../../examples/dds/map/LoadAll.java?tag=loadall&indent=0';
-import Ex_dds_map_PersonEntryStore_java_tag_personms from '../../examples/dds/map/PersonEntryStore.java?tag=personms';
-import Ex_dds_map_PersonMapStore_java_tag_personms from '../../examples/dds/map/PersonMapStore.java?tag=personms';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import CodeBlock from "@theme/CodeBlock";
+import Ex_dds_map_YourMapStoreImplementation_java_tag_ymsi from "../../examples/dds/map/YourMapStoreImplementation.java?tag=ymsi";
+import Ex_dds_map_LoadAll_java_tag_loadall_indent_0 from "../../examples/dds/map/LoadAll.java?tag=loadall&indent=0";
+import Ex_dds_map_PersonEntryStore_java_tag_personms from "../../examples/dds/map/PersonEntryStore.java?tag=personms";
+import Ex_dds_map_PersonMapStore_java_tag_personms from "../../examples/dds/map/PersonMapStore.java?tag=personms";
 
 You can use the Java `MapStore` and `MapLoader` interfaces to implement a custom MapStore with your own logic, such as for database connections, loading data from an external system, and writing data back to the external system.
 
 ## Differences Between MapLoader and MapStore
 
-The <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/MapStore.html" text="MapStore"/> interface extends the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/MapLoader.html" text="MapLoader"/> interface. Therefore, all methods and configuration parameters of the `MapLoader` are also available on the `MapStore` interface.
+The <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/MapStore.html" text="MapStore" /> interface extends the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/MapLoader.html" text="MapLoader" /> interface. Therefore, all methods and configuration parameters of the `MapLoader` are also available on the `MapStore` interface.
 
 If you only want to load data from external systems into a map, use the `MapLoader` interface. If you also want to save map entries to an external system, use the `MapStore` interface.
 
@@ -27,7 +27,7 @@ If you only want to load data from external systems into a map, use the `MapLoad
 
 ## Connecting to an External System {/* #managing-the-lifecycle-of-a-mapLoader */}
 
-To connect to an external system, you must configure a connection to it, using either a third-party library or a JDBC driver in the `init()` method of the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/MapLoaderLifecycleSupport.html" text="MapLoaderlifeCycleSupport"/> implementation.
+To connect to an external system, you must configure a connection to it, using either a third-party library or a JDBC driver in the `init()` method of the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/MapLoaderLifecycleSupport.html" text="MapLoaderlifeCycleSupport" /> implementation.
 
 The external system that you choose must be a centralized system that is accessible to all Hazelcast members. Persistence to a local file system is not supported.
 
@@ -43,7 +43,7 @@ The `destroy()` method is called during the graceful shutdown of a Hazelcast mem
 
 See an [example of this interface](https://github.com/hazelcast/hazelcast-code-samples/blob/master/hazelcast-integration/mongodb/src/main/java/com/hazelcast/loader/MongoMapStore.java).
 
-<Anchor id="configuring-a-connection-using-properties"/>
+<Anchor id="configuring-a-connection-using-properties" />
 
 You can declaratively specify the database properties in your configuration file and then implement the `init()` method to receive those properties. For example, you can define the database URL and name, using the `properties` configuration element. The following is a configuration example for MongoDB:
 
@@ -97,7 +97,7 @@ The first time you create a map that is configured with a MapStore, the map is e
 
 The `MapLoader.loadAllKeys()` method can return all, some, or none of the keys. For example, you can specify a range of keys to be loaded, then rely on read-through to load the remaining keys on demand. Or, you can return a `null` value so that no data is loaded from the external system.
 
-<Anchor id="loading-keys-incrementally"/>
+<Anchor id="loading-keys-incrementally" />
 
 If the number of keys to load is large, it is more efficient to load them incrementally rather than loading them all at once. To support incremental loading, the `MapLoader.loadAllKeys()` method returns an `Iterable` which can be lazily populated with the results of a database query. Hazelcast iterates over the returned data and, while doing so, sends the keys to their respective owner members. The iterator that was returned from the `MapLoader.loadAllKeys()` method may also implement the `Closeable` interface, in which case the iterator is closed when the iteration is over. This is intended for releasing resources such as closing a JDBC result set.
 

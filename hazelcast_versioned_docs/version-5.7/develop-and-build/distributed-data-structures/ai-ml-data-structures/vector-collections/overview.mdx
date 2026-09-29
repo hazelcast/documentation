@@ -7,8 +7,8 @@ enterprise: true
 beta: true
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 The primary object for interacting with vector storage is a Vector Collection. A Vector Collection holds information about the vectors and associated metadata (user values).
 
@@ -38,7 +38,7 @@ docker run -p 5701:5701 -e HZ_LICENSEKEY=<YOUR_LICENSE_KEY> \
      hazelcast/hazelcast-enterprise:{ee-version}-slim
 ```
 
-Replace the `<YOUR_LICENSE_KEY>` placeholder with your Hazelcast <Variable name="enterprise-product-name"/> license key.
+Replace the `<YOUR_LICENSE_KEY>` placeholder with your Hazelcast <Variable name="enterprise-product-name" /> license key.
 
 ## Configuration
 
@@ -66,7 +66,7 @@ The following tables list all available options:
 | ef-construction | The size of the search queue to use when finding nearest neighbors. | Optional | `100` |
 | use-deduplication | Whether to use vector deduplication. When disabled, each added vector is treated as a distinct vector in the index, even if it is identical to an existing one. When enabled, the index consumes less space as duplicates share a vector, but the time required to add a vector increases. | Optional | `TRUE` |
 
-<Anchor id="available-metrics"/>
+<Anchor id="available-metrics" />
 
 | Name | Description | Score definition |
 | --- | --- | --- |
@@ -209,7 +209,7 @@ The value of `split-brain-protection-ref` should be the split-brain protection c
 
 ### Configuring Merge Policy {/* #merge-policy */}
 
-While recovering from a split-brain scenario, Vector Collection in the small cluster merges into the bigger cluster based on a configured merge policy. The merge policy resolves conflicts with different out-of-the-box strategies. It can be configured programmatically using the method <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/vector/VectorCollectionConfig.html#setMergePolicyConfig(com.hazelcast.config.MergePolicyConfig)" text="setMergePolicyConfig()"/>, or declaratively using the element `merge-policy`. The following example shows declarative configuration:
+While recovering from a split-brain scenario, Vector Collection in the small cluster merges into the bigger cluster based on a configured merge policy. The merge policy resolves conflicts with different out-of-the-box strategies. It can be configured programmatically using the method <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/vector/VectorCollectionConfig.html#setMergePolicyConfig(com.hazelcast.config.MergePolicyConfig)" text="setMergePolicyConfig()" />, or declaratively using the element `merge-policy`. The following example shows declarative configuration:
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">

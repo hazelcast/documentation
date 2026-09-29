@@ -44,7 +44,7 @@ In other words, migration members are simply new non-public Hazelcast releases w
 
 ## Using the Migration Tool
 
-You can start a migration member, from the the <code><Variable name="full-version"/>{"-migration.jar"}</code> as you would a plain Hazelcast member. See the [Install Hazelcast](../deploy-clusters/installation/install-hazelcast.mdx#using-java) and [Start a Cluster](../get-started/start-a-local-cluster/get-started-java.mdx) sections.
+You can start a migration member, from the the <code><Variable name="full-version" />{"-migration.jar"}</code> as you would a plain Hazelcast member. See the [Install Hazelcast](../deploy-clusters/installation/install-hazelcast.mdx#using-java) and [Start a Cluster](../get-started/start-a-local-cluster/get-started-java.mdx) sections.
 
 ### Example Migration Scenarios
 
@@ -85,7 +85,7 @@ The diagram above outlines how you can perform a bidirectional migration between
 3. After the clusters have been started and WAN replication has been added, you can use WAN sync for `IMap` or wait until enough entries have been replicated in case of `IMap` or `ICache`. You can check if your map data is in sync by using merkle tree sync with the caveat that in some edge cases, the merkle tree consistency check may indicate that the clusters are out-of-sync while in reality they are actually in-sync. In other cases, once WAN sync completes successfully and if there are no errors, the map data should be synchronized. See [Limitations and Known Issues section](#limitations-and-known-issues) for more information when using merkle trees for consistency checks.
 4. After enough data has been replicated, you can shut down either of the clusters and afterwards shut down the remaining migration members or do a rolling restart of these members to plain members. If any of the clusters that you are keeping is comprised entirely out of migration members, you will need to do a rolling restart of the entire cluster.
 
-<Anchor id="wan-event-forwarding"/>
+<Anchor id="wan-event-forwarding" />
 
 **WAN Event Forwarding:**
 

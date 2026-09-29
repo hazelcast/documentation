@@ -4,12 +4,12 @@ sidebar_position: 10
 slug: /data-structures/listening-for-map-entries
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import CodeBlock from '@theme/CodeBlock';
-import Ex_dds_map_Employee_java_indent_0 from '../../../examples/dds/map/Employee.java?indent=0';
-import Ex_dds_map_ListenerWithPredicate_java_tag_lwp from '../../../examples/dds/map/ListenerWithPredicate.java?tag=lwp';
-import Ex_dds_map_MapInterceptorMember_java_tag_mim from '../../../examples/dds/map/MapInterceptorMember.java?tag=mim';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import CodeBlock from "@theme/CodeBlock";
+import Ex_dds_map_Employee_java_indent_0 from "../../../examples/dds/map/Employee.java?indent=0";
+import Ex_dds_map_ListenerWithPredicate_java_tag_lwp from "../../../examples/dds/map/ListenerWithPredicate.java?tag=lwp";
+import Ex_dds_map_MapInterceptorMember_java_tag_mim from "../../../examples/dds/map/MapInterceptorMember.java?tag=mim";
 
 You can set up monitoring of a map to look for specific events, such as adding an entry, updating a specific entry, or deleting an entry. You can use these events to trigger execution of code, or even intercept the event and change it before it affects the data in memory.
 
@@ -23,7 +23,7 @@ If you want to listen to changes to all map entries, see [Listening for Map Even
 
 ## Listening for Specific Map Entries using Predicates
 
-<Anchor id="listening-to-map-entries-with-predicates"/>
+<Anchor id="listening-to-map-entries-with-predicates" />
 
 The easiest way to explain this is through an example. We are going to listen for changes made to the map entry for an employee with the surname "smith". We will use JSON serialization. First, let's create the `Employee` class that we will use to create `HazelcastJsonValue` instances:
 
@@ -212,9 +212,9 @@ When you configure Hazelcast members with property `hazelcast.map.entry.filterin
 
 <table>
 <colgroup>
-<col style={{width:'33.3333%'}}/>
-<col style={{width:'33.3333%'}}/>
-<col style={{width:'33.3334%'}}/>
+<col style={{width:'33.3333%'}} />
+<col style={{width:'33.3333%'}} />
+<col style={{width:'33.3334%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -259,14 +259,14 @@ Map interceptors are chained, so adding the same interceptor to the same map mor
 
 When you add the interceptor in this way, be sure to implement the `hashCode()` method to return the same value for every instance of the interceptor. It is not strictly necessary, but it is a good idea to also implement `equals()` as this ensures that the map interceptor can be removed reliably.
 
-The map API has two methods for adding and removing an interceptor to the map: `addInterceptor` and `removeInterceptor`. See also the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/MapInterceptor.html" text="MapInterceptor interface"/> to learn about the methods used to intercept the changes in a map.
+The map API has two methods for adding and removing an interceptor to the map: `addInterceptor` and `removeInterceptor`. See also the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/MapInterceptor.html" text="MapInterceptor interface" /> to learn about the methods used to intercept the changes in a map.
 
 Methods available within the `MapInterceptor` interface:
 
 <table>
 <colgroup>
-<col style={{width:'50%'}}/>
-<col style={{width:'50%'}}/>
+<col style={{width:'50%'}} />
+<col style={{width:'50%'}} />
 </colgroup>
 <tbody>
 <tr>

@@ -24,9 +24,9 @@ If you use Management Center to export cluster-wide metrics to Prometheus, Manag
 
 <table>
 <colgroup>
-<col style={{width:'33.3333%'}}/>
-<col style={{width:'33.3333%'}}/>
-<col style={{width:'33.3334%'}}/>
+<col style={{width:'33.3333%'}} />
+<col style={{width:'33.3333%'}} />
+<col style={{width:'33.3334%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -94,15 +94,15 @@ Each Hazelcast member will have one instance of each of these metrics for each o
 <details>
 <summary>Streaming Engine Job-specific Metrics</summary>
 
-<Anchor id="job-metrics"/>All job specific metrics have their `job` (name and ID of the job) and `exec`(job execution ID) tags set, and most also have the `vertex` (vertex name) tag set (with very few exceptions). This means that most of these metrics will have at least one instance for each vertex of each current job execution.
+<Anchor id="job-metrics" />All job specific metrics have their `job` (name and ID of the job) and `exec`(job execution ID) tags set, and most also have the `vertex` (vertex name) tag set (with very few exceptions). This means that most of these metrics will have at least one instance for each vertex of each current job execution.
 
 Additionally, if the vertex sourcing them is a data source or data sink, then the `source` or `sink` tags will also be set to true.
 
 <table>
 <colgroup>
-<col style={{width:'33.3333%'}}/>
-<col style={{width:'33.3333%'}}/>
-<col style={{width:'33.3334%'}}/>
+<col style={{width:'33.3333%'}} />
+<col style={{width:'33.3333%'}} />
+<col style={{width:'33.3334%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -257,7 +257,7 @@ Each Hazelcast member will have one instance of these metrics for each edge M (i
 </tr>
 <tr>
 <th>numInFlightOps</th>
-<td>The number of pending (in flight) operations when using asynchronous mapping processors. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#mapUsingServiceAsyncP(com.hazelcast.jet.pipeline.ServiceFactory,int,boolean,com.hazelcast.function.FunctionEx,com.hazelcast.function.BiFunctionEx)" text="Processors.mapUsingServiceAsyncP"/>.</td>
+<td>The number of pending (in flight) operations when using asynchronous mapping processors. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#mapUsingServiceAsyncP(com.hazelcast.jet.pipeline.ServiceFactory,int,boolean,com.hazelcast.function.FunctionEx,com.hazelcast.function.BiFunctionEx)" text="Processors.mapUsingServiceAsyncP" />.</td>
 <td rowSpan={7}>
 
 *job, exec, vertex, proc, procType*
@@ -272,7 +272,7 @@ Processor specific metrics, only certain types of processors have them. The *pro
 </tr>
 <tr>
 <th>totalWindows</th>
-<td>The number of active windows being tracked by a session window processor. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#aggregateToSessionWindowP(long,long,java.util.List,java.util.List,com.hazelcast.jet.aggregate.AggregateOperation,com.hazelcast.jet.core.function.KeyedWindowResultFunction)" text="Processors.aggregateToSessionWindowP"/>.</td>
+<td>The number of active windows being tracked by a session window processor. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#aggregateToSessionWindowP(long,long,java.util.List,java.util.List,com.hazelcast.jet.aggregate.AggregateOperation,com.hazelcast.jet.core.function.KeyedWindowResultFunction)" text="Processors.aggregateToSessionWindowP" />.</td>
 </tr>
 <tr>
 <th>totalFrames</th>
@@ -280,11 +280,11 @@ Processor specific metrics, only certain types of processors have them. The *pro
 </tr>
 <tr>
 <th>totalKeysInFrames</th>
-<td>The number of grouping keys associated with the current active frames of a sliding window processor. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#aggregateToSlidingWindowP(java.util.List,java.util.List,com.hazelcast.jet.core.TimestampKind,com.hazelcast.jet.core.SlidingWindowPolicy,long,com.hazelcast.jet.aggregate.AggregateOperation,com.hazelcast.jet.core.function.KeyedWindowResultFunction)" text="Processors.aggregateToSlidingWindowP"/>.</td>
+<td>The number of grouping keys associated with the current active frames of a sliding window processor. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#aggregateToSlidingWindowP(java.util.List,java.util.List,com.hazelcast.jet.core.TimestampKind,com.hazelcast.jet.core.SlidingWindowPolicy,long,com.hazelcast.jet.aggregate.AggregateOperation,com.hazelcast.jet.core.function.KeyedWindowResultFunction)" text="Processors.aggregateToSlidingWindowP" />.</td>
 </tr>
 <tr>
 <th>totalStates</th>
-<td>Number of active state objects held by stateful processors in a running job. For keyed stages, the metric shows the number of per-key state objects currently allocated. For non-keyed stages, it reports 1 if the processor has processed at least one item, or 0 otherwise. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#mapStatefulP(long,com.hazelcast.function.FunctionEx,com.hazelcast.function.ToLongFunctionEx,java.util.function.Supplier,com.hazelcast.jet.function.TriFunction,com.hazelcast.jet.function.TriFunction)" text="Processors.mapStatefulP"/> <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#flatMapStatefulP(long,com.hazelcast.function.FunctionEx,com.hazelcast.function.ToLongFunctionEx,java.util.function.Supplier,com.hazelcast.jet.function.TriFunction,com.hazelcast.jet.function.TriFunction)" text="Processor.flatMapStatefulP"/></td>
+<td>Number of active state objects held by stateful processors in a running job. For keyed stages, the metric shows the number of per-key state objects currently allocated. For non-keyed stages, it reports 1 if the processor has processed at least one item, or 0 otherwise. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#mapStatefulP(long,com.hazelcast.function.FunctionEx,com.hazelcast.function.ToLongFunctionEx,java.util.function.Supplier,com.hazelcast.jet.function.TriFunction,com.hazelcast.jet.function.TriFunction)" text="Processors.mapStatefulP" /> <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#flatMapStatefulP(long,com.hazelcast.function.FunctionEx,com.hazelcast.function.ToLongFunctionEx,java.util.function.Supplier,com.hazelcast.jet.function.TriFunction,com.hazelcast.jet.function.TriFunction)" text="Processor.flatMapStatefulP" /></td>
 </tr>
 <tr>
 <th>lateEventsDropped</th>
@@ -302,10 +302,10 @@ The Reset column shows the reset behavior of the metrics. There are two types of
 
 <table>
 <colgroup>
-<col style={{width:'33.3333%'}}/>
-<col style={{width:'8.3333%'}}/>
-<col style={{width:'50%'}}/>
-<col style={{width:'8.3334%'}}/>
+<col style={{width:'33.3333%'}} />
+<col style={{width:'8.3333%'}} />
+<col style={{width:'50%'}} />
+<col style={{width:'8.3334%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -654,9 +654,9 @@ The above `*latency` metrics are only measured for the members and they do not r
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -913,9 +913,9 @@ The above `latency` metrics are only measured for the members and do not represe
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -1098,9 +1098,9 @@ The above `latency` metrics are only measured for the members and do not represe
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -1218,9 +1218,9 @@ The above `latency` metrics are only measured for the members and do not represe
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -1313,9 +1313,9 @@ The above `latency` metrics are only measured for the members and do not represe
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -1403,9 +1403,9 @@ The above `latency` metrics are only measured for the members and do not represe
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -1438,9 +1438,9 @@ The above `latency` metrics are only measured for the members and do not represe
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -1473,9 +1473,9 @@ The above `latency` metrics are only measured for the members and do not represe
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -1508,9 +1508,9 @@ The above `latency` metrics are only measured for the members and do not represe
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -1543,9 +1543,9 @@ The above `latency` metrics are only measured for the members and do not represe
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -1578,9 +1578,9 @@ The above `latency` metrics are only measured for the members and do not represe
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -1618,9 +1618,9 @@ The above `latency` metrics are only measured for the members and do not represe
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -1698,9 +1698,9 @@ The above `latency` metrics are only measured for the members and do not represe
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -1733,9 +1733,9 @@ The above `latency` metrics are only measured for the members and do not represe
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -1746,7 +1746,7 @@ The above `latency` metrics are only measured for the members and do not represe
 <tr>
 <td>`cluster.clock.clusterStartTime`</td>
 <td>ms</td>
-<td><Anchor id="clusterStartTime"/>Start time of the cluster (when the first member in cluster becomes master, its localClockTime value is saved as clusterStartTime)</td>
+<td><Anchor id="clusterStartTime" />Start time of the cluster (when the first member in cluster becomes master, its localClockTime value is saved as clusterStartTime)</td>
 </tr>
 <tr>
 <td>`cluster.clock.clusterTime`</td>
@@ -1810,9 +1810,9 @@ Scope: member-side only. These metrics describe clients connected to the local m
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -1842,9 +1842,9 @@ Scope: client-side only.
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -1877,9 +1877,9 @@ Scope: client-side only.
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -1979,9 +1979,9 @@ We also have a `summary` section per object type which provides live and destroy
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -2009,9 +2009,9 @@ We also have a `summary` section per object type which provides live and destroy
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -2076,9 +2076,9 @@ Scope: client-side only.
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -2106,9 +2106,9 @@ Scope: client-side only.
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -2141,9 +2141,9 @@ Scope: client-side only.
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -2201,9 +2201,9 @@ The same metric values can be exposed under multiple prefixes. Depending on the 
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -2279,15 +2279,15 @@ The same metric values can be exposed under multiple prefixes. Depending on the 
 <details>
 <summary>High-Density (HD) Memory Store</summary>
 
-Scope: member-side only. <Variable name="enterprise-product-name"/> only.
+Scope: member-side only. <Variable name="enterprise-product-name" /> only.
 
 These metrics are provided for data structures using HD memory. They will be prefixed with the relevant data structure prefix (e.g. `map.`).
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -2329,9 +2329,9 @@ The names in this table use the client prefix form (`nearcache.`). For member-si
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -2425,9 +2425,9 @@ Within Hazelcast context, the **priority** operations are the ones that are impo
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -2681,9 +2681,9 @@ It refers to the number of operations sent to the member that have yet to be con
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -2756,9 +2756,9 @@ It refers to the number of operations sent to the member that have yet to be con
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -2876,9 +2876,9 @@ It refers to the number of operations sent to the member that have yet to be con
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -2926,9 +2926,9 @@ It refers to the number of operations sent to the member that have yet to be con
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -2961,9 +2961,9 @@ It refers to the number of operations sent to the member that have yet to be con
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -3066,9 +3066,9 @@ It refers to the number of operations sent to the member that have yet to be con
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -3118,9 +3118,9 @@ Protocol-specific TCP byte metrics are available only when Advanced Networking i
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -3383,9 +3383,9 @@ Protocol-specific TCP byte metrics are available only when Advanced Networking i
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -3423,9 +3423,9 @@ Protocol-specific TCP byte metrics are available only when Advanced Networking i
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -3458,9 +3458,9 @@ Protocol-specific TCP byte metrics are available only when Advanced Networking i
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -3628,9 +3628,9 @@ Protocol-specific TCP byte metrics are available only when Advanced Networking i
 
 <table>
 <colgroup>
-<col style={{width:'36.3636%'}}/>
-<col style={{width:'9.0909%'}}/>
-<col style={{width:'54.5455%'}}/>
+<col style={{width:'36.3636%'}} />
+<col style={{width:'9.0909%'}} />
+<col style={{width:'54.5455%'}} />
 </colgroup>
 <tbody>
 <tr>

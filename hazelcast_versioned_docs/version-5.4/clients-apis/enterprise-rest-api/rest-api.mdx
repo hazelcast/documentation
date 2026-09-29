@@ -4,8 +4,8 @@ sidebar_position: 1
 slug: /maintain-cluster/rest-api
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 :::caution[Deprecation Notice for the REST API]
 
@@ -375,9 +375,9 @@ You need to handle the failures on REST polls as there is no transactional guara
 
 ## Managing Cluster's State
 
-<Anchor id="using-rest-api-for-cluster-management"/>
+<Anchor id="using-rest-api-for-cluster-management" />
 
-Besides the Management Center's <Variable href="/management-center/{page-latest-supported-mc}/clusters/administration#persistence" text="Persistence tab"/> and the script [hz-cluster-admin](../../operate-manage/maintaining-a-cluster/cluster-utilities.mdx#using-the-hz-cluster-admin-script), you can also use the REST API to manage your cluster's state. The following are the operations you can perform.
+Besides the Management Center's <Variable href="/management-center/{page-latest-supported-mc}/clusters/administration#persistence" text="Persistence tab" /> and the script [hz-cluster-admin](../../operate-manage/maintaining-a-cluster/cluster-utilities.mdx#using-the-hz-cluster-admin-script), you can also use the REST API to manage your cluster's state. The following are the operations you can perform.
 
 :::note
 
@@ -385,17 +385,17 @@ Some of the REST calls listed below need their REST endpoint groups to be enable
 
 :::
 
-Also note that the value of `${PASSWORD}` in the following calls is checked only if the security is [enabled](../../operate-manage/securing-a-cluster/enabling-jaas.mdx) in Hazelcast, i.e., if you have Hazelcast <Variable name="enterprise-product-name"/>. If the security is disabled, the `${PASSWORD}` can be left empty.
+Also note that the value of `${PASSWORD}` in the following calls is checked only if the security is [enabled](../../operate-manage/securing-a-cluster/enabling-jaas.mdx) in Hazelcast, i.e., if you have Hazelcast <Variable name="enterprise-product-name" />. If the security is disabled, the `${PASSWORD}` can be left empty.
 
 <table>
 <colgroup>
-<col style={{width:'100%'}}/>
+<col style={{width:'100%'}} />
 </colgroup>
 <tbody>
 <tr>
 <td>
 
-**<Variable name="open-source-product-name"/> commands**
+**<Variable name="open-source-product-name" /> commands**
 
 - *Checking if a member is ready to be used:*
 
@@ -439,7 +439,7 @@ Also note that the value of `${PASSWORD}` in the following calls is checked only
 <tr>
 <td>
 
-<Anchor id="partial-start-force-start"/>**<Variable name="enterprise-product-name"/> commands**
+<Anchor id="partial-start-force-start" />**<Variable name="enterprise-product-name" /> commands**
 
 - *Triggering a partial-start on the cluster:*
 
@@ -458,7 +458,7 @@ Also note that the value of `${PASSWORD}` in the following calls is checked only
 
   :::note
 
-  You can also perform the above operations (partialStart and forceStart) using the **Persistence** tab of Hazelcast Management Center or using the script `hz-cluster-admin`. See the <Variable href="/management-center/{page-latest-supported-mc}/clusters/administration#persistence" text="Persistence"/> and [hz-cluster-admin](../../operate-manage/maintaining-a-cluster/cluster-utilities.mdx#using-the-hz-cluster-admin-script) sections.
+  You can also perform the above operations (partialStart and forceStart) using the **Persistence** tab of Hazelcast Management Center or using the script `hz-cluster-admin`. See the <Variable href="/management-center/{page-latest-supported-mc}/clusters/administration#persistence" text="Persistence" /> and [hz-cluster-admin](../../operate-manage/maintaining-a-cluster/cluster-utilities.mdx#using-the-hz-cluster-admin-script) sections.
 
   :::
 - *Initiating a Backup:*
@@ -485,7 +485,7 @@ Also note that the value of `${PASSWORD}` in the following calls is checked only
 
   :::note
 
-  You can also perform the above cluster version operations using Hazelcast Management Center or using the script `hz-cluster-admin`. See the <Variable href="/management-center/{page-latest-supported-mc}/clusters/administration#rolling-upgrade" text="Rolling Member Upgrades"/> and [hz-cluster-admin](../../operate-manage/maintaining-a-cluster/cluster-utilities.mdx#using-the-hz-cluster-admin-script) sections.
+  You can also perform the above cluster version operations using Hazelcast Management Center or using the script `hz-cluster-admin`. See the <Variable href="/management-center/{page-latest-supported-mc}/clusters/administration#rolling-upgrade" text="Rolling Member Upgrades" /> and [hz-cluster-admin](../../operate-manage/maintaining-a-cluster/cluster-utilities.mdx#using-the-hz-cluster-admin-script) sections.
 
   :::
 
@@ -496,7 +496,7 @@ Also note that the value of `${PASSWORD}` in the following calls is checked only
 
 ## Using REST Endpoint Groups
 
-<Anchor id="using-the-rest-endpoint-groups"/>
+<Anchor id="using-the-rest-endpoint-groups" />
 
 Hazelcast members exposes various REST endpoints and these are grouped. REST endpoint groups are as follows:
 
@@ -546,9 +546,9 @@ The following table lists all the endpoints along with the groups they belong to
 
 <table>
 <colgroup>
-<col style={{width:'25%'}}/>
-<col style={{width:'12.5%'}}/>
-<col style={{width:'62.5%'}}/>
+<col style={{width:'25%'}} />
+<col style={{width:'12.5%'}} />
+<col style={{width:'62.5%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -773,7 +773,7 @@ When you enable or disable a REST endpoint group, all the endpoints in that grou
 
 ## Security
 
-<Anchor id="rest-api-security"/>
+<Anchor id="rest-api-security" />
 
 As mentioned previously in this section, REST API is disabled by default and this is for security reasons. Once it is enabled for a given endpoint group, some endpoints belonging to that group can be called by any application.
 
@@ -856,7 +856,7 @@ security:
 </TabItem>
 </Tabs>
 
-Note that you should enable security in the configuration, i.e., you should have the Hazelcast <Variable name="enterprise-product-name"/>. Assuming we have the above authentication configuration, the following is a REST call for the `/hazelcast/rest/management/cluster/state` endpoint, which includes the username and password as call parameters:
+Note that you should enable security in the configuration, i.e., you should have the Hazelcast <Variable name="enterprise-product-name" />. Assuming we have the above authentication configuration, the following is a REST call for the `/hazelcast/rest/management/cluster/state` endpoint, which includes the username and password as call parameters:
 
 ```none
 curl --data "test&a1234" https://<member IP address>:<port>/hazelcast/rest/management/cluster/state

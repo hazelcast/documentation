@@ -4,8 +4,8 @@ sidebar_position: 2
 slug: /migrate/upgrading-from-jet
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 This guide covers the most important changes that affect users of Jet 4.x who want to upgrade to Hazelcast.
 
@@ -27,12 +27,12 @@ See [Submitting Jobs](../../develop-build/building-data-pipelines/submitting-job
 
 ## Compatibility
 
-Hazelcast Platform is compatible only with the Job and Pipeline APIs of Jet 4.x. As a result, you can resubmit jobs that were running on Jet 4.x clusters to a <Variable name="full-version"/> cluster. But, you **cannot** do the following:
+Hazelcast Platform is compatible only with the Job and Pipeline APIs of Jet 4.x. As a result, you can resubmit jobs that were running on Jet 4.x clusters to a <Variable name="full-version" /> cluster. But, you **cannot** do the following:
 
-- Upgrade to <Variable name="full-version"/> using rolling upgrades.
-- Connect to a <Variable name="full-version"/> cluster using version 4.x of clients.
+- Upgrade to <Variable name="full-version" /> using rolling upgrades.
+- Connect to a <Variable name="full-version" /> cluster using version 4.x of clients.
 - Resubmit jobs from snapshots that were made on Jet 4.x clusters.
-- Use versions of Management Center before <Variable name="page-latest-supported-mc"/>.
+- Use versions of Management Center before <Variable name="page-latest-supported-mc" />.
 
 ## Jet Engine Security
 
@@ -75,7 +75,7 @@ The following methods for configuring the underlying IMDG instance of Jet have b
 - `configureHazelcast()`
 - `setHazelcastConfig()`
 
-If you used the `JetConfig` object to configure IMDG, you should replace instances of `JetConfig` with <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/Config.html" text="Config"/>.
+If you used the `JetConfig` object to configure IMDG, you should replace instances of `JetConfig` with <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/Config.html" text="Config" />.
 
 <Tabs groupId="hazelcast--jet-4-x">
 <TabItem value="jet-4-x" label="Jet 4.x">
@@ -142,7 +142,7 @@ All configuration loader methods have been moved from the `JetConfig` object to 
 
 ### Jet Properties
 
-In the Java API, properties in the `JetProperties` object have been merged into the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/spi/properties/ClusterProperty.html" text="ClusterProperty object"/>.
+In the Java API, properties in the `JetProperties` object have been merged into the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/spi/properties/ClusterProperty.html" text="ClusterProperty object" />.
 
 The following Jet properties have been removed:
 
@@ -186,9 +186,9 @@ While upgrading to Hazelcast Platform, if a YAML configuration violates any of t
 
 ## API Entry Points
 
-The `Jet` class, which was the main entry point of Jet 4.x, has been deprecated and replaced by the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/core/HazelcastInstance.html" text="HazelcastInstance class"/>.
+The `Jet` class, which was the main entry point of Jet 4.x, has been deprecated and replaced by the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/core/HazelcastInstance.html" text="HazelcastInstance class" />.
 
-The `JetInstance` class, which represented an instance of a Jet member or client has been deprecated and replaced by the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/jet/JetService.html" text="JetService class"/>. To access Jet related services, you should now use the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/core/HazelcastInstance.html#getJet--" text="HazelcastInstance.getJet() method"/> to get an instance of the `JetService` object.
+The `JetInstance` class, which represented an instance of a Jet member or client has been deprecated and replaced by the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/jet/JetService.html" text="JetService class" />. To access Jet related services, you should now use the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/core/HazelcastInstance.html#getJet--" text="HazelcastInstance.getJet() method" /> to get an instance of the `JetService` object.
 
 <Tabs groupId="hazelcast--jet-4-x">
 <TabItem value="jet-4-x" label="Jet 4.x">
@@ -212,8 +212,8 @@ Use the following table to find out which new class to use instead of JetInstanc
 
 <table>
 <colgroup>
-<col style={{width:'50%'}}/>
-<col style={{width:'50%'}}/>
+<col style={{width:'50%'}} />
+<col style={{width:'50%'}} />
 </colgroup>
 <thead>
 <tr>
@@ -370,8 +370,8 @@ Most scripts in the `bin` directory have been renamed. If you have any automated
 
 <table>
 <colgroup>
-<col style={{width:'50%'}}/>
-<col style={{width:'50%'}}/>
+<col style={{width:'50%'}} />
+<col style={{width:'50%'}} />
 </colgroup>
 <thead>
 <tr>

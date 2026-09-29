@@ -33,7 +33,7 @@ The minimal supported Java version is 11 starting with this release of Hazelcast
 - When advanced networking is enabled, the Kubernetes discovery plugin might have been discovering several endpoints (per each port) for each member's pod. The discovery plugin now matches only the private IP per endpoint, ignoring the port values. [\#23766](https://github.com/hazelcast/hazelcast/pull/23766)
 - Added support of [IMDSv2](https://aws.amazon.com/about-aws/whats-new/2022/10/amazon-machine-images-support-instance-metadata-service-version-2-default/#:~:text=Posted%20On%3A%20Oct%203%2C%202022,depth%20against%20unauthorized%20metadata%20access.) for Hazelcast's AWS Discovery plugin. [\#23545](https://github.com/hazelcast/hazelcast/pull/23545)
 - Added the support of discovering ECS and EC2 members on AWS. See [Deploying a Cluster on Amazon AWS](../deploy-clusters/public-cloud/deploying-on-aws.mdx). [\#22411](https://github.com/hazelcast/hazelcast/pull/22411)
-- <Badge type="enterprise"/> Enhanced the experience of using Hazelcast with persistence under Kubernetes by removing requirements for manual interventions. Previously, when there is a restart on such a cluster, the cluster states were needed to be changed manually. For some cases, this might have led to data loss. Now, the shutdown process is automated. See [Configuring Kubernetes](../deploy-clusters/kubernetes/kubernetes-auto-discovery.mdx#running-hazelcast-enterprise-with-persistence-under-kubernetes) for details. [\#21844](https://github.com/hazelcast/hazelcast/pull/21844)
+- <Badge type="enterprise" /> Enhanced the experience of using Hazelcast with persistence under Kubernetes by removing requirements for manual interventions. Previously, when there is a restart on such a cluster, the cluster states were needed to be changed manually. For some cases, this might have led to data loss. Now, the shutdown process is automated. See [Configuring Kubernetes](../deploy-clusters/kubernetes/kubernetes-auto-discovery.mdx#running-hazelcast-enterprise-with-persistence-under-kubernetes) for details. [\#21844](https://github.com/hazelcast/hazelcast/pull/21844)
 
 ### Storage
 
@@ -67,7 +67,7 @@ Tiered Storage feature is still in BETA stage.
 - Made all streaming SQL jobs to be suspending on failure. [\#23178](https://github.com/hazelcast/hazelcast/pull/23178)
 - Implemented the `TO_CHAR` function which is capable of formatting dates, timestamps, and numbers. [\#22529](https://github.com/hazelcast/hazelcast/pull/22529)
 - Implemented `JSON=VARCHAR` comparison. [\#22746](https://github.com/hazelcast/hazelcast/pull/22746)
-- <Badge type="enterprise"/> Added support of configuring SQL Catalog persistence. [\#24383](https://github.com/hazelcast/hazelcast/pull/24383)
+- <Badge type="enterprise" /> Added support of configuring SQL Catalog persistence. [\#24383](https://github.com/hazelcast/hazelcast/pull/24383)
 
 ### Jet Engine
 
@@ -75,12 +75,12 @@ Tiered Storage feature is still in BETA stage.
 - Each Jet engine job was creating a client for connecting to the remote cluster, resulting in an excessive number of clients. This has been fixed by introducing a single data connection which can be reused for all job instances. [\#23472](https://github.com/hazelcast/hazelcast/pull/23472), [\#23849](https://github.com/hazelcast/hazelcast/pull/23849)
 - Added MongoDB read (source) and write (sink) processors. [\#23348](https://github.com/hazelcast/hazelcast/pull/23348)
 - Introduced `JobStatusListener` as an alternative to repeatedly retrieve a job status via the `Job.getStatus()` method. [\#23193](https://github.com/hazelcast/hazelcast/pull/23193)
-- Updated the <Variable href="https://docs.hazelcast.org/docs/{page-latest-supported-java-client}/javadoc/com/hazelcast/jet/Job.html#isUserCancelled--" text="job API"/> to add the ability to distinguish the user-cancelled jobs from the failed ones. [\#22924](https://github.com/hazelcast/hazelcast/pull/22924)
+- Updated the <Variable href="https://docs.hazelcast.org/docs/{page-latest-supported-java-client}/javadoc/com/hazelcast/jet/Job.html#isUserCancelled--" text="job API" /> to add the ability to distinguish the user-cancelled jobs from the failed ones. [\#22924](https://github.com/hazelcast/hazelcast/pull/22924)
 - Added `flock` to guard all the concurrent `pip` executions (upgrading `pip` and `protobuf` versions) in the Jet-to-Python script. [\#22829](https://github.com/hazelcast/hazelcast/pull/22829)
 
 ### Security
 
-- <Badge type="enterprise"/> Added the TLS configuration property `keyMaterialDuration` which allows using a configurable timeout for caching keyStores and trustStores. See [TLS Configuration](../configure-and-manage-clusters/securing-a-cluster/tls-ssl/tls-configuration.mdx) for the details on how to configure this property. [\#23307](https://github.com/hazelcast/hazelcast/pull/23307)
+- <Badge type="enterprise" /> Added the TLS configuration property `keyMaterialDuration` which allows using a configurable timeout for caching keyStores and trustStores. See [TLS Configuration](../configure-and-manage-clusters/securing-a-cluster/tls-ssl/tls-configuration.mdx) for the details on how to configure this property. [\#23307](https://github.com/hazelcast/hazelcast/pull/23307)
 
 ### Serialization
 
@@ -120,10 +120,10 @@ Tiered Storage feature is still in BETA stage.
 
 ## Fixes
 
-- <Badge type="enterprise"/> Fixed an issue where a member with persistence can be restarted even though the persistence file structure is not valid (e.g., the persistence directory does not contain the required files). \#5861
-- <Badge type="enterprise"/> Fixed an issue where multiple Hazelcast members were able to use the same base directory for Tiered Storage, causing crashes. \#5770
-- <Badge type="enterprise"/> Fixed an issue where the members were crashing while they are loading data into the NATIVE memory and using JSON or Kryo serialization. \#5384
-- <Badge type="enterprise"/> Fixed an issue where Jet job snapshots could be prematurely deleted after a restart of a cluster, having lossless restart enabled. [\#24576](https://github.com/hazelcast/hazelcast/pull/24576)
+- <Badge type="enterprise" /> Fixed an issue where a member with persistence can be restarted even though the persistence file structure is not valid (e.g., the persistence directory does not contain the required files). \#5861
+- <Badge type="enterprise" /> Fixed an issue where multiple Hazelcast members were able to use the same base directory for Tiered Storage, causing crashes. \#5770
+- <Badge type="enterprise" /> Fixed an issue where the members were crashing while they are loading data into the NATIVE memory and using JSON or Kryo serialization. \#5384
+- <Badge type="enterprise" /> Fixed an issue where Jet job snapshots could be prematurely deleted after a restart of a cluster, having lossless restart enabled. [\#24576](https://github.com/hazelcast/hazelcast/pull/24576)
 - Fixed an issue where `map.clear()` was timing out when the map is configured with a generic map store. [\#24534](https://github.com/hazelcast/hazelcast/pull/24534)
 - Fixed an issue where the `SELECT COUNT(DISTINCT COLUMN)` query for maps was producing incorrect results. [\#24464](https://github.com/hazelcast/hazelcast/pull/24464)
 - Fixed an issue where there was a memory leak when Jet engine metrics are enabled. [\#23492](https://github.com/hazelcast/hazelcast/issues/23492)

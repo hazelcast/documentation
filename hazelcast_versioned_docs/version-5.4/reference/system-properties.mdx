@@ -14,10 +14,10 @@ When you want to reconfigure a system property, you need to restart the members 
 
 <table>
 <colgroup>
-<col style={{width:'40%'}}/>
-<col style={{width:'10%'}}/>
-<col style={{width:'10%'}}/>
-<col style={{width:'40%'}}/>
+<col style={{width:'40%'}} />
+<col style={{width:'10%'}} />
+<col style={{width:'10%'}} />
+<col style={{width:'40%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -87,7 +87,7 @@ When you want to reconfigure a system property, you need to restart the members 
 <td>Timeout duration to decide if a client is still part of the cluster. If a member cannot find any connection to a client in the cluster, it cleans up the local resources that are owned by that client.</td>
 </tr>
 <tr>
-<td><Anchor id="client-max-no"/> `hazelcast.client.max.no.heartbeat.seconds`</td>
+<td><Anchor id="client-max-no" /> `hazelcast.client.max.no.heartbeat.seconds`</td>
 <td>300</td>
 <td>int</td>
 <td>Time after which the member assumes the client is dead and closes its connections to the client.</td>
@@ -99,13 +99,13 @@ When you want to reconfigure a system property, you need to restart the members 
 <td>Allows clients to connect without matching the cluster name. This can help if you have a large number of existing clients and it would be impractical to update them. When enabled, cluster name validation is skipped during client authentication.</td>
 </tr>
 <tr>
-<td><Anchor id="client-tpc-enabled"/> `hazelcast.client.tpc.enabled`</td>
+<td><Anchor id="client-tpc-enabled" /> `hazelcast.client.tpc.enabled`</td>
 <td>false</td>
 <td>bool</td>
 <td>Enables TPC (Thread-Per-Core) on client.</td>
 </tr>
 <tr>
-<td><Anchor id="client-tpc-eventloop"/> `hazelcast.client.tpc.eventloop`</td>
+<td><Anchor id="client-tpc-eventloop" /> `hazelcast.client.tpc.eventloop`</td>
 <td>12</td>
 <td>int</td>
 <td>Specifies maximum number of eventloops.</td>
@@ -331,7 +331,7 @@ For detailed information about the diagnostic tool, along with this and the foll
 <td>Enable use of public IP address in member discovery with Discovery SPI. If you set this property to true in your source cluster, please make sure you have set the public addresses for your target members since they will be discovered using their public addresses. Otherwise, they cannot be discovered. See the [Public Address section](../operate-manage/partition-groups-and-networking/network-configuration.mdx#public-address).</td>
 </tr>
 <tr>
-<td><Anchor id="ignore-dynamic-conf-conflicts"/> `hazelcast.dynamicconfig.ignore.conflicts`</td>
+<td><Anchor id="ignore-dynamic-conf-conflicts" /> `hazelcast.dynamicconfig.ignore.conflicts`</td>
 <td></td>
 <td>bool</td>
 <td>When it is set to `true`, Hazelcast does not check if the added dynamic configuration conflicts with an existing dynamic configuration. Existing dynamic configuration is not replaced. Note that, this property is not meant to ignore the conflicts between static configuration and dynamic configuration. If the added dynamic configuration exists in the static configuration of the member, it will throw an exception regardless this property.</td>
@@ -367,7 +367,7 @@ For detailed information about the diagnostic tool, along with this and the foll
 <td>Number of event handler threads.</td>
 </tr>
 <tr>
-<td><Anchor id="hazelcast.graceful.shutdown.max.wait"/>`hazelcast.graceful.shutdown.max.wait`</td>
+<td><Anchor id="hazelcast.graceful.shutdown.max.wait" />`hazelcast.graceful.shutdown.max.wait`</td>
 <td>600</td>
 <td>int</td>
 <td>Maximum wait in seconds during graceful shutdown.</td>
@@ -487,13 +487,13 @@ This property should only be used as a last resort. Hazelcast uses the XXE prote
 <td>Timeout for a partition of a map. Its default value is 1000000 nanoseconds (1 ms). It puts an upper limit for execution of a background expiry operations to prevent the high CPU usages when a partition's size grows.</td>
 </tr>
 <tr>
-<td><Anchor id="internal-tpc-enabled"/> `hazelcast.internal.tpc.enabled`</td>
+<td><Anchor id="internal-tpc-enabled" /> `hazelcast.internal.tpc.enabled`</td>
 <td>false</td>
 <td>bool</td>
 <td>Enables TPC (Thread-Per-Core) on member.</td>
 </tr>
 <tr>
-<td><Anchor id="internal-tpc-eventloop"/> `hazelcast.internal.tpc.eventloop`</td>
+<td><Anchor id="internal-tpc-eventloop" /> `hazelcast.internal.tpc.eventloop`</td>
 <td>12</td>
 <td>int</td>
 <td>Specifies maximum number of eventloops.</td>
@@ -715,7 +715,7 @@ This property should only be used as a last resort. Hazelcast uses the XXE prote
 <td>Scheduler delay for map tasks those are executed on backup members.</td>
 </tr>
 <tr>
-<td><Anchor id="hazelcast-map-write-behind-queue-capacity"/>`hazelcast.map.write.behind.queue.capacity`</td>
+<td><Anchor id="hazelcast-map-write-behind-queue-capacity" />`hazelcast.map.write.behind.queue.capacity`</td>
 <td>50000</td>
 <td>string</td>
 <td>Maximum write-behind queue capacity per member. It is the total of all write-behind queue sizes in a member including backups. Its maximum value is `Integer.MAX_VALUE`. The value of this property is taken into account only if the `write-coalescing` element of the Map Store configuration is `false`. See [Configuring a MapStore](../develop-build/working-with-external-data/configuration-guide.mdx) for the description of the `write-coalescing` element.</td>
@@ -791,13 +791,13 @@ Setting this value too low may cause members to be evicted from the cluster when
 <td>Defines whether the Moby naming should be used for generating instance names when they are not provided by user. Moby name is a short human-readable name consisting of a randomly chosen adjective and the surname of a famous person. If set to `true`, a Moby name is generated. Otherwise, a name that is concatenation of a static prefix, number and cluster name is provided.</td>
 </tr>
 <tr>
-<td><Anchor id="splitbrain-first-check"/>`hazelcast.merge.first.run.delay.seconds`</td>
+<td><Anchor id="splitbrain-first-check" />`hazelcast.merge.first.run.delay.seconds`</td>
 <td>300</td>
 <td>int</td>
 <td>Initial run delay of [split-brain/merge process](../operate-manage/configuring-for-fault-tolerance/handling-network-partitions/network-partitioning.mdx#split-brain-syndrome) in seconds.</td>
 </tr>
 <tr>
-<td><Anchor id="splitbrain-check-interval"/>`hazelcast.merge.next.run.delay.seconds`</td>
+<td><Anchor id="splitbrain-check-interval" />`hazelcast.merge.next.run.delay.seconds`</td>
 <td>120</td>
 <td>int</td>
 <td>Run interval of [split-brain/merge process](../operate-manage/configuring-for-fault-tolerance/handling-network-partitions/network-partitioning.mdx#split-brain-syndrome) in seconds.</td>
@@ -1037,7 +1037,7 @@ Setting this value too low may cause members to be evicted from the cluster when
 <td>Type of the query optimizer. For optimizations based on static rules, set the value to `RULES`. To disable the optimization, set the value to `NONE`.</td>
 </tr>
 <tr>
-<td><Anchor id="parallel-predicates"/> `hazelcast.query.predicate.parallel.evaluation`</td>
+<td><Anchor id="parallel-predicates" /> `hazelcast.query.predicate.parallel.evaluation`</td>
 <td>false</td>
 <td>bool</td>
 <td>Each Hazelcast member evaluates query predicates using a single thread by default. In most cases, the overhead of inter-thread communications overweight can benefit from parallel execution. When you have a large dataset and/or slow predicate, you may benefit from parallel predicate evaluations. Set to `true` if you are using slow predicates or have \> 100,000s entries per member.</td>
@@ -1103,13 +1103,13 @@ Setting this value too low may cause members to be evicted from the cluster when
 <td>Version of the Hazelcast serialization. Accepted values are between 1 and the highest supported serialization version.</td>
 </tr>
 <tr>
-<td><Anchor id="hazelcast.shutdownhook.enabled"/>`hazelcast.shutdownhook.enabled`</td>
+<td><Anchor id="hazelcast.shutdownhook.enabled" />`hazelcast.shutdownhook.enabled`</td>
 <td>true</td>
 <td>bool</td>
 <td>Enables/disables Hazelcast shutdownhook thread. When enabled, the shutdown action is determined according to the value of [`hazelcast.shutdownhook.policy`](#hazelcast.shutdownhook.policy).</td>
 </tr>
 <tr>
-<td><Anchor id="hazelcast.shutdownhook.policy"/>`hazelcast.shutdownhook.policy`</td>
+<td><Anchor id="hazelcast.shutdownhook.policy" />`hazelcast.shutdownhook.policy`</td>
 <td>TERMINATE</td>
 <td>string</td>
 <td>
@@ -1239,7 +1239,7 @@ Always shutdown Hazelcast explicitly using the `HazelcastInstance.shutdown()` me
 <td>Bind server-socket to any local interface. If not set, `hazelcast.socket.bind.any` is used as the default.</td>
 </tr>
 <tr>
-<td><Anchor id="tcp-try-count"/>`hazelcast.tcp.join.port.try.count`</td>
+<td><Anchor id="tcp-try-count" />`hazelcast.tcp.join.port.try.count`</td>
 <td>3</td>
 <td>int</td>
 <td>The number of incremental ports, starting with the port number defined in the network configuration, that is used to connect to a host (which is defined without a port in TCP/IP member list while a member is searching for a cluster).</td>
@@ -1275,7 +1275,7 @@ Always shutdown Hazelcast explicitly using the `HazelcastInstance.shutdown()` me
 <td>Defines the multiplier (the speed of the function) for the backoff delay for the WAN implementation's consumer. It is used if the [acknowledgment delaying](#ack-delay) feature is enabled</td>
 </tr>
 <tr>
-<td>`hazelcast.wan.consumer.invocation.threshold`<Anchor id="ack-delay"/></td>
+<td>`hazelcast.wan.consumer.invocation.threshold`<Anchor id="ack-delay" /></td>
 <td>50000</td>
 <td>int</td>
 <td>Defines the pending invocation threshold for the WAN replication implementation. Exceeding this threshold on a WAN consumer member makes the member to delay the WAN acknowledgment, thus slowing down the WAN publishers on the source side that send WAN events to the given WAN consumer. Setting this value to negative disables the acknowledgment delaying feature.</td>

@@ -4,13 +4,13 @@ sidebar_position: 2
 slug: /clients/java
 ---
 
-import CodeBlock from '@theme/CodeBlock';
-import Ex_clients_ListeningClients_java_tag_lc from '../../examples/clients/ListeningClients.java?tag=lc';
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import Ex_clients_ExampleClientConfiguration_java_tag_scc from '../../examples/clients/ExampleClientConfiguration.java?tag=scc';
-import Ex_clients_ExampleClientAwsConfig_java_tag_clientaws from '../../examples/clients/ExampleClientAwsConfig.java?tag=clientaws';
-import Ex_clients_ExampleRTClient_java_tag_rtclient from '../../examples/clients/ExampleRTClient.java?tag=rtclient';
+import CodeBlock from "@theme/CodeBlock";
+import Ex_clients_ListeningClients_java_tag_lc from "../../examples/clients/ListeningClients.java?tag=lc";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import Ex_clients_ExampleClientConfiguration_java_tag_scc from "../../examples/clients/ExampleClientConfiguration.java?tag=scc";
+import Ex_clients_ExampleClientAwsConfig_java_tag_clientaws from "../../examples/clients/ExampleClientAwsConfig.java?tag=clientaws";
+import Ex_clients_ExampleRTClient_java_tag_rtclient from "../../examples/clients/ExampleRTClient.java?tag=rtclient";
 
 To get started, include the `hazelcast.jar` dependency in your classpath. Once included, you can start using this client as if you are using the Hazelcast API. The differences are discussed in the below sections.
 
@@ -903,9 +903,9 @@ You can use TLS/SSL to secure the connection between the client and the members.
 
 As explained in the TLS/SSL section, Hazelcast members have keyStores used to identify themselves (to other members) and Hazelcast clients have trustStore used to define which members they can trust. The clients also have their keyStores and members have their trustStores so that the members can know which clients they can trust: see the [Mutual Authentication section](../../configure-and-manage-clusters/securing-a-cluster/tls-ssl/tls-ssl.mdx#mutual-authentication).
 
-#### Configuring Hazelcast <Variable name="hazelcast-cloud"/> {/* #configuring-hazelcast-cloud */}
+#### Configuring Hazelcast <Variable name="hazelcast-cloud" /> {/* #configuring-hazelcast-cloud */}
 
-You can connect your Java client to a <Variable name="hazelcast-cloud"/> Standard cluster which is hosted on <Variable href="{url-cloud-signup}" text="{hazelcast-cloud}"/>. For this, you simply enable <Variable name="hazelcast-cloud"/> and specify the cluster's discovery token provided while creating the cluster; this allows the cluster to discover your clients. See the following example configurations.
+You can connect your Java client to a <Variable name="hazelcast-cloud" /> Standard cluster which is hosted on <Variable href="{url-cloud-signup}" text="{hazelcast-cloud}" />. For this, you simply enable <Variable name="hazelcast-cloud" /> and specify the cluster's discovery token provided while creating the cluster; this allows the cluster to discover your clients. See the following example configurations.
 
 Declarative Configuration:
 
@@ -951,9 +951,9 @@ networkConfig.setSSLConfig(new SSLConfig().setEnabled(true));
 HazelcastInstance client = HazelcastClient.newHazelcastClient(config);
 ```
 
-<Variable name="hazelcast-cloud"/> is disabled for the Java client, by default (`enabled` attribute is `false`).
+<Variable name="hazelcast-cloud" /> is disabled for the Java client, by default (`enabled` attribute is `false`).
 
-See <a href="/cloud/overview">Hazelcast <Variable name="hazelcast-cloud"/></a> for more information about <Variable name="hazelcast-cloud"/>.
+See <a href="/cloud/overview">Hazelcast <Variable name="hazelcast-cloud" /></a> for more information about <Variable name="hazelcast-cloud" />.
 
 :::note
 
@@ -1109,7 +1109,7 @@ clientConfig.setClusterName("dev");
 
 ### Configuring Client Security {/* #client-security-configuration */}
 
-In the cases where the security established with `Config` is not enough and you want your clients connecting securely to the cluster, you can use `ClientSecurityConfig`. This configuration has a `credentials` parameter to set the IP address and UID. See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/client/config/ClientSecurityConfig.html" text="ClientSecurityConfig Javadoc"/>.
+In the cases where the security established with `Config` is not enough and you want your clients connecting securely to the cluster, you can use `ClientSecurityConfig`. This configuration has a `credentials` parameter to set the IP address and UID. See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/client/config/ClientSecurityConfig.html" text="ClientSecurityConfig Javadoc" />.
 
 ### Client Serialization Configuration
 
@@ -1175,7 +1175,7 @@ You can also configure how the client reconnects to the cluster after a disconne
 
 :::note
 
-When you have `ASYNC` as the `reconnect-mode` and defined a Near Cache for your client, the client functions <Anchor id="non-stop-client"/>without interruptions/downtime by communicating the data from its Near Cache, provided that there is non-expired data in it. See [here](#configuring-client-near-cache) to learn how you can add a Near Cache to your client.
+When you have `ASYNC` as the `reconnect-mode` and defined a Near Cache for your client, the client functions <Anchor id="non-stop-client" />without interruptions/downtime by communicating the data from its Near Cache, provided that there is non-expired data in it. See [here](#configuring-client-near-cache) to learn how you can add a Near Cache to your client.
 
 :::
 
@@ -1303,13 +1303,13 @@ Note that, `TryConnect` above tries to connect to any member that the client kno
 
 ### Blue-Green Deployment {/* #blue-green-deployment-and-disaster-recovery */}
 
-<Anchor id="blue-green-mechanism"/>
+<Anchor id="blue-green-mechanism" />
 
 **Hazelcast Enterprise Feature**
 
 Blue-green deployment refers to a client connection technique that reduces system downtime by deploying two mirrored clusters: blue (active) and green (idle). One of these clusters is running in production while the other is on standby.
 
-Using the blue-green mechanism, clients can connect to another cluster automatically when they are blacklisted from their currently connected cluster. See the <Variable href="/management-center/{page-latest-supported-mc}/clusters/clients#changing-cluster-client-filtering" text="Hazelcast Management Center Reference Manual"/> for information about blacklisting the clients.
+Using the blue-green mechanism, clients can connect to another cluster automatically when they are blacklisted from their currently connected cluster. See the <Variable href="/management-center/{page-latest-supported-mc}/clusters/clients#changing-cluster-client-filtering" text="Hazelcast Management Center Reference Manual" /> for information about blacklisting the clients.
 
 The client's behavior after this disconnection depends on its [`reconnect-mode`](#java-client-connection-strategy). The following are the options when you are using the blue-green mechanism, i.e., you have alternative clusters for your clients to connect:
 
@@ -1838,7 +1838,7 @@ The table below lists the client configuration properties with their description
 
 | Property Name | Default Value | Type | Description |
 | --- | --- | --- | --- |
-| `hazelcast.client.cloud.discovery.token` |  | long | Token to use when discovering the cluster via <Variable name="hazelcast-cloud"/>. |
+| `hazelcast.client.cloud.discovery.token` |  | long | Token to use when discovering the cluster via <Variable name="hazelcast-cloud" />. |
 | `hazelcast.client.concurrent.window.ms` | 100 | int | Property needed for concurrency detection so that write through and dynamic response handling can be done correctly. This property sets the window for a concurrency detection (duration when it signals that a concurrency has been detected), even if there are no further updates in that window. Normally in a concurrent system the windows keeps sliding forward so it always remains concurrent. Setting it too high effectively disables the optimization because once concurrency has been detected it will keep that way. Setting it too low could lead to suboptimal performance because the system will try write through and other optimizations even though the system is concurrent. |
 | `hazelcast.discovery.enabled` | false | bool | Enables/disables the Discovery SPI lookup over the old native implementations. See [Discovery SPI](../../configure-and-manage-clusters/extending-hazelcast/discovery-spi.mdx) for more information. |
 | `hazelcast.discovery.public.ip.enabled` | null | bool | Overrides client behavior when the member has both public and private addresses available. When set to `true`, the client assumes that it needs to use public IP addresses reported by the members. When set to `false`, the client always uses private addresses reported by the members. If it is `null`, the client will try to infer how the discovery mechanism should be based on the reachability of the members. As the client's inference is not 100% reliable and can result in false-negatives, we recommend that it is overridden by setting to `true` when the client cannot connect to members using their public addresses. |
@@ -1856,7 +1856,7 @@ The table below lists the client configuration properties with their description
 | `hazelcast.client.max.concurrent.invocations` | Integer.MAX\_VALUE | int | Maximum allowed number of concurrent invocations. You can apply a constraint on the number of concurrent invocations in order to prevent the system from overloading. If the maximum number of concurrent invocations is exceeded and a new invocation comes in, Hazelcast throws `HazelcastOverloadException`. |
 | `hazelcast.client.metrics.collection.frequency` | 5 | int | Frequency, in seconds, of the [metrics](../../configure-and-manage-clusters/maintaining-a-cluster/monitoring.mdx#metrics) collection cycle. Note that the preferred way for controlling this setting is [Metrics Configuration](../../configure-and-manage-clusters/maintaining-a-cluster/monitoring.mdx#metrics#metrics-configuration). |
 | `hazelcast.client.metrics.debug.enabled` | false | bool | Enables collecting debug metrics if set to `true`, disables it otherwise. Note that this is meant to be enabled only if diagnostics is enabled, since currently only diagnostics consumes the debug metrics. |
-| `hazelcast.client.metrics.enabled` | true | bool | Enables the [metrics collection](../../configure-and-manage-clusters/maintaining-a-cluster/monitoring.mdx#metrics) if set to `true`, disables it otherwise. Note that the preferred way for controlling this setting is [Metrics Configuration](../../configure-and-manage-clusters/maintaining-a-cluster/monitoring.mdx#metrics#metrics-configuration). When it is `true` you can monitor metrics of the clients that are connected to your Hazelcast cluster, using Hazelcast Management Center. See <Variable href="/management-center/{page-latest-supported-mc}/clusters/clients" text="here"/> for more information. |
+| `hazelcast.client.metrics.enabled` | true | bool | Enables the [metrics collection](../../configure-and-manage-clusters/maintaining-a-cluster/monitoring.mdx#metrics) if set to `true`, disables it otherwise. Note that the preferred way for controlling this setting is [Metrics Configuration](../../configure-and-manage-clusters/maintaining-a-cluster/monitoring.mdx#metrics#metrics-configuration). When it is `true` you can monitor metrics of the clients that are connected to your Hazelcast cluster, using Hazelcast Management Center. See <Variable href="/management-center/{page-latest-supported-mc}/clusters/clients" text="here" /> for more information. |
 | `hazelcast.client.metrics.jmx.enabled` | true | bool | Enables exposing the collected [metrics](../../configure-and-manage-clusters/maintaining-a-cluster/monitoring.mdx#metrics) over JMX if set to `true`, disables it otherwise. Note that the preferred way for controlling this setting is [Metrics Configuration](../../configure-and-manage-clusters/maintaining-a-cluster/monitoring.mdx#metrics#metrics-configuration). |
 | `hazelcast.client.operation.backup.timeout.millis` | 5000 | int | If an operation has sync backups, this property specifies how long the invocation will wait for acks from the backup replicas. If acks are not received from some backups, there will not be any rollback on other successful replicas. |
 | `hazelcast.client.operation.fail.on.indeterminate.state` | false | bool | When this configuration is enabled, if an operation has sync backups and acks are not received from backup replicas in time, or the member which owns primary replica of the target partition leaves the cluster, then the invocation fails with `IndeterminateOperationStateException`. However, even if the invocation fails, there will not be any rollback on other successful replicas. |

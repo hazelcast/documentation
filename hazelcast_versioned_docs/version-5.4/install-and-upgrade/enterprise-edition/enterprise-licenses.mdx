@@ -6,17 +6,17 @@ slug: /deploy/enterprise-licenses
 enterprise: true
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import PartialClientsRestDeprecation from '@site/hazelcast_versioned_docs/version-5.4/_partials/clients-rest-deprecation.mdx';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import PartialClientsRestDeprecation from "@site/hazelcast_versioned_docs/version-5.4/_partials/clients-rest-deprecation.mdx";
 
-To use Hazelcast <Variable name="enterprise-product-name"/>, you need an <Variable name="enterprise-product-name"/> license key. This topic explains how to get a license key, install it on a member, and manage it.
+To use Hazelcast <Variable name="enterprise-product-name" />, you need an <Variable name="enterprise-product-name" /> license key. This topic explains how to get a license key, install it on a member, and manage it.
 
-## Getting an <Variable name="enterprise-product-name"/> License Key {/* #getting-an-enterprise-edition-license-key */}
+## Getting an <Variable name="enterprise-product-name" /> License Key {/* #getting-an-enterprise-edition-license-key */}
 
-Hazelcast <Variable name="enterprise-product-name"/> requires a license key. You can get a 30-day trial license from the [Hazelcast website](https://hazelcast.com/get-started?utm_source=docs-website).
+Hazelcast <Variable name="enterprise-product-name" /> requires a license key. You can get a 30-day trial license from the [Hazelcast website](https://hazelcast.com/get-started?utm_source=docs-website).
 
-<Anchor id="license-key-format"/>License keys have the following format:
+<Anchor id="license-key-format" />License keys have the following format:
 
 ```none
 <Hazelcast edition>#<Maximum members>#<License key>
@@ -44,11 +44,11 @@ These licenses are examples and will not work if you install them on members.
 
 ## Configuring a License Key on Members
 
-To use Hazelcast <Variable name="enterprise-product-name"/>, you need to configure a license key on all members in a cluster.
+To use Hazelcast <Variable name="enterprise-product-name" />, you need to configure a license key on all members in a cluster.
 
 :::note
 
-Hazelcast <Variable name="enterprise-product-name"/> license keys are required only for members. You do not need to set a license key for Java clients that are connected to members.
+Hazelcast <Variable name="enterprise-product-name" /> license keys are required only for members. You do not need to set a license key for Java clients that are connected to members.
 
 :::
 
@@ -72,7 +72,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-Add your license to the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/Config.html#setLicenseKey-java.lang.String-" text="setLicenseKey()"/> method.
+Add your license to the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/Config.html#setLicenseKey-java.lang.String-" text="setLicenseKey()" /> method.
 
 ```java
 Config config = new Config();
@@ -130,7 +130,7 @@ To get details about your current license, you can use the [Management Center](#
 The MBean `HazelcastInstance.LicenseInfo` holds all license details and can be accessed through Hazelcast's JMX port (if enabled). The following parameters represent these details:
 
 - `maxNodeCountAllowed`: Maximum members allowed to form a cluster under the current license.
-- <Anchor id="expiry-date"/>`expiryDate`: Expiration date of the current license.
+- <Anchor id="expiry-date" />`expiryDate`: Expiration date of the current license.
 - `typeCode`: Type code of the current license.
 - `type`: Type of the current license.
 - `ownerEmail`: Email of the current license's owner.
@@ -148,7 +148,7 @@ CUSTOM(4, "Custom");
 
 ### Getting License Details with the REST API {/* #rest */}
 
-<PartialClientsRestDeprecation/>
+<PartialClientsRestDeprecation />
 
 You can access license details by sending a `GET` request to the `/license` endpoint.
 
@@ -172,7 +172,7 @@ Its output is similar to the following:
 
 ### Getting License Details in Management Center {/* #mc */}
 
-See <Variable href="/management-center/{page-latest-supported-mc}/deploy-manage/license-management" text="Enterprise Licenses"/> in the Management Center documentation.
+See <Variable href="/management-center/{page-latest-supported-mc}/deploy-manage/license-management" text="Enterprise Licenses" /> in the Management Center documentation.
 
 ## Renewing a License Key
 

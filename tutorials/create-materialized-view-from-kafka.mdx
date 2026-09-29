@@ -25,12 +25,12 @@ Materialized views are useful for speeding up queries that are repeated. Instead
 
 You need the following:
 
-- A Hazelcast <Variable name="hazelcast-cloud"/> cluster. This tutorial assumes that you have a production cluster for <a href="/cloud/create-serverless-cluster"><Variable name="hazelcast-cloud"/> Standard</a>.
+- A Hazelcast <Variable name="hazelcast-cloud" /> cluster. This tutorial assumes that you have a production cluster for <a href="/cloud/create-serverless-cluster"><Variable name="hazelcast-cloud" /> Standard</a>.
 - A basic understanding of [Kafka](https://hazelcast.com/glossary/kafka/).
 
 ## Step 1. Set Up the Hazelcast CLC
 
-You need to use the Hazelcast CLC in later steps to open connections to the SQL shell of your <Variable name="hazelcast-cloud"/> cluster.
+You need to use the Hazelcast CLC in later steps to open connections to the SQL shell of your <Variable name="hazelcast-cloud" /> cluster.
 
 1. [Install the Hazelcast CLC client](/clc/latest/install-clc) for your operating system.
 2. Run the following command to check that the Hazelcast CLC client is installed.
@@ -40,7 +40,7 @@ You need to use the Hazelcast CLC in later steps to open connections to the SQL 
    ```
 
    You should see your installed version of the Hazelcast CLC client.
-3. Navigate to the Cluster Details page on the Viridian UI which shows the Client Connect options. Choose `CLI` and run the `clc config import` command to import the configuration of your <Variable name="hazelcast-cloud"/> cluster.
+3. Navigate to the Cluster Details page on the Viridian UI which shows the Client Connect options. Choose `CLI` and run the `clc config import` command to import the configuration of your <Variable name="hazelcast-cloud" /> cluster.
 4. Now execute the following command to connect the Hazelcast CLC to your cluster. Replace the placeholder `$CLUSTER_NAME` with your cluster name. You can find the cluster name on the dashboard of your cluster under **Cluster Details**.
 
    ```bash
@@ -59,7 +59,7 @@ You need to use the Hazelcast CLC in later steps to open connections to the SQL 
 
 1. [Create a Confluent Cloud account](https://confluent.cloud/signup) if you don't have one already.
 2. Create a Basic cluster.
-3. Select the same cloud provider as your <Variable name="hazelcast-cloud"/> cluster and the region that's closest to your Hazelcast cluster. For example, AWS Oregon (us-west-2).
+3. Select the same cloud provider as your <Variable name="hazelcast-cloud" /> cluster and the region that's closest to your Hazelcast cluster. For example, AWS Oregon (us-west-2).
 4. Skip payment and launch the cluster.
 5. Click your cluster's name in the breadcrumbs at the top of the page.
 
@@ -67,7 +67,7 @@ You need to use the Hazelcast CLC in later steps to open connections to the SQL 
 6. Click **Topics** \> **Create Topic** and enter **trades** in the **Topic name** field.
 7. Click **Create with defaults**. Confluent Cloud won't create a topic if you try to insert data into a topic that doesn't exist.
 8. Click **Clients** and select **Java**. Hazelcast uses a Java client to connect to Kafka clusters, so you need the configuration for a Java client.
-9. Click **Create Kafka cluster API key** and enter the name of your <Variable name="hazelcast-cloud"/> cluster in the description. This name helps you remember that your cluster is using that API key the next time you view them in Confluent Cloud.
+9. Click **Create Kafka cluster API key** and enter the name of your <Variable name="hazelcast-cloud" /> cluster in the description. This name helps you remember that your cluster is using that API key the next time you view them in Confluent Cloud.
 10. Click **Download and continue**. The configuration snippet now includes your API key and secret.
 11. Copy the code in your configuration snippet from the top to `session.timeout.ms=45000`. You won't use the Schema Registry in this tutorial.
 
@@ -75,7 +75,7 @@ You need to use the Hazelcast CLC in later steps to open connections to the SQL 
 
 To allow Hazelcast to access the `trades` topic that you created in your Confluent Cloud Kafka cluster, you need to create a mapping to it.
 
-1. Sign into the <Variable href="{page-cloud-console}" text="{hazelcast-cloud} console"/> and select your cluster.
+1. Sign into the <Variable href="{page-cloud-console}" text="{hazelcast-cloud} console" /> and select your cluster.
 2. Go to **SQL** in the left navigation to open the SQL browser.
 3. Create the mapping. Paste the connection configurations that you copied from Confluent Cloud below the `valueFormat` option. Make sure to format the configuration as necessary. For example:
 
@@ -127,7 +127,7 @@ To allow Hazelcast to access the `trades` topic that you created in your Conflue
      (1, 'SORG', 5.5, 10),
      (2, 'EORG', 14, 20);
    ```
-5. If you haven't started the CLC prompt on your <Variable name="hazelcast-cloud"/> cluster, do it now:
+5. If you haven't started the CLC prompt on your <Variable name="hazelcast-cloud" /> cluster, do it now:
 
    ```bash
    clc -c $CLUSTER_NAME
@@ -379,7 +379,7 @@ The table is empty, which means your job is no longer running.
 
 ## Summary
 
-You've learned how to connect <Variable name="hazelcast-cloud"/> to a Confluent Cloud Kafka cluster as well as the following:
+You've learned how to connect <Variable name="hazelcast-cloud" /> to a Confluent Cloud Kafka cluster as well as the following:
 
 - How to query streaming data from a Kafka topic.
 - How to enrich streaming data with contextual data and save the results to a materialized view.

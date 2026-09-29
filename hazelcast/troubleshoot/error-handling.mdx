@@ -32,7 +32,7 @@ Batch jobs don't strictly fall into this immutable-state category, but the gener
 
 ### Processing guarantees
 
-Streaming jobs with mutable state, those with a [processing guarantee](../operate-and-manage/fault-tolerance/fault-tolerance.mdx#processing-guarantee-is-a-shared-concern) set, achieve fault tolerance by periodically saving [recovery snapshots](../operate-and-manage/fault-tolerance/fault-tolerance.mdx#distributed-snapshot). If a streaming job was allowed to fail, the snapshots would be deleted. For this reason, by default all streaming jobs are suspended on failure, instead of failing completely. For more details, see <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/config/JobConfig.html#setSuspendOnFailure(boolean)" text="JobConfig.setSuspendOnFailure"/> and <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/Job.html#getSuspensionCause()" text="Job.getSuspensionCause"/>.
+Streaming jobs with mutable state, those with a [processing guarantee](../operate-and-manage/fault-tolerance/fault-tolerance.mdx#processing-guarantee-is-a-shared-concern) set, achieve fault tolerance by periodically saving [recovery snapshots](../operate-and-manage/fault-tolerance/fault-tolerance.mdx#distributed-snapshot). If a streaming job was allowed to fail, the snapshots would be deleted. For this reason, by default all streaming jobs are suspended on failure, instead of failing completely. For more details, see <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/config/JobConfig.html#setSuspendOnFailure(boolean)" text="JobConfig.setSuspendOnFailure" /> and <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/Job.html#getSuspensionCause()" text="Job.getSuspensionCause" />.
 
 :::note
 
@@ -42,9 +42,9 @@ If you use the [CREATE JOB statement](../develop-and-build/sql/statements/create
 
 A job in the suspended state has its snapshot preserved, and you can resume it without data loss once you have addressed the root cause of the failure.
 
-In the <Variable name="open-source-product-name"/> of Hazelcast, this scenario is limited to fixing the input data by some external means and then simply [resuming the job](../develop-and-build/building-data-pipelines/job-management.mdx#restarting).
+In the <Variable name="open-source-product-name" /> of Hazelcast, this scenario is limited to fixing the input data by some external means and then simply [resuming the job](../develop-and-build/building-data-pipelines/job-management.mdx#restarting).
 
-The <Variable name="enterprise-product-name"/> version of Hazelcast has the added option of [job upgrades](../develop-and-build/building-data-pipelines/job-update.mdx) which allows you to:
+The <Variable name="enterprise-product-name" /> version of Hazelcast has the added option of [job upgrades](../develop-and-build/building-data-pipelines/job-update.mdx) which allows you to:
 
 - Export the latest snapshot.
 - Update the pipeline, if needed — for example, to cope with unexpected data.

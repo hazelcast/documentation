@@ -11,14 +11,14 @@ tutorial_source: "https://github.com/hazelcast-guides/standard-deviation-paralle
 displayed_sidebar: null
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import CodeBlock from '@theme/CodeBlock';
-import Ex_standard_deviation_parallel_processing_client_src_main_java_your_company_name_JuniorDeveloper_java_tag_average_indent_0 from '@site/.tutorial-examples/standard-deviation-parallel-processing/client/src/main/java/your/company/name/JuniorDeveloper.java?tag=average&indent=0';
-import Ex_standard_deviation_parallel_processing_client_src_main_java_your_company_name_JuniorDeveloper_java_tag_stdev_indent_0 from '@site/.tutorial-examples/standard-deviation-parallel-processing/client/src/main/java/your/company/name/JuniorDeveloper.java?tag=stdev&indent=0';
-import Ex_standard_deviation_parallel_processing_client_src_main_java_your_company_name_SeniorDeveloper_java_tag_average_indent_0 from '@site/.tutorial-examples/standard-deviation-parallel-processing/client/src/main/java/your/company/name/SeniorDeveloper.java?tag=average&indent=0';
-import Ex_standard_deviation_parallel_processing_client_src_main_java_your_company_name_SeniorDeveloper_java_tag_stdev_indent_0 from '@site/.tutorial-examples/standard-deviation-parallel-processing/client/src/main/java/your/company/name/SeniorDeveloper.java?tag=stdev&indent=0';
-import Ex_standard_deviation_parallel_processing_cluster_side_pom_xml_tag_maven_plugin_indent_0 from '@site/.tutorial-examples/standard-deviation-parallel-processing/cluster-side/pom.xml?tag=maven-plugin&indent=0';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import CodeBlock from "@theme/CodeBlock";
+import Ex_standard_deviation_parallel_processing_client_src_main_java_your_company_name_JuniorDeveloper_java_tag_average_indent_0 from "@site/.tutorial-examples/standard-deviation-parallel-processing/client/src/main/java/your/company/name/JuniorDeveloper.java?tag=average&indent=0";
+import Ex_standard_deviation_parallel_processing_client_src_main_java_your_company_name_JuniorDeveloper_java_tag_stdev_indent_0 from "@site/.tutorial-examples/standard-deviation-parallel-processing/client/src/main/java/your/company/name/JuniorDeveloper.java?tag=stdev&indent=0";
+import Ex_standard_deviation_parallel_processing_client_src_main_java_your_company_name_SeniorDeveloper_java_tag_average_indent_0 from "@site/.tutorial-examples/standard-deviation-parallel-processing/client/src/main/java/your/company/name/SeniorDeveloper.java?tag=average&indent=0";
+import Ex_standard_deviation_parallel_processing_client_src_main_java_your_company_name_SeniorDeveloper_java_tag_stdev_indent_0 from "@site/.tutorial-examples/standard-deviation-parallel-processing/client/src/main/java/your/company/name/SeniorDeveloper.java?tag=stdev&indent=0";
+import Ex_standard_deviation_parallel_processing_cluster_side_pom_xml_tag_maven_plugin_indent_0 from "@site/.tutorial-examples/standard-deviation-parallel-processing/cluster-side/pom.xml?tag=maven-plugin&indent=0";
 
 In this tutorial, you'll build an application that calculates the standard deviation of customer satisfaction scores, using code that's executed on each member of a Hazelcast Cloud cluster.
 
@@ -60,14 +60,14 @@ Examples:
 
 The standard deviation results prove that the first set of numbers doesn't vary as much as the second set.
 
-In this tutorial, you'll deploy the following to a <Variable name="hazelcast-cloud"/> Standard cluster:
+In this tutorial, you'll deploy the following to a <Variable name="hazelcast-cloud" /> Standard cluster:
 
 - A `Customer` class to store `Customer` objects in a map. The objects will include a customer satisfaction score.
 - An executor that the cluster will use to calculate the standard deviation of all customer satisfaction scores in the map.
 
 You'll then use a client to connect to the cluster, load some `Customer` objects into a map, and calculate the standard deviation of all customer satisfaction scores.
 
-The client code shows both the junior developer and senior developer approach. The junior developer approach does the processing on the client-side. The senior developer approach is more efficient because it offloads the processing to the <Variable name="hazelcast-cloud"/> Standard cluster, using the executor.
+The client code shows both the junior developer and senior developer approach. The junior developer approach does the processing on the client-side. The senior developer approach is more efficient because it offloads the processing to the <Variable name="hazelcast-cloud" /> Standard cluster, using the executor.
 
 :::tip
 
@@ -79,7 +79,7 @@ The code in this tutorial is available as a [sample app on GitHub](https://githu
 
 You'll need the following to complete this tutorial:
 
-- A <a href="/cloud/create-serverless-cluster"><Variable name="hazelcast-cloud"/> Standard cluster</a>.
+- A <a href="/cloud/create-serverless-cluster"><Variable name="hazelcast-cloud" /> Standard cluster</a>.
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - [Maven](https://maven.apache.org/install.html)
 - JDK 17 or later installed and set up as the `JAVA_HOME` environment variable.
@@ -180,20 +180,20 @@ The code in this example disregards concurrency. Step 1 calculates the average, 
 
 ## Step 2. Deploy the Classes to the Cluster {/* #step-two */}
 
-In this step, you'll use the Hazelcast <Variable name="hazelcast-cloud"/> Maven plugin to package the cluster-side modules into a single JAR file and upload that file to your cluster.
+In this step, you'll use the Hazelcast <Variable name="hazelcast-cloud" /> Maven plugin to package the cluster-side modules into a single JAR file and upload that file to your cluster.
 
 1. Open the `pom.xml` file in the `cluster-side/` directory.
 2. Configure the Maven plugin with values for the following elements:
 
    <table>
    <colgroup>
-   <col style={{width:'50%'}}/>
-   <col style={{width:'50%'}}/>
+   <col style={{width:'50%'}} />
+   <col style={{width:'50%'}} />
    </colgroup>
    <thead>
    <tr>
    <th>Element</th>
-   <th>Location in <Variable name="hazelcast-cloud"/> console</th>
+   <th>Location in <Variable name="hazelcast-cloud" /> console</th>
    </tr>
    </thead>
    <tbody>
@@ -213,7 +213,7 @@ In this step, you'll use the Hazelcast <Variable name="hazelcast-cloud"/> Maven 
 
    To create a set of API credentials, do the following:
 
-   1. Sign into the <Variable href="{page-cloud-console}" text="{hazelcast-cloud} console"/>
+   1. Sign into the <Variable href="{page-cloud-console}" text="{hazelcast-cloud} console" />
    2. Select **Account** from the side navigation bar
    3. Select **Developer** from the **Account** options
 
@@ -247,18 +247,18 @@ The file is uploaded and is ready to be used:
 
 Now that the cluster-side modules are ready to use, you can run the client to trigger the process of calculating the standard deviation of customer satisfaction scores.
 
-1. Open the <Variable href="{page-cloud-console}" text="{hazelcast-cloud} console"/>.
+1. Open the <Variable href="{page-cloud-console}" text="{hazelcast-cloud} console" />.
 2. Next to **Connect Client**, select any client.
 3. Select **Advanced setup** and click **Download keystore file**.
 4. Extract the files and copy the `client.keystore` and `client.truststore` files to the `client/src/main/resources` directory.
-5. Leave the <Variable name="hazelcast-cloud"/> console open. You'll need some of these details in next steps.
+5. Leave the <Variable name="hazelcast-cloud" /> console open. You'll need some of these details in next steps.
 6. Change into the `client/` directory.
 7. Execute the client.
 
    ```bash
    mvn clean compile exec:java@standard-deviation -Dexec.cleanupDaemonThreads=false
    ```
-8. When prompted, enter the cluster name, keystore password, and discovery token for your cluster. These details are in the **Advanced setup** tab in the <Variable name="hazelcast-cloud"/> console.
+8. When prompted, enter the cluster name, keystore password, and discovery token for your cluster. These details are in the **Advanced setup** tab in the <Variable name="hazelcast-cloud" /> console.
 
 The client connects to the cluster and calculates the standard deviation, using both the junior developer code and the senior developer code.
 
@@ -298,8 +298,8 @@ Disconnecting the Hazelcast client
 
 In this tutorial, you learned how to do the following:
 
-- Use an executor to process data in parallel on a <Variable name="hazelcast-cloud"/> Standard cluster.
-- Deploy cluster-side modules to a <Variable name="hazelcast-cloud"/> Standard cluster using the Hazelcast <Variable name="hazelcast-cloud"/> Maven plugin.
+- Use an executor to process data in parallel on a <Variable name="hazelcast-cloud" /> Standard cluster.
+- Deploy cluster-side modules to a <Variable name="hazelcast-cloud" /> Standard cluster using the Hazelcast <Variable name="hazelcast-cloud" /> Maven plugin.
 
 ## Learn More
 

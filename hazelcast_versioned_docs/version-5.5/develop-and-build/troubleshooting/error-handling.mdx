@@ -32,7 +32,7 @@ Batch jobs don't strictly fall into this immutable-state category, but the gener
 
 ### Processing Guarantees
 
-Streaming jobs with mutable state, those with a [processing guarantee](../../operate-and-manage/fault-tolerance/fault-tolerance.mdx#processing-guarantee-is-a-shared-concern) set, achieve fault tolerance by periodically saving [recovery snapshots](../../operate-and-manage/fault-tolerance/fault-tolerance.mdx#distributed-snapshot). If a streaming job was allowed to fail, the snapshots would be deleted. For this reason, by default all streaming jobs are suspended on failure, instead of failing completely. For more details, see <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/config/JobConfig.html#setSuspendOnFailure(boolean)" text="JobConfig.setSuspendOnFailure"/> and <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/Job.html#getSuspensionCause()" text="Job.getSuspensionCause"/>.
+Streaming jobs with mutable state, those with a [processing guarantee](../../operate-and-manage/fault-tolerance/fault-tolerance.mdx#processing-guarantee-is-a-shared-concern) set, achieve fault tolerance by periodically saving [recovery snapshots](../../operate-and-manage/fault-tolerance/fault-tolerance.mdx#distributed-snapshot). If a streaming job was allowed to fail, the snapshots would be deleted. For this reason, by default all streaming jobs are suspended on failure, instead of failing completely. For more details, see <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/config/JobConfig.html#setSuspendOnFailure(boolean)" text="JobConfig.setSuspendOnFailure" /> and <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/Job.html#getSuspensionCause()" text="Job.getSuspensionCause" />.
 
 :::note
 
@@ -44,7 +44,7 @@ A job in the suspended state has its snapshot preserved, and you can resume it w
 
 In the open-source version of Hazelcast, this scenario is limited to fixing the input data by some external means and then simply [resuming the job](../building-data-pipelines/job-management.mdx#restarting).
 
-The <Variable name="enterprise-product-name"/> version of Hazelcast has the added option of [job upgrades](../building-data-pipelines/job-update.mdx). In that case you can:
+The <Variable name="enterprise-product-name" /> version of Hazelcast has the added option of [job upgrades](../building-data-pipelines/job-update.mdx). In that case you can:
 
 - export the latest snapshot
 - update the pipeline, if needed, for example, to cope with unexpected data

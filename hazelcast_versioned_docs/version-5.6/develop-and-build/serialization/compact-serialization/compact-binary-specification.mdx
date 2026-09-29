@@ -40,11 +40,11 @@ You cannot redefine the endianness in Compact Serialization; it is inherited fro
 | float32 | float | float | float | float | number | float32 | REAL | 32-bit IEEE 754 floating-point number | yes |
 | float64 | double | double | double | float | number | float64 | DOUBLE | 64-bit IEEE 754 floating-point number | yes |
 | string | String | optional\<std::string\> | string? | Optional\[str\] | string \| null | \*string | STRING | null or number of bytes in the string(int32) + UTF-8 string [https://tools.ietf.org/html/rfc3629](https://tools.ietf.org/html/rfc3629) | no |
-| decimal | BigDecimal | optional\<hazelcast:client:decimal\> | HBigDecimal? | Optional\[decimal.Decimal\] | BigDecimal \| null | \*types.Decimal | DECIMAL | null or<br/> Arbitrary precision and scale floating-point number:<br/> represented as unscaledValue x 10 ^ -scale<br/> unscaledValue: Array of int8 (byte array containing the two's-complement binary<br/> representation in big-endian byte-order: the most significant byte is in the zeroth element.)<br/> scale : single int32 for scale | no |
-| time | LocalTime | optional\<hazelcast:client:local\_time\> | HLocalTime? | Optional\[datetime.time\] | LocalTime \| null | \*types.LocalTime | TIME | null or<br/> HH-MI-SS-NN<br/> int8: hour<br/> int8: minute<br/> int8: seconds<br/> int32: nanoseconds<br/> | no(since it is nullable) |
-| date | LocalDate | optional\<hazelcast:client:local\_date\> | HLocalDate? | Optional\[datetime.date\] | LocalDate \| null | \*types.LocalDate | DATE | null or<br/> YYYY-MM-DD from -999999999-01-1 to 999999999-12-31<br/> int32: year<br/> int8: month<br/> int8: dayOfMonth | no(since it is nullable) |
-| timestamp | LocalDateTime | optional\<hazelcast:client:local\_date\_time\> | HLocalDateTime? | Optional\[datetime.datetime\] | LocalDateTime \| null | \*types.LocalDateTime | TIMESTAMP | null or<br/> YYYY-MM-DD-HH-MI-SS-NN<br/> int32: year<br/> int8: month<br/> int8: dayOfMonth<br/> int8 : hour<br/> int8: minute<br/> int8: seconds<br/> int32: nanoseconds<br/> | no(since it is nullable) |
-| timestampWithTimeZone | OffsetDateTime | optional\<hazelcast:client:offset\_date\_time\> | HOffsetDateTime? | Optional\[datetime.datetime\] | OffsetDateTime \| null | \*types.OffsetDateTime | TIMESTAMP W/ TZ | null or<br/> YYYY-MM-DD-HH-MI-SS-MM Zone<br/> int32: year<br/> int8: month<br/> int8:dayOfMonth<br/> int8 : hour<br/> int8: minute<br/> int8: seconds<br/> int32: nanoseconds<br/> int32 : offsetSeconds.<br/> offsetSeconds is range between +/-18:00:00 hour | no(since it is nullable) |
+| decimal | BigDecimal | optional\<hazelcast:client:decimal\> | HBigDecimal? | Optional\[decimal.Decimal\] | BigDecimal \| null | \*types.Decimal | DECIMAL | null or<br /> Arbitrary precision and scale floating-point number:<br /> represented as unscaledValue x 10 ^ -scale<br /> unscaledValue: Array of int8 (byte array containing the two's-complement binary<br /> representation in big-endian byte-order: the most significant byte is in the zeroth element.)<br /> scale : single int32 for scale | no |
+| time | LocalTime | optional\<hazelcast:client:local\_time\> | HLocalTime? | Optional\[datetime.time\] | LocalTime \| null | \*types.LocalTime | TIME | null or<br /> HH-MI-SS-NN<br /> int8: hour<br /> int8: minute<br /> int8: seconds<br /> int32: nanoseconds<br /> | no(since it is nullable) |
+| date | LocalDate | optional\<hazelcast:client:local\_date\> | HLocalDate? | Optional\[datetime.date\] | LocalDate \| null | \*types.LocalDate | DATE | null or<br /> YYYY-MM-DD from -999999999-01-1 to 999999999-12-31<br /> int32: year<br /> int8: month<br /> int8: dayOfMonth | no(since it is nullable) |
+| timestamp | LocalDateTime | optional\<hazelcast:client:local\_date\_time\> | HLocalDateTime? | Optional\[datetime.datetime\] | LocalDateTime \| null | \*types.LocalDateTime | TIMESTAMP | null or<br /> YYYY-MM-DD-HH-MI-SS-NN<br /> int32: year<br /> int8: month<br /> int8: dayOfMonth<br /> int8 : hour<br /> int8: minute<br /> int8: seconds<br /> int32: nanoseconds<br /> | no(since it is nullable) |
+| timestampWithTimeZone | OffsetDateTime | optional\<hazelcast:client:offset\_date\_time\> | HOffsetDateTime? | Optional\[datetime.datetime\] | OffsetDateTime \| null | \*types.OffsetDateTime | TIMESTAMP W/ TZ | null or<br /> YYYY-MM-DD-HH-MI-SS-MM Zone<br /> int32: year<br /> int8: month<br /> int8:dayOfMonth<br /> int8 : hour<br /> int8: minute<br /> int8: seconds<br /> int32: nanoseconds<br /> int32 : offsetSeconds.<br /> offsetSeconds is range between +/-18:00:00 hour | no(since it is nullable) |
 | compact | T | template\<typename T\> optional\<T\> | T? | Optional\[Any\] | T \| null | interface\{\} | OBJECT | A user defined compact | no |
 | boolean\[\] | boolean\[\] | optional\<std::vector\<bool\>\> | bool\[\]? | Optional\[list\[bool\]\] | boolean\[\] \| null | \[\]bool |  | Array of booleans | no |
 | int8\[\] | byte\[\] | optional\<std::vector\<int8\_t\>\> | sbyte\[\]? | Optional\[list\[int\]\] | Buffer \| null | \[\]int8 |  | Array of int8s | no |
@@ -89,9 +89,9 @@ The partition hash and the type ID are common for all serialization methods supp
 
 <table>
 <colgroup>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'60%'}}/>
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'60%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -120,9 +120,9 @@ Var-size objects are user-defined objects whose binary representation consists o
 
 <table>
 <colgroup>
-<col style={{width:'33.3333%'}}/>
-<col style={{width:'33.3333%'}}/>
-<col style={{width:'33.3334%'}}/>
+<col style={{width:'33.3333%'}} />
+<col style={{width:'33.3333%'}} />
+<col style={{width:'33.3334%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -147,8 +147,8 @@ Var-size objects are user-defined objects whose binary representation consists o
 
 <table>
 <colgroup>
-<col style={{width:'50%'}}/>
-<col style={{width:'50%'}}/>
+<col style={{width:'50%'}} />
+<col style={{width:'50%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -170,9 +170,9 @@ Var-size objects are user-defined objects whose binary representation consists o
 
 <table>
 <colgroup>
-<col style={{width:'20%'}}/>
-<col style={{width:'20%'}}/>
-<col style={{width:'60%'}}/>
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'60%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -246,8 +246,8 @@ Based on the length of the serialized data, the offsets of the variable-size fie
 
 <table>
 <colgroup>
-<col style={{width:'50%'}}/>
-<col style={{width:'50%'}}/>
+<col style={{width:'50%'}} />
+<col style={{width:'50%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -366,8 +366,8 @@ Consists of `Header`, `Data`, and `Offsets` sections in this order.
 
 <table>
 <colgroup>
-<col style={{width:'50%'}}/>
-<col style={{width:'50%'}}/>
+<col style={{width:'50%'}} />
+<col style={{width:'50%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -389,8 +389,8 @@ Consists of `Header`, `Data`, and `Offsets` sections in this order.
 
 <table>
 <colgroup>
-<col style={{width:'50%'}}/>
-<col style={{width:'50%'}}/>
+<col style={{width:'50%'}} />
+<col style={{width:'50%'}} />
 </colgroup>
 <tbody>
 <tr>
@@ -420,8 +420,8 @@ Consists of `Header`, `Data`, and `Offsets` sections in this order.
 
 <table>
 <colgroup>
-<col style={{width:'50%'}}/>
-<col style={{width:'50%'}}/>
+<col style={{width:'50%'}} />
+<col style={{width:'50%'}} />
 </colgroup>
 <tbody>
 <tr>

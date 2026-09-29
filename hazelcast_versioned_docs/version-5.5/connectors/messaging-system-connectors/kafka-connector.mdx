@@ -12,11 +12,11 @@ Apache Kafka is a popular distributed, persistent log store which is a great fit
 
 This connector is included in the full distribution of Hazelcast.
 
-If you're using the slim distribution, you must add the <Variable href="https://mvnrepository.com/artifact/com.hazelcast.jet/hazelcast-jet-kafka/{os-version}" text="hazelcast-jet-kafka module"/> to your member's classpath.
+If you're using the slim distribution, you must add the <Variable href="https://mvnrepository.com/artifact/com.hazelcast.jet/hazelcast-jet-kafka/{os-version}" text="hazelcast-jet-kafka module" /> to your member's classpath.
 
 ## Permissions
 
-<Badge type="enterprise"/>
+<Badge type="enterprise" />
 
 If [security](../../operate-and-manage/securing-a-cluster/enable-security.mdx) is enabled, your clients may need permissions to use this connector. For details, see [Securing Jobs](../../develop-and-build/building-data-pipelines/job-security.mdx).
 
@@ -62,7 +62,7 @@ One of the most important features of using Kafka as a source is that it's possi
 
 If the processing guarantees are disabled, the source will start reading from default offsets that are set in the `auto.offset.reset` property. You can enable offset committing by assigning a `group.id`, enabling auto offset committing using `enable.auto.commit` and configuring `auto.commit.interval.ms` in the given properties. Refer to [Kafka documentation](https://kafka.apache.org/22/documentation.html) for the descriptions of these properties.
 
-You can also explicitly specify exact initial offsets for the Kafka source using <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/kafka/KafkaSources.html#kafka(java.util.Properties,com.hazelcast.function.FunctionEx,com.hazelcast.jet.kafka.TopicsConfig)" text="TopicsConfig parameter"/>. Note that initial offsets provided in `topicConfig` will always have priority over offsets stored in Kafka or associated with a given consumer group. Those offsets are used only when the job is started for the first time after submission. Afterwards, the regular fault tolerance mechanism described above is used. This option is not supported when processing guarantees are disabled.
+You can also explicitly specify exact initial offsets for the Kafka source using <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/kafka/KafkaSources.html#kafka(java.util.Properties,com.hazelcast.function.FunctionEx,com.hazelcast.jet.kafka.TopicsConfig)" text="TopicsConfig parameter" />. Note that initial offsets provided in `topicConfig` will always have priority over offsets stored in Kafka or associated with a given consumer group. Those offsets are used only when the job is started for the first time after submission. Afterwards, the regular fault tolerance mechanism described above is used. This option is not supported when processing guarantees are disabled.
 
 ## Transactional Guarantees
 

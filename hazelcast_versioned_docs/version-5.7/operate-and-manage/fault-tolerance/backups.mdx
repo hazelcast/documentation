@@ -10,7 +10,7 @@ Hazelcast distributes your storage and computational data, along with their back
 
 Hazelcast does not support backup redistribution on a data structure level. Thus, changing the backup count of a nonempty data structure is **not** supported. For example, for a map:
 
-1. increasing the backup count<sup><Anchor id="_footnote_change-backup-count"/><Anchor id="_footnoteref_1"/>[<a href="#_footnotedef_1">1</a>]</sup> does **not** create additional copies of existing map entries,
+1. increasing the backup count<sup><Anchor id="_footnote_change-backup-count" /><Anchor id="_footnoteref_1" />[<a href="#_footnotedef_1">1</a>]</sup> does **not** create additional copies of existing map entries,
 2. decreasing the backup count<sup>[<a href="#_footnotedef_1">1</a>]</sup> does **not** remove any backups of existing map entries, so some backups will have stale data if the map entries are overwritten, and
 3. if some backups are lost due to node failure, additional copies are **not** created on other nodes to meet the backup count.
 
@@ -36,8 +36,8 @@ See the relevant sections below on how you can configure sync and async backups 
 
 See [this section](./fault-tolerance.mdx) for backup information about the Hazelcast jobs.
 
-<Anchor id="footnotes"/>
+<Anchor id="footnotes" />
 
 <hr />
 
-<Anchor id="_footnotedef_1"/>[1](#_footnoteref_1). The backup count of an empty map can only be changed by modifying the [static configuration](../configuration/understanding-configuration.mdx#static-configuration) and [restarting the cluster](../maintaining-a-cluster/restart-cluster.mdx).
+<Anchor id="_footnotedef_1" />[1](#_footnoteref_1). The backup count of an empty map can only be changed by modifying the [static configuration](../configuration/understanding-configuration.mdx#static-configuration) and [restarting the cluster](../maintaining-a-cluster/restart-cluster.mdx).
