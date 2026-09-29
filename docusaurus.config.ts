@@ -331,7 +331,7 @@ const config: Config = {
     // docs.hazelcast.com serves this site.
     algolia: {
       appId: 'QK2EAH8GB0',
-      apiKey: 'eafe0734c70b14ab7e856b7e248eb415',
+      apiKey: '148f165428808580b7a2d0e96f53b707',
       indexName: 'mir-test-new-docs-test',
       contextualSearch: false,
       // No `/search` route: Antora serves no search page, so adding one would be a
