@@ -203,3 +203,13 @@ Baseline at wire-up: **73 logical orphan pages** across the migrated set (50 unr
 ## Status
 
 Built: index pass, golden-snapshot builder (with `--component` scoping for smoke tests), all four gates (fidelity harness, reference checker, construct-coverage gate, orphan gate) and the converter. Not yet built: CI wiring for `npm run check`, orphan triage (populating `orphancheck/allowlist.json` + the redirect-generation step that reads its dispositions), the include graph, Swagger handling.
+
+## Antora attachment
+
+The corpus's only Antora *attachment* is the data file that the `map-join` tutorial tells the reader to download. It lives in `static/hazelcast/<version>/pipelines/_attachments/nasdaqlisted.txt`, with one copy per live version, matching the per-version image rule. It came from `hz-docs` `docs/modules/pipelines/attachments/`.
+
+Attachments are a different Antora resource family from images, so nothing in the converter places them. With a single file corpus-wide, adding a subsystem for it was not worth it.
+
+The converter emits Antora's published absolute URL for the link. For an absolute asset path, Docusaurus searches the static directories (mdx-loader `remark/transformLinks`, `getLocalFileAbsolutePath`). Finding the file there, it rewrites the link to a content-hashed `/assets/files/nasdaqlisted-<hash>.txt` require. So the referring pages link to the hashed asset, and webpack verifies it: deleting the file fails the build, as with a co-located image. The copies under `static/` only keep Antora's production URL alive for inbound links and bookmarks.
+
+The trade-off is duplication: six static copies plus one hashed asset for a 195 KB file. To make the pages use the production URL instead, the link would need Docusaurus's `pathname://` prefix to opt out of asset processing. That would cost the build-time verification and a broken-link warning, because the checker only sees routes.

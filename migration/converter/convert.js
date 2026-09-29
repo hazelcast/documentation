@@ -306,22 +306,13 @@ function writeVariablesFile (tsFile, groups, versioned) {
     versionedObj[comp] = {}
     for (const [vName, nv] of perVer) versionedObj[comp][vName] = mapToObj(nv)
   }
-  const ts = '// Single source of truth for doc variables — values that must stay\n' +
-    '// attributes, never baked (e.g. per-version product version numbers).\n' +
-    '// Bootstrapped from the Antora manifest by migration/converter during the\n' +
-    '// migration; MAINTAIN HERE going forward — update the version values on each\n' +
-    '// product release (via CI or by hand).\n' +
-    '//\n' +
-    '// `variablesBySource`: global/unversioned values grouped by ORIGIN — each\n' +
-    '// docs repo\'s own antora.yml, or the shared Antora playbook. Grouping is for\n' +
-    '// context/provenance; `variables` is the flat lookup the app consumes.\n' +
-    '// `versionedVariables[component][versionName]`: per-version values\n' +
-    '// (versionName is \'current\' for the current docs version, else the release).\n' +
+  const ts = '// Single source of truth for doc variables: values kept as attributes, never baked into pages.\n' +
+    '// `variablesBySource` groups global values by origin; `variables` is the flat lookup the app consumes.\n' +
+    '// `versionedVariables[component][versionName]` holds per-version values (\'current\' or the release name).\n' +
+    '// Update the version values on each product release.\n' +
     'export const variablesBySource: Record<string, Record<string, string>> = {\n' +
       bySourceBody + '\n};\n\n' +
-    '// Flattened lookup consumed by <Variable> (src/components/Variable.tsx) and\n' +
-    '// the example-attributes loader. Merged in group order, so a docs-repo value\n' +
-    '// overrides a playbook value on the same name.\n' +
+    '// Flat lookup consumed by <Variable> and the example-attributes loader; later groups override earlier ones.\n' +
     'export const variables: Record<string, string> = Object.assign(\n' +
     '  {},\n' +
     '  ...Object.values(variablesBySource),\n' +
@@ -1101,18 +1092,15 @@ function convertVersion (ver, ctx) {
   // the new version folder — an absolute link would stay frozen on the old
   // version). Spans allPages (not the --id subset) so links resolve in a
   // single-page run too. Trailing-slash variants keyed for robust lookup.
-  // Versioned instances only (seg != null): an unversioned component (cloud)
-  // has no version-cut lifecycle, so leave its absolute links unchanged. An
-  // empty map => every lookup misses => absolute links, as before.
+  // Unversioned components (cloud, tutorials) get the same file links: they
+  // have no version cut, but every page on the site links one way.
   const urlToRelFile = new Map()
   const setRelFile = (url, relFile) => {
     urlToRelFile.set(url, relFile)
     urlToRelFile.set(url.replace(/\/$/, ''), relFile)
     urlToRelFile.set(url.replace(/\/?$/, '/'), relFile)
   }
-  if (seg != null) {
-    for (const p of allPages) setRelFile(p.url, relFileForPage(p, byUrl, plan).relFile)
-  }
+  for (const p of allPages) setRelFile(p.url, relFileForPage(p, byUrl, plan).relFile)
 
   // sourceUrl -> the absolute route it redirects to, for every `redirect` orphan
   // in this version. A redirected page is NOT emitted, so an inbound link to it
@@ -1122,9 +1110,7 @@ function convertVersion (ver, ctx) {
   // goes straight there and the client redirect is left doing the job only it can:
   // keeping the old URL alive for bookmarks and links from outside the site.
   //
-  // Built for UNVERSIONED components too (outside the `seg != null` guard above):
-  // relative .mdx links are a versioned-instance concern, but a dead inbound link
-  // is not.
+  // Built for UNVERSIONED components too.
   const redirectRetargets = new Map()
   for (const p of allPages) {
     const { rec } = relFileForPage(p, byUrl, plan)
