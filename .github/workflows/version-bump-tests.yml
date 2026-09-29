@@ -1,0 +1,29 @@
+name: Version bump tests
+
+# Also on changes to the files the bump rewrites: the tests check they still round-trip.
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/scripts/version-bump/**'
+      - '.github/workflows/package.yml'
+      - '.github/workflows/promote.yml'
+      - '.github/workflows/version-bump-tests.yml'
+      - 'src/variables.ts'
+      - 'src/redirects.ts'
+      - 'src/currentVersions.json'
+      - '*_versions.json'
+      - 'static/_redirects'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - run: npm run test:version-bump

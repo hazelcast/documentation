@@ -1,0 +1,101 @@
+name: Promote Release
+run-name: ${{ github.workflow }} (`${{ inputs.VERSION }}`@${{ inputs.ENVIRONMENT }})
+
+on:
+  # Called from the release orchestrator
+  workflow_dispatch:
+    inputs:
+      VERSION:
+        description: 'The version to promote (e.g. `5.4.1`)'
+        required: true
+      RELEASE_TYPE:
+        description: 'What should be promoted'
+        required: true
+        type: choice
+        options:
+          - ALL
+          - OSS
+          - EE
+      ENVIRONMENT:
+        description: 'Environment to use'
+        required: true
+        type: environment
+
+jobs:
+  promote:
+    environment:
+      name: ${{ inputs.ENVIRONMENT }}
+      deployment: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      VERSION: ${{ inputs.VERSION }}
+      TITLE: Update main to ${{ inputs.VERSION }}
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Get release info
+        id: get-rel-info
+        uses: hazelcast/mono-actions/get-release-info@main
+        with:
+          release-version: ${{ inputs.VERSION }}
+          github-token: ${{ secrets.GH_TOKEN }}
+
+      - name: Find the PR
+        id: find-pr
+        run: |
+          numbers=$(gh pr list --state open --search "\"${TITLE}\" in:title" --json number,title,headRefName \
+            --jq '.[] | select(.title == env.TITLE and (.headRefName | startswith("update_version_"))) | .number')
+          if [[ $(grep -c . <<< "${numbers}") -gt 1 ]]; then
+            echo "::error::More than one open PR titled '${TITLE}': $(tr '\n' ' ' <<< "${numbers}")"
+            exit 1
+          fi
+          echo "number=${numbers}" >> "${GITHUB_OUTPUT}"
+
+      - name: Check there is nothing to release
+        if: steps.find-pr.outputs.number == ''
+        run: |
+          node .github/scripts/version-bump --dry-run | tee dry-run.log
+          if ! grep -q "^Nothing to change for ${VERSION}.$" dry-run.log; then
+            echo "::error::No open PR titled '${TITLE}', but ${VERSION} still has changes to make. Re-run Package Release."
+            exit 1
+          fi
+        env:
+          RELEASE_VERSION: ${{ inputs.VERSION }}
+          REL_MAJOR_MINOR: ${{ steps.get-rel-info.outputs.rel-major-minor }}
+          MASTER_VERSION: ${{ steps.get-rel-info.outputs.master-version }}
+          MASTER_MAJOR_MINOR: ${{ steps.get-rel-info.outputs.master-major-minor }}
+          MC_MAJOR_MINOR: ${{ steps.get-rel-info.outputs.mc-major-minor }}
+          IS_PATCH_RELEASE: ${{ steps.get-rel-info.outputs.is-patch-release }}
+          IS_REL_MAJOR_MINOR: ${{ steps.get-rel-info.outputs.is-rel-major-minor }}
+          IS_LATEST_STABLE_RELEASE: ${{ steps.get-rel-info.outputs.is-latest-stable-release }}
+          IS_BETA_RELEASE: ${{ steps.get-rel-info.outputs.is-beta-release }}
+
+      # Checks must pass: a red check on a version bump means a broken site would go live.
+      - name: Merge the PR
+        if: steps.find-pr.outputs.number != ''
+        run: |
+          number="${{ steps.find-pr.outputs.number }}"
+          if [[ $(gh pr view "${number}" --json isDraft --jq .isDraft) == "true" ]]; then
+            gh pr ready "${number}"
+          fi
+          if ! checks=$(gh pr checks "${number}" --watch --fail-fast 2>&1); then
+            if grep -q "no checks reported" <<< "${checks}"; then
+              echo "No checks reported on #${number}"
+            else
+              echo "${checks}"
+              echo "::error::Checks on #${number} did not pass"
+              exit 1
+            fi
+          fi
+          gh pr merge "${number}" --squash --delete-branch
