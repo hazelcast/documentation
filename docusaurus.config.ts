@@ -79,6 +79,14 @@ const config: Config = {
   // cache at cutover: it is holding 200s for them.
   trailingSlash: false,
 
+  headTags: [
+    {
+      tagName: 'meta',
+      // temp Algolia validation tag
+      attributes: {name: 'algolia-site-verification', content: '4C927B5F6BF53C1B'},
+    },
+  ],
+
   // '.api-specs' is where plugins/openapi-specs stages the OpenAPI specs it
   // fetches from the product repos: gitignored, rebuilt every run, and listed
   // here so Docusaurus copies it on `build` and serves it on `start` exactly as
