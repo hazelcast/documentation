@@ -1,19 +1,8 @@
-// Undo the extra HTML escaping Docusaurus applies to a local Markdown image's
-// alt and title.
+// Undo the extra HTML escaping @docusaurus/mdx-loader's transformImage applies to a local image's alt/title
+// (the built page would otherwise carry `&amp;#39;`).
 //
-// @docusaurus/mdx-loader's transformImage (3.10.2) turns `![alt](./x.png)` into
-// a JSX `<img>` and sets `alt` to `escapeHtml(node.alt)`. A JSX attribute value is
-// already text, and React escapes it again when rendering, so the built page
-// carries `alt="the name &amp;#39;hello&amp;#39;"` and a screen reader reads
-// the entity out. Found by fidelity Layer 2's `imageAlts` comparison: 20 pages
-// across Platform versions, every one of them an alt containing ' or <.
-//
-// This runs after the default plugins (it is registered in `remarkPlugins`,
-// which mdx-loader appends after transformImage) and reverses exactly one
-// escape-html pass. It only touches transformImage's output: an `<img>` whose
-// `src` is a `require(...)` expression. Remote images are not transformed and
-// render correctly, and the converted corpus writes no JSX `<img>` of its own.
-//
+// Runs after the default plugins (registered in `remarkPlugins`) and only touches transformImage output,
+// i.e. an `<img>` whose `src` is a `require(...)` expression.
 // Remove once Docusaurus stops escaping these values.
 
 type Attr = {type: string; name?: string; value?: unknown};
@@ -27,8 +16,7 @@ const ENTITIES: Record<string, string> = {
   '&amp;': '&',
 };
 
-// One pass over the five entities escape-html emits, in a single regex so an
-// escaped `&amp;lt;` decodes to `&lt;` and not on to `<`.
+// Single pass, so `&amp;lt;` decodes to `&lt;` and not on to `<`.
 export function unescapeHtml(s: string): string {
   return s.replace(/&(?:quot|#39|lt|gt|amp);/g, (e) => ENTITIES[e]);
 }

@@ -10,12 +10,7 @@ declare global {
   }
 }
 
-// The Kapa AI widget ("Ask AI").
-//
-// Not gated on NODE_ENV the way the GTM container is: the widget is a feature of
-// the site rather than analytics, so it loads on the dev server too. Off
-// production it finds no consent cookie and loads cookieless, which is the safe
-// direction.
+// Kapa AI widget. Loads on the dev server too (not gated on NODE_ENV); with no consent cookie it loads cookieless.
 
 const WIDGET_SRC = 'https://widget.kapa.ai/kapa-widget.bundle.js';
 const KAPA_COOKIE = 'kapa_web_id';
@@ -23,23 +18,16 @@ const KAPA_COOKIE = 'kapa_web_id';
 const CONFIG: Record<string, string> = {
   'data-website-id': '6b326171-dd1e-40c6-a948-1f9bb6c0ed52',
   'data-project-name': 'Hazelcast',
-  // A static/ asset. Its white fill is baked into the file: it renders on the
-  // teal modal header.
+  // White fill is baked in: it renders on the teal modal header.
   'data-project-logo': '/img/kapa/ask-ai-icon.svg',
-  // Suppress the widget's own floating launcher: the navbar button is the way
-  // in (src/components/NavbarAskAi).
+  // Hide the floating launcher; the navbar button opens the widget.
   'data-button-hide': 'true',
   'data-mcp-enabled': 'true',
   'data-mcp-server-url': 'https://hazelcast.mcp.kapa.ai',
-  // NO `data-modal-z-index`. Kapa applies it to the modal layer alone, leaving
-  // Mantine's popover layer at its default (--mantine-z-index-modal: 200,
-  // --mantine-z-index-popover: 300), so any value above 300 renders every
-  // tooltip inside the modal UNDERNEATH it. Omitting it keeps Mantine's own
-  // ordering intact; the height needed to clear the site navbar is applied to
-  // the widget's HOST instead, in custom.css.
+  // No `data-modal-z-index`: it only raises the modal layer, not Mantine's popover layer,
+  // which would put tooltips inside the modal underneath it. Navbar clearance is set on the host in custom.css.
   'data-modal-size': '800px',
-  // One value for every page: the widget loads once per SPA session, so this
-  // cannot vary by route. 70px clears the navbar.
+  // Widget loads once per SPA session, so this cannot vary by route.
   'data-modal-y-offset': '70px',
   'data-modal-title': 'Ask AI',
   'data-modal-title-font-size': '24px',
@@ -56,27 +44,15 @@ const CONFIG: Record<string, string> = {
     '["docs.hazelcast.com", "Java API Docs", "C# API Docs", "Go Client Docs"]',
 };
 
-// Kapa takes literal values in its data-* attributes -- it cannot consume
-// `var(--hive-...)`. So the HIVE tokens are resolved off the document element and
-// their computed values handed over.
-//
-// Resolving ONCE, at load, is safe rather than a shortcut: HIVE's variables.css
-// declares its colour tokens only on `:root` with no dark variant, and this
-// site's [data-theme='dark'] block redefines Infima `--ifm-*` vars exclusively.
-// The values do not vary with the theme, so a widget configured at load never
-// drifts out of step with the page.
-//
-// Each fallback is its token's current value, so a stylesheet that has not
-// applied yet still leaves the modal rendering correctly.
+// Kapa takes literal values, not `var(--hive-...)`, so HIVE tokens are resolved once at load
+// (safe: they don't vary with theme). Fallbacks apply if the stylesheet hasn't loaded yet.
 const THEMED: Record<string, [token: string, fallback: string]> = {
   'data-project-color': ['--hive-color-brand-secondary', '#061727'],
   'data-modal-header-bg-color': ['--hive-color-brand-text', '#10a4b3'],
   'data-modal-title-color': ['--hive-color-neutral-white', '#fff'],
   'data-modal-disclaimer-bg-color': ['--hive-color-neutral-white', '#fff'],
   'data-modal-disclaimer-text-color': ['--hive-color-text-secondary', '#707482'],
-  // Kapa drops this straight into a CSS `font-family`, so the token's whole
-  // stack is valid here -- verified against the rendered title's computed style
-  // inside the widget's shadow root.
+  // Dropped straight into a CSS `font-family`, so the token's whole stack is valid.
   'data-modal-title-font-family': [
     '--hive-font-family-heading',
     "'PP Telegraf', 'Helvetica', 'Arial', sans-serif",
@@ -93,17 +69,13 @@ function resolveThemeTokens(): Record<string, string> {
   );
 }
 
-// Enzuzo writes `cookies-analytics=true` when analytics consent is granted. It
-// does so however the banner itself was loaded, which is what lets this work
-// against the container-managed Enzuzo without the site knowing it exists.
+// Enzuzo writes `cookies-analytics=true` on analytics consent, however the banner was loaded.
 function analyticsGranted(): boolean {
   return /(?:^|;\s*)cookies-analytics=true(?:;|$)/.test(document.cookie);
 }
 
-// Kapa's own identifier cookie. It can outlive a withdrawal of consent, so it is
-// cleared explicitly. The domain walk covers every scope the cookie could have
-// been set at, because a cookie can only be deleted from the exact domain that
-// set it and we do not know which that was.
+// Kapa's identifier cookie can outlive a consent withdrawal. Walk every possible domain scope,
+// since a cookie can only be deleted from the domain that set it.
 function deleteKapaCookie(): void {
   if (!document.cookie.includes(`${KAPA_COOKIE}=`)) {
     return;
@@ -121,8 +93,7 @@ function deleteKapaCookie(): void {
   }
 }
 
-// A queueing stub, so a click on the navbar button before the bundle finishes
-// downloading is replayed instead of throwing. The real widget drains `q`.
+// Queueing stub so an early navbar click is replayed once the bundle loads.
 function installStub(): void {
   if (window.Kapa) {
     return;
@@ -144,9 +115,7 @@ function loadWidget(): void {
   for (const [name, value] of Object.entries({...CONFIG, ...resolveThemeTokens()})) {
     script.setAttribute(name, value);
   }
-  // Kapa resolves its analytics mode from this attribute once, at init. Note the
-  // default: an ABSENT attribute means cookies are enabled, so consent has to be
-  // expressed by actively passing `false`.
+  // Read once at init. An ABSENT attribute means cookies are enabled, so pass `false` explicitly.
   script.setAttribute(
     'data-user-analytics-cookie-enabled',
     analyticsGranted() ? 'true' : 'false',
@@ -154,24 +123,9 @@ function loadWidget(): void {
   document.head.appendChild(script);
 }
 
-// Consent can be withdrawn after the widget has already set its cookie, and the
-// mode above is fixed at init with no runtime setter -- so clearing the cookie is
-// the only lever short of reloading the page.
-//
-// `cookies-analytics` is the source of truth, and watching it directly keeps this
-// independent of GTM. The alternative signal, Enzuzo's `enzuzo_consent_update`
-// dataLayer event, is only observable by wrapping a `push` that GTM replaces when
-// the container initialises, and GTM does not load off production at all. Enzuzo
-// publishes nothing to subscribe to: there is no CustomEvent anywhere in its
-// bundle.
-//
-// This module runs once per SPA session rather than once per page, so a reader
-// can keep browsing for a long time after withdrawing consent. Closing that
-// window is the whole job of the watcher.
-//
-// Only withdrawal is actionable. Consent GRANTED mid-session cannot switch Kapa's
-// cookie back on, because the mode was fixed at init; that waits for the reader's
-// next full page load.
+// Cookie mode is fixed at init, so clearing the cookie on consent withdrawal is the only lever short of a reload.
+// Watches `cookies-analytics` directly, independent of GTM (absent off production).
+// Consent granted mid-session cannot re-enable the cookie; it waits for the next page load.
 const CONSENT_POLL_MS = 2000;
 
 function watchConsent(): void {
@@ -187,10 +141,8 @@ function watchConsent(): void {
     }
   };
 
-  // Chromium fires this for same-document cookie writes, which is how Enzuzo
-  // sets it; Safari and Firefox have no Cookie Store API, so they fall back to a
-  // string compare on an interval. Read off Partial<Window> because lib.dom
-  // declares `cookieStore` as always present, which those browsers disprove.
+  // Chromium fires this for same-document cookie writes; Safari/Firefox lack the Cookie Store API, so poll.
+  // Partial<Window> because lib.dom declares `cookieStore` as always present.
   const {cookieStore} = window as Partial<Window>;
   if (cookieStore) {
     cookieStore.addEventListener('change', check);
@@ -201,8 +153,7 @@ function watchConsent(): void {
 
 if (ExecutionEnvironment.canUseDOM) {
   installStub();
-  // Straight after the stub, so the callbacks are queued and replayed when the
-  // widget drains the queue.
+  // After the stub, so callbacks are queued and replayed.
   registerKapaAnalytics();
   if (!analyticsGranted()) {
     deleteKapaCookie();

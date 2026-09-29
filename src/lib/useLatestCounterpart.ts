@@ -4,18 +4,11 @@ import {
   type GlobalVersion,
 } from '@docusaurus/plugin-content-docs/client';
 
-// The current page's counterpart in the latest RELEASED version (`isLast`, so a
-// snapshot resolves to the release too). Undefined outside a docs page and on
-// the latest version itself; `path` is undefined when the page does not exist in
-// the latest version.
+// The current page's counterpart in the latest released version (`isLast`).
+// Undefined outside a docs page and on the latest version; `path` is undefined if the page is absent there.
 //
-// Matched on URL, NOT on doc id — deliberately, and not the same thing here.
-// A doc's id is its path in the source tree, which was reorganised between
-// versions, while the URL was preserved from Antora. So the 5.3 and 5.7 copies
-// of one page share a URL suffix but have different ids: id-matching finds
-// only 9 of 368 counterparts for 5.3, URL-matching finds 338. This is also
-// why Docusaurus's own id-keyed `alternateDocVersions` and
-// `useDocVersionSuggestions` cannot be used.
+// Matched on URL, NOT doc id: ids follow the source tree, which differs between versions, while URLs are stable.
+// This is also why Docusaurus's id-keyed `alternateDocVersions` / `useDocVersionSuggestions` cannot be used.
 export default function useLatestCounterpart():
   | {latest: GlobalVersion; path: string | undefined}
   | undefined {

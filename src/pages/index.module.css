@@ -1,13 +1,6 @@
-/* Production's hero image (from hazelcast-docs-ui src/img/home/), stretched
-   over the whole page ground rather than just the hero band. Painted on the
-   layout wrapper (the full-width flex child between navbar and footer) rather
-   than on `.page`, which is a centred 1440px column and would leave the margins
-   unpainted. On a pseudo-element so the filter changes only the image, not the
-   cards on top of it.
-   The image is dark navy, and keeps its own colours in both themes: light mode
-   brightens it further than dark mode does. The hero text is white on both. */
-/* Column so the hero and cards sit centred vertically between navbar and
-   footer when the page is taller than its content. */
+/* Hero image stretched over the whole page ground, painted on the layout wrapper (not `.page`, which would
+   leave the margins unpainted) via a pseudo-element so the filter affects only the image. */
+/* Column so the hero and cards centre vertically when the page is taller than its content. */
 .wrapper {
   position: relative;
   isolation: isolate;
@@ -51,15 +44,9 @@
   margin: 0;
   /* Scales down on narrow screens, where 3.5rem is wider than "Documentation". */
   font-size: clamp(2.25rem, 9vw, 3.5rem);
-  /* Tight, as production's is: the theme's 1.25 puts leading above the
-     letters, which makes the gap under the navbar look bigger than the one
-     above the footer even when the boxes are centred. */
-  line-height: 1.1;
-  /* The font's own space above its capitals, so the visible letters, not the
-     line box, sit where the centring puts them. */
-  margin-top: -0.18em;
-  /* Production's gradient text fill, teal to lime. Inline-block so the
-     gradient spans the text, not the full-width line. */
+  /* Tight leading: the theme's 1.25 puts extra space above the letters. */
+  /* Offsets the font's own space above capitals so the visible letters sit where centring puts them. */
+  /* Gradient text fill; inline-block so it spans the text, not the full-width line. */
   display: inline-block;
   background: linear-gradient(270deg, #c6ff3a, #0080a9);
   background-clip: text;
@@ -72,9 +59,7 @@
   max-width: 60ch;
 }
 
-/* Production's card breakpoints, which are not a symmetrical set: one column
-   below 480px, two up to 1400px, and four only above it — so the eight cards
-   land as 4x2 on a wide screen and 2x4 for most of the range. */
+/* One column below 480px, two up to 1400px, four above: 4x2 on wide screens, 2x4 for most of the range. */
 .grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -93,17 +78,12 @@
   }
 }
 
-/* HIVE paints every card white whatever the theme, which in dark mode puts the
-   theme's light heading text on white. The theme's surface token is white in
-   light mode anyway. Two classes, to outrank HIVE's single-class rule
-   regardless of stylesheet order. */
+/* HIVE paints every card white in all themes; two classes outrank its rule regardless of stylesheet order. */
 .grid .card {
   background: var(--ifm-background-surface-color);
 }
 
-/* Dark mode: the theme's neutral grey surface and HIVE's light border clash
-   with the navy image, so the cards become solid navy with a faint edge, and
-   the links are lifted to stay readable on them. */
+/* Dark mode: solid navy cards with a faint edge to suit the image; links lifted for readability. */
 :global([data-theme='dark']) .grid .card {
   background: var(--hive-color-brand-accent);
   border-color: rgb(255 255 255 / 0.14);
@@ -113,8 +93,7 @@
   color: color-mix(in oklch, var(--ifm-link-color), white 35%);
 }
 
-/* Production's card list sits 10px below the heading. Own heading means own
-   spacing: HIVE's is tuned for its 1rem title. */
+/* HIVE's spacing is tuned for its 1rem title, so the own heading needs its own. */
 .links {
   display: flex;
   flex-direction: column;
@@ -128,7 +107,6 @@
   margin: 0;
 }
 
-/* Production's card heading: 1.3rem, weight 500. */
 .cardTitle {
   font-size: 1.3rem;
   font-weight: 500;

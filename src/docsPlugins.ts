@@ -1,17 +1,9 @@
-// The docs plugin instances — one per migrated Antora component. Everything the
-// instances have in common lives here, so a new component is one line in
-// docusaurus.config.ts and a new VERSION is no config change at all.
+// The docs plugin instances, one per component; adding a component is one line in docusaurus.config.ts.
 //
-// This module also owns the on-disk files Docusaurus hardcodes for a versioned
-// instance. All three names are fixed as `<siteDir>/<pluginId>_*` with no config
-// hook (plugin-content-docs versions/files.js), so they have to sit at the site
-// root:
-//   <id>_versions.json        the live release list, newest first — committed,
-//                             and the single source everything below derives from
-//   <id>_versioned_docs/      the cut copy of each release's pages
-//   <id>_versioned_sidebars/  one sidebar stub per release — gitignored, written
-//                             on the way in and deleted at exit, so it never
-//                             lingers in the root (see ensureVersionedSidebars)
+// Owns the on-disk files Docusaurus hardcodes as `<siteDir>/<pluginId>_*` (no config hook):
+//   <id>_versions.json        live release list, newest first (committed; the single source)
+//   <id>_versioned_docs/      cut copy of each release's pages
+//   <id>_versioned_sidebars/  sidebar stubs, gitignored (see ensureVersionedSidebars)
 import fs from 'fs';
 import path from 'path';
 import type {PluginConfig} from '@docusaurus/types';
@@ -22,36 +14,15 @@ import imageAltUnescape from './remark/imageAltUnescape';
 
 const siteDir = path.resolve(__dirname, '..');
 
-// Which version segment each component's `/latest/` alias resolves to, filled in
-// by versionedDocs() as the instances are built and read by the latestLinks
-// remark plugin at compile time (see that file for why the timing works, and why
-// those links need resolving at all). Unversioned components are absent: with no
-// version segment there is no alias to resolve.
-//
-// Exported so docusaurus.config.ts can pass it through `customFields` to the
-// landing page, whose card links are written as `/<comp>/latest/...` too but
-// never see remark. Handed over by REFERENCE, as the remark plugin gets it: this
-// module fills the map while the plugins array is being built, and both readers
-// run after config evaluation has finished, so key order in the config literal
-// does not matter.
+// Version segment each versioned component's `/latest/` alias resolves to, filled by versionedDocs().
+// Exported for `customFields` (landing page). Passed by reference and read after config evaluation, so key order does not matter.
 export const latestSegs: LatestSegs = {};
 
-// Which version segment is each component's unreleased snapshot line, filled in
-// by versionedDocs() alongside latestSegs. `defaultVersion: 'latest-release'` is
-// exactly the statement "main is an unreleased snapshot", so this needs no naming
-// convention: a component whose main IS its newest release (clc) contributes
-// nothing, and neither do unversioned components.
+// Version segment of each component's unreleased snapshot line; components whose main is the newest release contribute nothing.
 const snapshotSegs: {[id: string]: string} = {};
 
-// True for a sitemap URL under a component's snapshot segment. Used to keep
-// snapshots out of the sitemap: the cross-version canonical sends their pages to
-// the latest release, so inviting Google to index them would contradict it.
-//
-// Reads the registry at CALL time rather than expanding it when the sitemap
-// options are built — `presets` is evaluated before `plugins` in
-// docusaurus.config.ts, so the map is still EMPTY then and any eager expansion
-// (a precomputed ignorePatterns list, say) would capture nothing. Same reason
-// latestSegs is handed to the remark plugin by reference.
+// True for a sitemap URL under a snapshot segment (snapshots' canonicals point at the latest release).
+// Reads the registry at call time: `presets` is evaluated before `plugins`, so the map is still empty when sitemap options are built.
 export function isSnapshotUrl(url: string): boolean {
   const {pathname} = new URL(url);
   return Object.entries(snapshotSegs).some(
@@ -59,21 +30,11 @@ export function isSnapshotUrl(url: string): boolean {
   );
 }
 
-// Asciidoctor's `caution`/`important` are not Docusaurus admonition keywords, so
-// every instance extends the defaults with them — the fidelity Layer-2 check
-// compares admonition type names, so those types must survive the round-trip.
+// `caution`/`important` are not default Docusaurus admonition keywords; fidelity Layer 2 compares admonition types.
 const admonitions = {keywords: ['caution', 'important'], extendDefaults: true};
 
-// Note what is NOT set here: `sidebarPath`. The option has no default, and when
-// it is omitted plugin-content-docs falls back to its built-in DefaultSidebars —
-// a single `defaultSidebar` key autogenerated from the folder tree, which is
-// exactly what a per-component sidebars.ts would have exported. Sidebar ids are
-// resolved per plugin INSTANCE (useLayoutDocsSidebar scopes the lookup by
-// docsPluginId), so every component reuses that one id and the navbar items
-// reference it as `sidebarId: 'defaultSidebar'`. A component that ever needs a
-// curated tree instead of the autogenerated one can reintroduce its own
-// sidebarPath here. Autogeneration reproduces the Antora nav order because the
-// folder tree and each _category_.json mirror nav.adoc.
+// `sidebarPath` is deliberately unset: the built-in default autogenerates one `defaultSidebar` per plugin instance from the folder tree,
+// which mirrors the Antora nav order. Navbar items reference `sidebarId: 'defaultSidebar'`.
 function contentDocs(options: Options): PluginConfig {
   return [
     '@docusaurus/plugin-content-docs',
@@ -92,43 +53,21 @@ function contentDocs(options: Options): PluginConfig {
   ];
 }
 
-// An unversioned component: the only version is served at the base path, with no
-// version segment (`/<component>/<page>`), as Antora publishes it.
+// An unversioned component: served at the base path with no version segment.
 export function docs(id: string): PluginConfig {
   return contentDocs({id, path: id, routeBasePath: id, admonitions});
 }
 
-// A versioned component. Antora publishes EVERY version under a version segment
-// and leaves the bare `/<component>/` root empty, so every version here — the
-// current one and each release — gets an explicit `path`. That is also what makes
-// adding a release safe rather than URL-breaking: Docusaurus's default path for
-// whichever version is `lastVersion` is '' (the bare root), so a new release
-// left to the default would quietly take over `/<component>/`.
+// A versioned component: every version, including current, gets an explicit `path`.
+// Otherwise a new release would take Docusaurus's default '' path for `lastVersion` and claim the bare `/<component>/` root.
 //
-// What each component's current version is lives in src/currentVersions.json,
-// keyed by plugin id — the one thing not derivable from <id>_versions.json, and
-// the file to edit when main's version changes:
+// src/currentVersions.json (keyed by plugin id) holds what is not derivable from <id>_versions.json:
+// - `currentSeg`: URL segment for main (`latest-snapshot`, a release number, or a numbered snapshot).
+// - `currentLabel`: dropdown text where it differs from the segment (defaults to currentSeg).
+// - `defaultVersion`: `latest-release` where main is an unreleased snapshot, `current` where main is the newest release.
 //
-// `currentSeg` is the URL segment Antora gives the main branch: `latest-snapshot`
-// where main is a -snapshot line, a release number where main declares itself
-// released (clc), or a numbered snapshot (management-center, hazelcast).
-//
-// `currentLabel` is what the version dropdown shows for that version, for the case
-// where Antora's `display_version` differs from the URL segment — a numbered
-// snapshot is published under `X.Y-snapshot` but displayed `X.Y-SNAPSHOT`, and the
-// label is reader-facing text while the segment is a URL we must preserve
-// verbatim. Defaults to currentSeg, which is right wherever the two agree.
-//
-// `defaultVersion` is where the version dropdown lands: `latest-release` (the
-// newest entry in <id>_versions.json) where main is an unreleased snapshot, or
-// `current` where main is itself the newest release.
-//
-// To show only SOME of the releases, add `onlyIncludeVersions` (a subset of
-// <id>_versions.json, plus 'current') to the returned options — the plugin
-// filters to it, and `lastVersion` has to be one of the versions it lists. Note
-// that de-listing a release whose pages have page-aliases also needs those
-// entries dropped from src/redirects.ts, or the redirects plugin fails the build
-// on targets that no longer exist.
+// To show only some releases, add `onlyIncludeVersions` (subset of <id>_versions.json plus 'current'); `lastVersion` must be one of them.
+// De-listing a release with page-aliases also needs those entries dropped from src/redirects.ts.
 export function versionedDocs(id: string): PluginConfig {
   const current = currentVersions[id];
   if (!current) {
@@ -142,9 +81,7 @@ export function versionedDocs(id: string): PluginConfig {
     );
   }
   ensureVersionedSidebars(id, releases);
-  // `/<id>/latest/` points at whichever version is `lastVersion` below — the
-  // newest release, or main's own segment where main IS the newest release. Same
-  // expression, so the alias cannot drift from what Docusaurus marks `isLast`.
+  // `/<id>/latest/` points at `lastVersion`; same expression as below so it cannot drift from `isLast`.
   latestSegs[id] = defaultVersion === 'current' ? currentSeg : releases[0]!;
   if (defaultVersion === 'latest-release') {
     snapshotSegs[id] = currentSeg;
@@ -198,9 +135,7 @@ function readCurrentVersions(): {[id: string]: CurrentVersion} {
   return entries as {[id: string]: CurrentVersion};
 }
 
-// The live release set. Generated by migration/converter during the migration and
-// prepended to by `docusaurus docs:version` afterwards; either way it is the only
-// place a version list is written down, so adding a version needs no edit here.
+// The live release set; generated by the converter, prepended to by `docusaurus docs:version`. The only place versions are listed.
 function readReleases(id: string): string[] {
   const file = path.join(siteDir, `${id}_versions.json`);
   if (!fs.existsSync(file)) {
@@ -215,29 +150,14 @@ function readReleases(id: string): string[] {
   return releases as string[];
 }
 
-// The per-release sidebar stubs: `<id>_versioned_sidebars/version-X-sidebars.json`,
-// one per release, every one the same information-free boilerplate. They are
-// nevertheless load-bearing — only the CURRENT version's sidebar file is checked
-// for existence (a missing one throws), while a MISSING versioned stub resolves to
-// DisabledSidebars, i.e. no left nav at all on that release's pages.
-//
-// So they are treated as pure build artefacts: gitignored, written here on the way
-// in, and deleted again on the way out (removeGeneratedStubs), leaving nothing in
-// the site root between runs. Writing them from config evaluation is what makes
-// that safe — it runs before the docs plugin reads them, and unlike an npm `pre*`
-// hook it cannot be bypassed by invoking the Docusaurus CLI directly.
-//
-// A file whose content is NOT our stub is left completely alone, in and out: to
-// give one release a hand-tuned sidebar, un-ignore that path, commit it, and it
-// wins. The flip side is that a deliberately committed stub identical to ours
-// would be cleaned up like a generated one — visibly, as a git deletion.
+// Per-release sidebar stubs (`<id>_versioned_sidebars/version-X-sidebars.json`). A missing versioned stub means no left nav
+// on that release, so they are required, but they are gitignored build artefacts: written here, deleted at exit.
+// Written from config evaluation so npm `pre*` hooks cannot be bypassed.
+// A file that is not our stub is left alone (un-ignore and commit it to hand-tune one release).
 const STUB =
   JSON.stringify({defaultSidebar: [{type: 'autogenerated', dirName: '.'}]}, null, 2) + '\n';
 
-// The stubs this process is responsible for deleting. Kept on globalThis, not in
-// module scope: the dev server re-evaluates the config (and so this module) on
-// every config change, and the files written by the first evaluation still have to
-// be cleaned up at exit.
+// Kept on globalThis, not module scope: the dev server re-evaluates this module on every config change.
 const generated: Set<string> = ((globalThis as Record<string, unknown>).__hzGeneratedSidebarStubs ??=
   new Set<string>()) as Set<string>;
 
@@ -259,14 +179,9 @@ function ensureVersionedSidebars(id: string, releases: string[]): void {
   hookCleanup();
 }
 
-// Docusaurus's own SIGINT/SIGTERM handlers call process.exit() — in the dev server
-// after stopping it (commands/start/start.js) and in build (commands/build/build.js)
-// — so an 'exit' listener covers Ctrl-C as well as a build running to completion,
-// without this taking over shutdown. Anything that kills the process outright
-// (SIGKILL, a crash) leaves the stubs, and the next run adopts and removes them.
-//
-// Not `postBuild`: the dev server never reaches it, and it fires per locale, so
-// deleting there would race a multi-locale build's later locales.
+// An 'exit' listener covers Ctrl-C (Docusaurus's SIGINT handlers call process.exit()) and normal completion.
+// A SIGKILL or crash leaves the stubs; the next run adopts and removes them.
+// Not `postBuild`: the dev server never reaches it, and it fires per locale.
 function hookCleanup(): void {
   const g = globalThis as Record<string, unknown>;
   if (g.__hzSidebarStubCleanupHooked) return;
@@ -274,7 +189,7 @@ function hookCleanup(): void {
   process.on('exit', removeGeneratedStubs);
 }
 
-// Synchronous by necessity: an 'exit' listener cannot await anything.
+// Synchronous: an 'exit' listener cannot await.
 function removeGeneratedStubs(): void {
   const dirs = new Set<string>();
   for (const file of generated) {
@@ -286,8 +201,7 @@ function removeGeneratedStubs(): void {
     }
   }
   generated.clear();
-  // Take the folder itself only when our stubs were all it held; a hand-tuned
-  // sibling left behind keeps it, and rmdirSync fails harmlessly.
+  // Remove the folder only if our stubs were all it held; rmdirSync fails harmlessly otherwise.
   for (const dir of dirs) {
     try {
       fs.rmdirSync(dir);

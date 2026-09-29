@@ -1,11 +1,5 @@
-// Swizzled (ejected) from @docusaurus/theme-classic to render Asciidoctor
-// callout numbers (conums). Opt-in per code block via a bare `conums` flag in
-// the fence info string; the callout markers live INLINE as `<N>` at the end of
-// their own lines (native Asciidoctor form), so they stay attached to the line
-// when the code is edited. Here we strip the `<N>` markers, record which line
-// each is on, and hand the map to the metadata for Content/Line to render a
-// badge. Blocks without the flag are untouched. This is the only change from
-// upstream.
+// Swizzled from @docusaurus/theme-classic to render Asciidoctor callout numbers (conums). Only change from upstream.
+// Opt-in via a bare `conums` fence flag; inline `<N>` markers are stripped and mapped by line for Content/Line to badge.
 import React from 'react';
 import {useThemeConfig} from '@docusaurus/theme-common';
 import {
@@ -23,9 +17,7 @@ const hasFlag = (metastring, flag) =>
 
 const hasConumsFlag = (metastring) => hasFlag(metastring, 'conums');
 
-// Doc-variable lookup for the active docs component + version, so a `vars` code
-// block resolves its {attribute} placeholders (kept, not baked) at render — the
-// in-code analogue of <Variable>. Per-version values win over global ones.
+// Doc-variable lookup for the active component + version so `vars` blocks resolve {attribute} placeholders at render. Per-version values win.
 function useVariableLookup() {
   const active = useActivePluginAndVersion();
   const pluginId = active?.activePlugin?.pluginId;
@@ -35,9 +27,7 @@ function useVariableLookup() {
   return {...variables, ...perVersion};
 }
 
-// Strip a trailing `<N>` conum marker from each line. Returns the cleaned code
-// and a { lineIndex: value } map. The whitespace BEFORE the marker is preserved
-// so the rendered code matches the source spacing.
+// Strips a trailing `<N>` conum marker per line; returns cleaned code and a { lineIndex: value } map. Whitespace before the marker is kept.
 function stripConums(code) {
   const conums = {};
   const lines = String(code).split('\n').map((line, i) => {
@@ -54,7 +44,7 @@ function useCodeBlockMetadata(props) {
   const variableLookup = useVariableLookup();
   let code = props.children;
   let conums;
-  // `vars`: resolve {attribute} placeholders kept in the code (never baked).
+  // `vars`: resolve {attribute} placeholders at render.
   if (hasFlag(props.metastring, 'vars')) {
     code = substitute(code, variableLookup);
   }

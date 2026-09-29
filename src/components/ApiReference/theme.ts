@@ -1,26 +1,10 @@
 import type {RedocRawOptions} from 'redoc';
 
-// Redoc's theme is a JavaScript object, not CSS, and it is not merely handed to
-// styled-components: Redoc runs polished's darken/transparentize over several of
-// these colours INSIDE its components (a `oneOf` type button does
-// `darken(0.15, colors.primary.main)`; the payload panels transparentize
-// `rightPanel.backgroundColor`). polished cannot parse `var(--x)`, so a CSS
-// custom property passed straight through would throw at render time.
-//
-// So the tokens are not copied here — they are RESOLVED here. Every colour is
-// read from the live custom property at render time and normalised to a plain
-// colour string polished can take. HIVE (and Infima, which the site already
-// derives from HIVE) stays the single source of truth: change a token and these
-// pages follow it, with nothing to keep in step. It is also what makes dark mode
-// free — Docusaurus redefines the same properties under [data-theme='dark'], so
-// re-reading them is the whole of it.
-//
-// Fonts are exempt: they pass through to CSS untouched, so they stay as `var(…)`
-// references and need no resolution.
+// Redoc's theme is a JS object, and Redoc runs polished's darken/transparentize over some colours, which cannot parse `var(--x)`.
+// So tokens are resolved from the live custom properties at render time to plain colour strings; HIVE/Infima stay the source of truth and dark mode follows for free.
+// Fonts pass through as `var(…)` and need no resolution.
 
-// Which custom property backs each Redoc colour. Anything that does not resolve
-// is left off the theme entirely, so a renamed or missing token degrades to
-// Redoc's own default rather than poisoning the theme.
+// Custom property backing each Redoc colour. Unresolvable ones are left off so Redoc's default applies.
 const TOKENS = {
   primary: {main: '--hive-color-primary-v4'},
   text: {primary: '--ifm-font-color-base', secondary: '--ifm-color-emphasis-700'},
@@ -37,14 +21,8 @@ const TOKENS = {
   code: {color: '--ifm-font-color-base', backgroundColor: '--ifm-code-background'},
 } as const;
 
-// Canvas is the colour parser the platform already ships, used twice over.
-// Assigning to fillStyle VALIDATES any syntax the browser understands — oklch,
-// which the HIVE v4 tokens are written in, and color-mix, which the site's
-// derived Infima shades use; an unparseable value leaves fillStyle at its
-// previous value, which is what the double assignment detects. Painting the
-// colour and reading the pixel back then CONVERTS it, which the assignment alone
-// does not: a computed oklch() serialises as oklch(), and polished takes only
-// hex/rgb/hsl. The pixel is the colour in plain sRGB bytes.
+// Canvas as colour parser: the double fillStyle assignment detects unparseable values (a bad value leaves fillStyle unchanged);
+// painting and reading back a pixel converts oklch()/color-mix() to sRGB, which polished needs.
 let probe: CanvasRenderingContext2D | null | undefined;
 
 function normaliseColor(value: string): string | null {
@@ -68,8 +46,7 @@ function normaliseColor(value: string): string | null {
   if (a === 0) {
     return 'rgba(0, 0, 0, 0)';
   }
-  // Canvas stores pixels premultiplied by alpha, so a translucent token has to
-  // be divided back out to recover the colour it was written as.
+  // Canvas pixels are premultiplied by alpha; divide back out.
   const scale = 255 / a!;
   const channel = (v: number) => Math.min(255, Math.round(v * scale));
   return a === 255
@@ -90,24 +67,12 @@ function resolve(group: Record<string, string>): Record<string, string> {
   return resolved;
 }
 
-// Read fresh on every call: the caller re-invokes it when the colour mode
-// changes, and Docusaurus has already written the new data-theme onto <html> by
-// then (ColorModeAttribute.set runs before the state update that re-renders us).
+// Read fresh each call: Docusaurus writes the new data-theme to <html> before the re-render that calls this.
 export function redocTheme(prismPlain: {color?: string; backgroundColor?: string}): RedocRawOptions['theme'] {
   return {
-    // sectionVertical is the one spacing value the Antora theme set, kept: it is
-    // what stops each operation being separated by a screenful of whitespace.
-    // sectionHorizontal is Redoc indenting its content panel away from the edge
-    // of the page it expects to own; here that panel sits in a docs column that
-    // is already indented, so the padding only pushes the API description out of
-    // line with the page title above it and the operations below.
+    // sectionVertical stops operations being separated by a screenful of whitespace; sectionHorizontal is 0 because the docs column is already indented.
     spacing: {sectionVertical: 20, sectionHorizontal: 0},
-    // Redoc splits each operation into a description column and a dark samples
-    // column, sized as a fraction of the VIEWPORT because it expects to own the
-    // page. Here it has one docs column to work in, which is never wide enough
-    // for two readable columns, so the split is switched off by putting its
-    // "narrow" breakpoint out of reach: samples stack under the operation they
-    // belong to, at every width.
+    // Redoc's operation/samples split is viewport-based; the docs column is too narrow, so push its breakpoint out of reach to stack samples always.
     breakpoints: {medium: '9999rem'},
     colors: {
       primary: resolve(TOKENS.primary),
@@ -115,14 +80,7 @@ export function redocTheme(prismPlain: {color?: string; backgroundColor?: string
       border: resolve(TOKENS.border),
     },
     schema: resolve(TOKENS.schema),
-    // The request/response samples. Redoc renders them in a dark rail down the
-    // side of the page, with a syntax theme (prism-dark, hardcoded in its
-    // PrismDiv) that only works on a dark background. Here they are ordinary
-    // code blocks in the flow, so both the panel and the block inside it take
-    // the SITE's code-block surface — the same prism theme object the site's own
-    // CodeBlock renders with (docusaurus.config themeConfig.prism), so there is
-    // one definition of "what code looks like here" rather than two. The token
-    // colours come from the same object; see prismTokenCss in Renderer.tsx.
+    // Samples use the site's code-block surface (the themeConfig.prism theme) rather than Redoc's dark-only prism-dark rail.
     rightPanel: {backgroundColor: prismPlain.backgroundColor, textColor: prismPlain.color},
     codeBlock: {backgroundColor: prismPlain.backgroundColor},
     typography: {
@@ -130,10 +88,7 @@ export function redocTheme(prismPlain: {color?: string; backgroundColor?: string
       headings: {fontFamily: 'var(--ifm-heading-font-family)'},
       code: {
         fontFamily: 'var(--ifm-font-family-monospace)',
-        // Redoc's 13px base for code compounds down through the JSON viewer's
-        // nested ems to about 12.3px — noticeably smaller than a code block
-        // anywhere else on the site. An absolute step keeps the sample legible
-        // and stops it drifting further with nesting depth.
+        // Redoc's 13px base compounds through nested ems to ~12.3px; an absolute size keeps samples legible.
         fontSize: '0.9rem',
         ...resolve(TOKENS.code),
       },

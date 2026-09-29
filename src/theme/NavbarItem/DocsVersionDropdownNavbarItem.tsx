@@ -6,9 +6,7 @@ import type {WrapperProps} from '@docusaurus/types';
 
 type Props = WrapperProps<typeof DocsVersionDropdownNavbarItemType>;
 
-// The stock version dropdown renders on every page, so each versioned docs
-// instance would show its selector while you are reading another one. Render
-// a dropdown only while its own docs instance is the active one.
+// Render a dropdown only while its own docs instance is active (stock shows every instance's selector on every page).
 export default function DocsVersionDropdownNavbarItemWrapper(
   props: Props,
 ): ReactNode {

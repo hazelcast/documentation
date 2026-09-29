@@ -13,16 +13,8 @@ import {TextField} from '@hazelcast/ui/lib/components/TextField';
 import {Toggle} from '@hazelcast/ui/lib/components/Toggle';
 import styles from './tutorials.module.css';
 
-// The tutorials landing page. Replaces the Antora one
-// (hazelcast-docs-ui body-tutorials-landing.hbs), which read the content catalog
-// at render time; the card data is carried onto each tutorial as `tutorial_*`
-// frontmatter by the converter and collected by plugins/tutorials-index.
-//
-// Facets reproduce production's: product, language, category, and an
-// include-Enterprise switch, plus a text search. The VALUES are deliberately
-// whatever the guides declare -- `imdg` is still a product here, and
-// "Get Started"/"Getting Started" are still two categories -- because
-// normalising the taxonomy is post-cutover content work, not migration.
+// Tutorials landing page. Card data comes from `tutorial_*` frontmatter, collected by plugins/tutorials-index.
+// Facet values are whatever the guides declare, deliberately unnormalised.
 
 type Card = {
   title: string;

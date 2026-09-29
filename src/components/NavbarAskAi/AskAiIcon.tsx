@@ -1,20 +1,8 @@
 import type {SVGAttributes} from 'react';
 
-// The Antora theme's ask-ai-icon.svg as a component, so it satisfies HIVE's
-// IconType and takes its colour from the button it sits in. Two deliberate
-// differences from the file it came from:
-//
-//   - `fill="currentColor"` replaces the baked `#FAFAFA`. That white was right
-//     for Antora's accent-coloured button; here the icon has to follow whatever
-//     the HIVE variant's text colour is. The static copy at
-//     static/img/kapa/ask-ai-icon.svg KEEPS the white fill -- that one is the
-//     modal header logo (data-project-logo), on a teal ground.
-//   - The <clipPath> is dropped. Its rect spans the full extent of all three
-//     paths, so it clipped nothing, and an inlined duplicate id is a real cost.
-//
-// No width/height: HIVE's Icon passes `width="1em" height="1em"`, and SVG's
-// default preserveAspectRatio fits this 15x19 viewBox inside that square
-// without distorting it. Props spread last so HIVE's values win.
+// The Ask AI icon as a component, so it satisfies HIVE's IconType. `fill="currentColor"` follows the button's text
+// colour (the static/ copy keeps its white fill for the modal header). No width/height: HIVE's Icon passes 1em
+// and the viewBox scales to fit; props spread last so HIVE's values win.
 export default function AskAiIcon(props: SVGAttributes<SVGElement>) {
   return (
     <svg viewBox="0 0 15 19" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>

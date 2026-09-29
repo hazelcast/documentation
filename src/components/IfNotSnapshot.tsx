@@ -1,14 +1,8 @@
 import React from 'react';
 import useIsSnapshot from '@site/src/components/useIsSnapshot';
 
-// Renders release-only content (from AsciiDoc `ifndef::snapshot[]`) on every docs
-// version EXCEPT the unreleased/snapshot one — the else half of <IfSnapshot>.
-//
-// The point is the version cut: `docusaurus docs:version` copies the current
-// (snapshot) tree verbatim, so a page that carries both branches needs no edit to
-// come out right. On the snapshot docs this content is hidden and the <IfSnapshot>
-// branch shows; the moment the copy becomes a released version that reverses,
-// exactly as Antora's per-branch `snapshot` attribute did.
+// Release-only content (AsciiDoc `ifndef::snapshot[]`): hidden on the unreleased version, the else half of <IfSnapshot>.
+// Lets `docs:version` copy pages verbatim and still flip correctly.
 export default function IfNotSnapshot({
   children,
 }: {

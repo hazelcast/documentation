@@ -1,6 +1,4 @@
-// Swizzled (ejected) from @docusaurus/theme-classic. Only change from upstream:
-// reads `metadata.conums` (set by Content/String) and passes the callout value
-// for each line to <Line>, which renders the badge. Everything else is upstream.
+// Swizzled from @docusaurus/theme-classic. Only change: passes `metadata.conums` (from Content/String) per line to <Line>.
 import React from 'react';
 import clsx from 'clsx';
 import {useCodeBlockContext} from '@docusaurus/theme-common/internal';

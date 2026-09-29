@@ -3,28 +3,19 @@
   color: var(--ifm-color-emphasis-600);
 }
 
-/* Redoc's <ApiInfo> opens with the spec's own title, which on these pages
- * restates the page title immediately above it. The rest of that block — the
- * description and the "Download OpenAPI specification" link — is kept. */
+/* Redoc's <ApiInfo> opens with the spec title, which repeats the page title. */
 .apiReference h1 {
   display: none;
 }
 
-/* Two colours Redoc hardcodes outside its theme, so nothing passed to it can
- * reach them — and both are dark slate, which is unreadable on a dark page.
- * Restating them here is also the better place for them: CSS can use the custom
- * properties directly, where the theme object cannot (see theme.ts).
- *   h5  the section labels — "PATH PARAMETERS", "REQUEST BODY SCHEMA"
- *   :last-of-type  the rule Redoc draws between operations */
+/* Redoc hardcodes these dark slate colours outside its theme, unreadable in dark mode:
+ * h5 section labels; :last-of-type rule between operations. */
 .apiReference h5 {
   color: var(--ifm-color-emphasis-700);
   border-bottom-color: var(--ifm-color-emphasis-300);
 }
 
-/* Redoc's own "Download OpenAPI specification" line, hidden in favour of the
- * HIVE Button rendered next to it (see Renderer.tsx). Matched by the paragraph
- * that holds the download anchor, which is the only thing identifying it —
- * Redoc's class names are generated. */
+/* Hides Redoc's download line (replaced by the HIVE Button in Renderer.tsx); its class names are generated, so match by the download anchor. */
 .apiReference p:has(a[download]) {
   display: none;
 }
@@ -33,14 +24,9 @@
   padding-bottom: var(--ifm-paragraph-margin-bottom);
 }
 
-/* The HTTP method badge on an operation's table-of-contents entry. Global
- * because it is injected as raw HTML into a TOC entry (Renderer.tsx), which no
- * CSS-module class name can reach. The colour is set inline, from Redoc's own
- * resolved theme, so a badge matches the method label in the content. */
+/* Global: injected as raw HTML into a TOC entry (Renderer.tsx). Colour is set inline. */
 :global(.api-toc-method) {
-  /* No width of its own: a min-width wide enough for GET is narrower than
-   * DELETE, so the gap before the label would change from row to row. The badge
-   * is sized by its own text and the gap is the one constant. */
+  /* No fixed width: a min-width fitting GET is narrower than DELETE and the gap would vary per row. */
   margin-right: 0.5em;
   font-size: 0.75em;
   font-weight: 700;
@@ -48,36 +34,10 @@
   text-transform: uppercase;
 }
 
-/* Type scale.
- *
- * Redoc has its own, keyed to a 14px base and setting every heading at weight
- * 400 — which inside a docs page reads as no hierarchy at all: an operation
- * title comes out LIGHTER than the bold run of text beside it, and there is
- * nothing to show where one operation stops and the next starts. Worse, headings
- * it leaves unsized (the "Response samples" rail heading) fall through to
- * Infima's h3 and land bold at a different size from the h3 next to them, so the
- * same level is typeset two ways on one screen.
- *
- * So the headings are mapped onto the PAGE's scale rather than tuned: the
- * levels come from the spec's own structure (Operation.tsx) and are typeset here
- * exactly as they would be if this content were written in Markdown — a tag
- * group h2, an operation h3, what an operation is made of h4, and one level up
- * for all of them in a spec with no tags.
- *
- * Getting that scale is not just `var(--ifm-h2-font-size)`: Infima applies the
- * DOCS heading sizes only to direct children of `.markdown` (`.markdown > h2 {
- * --ifm-h2-font-size: 2rem }`), and these headings are nested inside the API
- * container, so they would take the 1.5rem root value and come out a step small.
- * The rules below re-declare Infima's own overrides — the same local custom
- * property, the same rhythm margins, the same 576px breakdown — for that nested
- * position, so an operation title is the size an h2 is anywhere else on the site.
- * The explicit font-size is still needed on top of the property: Infima sets it
- * with a bare element selector, which loses to the generated class Redoc puts on
- * the element itself. The doubled class is for that same reason.
- *
- * The one heading level NOT taken from the page scale is h5, which is Redoc's
- * own field labels ("PATH PARAMETERS") — sized separately below, and the reason
- * Operation.tsx stops handing out levels at h4. */
+/* Type scale: Redoc's headings are weight 400 on a 14px base, which reads as no hierarchy in a docs page.
+ * Headings are mapped onto the page's scale instead (levels come from Operation.tsx). Infima applies docs heading sizes only to direct children of `.markdown`,
+ * so they are re-declared here for the nested position. The doubled class beats the generated class Redoc puts on each element.
+ * h5 (Redoc's field labels) is sized separately below. */
 .apiReference.apiReference h2 {
   --ifm-h2-font-size: 2rem;
 
@@ -98,10 +58,7 @@
   line-height: var(--ifm-heading-line-height);
 }
 
-/* Infima gives h4 no docs-specific size or rhythm of its own -- it groups h4/h5/h6
- * under the shared heading rhythm and lets the root font size stand -- so this
- * mirrors that rather than inventing a step. The declarations are still needed:
- * what they beat is Redoc's own scale, not Infima's. */
+/* Infima gives h4 no docs-specific size or rhythm, so mirror the shared heading rhythm; the declarations beat Redoc's scale. */
 .apiReference.apiReference h4 {
   margin-top: calc(var(--ifm-heading-vertical-rhythm-top) * var(--ifm-leading));
   margin-bottom: calc(var(--ifm-heading-vertical-rhythm-bottom) * var(--ifm-leading));
@@ -120,9 +77,7 @@
   }
 }
 
-/* The field labels ("PATH PARAMETERS"). Redoc sizes these and the property
- * tables under them at four separate values between 11.7px and 14.9px; one step
- * below body text for all of them is what stops the page reading as noise. */
+/* Field labels and property tables: Redoc uses four sizes between 11.7px and 14.9px; one step below body text for all. */
 .apiReference.apiReference h5 {
   font-size: var(--ifm-h5-font-size);
 }
@@ -132,11 +87,7 @@
   font-size: var(--ifm-h5-font-size);
 }
 
-/* Supporting text: the type name and "required" flag in a property table, and
- * the response-code chips. Redoc gives each of these its own size, so a single
- * operation shows five sizes between 12px and 15px doing one job. They inherit
- * their container's instead, leaving the page two steps below its headings:
- * body text, and this. */
+/* Supporting text (type names, "required", response-code chips) inherits its container's size instead of Redoc's per-element sizes. */
 .apiReference.apiReference td span,
 .apiReference.apiReference td div {
   font-size: inherit;
@@ -146,14 +97,12 @@
   font-size: var(--ifm-h5-font-size);
 }
 
-/* One operation. The rule between operations is a border rather than Redoc's
- * ::after (removed above), so it sits above the heading where it separates
- * rather than trailing the last thing in the section. */
+/* A border rather than Redoc's ::after, so the rule sits above the heading it separates. */
 .operation + .operation {
   border-top: 1px solid var(--ifm-color-emphasis-200);
 }
 
-/* The method + path line under an operation title. */
+/* Method + path line under an operation title. */
 .endpoint {
   display: flex;
   gap: 0.6em;

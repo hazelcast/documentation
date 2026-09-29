@@ -16,16 +16,9 @@ import {ApiTocProvider, useApiTocState} from '@site/src/components/ApiReference/
 
 import styles from './styles.module.css';
 
-// Ejected from theme-classic for two reasons. (1) An API-reference page has no
-// MDX headings, so the stock `toc.length > 0` test hides the TOC column on
-// exactly the pages that need it most. Its operations are discovered in the
-// browser and published up from the content
-// (src/components/ApiReference/apiToc.tsx), so the decision also has to consider
-// what has been published so far. (2) The stock `<DocVersionBadge/>` that sat
-// here is gone: it now rides in the badge row that DocItem/Content renders, so
-// the version pill and the page-level badges share one line. Everything else
-// here is stock — keep it that way, and re-diff against theme-classic on
-// upgrade.
+// Ejected from theme-classic: (1) API-reference pages have no MDX headings, so the TOC decision also considers
+// operations published from the content (src/components/ApiReference/apiToc.tsx); (2) the version badge moved into
+// DocItem/Content's badge row. Otherwise stock; re-diff on upgrade.
 
 /**
  * Decide if the toc should be rendered, on mobile or desktop viewports
@@ -57,23 +50,8 @@ export default function DocItemLayout({children}: Props): ReactNode {
   const {metadata} = useDoc();
   const windowSize = useWindowSize();
 
-  // The rail carries the TOC and, under it, the feedback button — so unlike
-  // stock it has to render on a page whose TOC is empty, which is how
-  // production behaves (Antora's main.hbs includes the toc partial
-  // unconditionally, and the feedback block is a sibling of the TOC aside
-  // inside .toc-container, not a child of it). ~690 of our pages have no
-  // headings, so keying the rail on the TOC would lose the button on about a
-  // fifth of the docs.
-  //
-  // `hide_table_of_contents` still suppresses the whole rail: a page that has
-  // asked for the full width gets it, feedback button included. Nothing sets
-  // that today, and the content column is capped at 75% whenever it is unset
-  // (styles.module.css), so the space the rail now always occupies was already
-  // reserved — this widens nothing and narrows nothing.
-  //
-  // Desktop only, as the rail always was. That leaves phones and tablets with
-  // no feedback button, which matches production, where .toc.sidebar is hidden
-  // below 1024px.
+  // The rail holds the TOC and the feedback button, so it renders even when the TOC is empty.
+  // `hide_table_of_contents` still suppresses the whole rail. Desktop only.
   const showRail =
     !docTOC.hidden && (windowSize === 'desktop' || windowSize === 'ssr');
   return (

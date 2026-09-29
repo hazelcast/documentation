@@ -3,25 +3,14 @@ import clsx from 'clsx';
 import Layout from '@theme/Layout';
 import styles from './privacy.module.css';
 
-// The policy text is deliberately NOT held in this repo. It is fetched at
-// runtime from the hazelcast.com WordPress REST API, which is what the Antora
-// site did too (hazelcast-docs-ui/src/layouts/privacy.hbs). Keeping the fetch
-// at runtime means Legal's edits reach this page without a docs rebuild -- the
-// tradeoff is that the policy is invisible to crawlers and to readers with no
-// JavaScript, exactly as it is on the current site.
-//
-// One link inside the fetched HTML -- `<a href="#manage_cookies">` in the
-// "Cookies we use" section -- has no target on this page. Enzuzo's cookiebar
-// bundle claims that href and opens its preferences pane; until that script is
-// loaded site-wide the link does nothing. No code here binds it, and none is
-// needed once Enzuzo is added.
+// The policy is fetched at runtime from the hazelcast.com WordPress REST API, so Legal's edits need no docs
+// rebuild; the tradeoff is that it is invisible to crawlers and to readers without JavaScript.
+// The fetched `<a href="#manage_cookies">` has no target here: the Enzuzo cookie bar claims that href, so no code binds it.
 const POLICY_ENDPOINT = 'https://hazelcast.com/wp-json/wp/v2/pages?slug=privacy';
 const POLICY_FALLBACK = 'https://hazelcast.com/privacy/';
 
-// The payload carries two unscoped <style> blocks whose rules select bare `h2`
-// and `table`, so injecting them would restyle the entire site, not just this
-// page. innerHTML never runs <script>, but it does apply <style>, so both are
-// stripped before injection.
+// The payload's two unscoped <style> blocks select bare `h2` and `table` and would restyle the whole site
+// (innerHTML applies <style> though not <script>), so they are stripped before injection.
 function stripEmbeddedCss(html: string): string {
   return html.replace(/<style[\s\S]*?<\/style>/gi, '');
 }

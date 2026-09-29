@@ -1,14 +1,7 @@
-// Single source of truth for doc variables — values that must stay
-// attributes, never baked (e.g. per-version product version numbers).
-// Bootstrapped from the Antora manifest by migration/converter during the
-// migration; MAINTAIN HERE going forward — update the version values on each
-// product release (via CI or by hand).
-//
-// `variablesBySource`: global/unversioned values grouped by ORIGIN — each
-// docs repo's own antora.yml, or the shared Antora playbook. Grouping is for
-// context/provenance; `variables` is the flat lookup the app consumes.
-// `versionedVariables[component][versionName]`: per-version values
-// (versionName is 'current' for the current docs version, else the release).
+// Single source of truth for doc variables: values kept as attributes, never baked into pages.
+// `variablesBySource` groups global values by origin; `variables` is the flat lookup the app consumes.
+// `versionedVariables[component][versionName]` holds per-version values ('current' or the release name).
+// Update the version values on each product release.
 export const variablesBySource: Record<string, Record<string, string>> = {
   // Global Antora playbook (shared across all docs repos; the rest arrive later)
   "playbook": {
@@ -23,9 +16,7 @@ export const variablesBySource: Record<string, Record<string, string>> = {
   },
 };
 
-// Flattened lookup consumed by <Variable> (src/components/Variable.tsx) and
-// the example-attributes loader. Merged in group order, so a docs-repo value
-// overrides a playbook value on the same name.
+// Flat lookup consumed by <Variable> and the example-attributes loader; later groups override earlier ones.
 export const variables: Record<string, string> = Object.assign(
   {},
   ...Object.values(variablesBySource),

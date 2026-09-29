@@ -1,6 +1,4 @@
-/* The injected strip. The buttons are HIVE's own, so nothing here styles them --
-   this is the row they sit in, coloured from DocSearch's custom properties so it
-   tracks the modal in both themes without a second set of dark-mode rules. */
+/* The injected strip; HIVE's buttons are unstyled here. Coloured from DocSearch's custom properties so it tracks both themes. */
 .host {
   border-block-end: 1px solid var(--docsearch-subtle-color);
   flex-shrink: 0;
@@ -10,8 +8,7 @@
   padding: 10px var(--docsearch-spacing, 12px);
 }
 
-/* HIVE's ButtonGroup is `inline-flex` and does not wrap, so the row scrolls
-   rather than letting the group overrun the modal or squash its labels. */
+/* HIVE's ButtonGroup is inline-flex and doesn't wrap, so the row scrolls. */
 .filters {
   display: flex;
   overflow-x: auto;
@@ -22,8 +19,7 @@
   display: none;
 }
 
-/* Caption and the Ask AI action share a row, so the action costs no extra
-   height. The caption yields first when space is short. */
+/* Caption and Ask AI share a row; the caption yields first. */
 .footer {
   display: flex;
   align-items: center;
@@ -32,9 +28,7 @@
   margin-block-start: 8px;
 }
 
-/* Says what the buttons cannot: the index holds only the latest RELEASE of each
-   product, so a hit is never from an older version -- nor from the snapshot --
-   even though the site serves both. */
+/* The index holds only the latest release of each product, never older versions or the snapshot. */
 .scope {
   color: var(--docsearch-muted-color);
   font-size: 0.75rem;
@@ -43,29 +37,21 @@
   min-width: 0;
 }
 
-/* The label carries the whole query, which has no length limit -- cap it so a
-   long one truncates (HIVE's `truncate`) instead of pushing the caption out. */
+/* The label carries the whole (unbounded) query; truncate it rather than pushing the caption out. */
 .askAi {
   flex-shrink: 0;
   max-width: 55%;
 }
 
-/* HIVE ships no dark palette (see the note in src/css/custom.css), so its
-   outlined buttons come out white inside the dark modal. Rather than override
-   HIVE's own rules, re-point the tokens its outlined variant READS.
-   Only reads can be redirected from here: `--button-bg` and
-   `--button-color-fg-on-light` are set by HIVE on the button element itself, so
-   a value inherited from this strip would lose to them. The tokens behind them
-   are inherited, so those are what these rules move. */
+/* HIVE has no dark palette (see src/css/custom.css), so re-point the tokens its outlined variant reads.
+   Only inherited tokens work: `--button-bg` and `--button-color-fg-on-light` are set on the button itself. */
 [data-theme='dark'] .host {
   --hive-color-neutral-white-v4: var(--docsearch-modal-background);
   --hive-color-surface-hover-v4: var(--docsearch-searchbox-focus-background);
   --hive-color-surface-active-v4: var(--docsearch-searchbox-focus-background);
 }
 
-/* The label colour, on the outlined buttons ONLY. `--hive-color-text-v4` also
-   feeds the contained button's label, and that one sits on brand green in both
-   themes and must stay dark -- so this cannot go on the strip. */
+/* Outlined buttons only: `--hive-color-text-v4` also feeds the contained button's label, which must stay dark. */
 [data-theme='dark'] .outlined {
   --hive-color-text-v4: var(--docsearch-text-color);
 }

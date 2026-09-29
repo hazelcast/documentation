@@ -10,32 +10,10 @@ import {anchorFor} from './anchors';
 import {titleFor} from './title';
 import styles from './styles.module.css';
 
-// One operation, rendered with the site's own components where Redoc's would
-// stand out.
-//
-// Redoc lays an operation out as two panels: a content panel (title,
-// description, parameters, responses) and a dark rail holding the samples. The
-// content panel is kept as-is — `Parameters` and `ResponseView` do the genuinely
-// hard work of rendering a recursive schema, and reimplementing that would be a
-// large amount of code to end up somewhere worse. The rail is what does not
-// belong on a docs page: its own tab widget, its own JSON viewer, its own
-// syntax theme, all styled for a dark full-height column. That half is replaced
-// with @theme/Tabs and @theme/CodeBlock, so a sample here is the same component,
-// with the same copy button and the same highlighting, as a sample anywhere else
-// in the docs.
+// Content panel (Parameters, ResponseView) is Redoc's; the dark samples rail is replaced with the site's Tabs and CodeBlock.
 
-// The heading level a menu item renders at, from its depth in the spec's own
-// structure: a tag group is an h2, an operation inside one is an h3, and what an
-// operation itself is made of is a step below that again — exactly the levels
-// this content would carry if it were written in Markdown on any other page.
-//
-// A spec with no tags (all five Management Center specs) has no group level, so
-// its operations start at h2 and nothing about those pages changes.
-//
-// Clamped at h4 because h5 is already spoken for: it is the level Redoc's own
-// field labels use ("PATH PARAMETERS", "REQUEST BODY SCHEMA"), and an operation
-// heading landing there would read as one of them. Only a spec nesting groups
-// inside groups (`x-tagGroups`) gets deep enough to hit the clamp.
+// Heading level from spec depth: tag group h2, operation h3, its parts one below. Specs without tags start operations at h2.
+// Clamped at h4 because h5 is Redoc's own field-label level.
 const MAX_LEVEL = 4;
 
 type Level = 2 | 3 | 4;
@@ -43,13 +21,10 @@ type Level = 2 | 3 | 4;
 const clampLevel = (level: number): Level => Math.min(level, MAX_LEVEL) as Level;
 const headingTag = (level: number) => `h${clampLevel(level)}` as 'h2' | 'h3' | 'h4';
 
-// `id` has to be unique across every tab in one group: several responses of the
-// same operation commonly share a media type, so the media type alone is not it.
+// `id` must be unique across a group's tabs: several responses commonly share a media type.
 type Payload = {id: string; mime: string; label: string; body: unknown};
 
-// The samples a request or response carries, flattened across media types. Redoc
-// has already resolved $refs and, where the spec gives no example, generated one
-// from the schema — so this only has to read them off the model.
+// Redoc has already resolved $refs and generated examples where the spec has none.
 function payloadsOf(content: MediaContentModel | undefined): Payload[] {
   if (!content) {
     return [];
@@ -60,8 +35,7 @@ function payloadsOf(content: MediaContentModel | undefined): Payload[] {
     const names = Object.keys(examples);
     for (const name of names) {
       const example = examples[name]!;
-      // Name the tab by the media type when there is one example (the usual
-      // case), and by the example when a spec offers several to choose between.
+      // Tab label: the media type, or the example name when a spec offers several.
       payloads.push({
         id: `${mediaType.name}:${name}`,
         mime: mediaType.name,
@@ -83,9 +57,7 @@ function Sample({payload}: {payload: Payload}): React.ReactElement {
   return <CodeBlock language={languageFor(payload.mime)}>{format(payload.body)}</CodeBlock>;
 }
 
-// A single sample renders as a plain code block; several render as tabs. No
-// groupId: the tab choice is per operation, and syncing every operation on the
-// page to one selection would move content the reader is not looking at.
+// No groupId: tab choice is per operation.
 function Samples({
   title,
   level,
@@ -127,13 +99,11 @@ export function ApiOperation({
   const store = useStore();
   const subLevel = level + 1;
   const Sub = headingTag(subLevel);
-  // The heading, and whether it consumed the description (see ./title).
+  // Whether the heading consumed the description (see ./title).
   const {title, usesDescription} = titleFor(operation);
   const httpColors =
     (store?.options.theme.colors as {http?: Record<string, string>} | undefined)?.http ?? {};
-  // Response samples are tabbed by status code, since that is what a reader
-  // picks between; a response offering several media types or examples adds
-  // those to its own label rather than getting a second row of tabs.
+  // Response samples are tabbed by status code; extra media types/examples go in the label.
   const responsePayloads = operation.responses.flatMap((response) => {
     const payloads = payloadsOf(response.content);
     return payloads.map((payload) => ({
@@ -144,17 +114,9 @@ export function ApiOperation({
   });
 
   return (
-    // `data-section-id` is what Redoc's own scroll service looks for, and the
-    // div keeps Redoc's `id` too so an `#operation/…` link still resolves — it
-    // is a real anchor this page used to publish, and it costs nothing to honour.
-    // The anchor the page ADVERTISES is the readable one, and it goes on the
-    // heading, so it is what the hash-link copies and what the TOC points at.
+    // `data-section-id` is for Redoc's scroll service; `id` keeps `#operation/…` links resolving. The advertised anchor goes on the heading.
     <div id={operation.id} data-section-id={operation.id} className={styles.operation}>
-      {/* @theme/Heading, not a bare <h2>: it is what renders the hash-link
-          affordance on every other heading in the docs. Without it these were
-          the one kind of heading on the site a contributor could not get a link
-          to by hovering it — which is how a JSON pointer nobody could have
-          guessed came to be pasted into the AsciiDoc sources by hand. */}
+      {/* @theme/Heading renders the hash-link affordance the rest of the docs have. */}
       <Heading as={headingTag(level)} id={anchorFor(operation)}>
         {title}
       </Heading>
@@ -176,13 +138,7 @@ export function ApiOperation({
         level={subLevel}
         payloads={payloadsOf(operation.requestBody?.content)}
       />
-      {/* Redoc's ResponsesList is this exact markup with its own heading
-          component in place of <Sub> — a styled h3 at 1.3em and weight 400, fixed
-          at that level whatever the operation is. Composing it here instead is
-          what puts the responses heading a step below its operation rather than
-          level with it (and at the same size as "Response samples" beside it);
-          `ResponseView`, which does the recursive schema rendering, is still
-          Redoc's. */}
+      {/* Composed here (not Redoc's ResponsesList, fixed at h3) so the heading sits a level below its operation. */}
       {operation.responses.length > 0 && (
         <div>
           <Sub>Responses</Sub>
@@ -196,13 +152,7 @@ export function ApiOperation({
   );
 }
 
-// Redoc's ContentItems, minus its Operation. Sections — tag groups, and the
-// markdown headings a spec description can introduce — render as a heading plus
-// their description, and their operations nest one level below.
-//
-// Platform's spec is the first in the corpus to use tags: 9 groups over its 50
-// operations. Management Center's five specs declare none, so their menus are
-// flat and every operation stays the h2 it was.
+// Redoc's ContentItems minus its Operation: sections render as a heading plus description, with operations nested one level below.
 export function ApiItems({
   items,
   level = 2,

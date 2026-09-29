@@ -6,9 +6,7 @@ import Heading from '@theme/Heading';
 import MDXContent from '@theme/MDXContent';
 import {TitleBadgeRow, BADGE_KEYS} from '@site/src/components/Badge';
 
-// Overrides the stock theme component so that page-level badges declared in
-// frontmatter (e.g. `dedicated: true`) render above the title, alongside the
-// version badge (TitleBadgeRow renders that one; see src/components/Badge)
+// Overrides the stock component so frontmatter page-level badges render above the title beside the version badge (see src/components/Badge).
 function useSyntheticTitle(): string | null {
   const {metadata, frontMatter, contentTitle} = useDoc();
   const shouldRender =

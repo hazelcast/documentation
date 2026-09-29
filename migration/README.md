@@ -195,6 +195,11 @@ Baseline at wire-up: **73 logical orphan pages** across the migrated set (50 unr
 - The manifest deliberately excludes partials/examples (no URL) — the include graph is separate, unbuilt work.
 - `onBrokenLinks` must be `'warn'` during migration (links point at not-yet-migrated pages); flip to `'throw'` at cutover.
 
+## Cutover checklist
+
+- Disable the Antora site's Algolia scraper workflow (`hazelcast-docs/.github/workflows/index-site.yml`). It builds the old `prod_hazelcast_docs` index with Antora selectors, which match nothing once docs.hazelcast.com serves this site.
+- Purge the Cloudflare cache. It holds 200s for the ~27 root URLs whose canonical form flips from slashed to unslashed (component roots, version roots, Management Center module roots, `/privacy`); they keep working via Netlify's automatic 301 once purged.
+
 ## Status
 
 Built: index pass, golden-snapshot builder (with `--component` scoping for smoke tests), all four gates (fidelity harness, reference checker, construct-coverage gate, orphan gate) and the converter. Not yet built: CI wiring for `npm run check`, orphan triage (populating `orphancheck/allowlist.json` + the redirect-generation step that reads its dispositions), the include graph, Swagger handling.

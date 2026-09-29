@@ -1,16 +1,8 @@
 import {pushDataLayer} from '@site/src/lib/analytics';
 
-// The Kapa half of the search analytics: eight callbacks, each pushing one
-// dataLayer event. Names and parameters are fixed by the GTM container's
-// triggers, not chosen here.
-//
-// Called from kapa.ts immediately after the queueing stub is installed, rather
-// than being its own client module -- registration has to happen after the stub
-// exists, and an explicit call says so where a second entry in the clientModules
-// array would leave it to the order of that array.
-//
-// Registering before the bundle has loaded is fine: each `Kapa('onX', fn)` call
-// goes into the stub's queue and is replayed once the widget drains it.
+// Kapa search analytics: each callback pushes one dataLayer event. Names and parameters are
+// fixed by the GTM container's triggers.
+// Called from kapa.ts right after the queueing stub is installed; calls made before the bundle loads are queued and replayed.
 export function registerKapaAnalytics(): void {
   const Kapa = window.Kapa;
   if (!Kapa) {

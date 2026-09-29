@@ -1,18 +1,6 @@
-/**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
- */
+/* Global styles. */
 
-/* Light theme: Infima primary driven by HIVE's v4 token
- * (--hive-color-primary-v4 from @hazelcast/ui variables.css) — the same teal
- * the shipped v4 components read, so the Docusaurus chrome matches embedded
- * HIVE components. The v4 palette defines only a SINGLE primary stop: the
- * legacy colorPrimaryLight/Dark are shades of the OLD blue primary (a
- * different hue), so they can't anchor the teal ramp. The six shades are
- * therefore derived from the single token with color-mix, in oklch (the
- * token's own space) for perceptually even steps. HIVE ships no dark palette
- * yet, so dark mode is left stock — see the [data-theme='dark'] block below. */
+/* Light theme: Infima primary from HIVE's v4 token, with the shades derived via color-mix in oklch (v4 has only a single primary stop). Dark mode is stock. */
 :root {
   --ifm-color-primary: var(--hive-color-primary-v4);
   --ifm-color-primary-dark: color-mix(in oklch, var(--hive-color-primary-v4) 90%, black);
@@ -24,48 +12,31 @@
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
 
-    /* HIVE typography (fonts loaded via customCss @font-face). */
+  /* HIVE typography (fonts loaded via customCss @font-face). */
   --ifm-font-family-base: var(--hive-font-family-text);
   --ifm-heading-font-family: var(--hive-font-family-heading);
 
-  /* Links: HIVE's dedicated link colour (a blue, distinct from the teal
-   * primary). HIVE and Infima both leave links undecorated and underline on
-   * hover with no colour change, so only the colour is overridden — hover
-   * colour is set to the same token to keep that (no darkening on hover). */
+  /* Links: HIVE's link colour; hover keeps the same colour (underline only). */
   --ifm-link-color: var(--hive-color-link-v4);
   --ifm-link-hover-color: var(--hive-color-link-v4);
 
-  /* Tabs: HIVE colours the active tab (label + underline) with brand-v4.
-   * Same value as primary-v4 today, but pinned to brand-v4 to match HIVE's
-   * own token and stay correct if the two ever diverge. Hover and the
-   * strip-wide bottom rule need selector rules (no Infima vars) — see below. */
+  /* Tabs: active label + underline use brand-v4 (pinned to it rather than primary-v4). Hover and the strip rule are selector rules below. */
   --ifm-tabs-color-active: var(--hive-color-brand-v4);
   --ifm-tabs-color-active-border: var(--hive-color-brand-v4);
 }
 
-/* Feedback widget (PushFeedback): its own tokens, pointed at HIVE's.
- *
- * `html:root` rather than `:root` on purpose. The widget's defaults come from
- * pushfeedback.css, which src/components/FeedbackButton imports, and which
- * declares them on `:root` too — webpack does not guarantee which of the two
- * stylesheets it emits last, so equal specificity would make this a coin toss.
- * The extra element selector settles it whatever the order. */
+/* Feedback widget (PushFeedback): tokens pointed at HIVE's.
+   `html:root` beats pushfeedback.css's `:root` regardless of webpack's stylesheet order. */
 html:root {
-  /* Functional as well as visual: the widget is configured with custom-font so
-   * it no longer pulls Inter from Google Fonts, and without this it would fall
-   * back to Tahoma. */
+  /* Needed so the widget uses HIVE fonts (custom-font is set, so Inter is not fetched) instead of falling back to Tahoma. */
   --feedback-font-family: var(--hive-font-family-text);
   --feedback-modal-header-font-family: var(--hive-font-family-heading);
   --feedback-modal-content-font-family: var(--hive-font-family-text);
-  /* Drives the modal's Send button and its selected-rating accents. The
-   * widget's own button tokens are not set: that button is not rendered, the
-   * trigger is an outlined secondary HIVE Button (src/components/FeedbackButton),
-   * deliberately quieter than the teal so the rail does not compete with the
-   * page. */
+  /* Modal Send button and selected-rating accents. The widget's own button is not rendered; the trigger is src/components/FeedbackButton. */
   --feedback-primary-color: var(--hive-color-primary-v4);
 }
 
-/* Dark mode: unchanged stock Docusaurus palette (HIVE has no dark tokens). */
+/* Dark mode: stock Docusaurus palette (HIVE has no dark tokens). */
 [data-theme='dark'] {
   --ifm-color-primary: #25c2a0;
   --ifm-color-primary-dark: #21af90;
@@ -77,10 +48,7 @@ html:root {
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
 
-/* Tabs: match HIVE's v4 TabList/Tab treatment that Infima variables can't
- * express. HIVE runs a border-v4 rule under the whole tab strip and colours
- * the label teal on hover (no background), whereas Infima gives only the
- * active item a border and shows a grey hover background. */
+/* Tabs: HIVE puts a rule under the whole strip and colours the label on hover (no background); Infima variables can't express that. */
 .tabs {
   border-bottom: var(--hive-border-width) solid var(--hive-color-border-v4);
 }
@@ -89,43 +57,25 @@ html:root {
   background-color: transparent;
 }
 
-/* Inline code: Infima's base `code` rule sets `vertical-align: middle`, which
- * aligns the chip's midpoint to the baseline plus half the parent's x-height —
- * with a monospace ascent taller than Open Sans's that drops the code below the
- * surrounding text (measured 0.68px at 16px body). The Antora UI never set
- * vertical-align, so restoring the CSS default matches the old site exactly.
- * Padding is Antora's own `0.125em 0.25em` (doc.css `.doc p code`); Infima's
- * 0.1rem on all four sides left the chip hugging the text horizontally. Both
- * scoped off `pre` so code blocks keep Infima's treatment untouched. */
+/* Inline code: Infima's `vertical-align: middle` drops the chip below the text; Antora's baseline and padding are restored. Scoped off `pre`. */
 :not(pre) > code {
   vertical-align: baseline;
   padding: 0.125em 0.25em;
 }
 
-/* Tables: translate HIVE's v4 SimpleTable (@hazelcast/ui SimpleTable.module.css,
- * the "surface" variant) onto native markdown tables — bordered + rounded, a
- * tinted header, and row separator lines (SimpleTable uses separators, not
- * zebra). Cells keep the body font (SimpleTable's data-oriented siblings use
- * monospace; prose shouldn't). The three themeable colours go through local
- * custom properties so dark mode is a single override — HIVE has no dark
- * palette, so dark falls back to Infima emphasis tokens. Scoped to .markdown
- * so it can't affect other tables. */
+/* Tables: HIVE's v4 SimpleTable "surface" variant on native markdown tables. Colours go through local custom properties so dark mode is one override. Scoped to .markdown. */
 .markdown table {
   --table-border: var(--hive-color-border-v4);
   --table-header-bg: var(--hive-color-surface-active-v4);
   --table-header-fg: var(--hive-color-text-secondary-v4);
 
-  /* SimpleTable uses row separators, not zebra — turn off Infima's default
-   * tr:nth-child(2n) striping (inherited by rows via this custom property). */
+  /* No zebra striping (SimpleTable uses row separators). */
   --ifm-table-stripe-background: transparent;
 
   display: table;
   width: 100%;
   max-width: 100%;
-  /* separate (not SimpleTable's collapse): border-collapse:collapse draws the
-   * border square and ignores border-radius, so the surface variant's rounded
-   * corners never round. separate + border-spacing:0 keeps the seamless look
-   * while letting the radius apply. */
+  /* separate, not collapse: collapse ignores border-radius. */
   border-collapse: separate;
   border-spacing: 0;
   margin-bottom: var(--ifm-spacing-vertical);
@@ -152,13 +102,7 @@ html:root {
   border-top: var(--hive-border-width) solid var(--table-border);
 }
 
-/* Admonitions in HIVE colours (light mode only — HIVE has no dark palette, so
- * dark keeps Docusaurus's stock admonition colours). Each Infima alert variant
- * gets a HIVE accent token (--hive-adm), then one shared rule drives the left
- * border + a light lab() tint of that accent for the background — the same
- * lab(from …) recipe HIVE's Badge uses. Types map via their variant: note→
- * secondary, tip→success, info/important→info, warning/caution→warning,
- * danger→error. */
+/* Admonitions in HIVE colours (light mode only). Each Infima alert variant sets a HIVE accent (--hive-adm); one shared rule derives the border and a lab() tint (as HIVE's Badge does). */
 :root:not([data-theme='dark']) .theme-admonition.alert--secondary {
   --hive-adm: var(--hive-color-text-secondary);
 }
@@ -176,15 +120,11 @@ html:root {
 }
 :root:not([data-theme='dark']) .theme-admonition[class*='alert--'] {
   --ifm-alert-border-color: var(--hive-adm);
-  /* Pale tint: high lightness + damped chroma (a/b scaled down) so the accent
-   * reads as a soft wash, not a vivid fill. */
+  /* Pale tint: high lightness, damped chroma. */
   --ifm-alert-background-color: lab(from var(--hive-adm) 97% calc(a * 0.4) calc(b * 0.4));
 }
 
-/* Footer: the production Antora footer is a single centered row of links, not
- * Infima's stacked columns. There's one link column, so centering the row and
- * turning the item list into a centered flex row lays all three links out
- * horizontally on one line. */
+/* Footer: a single centered row of links rather than Infima's stacked columns. */
 .footer__links {
   justify-content: center;
   margin-bottom: 0;
@@ -204,37 +144,17 @@ html:root {
   margin: 0;
 }
 
-/* Right-hand navbar order. Docusaurus renders the configured right items in
- * order and then appends the color-mode toggle after all of them, which strands
- * the toggle between Ask AI and the CTA. The row is a flex container, so `order`
- * sets the intended sequence instead:
- *
- *   version selector | theme toggle | search | Ask AI | CTA
- *
- * Only the items that have to move carry a value — search and Ask AI keep the
- * default 0 and fall between them in DOM order. The toggle's class is a CSS
- * module, so match its stable source-name prefix, not the hashed suffix.
- *
- * Spacing is left alone deliberately: every neighbour already contributes 12px
- * of its own (the version dropdown's and the search container's outer padding,
- * the CTA's margin), so the row reads evenly. Giving the toggle a margin too
- * stacks with the search container's and opens a 24px hole beside it. The CTA's
- * margin IS needed — Ask AI's padding is inside its background, so without it
- * the two buttons touch. */
+/* Right-hand navbar order: Docusaurus appends the color-mode toggle after all items, so `order` fixes the sequence:
+   version selector | theme toggle | search | Ask AI | CTA
+   The toggle's class is a CSS module, so match its stable prefix. Spacing is left alone, but the CTA needs its margin or it touches Ask AI. */
 .navbar__items--right > .navbar__item.dropdown {
   order: -2;
 }
 .navbar__items--right > [class*='colorModeToggle'] {
   order: -1;
 
-  /* The toggle is a 32px hit target around an 18px glyph, so it carries ~7px of
-   * invisible space on each side. Every other control here has a border or a
-   * filled background, so its box edge IS what the eye measures to, and the row
-   * otherwise runs on 12px; uncorrected, the gaps flanking the toggle read as
-   * 19px. Negative margin rather than a smaller button, so the 32px target
-   * survives. The left side then adds a deliberate extra gap, separating the
-   * toggle from the version dropdown -- the only two controls here with no
-   * border or fill, which otherwise run together. */
+  /* The 32px toggle has ~7px of invisible space per side; a negative margin corrects the optical gap while keeping the hit target.
+   * The extra left gap separates it from the borderless version dropdown. */
   --toggle-optical: -7px;
   --toggle-extra-left: 8px;
 
@@ -246,32 +166,15 @@ html:root {
   margin-left: var(--ifm-navbar-item-padding-horizontal);
 }
 
-/* Kapa widget: give its host a stacking context of its own.
- *
- * Kapa mounts into a `position: static; z-index: auto` div, which establishes no
- * stacking context, so the widget's internal z-indexes compete directly with the
- * page's -- and the navbar sits at --ifm-z-index-fixed (200). Kapa's answer is
- * `data-modal-z-index`, which lifts the modal but NOT Mantine's popover layer
- * (modal 200 / popover 300 by default), so raising it above 300 renders every
- * tooltip inside the modal beneath the modal.
- *
- * Lifting the HOST instead fixes both halves: the widget as a whole clears the
- * navbar, and Mantine's internal 200 < 300 ordering is left intact, so tooltips
- * land on top of the modal where they belong. See src/clientModules/kapa.ts,
- * which deliberately passes no `data-modal-z-index`. */
+/* Kapa widget: give its host its own stacking context. Raising `data-modal-z-index` lifts the modal but puts Mantine's tooltips beneath it,
+   so the host is lifted instead (see src/clientModules/kapa.ts, which deliberately passes no `data-modal-z-index`). */
 #kapa-widget-container {
   position: relative;
   z-index: 10001;
   isolation: isolate;
 }
 
-/* Below Infima's navbar breakpoint the burger menu takes over: Infima hides the
- * nav items with `.navbar__item { display: none }`, and Docusaurus hides the
- * colour toggle, leaving only the burger, the brand and search in the bar. The
- * HIVE buttons are raw <button>/<a> and never carry `.navbar__item`, so they
- * survive that rule and overlap the search box. Hide them here instead; the
- * burger sidebar renders its own full-width copies (see NavbarAskAi/NavbarCta,
- * which switch markup on the `mobile` prop). */
+/* Below the burger breakpoint, hide the HIVE buttons: they lack `.navbar__item`, so Infima's hide rule misses them and they overlap search. The burger sidebar renders its own copies. */
 @media (max-width: 996px) {
   .navbar__items--right > .navbar-ask-ai,
   .navbar__items--right > .navbar-cta {
@@ -279,39 +182,27 @@ html:root {
   }
 }
 
-/* Search button label: DocSearch hardcodes `font-size: 1rem` on the placeholder
- * and inherits weight 400, exposing no --docsearch-* variable for either, so
- * "Search" renders 16px/400 next to the 14px/500 HIVE buttons beside it. Match
- * the tokens those buttons use. */
+/* DocSearch hardcodes the placeholder font-size/weight with no variable; match the neighbouring HIVE buttons. */
 .navbar .DocSearch-Button-Placeholder {
   font-size: var(--hive-font-size-button-small);
   font-weight: var(--hive-font-weight-text-medium);
 }
 
-/* Doc sidebar (scoped to .theme-doc-sidebar-menu so the mobile navbar menu,
- * which reuses .menu, is untouched):
- *  - top-level items get HIVE's bold text weight to stand out from nested
- *    items (both collapsible categories and plain links live at level 1);
- *  - the whole tree is tightened vertically a touch — smaller link padding and
- *    inter-item margin than Infima's 0.375rem / 0.25rem defaults. */
+/* Doc sidebar (scoped so the mobile navbar menu, which reuses .menu, is untouched): bold top-level items, tighter vertical spacing. */
 .theme-doc-sidebar-item-category-level-1 > .menu__list-item-collapsible > .menu__link,
 .theme-doc-sidebar-item-link-level-1 > .menu__link {
   font-weight: var(--hive-font-weight-text-bold);
 }
 .theme-doc-sidebar-menu {
   --ifm-menu-link-padding-vertical: 0.35rem;
-  /* Between HIVE's body-small (0.875rem) and body-normal (1rem) — no token at
-   * this step, so a literal 15px. */
+  /* Between body-small and body-normal; no token at this step. */
   font-size: 0.9375rem;
 }
 .theme-doc-sidebar-menu .menu__list-item:not(:first-child) {
   margin-top: 0.2rem;
 }
 
-/* Asciidoctor callout numbers (conums) in code blocks. Ported from the Antora
-   UI (hazelcast-docs-ui doc.css): render the empty <i class="conum"> as a
-   circled number and hide the (N) fallback text. The swizzled CodeBlock
-   (src/theme/CodeBlock) emits this markup for lines flagged via `conums`. */
+/* Asciidoctor callout numbers (conums) as circled numbers; the swizzled CodeBlock emits this markup. */
 .conum[data-value] {
   border: 1px solid currentcolor;
   border-radius: 100%;
@@ -334,43 +225,27 @@ html:root {
   display: none;
 }
 
-/* Callout (conum) list under a code block (the <CodeCallouts> component): indent
-   the whole block from the body so the annotations read as belonging to the code
-   above. Tune the indent here. */
+/* Callout list under a code block (<CodeCallouts>): indented so the annotations read as part of the code above. */
 .conum-list {
   padding-left: 1.5rem;
 }
 .conum-item {
   margin: 0.4rem 0;
 }
-/* In the list the badge starts the line, so drop the leading margin the in-code
-   badge uses and add a little space before the description instead. */
+/* In the list the badge starts the line: drop the in-code leading margin and space it from the description. */
 .conum-item .conum[data-value] {
   margin-left: 0;
   margin-right: 0.5em;
 }
 
-/* A table that carries a <colgroup> has author-specified column proportions,
-   converted from the AsciiDoc `[cols="1a,1a,1m,2a"]` spec. Under the default
-   `table-layout: auto` those percentages are only a hint: the browser still
-   sizes columns from their content, so a cell holding a tab set re-flowed the
-   whole table whenever the reader switched XML/YAML — the column grew or shrank
-   to fit whichever snippet was showing. `fixed` makes the declared widths
-   authoritative, so the geometry is stable across tab switches and the reader's
-   eye stays where it was. Scoped to tables that actually declare widths: a
-   markdown pipe table has no colgroup and keeps content-based sizing. */
+/* A table with a <colgroup> has declared column widths; `fixed` makes them authoritative so a tab switch in a cell does not reflow the table. */
 .markdown table:has(> colgroup) {
   table-layout: fixed;
-  /* Required, not decorative: under `fixed` the column widths are resolved
-     against the TABLE's width, and the colgroup declares them as percentages.
-     Without an explicit width the table has none to resolve against and
-     collapses to a couple of pixels. */
+  /* Required: under `fixed` the percentages need an explicit table width to resolve against, or the table collapses. */
   width: 100%;
 }
 
-/* Block-image captions (a `.Title` on an Antora `image::`, emitted as
-   <figure>/<figcaption> by the converter). Antora renders these as a muted
-   caption under a centred image; without a rule they read as body prose. */
+/* Block-image captions (<figure>/<figcaption> from the converter): muted caption under a centred image. */
 .markdown figure {
   display: flex;
   flex-direction: column;

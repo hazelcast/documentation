@@ -7,22 +7,8 @@ import PromoBanner from '@site/src/components/PromoBanner';
 import {resolveLatest, type LatestSegs} from '../remark/latestLinks';
 import styles from './index.module.css';
 
-// The site landing page, replacing the Antora one — which was not a content page
-// at all: `home/modules/ROOT/pages/index.adoc` is four lines of attributes and
-// every card lived in the UI template (hazelcast-docs-ui body-home.hbs). So
-// there is nothing here for the converter to convert, and `/home/` is registered
-// in migration/lib/layout.js SITE_PAGES to say so.
-//
-// Reproduces production's eight cards and their thirty-two links verbatim.
-// Deliberately NOT reproduced: the Tutorials and "New and Popular" cards, the
-// centred search box and Ask AI button (the navbar carries those), the per-card
-// icons, the two linked card titles, and the "Was this helpful?" footer. The
-// hero's background image and gradient-fill heading, and the WordPress-fed promo
-// bar, ARE reproduced -- see <PromoBanner/>.
-//
-// Antora served this page at `/home/` with `/` bouncing to it; here the page is
-// `/` and `/home` redirects in (see the client-redirects entry in
-// docusaurus.config.ts).
+// Site landing page (`/`; `/home` redirects here via client-redirects in docusaurus.config.ts). It has no
+// source content page, so the cards live here. The navbar carries search and Ask AI, so they are not repeated.
 
 type CardLink = {label: string; to: string};
 
@@ -48,9 +34,7 @@ const CARDS: {title: string; links: CardLink[]}[] = [
   {
     title: 'Hazelcast Platform',
     links: [
-      // The one link production pins to a version rather than the alias, and it
-      // stays pinned: the label names the release, so both halves have to move
-      // together when the next one ships.
+      // Pinned to a version on purpose: the label names the release, so both must change together.
       {label: 'What\'s new in 5.7', to: '/hazelcast/5.7/whats-new'},
       {label: 'Available topologies', to: '/hazelcast/latest/deploy/choosing-a-deployment-option'},
       {label: 'Community vs. Enterprise', to: '/hazelcast/latest/getting-started/editions'},
@@ -100,8 +84,7 @@ const CARDS: {title: string; links: CardLink[]}[] = [
     title: 'Tools',
     links: [
       {label: 'Management Center', to: '/management-center/latest/getting-started/overview'},
-      // The component root: `/operator/latest/` resolves to the version root,
-      // which is a real page (its get-started index carries `slug: /`).
+      // The component root resolves to the version root, a real page (its index carries `slug: /`).
       {label: 'Platform Operator', to: '/operator/latest/'},
       {label: 'Command Line Client (CLC)', to: '/clc/latest/overview'},
       {label: 'Plugins', to: '/hazelcast/latest/plugins/hazelcast-plugins'},
@@ -126,11 +109,8 @@ export default function Home(): ReactNode {
     <Layout
       description="Find user guides, code samples, tutorials, API reference, and more."
       wrapperClassName={styles.wrapper}>
-      {/* The hero and the promo bar are outside `.page` so both span the
-          viewport, as production's do -- `.page` is a centred 1440px column
-          with its own padding, and breaking out of it would need a 100vw trick
-          that overflows when a scrollbar is present. Same order as production:
-          hero band, then bar, then cards. */}
+      {/* The hero and promo bar sit outside `.page` so both span the viewport; breaking out of the centred
+          column would need a 100vw trick that overflows when a scrollbar is present. */}
       <header className={styles.hero}>
         <h1>Hazelcast Documentation</h1>
         <p>Find user guides, code samples, tutorials, API reference, and more.</p>
@@ -139,11 +119,8 @@ export default function Home(): ReactNode {
       <main className={styles.page}>
         <div className={styles.grid}>
           {CARDS.map((card) => (
-            // The heading is rendered here rather than through HIVE's `title`
-            // prop: that prop's styling is a 1rem/700 label set by a
-            // three-class rule (`.bordered .heading .title`), which no
-            // single-class override from a CSS module can outrank without an
-            // escalation war. Own markup, own type scale, no !important.
+            // Rendered here rather than through HIVE's `title` prop: its three-class rule
+            // (`.bordered .heading .title`) can't be outranked from a CSS module without !important.
             <Card
               key={card.title}
               variant="bordered"

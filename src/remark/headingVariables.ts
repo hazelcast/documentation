@@ -1,20 +1,8 @@
-// Resolve `<Variable name="…"/>` inside headings to its text, at MDX compile time.
+// Resolve `<Variable name="…"/>` inside headings to its text at MDX compile time.
 //
-// WHY. Docusaurus builds each table-of-contents entry as an HTML string from the
-// heading's MDX (mdx-loader remark/toc/utils.js, mdxJsxTextElementToHtml), and
-// for a JSX element it keeps only the tag name and className. So
-// `## <Variable name="enterprise-product-name"/> versus …` reaches the TOC as
-// `<Variable></Variable> versus …` and renders as just "versus". Swizzling the
-// TOC cannot help: the name is already gone by then.
-//
-// Resolved here, not baked by the converter: the MDX keeps its <Variable>, and
-// the value comes from src/variables.ts on every build, with the same lookup
-// <Variable> itself uses (per-version values win over global ones, an unknown
-// name renders as the name). Must run BEFORE Docusaurus's own TOC plugin, so it
-// is registered through `beforeDefaultRemarkPlugins`.
-//
-// Only the name form. Link-mode <Variable href text/> is left alone; no heading
-// uses it.
+// Docusaurus builds TOC entries from the heading's MDX and keeps only the tag name of JSX elements, so the value would be lost.
+// Same lookup as <Variable> (per-version wins, unknown name renders as the name).
+// Must run before Docusaurus's TOC plugin, so register via `beforeDefaultRemarkPlugins`. Name form only.
 import path from 'path';
 import {variables, versionedVariables} from '../variables';
 
@@ -26,8 +14,7 @@ type Node = {
   children?: Node[];
 };
 
-// The docs instance's version for a source file: `<id>_versioned_docs/version-X/…`
-// is release X, anything else is the current version.
+// Version of the source file: `<id>_versioned_docs/version-X/…` is X, anything else is current.
 function versionOf(pluginId: string, filePath: string): string {
   const rel = path.relative(path.resolve(__dirname, '../..'), filePath).split(path.sep);
   return rel[0] === `${pluginId}_versioned_docs` && rel[1]?.startsWith('version-')

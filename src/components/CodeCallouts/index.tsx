@@ -1,20 +1,8 @@
 import React, {type ReactNode} from 'react';
 
-// The callout list that explains an annotated code block's `<N>` markers.
-//
-// Authors write a plain Markdown numbered list inside <CodeCallouts>:
-//
-//   <CodeCallouts>
-//   1. Cluster recovery policy.
-//   2. Size of the PVC.
-//   </CodeCallouts>
-//
-// Each item renders with the same circled callout badge (`.conum`) as the
-// in-code markers, indented from the body via `.conum-list` (src/css/custom.css).
-// The number is emitted as real text in <b> (styled away, shown as the circle),
-// so it reads as "1 Cluster recovery policy." — matching Asciidoctor's colist,
-// which is a table (not a list), so we deliberately render no top-level <li>.
-// Registered globally in src/theme/MDXComponents.tsx: no import needed in MDX.
+// Callout list for an annotated code block's `<N>` markers: a Markdown numbered list inside <CodeCallouts>,
+// each item shown with the circled `.conum` badge (src/css/custom.css). No top-level <li> is rendered.
+// Registered globally in src/theme/MDXComponents.tsx.
 
 function calloutItems(children: ReactNode): React.ReactElement[] {
   const top = React.Children.toArray(children).filter(React.isValidElement);
@@ -28,13 +16,9 @@ function calloutItems(children: ReactNode): React.ReactElement[] {
   ) as React.ReactElement[];
 }
 
-// A loose Markdown list wraps each item's content in a <p>. Unwrap a leading <p>
-// so the number and the item's first line render on ONE line next to the badge
-// (any further blocks — a nested list — follow after). This matches how the
-// golden colist reads the row and keeps the fidelity text compare aligned.
+// Unwrap the leading <p> of a loose list item so the number and first line sit on one line beside the badge.
 function itemContent(li: React.ReactElement): ReactNode[] {
-  // Drop whitespace-only text nodes first — a loose item's children begin with a
-  // "\n" node, which would otherwise hide the leading <p>.
+  // Drop whitespace-only text nodes first: a loose item starts with a "\n" node that would hide the leading <p>.
   const kids = React.Children.toArray(li.props.children).filter(
     (k) => React.isValidElement(k) || (typeof k === 'string' && k.trim() !== ''),
   );

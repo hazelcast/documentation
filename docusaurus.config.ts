@@ -2,62 +2,25 @@ import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 import {redirects} from './src/redirects';
-// The docs plugin instances. One shared factory per kind (unversioned /
-// versioned) holds everything the components have in common, and derives each
-// versioned component's version set from its <id>_versions.json and its current
-// version from src/currentVersions.json.
 import {docs, versionedDocs, versionedInstances, latestSegs, isSnapshotUrl} from './src/docsPlugins';
-// The single source of doc variables, also handed to the example-attributes
-// build loader so co-located example files resolve their {attribute}
-// placeholders per version at build (one file, no generated twin).
 import {variables, versionedVariables} from './src/variables';
-
-// This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
   title: 'Hazelcast Documentation',
   tagline: 'Hazelcast product documentation',
   favicon: 'img/favicon.ico',
 
-  // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
-    v4: true, // Improve compatibility with the upcoming Docusaurus v4
+    v4: true,
   },
 
-  // The production url. Matches the Antora playbook's `site.url`, and is not
-  // cosmetic: it is the origin baked into every canonical tag and every
-  // sitemap entry, so a placeholder here ships a sitemap pointing at a domain
-  // that does not exist.
+  // The origin baked into every canonical tag and sitemap entry.
   url: 'https://docs.hazelcast.com',
-  // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
 
-  // Emit `page.html`, not `page/index.html`, so a page's URL carries no
-  // trailing slash. This reproduces the Antora site's URL shape on the host
-  // that serves it (Netlify behind Cloudflare), measured against production
-  // rather than inferred.
-  //
-  // Netlify has no site-wide slash convention: it derives the canonical form
-  // per path from the file layout, and 301s the other form to it in BOTH
-  // directions. Under Antora's `html_extension_style: drop` a page is a file,
-  // so `/cloud/overview` is canonical and `/cloud/overview/` 301s to it. That
-  // is what `false` reproduces, for ~3,355 of ~3,375 URLs byte-for-byte, and
-  // it is the form the sitemap and canonical tags already advertise -- leaving
-  // this unset made every canonical URL a redirect.
-  //
-  // `false` does create 27 places where a file sits next to a directory of the
-  // same name (`hazelcast/5.7.html` beside `hazelcast/5.7/`), which is the one
-  // shape worth checking before trusting a host. Production already contains
-  // it -- `/management-center/5.10/getting-started` is a file with a directory
-  // of children beside it -- and Netlify resolves it correctly: the file wins
-  // for the bare path, the slash form 301s to it, the children are unaffected.
-  // So no explicit trailing-slash redirects are needed for those 27 roots.
-  //
-  // The ~27 root URLs whose canonical form flips from slashed to unslashed
-  // (component roots, version roots, the Management Center module roots,
-  // `/privacy`) keep working via that automatic 301. Purge the Cloudflare
-  // cache at cutover: it is holding 200s for them.
+  // Netlify canonicalizes slashes from the file layout, so this reproduces
+  // Antora's URL shape (`/cloud/overview` canonical, the slashed form 301s to
+  // it) with no explicit redirects.
   trailingSlash: false,
 
   headTags: [
@@ -68,12 +31,7 @@ const config: Config = {
     },
   ],
 
-  // '.api-specs' is where plugins/openapi-specs stages the OpenAPI specs it
-  // fetches from the product repos: gitignored, rebuilt every run, and listed
-  // here so Docusaurus copies it on `build` and serves it on `start` exactly as
-  // it does `static`. That is what republishes each spec at the attachment URL
-  // the Antora site uses, which Redoc's "Download OpenAPI specification" button
-  // links to.
+  // '.api-specs' is staged by plugins/openapi-specs; listing it here serves it like `static`.
   staticDirectories: ['static', '.api-specs'],
 
   onBrokenLinks: 'throw',
@@ -82,18 +40,10 @@ const config: Config = {
   markdown: {
     hooks: {
       onBrokenMarkdownLinks: 'throw',
-      // Images are co-located with the pages that use them and referenced by a
-      // relative path, so webpack resolves and fingerprints each one. A missing
-      // image is a real error (a page migrated without its assets), so fail the
-      // build on it -- that build-time guarantee is why we co-locate rather than
-      // dump into static/. migration/extract-images.js places the images.
       onBrokenMarkdownImages: 'throw',
     },
   },
 
-  // Even if you don't use internationalization, you can use this field to set
-  // useful metadata like html lang. For example, if your site is Chinese, you
-  // may want to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
     locales: ['en'],
@@ -103,43 +53,14 @@ const config: Config = {
     [
       'classic',
       {
-        // The default docs preset instance and blog are disabled: every
-        // migrated component is its own plugin-content-docs instance (see the
-        // `cloud` plugin below), and the site has no blog.
         docs: false,
         blog: false,
-        // Google Tag Manager container GTM-MQ59XD6, the same one the Antora site
-        // loads. The container is the ONLY thing this repo declares about
-        // analytics or consent, deliberately: the Enzuzo cookie banner is a tag
-        // inside it (the "Enzuzo Cookie Manager" template, on the Consent
-        // Initialization trigger), which is both Enzuzo's documented install and
-        // what production already runs.
-        //
-        // The Antora theme ALSO hardcodes the Enzuzo bundle in <head>, so every
-        // production page loads the banner twice and the bundle says so:
-        // "[enzuzo] more than one cookie banner was attempted to be loaded".
-        // That second copy is `defer`red and sits after the GTM snippet, so it
-        // could never set Consent Mode defaults in time and is pure liability --
-        // Enzuzo's own guidance is to deploy via GTM and NOT hardcode, because
-        // hardcoding creates conflicting sources of truth. Not reproducing it is
-        // the fix; there is deliberately no Enzuzo <script> anywhere in this repo.
-        //
-        // Consequences worth knowing. The plugin is a NO-OP unless
-        // NODE_ENV=production, so neither GTM nor the banner appears under
-        // `docusaurus start` -- use `build` + `serve` to see either. And a reader
-        // blocking googletagmanager.com gets no banner and an inert
-        // `#manage_cookies` link on /privacy; accepted, since that reader is
-        // blocking every tag the banner exists to gate.
+        // The container also loads the Enzuzo cookie banner, so there is deliberately
+        // no Enzuzo script in this repo. Runs only when NODE_ENV=production.
         googleTagManager: {
           containerId: 'GTM-MQ59XD6',
         },
-        // Snapshot versions are dropped from the sitemap. Their pages already
-        // canonical to the latest release, so listing them would ask Google to
-        // index pages we have just told it to treat as duplicates of another
-        // URL. This changes nothing else: snapshot docs stay built, linked,
-        // navigable and reachable — a sitemap is a crawl invitation, not an
-        // access control. Which segments count is derived from the version
-        // config, so a release or an archived version needs no edit here.
+        // Snapshot pages canonical to the latest release, so keep them out of the sitemap.
         sitemap: {
           createSitemapItems: async ({defaultCreateSitemapItems, ...params}) => {
             const items = await defaultCreateSitemapItems(params);
@@ -147,9 +68,6 @@ const config: Config = {
           },
         },
         theme: {
-          // HIVE v4 design tokens (:root CSS custom props) + brand fonts, both
-          // shipped by @hazelcast/ui. v4 components read var(--hive-*) and the
-          // @font-face families from here, or render unstyled/with fallback type.
           customCss: [
             require.resolve('@hazelcast/ui/styles/variables.css'),
             require.resolve('@hazelcast/ui/styles/typography/open-sans.css'),
@@ -162,121 +80,37 @@ const config: Config = {
   ],
 
   plugins: [
-    // Compiles HIVE's shipped .module.scss (Button.module.scss, constants,
-    // helpers) so swizzled components can import them.
     'docusaurus-plugin-sass',
 
-    // Registers the example-attributes loader so co-located example files keep
-    // their Antora {attribute} placeholders (byte-faithful, single-sourced) and
-    // have them substituted per-version at build. Fed from src/variables.ts.
+    // Substitutes {attribute} placeholders in example files per version.
     ['./plugins/example-attributes', {variables, versionedVariables}],
 
-    // Platform docs — migration target #5 and the biggest by a wide margin: 439
-    // pages over 46 Antora modules. The plugin id is the Antora component name
-    // `hazelcast`, because that is the URL segment production serves it at
-    // (/hazelcast/<version>/sql/…); the navbar calls it "Platform", which is
-    // the product's name. Its main is a NUMBERED snapshot like MC's — published
-    // under `X.Y-snapshot`, displayed `X.Y-SNAPSHOT` — and because it is
-    // unreleased, the dropdown lands on the newest release, as production does.
-    versionedDocs('hazelcast'),
-    // Cloud docs — migration target #1. Unversioned: the only version is served
-    // at the base path with no version segment, and routeBasePath === the Antora
-    // component name, so URLs match production exactly (/cloud/<page>).
+    versionedDocs('hazelcast'), // navbar label "Platform"
     docs('cloud'),
-    // Tutorials — migration target #6. Unversioned, and the first NAV-LESS
-    // component: its 57 pages are one flat set reached from the /tutorials index,
-    // never a sidebar (Antora serves them through a TOC-only layout with no nav
-    // tree), so nothing here declares a sidebar and the pages carry no
-    // sidebar_position. The component is assembled from 56 hazelcast-guides
-    // repos plus one bespoke page in cloud-docs; only the prose is migrated,
-    // the runnable code stays in the guide repos.
     docs('tutorials'),
-    // Operator docs — migration target #2 and the VERSIONED warm-up before
-    // Platform (same `main + v/*` Antora branch model). Antora serves main at
-    // `/operator/latest-snapshot/` and the dropdown lands on the newest release;
-    // releases older than the live set are frozen as static HTML outside this
-    // build. The live set itself is operator_versions.json.
     versionedDocs('operator'),
-    // CLC docs — migration target #3 and the SECOND versioned instance. Unlike
-    // operator, clc's `main` declares itself the released version rather than a
-    // `-snapshot` line, so it has no `latest-snapshot` render: the current version
-    // is served under its own numeric seg and is what the dropdown lands on. Only
-    // the previous release is cut as a versioned copy, matching the two versions
-    // clc serves in production.
     versionedDocs('clc'),
-    // Management Center docs — migration target #4, and the first MULTI-MODULE
-    // component: its 102 pages live in 11 Antora modules, whose names are URL
-    // segments (/management-center/<version>/clusters/dashboard), so a page is
-    // identified by module + stem rather than stem alone. Its main is a NUMBERED
-    // snapshot — published under `X.Y-snapshot`, displayed as `X.Y-SNAPSHOT` —
-    // and the dropdown lands on the newest release, as production does.
     versionedDocs('management-center'),
-    // Reproduces Antora's page-aliases as static meta-refresh redirect stubs at
-    // the old URLs, so existing bookmarks/inbound links still land on the moved
-    // page. Pairs are generated from the manifest into src/redirects.ts by the
-    // converter; matches production's default ('static') Antora redirect facility.
     [
       '@docusaurus/plugin-client-redirects',
       {
-        // The generated table plus one entry that is not the migration's to
-        // generate. Antora served the landing page at `/home/` and bounced `/`
-        // to it (playbook `site.start_page: home::index.adoc`); here the page IS
-        // `/` (src/pages/index.tsx), so the bounce reverses. It lives out here
-        // rather than in src/redirects.ts because that file is regenerated whole
-        // from the manifest on every converter run, and this pair comes from
-        // neither a page-alias nor an orphan decision -- it is the site's own
-        // shape, and has to outlive the migration tooling.
+        // '/home' is kept out of src/redirects.ts because that file is regenerated whole.
         redirects: [...redirects, {from: '/home', to: '/'}],
       },
     ],
-    // Emits /api/cloud.json at build time from the cloud docs' cloud_* frontmatter
-    // — the console index the Hazelcast Cloud console fetches. Permanent
-    // replacement for the Antora api-json.js extension; see plugins/cloud-console-index.
+    // Emits /api/cloud.json for the Cloud console.
     './plugins/cloud-console-index',
-    // Stages the OpenAPI specs the <ApiReference/> pages render, fetching each
-    // from the product repo that owns it at the branch that version's
-    // {…-swagger-branch} attribute names. Given every versioned component: it
-    // only fetches for the pages that declare an <ApiReference/>. See
-    // plugins/openapi-specs.
     ['./plugins/openapi-specs', {variables, versionedVariables, docs: versionedInstances}],
-    // Stages the example files the tutorial pages import. Their source of truth is
-    // the guide repo that owns each one — nothing is copied into this repo, only
-    // referenced from tutorials/examples.json at a pinned commit. See that plugin.
     './plugins/tutorial-examples',
-    // Collects the `tutorial_*` card frontmatter the converter writes onto each
-    // tutorial and hands it to src/pages/tutorials.tsx as global data — the
-    // replacement for Antora's landing page, which read the content catalog.
     './plugins/tutorials-index',
-    // Emits /llms.txt — the index an LLM or coding agent reads to find its way
-    // around the docs. Covers the current release of each component only (the
-    // version Docusaurus marks `isLast`, so snapshots are excluded exactly as
-    // they are from the sitemap). Written in postBuild from the docs plugins'
-    // own loaded content; see plugins/llms-txt for why that hook, and for where
-    // the later llms-full.txt / per-page .md pass will attach.
     './plugins/llms-txt',
   ],
 
-  // Handed to the client bundle for the landing page's card links, which are
-  // written as `/<comp>/latest/...` and resolved at render by resolveLatest
-  // (src/remark/latestLinks.ts). A React page gets no remark pass, so without
-  // this the twenty `/latest/` hrefs on `/` would each be reported broken --
-  // <Link> collects its href for the checker, and the alias is host
-  // infrastructure rather than a route. Same contract as the MDX side: a version
-  // cut re-points every one of them with no content change.
+  // Lets the landing page resolve its `/<comp>/latest/` links (no remark pass runs on React pages).
   customFields: {latestSegs},
 
-  // Loads the Kapa AI widget and keeps its cookie in step with Enzuzo's consent
-  // state. Not prod-gated like the GTM container: the widget is a feature of the
-  // site, so it runs on the dev server too.
   clientModules: [
     require.resolve('./src/clientModules/kapa.ts'),
-    // Defines the PushFeedback widget's custom elements. The button itself is
-    // rendered in the docs TOC rail by src/components/FeedbackButton, which is
-    // also where the widget's configuration lives and why three of its
-    // attributes are set the way they are (they are privacy settings, not
-    // styling). The vendor's own Docusaurus plugin is deliberately NOT used: it
-    // appends the button to document.body with no way to place it, and loads
-    // the bundle from jsDelivr at @latest.
     require.resolve('./src/clientModules/pushfeedback.ts'),
   ],
 
@@ -285,7 +119,6 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
 
-    // Search Console ownership
     metadata: [
       {
         name: 'google-site-verification',
@@ -293,32 +126,18 @@ const config: Config = {
       },
     ],
 
-    // Search. The index is built by an Algolia crawler from this site, and holds
-    // only the latest release of each product: the crawler's URL patterns name
-    // those versions, so they are what to bump when a version is cut. Its
-    // extractor also writes a versionless `product` attribute, which the product
-    // filter in the swizzled SearchBar facets on.
-    //
-    // `contextualSearch` MUST stay off: it filters on the `docusaurus_tag` of the
-    // version being read, so on any older version every query would match
-    // nothing.
-    //
-    // AT CUTOVER: disable the Antora site's scraper workflow
-    // (hazelcast-docs/.github/workflows/index-site.yml). It still builds the old
-    // `prod_hazelcast_docs` index with Antora selectors, which match nothing once
-    // docs.hazelcast.com serves this site.
+    // The crawler indexes only the latest release of each product, so bump its URL
+    // patterns when a version is cut. `contextualSearch` must stay off: it would
+    // return no results on older versions.
     algolia: {
       appId: 'QK2EAH8GB0',
       apiKey: '148f165428808580b7a2d0e96f53b707',
       indexName: 'mir-test-new-docs-test',
       contextualSearch: false,
-      // No `/search` route: Antora serves no search page, so adding one would be a
-      // new URL rather than a preserved one. Also suppresses the modal's "See all
-      // N results" footer, which would otherwise link somewhere that 404s.
+      // No `/search` route; this also drops the modal's "See all results" footer.
       searchPagePath: false,
     },
     navbar: {
-      // No title text: the logo wordmark stands alone.
       title: '',
       logo: {
         alt: 'Hazelcast',
@@ -361,54 +180,35 @@ const config: Config = {
           position: 'left',
           label: 'CLC',
         },
-        // Tutorials, last in the row. A plain link rather than a `docSidebar`
-        // item: the component is nav-less (its pages are one flat set reached
-        // from the index, as Antora serves them), so there is no sidebar to
-        // open and a docSidebar item would have nothing to point at.
+        // Plain link: tutorials has no sidebar.
         {
           to: '/tutorials',
           position: 'left',
           label: 'Tutorials',
         },
-        // Version dropdown for the hazelcast (Platform) instance: the
-        // 6.0-SNAPSHOT current version plus the live releases.
         {
           type: 'docsVersionDropdown',
           docsPluginId: 'hazelcast',
           position: 'right',
         },
-        // Version dropdown for the operator instance (current + live releases).
         {
           type: 'docsVersionDropdown',
           docsPluginId: 'operator',
           position: 'right',
         },
-        // Version dropdown for the clc instance (current 5.5.1 + the 5.5.0 copy).
         {
           type: 'docsVersionDropdown',
           docsPluginId: 'clc',
           position: 'right',
         },
-        // Version dropdown for the management-center instance (5.12-SNAPSHOT +
-        // the 5.11/5.10/5.9 copies).
         {
           type: 'docsVersionDropdown',
           docsPluginId: 'management-center',
           position: 'right',
         },
-        // Search, declared EXPLICITLY rather than left to Docusaurus. With no
-        // `search` item the theme auto-appends the search bar after every other
-        // navbar item, which would put it past the CTA; naming it here fixes its
-        // position and lets Ask AI sit next to it, as the Antora header does.
+        // Declared explicitly so search sits before Ask AI and the CTA.
         {type: 'search', position: 'right'},
-        // Ask AI, immediately after search. Opens the Kapa modal; the widget
-        // itself is loaded by src/clientModules/kapa.ts and its own floating
-        // launcher is suppressed, so this button is the only way in.
-        // Registered in src/theme/NavbarItem/ComponentTypes.tsx.
         {type: 'custom-ask-ai', position: 'right'},
-        // CTA, rendered as a HIVE Button (Try Free on Cloud pages,
-        // Try Hazelcast elsewhere). Registered in
-        // src/theme/NavbarItem/ComponentTypes.tsx.
         {type: 'custom-cta', position: 'right'},
       ],
     },
@@ -448,12 +248,7 @@ const config: Config = {
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
-      // prism-react-renderer bundles ~50 languages; anything else the docs use
-      // must be named here or its code blocks render UNHIGHLIGHTED (silently --
-      // the fidelity harness compares text and structure, not highlighting).
-      // Each entry below is a language some page actually uses, checked against
-      // the migrated set by constructcheck's source-language census.
-      // `docker` also registers the `dockerfile` alias; `batch` covers `[source,bat]`.
+      // A language missing here renders unhighlighted, silently.
       additionalLanguages: [
         'bash', 'java', 'properties', 'csharp',
         'batch', 'cmake', 'docker', 'dot', 'groovy', 'php', 'protobuf',

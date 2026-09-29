@@ -1,9 +1,5 @@
-// Swizzled (ejected) from @docusaurus/theme-classic. Only change from upstream:
-// when a `conum` value is present for this line, append Asciidoctor's callout
-// markup (`<i class="conum" data-value="N"></i><b>(N)</b>`) after the code. The
-// `.conum` CSS (src/css/custom.css, ported from the Antora UI) renders it as a
-// circled number badge and hides the `(N)` fallback — matching production, while
-// keeping the `(N)` in the DOM so the fidelity text compare still matches.
+// Swizzled from @docusaurus/theme-classic. Only change: a `conum` value appends Asciidoctor callout markup;
+// `.conum` CSS (src/css/custom.css) renders the badge and hides the `(N)` fallback, which stays in the DOM.
 import React from 'react';
 import clsx from 'clsx';
 import LineToken from '@theme/CodeBlock/Line/Token';

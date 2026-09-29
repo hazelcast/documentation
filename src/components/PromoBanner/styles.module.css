@@ -1,12 +1,5 @@
-/* Styling for markup this repo does not own. The bar's HTML comes from
-   WordPress, so its classes are literal strings we have to match rather than
-   module-hashed names — hence `:global()` throughout, scoped under the one
-   hashed class (`.host`) we do control, so none of it leaks past the slot.
-
-   Ported from the Antora UI's home.css (.promo-banner block). Three of
-   production's four hardcoded colours are HIVE tokens exactly
-   (#c6ff3a / #0080a9 / #0b2b39), so those are named rather than repeated; the
-   deep navy #051a27 has no token and stays literal. */
+/* Styling for WordPress-owned markup: its classes are literal strings, so `:global()` throughout, scoped under
+   the one hashed class (`.host`) we control so none of it leaks past the slot. */
 
 .host :global(.promo-banner) {
   display: flex;
@@ -90,10 +83,8 @@
   transform: translateY(-50%) translateX(4px);
 }
 
-/* The gradient text treatment the bar currently in WordPress actually uses. It
-   is a sibling of the `strong`/`.p-btn` shapes above, not a replacement: the
-   .promo-banner class has outlived several markup shapes and the stylesheet
-   carries all of them, so whichever one marketing publishes lands styled. */
+/* Gradient text used by the current WordPress bar. The class has outlived several markup shapes and the
+   stylesheet carries all of them, so whichever shape marketing publishes lands styled. */
 .host :global(.promo-banner .grad-text) {
   display: inline-block;
   background: linear-gradient(
@@ -115,12 +106,6 @@
   background-position: right center;
 }
 
-/* The bar is a fixed lime panel in both themes, as production has it, so the
-   dark-mode ground behind it never shows through and needs no override.
-
-   One quirk worth knowing rather than fixing: the banner WordPress publishes
-   carries an inline `style="display: block"`, which beats the `display: flex`
-   above and makes the flex properties inert — centring then comes from
-   `text-align`. Production's stylesheet loses the same fight to the same inline
-   style, so this renders as production does; do not add `!important` to "fix"
-   it, or this bar stops matching the live site. */
+/* The bar is a fixed lime panel in both themes, so dark mode needs no override.
+   The published banner carries an inline `style="display: block"` that beats the `display: flex` above, so
+   centring comes from `text-align`. Do not add `!important` to "fix" it, or the bar stops matching the live site. */

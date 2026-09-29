@@ -4,40 +4,21 @@ const path = require('node:path')
 const fs = require('node:fs')
 const { Globby, parseMarkdownFile, DEFAULT_PARSE_FRONT_MATTER } = require('@docusaurus/utils')
 
-// Emits /api/cloud.json at build time — the console index the Hazelcast Cloud
-// console's in-product help nav fetches. This is the permanent replacement for
-// the Antora `api-json.js` extension (hazelcast-docs-tools): same shape, same
-// algorithm, but sourced from Docusaurus content instead of the Antora catalog.
-//
-// Source of truth = cloud_* frontmatter on the cloud docs (seeded from the old
-// cloud-* page header attributes during migration, maintained per-page there­
-// after). A page opts in with `cloud_tags`; the rest refine its entry. A `|` in
-// cloud_title/cloud_tags/cloud_order/cloud_anchor/cloud_url_video splits ONE page
-// into MULTIPLE entries. Because the data lives in new-docs (not the migration
-// tooling), this survives deletion of migration/.
-//
-// The tag allowlist doubles as build-time validation (a page tag outside it
-// fails the build, exactly as upstream). `data` holds the entries with no doc
-// page of their own — the two hardcoded videos.
-//
-// Mirrors hazelcast-docs/antora-playbook.yml (the api-json.js config block).
+// Emits /api/cloud.json at build time: the index the Cloud console's in-product help nav fetches.
+// The { tags, links } shape is a contract with the console; don't change it.
+// Source: cloud_* frontmatter on pages (a page opts in with cloud_tags). A `|` in
+// cloud_title/cloud_tags/cloud_order/cloud_anchor/cloud_url_video splits one page into several entries.
 
-// The content trees scanned for cloud_* frontmatter, and the route base each is
-// served under. A page's URL = its source's base + its `slug` frontmatter, so
-// every page that opts in needs an explicit slug; both instances here are
-// unversioned, which is what makes that one-line reconstruction sound.
-//
-// `tutorials` is in the list because a tutorial can be a console entry too: one
-// is (the MongoDB write-through cache, a Favorite). It used to be hardcoded in
-// DATA while tutorials was still unmigrated; now that the page is here and
-// carries its own cloud_tags, this is what reads it. Match each entry to its
-// content-docs instance in docusaurus.config.ts (path/routeBasePath).
+// Content trees scanned for cloud_* frontmatter, with their route bases. URL = base + `slug`, so
+// opted-in pages need a slug and their docs instance must be unversioned.
+// Keep in sync with path/routeBasePath in docusaurus.config.ts.
 const DOC_SOURCES = [
   { dir: 'cloud', base: '/cloud' },
   { dir: 'tutorials', base: '/tutorials' },
 ]
 const OUT_PATH = 'api/cloud.json'
 
+// Allowlist; a page tag outside it fails the build.
 const TAGS = [
   'Favorites', 'Videos', 'Get Started', 'Whitepapers', 'Use cases',
   'Case studies', 'Documentation', 'Develop Applications',
@@ -45,16 +26,13 @@ const TAGS = [
   'Manage Clusters',
 ]
 
+// Entries with no doc page of their own.
 const DATA = [
   { title: 'What is a client?', url: 'https://www.youtube.com/embed/lkQEAdgxvbE', type: 'video', order: 8, tags: 'Videos, Get Started' },
   { title: 'What is the Hazelcast Platform?', url: 'https://www.youtube.com/embed/UpIgHzKbMp0', type: 'video', order: 9, tags: 'Videos, Get Started' },
 ]
 
-// Read the frontmatter of every page that opts in, across DOC_SOURCES, returning
-// {frontMatter, permalink, title} for each. Self-contained (no dependency on
-// content-docs internals): the URL is reconstructed from the page's slug, which
-// the migration guarantees on every page carrying cloud_tags. Uses Docusaurus's
-// own frontmatter parser for consistency.
+// Reads cloud_* frontmatter of opted-in pages; the URL is rebuilt from the slug.
 async function readCloudDocs (siteDir) {
   const docs = []
   for (const { dir, base } of DOC_SOURCES) {
@@ -79,8 +57,7 @@ async function readCloudDocs (siteDir) {
   return docs
 }
 
-// Faithful port of api-json.js: build the links array from the docs' cloud_*
-// frontmatter, prepending the hardcoded `data` entries, then sort by order.
+// Builds the links array from DATA plus pages' cloud_* frontmatter, sorted by order.
 function buildLinks (docs) {
   const links = []
   const addEntity = ({ title, url, tags, type, order }) => {
@@ -96,7 +73,6 @@ function buildLinks (docs) {
       order: order ? parseInt(order, 10) : 0,
     })
   }
-  // Hardcoded extras first, then pages (final sort is stable; orders are unique).
   for (const item of DATA) addEntity(item)
   for (const doc of docs) {
     const fm = doc.frontMatter || {}
@@ -131,10 +107,8 @@ module.exports = function cloudConsoleIndexPlugin (context) {
   const { siteDir } = context
   return {
     name: 'cloud-console-index',
-    // Emit the file into the build output (served at /api/cloud.json). postBuild
-    // runs only for `docusaurus build`, matching the Antora extension's
-    // beforePublish — this is a published artifact, not a dev-server route.
-    // No timestamp: deterministic, matches production.
+    // postBuild: this is a published artifact, not a dev-server route.
+    // No timestamp, so output is deterministic.
     async postBuild ({ outDir }) {
       const docs = await readCloudDocs(siteDir)
       const links = buildLinks(docs)

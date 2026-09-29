@@ -4,39 +4,17 @@ const crypto = require('node:crypto')
 const fs = require('node:fs')
 const path = require('node:path')
 
-// Stages the example files the tutorial pages import. Same principle as
-// plugins/openapi-specs: the files are NEVER copied into this repo.
-//
-// A tutorial's examples are the guide repo's RUNNABLE project files -- each
-// hazelcast-guides repo symlinks `src/`, `client/`, `pom.xml` and friends into
-// Antora's examples dir, and that repo's own CI compiles them while Dependabot
-// keeps their dependencies current. A committed copy here would be a second,
-// unmaintained fork of code that already has a maintained home, and it would put
-// runnable third-party code inside the site tree where webpack walks it.
-//
-// So tutorials/examples.json holds only REFERENCES -- repo, commit, path and a
-// hash of the bytes -- and this plugin fetches each one from the pinned commit
-// into a gitignored staging dir that the pages import out of (`@site/…`).
-// Because the pin is a commit SHA the bytes are immutable, so a file already
-// staged at that SHA is never re-fetched.
-//
-// A failed fetch, or a hash that does not match, FAILS THE BUILD. Publishing a
-// page whose code block silently differs from the code the migration verified is
-// worse than not publishing it.
+// Stages the example files the tutorial pages import, fetched from pinned commits into a gitignored staging
+// dir (as plugins/openapi-specs); never committed. `<component>/examples.json` holds only references (repo,
+// commit, path, sha256). The pin is a commit SHA, so an already-staged file is never re-fetched.
+// A failed fetch or hash mismatch fails the build.
 
 const STAGING_DIR = '.tutorial-examples'
-// No `.json` extension: the staging dir is covered by the example-attributes
-// webpack rule, and a cache.json in there would be pulled through the loader
-// chain as if it were an example.
+// No `.json` extension: the example-attributes webpack rule covers this dir and would treat a cache.json as an example.
 const CACHE_FILE = '.fetch-cache'
 const CONCURRENCY = 8
 
-// Every component that stages examples by reference writes `<component>/examples.json`,
-// and the presence of that file is the declaration -- so this discovers them rather
-// than naming them. Two today: `tutorials` (the guide repos' project files) and
-// `operator`, whose tutorial pages include example$ files from hazelcast-code-samples.
-// Only top-level component dirs are scanned; a versioned tree never holds one,
-// because these sources are not versioned per release.
+// Any top-level `<component>/examples.json` declares example references; discovered, not named. Versioned trees never hold one.
 function manifestFiles (siteDir) {
   return fs.readdirSync(siteDir, { withFileTypes: true })
     .filter((e) => e.isDirectory() && !e.name.startsWith('.') && e.name !== 'node_modules')
@@ -44,10 +22,8 @@ function manifestFiles (siteDir) {
     .filter((f) => fs.existsSync(f))
 }
 
-// Merge the manifests into one fetch list. Ids are namespaced by source repo, so
-// two components referencing the same upstream file share one staged copy and one
-// fetch. If they ever disagree about its BYTES that is a real conflict -- one of
-// them would silently overwrite the other's -- so it fails rather than picking.
+// Merges manifests into one fetch list keyed by id (namespaced by source repo), so shared files fetch once.
+// Two manifests disagreeing on a file's bytes is a conflict and fails.
 function mergeManifests (files) {
   const byId = new Map()
   for (const file of files) {
@@ -67,16 +43,13 @@ function mergeManifests (files) {
 async function fetchFile ({ repo, sha, path: filePath }, token) {
   const url = `https://raw.githubusercontent.com/${repo}/${sha}/${filePath.split('/').map(encodeURIComponent).join('/')}`
   const headers = { 'User-Agent': 'hazelcast-docs' }
-  // Public repos, so a token is optional -- it only raises the rate limit.
+  // Public repos, so the token only raises the rate limit.
   if (token) headers.Authorization = `Bearer ${token}`
   const response = await fetch(url, { headers })
   if (!response.ok) {
     throw new Error(`${response.status} fetching ${repo}@${sha.slice(0, 8)}/${filePath}`)
   }
-  // NOT response.text(): that decodes per WHATWG, which STRIPS a leading UTF-8
-  // BOM. Four of the guides' C# examples start with one, so text() would stage
-  // bytes that differ from the file the converter matched -- silently, but for
-  // the hash check below.
+  // Not response.text(): it strips a leading UTF-8 BOM, which would stage bytes that fail the hash check.
   return Buffer.from(await response.arrayBuffer()).toString('utf8')
 }
 
@@ -88,8 +61,7 @@ async function pool (items, limit, worker) {
   await Promise.all(runners)
 }
 
-// Remove anything under the staging dir this run did not write, so a file a page
-// stops referencing cannot linger and keep being imported from a stale copy.
+// Remove anything under the staging dir this run did not write, so dropped files aren't imported stale.
 function pruneStale (stagingDir, keep) {
   if (!fs.existsSync(stagingDir)) return
   const walk = (dir) => {
@@ -133,8 +105,7 @@ module.exports = function tutorialExamplesPlugin (context) {
       await pool(files, CONCURRENCY, async (entry) => {
         const target = path.join(stagingDir, entry.id)
         keep.add(target)
-        // The pin is a commit, so the bytes cannot have changed: a file already
-        // staged from this SHA is current by construction.
+        // The pin is a commit, so a file already staged from this SHA is current.
         if (cache[entry.id] === entry.sha && fs.existsSync(target)) { cached++; return }
         try {
           const content = await fetchFile(entry, token)

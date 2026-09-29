@@ -2,9 +2,7 @@ import ComponentTypes from '@theme-original/NavbarItem/ComponentTypes';
 import NavbarCta from '@site/src/components/NavbarCta';
 import NavbarAskAi from '@site/src/components/NavbarAskAi';
 
-// Register a custom navbar item type so config can place a real React
-// component (the HIVE Button) in themeConfig.navbar.items via
-// `{type: 'custom-cta'}`.
+// Registers a `custom-cta` navbar item type so config can place the HIVE Button in navbar items.
 export default {
   ...ComponentTypes,
   'custom-cta': NavbarCta,

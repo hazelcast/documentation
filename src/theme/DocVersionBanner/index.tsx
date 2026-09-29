@@ -10,14 +10,9 @@ import {
 import type {Props} from '@theme/DocVersionBanner';
 import useLatestCounterpart from '@site/src/lib/useLatestCounterpart';
 
-// Ejected for three reasons:
-//   - wording: stock says an older version is "no longer actively maintained",
-//     which is a support-policy claim the banner should not make;
-//   - naming: stock names the SITE title ("Hazelcast Documentation 5.10"), not
-//     the product;
-//   - the link: stock finds the same page in the latest version by doc id, which
-//     misses most counterparts here (see useLatestCounterpart), so it matches on
-//     URL and falls back to the latest version's main doc.
+// Ejected: stock wording claims "no longer actively maintained" (a support-policy claim), stock names the site title
+// rather than the product, and stock finds the latest counterpart by doc id (misses most here; see useLatestCounterpart),
+// so this matches on URL with a fallback to the latest main doc.
 
 // Keyed by docs plugin id. Unversioned components never show a banner.
 const PRODUCT_NAMES: Record<string, string> = {

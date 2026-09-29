@@ -7,7 +7,7 @@ import clsx from 'clsx';
 
 import styles from './styles.module.css';
 
-// Mobile counterpart of DocItem/TOC/Desktop — same substitution, same fallback.
+// Mobile counterpart of DocItem/TOC/Desktop.
 export default function DocItemTOCMobile(): ReactNode {
   const apiTocItems = useApiTocItems();
   if (apiTocItems.length === 0) {

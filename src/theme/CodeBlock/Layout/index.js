@@ -1,14 +1,6 @@
-// Swizzled (ejected) from @docusaurus/theme-classic. Two changes from upstream:
-//
-//   - every code block gets a header bar above the code, holding the language
-//     label and the action buttons, which are therefore always visible instead
-//     of appearing on hover in the top-right corner of the code itself
-//     (upstream's overlay hid the first line's text and gave no clue the copy
-//     button existed). The bar shares the code's own background, so the block
-//     still reads as one surface.
-//   - a `title=` block renders its title as a CAPTION ABOVE the block rather
-//     than as a bar inside it, which is where Asciidoctor puts a block title
-//     too (.listingblock > .title in the Antora UI).
+// Swizzled from @docusaurus/theme-classic. Changes from upstream:
+//   - a header bar above every block holds the language label and the always-visible action buttons
+//   - a `title=` block renders its title as a caption above the block, not a bar inside it
 import React from 'react';
 import clsx from 'clsx';
 import {useCodeBlockContext} from '@docusaurus/theme-common/internal';
@@ -18,13 +10,10 @@ import Content from '@theme/CodeBlock/Content';
 import Buttons from '@theme/CodeBlock/Buttons';
 import styles from './styles.module.css';
 
-// Fence languages that mean "this isn't a language" — label nothing for them
-// rather than captioning a block of output or plain text with a made-up name.
+// Fence languages that carry no language name; nothing is labelled for them.
 const UNLABELLED_LANGUAGES = new Set(['none', 'text', 'plain', 'plaintext']);
 
-// The label is the language exactly as the fence (or the `language` prop) gave
-// it — `bash`, `js` — not a prettified display name. Docusaurus has already
-// lowercased it by the time it reaches the metadata.
+// The label is the language as given (already lowercased by Docusaurus), not a display name.
 function languageLabel(language) {
   if (!language || UNLABELLED_LANGUAGES.has(language)) {
     return undefined;

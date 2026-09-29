@@ -8,21 +8,13 @@ import {
   BadgeIcon,
   type BadgeType,
 } from '@hazelcast/ui/lib/components/Badge';
-// HIVE's own compiled Badge styles — borrowed for the inline mode so the pill
-// tracks upstream style tweaks (colours/padding/radius) short of a structural
-// redesign. Same file the real <Badge> uses, so both modes stay in sync.
+// HIVE's compiled Badge styles, borrowed so the inline pill tracks upstream style changes.
 import hive from '@hazelcast/ui/lib/components/Badge.module.scss';
 import styles from './styles.module.css';
 
-// Single source of truth for every badge type. Two sources, two render modes:
-//   - inline `<Badge type="…"/>` (source #1): appears mid-prose, so it must be
-//     inline-valid HTML. HIVE's <Badge> is a block <div> (illegal inside <p>),
-//     so inline badges are our own <span> wearing HIVE's real Badge classes
-//     (hive.badge + type) and its per-type icon (BadgeIcon).
-//   - page-level (frontmatter tag, source #2): a row above the title, block
-//     context — renders the REAL HIVE <Badge>, which fully tracks HIVE.
-// Both take their text from `label` and their tooltip from the shared popover.
-// `hiveType` selects HIVE's semantic colour + icon; change it here to recolour.
+// Single source of truth for every badge type. Inline `<Badge type/>` is a <span> wearing HIVE's Badge classes
+// (HIVE's <Badge> is a <div>, invalid inside <p>); page-level frontmatter badges render the real HIVE <Badge>.
+// `hiveType` selects HIVE's colour and icon.
 type BadgeDef = {
   label: string;
   tooltip: string;
@@ -46,21 +38,10 @@ export const BADGES: Record<string, BadgeDef> = {
     hiveType: 'neutral',
   },
   enterprise: {
-    // "Enterprise Edition", not "Enterprise": this is the value of both Platform's
-    // and Management Center's `enterprise-product-name` Antora attribute, and what
-    // Platform's 37 badge occurrences render today (`[.enterprise]*{enterprise-product-name}*`).
-    // MC's single occurrence writes the literal `Enterprise` instead — a source
-    // inconsistency, not a different value — so that one sentence ("a feature ... is
-    // labelled <Badge/>") now reads "Enterprise Edition", which is what the badge
-    // beside it actually says. User decision 2026-08-27.
-    //
-    // The label is a literal here rather than a doc variable, so it does not follow
-    // `enterprise-product-name` automatically; refcheck records that trade as
-    // `bake:badge-label` (see refcheck/lib/bake-contexts.js). If the attribute ever
-    // changes, this string has to change with it.
+    // Matches the `enterprise-product-name` attribute. The label is a literal, so it must change with
+    // that attribute (refcheck records this as `bake:badge-label`).
     label: 'Enterprise Edition',
-    // Link deferred until platform (hz-docs) migrates and the Enterprise
-    // explainer page has a stable URL.
+    // Link deferred until the Enterprise explainer page has a stable URL.
     tooltip:
       'This feature requires Hazelcast Enterprise, a licensed edition of the Hazelcast Platform.',
     hiveType: 'neutral',
@@ -111,14 +92,8 @@ export default function Badge({
   );
 }
 
-// Page-level badge row, above the title (source #2). Uses the REAL HIVE <Badge>
-// inside a <div> wrapper (HIVE's Badge is a <div>, illegal inside a <span>).
-// Docusaurus' own version pill leads the row: it is the same kind of thing and
-// the same HIVE pill (see src/theme/DocVersionBadge), so it belongs on the same
-// line rather than stacked above. That is why this only renders from
-// DocItem/Content, where the docs-version context exists — DocItem/Layout no
-// longer renders <DocVersionBadge/> itself. Returns null when the page has
-// neither a version badge nor badge frontmatter.
+// Page-level badge row above the title, using the real HIVE <Badge> in a <div>. Leads with the version pill,
+// so it renders only from DocItem/Content, where the docs-version context exists. Null when there is nothing to show.
 export function TitleBadgeRow({
   names,
 }: {

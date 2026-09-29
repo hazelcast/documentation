@@ -6,20 +6,9 @@ const path = require('node:path')
 const yaml = require('js-yaml')
 const { Globby } = require('@docusaurus/utils')
 
-// Card data for the tutorials landing page (src/pages/tutorials.tsx).
-//
-// Antora's landing page reads the content catalog at render time and keeps every
-// page whose header says `page-layout: tutorial`, pulling the card's title, blurb,
-// time, product, languages and categories straight off that page's attributes.
-// There is no catalog here, so the converter carries those attributes onto each
-// tutorial as `tutorial_*` frontmatter and this plugin reads them back, handing
-// the page one array through global data.
-//
-// Values are passed through RAW. `tutorial_categories` and `tutorial_lang` are
-// comma-lists whose casing and vocabulary are inconsistent across the 57 guides
-// ("Get Started" vs "Getting Started", `python3`, `cplus`); splitting is presentation,
-// but normalising would be a content change and belongs to the post-cutover
-// taxonomy work, not here.
+// Card data for the tutorials landing page (src/pages/tutorials.tsx), read from `tutorial_*`
+// frontmatter and passed to the page as global data.
+// Values are passed through raw; splitting comma-lists is presentation, normalising would be a content change.
 
 const TUTORIALS_DIR = 'tutorials'
 
@@ -35,9 +24,7 @@ function readCard(file, siteDir) {
   } catch {
     return null
   }
-  // The gate is the same one production applies: a page is a card only if it
-  // carries the tutorial metadata, which the converter writes only for pages
-  // whose source declared `page-layout: tutorial`.
+  // A page is a card only if it carries tutorial metadata.
   if (!fm.tutorial_product && !fm.tutorial_categories && !fm.tutorial_time) return null
   return {
     title: fm.title || path.basename(file, '.mdx'),
