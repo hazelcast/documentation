@@ -20,13 +20,24 @@ A product's folder name (`hazelcast`, `management-center`, `operator`, `clc`, `c
 Follow these rules in addition to CONTRIBUTING.md:
 - Never edit or commit generated directories: `build/`, `.docusaurus/`, `.api-specs/`, `.tutorial-examples/`, `target/`, and `*_versioned_sidebars/`.
 - Never create a version by copying folders. The release script does that. See [Releasing a version](MAINTAINING.md#releasing-a-version).
-- A fix that applies to several versions must be made in each version's folder: `<component>/` for `main`, and `<component>_versioned_docs/version-X.Y/` for each release.
+- A change that applies to several versions must be made in each version's folder. See [Versions](#versions).
 - Do not reformat the files the release script rewrites: `src/variables.ts`, `src/redirects.ts`, `src/currentVersions.json`, `static/_redirects`, and `*_versions.json`. If their formatting changes, the release script stops working.
 - Do not run `npm run build` while a dev server is running in the same folder. The build overwrites the files the dev server uses.
 - Ignore `migration/` unless your task is the migration, and never import from it. It holds throwaway Antora conversion tooling with its own `package.json`. Its checks need local mirrors of the Antora source repos. Read `migration/README.md` before running them.
 - Before you change a `cloud_*` frontmatter key, read `plugins/cloud-console-index/index.js`. The keys feed `/api/cloud.json`, which the Hazelcast Cloud console reads.
 - An imported code example can contain `{attribute}` placeholders. The build replaces them with the version's values. Do not replace them with literal values.
 - When you are unsure how to write something, follow the pattern of the neighboring pages.
+
+## Versions
+
+When the user asks you to apply or backport a change to other versions, follow [Changing content for several versions](CONTRIBUTING.md#changing-content-for-several-versions). In addition:
+- Use the backport script. Do not copy the change into each folder by hand.
+- Before you run it, confirm with the user which versions the change applies to, even if they named versions in the request. List the versions you will apply it to, and point out any where the change might not be true, such as a release that does not have the feature.
+- When you resolve a conflict, keep that version's own text, and apply only the change you are backporting.
+- For a `missing` file, search that version's folder for the page with the same title, because older releases often have the page at a different path. If the version has no such page, do not create one unless the user asks.
+- "All versions" means every release in `<product>_versions.json`, and `main`.
+- Version numbers are not decimals: 5.10 is newer than 5.9. Take the order of releases from `<product>_versions.json`, which lists them newest first, and never sort them yourself.
+- When you finish, tell the user which versions have the change and which do not.
 
 ## Running the site
 
@@ -47,6 +58,7 @@ Run the checks that match what you changed:
 | `npm run build`                          | Anything. It fails on a broken internal link, a broken Markdown link, or a missing image. It does not check anchors (`#fragment`), so verify cross-page anchors yourself.  |
 | `npm run typecheck`                      | TypeScript in `src/`, `plugins/`, or `docusaurus.config.ts`.                                                                                                               |
 | `npm run test:version-update`            | `.github/scripts/version-update/`, or any file it rewrites: `src/variables.ts`, `src/redirects.ts`, `src/currentVersions.json`, `*_versions.json`, or `static/_redirects`. |
+| `npm run test:backport`                  | `scripts/backport/`, or `versionLink` in `.github/scripts/version-update/files.js`, which the backport script uses to rewrite links.                              |
 | `mvn test -Dversion.hazelcast=<version>` | Java in `hazelcast/examples/`.                                                                                                                                             |
 
 ## Before you finish

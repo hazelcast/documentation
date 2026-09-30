@@ -21,7 +21,7 @@ The site is built with [Docusaurus](https://docusaurus.io/) and published at htt
 | `cloud/`             | Hazelcast Cloud             | `/cloud`             | No        |
 | `tutorials/`         | Tutorials                   | `/tutorials`         | No        |
 
-For a versioned component, the component folder holds the unreleased version (`main`), except for CLC, where `main` is the newest release. Each `<component>_versioned_docs/version-X.Y/` folder holds the pages of one released version, and `<component>_versions.json` lists the versions. A released version's pages can be edited at any time.
+For a versioned component, the component folder holds the unreleased version (`main`), except for CLC, where `main` is the newest release. Each `<component>_versioned_docs/version-X.Y/` folder holds the pages of one released version, and `<component>_versions.json` lists the released versions, newest first. A released version's pages can be edited at any time.
 
 ## Local development
 
@@ -63,7 +63,9 @@ These commands are also available:
 | `npm run serve`                          | Serve the last build locally.                                                              |
 | `npm run typecheck`                      | Type-check the TypeScript in `src/`, `plugins/`, and `docusaurus.config.ts`.               |
 | `npm run clear`                          | Delete Docusaurus caches and generated files. Use it when the site behaves inconsistently. |
+| `npm run backport -- <version>...`       | Apply your changes to other versions. See [Changing content for several versions](CONTRIBUTING.md#changing-content-for-several-versions). |
 | `npm run test:version-update`            | Run the tests for the release script.                                                      |
+| `npm run test:backport`                  | Run the tests for the backport script.                                                     |
 | `mvn test -Dversion.hazelcast=<version>` | Compile-check the Java in `hazelcast/examples/`.                                           |
 
 ## Repository layout

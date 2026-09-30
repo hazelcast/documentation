@@ -61,6 +61,27 @@ This feature is in beta.
 </IfSnapshot>
 ```
 
+## Changing content for several versions
+
+Each version of a product has its own folder: `<product>/` for `main`, and `<product>_versioned_docs/version-X.Y/` for each release. Make the change in one version, then copy it to the others with the backport script:
+
+```bash
+npm run backport -- 5.7 5.6
+```
+
+The script takes your uncommitted changes, including new files, and applies them to the same files in each version you name. Name a release by its number, and `main` as `current`. To apply a commit instead, add `--commit <ref>`. To see what would happen without changing any files, add `--dry-run`.
+
+The script merges your change into each version's copy of the file, so text that differs between versions is kept. It lists each file with one of these results:
+- `applied`: the change is in the file.
+- `unchanged`: the file already had the change.
+- `conflict`: the change clashed with that version's text. Resolve the `<<<<<<<` markers in the file.
+- `not applied`: the script could not apply the change, for example because a new file already exists in that version with different content. Make the change by hand.
+- `missing`: the version has no file at that path. The page might not exist in that version, or it might be at a different path. If it is at a different path, make the change by hand.
+
+The script exits with 1 if any file needs your attention. It only changes files in a version's folder. If you changed other files, such as `src/redirects.ts`, the script's output names them and leaves them alone.
+
+If you changed files in more than one version of a product, add `--from <version>` to say which version's changes to apply. Review the result with `git diff` before you commit.
+
 ## Code examples
 
 Short snippets, such as shell commands and configuration fragments, go directly in the page in a code fence. Java examples are kept in separate files instead, which CI compiles to catch examples that no longer match the API. A page imports the file and displays it in a `CodeBlock`, and several pages can import the same file.
@@ -150,7 +171,7 @@ Webpack resolves and content-hashes each image, and a missing image fails the bu
 
 Every change reaches the site through a pull request (PR) against the `main` branch:
 1. Fork the repo, or create a branch if you have write access.
-2. Make your change, following this guide. If the change applies to several released versions, make it in each version's folder.
+2. Make your change, following this guide. If the change applies to several versions, see [Changing content for several versions](#changing-content-for-several-versions).
 3. Run `npm run build` and fix any errors it reports.
 4. Open a PR that says what you changed and why.
 
