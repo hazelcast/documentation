@@ -1,0 +1,143 @@
+---
+title: "Create data pipelines with the Jet engine"
+sidebar_position: 1
+slug: /jet-engine-configuration
+---
+
+import CodeBlock from "@theme/CodeBlock";
+import Ex_jet_engine_configuration_yaml from "../../../examples/jet-engine-configuration.yaml";
+import Ex_jet_engine_properties_yaml from "../../../examples/jet-engine-properties.yaml";
+
+The Jet engine is a batch and stream processing system that allows Hazelcast members to do both stateless and stateful computations over large amounts of data with consistent low latency.
+
+The Jet engine processes data in *pipelines*. Pipelines allow you to take data stored in one location (source), apply processing, and send it to another location (sink). If you only want to process data without moving it, you can use the same location for source and sink.
+
+Pipelines are executed as *jobs*. Jobs are run in parallel across all Hazelcast cluster members for maximum speed.
+
+For more information, see [Data pipelines](/hazelcast/latest/pipelines/overview).
+
+## Configure the Jet engine
+
+The Jet engine is enabled by default and has the following configuration options. For more detailed information, see the [API reference](../../../reference/api-ref.mdx#jetengineconfiguration).
+
+<table>
+<colgroup>
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'60%'}} />
+</colgroup>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`enabled`</td>
+<td>true</td>
+<td>Set to `false` to disable the Jet engine.</td>
+</tr>
+<tr>
+<td>`resourceUploadEnabled`</td>
+<td>false</td>
+<td>Set to `true` to enable the uploading of resources for Jet jobs.</td>
+</tr>
+<tr>
+<td>`instance/cooperativeThreadCount`</td>
+<td></td>
+<td>The number of threads Jet creates in its cooperative multithreading pool.</td>
+</tr>
+<tr>
+<td>`instance/flowControlPeriodMS`</td>
+<td>100</td>
+<td>The duration of the interval between flow control packets.</td>
+</tr>
+<tr>
+<td>`instance/backupCount`</td>
+<td>1</td>
+<td>The number of synchronous backups to configure on the IMap, which Jet needs internally to store job metadata and snapshots.</td>
+</tr>
+<tr>
+<td>`instance/scaleUpDelayMS`</td>
+<td>10000</td>
+<td>The delay after which the auto-scaled jobs restart if a new member joins the cluster.</td>
+</tr>
+<tr>
+<td>`instance/losslessRestartEnabled`</td>
+<td>false</td>
+<td>
+
+Whether the lossless cluster restart feature is enabled.
+
+:::warning
+
+Lossless Restart requires Persistence to be enabled. See [Persistence, backup, and restore](../../resilience/backup-restore/overview.mdx).
+
+:::
+
+</td>
+</tr>
+<tr>
+<td>`instance/maxProcessorAccumulatedRecords`</td>
+<td></td>
+<td>The maximum number of records that can be accumulated by any single processor instance.</td>
+</tr>
+<tr>
+<td>`edgeDefaults/queueSize`</td>
+<td></td>
+<td>The capacity of processor-to-processor concurrent queues.</td>
+</tr>
+<tr>
+<td>`edgeDefaults/packetSizeLimit`</td>
+<td></td>
+<td>The maximum packet size in bytes.</td>
+</tr>
+<tr>
+<td>`edgeDefaults/receiveWindowMultiplier`</td>
+<td></td>
+<td>The scaling factor used by the adaptive receive window sizing function.</td>
+</tr>
+<tr>
+<td>`bucketConfig`</td>
+<td></td>
+<td>
+
+JAR files from an external bucket are made accessible to cluster members when the following parameter values are supplied:
+
+- `secretName`: Name of the Secret object that holds the credentials for your cloud provider.
+- `bucketURI`: Full path for the external bucket. For example: `gs://your-bucket/path/to/jars`.
+
+</td>
+</tr>
+<tr>
+<td>`configMaps`</td>
+<td></td>
+<td>List of names of ConfigMaps. Files in each ConfigMap will be downloaded.</td>
+</tr>
+<tr>
+<td>`remoteURLs`</td>
+<td></td>
+<td>List of URLs from where files will be downloaded.</td>
+</tr>
+</tbody>
+</table>
+
+## Example configuration
+
+The following example creates a Hazelcast cluster and sets some Jet configuration.
+
+<CodeBlock language="yaml" title="Example configuration">{Ex_jet_engine_configuration_yaml}</CodeBlock>
+
+## Configuration properties
+
+You can also set configuration using Java system properties. See [Set arbitrary JVM arguments](../../configuration-properties/jvm-parameters.mdx#setting-arbitrary-jvm-arguments) for more information.
+
+<CodeBlock language="yaml" title="Example configuration">{Ex_jet_engine_properties_yaml}</CodeBlock>
+
+## Next steps
+
+Once you have configured the Jet engine, you can [submit Jet jobs](./jet-job-configuration/overview.mdx).
+
+For a worked example, see the [Run a data pipeline using Jet tutorial](./jet-job-configuration/overview.mdx).

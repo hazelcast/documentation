@@ -1,0 +1,83 @@
+---
+title: "Custom configuration"
+sidebar_position: 4
+slug: /custom-config
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+Operator's custom configuration allows you to provide a raw Hazelcast configuration that can be directly utilized. It allows you to take complete control over your configuration or to use new features that are not yet supported in Operator.
+
+## Configure Hazelcast using custom configuration
+
+To use custom configuration as a method of configuring the Hazelcast cluster, you need to create a `ConfigMap` or a `Secret` with the member configuration. The configuration must be in YAML format and consist of valid [Hazelcast configuration](/hazelcast/latest/configuration/configuring-declaratively). For example:
+
+<Tabs groupId="configmap--secret">
+<TabItem value="configmap" label="ConfigMap">
+
+```shell
+kubectl create configmap custom-config-cm --from-file=<path-to-file>
+```
+
+The name of the `ConfigMap` must be set to the Hazelcast CR's `customConfigCmName` field.
+
+```none
+apiVersion: hazelcast.com/v1alpha1
+kind: Hazelcast
+metadata:
+  name: hazelcast
+spec:
+  customConfigCmName: custom-config-cm
+```
+
+</TabItem>
+<TabItem value="secret" label="Secret">
+
+```none
+kubectl create secret generic custom-config-secret --from-file=<path-to-file>
+```
+
+The name of the `Secret` must be set to the Hazelcast CR's `customConfigSecretName` field.
+
+```none
+apiVersion: hazelcast.com/v1alpha1
+kind: Hazelcast
+metadata:
+  name: hazelcast
+spec:
+  customConfigSecretName: custom-config-secret
+```
+
+</TabItem>
+</Tabs>
+
+## Custom configuration and Hazelcast CR
+
+The custom configuration is not designed as an alternative to the Hazelcast CR configuration, and it is not recommended to use it as the main source of the configuration. Instead, custom configuration should be used together with the Hazelcast CR configuration.
+
+The configuration from the Hazelcast CR and the custom configuration will be merged into one structure that will be used as the Hazelcast member configuration. If the same feature is configured with a custom configuration `ConfigMap` and in the Hazelcast CR, the configuration from the Hazelcast CR will take precedence and will override the custom configuration.
+
+## Cautions and limitations
+
+Custom configuration contains raw Hazelcast configuration that is not being managed by Operator and has some limitations.
+
+### Combining ConfigMap and Secred based custom configuration
+
+It is not possible to use both `ConfigMap` and `Secret` based custom configuration. You must choose only one type of custom configuration.
+
+### Combining Hazelcast CR and custom configuration
+
+It is not possible to combine the configuration of one feature in the Hazelcast CR and the custom configuration. The configuration from the Hazelcast CR will override the partial configuration from the custom configuration.
+
+### Operator-managed features
+
+Some Hazelcast features require the management of additional Kubernetes resources (for example, [persistence](/hazelcast/latest/storage/persistence) requires PVCs). Custom configuration does not allow configuring Kubernetes resources, only the Hazelcast configuration. Therefore it is not possible to use custom configuration for such features; only Hazelcast CR configuration is supported.
+
+### Networking configuration
+
+Operator communicates with the Hazelcast cluster, requiring a specific networking configuration. Reconfiguring it using custom configuration might break communication between Operator and the cluster. To avoid such cases, Operator will always override the networking section of the custom configuration. You should use the Hazelcast CR for networking configuration.
+
+### Security configuration
+
+Security configuration is not accessible through custom configuration. To configure [simple authentication](../security/client-simple-auth.mdx), use the `Security` section of the Hazelcast CR.

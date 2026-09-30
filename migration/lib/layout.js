@@ -77,7 +77,7 @@ const NAV_SOURCES = {
 // still lands on the newest release (5.11). The three releases below are the live
 // set; 5.8 and older are frozen (freeze plan), which is why they stop at 5.9.
 const VERSIONS = {
-  operator: { releases: ['5.19', '5.18', '5.17', '5.16', '5.15', '5.14', '5.13', '5.12'] },
+  operator: { releases: ['5.20', '5.19', '5.18', '5.17', '5.16', '5.15', '5.14', '5.13', '5.12'] },
   clc: { current: '5.5.1', releases: ['5.5.0'] },
   'management-center': { current: '5.12-snapshot', releases: ['5.11', '5.10', '5.9'] },
   // Platform's main declares `6.0-snapshot` (an unreleased snapshot, as MC's is),

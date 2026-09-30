@@ -84,7 +84,7 @@ export const versionedVariables: Record<string, Record<string, Record<string, st
       "open-source-product-name": "Community Edition",
       "os-version": "6.0.0-SNAPSHOT",
       "page-latest-supported-clc": "5.5.1",
-      "page-latest-supported-cplusplus-client": "5.7.0",
+      "page-latest-supported-cplusplus-client": "5.7.1",
       "page-latest-supported-csharp-client": "5.7.0",
       "page-latest-supported-go-client": "1.6.0",
       "page-latest-supported-mc": "5.12-snapshot",
@@ -125,9 +125,9 @@ export const versionedVariables: Record<string, Record<string, Record<string, st
       "version": "5.7"
     },
     "5.6": {
-      "ee-version": "5.6.1",
+      "ee-version": "5.6.2",
       "enterprise-product-name": "Enterprise Edition",
-      "full-version": "5.6.1",
+      "full-version": "5.6.2",
       "hazelcast-cloud": "Cloud",
       "hz-repo-swagger-branch": "5.6.z",
       "java-client": "Java Client and Embedded Server",
@@ -372,7 +372,12 @@ export const versionedVariables: Record<string, Record<string, Record<string, st
   },
   "operator": {
     "current": {
-      "operator-chart-version": "5.20.0-snapshot",
+      "operator-chart-version": "5.21.0-snapshot",
+      "page-latest-supported-hazelcast": "5.7.1",
+      "page-latest-supported-mc": "5.11.1"
+    },
+    "5.20": {
+      "operator-chart-version": "5.20.0",
       "page-latest-supported-hazelcast": "5.7.1",
       "page-latest-supported-mc": "5.11.1"
     },

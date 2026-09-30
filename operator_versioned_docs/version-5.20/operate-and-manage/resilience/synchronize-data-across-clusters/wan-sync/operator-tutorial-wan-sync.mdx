@@ -1,0 +1,463 @@
+---
+title: "Tutorial: Synchronize data between two Hazelcast clusters using WAN synchronization"
+sidebar_position: 1
+slug: /tutorials/operator-tutorial-wan-sync
+---
+
+import CodeBlock from "@theme/CodeBlock";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_hazelcast_first_yaml from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-sync/docs/modules/ROOT/examples/operator-wan-sync/hazelcast-first.yaml";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_hazelcast_second_yaml from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-sync/docs/modules/ROOT/examples/operator-wan-sync/hazelcast-second.yaml";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_full_sync_map_yaml from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-sync/docs/modules/ROOT/examples/operator-wan-sync/full-sync-map.yaml";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_delta_sync_map_yaml from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-sync/docs/modules/ROOT/examples/operator-wan-sync/delta-sync-map.yaml";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_java_src_main_java_com_hazelcast_Main_java from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-sync/docs/modules/ROOT/examples/operator-wan-sync/java/src/main/java/com/hazelcast/Main.java";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_nodejs_client_js from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-sync/docs/modules/ROOT/examples/operator-wan-sync/nodejs/client.js";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_go_main_go from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-sync/docs/modules/ROOT/examples/operator-wan-sync/go/main.go";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_python_main_py from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-sync/docs/modules/ROOT/examples/operator-wan-sync/python/main.py";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_dotnet_Program_cs from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-sync/docs/modules/ROOT/examples/operator-wan-sync/dotnet/Program.cs";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_full_sync_wanreplication_yaml from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-sync/docs/modules/ROOT/examples/operator-wan-sync/full-sync-wanreplication.yaml";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_delta_sync_wanreplication_yaml from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-sync/docs/modules/ROOT/examples/operator-wan-sync/delta-sync-wanreplication.yaml";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_wansync_yaml from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-sync/docs/modules/ROOT/examples/operator-wan-sync/wansync.yaml";
+
+Learn how to synchronize data across two Hazelcast clusters using WAN synchronization.
+
+## Overview
+
+In this tutorial, you'll do the following:
+
+- Deploy two Hazelcast clusters.
+- Create a Hazelcast map configuration on one of the clusters.
+- Synchronize map data between the two Hazelcast clusters using both full and delta WAN synchronization.
+
+The tutorial should take approximately 10 minutes to complete.
+
+## Prerequisites
+
+Before you begin, make sure that you have:
+
+- A running [Kubernetes](https://kubernetes.io/) cluster.
+- The Kubernetes command line tool, [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl).
+- A deployed [Hazelcast Platform Operator](../../../../install-and-upgrade/get-started/overview.mdx).
+- The Hazelcast Code Samples repository [https://github.com/hazelcast/hazelcast-code-samples](https://github.com/hazelcast/hazelcast-code-samples) cloned to your local machine.
+
+## Start the Hazelcast clusters
+
+In this step, you'll start two Hazelcast clusters, one called `hazelcast-first` and one called `hazelcast-second`.
+
+1. Create a secret with your [Hazelcast Enterprise License](http://trialrequest.hazelcast.com/).
+
+   ```shell
+   kubectl create secret generic hazelcast-license-key --from-literal=license-key=<hz-license-key>
+   ```
+2. Start the first Hazelcast cluster.
+
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_hazelcast_first_yaml + '\nEOF'}</CodeBlock>
+3. Check the status of the cluster to ensure it is running.
+
+   ```shell
+   kubectl get hazelcast
+   ```
+
+   ```shell
+   NAME               STATUS    MEMBERS
+   hazelcast-first    Running   3/3
+   ```
+4. Start the second cluster.
+
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_hazelcast_second_yaml + '\nEOF'}</CodeBlock>
+5. Check the status to ensure that both clusters are running.
+
+   ```shell
+   kubectl get hazelcast
+   ```
+
+   ```shell
+   NAME               STATUS    MEMBERS
+   hazelcast-first     Running   3/3
+   hazelcast-second    Running   3/3
+   ```
+
+## Create and populate a map for WAN replication
+
+In this step, you will create and populate a map on the `hazelcast-first` cluster. This map will be the source for WAN replication.
+
+1. Create the configuration for a map called `map-sync` on the `hazelcast-first` cluster.
+
+   If you need **full WAN synchronization**, use the following command.
+
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_full_sync_map_yaml + 'EOF'}</CodeBlock>
+
+   If you need **delta WAN synchronization**, use the following command.
+
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_delta_sync_map_yaml + 'EOF'}</CodeBlock>
+
+   :::tip
+
+   Unsure of whether you need full or delta? See [Full WAN synchronization](https://docs.hazelcast.com/hazelcast/5.5/wan/advanced-features#synchronizing-wan-target-cluster) and [Delta WAN synchronization](https://docs.hazelcast.com/hazelcast/5.5/wan/advanced-features#delta-wan-synchronization) for details.
+
+   :::
+2. Find the address of the first cluster.
+
+   ```shell
+   kubectl get hazelcastendpoint --selector="app.kubernetes.io/instance in (hazelcast-first)"
+   ```
+
+   ```shell
+   NAME                   TYPE        ADDRESS
+   hazelcast-first        Discovery   34.123.9.149:5701
+   hazelcast-first-wan    WAN         34.123.9.149:5710
+   ```
+
+   The `ADDRESS` column displays the external address of the first Hazelcast cluster.
+3. Open the examples folder to access all sample clients:
+
+   ```shell
+   cd hazelcast-platform-operator-wan-sync
+   ```
+
+   The sample code for this tutorial is in the [`docs/modules/ROOT/examples/operator-wan-sync`](https://github.com/hazelcast/hazelcast-code-samples/tree/master/platform-operator/hazelcast-platform-operator-wan-sync/docs/modules/ROOT/examples/operator-wan-sync) directory.
+4. Configure the Hazelcast client to connect to the first cluster using its address. <Anchor id="configure-client" />
+
+   <Tabs groupId="client-language">
+   <TabItem value="clc" label="CLC">
+
+   :::note
+
+   CLC must be installed in your system. See the [CLC installation instructions](https://docs.hazelcast.com/clc/latest/install-clc).
+
+   :::
+
+   Add the first cluster configuration to the CLC:
+
+   ```bash
+   clc config add hz-1 cluster.name=dev cluster.address=<FIRST-CLUSTER-EXTERNAL-IP>
+   ```
+
+   </TabItem>
+   <TabItem value="java" label="Java">
+
+   <CodeBlock language="java">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_java_src_main_java_com_hazelcast_Main_java}</CodeBlock>
+
+   </TabItem>
+   <TabItem value="nodejs" label="NodeJS">
+
+   <CodeBlock language="javascript">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_nodejs_client_js}</CodeBlock>
+
+   </TabItem>
+   <TabItem value="go" label="Go">
+
+   <CodeBlock language="go">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_go_main_go}</CodeBlock>
+
+   </TabItem>
+   <TabItem value="python" label="Python">
+
+   <CodeBlock language="python">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_python_main_py}</CodeBlock>
+
+   </TabItem>
+   <TabItem value="net" label=".NET">
+
+   <CodeBlock language="cs">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_dotnet_Program_cs}</CodeBlock>
+
+   </TabItem>
+   </Tabs>
+5. Add entries to the map.
+
+   <Tabs groupId="client-language">
+   <TabItem value="clc" label="CLC">
+
+   Populate the map with entries.
+
+   ```bash
+   for i in {1..10};
+   do
+      clc -c hz-1 map set --name map-sync key-$i value-$i;
+   done
+   ```
+
+   Verify that the map has the expected number of entries.
+
+   ```bash
+   clc -c hz-1 map size --name map-sync
+   ```
+
+   </TabItem>
+   <TabItem value="java" label="Java">
+
+   Start the application to populate the map with entries.
+
+   ```bash
+   cd java
+   mvn package
+   java -jar target/*jar-with-dependencies*.jar fill map-sync
+   ```
+
+   You should see the following output.
+
+   ```shell
+   Successful connection!
+   Starting to fill the map (<MAP-NAME>) with random entries.
+   Current map size: 2
+   Current map size: 3
+   Current map size: 4
+   ....
+   ....
+   ```
+
+   </TabItem>
+   <TabItem value="nodejs" label="NodeJS">
+
+   Start the application to populate the map with entries.
+
+   ```bash
+   cd nodejs
+   npm install
+   npm start fill map-sync
+   ```
+
+   You should see the following output.
+
+   ```shell
+   Successful connection!
+   Starting to fill the map (map-sync) with random entries.
+   Current map size: 2
+   Current map size: 3
+   Current map size: 4
+   ....
+   ....
+   ```
+
+   </TabItem>
+   <TabItem value="go" label="Go">
+
+   Start the application to populate the map with entries.
+
+   ```bash
+   cd go
+   go run main.go fill map-sync
+   ```
+
+   You should see the following output.
+
+   ```shell
+   Successful connection!
+   Starting to fill the map (map-sync) with random entries.
+   Current map size: 2
+   Current map size: 3
+   Current map size: 4
+   ....
+   ....
+   ```
+
+   </TabItem>
+   <TabItem value="python" label="Python">
+
+   Start the application to populate the map with entries.
+
+   ```bash
+   cd python
+   pip install -r requirements.txt
+   python main.py fill map-sync
+   ```
+
+   You should see the following output.
+
+   ```shell
+   Successful connection!
+   Starting to fill the map (map-sync) with random entries.
+   Current map size: 2
+   Current map size: 3
+   Current map size: 4
+   ....
+   ....
+   ```
+
+   </TabItem>
+   <TabItem value="net" label=".NET">
+
+   Start the application to populate the map with entries.
+
+   ```bash
+   cd dotnet
+   dotnet build
+   dotnet run fill map-sync
+   ```
+
+   You should see the following output.
+
+   ```shell
+   Successful connection!
+   Starting to fill the map (map-sync) with random entries.
+   Current map size: 2
+   Current map size: 3
+   Current map size: 4
+   ....
+   ....
+   ```
+
+   </TabItem>
+   </Tabs>
+
+## Enable WAN replication and replicate entries
+
+In this step, you'll first verify that the second cluster does not contain a `map-sync` structure. You'll then enable WAN replication and verify that the map and all entries have been copied to the second cluster.
+
+1. Find the address of the second cluster.
+
+   ```shell
+   kubectl get hazelcastendpoint --selector="app.kubernetes.io/instance in (hazelcast-second)"
+   ```
+
+   ```shell
+   NAME                   TYPE        ADDRESS
+   hazelcast-second       Discovery   198.51.100.16:5701
+   hazelcast-second-wan   WAN         198.51.100.16:5710
+   ```
+
+   The `ADDRESS` column displays the external address of the second Hazelcast cluster.
+2. Repeat steps 2.3 to 2.4, using the address of the second cluster to enable the client to connect.
+3. Connect to the second cluster and verify that the map named `map-sync` contains no data.
+
+   <Tabs groupId="client-language">
+   <TabItem value="clc" label="CLC">
+
+   ```bash
+   clc -c hz-2 map size --name map-sync
+   ```
+
+   </TabItem>
+   <TabItem value="java" label="Java">
+
+   ```bash
+   cd clients/java
+   mvn package
+   java -jar target/*jar-with-dependencies*.jar size map-sync
+   ```
+
+   You should see the following output:
+
+   ```shell
+   Successful connection!
+   Current map (map-sync) size: 0
+   ```
+
+   </TabItem>
+   <TabItem value="nodejs" label="NodeJS">
+
+   ```bash
+   cd clients/nodejs
+   npm install
+   npm start size map-sync
+   ```
+
+   You should see the following output:
+
+   ```shell
+   Successful connection!
+   Current map (map-sync) size: 0
+   ```
+
+   </TabItem>
+   <TabItem value="go" label="Go">
+
+   ```bash
+   cd clients/go
+   go run main.go size map-sync
+   ```
+
+   You should see the following output:
+
+   ```shell
+   Successful connection!
+   Current map (map-sync) size: 0
+   ```
+
+   </TabItem>
+   <TabItem value="python" label="Python">
+
+   ```bash
+   cd clients/python
+   pip install -r requirements.txt
+   python main.py size map-sync
+   ```
+
+   You should see the following output:
+
+   ```shell
+   Successful connection!
+   Current map (map-sync) size: 0
+   ```
+
+   </TabItem>
+   <TabItem value="net" label=".NET">
+
+   ```bash
+   cd clients/dotnet
+   dotnet build
+   dotnet run size map-sync
+   ```
+
+   You should see the following output:
+
+   ```shell
+   Successful connection!
+   Current map (map-sync) size: 0
+   ```
+
+   </TabItem>
+   </Tabs>
+4. Modify the configuration of the first cluster to add the address of the second cluster as the WAN replication event target.
+
+   If you need a **full WAN synchronization**, run the following command to apply the configuration:
+
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_full_sync_wanreplication_yaml + '\nEOF'}</CodeBlock>
+
+   If you need a **delta WAN synchronization**, run the following to apply the configuration:
+
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_delta_sync_wanreplication_yaml + 'EOF'}</CodeBlock>
+5. Create a WAN synchronization resource within the Kubernetes cluster, using the existing `WanReplication` CR.
+
+   <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_sync_docs_modules_ROOT_examples_operator_wan_sync_wansync_yaml + '\nEOF'}</CodeBlock>
+
+   :::note
+
+   WAN synchronization ensures data consistency between the two Hazelcast clusters. Full WAN synchronization transmits all data from the source cluster to the target cluster, aligning the state of the target `IMap` with the source `IMap`. This method is particularly beneficial when the synchronization between two remote clusters is lost due to WAN queue overflows or cluster restarts.
+
+   :::
+6. Check the WAN synchronization status:
+
+   ```shell
+   kubectl get wansync wan-sync
+   ```
+
+   The output should be similar to the following:
+
+   ```shell
+   NAME       STATUS
+   wan-sync   Completed
+   ```
+7. Repeat step 3.3 to verify that the `map-sync` structure on the `hazelcast-second` cluster now contains data.
+
+## Clean up
+
+To remove all custom resources, run the following commands:
+
+```shell
+kubectl delete secret hazelcast-license-key
+kubectl delete $(kubectl get wansync,wanreplications,map,hazelcast -o name)
+```
+
+## Summary
+
+In this tutorial, you learned how to:
+
+- Deploy two Hazelcast clusters.
+- Create a Hazelcast map configuration on one of the clusters.
+- Synchronize map data between the two Hazelcast clusters using full and delta WAN synchronization.
+
+## Next steps
+
+See also:
+
+- [Configure WAN Replication](../wan-replication/overview.mdx)
+- [Tutorial: Connect to Hazelcast from outside Kubernetes](../../../../install-and-upgrade/connect-outside-kubernetes/operator-tutorial-expose-externally.mdx)

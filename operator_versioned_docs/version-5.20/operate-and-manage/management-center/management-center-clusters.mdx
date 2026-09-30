@@ -1,0 +1,55 @@
+---
+title: "Connect Management Center to a Hazelcast cluster"
+sidebar_position: 1
+slug: /management-center-clusters
+---
+
+import CodeBlock from "@theme/CodeBlock";
+import Ex_management_center_clusters_yaml from "../../examples/management-center-clusters.yaml";
+import Ex_management_center_tls_yaml from "../../examples/management-center-tls.yaml";
+
+You can connect an instance of Management Center to multiple Hazelcast clusters.
+
+To connect Management Center to a Hazelcast cluster, you need to configure the name of the cluster and the addresses of one or more members. You can connect Management Center to a cluster that is configured to use TLS by providing the Kubernetes secret.
+
+See the [Management Center documentation](/management-center/latest/deploy-manage/cluster-connections) for more information.
+
+## Configure cluster connections
+
+Connection configuration for the Hazelcast clusters that Management Center will monitor.
+
+| Field | Description |
+| --- | --- |
+| `hazelcastClusters[].address` | IP address or DNS name of the Hazelcast cluster. If the cluster is exposed with a service name in a different namespace, use the following syntax: `<service-name>.<service-namespace>`. |
+| `hazelcastClusters[].name` | Name of the Hazelcast cluster that Management Center will connect to. Default is `dev`. |
+| `hazelcastClusters[].tls.secretName` | Name of the Kubernetes TLS secret. |
+
+:::warning
+
+The `hazelcastClusters` field does not support deleting clusters from the custom resource. If you want to remove a cluster from the Management Center, use the Management Center UI.
+
+:::
+
+### Example Management Center configuration
+
+The example configuration creates a connection to a Hazelcast cluster `dev` with `hazelcast` as the DNS name.
+
+<CodeBlock language="yaml">{Ex_management_center_clusters_yaml}</CodeBlock>
+
+### Example Management Center configuration with TLS
+
+The example configuration creates a TLS-secured connection to a Hazelcast cluster `dev` with `hazelcast` as the DNS name. It uses a secret named `example` for the TLS certificate.
+
+<CodeBlock language="yaml">{Ex_management_center_tls_yaml}</CodeBlock>
+
+If required, you can create a TLS secret from an existing PEM certificate:
+
+```shell
+kubectl create secret generic example \
+  --from-file=tls.crt=example.crt \
+  --from-file=tls.key=example.key
+```
+
+## Next steps
+
+[Configure external access to Management Center](./management-center-external-access.mdx).

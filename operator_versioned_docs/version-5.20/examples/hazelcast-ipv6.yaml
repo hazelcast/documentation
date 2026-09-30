@@ -1,0 +1,12 @@
+apiVersion: hazelcast.com/v1alpha1
+kind: Hazelcast
+metadata:
+  name: hazelcast-ipv6
+spec:
+  properties:
+    - "hazelcast.prefer.ipv4.stack": "false"
+  jvm:
+    args:
+      - "-Djava.net.preferIPv4Stack=false"
+      - "-Djava.net.preferIPv6Addresses=true"
+

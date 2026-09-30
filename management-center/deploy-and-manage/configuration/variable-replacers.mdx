@@ -1,6 +1,6 @@
 ---
 title: "Variable replacers"
-sidebar_position: 4
+sidebar_position: 5
 slug: /deploy-manage/variable-replacers
 ---
 
@@ -8,6 +8,12 @@ import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
 Variable replacers are Java classes that replace custom strings in configuration. You can use variable replacers in command line arguments or in the \`hz-mc conf\` tool. A common use case for variable replacers is to mask sensitive information such as usernames and passwords.
+
+:::note
+
+This is a separate mechanism from the `file:<path>` convention used to supply secrets in a [YAML declarative configuration file (Beta)](./declarative-configuration/overview.mdx#secrets-the-file-convention). That convention works regardless of which, if any, `ConfigReplacer` is configured on the instance.
+
+:::
 
 A variable to be replaced takes the following form:
 

@@ -1,0 +1,486 @@
+---
+title: "Tutorial: Connect to Hazelcast from outside Kubernetes"
+sidebar_position: 1
+slug: /tutorials/operator-tutorial-expose-externally
+---
+
+import CodeBlock from "@theme/CodeBlock";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_hazelcast_unisocket_yaml from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-expose-externally/docs/modules/ROOT/examples/operator-expose-externally/hazelcast-unisocket.yaml";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_java_src_main_java_com_hazelcast_Main_java from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-expose-externally/docs/modules/ROOT/examples/operator-expose-externally/java/src/main/java/com/hazelcast/Main.java";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_nodejs_client_js from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-expose-externally/docs/modules/ROOT/examples/operator-expose-externally/nodejs/client.js";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_go_main_go from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-expose-externally/docs/modules/ROOT/examples/operator-expose-externally/go/main.go";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_python_main_py from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-expose-externally/docs/modules/ROOT/examples/operator-expose-externally/python/main.py";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_dotnet_unisocket_csharp_example_cs from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-expose-externally/docs/modules/ROOT/examples/operator-expose-externally/dotnet-unisocket/csharp_example.cs";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_hazelcast_smart_yaml from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-expose-externally/docs/modules/ROOT/examples/operator-expose-externally/hazelcast-smart.yaml";
+
+Learn how to connect to a Hazelcast cluster running in Kubernetes from outside of the Kubernetes environment.
+
+## Overview
+
+In this tutorial, you'll configure two available options for exposing your Hazelcast cluster to clients outside Kubernetes:
+
+- **Unisocket** - client requests are load balanced between Hazelcast members.
+- **Smart** - the client connects to all members and sends requests directly to the members owning the data.
+
+The tutorial should take approximately 5 to 10 minutes to complete.
+
+## Prerequisites
+
+Before you begin, make sure that you have:
+
+- An up and running [Kubernetes](https://kubernetes.io/) cluster.
+- The Kubernetes command line tool, [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl).
+- Deployed [Hazelcast Platform Operator](../get-started/overview.mdx).
+- The Hazelcast Code Samples repository [https://github.com/hazelcast/hazelcast-code-samples](https://github.com/hazelcast/hazelcast-code-samples) cloned to your local machine.
+- Created a license secret.
+
+  To create a secret with your [Hazelcast Enterprise License](http://trialrequest.hazelcast.com/):
+
+  ```shell
+  kubectl create secret generic hazelcast-license-key --from-literal=license-key=<hz-license-key>
+  ```
+- If you want to use the Hazelcast Command Line Client (CLC) to manage cluster configuration, it must be installed on your system. See the [CLC installation instructions](https://docs.hazelcast.com/clc/latest/install-clc).
+
+This tutorial uses load balancer services to connect to Hazelcast from outside of the Kubernetes cluster. Therefore, it is essential to ensure that your Kubernetes cluster can assign public IP addresses to load balancer services. This is particularly important if you are using a local Kubernetes cluster such as Minikube or Kind.
+
+## Unisocket
+
+The first option is to use the `Unisocket` type. This option uses the standard Kubernetes mechanism that automatically load balances the traffic to Hazelcast members.
+
+### Start the Hazelcast cluster
+
+Create the Hazelcast cluster and enable exposing externally using the unisocket type:
+
+<CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_hazelcast_unisocket_yaml + 'EOF'}</CodeBlock>
+
+For `discoveryServiceType` you can use:
+
+- `LoadBalancer` - create an external `LoadBalancer` for discovery service;
+- `NodePort` - expose the discovery service via `NodePort`.
+
+### Verify the Hazelcast cluster
+
+Check the cluster status:
+
+```shell
+kubectl get hazelcast my-hazelcast-unisocket
+NAME           STATUS    MEMBERS
+my-hazelcast   Running   3/3
+```
+
+After verifying that the cluster is `Running` and all the members are ready (`3/3`), find the discovery address:
+
+```shell
+kubectl get hazelcastendpoint my-hazelcast-unisocket
+NAME                     TYPE        ADDRESS
+my-hazelcast-unisocket   Discovery   192.0.2.0:5701
+```
+
+The `ADDRESS` column shows the external address of your Hazelcast cluster.
+
+### Connect Hazelcast Clients to the cluster
+
+1. Open the examples folder to access all sample clients:
+
+   ```shell
+   cd hazelcast-platform-operator-expose-externally
+   ```
+
+   The sample code for this tutorial is in the [`docs/modules/ROOT/examples/operator-expose-externally`](https://github.com/hazelcast/hazelcast-code-samples/tree/master/platform-operator/hazelcast-platform-operator-expose-externally/docs/modules/ROOT/examples/operator-expose-externally) directory.
+2. Configure the Hazelcast client with the external address and disable smart routing to use the unisocket connection.
+
+<Tabs groupId="client-language">
+<TabItem value="clc" label="CLC">
+
+```bash
+clc config add hz cluster.name=dev cluster.address=<EXTERNAL-IP>
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+<CodeBlock language="java">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_java_src_main_java_com_hazelcast_Main_java}</CodeBlock>
+
+</TabItem>
+<TabItem value="nodejs" label="NodeJS">
+
+<CodeBlock language="javascript">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_nodejs_client_js}</CodeBlock>
+
+</TabItem>
+<TabItem value="go" label="Go">
+
+<CodeBlock language="go">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_go_main_go}</CodeBlock>
+
+</TabItem>
+<TabItem value="python" label="Python">
+
+<CodeBlock language="python">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_python_main_py}</CodeBlock>
+
+</TabItem>
+<TabItem value="net" label=".NET">
+
+<CodeBlock language="cs">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_dotnet_unisocket_csharp_example_cs}</CodeBlock>
+
+</TabItem>
+</Tabs>
+
+Now you can start the application.
+
+<Tabs groupId="client-language">
+<TabItem value="clc" label="CLC">
+
+Fill a map:
+
+```bash
+for i in {1..10};
+do
+   clc -c hz map set --name map1 key-$i value-$i;
+done
+```
+
+Check the map size:
+
+```bash
+clc -c hz map size --name map1
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```bash
+cd java-unisocket
+mvn package
+java -jar target/*jar-with-dependencies*.jar
+```
+
+You should see the following output:
+
+```shell
+Successful connection!
+Starting to fill the map with random entries.
+Current map size: 2
+Current map size: 3
+Current map size: 4
+....
+....
+```
+
+</TabItem>
+<TabItem value="nodejs" label="NodeJS">
+
+```bash
+cd nodejs-unisocket
+npm install
+npm start
+```
+
+You should see the following output:
+
+```shell
+Successful connection!
+Starting to fill the map with random entries.
+Current map size: 2
+Current map size: 3
+Current map size: 4
+....
+....
+```
+
+</TabItem>
+<TabItem value="go" label="Go">
+
+```bash
+cd go-unisocket
+go run main.go
+```
+
+You should see the following output:
+
+```shell
+Successful connection!
+Starting to fill the map with random entries.
+Current map size: 2
+Current map size: 3
+Current map size: 4
+....
+....
+```
+
+</TabItem>
+<TabItem value="python" label="Python">
+
+```bash
+cd python-unisocket
+pip install -r requirements.txt
+python main.py
+```
+
+You should see the following output:
+
+```shell
+Successful connection!
+Starting to fill the map with random entries.
+Current map size: 2
+Current map size: 3
+Current map size: 4
+....
+....
+```
+
+</TabItem>
+<TabItem value="net" label=".NET">
+
+```bash
+cd dotnet-unisocket
+dotnet build
+dotnet run
+```
+
+You should see the following output:
+
+```shell
+Successful connection!
+Starting to fill the map with random entries.
+Current map size: 2
+Current map size: 3
+Current map size: 4
+....
+....
+```
+
+</TabItem>
+</Tabs>
+
+## Smart client
+
+The second option is to use the `Smart` type. With this option, each Hazelcast member is exposed with its own service (it can be either `LoadBalancer` or `NodePort`). Hazelcast maps keys to members and sends data directly to the member that contains the right data partition.
+
+### Start the Hazelcast cluster {/* #start-the-hazelcast-cluster-2 */}
+
+Create the Hazelcast cluster and enable exposing externally using the smart type:
+
+<CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_hazelcast_smart_yaml + '\nEOF'}</CodeBlock>
+
+This creates the Hazelcast cluster along with one `LoadBalancer` service for discovery and one `LoadBalancer` service for each pod.
+
+For `discoveryServiceType` you can use:
+
+- `LoadBalancer` - creates an external `LoadBalancer` for discovery service.
+- `NodePort` - exposes the discovery service via `NodePort`.
+
+For `memberAccess` you can use:
+
+- `LoadBalancer` - lets the client access Hazelcast member with the `LoadBalancer` service.
+- `NodePortNodeName` - lets the client access Hazelcast member with the `NodePort` service and the node name.
+- `NodePortExternalIP` - lets the client access Hazelcast member with the `NodePort` service and the node external IP/hostname.
+
+### Verify the Hazelcast cluster {/* #verify-the-hazelcast-cluster-2 */}
+
+Check the cluster status:
+
+```shell
+kubectl get hazelcast my-hazelcast-smart
+NAME           STATUS    MEMBERS
+my-hazelcast   Running   3/3
+```
+
+After verifying that the cluster is `Running` and all the members are ready (`3/3`), find the discovery and member addresses:
+
+```shell
+kubectl get hazelcastendpoint --selector="app.kubernetes.io/instance=my-hazelcast-smart"
+NAME               TYPE        ADDRESS
+my-hazelcast       Discovery   198.51.100.0:5701
+my-hazelcast-0     Member      203.0.113.134:5701
+my-hazelcast-1     Member      203.0.113.134:5701
+my-hazelcast-2     Member      203.0.113.128:5701
+my-hazelcast-wan   WAN         198.51.100.0:5701
+```
+
+The `ADDRESS` column displays the external addresses of your Hazelcast cluster and members.
+
+### Connect Hazelcast clients to the cluster {/* #connect-hazelcast-clients-to-the-cluster-2 */}
+
+Configure the Hazelcast client to connect to the cluster external address.
+
+<Tabs groupId="client-language">
+<TabItem value="clc" label="CLC">
+
+```bash
+clc config add hz cluster.name=dev cluster.address=<EXTERNAL-IP>
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+<CodeBlock language="java">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_java_src_main_java_com_hazelcast_Main_java}</CodeBlock>
+
+</TabItem>
+<TabItem value="nodejs" label="NodeJS">
+
+<CodeBlock language="javascript">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_nodejs_client_js}</CodeBlock>
+
+</TabItem>
+<TabItem value="go" label="Go">
+
+<CodeBlock language="go">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_go_main_go}</CodeBlock>
+
+</TabItem>
+<TabItem value="python" label="Python">
+
+<CodeBlock language="python">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_python_main_py}</CodeBlock>
+
+</TabItem>
+<TabItem value="net" label=".Net">
+
+<CodeBlock language="cs">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_expose_externally_docs_modules_ROOT_examples_operator_expose_externally_dotnet_unisocket_csharp_example_cs}</CodeBlock>
+
+</TabItem>
+</Tabs>
+
+Now you can start the application.
+
+<Tabs groupId="client-language">
+<TabItem value="clc" label="CLC">
+
+Fill a map:
+
+```bash
+for i in {1..10};
+do
+   clc -c hz map set --name map1 key-$i value-$i;
+done
+```
+
+Check the map size:
+
+```bash
+clc -c hz map size --name map1
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```bash
+cd java
+mvn package
+java -jar target/*jar-with-dependencies*.jar
+```
+
+You should see the following output:
+
+```shell
+Successful connection!
+Starting to fill the map with random entries.
+Current map size: 2
+Current map size: 3
+Current map size: 4
+....
+....
+```
+
+</TabItem>
+<TabItem value="nodejs" label="NodeJS">
+
+```bash
+cd nodejs
+npm install
+npm start
+```
+
+You should see the following output:
+
+```shell
+Successful connection!
+Starting to fill the map with random entries.
+Current map size: 2
+Current map size: 3
+Current map size: 4
+....
+....
+```
+
+</TabItem>
+<TabItem value="go" label="Go">
+
+```bash
+cd go
+go run main.go
+```
+
+You should see the following output:
+
+```shell
+Successful connection!
+Starting to fill the map with random entries.
+Current map size: 2
+Current map size: 3
+Current map size: 4
+....
+....
+```
+
+</TabItem>
+<TabItem value="python" label="Python">
+
+```bash
+cd python
+pip install -r requirements.txt
+python main.py
+```
+
+You should see the following output:
+
+```shell
+Successful connection!
+Starting to fill the map with random entries.
+Current map size: 2
+Current map size: 3
+Current map size: 4
+....
+....
+```
+
+</TabItem>
+<TabItem value="net" label=".NET">
+
+```bash
+cd dotnet
+dotnet build
+dotnet run
+```
+
+You should see the following output:
+
+```shell
+Successful connection!
+Starting to fill the map with random entries.
+Current map size: 2
+Current map size: 3
+Current map size: 4
+....
+....
+```
+
+</TabItem>
+</Tabs>
+
+## Clean up
+
+When you've finished, clean up the created resources remove the Hazelcast Custom Resources:
+
+```shell
+kubectl delete hazelcast my-hazelcast-unisocket
+kubectl delete hazelcast my-hazelcast-smart
+```
+
+## Summary
+
+In this tutorial, you learned how to connect to a Hazelcast cluster running in Kubernetes from outside of the Kubernetes environment, using both the Unisocket and Smart options.
+
+## Next steps
+
+See also:
+
+- [Connect to Hazelcast from outside Kubernetes](./overview.mdx)

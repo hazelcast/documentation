@@ -405,6 +405,7 @@ export const redirects: {from: string; to: string}[] = [
   { from: "/hazelcast/5.6/query/sql-overview", to: "/hazelcast/5.6/sql/sql-overview" },
   { from: "/hazelcast/5.6/release-notes/5-6-0", to: "/hazelcast/5.6/release-notes/releases" },
   { from: "/hazelcast/5.6/release-notes/5-6-1", to: "/hazelcast/5.6/release-notes/enterprise" },
+  { from: "/hazelcast/5.6/release-notes/5-6-2", to: "/hazelcast/5.6/release-notes/enterprise" },
   { from: "/hazelcast/5.6/secure-cluster/security-best-practices", to: "/hazelcast/5.6/cluster-performance/security-best-practices" },
   { from: "/hazelcast/5.6/security/cluster-member-security", to: "/hazelcast/5.6/security/overview" },
   { from: "/hazelcast/5.6/security/enabling-jaas", to: "/hazelcast/5.6/security/enable-security" },
@@ -829,6 +830,8 @@ export const redirects: {from: string; to: string}[] = [
   { from: "/operator/5.18/scaling-upgrading", to: "/operator/5.18/scale" },
   { from: "/operator/5.19/air-gapped-env", to: "/operator/5.19/image-registry" },
   { from: "/operator/5.19/scaling-upgrading", to: "/operator/5.19/scale" },
+  { from: "/operator/5.20/air-gapped-env", to: "/operator/5.20/image-registry" },
+  { from: "/operator/5.20/scaling-upgrading", to: "/operator/5.20/scale" },
   { from: "/operator/latest-snapshot/air-gapped-env", to: "/operator/latest-snapshot/image-registry" },
   { from: "/operator/latest-snapshot/scaling-upgrading", to: "/operator/latest-snapshot/scale" },
 ];

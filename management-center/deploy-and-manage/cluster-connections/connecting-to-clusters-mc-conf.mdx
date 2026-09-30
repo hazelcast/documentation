@@ -17,6 +17,12 @@ To connect Management Center to a Hazelcast cluster, using the `hz-mc conf` tool
 
   :::
 
+:::tip
+
+You can also preconfigure a cluster connection with a [YAML declarative configuration file](../configuration/declarative-configuration/overview.mdx#clusters) instead of `hz-mc conf`, which supports both options above — the cluster name and member addresses, or a path to a client configuration file. This lets Management Center apply the connection automatically every time it starts, instead of requiring a one-off `hz-mc conf` run. See [YAML declarative configuration](../configuration/declarative-configuration/overview.mdx).
+
+:::
+
 ## Before you begin
 
 Make sure that Management Center is not running. If you execute a CLI command while Management Center is running, you will see the following error: `Could not lock home directory`.
@@ -36,7 +42,7 @@ For a getting started guide, see [Management Center Configuration Tool](../confi
    ```none
    Successfully added Cluster Config.
    ```
-2. To provide the path to a client configuration file, use the following:
+2. <Anchor id="using-a-client-configuration-file" />To provide the path to a client configuration file, use the following:
 
    ```bash
    hz-mc conf cluster add --client-config={path to file}
@@ -94,3 +100,5 @@ Use the `-f` / `--force` flag to make `cluster remove` idempotent. The command s
 For the full reference of `mc-cli`, see [Management Center Configuration Tool](../configuration/mc-conf.mdx)
 
 You can also use the CLI to preconfigure a security provider, including dev mode. This allows you to automate the setup of Management Center without needing to interact with the UI.
+
+For a fully declarative, GitOps-friendly alternative that also covers cluster connections, security providers, and more, see [YAML declarative configuration (Beta)](../configuration/declarative-configuration/overview.mdx).

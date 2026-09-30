@@ -1,0 +1,2790 @@
+---
+title: "Hazelcast Platform Operator API Docs"
+sidebar_position: 1
+slug: /api-ref
+---
+
+A reference guide to the Hazelcast Platform Operator CRD types.
+
+## Hazelcast Platform Operator API Docs
+
+This is a reference for the Hazelcast Platform Operator API types. These are all the types and fields that are used in the Hazelcast Platform Operator CRDs.
+
+:::tip
+
+This document was generated from comments in the Go code in the api/ directory.
+
+:::
+
+### Table of Contents
+
+- [AcknowledgementSetting](#acknowledgementsetting)
+- [AcknowledgementType](#acknowledgementtype)
+- [AdvancedNetwork](#advancednetwork)
+- [AgentConfiguration](#agentconfiguration)
+- [AttributeConfig](#attributeconfig)
+- [Authentication](#authentication)
+- [BatchSetting](#batchsetting)
+- [BitmapIndexOptionsConfig](#bitmapindexoptionsconfig)
+- [BucketConfiguration](#bucketconfiguration)
+- [BucketSource](#bucketsource)
+- [ByteOrder](#byteorder)
+- [CPSubsystem](#cpsubsystem)
+- [Cache](#cache)
+- [CacheList](#cachelist)
+- [CacheSpec](#cachespec)
+- [CacheStatus](#cachestatus)
+- [CapacityPolicyType](#capacitypolicytype)
+- [ClientAuthentication](#clientauthentication)
+- [ClientOnJoinOperation](#clientonjoinoperation)
+- [ClientPermissions](#clientpermissions)
+- [ClientSecurity](#clientsecurity)
+- [ClientServerSocketEndpointConfig](#clientserversocketendpointconfig)
+- [ClientTLS](#clienttls)
+- [CollectionType](#collectiontype)
+- [CompactSerializationConfig](#compactserializationconfig)
+- [CronHotBackup](#cronhotbackup)
+- [CronHotBackupList](#cronhotbackuplist)
+- [CronHotBackupSpec](#cronhotbackupspec)
+- [CronHotBackupStatus](#cronhotbackupstatus)
+- [CustomConfig](#customconfig)
+- [DataRecoveryPolicyType](#datarecoverypolicytype)
+- [DataStructureConfigState](#datastructureconfigstate)
+- [DataStructureSpec](#datastructurespec)
+- [DataStructureStatus](#datastructurestatus)
+- [Diagnostics](#diagnostics)
+- [DiagnosticsFileConfiguration](#diagnosticsfileconfiguration)
+- [DiagnosticsOutputType](#diagnosticsoutputtype)
+- [DurableExecutorServiceConfiguration](#durableexecutorserviceconfiguration)
+- [EntryListenerConfiguration](#entrylistenerconfiguration)
+- [EventJournal](#eventjournal)
+- [EvictionConfig](#evictionconfig)
+- [EvictionPolicyType](#evictionpolicytype)
+- [ExecutorServiceConfiguration](#executorserviceconfiguration)
+- [ExposeExternallyConfiguration](#exposeexternallyconfiguration)
+- [ExposeExternallyType](#exposeexternallytype)
+- [ExternalConnectivityConfiguration](#externalconnectivityconfiguration)
+- [ExternalConnectivityIngress](#externalconnectivityingress)
+- [ExternalConnectivityRoute](#externalconnectivityroute)
+- [ExternalConnectivityServiceType](#externalconnectivityservicetype)
+- [ExternalConnectivityType](#ExternalConnectivityType)
+- [FullBehaviorSetting](#fullbehaviorsetting)
+- [GCType](#gctype)
+- [GlobalSerializer](#globalserializer)
+- [Hazelcast](#hazelcast)
+- [HazelcastClusterConfig](#hazelcastclusterconfig)
+- [HazelcastClusterStatus](#hazelcastclusterstatus)
+- [HazelcastEndpoint](#hazelcastendpoint)
+- [HazelcastEndpointList](#hazelcastendpointlist)
+- [HazelcastEndpointSpec](#hazelcastendpointspec)
+- [HazelcastEndpointStatus](#hazelcastendpointstatus)
+- [HazelcastEndpointType](#hazelcastendpointtype)
+- [HazelcastList](#hazelcastlist)
+- [HazelcastMemberStatus](#hazelcastmemberstatus)
+- [HazelcastPersistenceConfiguration](#hazelcastpersistenceconfiguration)
+- [HazelcastSpec](#hazelcastspec)
+- [HazelcastStatus](#hazelcaststatus)
+- [HighAvailabilityMode](#highavailabilitymode)
+- [HotBackup](#hotbackup)
+- [HotBackupList](#hotbackuplist)
+- [HotBackupSpec](#hotbackupspec)
+- [HotBackupState](#hotbackupstate)
+- [HotBackupStatus](#hotbackupstatus)
+- [HotBackupTemplateSpec](#hotbackuptemplatespec)
+- [IPFamily](#ipfamily)
+- [InMemoryFormatType](#inmemoryformattype)
+- [IndexConfig](#indexconfig)
+- [IndexType](#indextype)
+- [InitContainerConfiguration](#initcontainerconfiguration)
+- [InitialModeType](#initialmodetype)
+- [JAASAuthItem](#jaasauthitem)
+- [JAASPropertiesSource](#JAASPropertiesSource)
+- [JAASPropertyFromSource](#jaaspropertyfromsource)
+- [JVMConfiguration](#jvmconfiguration)
+- [JVMDebugConfiguration](#jvmdebugconfiguration)
+- [JVMGCConfiguration](#jvmgcconfiguration)
+- [JVMMemoryConfiguration](#jvmmemoryconfiguration)
+- [JavaFilterConfig](#javafilterconfig)
+- [JetEdgeDefaults](#jetedgedefaults)
+- [JetEngineConfiguration](#jetengineconfiguration)
+- [JetInstance](#jetinstance)
+- [JetJob](#jetjob)
+- [JetJobList](#jetjoblist)
+- [JetJobSnapshot](#jetjobsnapshot)
+- [JetJobSnapshotList](#jetjobsnapshotlist)
+- [JetJobSnapshotSpec](#jetjobsnapshotspec)
+- [JetJobSnapshotState](#jetjobsnapshotstate)
+- [JetJobSnapshotStatus](#jetjobsnapshotstatus)
+- [JetJobSpec](#jetjobspec)
+- [JetJobState](#jetjobstate)
+- [JetJobStatus](#jetjobstatus)
+- [JetJobStatusPhase](#jetjobstatusphase)
+- [JetRemoteFileConfiguration](#jetremotefileconfiguration)
+- [LDAPProvider](#ldapprovider)
+- [LdapTLS](#ldaptls)
+- [LiteMember](#litemember)
+- [LoggingConfiguration](#loggingconfiguration)
+- [LoggingLevel](#logginglevel)
+- [LoginModuleUsage](#loginmoduleusage)
+- [MCClientTLS](#mcclienttls)
+- [MCJVMConfiguration](#mcjvmconfiguration)
+- [MCPersistenceConfiguration](#mcpersistenceconfiguration)
+- [MCPhase](#mcphase)
+- [ManagementCenter](#managementcenter)
+- [ManagementCenterConfig](#managementcenterconfig)
+- [ManagementCenterList](#managementcenterlist)
+- [ManagementCenterSpec](#managementcenterspec)
+- [ManagementCenterStatus](#managementcenterstatus)
+- [Map](#map)
+- [MapConfigState](#mapconfigstate)
+- [MapList](#maplist)
+- [MapSpec](#mapspec)
+- [MapStatus](#mapstatus)
+- [MapStoreConfig](#mapstoreconfig)
+- [MaxSizePolicyType](#maxsizepolicytype)
+- [MemberAccess](#memberaccess)
+- [MerkleTreeConfig](#merkletreeconfig)
+- [ModuleDeploymentConfiguration](#moduledeploymentconfiguration)
+- [MultiMap](#multimap)
+- [MultiMapList](#multimaplist)
+- [MultiMapSpec](#multimapspec)
+- [MultiMapStatus](#multimapstatus)
+- [MutualAuthentication](#mutualauthentication)
+- [NativeMemoryAllocatorType](#nativememoryallocatortype)
+- [NativeMemoryConfiguration](#nativememoryconfiguration)
+- [NearCache](#nearcache)
+- [NearCacheEviction](#nearcacheeviction)
+- [NearCacheMaxSizePolicyType](#nearcachemaxsizepolicytype)
+- [NodeState](#nodestate)
+- [PVCNamePrefix](#pvcnameprefix)
+- [PVCTemplateConfiguration](#pvctemplateconfiguration)
+- [PermissionItem](#permissionitem)
+- [PermissionWithName](#permissionwithname)
+- [PersistenceStartupAction](#persistencestartupaction)
+- [Phase](#phase)
+- [PrometheusExporter](#prometheusexporter)
+- [PrometheusFilterMetrics](#prometheusfiltermetrics)
+- [PrometheusMonitoring](#prometheusmonitoring)
+- [PrometheusPrinter](#prometheusprinter)
+- [PvcConfiguration](#pvcconfiguration)
+- [Queue](#queue)
+- [QueueList](#queuelist)
+- [QueueSetting](#queuesetting)
+- [QueueSpec](#queuespec)
+- [QueueStatus](#queuestatus)
+- [RMInMemoryFormatType](#rminmemoryformattype)
+- [Realm](#realm)
+- [RemoteFileConfiguration](#remotefileconfiguration)
+- [ReplicatedMap](#replicatedmap)
+- [ReplicatedMapList](#replicatedmaplist)
+- [ReplicatedMapSpec](#replicatedmapspec)
+- [ReplicatedMapStatus](#replicatedmapstatus)
+- [ResourceKind](#resourcekind)
+- [ResourceSpec](#resourcespec)
+- [RestoreConfiguration](#restoreconfiguration)
+- [RestoreFromLocalConfiguration](#restorefromlocalconfiguration)
+- [RestoreState](#restorestate)
+- [RestoreStatus](#restorestatus)
+- [SQL](#sql)
+- [ScheduledExecutorServiceConfiguration](#scheduledexecutorserviceconfiguration)
+- [SchedulingConfiguration](#schedulingconfiguration)
+- [Security](#security)
+- [SecurityProviders](#securityproviders)
+- [SerializationConfig](#serializationconfig)
+- [SerializationFilterList](#serializationfilterlist)
+- [Serializer](#serializer)
+- [ServerSocketEndpointConfig](#serversocketendpointconfig)
+- [SimpleAuthentication](#simpleauthentication)
+- [SyncConsistencyCheckStrategy](#syncconsistencycheckstrategy)
+- [TLS](#tls)
+- [Topic](#topic)
+- [TopicList](#topiclist)
+- [TopicSpec](#topicspec)
+- [TopicStatus](#topicstatus)
+- [UniqueKeyTransformation](#uniquekeytransformation)
+- [User](#user)
+- [UserCodeDeploymentConfig](#usercodedeploymentconfig)
+- [UserCodeNamespace](#usercodenamespace)
+- [UserCodeNamespaceList](#usercodenamespacelist)
+- [UserCodeNamespaceSpec](#usercodenamespacespec)
+- [UserCodeNamespaceState](#usercodenamespacestate)
+- [UserCodeNamespaceStatus](#usercodenamespacestatus)
+- [UserCodeNamespacesConfig](#usercodenamespacesconfig)
+- [VectorCollection](#vectorcollection)
+- [VectorCollectionList](#vectorcollectionlist)
+- [VectorCollectionSpec](#vectorcollectionspec)
+- [VectorCollectionStatus](#vectorcollectionstatus)
+- [VectorIndex](#vectorindex)
+- [VectorMetric](#vectormetric)
+- [WANConfig](#wanconfig)
+- [WANServiceType](#wanservicetype)
+- [WanMemberStatus](#wanmemberstatus)
+- [WanReplication](#wanreplication)
+- [WanReplicationList](#wanreplicationlist)
+- [WanReplicationMapStatus](#wanreplicationmapstatus)
+- [WanReplicationSpec](#wanreplicationspec)
+- [WanReplicationStatus](#wanreplicationstatus)
+- [WanStatus](#wanstatus)
+- [WanSync](#wansync)
+- [WanSyncList](#wansynclist)
+- [WanSyncMapStatus](#wansyncmapstatus)
+- [WanSyncPhase](#wansyncphase)
+- [WanSyncSpec](#wansyncspec)
+- [WanSyncStatus](#wansyncstatus)
+
+### AcknowledgementSetting
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `type` | Type represents how a batch of replication events is considered successfully replicated. | [`AcknowledgementType`](#acknowledgementtype) | false | ACK\_ON\_OPERATION\_COMPLETE |
+| `timeout` | Timeout represents the time in milliseconds the source cluster waits for the acknowledgement. After timeout, the events will be resent. | `int32` | false | 60000 |
+
+[Back to TOC](#table-of-contents)
+
+### AdvancedNetwork
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `memberServerSocketEndpointConfig` |  | [`ServerSocketEndpointConfig`](#serversocketendpointconfig) | false | - |
+| `clientServerSocketEndpointConfig` |  | [`ClientServerSocketEndpointConfig`](#clientserversocketendpointconfig) | false | - |
+| `wan` |  | [`[]WANConfig`](#wanconfig) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### AgentConfiguration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `repository` | Repository to pull Hazelcast Platform Operator Agent([https://github.com/hazelcast/platform-operator-agent](https://github.com/hazelcast/platform-operator-agent)) | `string` | false | "docker.io/hazelcast/platform-operator-agent" |
+| `version` | Version of Hazelcast Platform Operator Agent. | `string` | false | "5.20.0" |
+| `resources` | Compute Resources required by the Agent container. | [`*corev1.ResourceRequirements`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### AttributeConfig
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | Name of the attribute [https://docs.hazelcast.com/hazelcast/latest/query/predicate-overview\#creating-custom-query-attributes](https://docs.hazelcast.com/hazelcast/latest/query/predicate-overview#creating-custom-query-attributes) | `string` | true | - |
+| `extractorClassName` | Name of the extractor class [https://docs.hazelcast.com/hazelcast/latest/query/predicate-overview\#implementing-a-valueextractor](https://docs.hazelcast.com/hazelcast/latest/query/predicate-overview#implementing-a-valueextractor) | `string` | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### Authentication
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `simple` |  | [`*SimpleAuthentication`](#simpleauthentication) | false | - |
+| `jaas` |  | [`[]JAASAuthItem`](#jaasauthitem) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### BatchSetting
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `size` | Size represents the maximum batch size. | `int32` | false | 500 |
+| `maximumDelay` | MaximumDelay represents the maximum delay in milliseconds. If the batch size is not reached, the events will be sent after the maximum delay. | `int32` | false | 1000 |
+
+[Back to TOC](#table-of-contents)
+
+### BitmapIndexOptionsConfig
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `uniqueKey` |  | `string` | true | - |
+| `uniqueKeyTransformation` |  | [`UniqueKeyTransformation`](#uniquekeytransformation) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### BucketConfiguration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `secretName` | Name of the secret with credentials for cloud providers. | `string` | false | - |
+| `bucketURI` | URL of the bucket to download folders. AWS S3, GCP Bucket and Azure Blob storage buckets are supported. Example bucket URIs: - AWS S3 → s3://bucket-name/path/to/folder - GCP Bucket → gs://bucket-name/path/to/folder - Azure Blob → azblob://bucket-name/path/to/folder | `string` | true | - |
+
+#### Deprecated
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `secret` | secret is a deprecated alias for secretName. | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### BucketSource
+
+BucketSource defines the configuration for a single cloud storage bucket.
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `secretName` | Name of the secret with credentials for cloud providers. | `string` | false | - |
+| `bucketURI` | URL of the bucket to download folders. AWS S3, GCP Bucket and Azure Blob storage buckets are supported. Example bucket URIs: - AWS S3 → s3://bucket-name/path/to/folder - GCP Bucket → gs://bucket-name/path/to/folder - Azure Blob → azblob://bucket-name/path/to/folder | `string` | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### CPSubsystem
+
+CPSubsystem contains the configuration of a component of a Hazelcast that builds a strongly consistent layer for a set of distributed data structures
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `sessionTTLSeconds` | SessionTTLSeconds is the duration for a CP session to be kept alive after the last received heartbeat. Must be greater than or equal to SessionHeartbeatIntervalSeconds and smaller than or equal to MissingCpMemberAutoRemovalSeconds. | `*int32` | false | - |
+| `sessionHeartbeatIntervalSeconds` | SessionHeartbeatIntervalSeconds Interval in seconds for the periodically committed CP session heartbeats. Must be smaller than SessionTTLSeconds. | `*int32` | false | - |
+| `missingCpMemberAutoRemovalSeconds` | MissingCpMemberAutoRemovalSeconds is the duration in seconds to wait before automatically removing a missing CP member from the CP Subsystem. | `*int32` | false | - |
+| `failOnIndeterminateOperationState` | FailOnIndeterminateOperationState indicated whether CP Subsystem operations use at-least-once and at-most-once execution guarantees. | `*bool` | false | - |
+| `dataLoadTimeoutSeconds` | DataLoadTimeoutSeconds is the timeout duration in seconds for CP members to restore their persisted data from disk | `*int32` | false | - |
+| `pvc` | PVC is the configuration of PersistenceVolumeClaim. | [`*PvcConfiguration`](#pvcconfiguration) | false | - |
+| `pvcName` | PVCName is the name of the mounted PVC | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### Cache
+
+Cache is the Schema for the caches API
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta) | false | - |
+| `spec` |  | [`CacheSpec`](#cachespec) | true | - |
+| `status` |  | [`CacheStatus`](#cachestatus) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### CacheList
+
+CacheList contains a list of Cache
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ListMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#listmeta-v1-meta) | false | - |
+| `items` |  | [`[]Cache`](#cache) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### CacheSpec
+
+CacheSpec defines the desired state of Cache It cannot be updated after the Cache is created
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | Name of the data structure config to be created. If empty, CR name will be used. It cannot be updated after the config is created successfully. | `string` | false | - |
+| `hazelcastResourceName` | HazelcastResourceName defines the name of the Hazelcast resource that this resource is created for. | `string` | true | - |
+| `backupCount` | Number of synchronous backups. | `*int32` | false | 1 |
+| `asyncBackupCount` | Number of asynchronous backups. | `int32` | false | 0 |
+| `userCodeNamespace` | Name of the User Code Namespace applied to this instance | `string` | false | - |
+| `keyType` | Class name of the key type | `string` | false | - |
+| `valueType` | Class name of the value type | `string` | false | - |
+| `persistenceEnabled` | When enabled, cache data will be persisted. | `bool` | false | false |
+| `inMemoryFormat` | InMemoryFormat specifies in which format data will be stored in your cache | [`InMemoryFormatType`](#inmemoryformattype) | false | BINARY |
+| `eventJournal` | EventJournal specifies event journal configuration of the Cache | [`*EventJournal`](#eventjournal) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### CacheStatus
+
+CacheStatus defines the observed state of Cache
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `state` | State of the data structure | [`DataStructureConfigState`](#datastructureconfigstate) | false | - |
+| `message` | Message explaining the current state | `string` | false | - |
+| `memberStatuses` | Holds status of data structure for each Hazelcast member | [`map[string]DataStructureConfigState`](#datastructureconfigstate) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### ClientAuthentication
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `realm` |  | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### ClientPermissions
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `priorityGrant` |  | `*bool` | false | - |
+| `onJoinOperation` |  | [`ClientOnJoinOperation`](#clientonjoinoperation) | false | - |
+| `all` |  | [`*PermissionItem`](#permissionitem) | false | - |
+| `permissions` |  | [`map[string][]PermissionWithName`](#permissionwithname) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### ClientSecurity
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `clientSecretName` |  | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### ClientServerSocketEndpointConfig
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `interfaces` |  | `[]string` | false | - |
+| `port` |  | `*uint` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### ClientTLS
+
+ClientTLS is used for client TLS configuration in Hazelcast CR
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `secretName` | Name of the secret with TLS certificate and key. | `string` | true | - |
+| `clientAuthentication` | Mutual authentication configuration for the client. It is None by default which means the client side of connection is not authenticated. | [`MutualAuthentication`](#mutualauthentication) | false | "None" |
+| `keyMaterialDuration` |  | [`*metav1.Duration`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#duration-v1-meta) | false | - |
+
+#### Deprecated {/* #deprecated-2 */}
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `mutualAuthentication` | mutualAuthentication is deprecated. Use clientAuthentication field instead. Mutual authentication configuration. It's None by default which means the client side of connection is not authenticated. | [`MutualAuthentication`](#mutualauthentication) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### CompactSerializationConfig
+
+CompactSerializationConfig is the configuration for the Hazelcast Compact serialization.
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `serializers` | Serializers is the list of explicit serializers to be registered. | `[]string` | false | - |
+| `classes` | Classes is the list of class names for which a zero-config serializer will be registered, without implementing an explicit serializer. | `[]string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### CronHotBackup
+
+CronHotBackup is the Schema for the cronhotbackups API
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta) | false | - |
+| `spec` |  | [`CronHotBackupSpec`](#cronhotbackupspec) | true | - |
+| `status` |  | [`CronHotBackupStatus`](#cronhotbackupstatus) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### CronHotBackupList
+
+CronHotBackupList contains a list of CronHotBackup
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ListMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#listmeta-v1-meta) | false | - |
+| `items` |  | [`[]CronHotBackup`](#cronhotbackup) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### CronHotBackupSpec
+
+CronHotBackupSpec defines the desired state of CronHotBackup
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `schedule` | Schedule contains a crontab-like expression that defines the schedule in which HotBackup will be started. If the Schedule is empty the HotBackup will start only once when applied. | `string` | true | - |
+| `hotBackupTemplate` | Specifies the hot backup that will be created when executing a CronHotBackup. | [`HotBackupTemplateSpec`](#hotbackuptemplatespec) | true | - |
+| `successfulHotBackupsHistoryLimit` | The number of successful finished hot backups to retain. | `*int32` | false | 5 |
+| `failedHotBackupsHistoryLimit` | The number of failed finished hot backups to retain. | `*int32` | false | 3 |
+| `suspend` | When true, CronHotBackup will stop creating HotBackup CRs until it is disabled | `bool` | false | false |
+
+[Back to TOC](#table-of-contents)
+
+### CronHotBackupStatus
+
+CronHotBackupStatus defines the observed state of CronHotBackup
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `hazelcastReady` |  | `bool` | false | - |
+| `state` |  | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### CustomConfig
+
+CustomConfig contains the name of the custom configuration object
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `customConfigCmName` | Name of the ConfigMap with the Hazelcast custom configuration. This configuration from the ConfigMap might be overridden by the Hazelcast CR configuration. | `string` | false | - |
+| `customConfigSecretName` | Name of the Secret with the Hazelcast custom configuration. This configuration from the ConfigMap might be overridden by the Hazelcast CR configuration. | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### DataStructureSpec
+
+DataStructureSpec is a common spec for data structures.
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | Name of the data structure config to be created. If empty, CR name will be used. It cannot be updated after the config is created successfully. | `string` | false | - |
+| `hazelcastResourceName` | HazelcastResourceName defines the name of the Hazelcast resource that this resource is created for. | `string` | true | - |
+| `backupCount` | Number of synchronous backups. | `*int32` | false | 1 |
+| `asyncBackupCount` | Number of asynchronous backups. | `int32` | false | 0 |
+| `userCodeNamespace` | Name of the User Code Namespace applied to this instance | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### DataStructureStatus
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `state` | State of the data structure | [`DataStructureConfigState`](#datastructureconfigstate) | false | - |
+| `message` | Message explaining the current state | `string` | false | - |
+| `memberStatuses` | Holds status of data structure for each Hazelcast member | [`map[string]DataStructureConfigState`](#datastructureconfigstate) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### Diagnostics
+
+Diagnostics configures the diagnostics logging.
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `outputType` |  | [`DiagnosticsOutputType`](#diagnosticsoutputtype) | false | STDOUT |
+| `includeEpochTime` |  | `*bool` | false | true |
+| `maxRolledFileSize` |  | `*resource.Quantity` | true | "50M" |
+| `maxRolledFileCount` |  | `int32` | true | 10 |
+| `fileNamePrefix` | FileNamePrefix is the prefix of the diagnostics logs file. | `string` | false | - |
+| `pluginProperties` | PluginProperties specifies the properties for the diagnostics plugin. | `map[string]string` | false | - |
+| `autoOffTimerInMinutes` | AutoOffTimerInMinutes if present, sets the time in minuter after which the diagnostic logging will be turned off. | `*int32` | false | - |
+| `pvcName` | PVCName is the name of the PVC. | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### DiagnosticsFileConfiguration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `maxRolledFileSizeInMB` |  | `int32` | true | 50 |
+| `maxRolledFileCount` |  | `int32` | true | 10 |
+| `fileNamePrefix` | FileNamePrefix is the prefix of the diagnostics logs file. | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### DurableExecutorServiceConfiguration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | The name of the executor service | `string` | false | "default" |
+| `poolSize` | The number of executor threads per member. | `int32` | false | 16 |
+| `durability` | Durability of the executor. | `int32` | false | 1 |
+| `capacity` | Capacity of the executor task per partition. | `int32` | false | 100 |
+| `userCodeNamespace` | Name of the User Code Namespace applied to this instance | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### EntryListenerConfiguration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `className` | ClassName is the fully qualified name of the class that implements any of the Listener interface. | `string` | true | - |
+| `includeValues` | IncludeValues is an optional attribute that indicates whether the event will contain the map value. Defaults to true. | `*bool` | false | true |
+| `local` | Local is an optional attribute that indicates whether the map on the local member can be listened to. Defaults to false. | `bool` | false | false |
+
+[Back to TOC](#table-of-contents)
+
+### EventJournal
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `capacity` | Capacity sets the capacity of the ringbuffer underlying the event journal. | `int32` | false | 10000 |
+| `timeToLiveSeconds` | TimeToLiveSeconds indicates how long the items remain in the event journal before they are expired. | `int32` | false | 0 |
+
+[Back to TOC](#table-of-contents)
+
+### EvictionConfig
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `evictionPolicy` | Eviction policy to be applied when map reaches its max size according to the max size policy. | [`EvictionPolicyType`](#evictionpolicytype) | false | "NONE" |
+| `maxSize` | Max size of the map. | `int32` | false | 0 |
+| `maxSizePolicy` | Policy for deciding if the maxSize is reached. | [`MaxSizePolicyType`](#maxsizepolicytype) | false | "PER\_NODE" |
+
+[Back to TOC](#table-of-contents)
+
+### ExecutorServiceConfiguration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | The name of the executor service | `string` | false | "default" |
+| `poolSize` | The number of executor threads per member. | `int32` | false | 8 |
+| `queueCapacity` | Task queue capacity of the executor. | `int32` | false | 0 |
+| `userCodeNamespace` | Name of the User Code Namespace applied to this instance | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### ExposeExternallyConfiguration
+
+ExposeExternallyConfiguration defines how to expose Hazelcast cluster to external clients
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `type` | Specifies how members are exposed. Valid values are: - "Smart" (default): each member pod is exposed with a separate external address - "Unisocket": all member pods are exposed with one external address | [`ExposeExternallyType`](#exposeexternallytype) | false | "Smart" |
+| `discoveryServiceType` | Type of the service used to discover Hazelcast cluster. | [`corev1.ServiceType`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#servicetype-v1-core) | false | "LoadBalancer" |
+| `memberAccess` | How each member is accessed from the external client. Only available for "Smart" client and valid values are: - "NodePortExternalIP" (default): each member is accessed by the NodePort service and the node external IP/hostname - "NodePortNodeName": each member is accessed by the NodePort service and the node name - "LoadBalancer": each member is accessed by the LoadBalancer service external address | [`MemberAccess`](#memberaccess) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### ExternalConnectivityConfiguration
+
+ExternalConnectivityConfiguration defines how to expose Management Center pod.
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `serviceType` | How Management Center is exposed. Valid values are: - "ClusterIP" - "NodePort" - "LoadBalancer" (default) | [`ExternalConnectivityServiceType`](#externalconnectivityservicetype) | false | - |
+| `ingress` | Ingress configuration of Management Center | [`*ExternalConnectivityIngress`](#externalconnectivityingress) | false | - |
+| `route` | OpenShift Route configuration of Management Center | [`*ExternalConnectivityRoute`](#externalconnectivityroute) | false | - |
+
+#### Deprecated {/* #deprecated-3 */}
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `type` | type is a deprecated alias for serviceType. | [`ExternalConnectivityServiceType`](#externalconnectivityservicetype) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### ExternalConnectivityIngress
+
+ExternalConnectivityIngress defines ingress configuration of Management Center
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `hostname` | Hostname of Management Center exposed by Ingress. Ingress controller will use this hostname to route inbound traffic. | `string` | true | - |
+| `ingressClassName` | IngressClassName of the ingress object. | `string` | false | - |
+| `annotations` | Annotations added to the ingress object. | `map[string]string` | false | - |
+| `path` | Path of the ingress rule. | `string` | false | "/" |
+
+[Back to TOC](#table-of-contents)
+
+### ExternalConnectivityRoute
+
+ExternalConnectivityRoute defines OpenShift route configuration of Management Center
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `hostname` | Hostname of Management Center exposed by route. Openshift routers will use this hostname to route inbound traffic. | `string` | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### GlobalSerializer
+
+GlobalSerializer is registered as a fallback serializer to handle all other objects if a serializer cannot be located for them.
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `overrideJavaSerialization` | If set to true, will replace the internal Java serialization. | `*bool` | false | - |
+| `className` | Class name of the GlobalSerializer. | `string` | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### Hazelcast
+
+Hazelcast is the Schema for the hazelcasts API
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta) | false | - |
+| `spec` |  | [`HazelcastSpec`](#hazelcastspec) | false | - |
+| `status` |  | [`HazelcastStatus`](#hazelcaststatus) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### HazelcastClusterConfig
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | Name of the Hazelcast cluster that Management Center will connect to, default is dev. | `string` | false | "dev" |
+| `address` | IP address or DNS name of the Hazelcast cluster. If the cluster is exposed with a service name in a different namespace, use the following syntax "\<service-name\>.\<service-namespace\>". | `string` | true | - |
+| `tls` | TLS client configuration. | [`*MCClientTLS`](#mcclienttls) | false | - |
+| `security` | Security client configuration. | [`*ClientSecurity`](#clientsecurity) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### HazelcastClusterStatus
+
+HazelcastClusterStatus defines the status of the Hazelcast cluster
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `readyMembers` | ReadyMembers represents the number of members that are connected to cluster from the desired number of members in the format \<ready\>/\<desired\> | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### HazelcastEndpoint
+
+HazelcastEndpoint is the Schema for the hazelcastendpoints API
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta) | false | - |
+| `spec` |  | [`HazelcastEndpointSpec`](#hazelcastendpointspec) | false | - |
+| `status` |  | [`HazelcastEndpointStatus`](#hazelcastendpointstatus) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### HazelcastEndpointList
+
+HazelcastEndpointList contains a list of HazelcastEndpoint
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ListMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#listmeta-v1-meta) | false | - |
+| `items` |  | [`[]HazelcastEndpoint`](#hazelcastendpoint) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### HazelcastEndpointSpec
+
+HazelcastEndpointSpec defines the desired state of HazelcastEndpoint
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `type` | Type defines the endpoint connection. It is used to identify the target of the endpoint. | [`HazelcastEndpointType`](#hazelcastendpointtype) | true | - |
+| `port` | Port of the endpoint. | `int32` | true | - |
+| `hazelcastResourceName` | HazelcastResourceName defines the name of the Hazelcast resource that this resource is created for. | `string` | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### HazelcastEndpointStatus
+
+HazelcastEndpointStatus defines the observed state of HazelcastEndpoint
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `address` | Address is the external address of the endpoint. It is taken from the corresponding service. | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### HazelcastList
+
+HazelcastList contains a list of Hazelcast
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ListMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#listmeta-v1-meta) | false | - |
+| `items` |  | [`[]Hazelcast`](#hazelcast) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### HazelcastMemberStatus
+
+HazelcastMemberStatus defines the observed state of the individual Hazelcast member.
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `podName` | PodName is the name of the Hazelcast member pod. | `string` | false | - |
+| `uid` | Uid is the unique member identifier within the cluster. | `string` | false | - |
+| `ip` | Ip is the IP address of the member within the cluster. | `string` | false | - |
+| `version` | Version represents the Hazelcast version of the member. | `string` | false | - |
+| `state` | State represents the observed state of the member. | [`NodeState`](#nodestate) | false | - |
+| `master` | Master flag is set to true if the member is master. | `bool` | false | - |
+| `lite` | Lite is the flag that is true when the member is lite-member. | `bool` | false | - |
+| `ownedPartitions` | OwnedPartitions represents the partitions count on the member. | `int32` | false | - |
+| `connected` | Ready is the flag that is set to true when the member is successfully started, connected to cluster and ready to accept connections. | `bool` | false | - |
+| `message` | Message contains the optional message with the details of the cluster state. | `string` | false | - |
+| `reason` | Reason contains the optional reason of member crash or restart. | `string` | false | - |
+| `restartCount` | RestartCount is the number of times the member has been restarted. | `int32` | false | - |
+| `diagnosticsEnabled` | DiagnosticsEnabled indicates the status of diagnostic logging configuration. | `bool` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### HazelcastPersistenceConfiguration
+
+HazelcastPersistenceConfiguration contains the configuration for Hazelcast Persistence and K8s storage.
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `clusterDataRecoveryPolicy` | Configuration of the cluster recovery strategy. | [`DataRecoveryPolicyType`](#datarecoverypolicytype) | false | "PartialRecoveryMostComplete" |
+| `dataRecoveryTimeout` | DataRecoveryTimeout is timeout for each step of data recovery in seconds. Maximum timeout is equal to DataRecoveryTimeout\*2 (for each step: validation and data-load). | `int32` | false | - |
+| `pvc` | Configuration of PersistenceVolumeClaim. | [`*PvcConfiguration`](#pvcconfiguration) | false | - |
+| `pvcName` | PVCName is the name of the mounted PVC | `string` | false | - |
+| `restore` | Restore configuration | [`RestoreConfiguration`](#restoreconfiguration) | false | \{\} |
+
+#### Deprecated {/* #deprecated-4 */}
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `baseDir` | BaseDir is deprecated. Use restore.localConfig to restore from a local backup. | `string` | false | - |
+| `startupAction` | DEPRECATED: DeprecatedStartupAction is deprecated. Use ClusterDataRecoveryPolicy PartialRecoveryMostComplete instead. DeprecatedStartupAction represents the action triggered when the cluster starts to force the cluster startup. | [`PersistenceStartupAction`](#persistencestartupaction) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### HazelcastSpec
+
+HazelcastSpec defines the desired state of Hazelcast
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `clusterSize` | Number of Hazelcast members in the cluster. | `*int32` | false | 3 |
+| `repository` | Repository to pull the Hazelcast Platform image from. | `string` | false | "docker.io/hazelcast/hazelcast-enterprise" |
+| `version` | Version of Hazelcast Platform. | `string` | false | "5.7.1" |
+| `imagePullPolicy` | Pull policy for the Hazelcast Platform image | [`corev1.PullPolicy`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#pullpolicy-v1-core) | false | "IfNotPresent" |
+| `imagePullSecrets` | Image pull secrets for the Hazelcast Platform image | [`[]corev1.LocalObjectReference`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#localobjectreference-v1-core) | false | - |
+| `licenseKeySecretName` | Name of the secret with Hazelcast Enterprise License Key. | `string` | true | - |
+| `exposeExternally` | Configuration to expose Hazelcast cluster to external clients. | [`*ExposeExternallyConfiguration`](#exposeexternallyconfiguration) | false | - |
+| `clusterName` | Name of the Hazelcast cluster. | `string` | false | "dev" |
+| `scheduling` | Scheduling details | [`*SchedulingConfiguration`](#schedulingconfiguration) | false | - |
+| `resources` | Compute Resources required by the Hazelcast container. | [`*corev1.ResourceRequirements`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core) | false | - |
+| `persistence` | Persistence configuration | [`*HazelcastPersistenceConfiguration`](#hazelcastpersistenceconfiguration) | false | - |
+| `agent` | B&R Agent configurations | [`AgentConfiguration`](#agentconfiguration) | false | - |
+| `initContainer` | InitContainer configurations. | [`*InitContainerConfiguration`](#initcontainerconfiguration) | false | - |
+| `jet` | Jet Engine configuration | [`*JetEngineConfiguration`](#jetengineconfiguration) | false | \{enabled: true, resourceUploadEnabled: false\} |
+| `executorServices` | Java Executor Service configurations, see [https://docs.hazelcast.com/hazelcast/latest/computing/executor-service](https://docs.hazelcast.com/hazelcast/latest/computing/executor-service) | [`[]ExecutorServiceConfiguration`](#executorserviceconfiguration) | false | - |
+| `durableExecutorServices` | Durable Executor Service configurations, see [https://docs.hazelcast.com/hazelcast/latest/computing/durable-executor-service](https://docs.hazelcast.com/hazelcast/latest/computing/durable-executor-service) | [`[]DurableExecutorServiceConfiguration`](#durableexecutorserviceconfiguration) | false | - |
+| `scheduledExecutorServices` | Scheduled Executor Service configurations, see [https://docs.hazelcast.com/hazelcast/latest/computing/scheduled-executor-service](https://docs.hazelcast.com/hazelcast/latest/computing/scheduled-executor-service) | [`[]ScheduledExecutorServiceConfiguration`](#scheduledexecutorserviceconfiguration) | false | - |
+| `properties` | Hazelcast system properties, see [https://docs.hazelcast.com/hazelcast/latest/system-properties](https://docs.hazelcast.com/hazelcast/latest/system-properties) | `map[string]string` | false | - |
+| `loggingLevel` | Logging level for Hazelcast members | [`LoggingLevel`](#logginglevel) | false | "INFO" |
+| `loggingConfiguration` | LoggingConfiguration specify the logging configuration file to be mounted to the Hazelcast members. | [`*LoggingConfiguration`](#loggingconfiguration) | false | - |
+| `highAvailabilityMode` | Configuration to create clusters resilient to node and zone failures | [`HighAvailabilityMode`](#highavailabilitymode) | false | - |
+| `jvm` | Hazelcast JVM configuration | [`*JVMConfiguration`](#jvmconfiguration) | false | - |
+| `nativeMemory` | Hazelcast Native Memory (HD Memory) configuration | [`*NativeMemoryConfiguration`](#nativememoryconfiguration) | false | - |
+| `advancedNetwork` | Hazelcast Advanced Network configuration | [`*AdvancedNetwork`](#advancednetwork) | false | - |
+| `managementCenter` | Hazelcast Management Center Configuration | [`*ManagementCenterConfig`](#managementcenterconfig) | false | - |
+| `tls` | Hazelcast TLS configuration | [`*TLS`](#tls) | false | - |
+| `serialization` | Hazelcast serialization configuration | [`*SerializationConfig`](#serializationconfig) | false | - |
+| `customConfigCmName` | Name of the ConfigMap with the Hazelcast custom configuration. This configuration from the ConfigMap might be overridden by the Hazelcast CR configuration. | `string` | false | - |
+| `customConfigSecretName` | Name of the Secret with the Hazelcast custom configuration. This configuration from the ConfigMap might be overridden by the Hazelcast CR configuration. | `string` | false | - |
+| `sql` | Hazelcast SQL configuration | [`*SQL`](#sql) | false | - |
+| `annotations` | Hazelcast Kubernetes resource annotations | `map[string]string` | false | - |
+| `labels` | Hazelcast Kubernetes resource labels | `map[string]string` | false | - |
+| `serviceAccountName` | ServiceAccountName is the name of the ServiceAccount to use to run Hazelcast cluster. More info: [https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) | `string` | false | - |
+| `cpSubsystem` | CPSubsystem is the configuration of the Hazelcast CP Subsystem. | [`*CPSubsystem`](#cpsubsystem) | false | - |
+| `userCodeNamespaces` | UserCodeNamespaces provide a container for Java classpath resources, such as user code and accompanying artifacts like property files | [`*UserCodeNamespacesConfig`](#usercodenamespacesconfig) | false | - |
+| `env` | Env configuration of environment variables | [`[]corev1.EnvVar`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#envvar-v1-core) | false | - |
+| `envFrom` | EnvFrom defines sources to populate environment variables in the Hazelcast container. Allows referencing entire ConfigMaps or Secrets. | [`[]corev1.EnvFromSource`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#envfromsource-v1-core) | false | - |
+| `liteMember` |  | [`*LiteMember`](#litemember) | false | - |
+| `security` |  | [`*Security`](#security) | false | - |
+| `diagnostics` |  | [`*Diagnostics`](#diagnostics) | false | - |
+| `persistenceVolumeClaims` | PersistenceVolumeClaims specifies the PVCs that will be created and attached to the created StatefulSet. | [`[]PVCTemplateConfiguration`](#pvctemplateconfiguration) | false | - |
+| `kubernetesMaster` | KubernetesMaster is the URL of the Kubernetes master used by the Hazelcast discovery plugin to discover other members. Defaults to [https://kubernetes.default.svc](https://kubernetes.default.svc). | `string` | false | - |
+| `ipFamily` | IPFamily selects the network stack for Hazelcast members. | [`IPFamily`](#ipfamily) | false | IPv4 |
+| `moduleDeployment` | ModuleDeployment defines the modules to Download into CLASSPATH | [`*ModuleDeploymentConfiguration`](#moduledeploymentconfiguration) | false | - |
+
+#### Deprecated {/* #deprecated-5 */}
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `licenseKeySecret` | licenseKeySecret is a deprecated alias for licenseKeySecretName. | `string` | false | - |
+| `userCodeDeployment` | User Codes to Download into CLASSPATH | [`*UserCodeDeploymentConfig`](#usercodedeploymentconfig) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### HazelcastStatus
+
+HazelcastStatus defines the observed state of Hazelcast
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `clusterSize` | Number of Hazelcast members in the cluster. | `int32` | false | - |
+| `liteMemberCount` | Number of Hazelcast lite members in the cluster. | `int32` | false | - |
+| `selector` | Selector is a label selector used by HorizontalPodAutoscaler to autoscale Hazelcast resource. | `string` | false | - |
+| `phase` | Phase of the Hazelcast cluster | [`Phase`](#phase) | false | - |
+| `hazelcastClusterStatus` | Status of the Hazelcast cluster | [`HazelcastClusterStatus`](#hazelcastclusterstatus) | false | - |
+| `message` | Message about the Hazelcast cluster state | `string` | false | - |
+| `members` | Status of Hazelcast members | [`[]HazelcastMemberStatus`](#hazelcastmemberstatus) | false | - |
+| `restore` | Status of restore process of the Hazelcast cluster | [`RestoreStatus`](#restorestatus) | false | \{\} |
+
+[Back to TOC](#table-of-contents)
+
+### HotBackup
+
+HotBackup is the Schema for the hot backup API
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta) | false | - |
+| `spec` |  | [`HotBackupSpec`](#hotbackupspec) | true | - |
+| `status` |  | [`HotBackupStatus`](#hotbackupstatus) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### HotBackupList
+
+HotBackupList contains a list of HotBackup
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ListMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#listmeta-v1-meta) | false | - |
+| `items` |  | [`[]HotBackup`](#hotbackup) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### HotBackupSpec
+
+HotBackupSpec defines the Spec of HotBackup
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `hazelcastResourceName` | HazelcastResourceName defines the name of the Hazelcast resource | `string` | true | - |
+| `bucketURI` | URL of the bucket to download HotBackup folders. AWS S3, GCP Bucket and Azure Blob storage buckets are supported. Example bucket URIs: - AWS S3 → s3://bucket-name/path/to/folder - GCP Bucket → gs://bucket-name/path/to/folder - Azure Blob → azblob://bucket-name/path/to/folder | `string` | false | - |
+| `secretName` | Name of the secret with credentials for cloud providers. | `string` | false | - |
+
+#### Deprecated {/* #deprecated-6 */}
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `secret` | secret is a deprecated alias for secretName. | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### HotBackupStatus
+
+HotBackupStatus defines the observed state of HotBackup
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `state` |  | [`HotBackupState`](#hotbackupstate) | false | - |
+| `message` |  | `string` | false | - |
+| `backupUUIDs` |  | `[]string` | false | - |
+| `catalogPersistenceEnabled` |  | `bool` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### HotBackupTemplateSpec
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` | Standard object's metadata of the hot backups created from this template. | [`metav1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta) | false | - |
+| `spec` | Specification of the desired behavior of the hot backup. | [`HotBackupSpec`](#hotbackupspec) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### IndexConfig
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | Name of the index config. | `string` | false | - |
+| `type` | Type of the index. See [https://docs.hazelcast.com/hazelcast/latest/query/indexing-maps\#index-types](https://docs.hazelcast.com/hazelcast/latest/query/indexing-maps#index-types) | [`IndexType`](#indextype) | true | - |
+| `attributes` | Attributes of the index. At least one attribute is required; duplicates are not allowed. | `[]string` | true | - |
+| `bitMapIndexOptions` | Options for "BITMAP" index type only. See [https://docs.hazelcast.com/hazelcast/latest/query/indexing-maps\#configuring-bitmap-indexes](https://docs.hazelcast.com/hazelcast/latest/query/indexing-maps#configuring-bitmap-indexes) | [`*BitmapIndexOptionsConfig`](#bitmapindexoptionsconfig) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### InitContainerConfiguration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `resources` | Compute Resources required by the Hazelcast init container. | [`*corev1.ResourceRequirements`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### JAASAuthItem
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `className` |  | `string` | true | - |
+| `usage` |  | [`LoginModuleUsage`](#loginmoduleusage) | true | REQUIRED |
+| `properties` |  | `map[string]string` | false | - |
+| `propertiesFrom` |  | [`[]JAASPropertyFromSource`](#jaaspropertyfromsource) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### JAASPropertyFromSource
+
+JAASPropertyFromSource represents the source for the JAAS Properties
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `configMapRef` | The ConfigMap to select from | [`*JAASPropertiesSource`](#JAASPropertiesSource) | false | - |
+| `secretRef` | The Secret to select from | [`*JAASPropertiesSource`](#JAASPropertiesSource) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### JVMConfiguration
+
+JVMConfiguration is a Hazelcast JVM configuration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `memory` | Memory is a JVM memory configuration | [`*JVMMemoryConfiguration`](#jvmmemoryconfiguration) | false | - |
+| `gc` | GC is for configuring JVM Garbage Collector | [`*JVMGCConfiguration`](#jvmgcconfiguration) | false | - |
+| `args` | Args is for arbitrary JVM arguments | `[]string` | false | - |
+| `debug` | Debug configures remote JVM debugging. | [`*JVMDebugConfiguration`](#jvmdebugconfiguration) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### JVMDebugConfiguration
+
+JVMDebugConfiguration configures remote JVM debugging via JDWP.
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `enabled` | Enabled turns on JVM debug mode. | `*bool` | false | - |
+| `port` | Port is the TCP port the JVM listens on for debugger connections (listen mode) | `*int32` | false | 5005 |
+| `suspend` | Suspend when true blocks JVM startup until a debugger connects. Pods may remain NotReady until a debugger attaches | `*bool` | false | - |
+| `attach` | Attach is the host:port of a listening debugger (attach mode). When set, the JVM connects out to the debugger instead of listening in the pod | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### JVMGCConfiguration
+
+JVMGCConfiguration is for configuring JVM Garbage Collector
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `logging` | Logging enables logging when set to true | `*bool` | false | - |
+| `collector` | Collector is the Garbage Collector type | [`*GCType`](#gctype) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### JVMMemoryConfiguration
+
+JVMMemoryConfiguration is a JVM memory configuration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `initialRAMPercentage` | InitialRAMPercentage configures JVM initial heap size | `*string` | false | - |
+| `minRAMPercentage` | MinRAMPercentage sets the minimum heap size for a JVM | `*string` | false | - |
+| `maxRAMPercentage` | MaxRAMPercentage sets the maximum heap size for a JVM | `*string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### JavaFilterConfig
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `blacklist` | Java deserialization protection Blacklist. | [`*SerializationFilterList`](#serializationfilterlist) | false | - |
+| `whitelist` | Java deserialization protection Whitelist. | [`*SerializationFilterList`](#serializationfilterlist) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### JetEdgeDefaults
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `queueSize` | Sets the capacity of processor-to-processor concurrent queues. | `*int32` | false | - |
+| `packetSizeLimit` | Limits the size of the packet in bytes. | `*int32` | false | - |
+| `receiveWindowMultiplier` | Sets the scaling factor used by the adaptive receive window sizing function. | `*int8` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### JetEngineConfiguration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `enabled` | When false, disables Jet Engine. | `*bool` | false | true |
+| `resourceUploadEnabled` | When true, enables resource uploading for Jet jobs. | `bool` | false | false |
+| `bucketConfigs` | Bucket configs from where the JAR files will be downloaded. | [`[]BucketSource`](#bucketsource) | false | - |
+| `configMaps` | Names of the list of ConfigMaps. Files in each ConfigMap will be downloaded. | `[]string` | false | - |
+| `remoteURLs` | List of URLs from where the files will be downloaded. | `[]string` | false | - |
+| `instance` | Jet Instance Configuration | [`*JetInstance`](#jetinstance) | false | \{\} |
+| `edgeDefaults` | Jet Edge Defaults Configuration | [`*JetEdgeDefaults`](#jetedgedefaults) | false | \{\} |
+
+[Back to TOC](#table-of-contents)
+
+### JetInstance
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `cooperativeThreadCount` | The number of threads Jet creates in its cooperative multithreading pool. Its default value is the number of cores | `*int32` | false | - |
+| `flowControlPeriodMillis` | The duration of the interval between flow-control packets. | `int32` | false | 100 |
+| `backupCount` | The number of synchronous backups to configure on the IMap that Jet needs internally to store job metadata and snapshots. | `int32` | false | 1 |
+| `scaleUpDelayMillis` | The delay after which the auto-scaled jobs restart if a new member joins the cluster. | `int32` | false | 10000 |
+| `losslessRestartEnabled` | Specifies whether the Lossless Cluster Restart feature is enabled. | `bool` | false | false |
+| `maxProcessorAccumulatedRecords` | Specifies the maximum number of records that can be accumulated by any single processor instance. Default value is Long.MAX\_VALUE | `*int64` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### JetJob
+
+JetJob is the Schema for the jetjobs API
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta) | false | - |
+| `spec` |  | [`JetJobSpec`](#jetjobspec) | false | - |
+| `status` |  | [`JetJobStatus`](#jetjobstatus) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### JetJobList
+
+JetJobList contains a list of JetJob
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ListMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#listmeta-v1-meta) | false | - |
+| `items` |  | [`[]JetJob`](#jetjob) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### JetJobSnapshot
+
+JetJobSnapshot is the Schema for the jetjobsnapshots API
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta) | false | - |
+| `spec` |  | [`JetJobSnapshotSpec`](#jetjobsnapshotspec) | true | - |
+| `status` |  | [`JetJobSnapshotStatus`](#jetjobsnapshotstatus) | false | \{state: "Waiting"\} |
+
+[Back to TOC](#table-of-contents)
+
+### JetJobSnapshotList
+
+JetJobSnapshotList contains a list of JetJobSnapshot
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ListMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#listmeta-v1-meta) | false | - |
+| `items` |  | [`[]JetJobSnapshot`](#jetjobsnapshot) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### JetJobSnapshotSpec
+
+JetJobSnapshotSpec defines the desired state of JetJobSnapshot
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | Name of the exported snapshot | `string` | false | - |
+| `cancelJob` | CancelJob determines whether the job is canceled after exporting snapshot | `bool` | false | false |
+| `jetJobResourceName` | JetJobResourceName is the name of the JetJob CR where the Snapshot is exported from | `string` | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### JetJobSnapshotStatus
+
+JetJobSnapshotStatus defines the observed state of JetJobSnapshot
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `state` |  | [`JetJobSnapshotState`](#jetjobsnapshotstate) | false | - |
+| `message` |  | `string` | false | - |
+| `creationTime` |  | [`*metav1.Time`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#time-v1-meta) | false | - |
+| `hazelcastResourceName` | HazelcastResourceName defines the name of the Hazelcast resource that JetJobSnapshot is applied to. | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### JetJobSpec
+
+JetJobSpec defines the desired state of JetJob
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | Name of the JetJob to be created. If empty, CR name will be used. It cannot be updated after the config is created successfully. | `string` | false | - |
+| `hazelcastResourceName` | HazelcastResourceName defines the name of the Hazelcast resource that this resource is created for. | `string` | true | - |
+| `state` | State is used to manage the job state. | [`JetJobState`](#jetjobstate) | true | Running |
+| `jarName` | JarName specify the name of the Jar to run that is present on the member. | `string` | true | - |
+| `mainClass` | MainClass is the name of the main class that will be run on the submitted job. | `string` | false | - |
+| `initialSnapshotResourceName` | InitialSnapshotResourceName specify the name of the JetJobSnapshot object from which the JetJob is initialized. | `string` | false | - |
+| `parameters` | Parameters to be passed to Jet Job. | `[]string` | false | - |
+| `bucketConfig` | Bucket config from where the JAR files will be downloaded. | [`*BucketConfiguration`](#bucketconfiguration) | false | - |
+| `remoteURL` | URL from where the file will be downloaded. | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### JetJobStatus
+
+JetJobStatus defines the observed state of JetJob
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `id` |  | `int64` | true | - |
+| `phase` |  | [`JetJobStatusPhase`](#jetjobstatusphase) | true | - |
+| `submissionTime` |  | [`*metav1.Time`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#time-v1-meta) | false | - |
+| `completionTime` |  | [`*metav1.Time`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#time-v1-meta) | false | - |
+| `failureText` |  | `string` | false | - |
+| `suspensionCause` |  | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### JetRemoteFileConfiguration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `bucketConfig` | Bucket config from where the JAR files will be downloaded. | [`*BucketConfiguration`](#bucketconfiguration) | false | - |
+| `remoteURL` | URL from where the file will be downloaded. | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### LDAPProvider
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `url` | URL of your LDAP server, including schema (ldap:// or ldaps://) and port. | `string` | true | - |
+| `credentialsSecretName` | CredentialsSecretName is the name of the secret that contains username and password of a user that has admin privileges on the LDAP server. The username must be the DN of the user. It is used to connect to the server when authenticating users. | `string` | true | - |
+| `userDN` | DN to be used for searching users. | `string` | true | - |
+| `groupDN` | DN to be used for searching groups. | `string` | true | - |
+| `adminGroups` | Members of these groups and its nested groups have admin privileges on the Management Center. | `[]string` | true | - |
+| `userGroups` | Members of these groups and its nested groups have read and write privileges on the Management Center. | `[]string` | true | - |
+| `readonlyUserGroups` | Members of these groups and its nested groups have only read privilege on the Management Center. | `[]string` | true | - |
+| `metricsOnlyGroups` | Members of these groups and its nested groups have the privilege to see only the metrics on the Management Center. | `[]string` | true | - |
+| `userSearchFilter` | LDAP search filter expression to search for the users. For example, uid=\{0\} searches for a username that matches with the uid attribute. | `string` | true | - |
+| `groupSearchFilter` | LDAP search filter expression to search for the groups. For example, uniquemember=\{0\} searches for a group that matches with the uniquemember attribute. | `string` | true | - |
+| `nestedGroupSearch` | NestedGroupSearch enables searching for nested LDAP groups. | `bool` | true | true |
+| `tls` | TLS configures the TLS connection for LDAP. | [`*LdapTLS`](#ldaptls) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### LdapTLS
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `secretName` | Name of the secret with TLS certificate and key. | `string` | true | - |
+| `startTLS` | Enable if your LDAP server uses Start TLS operation. | `bool` | true | true |
+
+[Back to TOC](#table-of-contents)
+
+### LiteMember
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `count` |  | `int32` | true | - |
+| `scheduling` | Scheduling details | [`*SchedulingConfiguration`](#schedulingconfiguration) | false | - |
+| `jvm` | Hazelcast JVM configuration | [`*JVMConfiguration`](#jvmconfiguration) | false | - |
+| `resources` | Compute Resources required by the Hazelcast container. | [`*corev1.ResourceRequirements`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core) | false | - |
+| `env` | Env configuration of environment variables | [`[]corev1.EnvVar`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#envvar-v1-core) | false | - |
+| `envFrom` | EnvFrom defines sources to populate environment variables in the Hazelcast lite member container. Allows referencing entire ConfigMaps or Secrets. | [`[]corev1.EnvFromSource`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#envfromsource-v1-core) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### LoggingConfiguration
+
+LoggingConfiguration specify the file to be mounted as logging configuration.
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `configMapKeyRef` |  | [`corev1.ConfigMapKeySelector`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#configmapkeyselector-v1-core) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### MCClientTLS
+
+MCClientTLS is used by Management Center CR, MC has nothing to do with MemberAuthentication
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `secretName` | Name of the secret with TLS certificate and key. | `string` | true | - |
+| `clientAuthentication` | Mutual authentication configuration for the client. It is None by default which means the client side of connection is not authenticated. | [`MutualAuthentication`](#mutualauthentication) | false | "None" |
+
+#### Deprecated {/* #deprecated-7 */}
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `mutualAuthentication` | mutualAuthentication is deprecated. Use clientAuthentication field instead. Mutual authentication configuration. It's None by default which means the client side of connection is not authenticated. | [`MutualAuthentication`](#mutualauthentication) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### MCJVMConfiguration
+
+MCJVMConfiguration is a ManagementCenter JVM configuration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `args` | Args is for arbitrary JVM arguments | `[]string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### MCPersistenceConfiguration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `enabled` | When true, MC will use a PersistentVolumeClaim to store data. | `*bool` | false | true |
+| `existingVolumeClaimName` | Name of the PersistentVolumeClaim MC will use for persistence. If not empty, MC will use the existing claim instead of creating a new one. | `string` | false | - |
+| `storageClass` | StorageClass from which PersistentVolumeClaim will be created. | `*string` | false | - |
+| `size` | Size of the created PersistentVolumeClaim. | `*resource.Quantity` | false | "10Gi" |
+
+[Back to TOC](#table-of-contents)
+
+### ManagementCenter
+
+ManagementCenter is the Schema for the managementcenters API
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta) | false | - |
+| `spec` |  | [`ManagementCenterSpec`](#managementcenterspec) | false | - |
+| `status` |  | [`ManagementCenterStatus`](#managementcenterstatus) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### ManagementCenterConfig
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `scriptingEnabled` | Allows you to execute scripts that can automate interactions with the cluster. | `bool` | false | false |
+| `consoleEnabled` | Allows you to execute commands from a built-in console in the user interface. | `bool` | false | false |
+| `dataAccessEnabled` | Allows you to access contents of Hazelcast data structures via SQL Browser or Map Browser. | `bool` | false | false |
+
+[Back to TOC](#table-of-contents)
+
+### ManagementCenterList
+
+ManagementCenterList contains a list of ManagementCenter
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ListMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#listmeta-v1-meta) | false | - |
+| `items` |  | [`[]ManagementCenter`](#managementcenter) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### ManagementCenterSpec
+
+ManagementCenterSpec defines the desired state of ManagementCenter.
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `repository` | Repository to pull the Management Center image from. | `string` | false | "docker.io/hazelcast/management-center" |
+| `version` | Version of Management Center. | `string` | false | "5.11.1" |
+| `imagePullPolicy` | Pull policy for the Management Center image | [`corev1.PullPolicy`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#pullpolicy-v1-core) | false | "IfNotPresent" |
+| `imagePullSecrets` | Image pull secrets for the Management Center image | [`[]corev1.LocalObjectReference`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#localobjectreference-v1-core) | false | - |
+| `licenseKeySecretName` | Name of the secret with Hazelcast Enterprise License Key. | `string` | true | - |
+| `hazelcastClusters` | Connection configuration for the Hazelcast clusters that Management Center will monitor. | [`[]HazelcastClusterConfig`](#hazelcastclusterconfig) | false | - |
+| `externalConnectivity` | Configuration to expose Management Center to outside. | [`*ExternalConnectivityConfiguration`](#externalconnectivityconfiguration) | false | \{serviceType: "LoadBalancer"\} |
+| `persistence` | Configuration for Management Center persistence. | [`*MCPersistenceConfiguration`](#mcpersistenceconfiguration) | false | \{enabled: true, size: "10Gi"\} |
+| `scheduling` | Scheduling details | [`*SchedulingConfiguration`](#schedulingconfiguration) | false | \{\} |
+| `resources` | Compute Resources required by the MC container. | [`*corev1.ResourceRequirements`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core) | false | \{\} |
+| `jvm` | ManagementCenter JVM configuration | [`*MCJVMConfiguration`](#mcjvmconfiguration) | false | - |
+| `securityProvider` | SecurityProviders to authenticate users in Management Center | [`*SecurityProviders`](#securityproviders) | false | - |
+| `annotations` | ManagementCenter Kubernetes resource annotations | `map[string]string` | false | - |
+| `labels` | ManagementCenter Kubernetes resource labels | `map[string]string` | false | - |
+| `env` | Env configuration of environment variables | [`[]corev1.EnvVar`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#envvar-v1-core) | false | - |
+| `moduleDeployment` | ModuleDeployment defines the modules to Download into MC\_CLASSPATH | [`*ModuleDeploymentConfiguration`](#moduledeploymentconfiguration) | false | - |
+| `agent` | Agent configurations is the configuration for the InitContainer. | [`AgentConfiguration`](#agentconfiguration) | false | - |
+| `serviceAccountName` | ServiceAccountName is the name of the ServiceAccount to use to run InitContainer for ManagementCenter. More info: [https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) | `string` | false | - |
+| `prometheusMonitoring` | PrometheusMonitoring configures the integration with Prometheus. | [`*PrometheusMonitoring`](#prometheusmonitoring) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### ManagementCenterStatus
+
+ManagementCenterStatus defines the observed state of ManagementCenter.
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `phase` | Phase of the Management Center | [`MCPhase`](#mcphase) | false | - |
+| `configured` | Configured is a flag that indicates if the configuration step has successfully passed | `bool` | false | - |
+| `message` | Message about the Management Center state | `string` | false | - |
+| `externalAddresses` | External addresses of the Management Center instance | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### Map
+
+Map is the Schema for the maps API
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta) | false | - |
+| `spec` |  | [`MapSpec`](#mapspec) | true | - |
+| `status` |  | [`MapStatus`](#mapstatus) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### MapList
+
+MapList contains a list of Map
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ListMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#listmeta-v1-meta) | false | - |
+| `items` |  | [`[]Map`](#map) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### MapSpec
+
+MapSpec defines the desired state of Hazelcast Map Config
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | Name of the data structure config to be created. If empty, CR name will be used. It cannot be updated after the config is created successfully. | `string` | false | - |
+| `hazelcastResourceName` | HazelcastResourceName defines the name of the Hazelcast resource that this resource is created for. | `string` | true | - |
+| `backupCount` | Number of synchronous backups. | `*int32` | false | 1 |
+| `asyncBackupCount` | Number of asynchronous backups. | `int32` | false | 0 |
+| `userCodeNamespace` | Name of the User Code Namespace applied to this instance | `string` | false | - |
+| `timeToLiveSeconds` | Maximum time in seconds for each entry to stay in the map. If it is not 0, entries that are older than this time and not updated for this time are evicted automatically. It can be updated. | `int32` | false | 0 |
+| `maxIdleSeconds` | Maximum time in seconds for each entry to stay idle in the map. Entries that are idle for more than this time are evicted automatically. It can be updated. | `int32` | false | 0 |
+| `eviction` | Configuration for removing data from the map when it reaches its max size. It can be updated. | [`EvictionConfig`](#evictionconfig) | false | - |
+| `indexes` | Indexes to be created for the map data. You can learn more at [https://docs.hazelcast.com/hazelcast/latest/query/indexing-maps](https://docs.hazelcast.com/hazelcast/latest/query/indexing-maps). It cannot be updated after map config is created successfully. | [`[]IndexConfig`](#indexconfig) | false | - |
+| `attributes` | Attributes to be used with Predicates API. You can learn more at [https://docs.hazelcast.com/hazelcast/latest/query/predicate-overview\#creating-custom-query-attributes](https://docs.hazelcast.com/hazelcast/latest/query/predicate-overview#creating-custom-query-attributes) | [`[]AttributeConfig`](#attributeconfig) | false | - |
+| `persistenceEnabled` | When enabled, map data will be persisted. It cannot be updated after map config is created successfully. | `bool` | false | false |
+| `mapStore` | Configuration options when you want to load/store the map entries from/to a persistent data store such as a relational database You can learn more at [https://docs.hazelcast.com/hazelcast/latest/data-structures/working-with-external-data](https://docs.hazelcast.com/hazelcast/latest/data-structures/working-with-external-data) | [`*MapStoreConfig`](#mapstoreconfig) | false | - |
+| `inMemoryFormat` | InMemoryFormat specifies in which format data will be stored in your map | [`InMemoryFormatType`](#inmemoryformattype) | false | BINARY |
+| `entryListeners` | EntryListeners contains the configuration for the map-level or entry-based events listeners provided by the Hazelcast's eventing framework. You can learn more at [https://docs.hazelcast.com/hazelcast/latest/events/object-events](https://docs.hazelcast.com/hazelcast/latest/events/object-events). | [`[]EntryListenerConfiguration`](#entrylistenerconfiguration) | false | - |
+| `nearCache` | InMemoryFormat specifies near cache configuration for map | [`*NearCache`](#nearcache) | false | - |
+| `eventJournal` | EventJournal specifies event journal configuration of the Map | [`*EventJournal`](#eventjournal) | false | - |
+| `merkleTree` | MerkleTree defines the configuration for the Merkle tree data structure. | [`*MerkleTreeConfig`](#merkletreeconfig) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### MapStatus
+
+MapStatus defines the observed state of Map
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `state` |  | [`MapConfigState`](#mapconfigstate) | false | - |
+| `message` |  | `string` | false | - |
+| `memberStatuses` |  | [`map[string]MapConfigState`](#mapconfigstate) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### MapStoreConfig
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `initialMode` | Sets the initial entry loading mode. | [`InitialModeType`](#initialmodetype) | false | LAZY |
+| `className` | Name of your class implementing MapLoader and/or MapStore interface. | `string` | true | - |
+| `writeDelaySeconds` | Number of seconds to delay the storing of entries. | `int32` | false | - |
+| `writeBatchSize` | Used to create batches when writing to map store. | `int32` | false | 1 |
+| `writeCoalescing` | It is meaningful if you are using write behind in MapStore. When it is set to true, only the latest store operation on a key during the write-delay-seconds will be reflected to MapStore. | `*bool` | false | true |
+| `propertiesSecretName` | Properties can be used for giving information to the MapStore implementation | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### MerkleTreeConfig
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `depth` | Depth of the merkle tree. | `int32` | false | 10 |
+
+[Back to TOC](#table-of-contents)
+
+### ModuleDeploymentConfiguration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `triggerSequence` | A string for triggering a rolling restart for re-downloading the user code. | `string` | false | - |
+| `bucketConfigs` | Bucket configs from where the JAR files will be downloaded. | [`[]BucketSource`](#bucketsource) | false | - |
+| `configMaps` | Names of the list of ConfigMaps. Files in each ConfigMap will be downloaded. | `[]string` | false | - |
+| `remoteURLs` | List of URLs from where the files will be downloaded. | `[]string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### MultiMap
+
+MultiMap is the Schema for the multimaps API
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta) | false | - |
+| `spec` |  | [`MultiMapSpec`](#multimapspec) | true | - |
+| `status` |  | [`MultiMapStatus`](#multimapstatus) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### MultiMapList
+
+MultiMapList contains a list of MultiMap
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ListMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#listmeta-v1-meta) | false | - |
+| `items` |  | [`[]MultiMap`](#multimap) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### MultiMapSpec
+
+MultiMapSpec defines the desired state of MultiMap
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | Name of the data structure config to be created. If empty, CR name will be used. It cannot be updated after the config is created successfully. | `string` | false | - |
+| `hazelcastResourceName` | HazelcastResourceName defines the name of the Hazelcast resource that this resource is created for. | `string` | true | - |
+| `backupCount` | Number of synchronous backups. | `*int32` | false | 1 |
+| `asyncBackupCount` | Number of asynchronous backups. | `int32` | false | 0 |
+| `userCodeNamespace` | Name of the User Code Namespace applied to this instance | `string` | false | - |
+| `binary` | Specifies in which format data will be stored in your MultiMap. false: OBJECT true: BINARY | `bool` | false | false |
+| `collectionType` | Type of the value collection | [`CollectionType`](#collectiontype) | false | SET |
+
+[Back to TOC](#table-of-contents)
+
+### MultiMapStatus
+
+MultiMapStatus defines the observed state of MultiMap
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `state` | State of the data structure | [`DataStructureConfigState`](#datastructureconfigstate) | false | - |
+| `message` | Message explaining the current state | `string` | false | - |
+| `memberStatuses` | Holds status of data structure for each Hazelcast member | [`map[string]DataStructureConfigState`](#datastructureconfigstate) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### NativeMemoryConfiguration
+
+NativeMemoryConfiguration is a Hazelcast HD memory configuration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `allocatorType` | AllocatorType specifies one of 2 types of mechanism for allocating memory to HD | [`NativeMemoryAllocatorType`](#nativememoryallocatortype) | false | "STANDARD" |
+| `size` | Size of the total native memory to allocate | `resource.Quantity` | false | "512M" |
+| `minBlockSize` | MinBlockSize is the size of smallest block that will be allocated. It is used only by the POOLED memory allocator. | `int32` | false | - |
+| `pageSize` | PageSize is the size of the page in bytes to allocate memory as a block. It is used only by the POOLED memory allocator. | `int32` | false | 4194304 |
+| `metadataSpacePercentage` | MetadataSpacePercentage defines percentage of the allocated native memory that is used for the metadata of other map components such as index (for predicates), offset, etc. | `int32` | false | 12 |
+
+[Back to TOC](#table-of-contents)
+
+### NearCache
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | Name is name of the near cache | `string` | false | default |
+| `inMemoryFormat` | InMemoryFormat specifies in which format data will be stored in your near cache | [`InMemoryFormatType`](#inmemoryformattype) | false | BINARY |
+| `invalidateOnChange` | InvalidateOnChange specifies whether the cached entries are evicted when the entries are updated or removed | `*bool` | false | true |
+| `timeToLiveSeconds` | TimeToLiveSeconds maximum number of seconds for each entry to stay in the Near Cache | `uint` | false | 0 |
+| `maxIdleSeconds` | MaxIdleSeconds Maximum number of seconds each entry can stay in the Near Cache as untouched (not read) | `uint` | false | 0 |
+| `eviction` | NearCacheEviction specifies the eviction behavior in Near Cache | [`NearCacheEviction`](#nearcacheeviction) | true | - |
+| `cacheLocalEntries` | CacheLocalEntries specifies whether the local entries are cached | `*bool` | false | false |
+| `serializeKeys` | SerializeKeys specifies whether NearCache key in serialized format or by-reference. | `*bool` | false | false |
+
+[Back to TOC](#table-of-contents)
+
+### NearCacheEviction
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `evictionPolicy` | EvictionPolicy to be applied when near cache reaches its max size according to the max size policy. | [`EvictionPolicyType`](#evictionpolicytype) | false | "LRU" |
+| `maxSizePolicy` | MaxSizePolicy for deciding if the maxSize is reached. | [`NearCacheMaxSizePolicyType`](#nearcachemaxsizepolicytype) | false | "ENTRY\_COUNT" |
+| `size` | Size is maximum size of the Near Cache used for max-size-policy | `uint32` | false | 0 |
+
+[Back to TOC](#table-of-contents)
+
+### PVCTemplateConfiguration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` |  | `string` | true | - |
+| `accessModes` | AccessModes contains the actual access modes of the volume backing the PVC has. More info: [https://kubernetes.io/docs/concepts/storage/persistent-volumes\#access-modes-1](https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1) | [`[]corev1.PersistentVolumeAccessMode`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#persistentvolumeaccessmode-v1-core) | true | - |
+| `requestStorage` | A description of the PVC request capacity. | `*resource.Quantity` | false | "8Gi" |
+| `storageClassName` | Name of StorageClass which this persistent volume belongs to. | `*string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### PermissionItem
+
+PermissionItem is used for cluster wide permissions which is configured as `all` in Hazelcast config
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `principal` |  | `string` | false | - |
+| `endpoints` |  | `[]string` | false | - |
+| `deny` |  | `*bool` | false | - |
+| `actions` |  | `[]string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### PermissionWithName
+
+PermissionWithName is used for instance permissions like map, queue etc.
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `principal` |  | `string` | false | - |
+| `endpoints` |  | `[]string` | false | - |
+| `deny` |  | `*bool` | false | - |
+| `actions` |  | `[]string` | false | - |
+| `name` |  | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### PrometheusExporter
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `timestampEnabled` | TimestampEnabled configures whether to send timestamp of the individual members' metrics to Prometheus. | `bool` | true | true |
+| `filterMetrics` | FilterMetrics configure metrics in the /metrics endpoint. | [`PrometheusFilterMetrics`](#prometheusfiltermetrics) | false | - |
+| `printers` | Printers configure the set of metrics to expose. | [`[]PrometheusPrinter`](#prometheusprinter) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### PrometheusFilterMetrics
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `included` | Included configure metrics to include in the /metrics endpoint. | `[]string` | false | - |
+| `excluded` | Excluded configure metrics to exclude from the /metrics endpoint. | `[]string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### PrometheusMonitoring
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `credentialsSecretName` | CredentialsSecretName is the name of the secret that contains username and password basic authentication to secure the scrape endpoint. If the CredentialsSecretName is not set, the basic authentication on the scrape endpoint will be disabled. | `string` | false | - |
+| `exporter` | Exporter configures the reformating of all Hazelcast cluster metrics for compatibility with Prometheus. | [`PrometheusExporter`](#prometheusexporter) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### PvcConfiguration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `accessModes` | AccessModes contains the actual access modes of the volume backing the PVC has. More info: [https://kubernetes.io/docs/concepts/storage/persistent-volumes\#access-modes-1](https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1) | [`[]corev1.PersistentVolumeAccessMode`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#persistentvolumeaccessmode-v1-core) | true | - |
+| `requestStorage` | A description of the PVC request capacity. | `*resource.Quantity` | false | "8Gi" |
+| `storageClassName` | Name of StorageClass which this persistent volume belongs to. | `*string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### Queue
+
+Queue is the Schema for the queues API
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta) | false | - |
+| `spec` |  | [`QueueSpec`](#queuespec) | true | - |
+| `status` |  | [`QueueStatus`](#queuestatus) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### QueueList
+
+QueueList contains a list of Queue
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ListMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#listmeta-v1-meta) | false | - |
+| `items` |  | [`[]Queue`](#queue) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### QueueSetting
+
+QueueSetting defines the configuration for Hazelcast WAN queue
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `capacity` | Capacity is the total capacity of WAN queue. | `int32` | false | 10000 |
+| `fullBehavior` | FullBehavior represents the behavior of the new arrival when the queue is full. | [`FullBehaviorSetting`](#fullbehaviorsetting) | false | DISCARD\_AFTER\_MUTATION |
+
+[Back to TOC](#table-of-contents)
+
+### QueueSpec
+
+QueueSpec defines the desired state of Queue It cannot be updated after the Queue is created
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | Name of the data structure config to be created. If empty, CR name will be used. It cannot be updated after the config is created successfully. | `string` | false | - |
+| `hazelcastResourceName` | HazelcastResourceName defines the name of the Hazelcast resource that this resource is created for. | `string` | true | - |
+| `backupCount` | Number of synchronous backups. | `*int32` | false | 1 |
+| `asyncBackupCount` | Number of asynchronous backups. | `int32` | false | 0 |
+| `userCodeNamespace` | Name of the User Code Namespace applied to this instance | `string` | false | - |
+| `maxSize` | Max size of the queue. | `int32` | false | 0 |
+| `emptyQueueTTLSeconds` | Time in seconds after which the Queue will be destroyed if it stays empty or unused. If the values is not provided the Queue will never be destroyed. | `*int32` | false | -1 |
+| `priorityComparatorClassName` | The name of the comparator class. If the class name is provided, the Queue becomes Priority Queue. You can learn more at [https://docs.hazelcast.com/hazelcast/latest/data-structures/priority-queue](https://docs.hazelcast.com/hazelcast/latest/data-structures/priority-queue). | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### QueueStatus
+
+QueueStatus defines the observed state of Queue
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `state` | State of the data structure | [`DataStructureConfigState`](#datastructureconfigstate) | false | - |
+| `message` | Message explaining the current state | `string` | false | - |
+| `memberStatuses` | Holds status of data structure for each Hazelcast member | [`map[string]DataStructureConfigState`](#datastructureconfigstate) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### Realm
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` |  | `string` | false | - |
+| `authentication` |  | [`*Authentication`](#authentication) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### RemoteFileConfiguration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `bucketConfigs` | Bucket configs from where the JAR files will be downloaded. | [`[]BucketSource`](#bucketsource) | false | - |
+| `configMaps` | Names of the list of ConfigMaps. Files in each ConfigMap will be downloaded. | `[]string` | false | - |
+| `remoteURLs` | List of URLs from where the files will be downloaded. | `[]string` | false | - |
+
+#### Deprecated {/* #deprecated-8 */}
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `bucketConfig` | bucketConfig is deprecated. Use bucketConfigs instead. Bucket config from where the JAR files will be downloaded. | [`*BucketConfiguration`](#bucketconfiguration) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### ReplicatedMap
+
+ReplicatedMap is the Schema for the replicatedmaps API
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta) | false | - |
+| `spec` |  | [`ReplicatedMapSpec`](#replicatedmapspec) | true | - |
+| `status` |  | [`ReplicatedMapStatus`](#replicatedmapstatus) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### ReplicatedMapList
+
+ReplicatedMapList contains a list of ReplicatedMap
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ListMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#listmeta-v1-meta) | false | - |
+| `items` |  | [`[]ReplicatedMap`](#replicatedmap) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### ReplicatedMapSpec
+
+ReplicatedMapSpec defines the desired state of ReplicatedMap
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | Name of the ReplicatedMap config to be created. If empty, CR name will be used. | `string` | false | - |
+| `asyncFillup` | AsyncFillup specifies whether the ReplicatedMap is available for reads before the initial replication is completed | `*bool` | false | true |
+| `inMemoryFormat` | InMemoryFormat specifies in which format data will be stored in the ReplicatedMap | [`RMInMemoryFormatType`](#rminmemoryformattype) | false | OBJECT |
+| `hazelcastResourceName` | HazelcastResourceName defines the name of the Hazelcast resource. | `string` | true | - |
+| `userCodeNamespace` | Name of the User Code Namespace applied to this instance | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### ReplicatedMapStatus
+
+ReplicatedMapStatus defines the observed state of ReplicatedMap
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `state` | State of the data structure | [`DataStructureConfigState`](#datastructureconfigstate) | false | - |
+| `message` | Message explaining the current state | `string` | false | - |
+| `memberStatuses` | Holds status of data structure for each Hazelcast member | [`map[string]DataStructureConfigState`](#datastructureconfigstate) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### ResourceSpec
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | Name is the name of custom resource to which WAN replication applies. | `string` | true | - |
+| `kind` | Kind is the kind of custom resource to which WAN replication applies. | [`ResourceKind`](#resourcekind) | false | Map |
+
+[Back to TOC](#table-of-contents)
+
+### RestoreConfiguration
+
+RestoreConfiguration contains the configuration for Restore operation
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `bucketConfig` | Bucket Configuration from which the backup will be downloaded. | [`*BucketConfiguration`](#bucketconfiguration) | false | - |
+| `hotBackupResourceName` | Name of the HotBackup resource from which backup will be fetched. | `string` | false | - |
+| `localConfig` | Configuration to restore from local backup | [`*RestoreFromLocalConfiguration`](#restorefromlocalconfiguration) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### RestoreFromLocalConfiguration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `pvcNamePrefix` | PVC name prefix used in existing PVCs | [`PVCNamePrefix`](#pvcnameprefix) | false | "persistence" |
+| `baseDir` | Persistence base directory | `string` | false | - |
+| `backupDir` | Local backup base directory | `string` | false | - |
+| `backupFolder` | Backup directory | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### RestoreStatus
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `state` | State shows the current phase of the restore process of the cluster. | [`RestoreState`](#restorestate) | false | - |
+| `remainingValidationTime` | RemainingValidationTime show the time in seconds remained for the restore validation step. | `int64` | false | - |
+| `remainingDataLoadTime` | RemainingDataLoadTime show the time in seconds remained for the restore data load step. | `int64` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### SQL
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `statementTimeout` | StatementTimeout defines the timeout in milliseconds that is applied to queries without an explicit timeout. | `int32` | false | 0 |
+| `catalogPersistenceEnabled` | CatalogPersistenceEnabled sets whether SQL Catalog persistence is enabled for the node. With SQL Catalog persistence enabled you can restart the whole cluster without losing schema definition objects (such as MAPPINGs, TYPEs, VIEWs and DATA CONNECTIONs). The feature is implemented on top of the Hot Restart feature of Hazelcast which persists the data to disk. If enabled, you have to also configure Hot Restart. Feature is disabled by default. | `bool` | false | false |
+
+[Back to TOC](#table-of-contents)
+
+### ScheduledExecutorServiceConfiguration
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | The name of the executor service | `string` | false | "default" |
+| `poolSize` | The number of executor threads per member. | `int32` | false | 16 |
+| `durability` | Durability of the executor. | `int32` | false | 1 |
+| `capacity` | Capacity of the executor task per partition. | `int32` | false | 100 |
+| `capacityPolicy` | The active policy for the capacity setting. | `string` | false | PER\_NODE |
+| `userCodeNamespace` | Name of the User Code Namespace applied to this instance | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### SchedulingConfiguration
+
+SchedulingConfiguration defines the pods scheduling details
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `affinity` | Affinity | [`*corev1.Affinity`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core) | false | - |
+| `tolerations` | Tolerations | [`[]corev1.Toleration`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) | false | - |
+| `nodeSelector` | NodeSelector | `map[string]string` | false | - |
+| `topologySpreadConstraints` | TopologySpreadConstraints | [`[]corev1.TopologySpreadConstraint`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#topologyspreadconstraint-v1-core) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### Security
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `operatorClientSecretName` |  | `string` | false | - |
+| `realms` |  | [`[]Realm`](#realm) | false | - |
+| `clientAuthentication` |  | [`ClientAuthentication`](#clientauthentication) | false | - |
+| `clientPermissions` |  | [`*ClientPermissions`](#clientpermissions) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### SecurityProviders
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `ldap` | LDAP security provider | [`*LDAPProvider`](#ldapprovider) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### SerializationConfig
+
+SerializationConfig contains the configuration for the Hazelcast serialization.
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `byteOrder` | Specifies the byte order that the serialization will use. | [`ByteOrder`](#byteorder) | false | BigEndian |
+| `overrideDefaultSerializers` | Allows override of built-in default serializers. | `bool` | false | false |
+| `enableCompression` | Enables compression when default Java serialization is used. | `bool` | false | false |
+| `enableSharedObject` | Enables shared object when default Java serialization is used. | `bool` | false | false |
+| `allowUnsafe` | Allow the usage of unsafe. | `bool` | false | false |
+| `dataSerializableFactories` | Lists class implementations of Hazelcast's DataSerializableFactory. | `[]string` | false | - |
+| `portableFactories` | Lists class implementations of Hazelcast's PortableFactory. | `[]string` | false | - |
+| `globalSerializer` | List of global serializers. | [`*GlobalSerializer`](#globalserializer) | false | - |
+| `serializers` | List of serializers (classes) that implemented using Hazelcast's StreamSerializer, ByteArraySerializer etc. | [`[]Serializer`](#serializer) | false | - |
+| `compactSerialization` | Configuration attributes the compact serialization. | [`*CompactSerializationConfig`](#compactserializationconfig) | false | - |
+| `javaSerializationFilter` | Blacklist and whitelist for deserialized classes when Java serialization is used. | [`*JavaFilterConfig`](#javafilterconfig) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### SerializationFilterList
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `classes` | List of class names to be filtered. | `[]string` | false | - |
+| `packages` | List of packages to be filtered | `[]string` | false | - |
+| `prefixes` | List of prefixes to be filtered. | `[]string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### Serializer
+
+Serializer allows to plug in a custom serializer for serializing objects.
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `typeClass` | Name of the class that will be serialized via this implementation. | `string` | true | - |
+| `className` | Class name of the implementation of the serializer class. | `string` | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### ServerSocketEndpointConfig
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `interfaces` |  | `[]string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### SimpleAuthentication
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `users` |  | [`[]User`](#user) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### TLS
+
+TLS is used by Hazelcast CR
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `secretName` | Name of the secret with TLS certificate and key. | `string` | true | - |
+| `clientAuthentication` | Mutual authentication configuration for the client. It is None by default which means the client side of connection is not authenticated. | [`MutualAuthentication`](#mutualauthentication) | false | "None" |
+| `keyMaterialDuration` |  | [`*metav1.Duration`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#duration-v1-meta) | false | - |
+| `memberAuthentication` | Mutual authentication configuration between members. It is Required by default which means the connections between members are authenticated. | [`MutualAuthentication`](#mutualauthentication) | false | "Required" |
+
+[Back to TOC](#table-of-contents)
+
+### Topic
+
+Topic is the Schema for the topics API
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta) | false | - |
+| `spec` |  | [`TopicSpec`](#topicspec) | true | - |
+| `status` |  | [`TopicStatus`](#topicstatus) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### TopicList
+
+TopicList contains a list of Topic
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ListMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#listmeta-v1-meta) | false | - |
+| `items` |  | [`[]Topic`](#topic) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### TopicSpec
+
+TopicSpec defines the desired state of Topic
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | Name of the topic config to be created. If empty, CR name will be used. | `string` | false | - |
+| `globalOrderingEnabled` | globalOrderingEnabled allows all nodes listening to the same topic get their messages in the same order the same order | `bool` | false | false |
+| `multiThreadingEnabled` | multiThreadingEnabled enables multi-threaded processing of incoming messages a single thread will handle all topic messages | `bool` | false | false |
+| `hazelcastResourceName` | HazelcastResourceName defines the name of the Hazelcast resource for which topic config will be created | `string` | true | - |
+| `userCodeNamespace` | Name of the User Code Namespace applied to this instance | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### TopicStatus
+
+TopicStatus defines the observed state of Topic
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `state` | State of the data structure | [`DataStructureConfigState`](#datastructureconfigstate) | false | - |
+| `message` | Message explaining the current state | `string` | false | - |
+| `memberStatuses` | Holds status of data structure for each Hazelcast member | [`map[string]DataStructureConfigState`](#datastructureconfigstate) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### User
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `secretName` |  | `string` | false | - |
+| `roles` |  | `[]string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### UserCodeDeploymentConfig
+
+UserCodeDeploymentConfig contains the configuration for User Code download operation
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `clientEnabled` | When true, allows user code deployment from clients. | `*bool` | false | - |
+| `triggerSequence` | A string for triggering a rolling restart for re-downloading the user code. | `string` | false | - |
+| `bucketConfigs` | Bucket configs from where the JAR files will be downloaded. | [`[]BucketSource`](#bucketsource) | false | - |
+| `configMaps` | Names of the list of ConfigMaps. Files in each ConfigMap will be downloaded. | `[]string` | false | - |
+| `remoteURLs` | List of URLs from where the files will be downloaded. | `[]string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### UserCodeNamespace
+
+UserCodeNamespace is the Schema for the usercodenamespaces API
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta) | false | - |
+| `spec` |  | [`UserCodeNamespaceSpec`](#usercodenamespacespec) | false | - |
+| `status` |  | [`UserCodeNamespaceStatus`](#usercodenamespacestatus) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### UserCodeNamespaceList
+
+UserCodeNamespaceList contains a list of UserCodeNamespace
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ListMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#listmeta-v1-meta) | false | - |
+| `items` |  | [`[]UserCodeNamespace`](#usercodenamespace) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### UserCodeNamespaceSpec
+
+UserCodeNamespaceSpec defines the desired state of UserCodeNamespace
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `bucketConfigs` | Bucket configs from where the JAR files will be downloaded. | [`[]BucketSource`](#bucketsource) | false | - |
+| `configMaps` | Names of the list of ConfigMaps. Files in each ConfigMap will be downloaded. | `[]string` | false | - |
+| `remoteURLs` | List of URLs from where the files will be downloaded. | `[]string` | false | - |
+| `hazelcastResourceName` | HazelcastResourceName defines the name of the Hazelcast resource that this resource is created for. | `string` | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### UserCodeNamespaceStatus
+
+UserCodeNamespaceStatus defines the observed state of UserCodeNamespace
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `state` |  | [`UserCodeNamespaceState`](#usercodenamespacestate) | false | - |
+| `message` |  | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### UserCodeNamespacesConfig
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `classFilter` | Blacklist and whitelist for classes when User Code Namespaces is used. | [`*JavaFilterConfig`](#javafilterconfig) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### VectorCollection
+
+VectorCollection is the Schema for the vectorcollections API
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta) | false | - |
+| `spec` |  | [`VectorCollectionSpec`](#vectorcollectionspec) | false | - |
+| `status` |  | [`VectorCollectionStatus`](#vectorcollectionstatus) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### VectorCollectionList
+
+VectorCollectionList contains a list of VectorCollection
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ListMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#listmeta-v1-meta) | false | - |
+| `items` |  | [`[]VectorCollection`](#vectorcollection) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### VectorCollectionSpec
+
+VectorCollectionSpec defines the desired state of VectorCollection
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | Name of the data structure config to be created. If empty, CR name will be used. It cannot be updated after the config is created successfully. | `string` | false | - |
+| `hazelcastResourceName` | HazelcastResourceName defines the name of the Hazelcast resource that this resource is created for. | `string` | true | - |
+| `indexes` | Information about indexes configuration | [`[]VectorIndex`](#vectorindex) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### VectorCollectionStatus
+
+VectorCollectionStatus defines the observed state of VectorCollection
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `state` | State of the data structure | [`DataStructureConfigState`](#datastructureconfigstate) | false | - |
+| `message` | Message explaining the current state | `string` | false | - |
+| `memberStatuses` | Holds status of data structure for each Hazelcast member | [`map[string]DataStructureConfigState`](#datastructureconfigstate) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### VectorIndex
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `name` | Name is name of the vector index. Can include letters, numbers, and the symbols - and \_. Required for single-index vector collections. Optional for multi-index collection. | `string` | false | - |
+| `dimension` | Dimension of the vector. | `int32` | true | - |
+| `metric` | Metric is used to calculate the distance between two vectors. | [`VectorMetric`](#vectormetric) | true | - |
+| `maxDegree` | MaxDegree is used to calculate the maximum number of neighbors per node. The calculation used is max-degree \* 2. | `int32` | true | - |
+| `efConstruction` | EfConstruction is the size of the search queue to use when finding nearest neighbors. | `int32` | true | - |
+| `useDeduplication` | UseDeduplication specify whether to use vector deduplication. | `bool` | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### WANConfig
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `port` |  | `uint` | false | 5710 |
+| `serviceType` |  | [`WANServiceType`](#wanservicetype) | false | "LoadBalancer" |
+| `name` |  | `string` | false | "default" |
+
+#### Deprecated {/* #deprecated-9 */}
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `portCount` | DEPRECATED: PortCount is deprecated. The actual value is always 1 regardless of the given value. | `*uint` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### WanMemberStatus
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `isConnected` | IsConnected defines whether the member is connected | `bool` | false | - |
+| `state` | State is the WAN state of the member | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### WanReplication
+
+WanReplication is the Schema for the wanreplications API
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta) | false | - |
+| `spec` |  | [`WanReplicationSpec`](#wanreplicationspec) | true | - |
+| `status` |  | [`WanReplicationStatus`](#wanreplicationstatus) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### WanReplicationList
+
+WanReplicationList contains a list of WanReplication
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ListMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#listmeta-v1-meta) | false | - |
+| `items` |  | [`[]WanReplication`](#wanreplication) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### WanReplicationMapStatus
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `resourceName` | ResourceName is the name of the Map Custom Resource. | `string` | false | - |
+| `publisherId` | PublisherId is the ID used for WAN publisher ID | `string` | false | - |
+| `status` | Status is the status of WAN replication | [`WanStatus`](#wanstatus) | false | - |
+| `membersStatus` | MembersStatus is the wan status of each member | [`map[string]WanMemberStatus`](#wanmemberstatus) | false | - |
+| `message` | Message is the field to show detail information or error | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### WanReplicationSpec
+
+WanReplicationSpec defines the desired state of WanReplication
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `resources` | Resources is the list of custom resources to which WAN replication applies. | [`[]ResourceSpec`](#resourcespec) | true | - |
+| `targetClusterName` | ClusterName is the clusterName field of the target Hazelcast resource. | `string` | true | - |
+| `endpoints` | Endpoints is the target cluster comma separated endpoint list . | `string` | true | - |
+| `queue` | Queue is the configuration for WAN events queue. | [`QueueSetting`](#queuesetting) | false | - |
+| `batch` | Batch is the configuration for WAN events batch. | [`BatchSetting`](#batchsetting) | false | - |
+| `acknowledgement` | Acknowledgement is the configuration for the condition when the next batch of WAN events are sent. | [`AcknowledgementSetting`](#acknowledgementsetting) | false | - |
+| `syncConsistencyCheckStrategy` | SyncConsistencyCheckStrategy is the strategy for checking the consistency of data between replicas. | [`SyncConsistencyCheckStrategy`](#syncconsistencycheckstrategy) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### WanReplicationStatus
+
+WanReplicationStatus defines the observed state of WanReplication
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `status` | Status is the status of WAN replication | [`WanStatus`](#wanstatus) | false | - |
+| `message` | Message is the field to show detail information or error | `string` | false | - |
+| `wanReplicationMapsStatus` | WanReplicationMapsStatus is the WAN Replication status of the Maps given in the spec directly or indirectly by Hazelcast resource. | [`map[string]WanReplicationMapStatus`](#wanreplicationmapstatus) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### WanSync
+
+WanSync is the Schema for the wansyncs API
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ObjectMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta) | false | - |
+| `spec` |  | [`WanSyncSpec`](#wansyncspec) | true | - |
+| `status` |  | [`WanSyncStatus`](#wansyncstatus) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### WanSyncList
+
+WanSyncList contains a list of WanSync
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `metadata` |  | [`metav1.ListMeta`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#listmeta-v1-meta) | false | - |
+| `items` |  | [`[]WanSync`](#wansync) | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### WanSyncMapStatus
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `resourceName` | ResourceName is the name of the Map Custom Resource. | `string` | false | - |
+| `publisherId` | PublisherId is the ID used for WAN publisher ID | `string` | false | - |
+| `phase` | Status is the status of the resource WAN sync | [`WanSyncPhase`](#wansyncphase) | false | - |
+| `message` | Message is the field to show detail information or error | `string` | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### WanSyncSpec
+
+WanSyncSpec defines the desired state of WanSync
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `wanReplicationResourceName` | WanReplicationResourceName is the name of WanReplication CR that contains the WAN publisher configuration. If specified the Sync operation will use existing WAN publisher. | `string` | true | - |
+
+[Back to TOC](#table-of-contents)
+
+### WanSyncStatus
+
+WanSyncStatus defines the observed state of WanSync
+
+| Field | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- |
+| `status` | Status is the status of WAN Sync | [`WanSyncPhase`](#wansyncphase) | false | - |
+| `message` | Message is the field to show detail information or error | `string` | false | - |
+| `wanSyncMapsStatus` | WanSyncMapStatus is the WAN Sync status of the Maps given in the spec directly or indirectly by Hazelcast resource. | [`map[string]WanSyncMapStatus`](#wansyncmapstatus) | false | - |
+
+[Back to TOC](#table-of-contents)
+
+### AcknowledgementType
+
+| Value | Description |
+| --- | --- |
+| `"ACK_ON_RECEIPT"` | Replication event is considered successful as soon as it is received by target cluster. |
+| `"ACK_ON_OPERATION_COMPLETE"` | Replication event is considered successful when it is received and applied by the target cluster. |
+
+[Back to TOC](#table-of-contents)
+
+### ByteOrder
+
+| Value | Description |
+| --- | --- |
+| `"Native"` | NativeByteOrder uses the native byte order of the underlying platform. |
+| `"BigEndian"` | BigEndian uses the big-endian byte order. |
+| `"LittleEndian"` | LittleEndian uses the kittle-endian byte order. |
+
+[Back to TOC](#table-of-contents)
+
+### CapacityPolicyType
+
+CapacityPolicyType represents the active policy types for the capacity setting
+
+| Value | Description |
+| --- | --- |
+| `"PER_NODE"` | CapacityPolicyPerNode is the policy for limiting the maximum number of tasks in each Hazelcast instance |
+| `"PER_PARTITION"` | CapacityPolicyPerPartition is the policy for limiting the maximum number of tasks within each partition. |
+
+[Back to TOC](#table-of-contents)
+
+### ClientOnJoinOperation
+
+| Value | Description |
+| --- | --- |
+| `"SEND"` |  |
+| `"RECEIVE"` |  |
+| `"NONE"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### CollectionType
+
+CollectionType represents the value collection options for storing the data in the multiMap.
+
+| Value | Description |
+| --- | --- |
+| `"SET"` |  |
+| `"LIST"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### DataRecoveryPolicyType
+
+DataRecoveryPolicyType represents the options for data recovery policy when the whole cluster restarts.
+
+| Value | Description |
+| --- | --- |
+| `"FullRecoveryOnly"` | FullRecovery does not allow partial start of the cluster and corresponds to "cluster-data-recovery-policy.FULL\_RECOVERY\_ONLY" configuration option. |
+| `"PartialRecoveryMostRecent"` | MostRecent allow partial start with the members that have most up-to-date partition table and corresponds to "cluster-data-recovery-policy.PARTIAL\_RECOVERY\_MOST\_RECENT" configuration option. |
+| `"PartialRecoveryMostComplete"` | MostComplete allow partial start with the members that have most complete partition table and corresponds to "cluster-data-recovery-policy.PARTIAL\_RECOVERY\_MOST\_COMPLETE" configuration option. |
+
+[Back to TOC](#table-of-contents)
+
+### DataStructureConfigState
+
+| Value | Description |
+| --- | --- |
+| `"Failed"` | Data structure is not successfully applied. |
+| `"Success"` | Data structure configuration is applied successfully. |
+| `"Pending"` | Data structure configuration is being applied |
+| `"Persisting"` | The config is added into all members but waiting for the config to be persisted into ConfigMap |
+| `"Terminating"` | Data structure is marked to be deleted, |
+
+[Back to TOC](#table-of-contents)
+
+### DiagnosticsOutputType
+
+| Value | Description |
+| --- | --- |
+| `"FILE"` |  |
+| `"STDOUT"` |  |
+| `"LOGGER"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### EvictionPolicyType
+
+EvictionPolicyType represents the eviction policy to be applied.
+
+| Value | Description |
+| --- | --- |
+| `"LRU"` | Least recently used entries will be removed. |
+| `"LFU"` | Least frequently used entries will be removed. |
+| `"NONE"` | No eviction. |
+| `"RANDOM"` | Randomly selected entries will be removed. |
+
+[Back to TOC](#table-of-contents)
+
+### ExposeExternallyType
+
+ExposeExternallyType describes how Hazelcast members are exposed.
+
+| Value | Description |
+| --- | --- |
+| `"Smart"` | ExposeExternallyTypeSmart exposes each Hazelcast member with a separate external address. |
+| `"Unisocket"` | ExposeExternallyTypeUnisocket exposes all Hazelcast members with one external address. |
+
+[Back to TOC](#table-of-contents)
+
+### ExternalConnectivityServiceType
+
+ExternalConnectivityServiceType describes how Management Center is exposed.
+
+| Value | Description |
+| --- | --- |
+| `"ClusterIP"` | ExternalConnectivityTypeClusterIP exposes Management Center with ClusterIP service. |
+| `"NodePort"` | ExternalConnectivityTypeNodePort exposes Management Center with NodePort service. |
+| `"LoadBalancer"` | ExternalConnectivityTypeLoadBalancer exposes Management Center with LoadBalancer service. |
+
+[Back to TOC](#table-of-contents)
+
+### FullBehaviorSetting
+
+| Value | Description |
+| --- | --- |
+| `"DISCARD_AFTER_MUTATION"` |  |
+| `"THROW_EXCEPTION"` |  |
+| `"THROW_EXCEPTION_ONLY_IF_REPLICATION_ACTIVE"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### GCType
+
+GCType is Garbage Collector type
+
+| Value | Description |
+| --- | --- |
+| `"Serial"` |  |
+| `"Parallel"` |  |
+| `"G1"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### HazelcastEndpointType
+
+| Value | Description |
+| --- | --- |
+| `"Discovery"` |  |
+| `"Member"` |  |
+| `"WAN"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### HighAvailabilityMode
+
+| Value | Description |
+| --- | --- |
+| `"NODE"` |  |
+| `"ZONE"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### HotBackupState
+
+| Value | Description |
+| --- | --- |
+| `"Unknown"` |  |
+| `"Pending"` |  |
+| `"NotStarted"` |  |
+| `"InProgress"` |  |
+| `"Failure"` |  |
+| `"Success"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### IPFamily
+
+| Value | Description |
+| --- | --- |
+| `"IPv4"` |  |
+| `"IPv6"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### InMemoryFormatType
+
+InMemoryFormatType represents the format options for storing the data in the map/cache.
+
+| Value | Description |
+| --- | --- |
+| `"BINARY"` | InMemoryFormatBinary Data will be stored in serialized binary format. |
+| `"OBJECT"` | InMemoryFormatObject Data will be stored in deserialized form. |
+| `"NATIVE"` | InMemoryFormatNative Data will be stored in the map that uses Hazelcast's High-Density Memory Store feature. |
+
+[Back to TOC](#table-of-contents)
+
+### IndexType
+
+| Value | Description |
+| --- | --- |
+| `"SORTED"` |  |
+| `"HASH"` |  |
+| `"BITMAP"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### InitialModeType
+
+| Value | Description |
+| --- | --- |
+| `"LAZY"` | Loading is asynchronous. It is the default mode. |
+| `"EAGER"` | Loading is blocked until all partitions are loaded. |
+
+[Back to TOC](#table-of-contents)
+
+### JetJobSnapshotState
+
+| Value | Description |
+| --- | --- |
+| `"Waiting"` |  |
+| `"Exporting"` |  |
+| `"Exported"` |  |
+| `"Failed"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### JetJobState
+
+| Value | Description |
+| --- | --- |
+| `"Running"` |  |
+| `"Suspended"` |  |
+| `"Canceled"` |  |
+| `"Restarted"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### JetJobStatusPhase
+
+| Value | Description |
+| --- | --- |
+| `"Failed"` |  |
+| `"NotRunning"` |  |
+| `"Starting"` |  |
+| `"Running"` |  |
+| `"Suspended"` |  |
+| `"SuspendedExportingSnapshot"` |  |
+| `"Completing"` |  |
+| `"ExecutionFailed"` |  |
+| `"Completed"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### LoggingLevel
+
+LoggingLevel controls log verbosity for Hazelcast.
+
+| Value | Description |
+| --- | --- |
+| `"OFF"` |  |
+| `"FATAL"` |  |
+| `"ERROR"` |  |
+| `"WARN"` |  |
+| `"INFO"` |  |
+| `"DEBUG"` |  |
+| `"TRACE"` |  |
+| `"ALL"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### LoginModuleUsage
+
+| Value | Description |
+| --- | --- |
+| `"REQUIRED"` |  |
+| `"REQUISITE"` |  |
+| `"SUFFICIENT"` |  |
+| `"OPTIONAL"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### MCPhase
+
+MCPhase represents the current state of the cluster
+
+| Value | Description |
+| --- | --- |
+| `"Running"` | McRunning phase is the state when the ManagementCenter is successfully started |
+| `"Failed"` | McFailed phase is the state of error during the ManagementCenter startup |
+| `"Configuring"` | McConfiguring phase is the state of configuring the ManagementCenter and might be restated |
+| `"Pending"` | McPending phase is the state of starting the cluster when the ManagementCenter is not started yet |
+| `"Terminating"` | McTerminating phase is the state where deletion of ManagementCenter and dependent resources happen |
+
+[Back to TOC](#table-of-contents)
+
+### MapConfigState
+
+| Value | Description |
+| --- | --- |
+| `"Failed"` |  |
+| `"Success"` |  |
+| `"Pending"` |  |
+| `"Persisting"` | Map config is added into all members but waiting for map to be persistent into ConfigMap |
+| `"Terminating"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### MaxSizePolicyType
+
+| Value | Description |
+| --- | --- |
+| `"PER_NODE"` | Maximum number of map entries in each cluster member. You cannot set the max-size to a value lower than the partition count (which is 271 by default). |
+| `"PER_PARTITION"` | Maximum number of map entries within each partition. |
+| `"USED_HEAP_PERCENTAGE"` | Maximum used heap size percentage per map for each Hazelcast instance. If, for example, JVM is configured to have 1000 MB and this value is 10, then the map entries will be evicted when used heap size exceeds 100 MB. It does not work when "in-memory-format" is set to OBJECT. |
+| `"USED_HEAP_SIZE"` | Maximum used heap size in megabytes per map for each Hazelcast instance. It does not work when "in-memory-format" is set to OBJECT. |
+| `"FREE_HEAP_PERCENTAGE"` | Minimum free heap size percentage for each Hazelcast instance. If, for example, JVM is configured to have 1000 MB and this value is 10, then the map entries will be evicted when free heap size is below 100 MB. |
+| `"FREE_HEAP_SIZE"` | Minimum free heap size in megabytes for each Hazelcast instance. |
+| `"USED_NATIVE_MEMORY_SIZE"` | Maximum used native memory size in megabytes per map for each Hazelcast instance. It is available only in Hazelcast Enterprise HD. |
+| `"USED_NATIVE_MEMORY_PERCENTAGE"` | Maximum used native memory size percentage per map for each Hazelcast instance. It is available only in Hazelcast Enterprise HD. |
+| `"FREE_NATIVE_MEMORY_SIZE"` | Minimum free native memory size in megabytes for each Hazelcast instance. It is available only in Hazelcast Enterprise HD. |
+| `"FREE_NATIVE_MEMORY_PERCENTAGE"` | Minimum free native memory size percentage for each Hazelcast instance. It is available only in Hazelcast Enterprise HD. |
+| `"ENTRY_COUNT"` | Maximum size based on the entry count in the Near Cache Warning: This policy is specific to near cache. |
+
+[Back to TOC](#table-of-contents)
+
+### MemberAccess
+
+MemberAccess describes how each Hazelcast member is accessed from the external client.
+
+| Value | Description |
+| --- | --- |
+| `"NodePortExternalIP"` | MemberAccessNodePortExternalIP lets the client access Hazelcast member with the NodePort service and the node external IP/hostname |
+| `"NodePortNodeName"` | MemberAccessNodePortNodeName lets the client access Hazelcast member with the NodePort service and the node name |
+| `"LoadBalancer"` | MemberAccessLoadBalancer lets the client access Hazelcast member with the LoadBalancer service |
+
+[Back to TOC](#table-of-contents)
+
+### MutualAuthentication
+
+| Value | Description |
+| --- | --- |
+| `"None"` | Client side of connection is not authenticated. |
+| `"Required"` | Server asks for client certificate. If the client does not provide a keystore or the provided keystore is not verified against member's truststore, the client is not authenticated. |
+| `"Optional"` | Server asks for client certificate, but client is not required to provide any valid certificate. |
+
+[Back to TOC](#table-of-contents)
+
+### NativeMemoryAllocatorType
+
+NativeMemoryAllocatorType is one of 2 types of mechanism for allocating HD Memory
+
+| Value | Description |
+| --- | --- |
+| `"STANDARD"` | NativeMemoryStandard allocate memory using default OS memory manager |
+| `"POOLED"` | NativeMemoryPooled is Hazelcast own pooling memory allocator |
+
+[Back to TOC](#table-of-contents)
+
+### NearCacheMaxSizePolicyType
+
+NearCacheMaxSizePolicyType represents the max-size policy for NearCache. Only supports policies compatible with NearCache (excludes heap-based policies).
+
+| Value | Description |
+| --- | --- |
+| `"ENTRY_COUNT"` | NearCacheMaxSizePolicyEntryCount Maximum size based on the entry count in the Near Cache |
+| `"USED_NATIVE_MEMORY_SIZE"` | NearCacheMaxSizePolicyUsedNativeMemorySize Maximum used native memory size in megabytes per map for each Hazelcast instance. Available only in Hazelcast Enterprise HD. |
+| `"USED_NATIVE_MEMORY_PERCENTAGE"` | NearCacheMaxSizePolicyUsedNativeMemoryPercentage Maximum used native memory size percentage per map for each Hazelcast instance. Available only in Hazelcast Enterprise HD. |
+| `"FREE_NATIVE_MEMORY_SIZE"` | NearCacheMaxSizePolicyFreeNativeMemorySize Minimum free native memory size in megabytes for each Hazelcast instance. Available only in Hazelcast Enterprise HD. |
+| `"FREE_NATIVE_MEMORY_PERCENTAGE"` | NearCacheMaxSizePolicyFreeNativeMemoryPercentage Minimum free native memory size percentage for each Hazelcast instance. Available only in Hazelcast Enterprise HD. |
+
+[Back to TOC](#table-of-contents)
+
+### NodeState
+
+| Value | Description |
+| --- | --- |
+| `"PASSIVE"` |  |
+| `"ACTIVE"` |  |
+| `"SHUT_DOWN"` |  |
+| `"STARTING"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### PVCNamePrefix
+
+PVCNamePrefix specifies the prefix of existing PVCs
+
+| Value | Description |
+| --- | --- |
+| `"persistence"` | Persistence format is persistence. |
+| `"hot-restart-persistence"` | HotRestartPersistence format is hot-restart-persistence. |
+
+[Back to TOC](#table-of-contents)
+
+### PersistenceStartupAction
+
+PersistenceStartupAction represents the action triggered on the cluster startup to force the cluster startup.
+
+| Value | Description |
+| --- | --- |
+| `"ForceStart"` | ForceStart will trigger the force start action on the startup |
+| `"PartialStart"` | PartialStart will trigger the partial start action on the startup. Can be used only with the MostComplete or MostRecent DataRecoveryPolicyType type. |
+
+[Back to TOC](#table-of-contents)
+
+### Phase
+
+Phase represents the current state of the cluster
+
+| Value | Description |
+| --- | --- |
+| `"Running"` | Running phase is the state when all the members of the cluster are successfully started |
+| `"Failed"` | Failed phase is the state of error during the cluster startup |
+| `"Pending"` | Pending phase is the state of starting the cluster when not all the members are started yet |
+| `"Terminating"` | Terminating phase is the state where deletion of cluster scoped resources and Hazelcast dependent resources happen |
+
+[Back to TOC](#table-of-contents)
+
+### PrometheusPrinter
+
+| Value | Description |
+| --- | --- |
+| `"V1"` |  |
+| `"V2"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### RMInMemoryFormatType
+
+RMInMemoryFormatType represents the format options for storing the data in the ReplicatedMap.
+
+| Value | Description |
+| --- | --- |
+| `"BINARY"` | RMInMemoryFormatBinary Data will be stored in serialized binary format. |
+| `"OBJECT"` | RMInMemoryFormatObject Data will be stored in deserialized form. |
+
+[Back to TOC](#table-of-contents)
+
+### ResourceKind
+
+| Value | Description |
+| --- | --- |
+| `"Map"` |  |
+| `"Hazelcast"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### RestoreState
+
+| Value | Description |
+| --- | --- |
+| `"Unknown"` |  |
+| `"Failed"` |  |
+| `"InProgress"` |  |
+| `"Succeeded"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### SyncConsistencyCheckStrategy
+
+| Value | Description |
+| --- | --- |
+
+[Back to TOC](#table-of-contents)
+
+### UniqueKeyTransformation
+
+| Value | Description |
+| --- | --- |
+| `"OBJECT"` |  |
+| `"LONG"` |  |
+| `"RAW"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### UserCodeNamespaceState
+
+| Value | Description |
+| --- | --- |
+| `"Pending"` |  |
+| `"Failure"` |  |
+| `"Success"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### VectorMetric
+
+| Value | Description |
+| --- | --- |
+| `"Euclidean"` | Euclidean distance. Score definition: 1 / (1 + squareDistance(v1, v2)) |
+| `"Cosine"` | Cosine of the angle between the vectors. Score definition: (1 + cos(v1, v2)) / 2 |
+| `"Dot"` | Dot product of the vectors. Score definition: (1 + dotProduct(v1, v2)) / 2 |
+
+[Back to TOC](#table-of-contents)
+
+### WANServiceType
+
+WANServiceType describes the service type where the wan ports are exposed
+
+| Value | Description |
+| --- | --- |
+| `"WithExposeExternally"` | WANServiceTypeWithExposeExternally exposes WAN ports in the existing service-per-pod services configured in 'exposeExternally' |
+
+[Back to TOC](#table-of-contents)
+
+### WanStatus
+
+| Value | Description |
+| --- | --- |
+| `"Failed"` |  |
+| `"Pending"` |  |
+| `"Success"` |  |
+| `"Persisting"` | The config is added into all members but waiting for the config to be persisted into ConfigMap |
+| `"Terminating"` |  |
+
+[Back to TOC](#table-of-contents)
+
+### WanSyncPhase
+
+| Value | Description |
+| --- | --- |
+| `"NotStarted"` |  |
+| `"Failed"` |  |
+| `"Pending"` |  |
+| `"Completed"` |  |
+
+[Back to TOC](#table-of-contents)

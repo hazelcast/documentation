@@ -11,9 +11,9 @@ You can use your existing LDAP server for authentication/authorization on the Ma
 
 ## Set up the LDAP security provider
 
-To set up LDAP, you need to configure settings either in the UI or the `hz-mc conf` tool.
+To set up LDAP, you need to configure settings in the UI, the `hz-mc conf` tool, or a YAML declarative configuration file.
 
-<Tabs groupId="mc-config-method">
+<Tabs groupId="mc-conf--ui--yaml-beta">
 <TabItem value="ui" label="UI">
 
 To set up the LDAP security provider in the UI, go to **Settings** \> **Security Providers** \> **LDAP**.
@@ -32,6 +32,32 @@ hz-mc conf ldap configure
 ```bash title="Windows"
 mc-conf.bat ldap configure
 ```
+
+</TabItem>
+<TabItem value="yaml-beta" label="YAML (Beta)">
+
+Declare an `ldap` block under `securityProvider` in a [YAML declarative configuration file](../../configuration/declarative-configuration/overview.mdx#ldap):
+
+```yaml
+securityProvider:
+  ldap:
+    url: "ldaps://ldap.example.com"
+    username: "cn=admin,dc=example,dc=com"
+    password: "file:/run/secrets/ldap-bind-password"
+    userDn: "ou=users,dc=example,dc=com"
+    groupDn: "ou=groups,dc=example,dc=com"
+    userSearchFilter: "(uid={0})"
+    groupSearchFilter: "(member={0})"
+    startTls: false
+    nestedGroupSearch: false
+    roles:
+      adminGroups: "mc-admins"
+      readWriteGroups: "mc-writers"
+      readOnlyGroups: "mc-readers"
+      metricsOnlyGroups: "mc-metrics"
+```
+
+An optional `keystore` block covers [password encryption](#password-encryption) — see [the full field reference](../../configuration/declarative-configuration/overview.mdx#ldap).
 
 </TabItem>
 </Tabs>
@@ -156,4 +182,4 @@ Use the `-f` / `--force` flag with `ldap configure` to make configuration idempo
 
 ## Next steps
 
-For details about the `hz-mc conf` tool, see [Management Center Configuration Tool](../../configuration/mc-conf.mdx).
+For details about the `hz-mc conf` tool, see [Management Center Configuration Tool](../../configuration/mc-conf.mdx). For details about the YAML declarative configuration file, see [YAML declarative configuration](../../configuration/declarative-configuration/overview.mdx).

@@ -24,6 +24,10 @@ This task deletes all existing user accounts and auth tokens.
 
 Then, you can configure another local security provider. For help setting one up, see [Security Providers](./security-providers.mdx)
 
+## Use a YAML declarative configuration file (Beta)
+
+A [YAML declarative configuration file](../../configuration/declarative-configuration/overview.mdx) can never switch an already-active security provider to a different type — like `hz-mc conf`, it requires you to run `hz-mc conf security reset` first, then restart Management Center with the file. The one exception is the Dev Mode: since it isn't a deliberately-configured provider, a file may declare any other provider type — including the local provider — while Dev Mode is active, and Management Center activates it directly, with no reset needed first. See [Declarative configuration apply modes](../../configuration/declarative-configuration/declarative-configuration-apply-mode.mdx) for details and examples.
+
 ## Fetch the security provider details
 
 You can fetch the configuration details of the security provider to validate if this is set correctly using the `hz-mc conf` tool with the `security get` task. Sensitive fields such as `password` or `clientSecret` are masked in the output.

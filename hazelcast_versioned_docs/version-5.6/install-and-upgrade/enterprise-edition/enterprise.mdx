@@ -10,6 +10,54 @@ These release notes list any new features, enhancements, fixes, security issues 
 
 For help downloading Hazelcast <Variable name="enterprise-product-name" />, see [Install Hazelcast Enterprise Edition](./install-enterprise.mdx) or [request a trial license key](https://hazelcast.com/trial-request/?utm_source=docs-website).
 
+## 5.6.2 {/* #5-6-2 */}
+
+**Release date**: 2026-09-09
+
+- [Fixes](#fixes)
+- [Security](#security)
+- [Contributors](#contributors)
+
+### Fixes
+
+- **Fixed IndexOutOfBoundsException in HD IMap SetOperation with MapStore and TTL**: Resolved an issue where a slow MapStore store operation could outlive an entry TTL and cause an `IndexOutOfBoundsException` while returning the old value for an HD IMap update. The fix prevents unexpected operation failures in this scenario.
+- **Fixed Kafka sink failures caused by duplicate transactional IDs**: Resolved an issue where Jet jobs writing to Kafka could suspend with `ProducerFencedException` when a newer producer with the same transactional ID fenced the current producer.
+- **Fixed potential MapStore data loss when a member fails during a flush**: Resolved an issue where manual flush operations could clear queues before the entries were persisted.
+- **Fixed persistence with MapStore after restart**: Prevented map operations from remaining blocked in the passive state when persistence and MapStore are both enabled after a cluster restart.
+- **Fixed missing OSGi package exports in Enterprise bundle**: Resolved an issue where several core Hazelcast packages were not exported correctly in the `MANIFEST.MF` starting from 5.5.0.
+- **Fixed failure during CP snapshot restore when upgrading from 5.5 to 5.6**: Resolved an issue where restoring Raft snapshots created in 5.5 could fail in 5.6 due to a missing conversion step in the snapshot processing path, causing repeated errors and blocking upgrades.
+- **Released retained WAN events**: Prevented the last drained event from remaining in the WAN event queue and consuming unnecessary resources.
+- **Fixed failures and inconsistent results in** `IMap.containsValue()` **for maps in HD Memory with TTL**: Resolved an issue where entry expiration during iteration could interfere with map traversal, causing operation failures and missed values. The fix ensures stable iteration by checking expiration instead of modifying entries during traversal, resulting in reliable results.
+- **Added shared `HttpClient` cache for `RestClient`**: Introduced a static cache to enable reuse of `HttpClient` instances across multiple `RestClient` instances, reducing overhead from repeated client creation.
+- **Fixed networking CPU spikes**: Prevented NIO threads from spinning when a member connection remains established but is dead.
+- **Clarified locking behavior**: Updated IMap and MultiMap class documentation.
+
+### Security
+
+- **Enforced checks on classes used in client protocol**: In some situations it was possible to instantiate arbitrary classes in client protocol error conditions. Strict filtering has been implemented to prevent this issue.
+- **Improved validation for serializable Jet functions**: Added additional validation to prevent serializable functions from connecting to attacker-controlled clusters or arbitrary addresses without a valid execution context.
+- **Prevented arbitrary file read through Jet**: Hardened Jet usage in serializable contexts to prevent crafted operations from reading files from members, including configuration, secrets, or data stored on disk.
+- **Removed exposure from experimental declarative pipeline functionality**: Addressed a permissions issue in the Enterprise declarative pipeline component that could allow unauthorized Jet job submission and access to sources or sinks such as files, maps, Kafka, and JDBC when Jet/SQL was enabled.
+- **Enforced stricter checks on classes in SQL**: Resolved an issue where restrictions on classnames used in SQL mappings and types were not checked in some cases.
+- **Ensured SQL is enabled before deserializing messages**: Applied additional hardening to prevent SQL parameters from being deserialized when SQL is not enabled.
+- **Enforced checks on classes in JsonUtil deserialization**: Some classes, which are unlikely to be used, are no longer allowed to be deserialized using JsonUtil.
+- **Blocked Jackson serializable classes**: Prevented serializable Jackson classes from exposing information.
+- **Hardened Jet path and class-loading validation**: Fixed path traversal issues in Jet processor class loading and in file sinks.
+- **Blocked reflective access to additional classes**: Blocked further classes in the Predicate API and SQL paths to prevent reflective access to Hazelcast instances and sensitive objects.
+- **Hardened client deserialization**: Added default Java serialization protections and extended the zero-config Compact serialization blocklist.
+- **Hardened SQL object creation and method invocation**: Prevented unprivileged actions in IMap.
+- **Rejected malformed serialized arrays**: Added validation to detect truncated array data before allocating or deserializing unexpectedly large arrays.
+- **Resolved high-severity CVEs in third-party dependencies**: Upgraded affected dependencies to address reported vulnerabilities, including Apache Log4j [CVE-2026-34478](https://nvd.nist.gov/vuln/detail/CVE-2026-34478), [CVE-2026-34480](https://nvd.nist.gov/vuln/detail/CVE-2026-34480) and [CVE-2026-34481](https://nvd.nist.gov/vuln/detail/CVE-2026-34481); PostgreSQL JDBC driver [CVE-2026-42198](https://nvd.nist.gov/vuln/detail/CVE-2026-42198); and Spring and its transitive Tomcat dependency [CVE-2026-40973](https://nvd.nist.gov/vuln/detail/CVE-2026-40973) and [CVE-2025-66614](https://nvd.nist.gov/vuln/detail/CVE-2025-66614).
+- **Resolved vulnerabilities in Jackson**: Addressed reported vulnerabilities, including Jackson Core async parser DoS [GHSA-72hv-8253-57qq](https://github.com/advisories/GHSA-72hv-8253-57qq) and [CVE-2026-54512](https://nvd.nist.gov/vuln/detail/CVE-2026-54512) and [CVE-2026-54513](https://nvd.nist.gov/vuln/detail/CVE-2026-54513).
+- **Resolved high and critical CVEs identified by security scans**: Addressed critical and high-severity vulnerabilities: [CVE-2026-41293](https://nvd.nist.gov/vuln/detail/CVE-2026-41293), [CVE-2026-43512](https://nvd.nist.gov/vuln/detail/CVE-2026-43512), [CVE-2026-43515](https://nvd.nist.gov/vuln/detail/CVE-2026-43515), [CVE-2023-45859](https://nvd.nist.gov/vuln/detail/CVE-2023-45859), [CVE-2023-45860](https://nvd.nist.gov/vuln/detail/CVE-2023-45860), [CVE-2025-59250](https://nvd.nist.gov/vuln/detail/CVE-2025-59250), [CVE-2026-0603](https://nvd.nist.gov/vuln/detail/CVE-2026-0603), [CVE-2026-24734](https://nvd.nist.gov/vuln/detail/CVE-2026-24734), [CVE-2026-24880](https://nvd.nist.gov/vuln/detail/CVE-2026-24880), [CVE-2026-34483](https://nvd.nist.gov/vuln/detail/CVE-2026-34483), [CVE-2026-34487](https://nvd.nist.gov/vuln/detail/CVE-2026-34487), [CVE-2026-41284](https://nvd.nist.gov/vuln/detail/CVE-2026-41284), [CVE-2026-42498](https://nvd.nist.gov/vuln/detail/CVE-2026-42498), [CVE-2026-43513](https://nvd.nist.gov/vuln/detail/CVE-2026-43513), and [CVE-2026-54291](https://nvd.nist.gov/vuln/detail/CVE-2026-54291).
+
+### Contributors
+
+We would like to thank the contributors from our open source community who worked on this release:
+
+- [guss77](https://github.com/guss77)
+- [Haricshore](https://github.com/Haricshore)
+
 ## 5.6.1 {/* #5-6-1 */}
 
 **Release date**: 2026-03-25
@@ -25,7 +73,7 @@ For help downloading Hazelcast <Variable name="enterprise-product-name" />, see 
 - **Improved clarity of "Max native memory size per partition" warning in member logs**: Enhanced the warning message logged when the calculated native memory size per partition exceeds the recommended threshold. The updated message now makes the calculation basis explicit, clarifies the rationale behind the recommendation, and advises when the warning can be safely ignored.
 - **Improved Map and Cache Event Journal cleanup to prevent memory leaks**: Enhanced the cleanup process for event journals to prevent unbounded heap growth on backup replicas. Cleanup now runs on both primary and backup replicas before add operations. A new cluster property, `hazelcast.journal.cleanup.threshold`, was also introduced to trigger cleanup when the journal's remaining capacity drops below a configured threshold.
 
-### Fixes
+### Fixes {/* #fixes-2 */}
 
 - **Fixed database errors and potential data loss after cluster network recovery**: Resolved an issue where reconnecting nodes could cause duplicate database write operations when using a write-behind MapStore. During a split-brain recovery, the system could keep old background tasks running alongside new ones, leading to database conflicts and lost updates. The fix ensures that old tasks are properly stopped during the merge process. This guarantees that only a single process writes to the database, ensuring reliable data persistence and preventing database errors.
 - **Improved validation for null client cluster name configuration**: Resolved an issue where setting a `null` cluster name via `ClientConfig#setClusterName(null)` resulted in a `NullPointerException` during client connection with an unclear error message. The fix introduces fail-fast validation that throws an `IllegalArgumentException` when a null cluster name is configured, helping users identify the configuration problem earlier and with a clearer error message.
@@ -36,7 +84,7 @@ For help downloading Hazelcast <Variable name="enterprise-product-name" />, see 
 - **Fixed cluster data migration failures if TRACE logging was enabled**: Resolved an issue where the cluster could get stuck while moving data between nodes. This occurred because an internal error could be triggered when the system attempted to write diagnostic logs at the exact same time as other background tasks were completing. The fix ensures that the internal logging mechanism safely handles simultaneous operations, allowing data migrations to complete smoothly and reliably.
 - **Fixed potential CP Subsystem state inconsistency after snapshot restore**: Resolved an issue where restored CP Subsystem state could be unintentionally changed by ongoing operations, leading to inconsistent behavior after recovery. The fix ensures that recovered data is no longer unintentionally modified by ongoing cluster operations.
 
-### Security
+### Security {/* #security-2 */}
 
 - **Resolved [CVE-2025-33042](https://nvd.nist.gov/vuln/detail/CVE-2025-33042) in Avro**: Fixed a vulnerability by upgrading the Avro and Parquet dependencies.
 - **Security Advisory regarding Elasticsearch 7**: [CVE-2025-66566](https://nvd.nist.gov/vuln/detail/CVE-2025-66566) has been identified in Elasticsearch 7. As Elasticsearch 7 is currently End of Life (EOL), no upstream fix is available from the vendor. We strongly recommend that users evaluate the security risks associated with this CVE. Support for Elasticsearch 7 will be removed in a future version of Hazelcast.
@@ -46,7 +94,7 @@ For help downloading Hazelcast <Variable name="enterprise-product-name" />, see 
 - **Resolved [CVE-2026-22731](https://nvd.nist.gov/vuln/detail/CVE-2026-22731), [CVE-2026-22733](https://nvd.nist.gov/vuln/detail/CVE-2026-22733), [CVE-2026-22737](https://nvd.nist.gov/vuln/detail/CVE-2026-22737), and [CVE-2026-22735](https://nvd.nist.gov/vuln/detail/CVE-2026-22735) in Spring Boot**: Fixed vulnerabilities by upgrading the Spring Boot dependency.
 - **Resolved [CVE-2024-6763](https://nvd.nist.gov/vuln/detail/CVE-2024-6763) in Jetty**: Fixed vulnerability by upgrading the Jetty dependency. Note that although this CVE is fixed, it may be flagged as still present in security scans due to the EOL status of Jetty 9. Hazelcast are aware of the issue and are working to upgrade Jetty in a future release.
 
-### Contributors
+### Contributors {/* #contributors-2 */}
 
 We would like to thank the contributors from our open source community who worked on this release:
 
@@ -117,7 +165,7 @@ For more details on new features, see [What's new](../../get-started/whats-new.m
 - **Added Spring Cache integration with HazelcastCache**: Enhanced the HazelcastCache implementation with asynchronous retrieval via `CompletableFuture`. This improvement ensures better compatibility with Spring Cache and enables the use of non-blocking cache access patterns.
 - **Upgraded Debezium in Change Data Capture (CDC)**: Updated the embedded Debezium version used in the CDC module to 3.1.3. This upgrade provides access to the latest features and improvements, including compatibility with MySQL 8.4.
 
-### Fixes {/* #fixes-2 */}
+### Fixes {/* #fixes-3 */}
 
 - **Double serialization in CP Subsystem**: Resolved redundant serialization during large CP snapshots by removing extra serialization paths and eliminating `FixedBufferObjectDataOutput`. The fix adds the `hazelcast.cp.disk.output.buffer.size` property to better handle larger snapshot writes (especially with higher commit-index-advance-count-to-snapshot settings). This reduces overhead and improves snapshot performance.
 - **Error message on REST timeouts for CP endpoints**: Resolved an issue where the REST API endpoint for CP members would return a null error message after a 30-second timeout. This fix results in a more informative error message when the request exceeds the configured timeout, improving troubleshooting capabilities.
@@ -143,7 +191,7 @@ For more details on new features, see [What's new](../../get-started/whats-new.m
 - **Deprecated `SqlResult.updateCount()` API**: The `updateCount()` method in `SqlResult` has been deprecated because it always returns 0 for DML statements.
 - **Deprecated RoutingMode enum in internal package**: The RoutingMode enum previously required by public APIs such as `ClusterRoutingConfig.setRoutingMode(…​)` was incorrectly defined in the internal package `com.hazelcast.client.impl.connection.tcp`. This visibility mismatch has been resolved by introducing a new `RoutingMode` enum in the public `com.hazelcast.client.config package`. Users should check usage of `get/setRoutingMode` APIs and update imports to the public package.
 
-### Security {/* #security-2 */}
+### Security {/* #security-3 */}
 
 - **Resolved [CVE-2025-41249](https://nvd.nist.gov/vuln/detail/CVE-2025-41249) in Rest API** – Fixed improper input validation in Spring Framework dependency by upgrading to a secure version.
 - **Resolved [CVE-2024-25638](https://nvd.nist.gov/vuln/detail/CVE-2024-25638) in Hazelcast Jet Hadoop Connector** – Fixed improper input validation in Dnsjava dependency by upgrading to a secure version.

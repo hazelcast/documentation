@@ -1,0 +1,65 @@
+---
+title: "Configure Management Center persistence"
+sidebar_position: 3
+slug: /management-center-persistence
+---
+
+import CodeBlock from "@theme/CodeBlock";
+import Ex_management_center_persistence_yaml from "../../examples/management-center-persistence.yaml";
+
+By default, Management Center persists metrics to a persistent volume. You can turn this off by disabling persistence.
+
+Management Center collects and report metrics data for connected Hazelcast clusters. See [Monitoring](/hazelcast/latest/maintain-cluster/monitoring) for more information.
+
+## Configure Management Center persistence
+
+Operator supports the following configuration for Management Center persistence.
+
+<table>
+<colgroup>
+<col style={{width:'30%'}} />
+<col style={{width:'70%'}} />
+</colgroup>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`persistence.enabled`</td>
+<td>When true, Management Center will use a Persistent Volume Claim (PVC) to store data.</td>
+</tr>
+<tr>
+<td>`persistence.size`</td>
+<td>Size of the PVC.</td>
+</tr>
+<tr>
+<td>`persistence.existingVolumeClaimName`</td>
+<td>
+
+Name of an existing PVC to use. If left blank, Management Center will request a new PVC.
+
+By default, [Management Center data](/management-center/latest/deploy-manage/configuring#where-management-center-saves-data) is persisted to the `/data` directory. If you want to use an existing PVC, set its name here.
+
+</td>
+</tr>
+<tr>
+<td>`persistence.storageClass`</td>
+<td>Storage class for the PVC.</td>
+</tr>
+</tbody>
+</table>
+
+:::warning
+
+StatefulSet does not support updates to the `volumeClaimTemplates` field, so the `persistence` field should be set only at the creation of the custom resource. Any update to the `persistence` field will not affect Management Center.
+
+:::
+
+### Example configuration
+
+The following example configuration assigns a Kubernetes Persistent Volume with a size of 10GiB:
+
+<CodeBlock language="yaml" title="Example Management Center with Persistence Configuration">{Ex_management_center_persistence_yaml}</CodeBlock>

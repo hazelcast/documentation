@@ -1,0 +1,410 @@
+---
+title: "Tutorial: Replicate data between two Hazelcast clusters"
+sidebar_position: 1
+slug: /tutorials/operator-tutorial-wan-replication
+---
+
+import CodeBlock from "@theme/CodeBlock";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_hazelcast_first_yaml from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/hazelcast-first.yaml";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_hazelcast_second_yaml from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/hazelcast-second.yaml";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_map_yaml from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/map.yaml";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_wanreplication_yaml from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/wanreplication.yaml";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_java_src_main_java_com_hazelcast_Main_java from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/java/src/main/java/com/hazelcast/Main.java";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_nodejs_client_js from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/nodejs/client.js";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_go_main_go from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/go/main.go";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_python_main_py from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/python/main.py";
+import Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_dotnet_Program_cs from "@site/.tutorial-examples/hazelcast-code-samples/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan/dotnet/Program.cs";
+
+Learn how to keep data in sync across two Hazelcast clusters.
+
+## Overview
+
+In this tutorial, you'll do the following:
+
+- Deploy two Hazelcast clusters.
+- Create two Hazelcast map configurations on one of the clusters.
+- Synchronize map data between the two Hazelcast clusters.
+
+The tutorial should take approximately 10 minutes to complete.
+
+## Prerequisites
+
+Before you begin, make sure that you have:
+
+- A running [Kubernetes](https://kubernetes.io/) cluster.
+- The Kubernetes command line tool, [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl).
+- A deployed [Operator](../../../../install-and-upgrade/get-started/overview.mdx).
+- The Hazelcast Code Samples repository [https://github.com/hazelcast/hazelcast-code-samples](https://github.com/hazelcast/hazelcast-code-samples) cloned to your local machine.
+
+## Start the Hazelcast cluster
+
+1. Create a secret with your [Hazelcast Enterprise License](http://trialrequest.hazelcast.com/).
+
+   ```shell
+   kubectl create secret generic hazelcast-license-key --from-literal=license-key=<hz-license-key>
+   ```
+2. Create the Hazelcast clusters.
+
+   1. Create the first cluster:
+
+      <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_hazelcast_first_yaml + '\nEOF'}</CodeBlock>
+   2. Create the second cluster:
+
+      <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_hazelcast_second_yaml + '\nEOF'}</CodeBlock>
+3. Check the status of the clusters to make sure that both clusters are running.
+
+   ```shell
+   kubectl get hazelcast
+   ```
+
+   ```shell
+   NAME               STATUS    MEMBERS
+   hazelcast-first    Running   3/3
+   hazelcast-second   Running   3/3
+   ```
+4. Find the addresses of the clusters.
+
+   ```shell
+   kubectl get hazelcastendpoint --selector="app.kubernetes.io/instance in (hazelcast-first, hazelcast-second)"
+   ```
+
+   ```shell
+   NAME                   TYPE        ADDRESS
+   hazelcast-first        Discovery   34.123.9.149:5701
+   hazelcast-first-wan    WAN         34.123.9.149:5710
+   hazelcast-second       Discovery   34.16.0.16:5701
+   hazelcast-second-wan   WAN         34.16.0.16:5710
+   ```
+
+   The `ADDRESS` column displays the external addresses of the Hazelcast clusters.
+
+## Create a WAN replication configuration
+
+1. Create two maps on the first cluster. In this example, the following maps are created:
+
+   - `map-1`
+   - `map-2`.
+
+     <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_map_yaml + '\nEOF'}</CodeBlock>
+2. Create the configuration for WAN replication:
+
+   - Use the first cluster as the source cluster by adding its name as a resource in the WAN replication configuration. Adding the cluster name as a resource starts WAN replication for both the maps that you created earlier.
+   - Add the second cluster as the target cluster to receive the WAN replication events.
+   - Apply the configuration:
+
+     <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_wanreplication_yaml + '\nEOF'}</CodeBlock>
+
+## Put entries to the maps on the source cluster
+
+In this step, you'll fill the maps on the source cluster.
+
+1. Configure the Hazelcast client to connect to the source cluster, using its address. <Anchor id="configure-client" />
+
+   Open the examples folder to access all sample clients:
+
+   ```shell
+   cd hazelcast-platform-operator-wan-replication
+   ```
+
+   The sample code for this tutorial is in the [`docs/modules/ROOT/examples/operator-wan`](https://github.com/hazelcast/hazelcast-code-samples/tree/master/platform-operator/hazelcast-platform-operator-wan-replication/docs/modules/ROOT/examples/operator-wan) directory.
+
+   <Tabs groupId="client-language">
+   <TabItem value="clc" label="CLC">
+
+   :::note
+
+   CLC must be installed in your system. See the [CLC installation instructions](https://docs.hazelcast.com/clc/latest/install-clc).
+
+   :::
+
+   Add the first cluster config to the CLC:
+
+   ```bash
+   clc config add hz-1 cluster.name=dev cluster.address=<FIRST-CLUSTER-EXTERNAL-IP>
+   ```
+
+   </TabItem>
+   <TabItem value="java" label="Java">
+
+   <CodeBlock language="java">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_java_src_main_java_com_hazelcast_Main_java}</CodeBlock>
+
+   </TabItem>
+   <TabItem value="nodejs" label="NodeJS">
+
+   <CodeBlock language="javascript">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_nodejs_client_js}</CodeBlock>
+
+   </TabItem>
+   <TabItem value="go" label="Go">
+
+   <CodeBlock language="go">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_go_main_go}</CodeBlock>
+
+   </TabItem>
+   <TabItem value="python" label="Python">
+
+   <CodeBlock language="python">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_python_main_py}</CodeBlock>
+
+   </TabItem>
+   <TabItem value="net" label=".NET">
+
+   <CodeBlock language="cs">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_wan_replication_docs_modules_ROOT_examples_operator_wan_dotnet_Program_cs}</CodeBlock>
+
+   </TabItem>
+   </Tabs>
+2. Start to fill the maps.
+
+   <Tabs groupId="client-language">
+   <TabItem value="clc" label="CLC">
+
+   Run the following command for each map, using the map name as an argument to fill each map with entries. Use the map names `map-1` and `map-2`:
+
+   ```bash
+   for i in {1..10};
+   do
+      clc -c hz-1 map set --name <MAP-NAME> key-$i value-$i;
+   done
+   ```
+
+   Again, for each map, check if the sizes are expected:
+
+   ```bash
+   clc -c hz-1 map size --name <MAP-NAME>
+   ```
+
+   </TabItem>
+   <TabItem value="java" label="Java">
+
+   Start the application for each map, using the map name as an argument to fill each map with random entries. Use the map names `map-1` and `map-2`.
+
+   ```bash
+   cd java
+   mvn package
+   java -jar target/*jar-with-dependencies*.jar fill <MAP-NAME>
+   ```
+
+   You should see the following output.
+
+   ```shell
+   Successful connection!
+   Starting to fill the map (<MAP-NAME>) with random entries.
+   Current map size: 2
+   Current map size: 3
+   Current map size: 4
+   ....
+   ....
+   ```
+
+   </TabItem>
+   <TabItem value="nodejs" label="NodeJS">
+
+   Start the application for each map, using the map name as an argument to fill each map with random entries. Use the map names `map-1` and `map-2`.
+
+   ```bash
+   cd nodejs
+   npm install
+   npm start fill <MAP-NAME>
+   ```
+
+   You should see the following output.
+
+   ```shell
+   Successful connection!
+   Starting to fill the map (<MAP-NAME>) with random entries.
+   Current map size: 2
+   Current map size: 3
+   Current map size: 4
+   ....
+   ....
+   ```
+
+   </TabItem>
+   <TabItem value="go" label="Go">
+
+   Start the application for each map, using the map name as an argument to fill each map with random entries. Use the map names `map-1` and `map-2`.
+
+   ```bash
+   cd go
+   go run main.go fill <MAP-NAME>
+   ```
+
+   You should see the following output.
+
+   ```shell
+   Successful connection!
+   Starting to fill the map (<MAP-NAME>) with random entries.
+   Current map size: 2
+   Current map size: 3
+   Current map size: 4
+   ....
+   ....
+   ```
+
+   </TabItem>
+   <TabItem value="python" label="Python">
+
+   Start the application for each map, using the map name as an argument to fill each map with random entries. Use the map names `map-1` and `map-2`.
+
+   ```bash
+   cd python
+   pip install -r requirements.txt
+   python main.py fill <MAP-NAME>
+   ```
+
+   You should see the following output.
+
+   ```shell
+   Successful connection!
+   Starting to fill the map (<MAP-NAME>) with random entries.
+   Current map size: 2
+   Current map size: 3
+   Current map size: 4
+   ....
+   ....
+   ```
+
+   </TabItem>
+   <TabItem value="net" label=".NET">
+
+   Start the application for each map, using the map name as an argument to fill each map with random entries. Use the map names `map-1` and `map-2`.
+
+   ```bash
+   cd dotnet
+   dotnet build
+   dotnet run fill <MAP-NAME>
+   ```
+
+   You should see the following output.
+
+   ```shell
+   Successful connection!
+   Starting to fill the map (<MAP-NAME>) with random entries.
+   Current map size: 2
+   Current map size: 3
+   Current map size: 4
+   ....
+   ....
+   ```
+
+   </TabItem>
+   </Tabs>
+
+## Verify the replication of map entries
+
+In this step, you'll check the sizes of the maps on the second, target cluster to make sure that WAN replication events have been received.
+
+1. Configure the Hazelcast client to connect to the second cluster, as you did in [Configure the Hazelcast Client](#configure-client).
+2. Start the application for each map, using the map name as an argument to check the map size, and to check that WAN replication was successful. Use the map names `map-1` and `map-2`.
+
+   <Tabs groupId="client-language">
+   <TabItem value="clc" label="CLC">
+
+   ```bash
+   clc -c hz-2 map size --name <MAP-NAME>
+   ```
+
+   </TabItem>
+   <TabItem value="java" label="Java">
+
+   ```bash
+   cd clients/java
+   mvn package
+   java -jar target/*jar-with-dependencies*.jar size <MAP-NAME>
+   ```
+
+   You should see the following output:
+
+   ```shell
+   Successful connection!
+   Current map (<MAP-NAME>) size: 12
+   ```
+
+   </TabItem>
+   <TabItem value="nodejs" label="NodeJS">
+
+   ```bash
+   cd clients/nodejs
+   npm install
+   npm start size <MAP-NAME>
+   ```
+
+   You should see the following output:
+
+   ```shell
+   Successful connection!
+   Current map (<MAP-NAME>) size: 12
+   ```
+
+   </TabItem>
+   <TabItem value="go" label="Go">
+
+   ```bash
+   cd clients/go
+   go run main.go size <MAP-NAME>
+   ```
+
+   You should see the following output:
+
+   ```shell
+   Successful connection!
+   Current map (<MAP-NAME>) size: 12
+   ```
+
+   </TabItem>
+   <TabItem value="python" label="Python">
+
+   ```bash
+   cd clients/python
+   pip install -r requirements.txt
+   python main.py size <MAP-NAME>
+   ```
+
+   You should see the following output:
+
+   ```shell
+   Successful connection!
+   Current map (<MAP-NAME>) size: 12
+   ```
+
+   </TabItem>
+   <TabItem value="net" label=".NET">
+
+   ```bash
+   cd clients/dotnet
+   dotnet build
+   dotnet run size <MAP-NAME>
+   ```
+
+   You should see the following output:
+
+   ```shell
+   Successful connection!
+   Current map (<MAP-NAME>) size: 12
+   ```
+
+   </TabItem>
+   </Tabs>
+
+## Clean up
+
+To remove all custom resources, run the following commands:
+
+```shell
+kubectl delete secret hazelcast-license-key
+kubectl delete $(kubectl get wanreplications,map,hazelcast -o name)
+```
+
+## Summary
+
+In this tutorial, you learned how to:
+
+- Deploy two Hazelcast clusters.
+- Create two Hazelcast map configurations on one of the clusters.
+- Synchronize map data between the two Hazelcast clusters.
+
+## Next steps
+
+See also:
+
+- [Configure WAN Replication](./overview.mdx)
+- [Tutorial: Connect to Hazelcast from outside Kubernetes](../../../../install-and-upgrade/connect-outside-kubernetes/operator-tutorial-expose-externally.mdx)
