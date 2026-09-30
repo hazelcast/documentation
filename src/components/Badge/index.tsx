@@ -3,8 +3,10 @@ import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import {useDocsVersion} from '@docusaurus/plugin-content-docs/client';
 import DocVersionBadge from '@theme/DocVersionBadge';
+import {AlertTriangle} from 'react-feather';
 import {
   Badge as HiveBadge,
+  type BadgeIconDescriptor,
   BadgeIcon,
   type BadgeType,
 } from '@hazelcast/ui/lib/components/Badge';
@@ -20,6 +22,8 @@ type BadgeDef = {
   tooltip: string;
   href?: string;
   hiveType: BadgeType;
+  // Overrides the icon HIVE derives from `hiveType`, so colour and glyph are chosen independently.
+  icon?: BadgeIconDescriptor;
 };
 
 export const BADGES: Record<string, BadgeDef> = {
@@ -45,6 +49,20 @@ export const BADGES: Record<string, BadgeDef> = {
     tooltip:
       'This feature requires Hazelcast Enterprise, a licensed edition of the Hazelcast Platform.',
     hiveType: 'neutral',
+  },
+  beta: {
+    label: 'Beta',
+    tooltip:
+      'This feature is in beta and is not recommended for production use. It is separately licensed. If you are interested in trialing this feature, contact your Hazelcast representative.',
+    hiveType: 'neutral',
+    icon: {icon: AlertTriangle, ariaLabel: 'Warning'},
+  },
+  experimental: {
+    label: 'Experimental',
+    tooltip:
+      'This is an experimental feature and is not recommended for production use. It is separately licensed. If you are interested in trialing this feature, contact your Hazelcast representative.',
+    hiveType: 'neutral',
+    icon: {icon: AlertTriangle, ariaLabel: 'Warning'},
   },
 };
 
@@ -77,7 +95,7 @@ export default function Badge({
   if (!def) {
     return null;
   }
-  const {icon: IconCmp} = BadgeIcon[def.hiveType];
+  const {icon: IconCmp} = def.icon ?? BadgeIcon[def.hiveType];
   return (
     <span className={styles.badge}>
       <span
@@ -115,7 +133,11 @@ export function TitleBadgeRow({
             className={clsx(styles.badge, styles.trigger)}
             tabIndex={0}
             aria-label={`${def.label}: more information`}>
-            <HiveBadge type={def.hiveType} content={def.label} />
+            <HiveBadge
+              type={def.hiveType}
+              content={def.label}
+              icon={def.icon}
+            />
             <Popover def={def} />
           </div>
         );
