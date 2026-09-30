@@ -202,6 +202,31 @@ html:root {
   margin-top: 0.2rem;
 }
 
+/* Sidebar badges for beta and enterprise pages; the class comes from sidebarItemsGenerator in src/docsPlugins.ts. Same neutral HIVE colours as the page badges, no icon. */
+.nav-badge-beta > .menu__link::after,
+.nav-badge-beta > .menu__list-item-collapsible > .menu__link::after,
+.nav-badge-enterprise > .menu__link::after,
+.nav-badge-enterprise > .menu__list-item-collapsible > .menu__link::after {
+  flex: 0 0 auto;
+  margin-left: 0.5rem;
+  padding: 0 0.4rem;
+  border: 1px solid var(--hive-color-text-secondary);
+  border-radius: 8px;
+  background-color: lab(from var(--hive-color-text-secondary) 97% a b);
+  color: var(--hive-color-text-secondary);
+  font-size: var(--hive-font-size-body-small);
+  font-weight: var(--hive-font-weight-text-regular);
+  line-height: var(--hive-line-height-body-small);
+}
+.nav-badge-beta > .menu__link::after,
+.nav-badge-beta > .menu__list-item-collapsible > .menu__link::after {
+  content: 'Beta';
+}
+.nav-badge-enterprise > .menu__link::after,
+.nav-badge-enterprise > .menu__list-item-collapsible > .menu__link::after {
+  content: 'Enterprise';
+}
+
 /* Asciidoctor callout numbers (conums) as circled numbers; the swizzled CodeBlock emits this markup. */
 .conum[data-value] {
   border: 1px solid currentcolor;

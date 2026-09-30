@@ -33,6 +33,32 @@ export function isSnapshotUrl(url: string): boolean {
 // `caution`/`important` are not default Docusaurus admonition keywords; fidelity Layer 2 compares admonition types.
 const admonitions = {keywords: ['caution', 'important'], extendDefaults: true};
 
+// Sidebar badge from a doc's frontmatter, as a class that src/css/custom.css turns into a pill. Beta wins over enterprise: there is no room for both.
+function navBadgeClass(frontMatter: {[key: string]: unknown} | undefined): string | undefined {
+  if (frontMatter?.beta === true) return 'nav-badge-beta';
+  if (frontMatter?.enterprise === true) return 'nav-badge-enterprise';
+  return undefined;
+}
+
+type GeneratorArgs = Parameters<NonNullable<Options['sidebarItemsGenerator']>>[0];
+type SidebarItems = Awaited<ReturnType<GeneratorArgs['defaultSidebarItemsGenerator']>>;
+
+// Wraps the default generator to tag each doc link, and each category whose landing page is a doc, with its badge class.
+const sidebarItemsGenerator: NonNullable<Options['sidebarItemsGenerator']> = async ({
+  defaultSidebarItemsGenerator,
+  ...args
+}) => {
+  const frontMatterById = new Map(args.docs.map((doc) => [doc.id, doc.frontMatter as {[key: string]: unknown}]));
+  const tag = (items: SidebarItems): SidebarItems =>
+    items.map((item) => {
+      const docId = item.type === 'doc' ? item.id : item.type === 'category' && item.link?.type === 'doc' ? item.link.id : undefined;
+      const badge = docId === undefined ? undefined : navBadgeClass(frontMatterById.get(docId));
+      const tagged = badge ? {...item, className: [item.className, badge].filter(Boolean).join(' ')} : item;
+      return tagged.type === 'category' ? {...tagged, items: tag(tagged.items)} : tagged;
+    });
+  return tag(await defaultSidebarItemsGenerator({...args}));
+};
+
 // `sidebarPath` is deliberately unset: the built-in default autogenerates one `defaultSidebar` per plugin instance from the folder tree,
 // which mirrors the Antora nav order. Navbar items reference `sidebarId: 'defaultSidebar'`.
 function contentDocs(options: Options): PluginConfig {
@@ -40,6 +66,7 @@ function contentDocs(options: Options): PluginConfig {
     '@docusaurus/plugin-content-docs',
     {
       ...options,
+      sidebarItemsGenerator,
       beforeDefaultRemarkPlugins: [
         ...(options.beforeDefaultRemarkPlugins ?? []),
         [headingVariables, {pluginId: options.id}],
