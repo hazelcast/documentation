@@ -224,12 +224,17 @@ test('rejects product releases the tool cannot make', () => {
   rejects(MC, '5.13.0', {next: '5.14.0-SNAPSHOT'}, /not the line main is on/)
   rejects(OPERATOR, '5.20.0', {}, /needs --next/)
   rejects(OPERATOR, '5.20.0', {next: '5.20.0'}, /is not after/)
-  rejects(OPERATOR, '5.17.5', {next: '5.18.0'}, /older than the newest release/)
   rejects(CLC, '5.5.1', {}, /not after the current version/)
   rejects(CLC, '5.4.9', {}, /not after the current version/)
   rejects(PLATFORM, '6.0.0', {}, /needs --next/)
   rejects(MC, '5.12.0-BETA-1', {next: '5.13.0'}, /beta/)
   rejects('cloud', '1.0.0', {}, /Unknown component/)
+})
+
+test('an Operator release of a version that is not live changes nothing, including main', () => {
+  const {steps, notes} = planRelease(OPERATOR, '5.17.5', {next: '5.20.0', hazelcast: '5.8.0'}, base())
+  assert.deepEqual(steps, [])
+  assert.match(notes.join('\n'), /5\.17 is not a live version/)
 })
 
 test('a patch of an MC version that is not live changes nothing', () => {

@@ -93,10 +93,7 @@ const config: Config = {
     versionedDocs('management-center'),
     [
       '@docusaurus/plugin-client-redirects',
-      {
-        // '/home' is kept out of src/redirects.ts because that file is regenerated whole.
-        redirects: [...redirects, {from: '/home', to: '/'}],
-      },
+      {redirects},
     ],
     // Emits /api/cloud.json for the Cloud console.
     './plugins/cloud-console-index',

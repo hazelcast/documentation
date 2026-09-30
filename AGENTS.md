@@ -127,49 +127,7 @@ Prefer a section in an existing page to a new page, unless the topic is distinct
 
 ## Writing style
 
-### Who is reading
-
-Readers are developers and operators who use Hazelcast. Assume they know Java or another client language, Docker or Kubernetes where the page is about them, and general distributed-systems terms. Do not assume they know Hazelcast concepts. Define a Hazelcast term the first time it appears on a page, or link to where it is defined.
-
-Write for AI readers as well as human ones. Either may arrive at a section without having read the one above it, so each section states its own subject instead of inheriting it, and one concept keeps one name throughout the site. Use the product names exactly: Platform, Management Center, CLC, Operator, Cloud.
-
-### Accuracy
-
-- Document what is built, not what is planned. Verify every statement about product behavior against the product code, a test that pins the behavior, or a live run. Do not document from a design document, a roadmap, or memory.
-- Where the answer is not knowable from what you have, do not guess. Leave a comment for the owner in the form `{/* TODO: <question> */}`. An open question is correct, and a plausible guess is not.
-- Do not promise future behavior or release dates.
-- State a limitation plainly. Readers use these pages to decide what to run in production.
-- Release notes are generated at release time. Do not hand-edit them. Record a removal or a breaking change in the migration or upgrade guide instead.
-
-### Voice
-
-- Use a neutral, direct register. Avoid contractions in new text, unless the expanded form reads badly. Existing pages contain contractions. Do not rewrite a page's style as a side effect of an unrelated change.
-- Write one idea per sentence. Keep to about fifteen words on average, and split anything over thirty.
-- Use the present tense. Avoid "will": write "Hazelcast rejects the request", not "Hazelcast will reject the request".
-- Address the reader as "you". Every sentence has a real agent: "The member closes the connection", not "the connection is closed". Avoid "we", "let's", and "our".
-- Be precise. Name the thing and the action: "set the path with `--config`", not "point it somewhere else".
-- Be concrete. No metaphors, and no "seamlessly", "robust", "powerful", "simply", "easily", or "very".
-- Avoid the ", so" construction, which reads as either consequence or purpose. Split the sentence, or write "because" or "in order to".
-- A value "increases" or "decreases". It never "rises", "grows", or "climbs".
-- Do not sell the product or explain business context on a reference page.
-
-### Mechanics
-
-- Write one line per paragraph. Do not hard-wrap Markdown or MDX files.
-- Use the Oxford comma, always.
-- Use US spelling: `behavior`, not `behaviour`.
-- Use sentence case for headings: "Configure a cluster", not "Configure A Cluster". Headings for tasks are imperative. Do not end a heading with a period.
-- Never follow a heading directly with another heading. Open every section with at least one sentence saying what it covers.
-- Introduce every table and list with a sentence ending in a colon, with no blank line between the sentence and the list. Capitalize each list item unless it begins with a code identifier.
-- Never open a sentence with a lowercase code item. Rewrite it: "The `name` field", or "Hazelcast sets `name`".
-- Put commands, file names, configuration keys, and class names in backticks. Put UI labels in bold.
-- Make each step in a procedure one action. Say what the reader should see when it succeeds, if it is not obvious.
-- Write the product name "Management Center", not "MC". Write "CLC", not "clc", in prose.
-- Give a code block a language, and a `title` when it represents a file.
-
-### Keep one explanation of each fact
-
-Explain a fact, meaning the mechanism and the reason it behaves that way, in one place. On every other page that needs it, say what that page's reader needs and link to the explanation. Do not restate it. A feature that belongs on several pages, such as a setting that appears in a configuration guide, a reference, and a tutorial, is normal.
+Before writing or editing a page, read [Writing style](CONTRIBUTING.md#writing-style) in CONTRIBUTING.md and follow it.
 
 ## Before you finish
 

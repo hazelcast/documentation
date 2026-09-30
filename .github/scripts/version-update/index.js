@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict'
 
-// Version update for a release. See README.md "Releasing a version".
+// Version update for a release. See MAINTAINING.md "Releasing a version".
 //   node .github/scripts/version-update <component> <version> [--next V] [--hazelcast V] [--mc V] [--dry-run]
 // With no component, reads the Platform release info get-release-info outputs as env vars (package.yml).
 

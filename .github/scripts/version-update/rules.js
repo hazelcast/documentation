@@ -234,7 +234,10 @@ function planOperator (release, {next, hazelcast, mc}, state) {
     setVars(OPERATOR, line, releaseValues)
   } else {
     const newest = state.releases[OPERATOR][0]
-    if (newest && compareMajorMinor(line, newest) <= 0) throw new Error(`${OPERATOR} ${line} is older than the newest release, ${newest}`)
+    if (newest && compareMajorMinor(line, newest) <= 0) {
+      notes.push(`${OPERATOR} ${line} is not a live version; nothing to change`)
+      return {steps, notes}
+    }
     const current = state.current[OPERATOR]
     const variables = {...state.variables[OPERATOR].current}
     for (const [k, v] of Object.entries(releaseValues)) if (v !== undefined) variables[k] = v
