@@ -34,7 +34,7 @@ Prefer a new section in an existing page to a new page, unless the topic is dist
 
 ## Links and redirects
 
-Link to another page in the same product plugin with a relative path to its file, including the extension e.g. `../mc-conf.mdx`. Use absolute paths for links to pages in another docs plugin, e.g. `hazelcast/mc-conf`. Do not hardcode a version number in an internal link. A link to `/<component>/latest/...` resolves to the newest release at build time.
+Link to another page in the same product with a relative path to its file, including the extension, e.g. `../mc-conf.mdx`. Link to a page in another product with its URL path, starting with `/`. For a versioned product, use `latest` as the version, e.g. `/hazelcast/latest/sql/sql-statements`. The build resolves `latest` to the newest release. For Cloud and Tutorials, leave out the version, e.g. `/tutorials/write-through-cache-serverless-mapstore`. Do not hardcode a version number in an internal link.
 
 If a change alters a page's URL, add a redirect from the old URL to the new one in `src/redirects.ts`, e.g. `{ from: "/hazelcast/6.0-snapshot/old-name", to: "/hazelcast/6.0-snapshot/new-name" },`. A page's URL changes when you edit its `slug`, or when you rename or move a page that has no `slug`. The build fails if a redirect points at a page that does not exist. Do not edit `static/_redirects`. The release script maintains it.
 
@@ -184,7 +184,8 @@ Every statement on a page must be true of the shipped product:
 ### Voice
 
 Write in a plain, direct, and formal voice:
-- Use a neutral, direct register. Avoid contractions in new text, unless the expanded form reads badly. Existing pages contain contractions. Do not rewrite a page's style as a side effect of an unrelated change.
+- Use a neutral, direct register. Avoid contractions in new text, unless the expanded form reads badly.
+- Do not rewrite a page's style as a side effect of an unrelated change.
 - Write one idea per sentence. Keep to about fifteen words on average, and split anything over thirty.
 - Use the present tense. Avoid "will": write "Hazelcast rejects the request", not "Hazelcast will reject the request".
 - Address the reader as "you". Every sentence has a real agent: "The member closes the connection", not "the connection is closed". Avoid "we", "let's", and "our".
