@@ -8,7 +8,7 @@ enterprise: true
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
-Hazelcast Enterprise allows observing some important cluster events using the Auditlog feature. Auditable events have a unique type ID; they contain a timestamp and importance level. The events may also contain a message and parameters. Supported event type identifiers are listed in <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/auditlog/AuditlogTypeIds.html" text="AuditlogTypeIds" />.
+Hazelcast Enterprise allows observing some important cluster events using the Auditlog feature. Auditable events have a unique type ID; they contain a timestamp and importance level. The events may also contain a message and parameters. Supported event type identifiers are listed in <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/auditlog/AuditlogTypeIds.html" text="AuditlogTypeIds" code />.
 
 You can enable the auditlog feature in the configuration as follows:
 
@@ -70,6 +70,6 @@ The auditlog has its own SPI allowing you to provide your implementations. Relev
 
 The central point of auditlog SPI is the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/auditlog/AuditlogService.html" text="AuditlogService interface" /> and its `log(…​)` methods. Their implementations are responsible for processing auditable events, e.g., writing them to a database.
 
-`AuditlogService` also creates the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/auditlog/EventBuilder.html" text="EventBuilder" /> instances which are used to build <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/auditlog/AuditableEvent.html" text="AuditableEvents" />.
+`AuditlogService` also creates the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/auditlog/EventBuilder.html" text="EventBuilder" code /> instances which are used to build <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/auditlog/AuditableEvent.html" text="AuditableEvents" code />.
 
 Another important piece in the SPI is the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/auditlog/AuditlogServiceFactory.html" text="AuditlogServiceFactory interface" />. The factory class allows the `AuditlogService` initialization based on parameters.

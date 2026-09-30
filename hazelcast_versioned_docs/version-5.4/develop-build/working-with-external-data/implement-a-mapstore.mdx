@@ -16,7 +16,7 @@ You can use the Java `MapStore` and `MapLoader` interfaces to implement a custom
 
 ## Differences Between MapLoader and MapStore
 
-The <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/MapStore.html" text="MapStore" /> interface extends the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/MapLoader.html" text="MapLoader" /> interface. Therefore, all methods and configuration parameters of the `MapLoader` are also available on the `MapStore` interface.
+The <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/MapStore.html" text="MapStore" code /> interface extends the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/MapLoader.html" text="MapLoader" code /> interface. Therefore, all methods and configuration parameters of the `MapLoader` are also available on the `MapStore` interface.
 
 If you only want to load data from external systems into a map, use the `MapLoader` interface. If you also want to save map entries to an external system, use the `MapStore` interface.
 
@@ -27,7 +27,7 @@ If you only want to load data from external systems into a map, use the `MapLoad
 
 ## Connecting to an External System {/* #managing-the-lifecycle-of-a-mapLoader */}
 
-To connect to an external system, you must configure a connection to it, using either a third-party library or a JDBC driver in the `init()` method of the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/MapLoaderLifecycleSupport.html" text="MapLoaderlifeCycleSupport" /> implementation.
+To connect to an external system, you must configure a connection to it, using either a third-party library or a JDBC driver in the `init()` method of the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/MapLoaderLifecycleSupport.html" text="MapLoaderlifeCycleSupport" code /> implementation.
 
 The external system that you choose must be a centralized system that is accessible to all Hazelcast members. Persistence to a local file system is not supported.
 

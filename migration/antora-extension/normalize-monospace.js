@@ -1,7 +1,7 @@
 'use strict'
 
 // Source-text normalizer for inline monospace, applied to the in-memory catalog
-// before the golden render (like mark-attributes/mark-conditionals). It wraps the
+// before the golden render (like mark-attributes). It wraps the
 // content of constrained inline monospace spans that carry emphasis metacharacters
 // (`_`, `*`) in a single-plus passthrough -- `` `X` `` -> `` `+X+` `` -- so
 // Asciidoctor renders the span literally.

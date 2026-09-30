@@ -22,9 +22,6 @@ const {
   refCounts, countMdxRefs, countExampleRefs, usageCount, dropLiteralFences, dropHiddenBranches,
   importsOf, slugOf, stripFrontmatter, frontmatterTokens,
 } = require('./lib/mdx-refs')
-const {
-  START, END, NOT_START, NOT_END,
-} = require('../antora-extension/mark-conditionals')
 const { includesIn, resolveTarget, sliceByTags, stripComments } = require('./lib/source-refs')
 
 let n = 0
@@ -224,44 +221,15 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
   ok('census walker: badge and tab-label beat their container; pane content and prose are unaffected')
 }
 
-// --- the census guard is read DE-INSTRUMENTED ---------------------------------
-// The census render carries mark-conditionals' sentinels (it has to: that pass can
-// promote a swallowed block title, so an unmarked census cannot reproduce the
-// golden). They must therefore be invisible to the guard -- while a real
-// difference in the same page still fails it.
-{
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'refcheck-guard-'))
-  const tokens = [{ name: 'ucn', token: tokenFor(3), value: 'Cloud', rendered: tokenFor(3), unmaskSafe: true }]
-  const page = (body) => `<div class="paragraph">\n${body}\n</div>\n`
-  const censusFile = path.join(dir, 'census.html')
-  const goldenFile = path.join(dir, 'golden.html')
-  // Both renders are instrumented identically; only the substituted value differs.
-  fs.writeFileSync(censusFile, page(`${START}\n<p>${tokenFor(3)} only</p>\n${END}`))
-  fs.writeFileSync(goldenFile, page(`${START}\n<p>Cloud only</p>\n${END}`))
-  assert.strictEqual(unmaskGuard(censusFile, goldenFile, tokens).verdict, 'identical',
-    'sentinels on both sides are stripped, so they cannot make the guard fail')
-
-  fs.writeFileSync(goldenFile, page(`${START}\n<p>Cloud only, and more</p>\n${END}`))
-  assert.strictEqual(unmaskGuard(censusFile, goldenFile, tokens).verdict, 'differs',
-    'a real content difference inside a marked region still fails the guard')
-  fs.rmSync(dir, { recursive: true, force: true })
-  ok('unmaskGuard: conditional sentinels are invisible; content differences are not')
-}
-
 // --- which conditional branch did this version render? ------------------------
-// mark-conditionals puts its sentinels INSIDE each branch, so they are present in
-// a render exactly when that branch is. That is the gate's only per-page evidence
-// of which half of an ifdef/ifndef pair this version resolved.
+// A version whose render had `snapshot` set shows the then-branch, so the
+// else-branch is the one to skip; a release render the reverse.
 {
-  const marked = (open, close) => `<div>\n${open}\n<p>half</p>\n${close}\n</div>\n`
-  assert.deepStrictEqual(hiddenBranchComponents(marked(START, END)), ['IfNotSnapshot'],
+  assert.deepStrictEqual(hiddenBranchComponents(true), ['IfNotSnapshot'],
     'a snapshot render kept the then-branch, so the else-branch is the hidden one')
-  assert.deepStrictEqual(hiddenBranchComponents(marked(NOT_START, NOT_END)), ['IfSnapshot'],
+  assert.deepStrictEqual(hiddenBranchComponents(false), ['IfSnapshot'],
     'a release render kept the else-branch, so the then-branch is hidden')
-  assert.deepStrictEqual(hiddenBranchComponents('<p>no conditional here</p>'),
-    ['IfSnapshot', 'IfNotSnapshot'],
-    'a page with no marked conditional hides both -- a no-op where there is no wrapper')
-  ok('hiddenBranchComponents: the census render names the half it kept')
+  ok('hiddenBranchComponents: the version\'s snapshot state names the half it hides')
 }
 
 // --- MDX side: only the branch this version renders is counted ----------------

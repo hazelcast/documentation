@@ -18,17 +18,25 @@ You can install this tool using its Homebrew, RPM, or Debian packages:
 <Tabs groupId="debian--homebrew--rpm">
 <TabItem value="homebrew" label="Homebrew">
 
-<IfNotSnapshot>
-
 ```bash vars
 brew tap hazelcast/hz
 brew install hazelcast@{full-version}
 ```
 
-</IfNotSnapshot>
-
 </TabItem>
 <TabItem value="debian" label="Debian">
+
+<IfSnapshot>
+
+```bash
+wget -qO - https://repository.hazelcast.com/api/gpg/key/public | gpg --dearmor | sudo tee /usr/share/keyrings/hazelcast-archive-keyring.gpg > /dev/null
+echo "deb [signed-by=/usr/share/keyrings/hazelcast-archive-keyring.gpg] https://repository.hazelcast.com/debian stable main" | sudo tee -a /etc/apt/sources.list
+sudo apt update && sudo apt install hazelcast
+```
+
+</IfSnapshot>
+
+<IfNotSnapshot>
 
 ```shell vars
 wget -qO - https://repository.hazelcast.com/api/gpg/key/public | gpg --dearmor | sudo tee /usr/share/keyrings/hazelcast-archive-keyring.gpg > /dev/null
@@ -36,14 +44,30 @@ echo "deb [signed-by=/usr/share/keyrings/hazelcast-archive-keyring.gpg] https://
 sudo apt update && sudo apt install hazelcast={full-version}
 ```
 
+</IfNotSnapshot>
+
 </TabItem>
 <TabItem value="rpm" label="RPM">
+
+<IfSnapshot>
+
+```bash
+wget https://repository.hazelcast.com/rpm/hazelcast-rpm.repo -O hazelcast-rpm.repo
+sudo mv hazelcast-rpm.repo /etc/yum.repos.d/
+sudo yum install hazelcast
+```
+
+</IfSnapshot>
+
+<IfNotSnapshot>
 
 ```shell vars
 wget https://repository.hazelcast.com/rpm/stable/hazelcast-rpm-stable.repo -O hazelcast-rpm-stable.repo
 sudo mv hazelcast-rpm-stable.repo /etc/yum.repos.d/
 sudo yum install hazelcast-{full-version}
 ```
+
+</IfNotSnapshot>
 
 </TabItem>
 </Tabs>

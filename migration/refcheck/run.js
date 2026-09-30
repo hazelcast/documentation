@@ -118,6 +118,10 @@ function main () {
   }
   const censusByUrl = byUrl(opts.censusDir)
   const goldenByUrl = byUrl(opts.goldenDir)
+  // Whether each version's render had `snapshot` set (build-snapshot.js).
+  const flipMetaFile = path.join(opts.goldenDir, 'flip', 'meta.json')
+  if (!fs.existsSync(flipMetaFile)) { console.error(`[refcheck] ${flipMetaFile} is missing: rebuild the golden`); process.exit(2) }
+  const flipMeta = JSON.parse(fs.readFileSync(flipMetaFile, 'utf8'))
 
   const components = opts.component ? [opts.component] : MIGRATED_COMPONENTS
 
@@ -164,10 +168,10 @@ function main () {
 
         const scope = { component, seg, url: resource.url }
         const censusHtml = fs.readFileSync(censusFile, 'utf8')
-        // A spliced page carries BOTH halves of a `snapshot` conditional; this
-        // version renders one. The census says which, so the MDX side can ignore
-        // the other instead of reporting it as a surplus reference.
-        const hiddenBranches = hiddenBranchComponents(censusHtml)
+        // The MDX carries BOTH halves of a `snapshot` conditional; this version
+        // renders one, so the MDX side ignores the other instead of reporting it
+        // as a surplus reference.
+        const hiddenBranches = hiddenBranchComponents(!!flipMeta.goldenSnapshot[`${seg}@${component}`])
 
         // --- (1) attributes: exact per-page accounting -----------------------
         const { preserve, bakes, unknown } = scanCensusPage(censusHtml, { tokens: census.tokens })
@@ -372,7 +376,7 @@ function report (opts, counts, f, dispositionTally, completeness) {
     // be told apart from a gate that is not running -- and this one silently
     // passed a 110-of-179 shortfall while it was only a floor.
     console.log(`[refcheck] examples: ${counts.exUses}/${counts.exSites} example$ include site(s) single-sourced across ${counts.exPages} page(s)` +
-      (counts.exOver ? `  (${counts.exOver} page(s) render an example more often than the source includes it — expected where a conditional branch is spliced)` : ''))
+      (counts.exOver ? `  (${counts.exOver} page(s) render an example more often than the source includes it — expected where a snapshot conditional carries both halves)` : ''))
   }
 
   // Accepted: reported EVERY run, deliberately above the pass/fail line. The

@@ -114,6 +114,9 @@ function convertBody (html, ctx) {
     // cannot work here, since it would have to decide that `.0` continues the
     // URL but not the version.
     hrefVars: ctx.hrefVars || new Map(),
+    // Resolved page path + #fragment -> `/<comp>/{attr}/…`, for this page's cross-component
+    // xrefs whose version is an attribute (convert.js resolveXrefTemplates).
+    xrefVars: ctx.xrefVars || new Map(),
     codeVars: ctx.codeVars || null,
     // The value map for fence lines no template covered: pageVars minus the names
     // the templates already account for (convert.js codeValueVarsFor).
@@ -167,20 +170,13 @@ function collapseSentinels ($, node, st) {
         i = j // skip the inner nodes; the loop's i++ steps past the end comment
         continue
       }
-      // Snapshot-conditional region (mark-conditionals.js): wrap it in an
-      // <IfSnapshot> placeholder in EVERY version. The content stays present in
-      // all versions' MDX; the component includes it in the built HTML only on
-      // the snapshot version (banner 'unreleased') and hides it on releases.
-      // That is the whole point of the source `ifdef::snapshot[]`. (A released
-      // version whose golden still carries this content — because its branch is
-      // wrongly marked `snapshot: true` — will then diverge from its golden and
-      // fail Layer 2: a TRUE POSITIVE flagging that source bug, cleared by the
-      // source fix.)
-      // Both branches of the conditional are marked (mark-conditionals.js) and
-      // both become components: the `ifdef` region <IfSnapshot>, the `ifndef`
-      // region <IfNotSnapshot>. Which one a given version's golden CONTAINS is
-      // decided by Antora — a snapshot render carries the then-branch, a release
-      // render the else-branch — so a page normally yields one or the other here.
+      // Snapshot-conditional region (convert.js merges each versioned page with
+      // its snapshot-flipped render, lib/snapshot-merge.js): the half a snapshot
+      // render shows becomes <IfSnapshot>, the half a release shows
+      // <IfNotSnapshot>. Every version's MDX carries both; the components pick one
+      // at build time from the version's banner. (A released version whose
+      // antora.yml wrongly sets `snapshot: true` then diverges from its golden, a
+      // true positive of that source bug.)
       const cond = c.data.trim().match(/^hz-(if|ifnot):snapshot:start$/)
       if (cond) {
         const endMark = `hz-${cond[1]}:snapshot:end`
@@ -230,6 +226,38 @@ function fixSwallowedBlockTitles ($) {
     const title = m[1].trim().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     $block.prepend(`<div class="title">${title}</div>`)
     $para.remove()
+  })
+
+  // The same defect at a snapshot conditional. An `ifdef` is invisible to the
+  // block parser, so a paragraph directly above one absorbs the branch's first
+  // line, and when that is a block title it renders as stray text (management-
+  // center install.adoc: "…depending on your Linux distribution: .Debian"). Both
+  // halves open with that title, so it goes to the first listing of EVERY
+  // wrapper that follows; if any of them does not open with an untitled listing,
+  // the paragraph is left as Antora renders it.
+  $('div.paragraph > p').each((_, p) => {
+    const $p = $(p)
+    const m = $p.text().match(/^([\s\S]*\S)\s*\n\s*\.([^.\s].*)\s*$/)
+    if (!m) return
+    // collapseSentinels rebuilt the parent's `children` without relinking sibling
+    // pointers, so walk that array rather than cheerio's next().
+    const para = $p.parent()[0]
+    const siblings = (para.parent && para.parent.children) || []
+    const wrappers = []
+    for (let i = siblings.indexOf(para) + 1; i < siblings.length; i++) {
+      const n = siblings[i]
+      if (n.type === 'text' && !n.data.trim()) continue
+      if (n.type !== 'tag' || (n.name !== 'hzifsnapshot' && n.name !== 'hzifnotsnapshot')) break
+      wrappers.push(n)
+    }
+    if (!wrappers.length) return
+    const firsts = wrappers.map((w) => (w.children || []).find((c) => c.type === 'tag'))
+    if (!firsts.every((b) => b && $(b).is('.listingblock, .literalblock') && !$(b).children('.title').length)) return
+    const title = m[2].trim().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    for (const b of firsts) $(b).prepend(`<div class="title">${title}</div>`)
+    // Drop the title line from the paragraph's last text node, keeping any markup before it.
+    const last = $p.contents().toArray().filter((n) => n.type === 'text').pop()
+    if (last) last.data = last.data.replace(/\s*\n\s*\.[^.\s][^\n]*\s*$/, '')
   })
 }
 
@@ -281,6 +309,9 @@ const markerName = (node) => {
 // single-sourced. Three rungs, most exact first:
 //
 //   1. linkVars    — the whole href IS an attribute's value.
+//   1b. xrefVars   — the href is where one of the page's attribute-VERSIONED
+//                    xrefs (`xref:{page-latest-supported-mc}@management-center:…`)
+//                    resolves, so the version segment is that attribute.
 //   2. hrefVars    — this href is what one of the page's own link TARGETS resolves
 //                    to, so the source template is re-emitted verbatim with its
 //                    `{attr}` intact. The only thing that recovers a reference
@@ -316,6 +347,13 @@ function singleSourcedLink (rawHref, href, rawTokenText, st, { code = false } = 
   const labelVars = st.proseVars || st.pageVars
   const varName = st.linkVars.get(rawHref)
   if (varName) return `<Variable href=${jsxAttr(`{${varName}}`)} text=${jsxAttr(tokenText)}${flag} />`
+  const hash = href.indexOf('#')
+  const xrefTpl = st.xrefVars.get(xrefKey(href))
+  if (xrefTpl) {
+    const pathPart = hash === -1 ? href : href.slice(0, hash)
+    const full = xrefTpl + (pathPart.endsWith('/') && !xrefTpl.endsWith('/') ? '/' : '') + (hash === -1 ? '' : href.slice(hash))
+    return `<Variable href=${jsxAttr(full)} text=${jsxAttr(labelTemplate(tokenText, rawHref, full, labelVars))}${flag} />`
+  }
   const hrefTpl = st.hrefVars.get(rawHref)
   if (hrefTpl) {
     return `<Variable href=${jsxAttr(hrefTpl)} text=${jsxAttr(labelTemplate(tokenText, rawHref, hrefTpl, labelVars))}${flag} />`
@@ -1192,13 +1230,23 @@ function imageMd ($, img, st) {
 //     version (a 5.18 page must go on linking within 5.18, not jump to latest).
 //   - version === the component's CURRENT latest: an explicit pin to an older
 //     version (`/hazelcast/5.5/`) is a deliberate author choice — leave it.
+//   - not an attribute-versioned xref (xrefVars): `{page-latest-supported-mc}`
+//     equal to MC's latest TODAY looks exactly like a versionless xref in the
+//     golden, but it must follow the attribute, not the next MC release.
 // `href` is `pathname + hash`, so any `#anchor` rides along in `rest`.
+// The xrefVars key of an internal href: its path without a trailing slash, plus its #fragment.
+const xrefKey = (href) => {
+  const i = href.indexOf('#')
+  return i === -1 ? href.replace(/\/+$/, '') : href.slice(0, i).replace(/\/+$/, '') + href.slice(i)
+}
+
 function floatCrossComponentLatest (href, st) {
   const m = href.match(/^\/([^/]+)\/([^/]+)(\/.*)?$/)
   if (!m) return href
   const [, comp, ver, rest] = m
   if (comp === st.component) return href
   if (!st.latestVersions || st.latestVersions[comp] !== ver) return href
+  if (st.xrefVars && st.xrefVars.has(xrefKey(href))) return href
   return `/${comp}/latest${rest || '/'}`
 }
 
@@ -1334,20 +1382,8 @@ function healDocRef (resolved, st) {
 // here includes the version segment — mirroring extract-images.js's per-version
 // destination. Unversioned components (cloud) strip only the component prefix.
 // Look a resolved image URL up in this version's placement plan.
-//
-// A SPLICED conditional branch is converted from another version's golden but
-// with this page's context (see withBothConditionalBranches in convert.js), so
-// its image URLs carry the DONOR's version segment. Re-point those at this
-// version before giving up — the same image, published twice under two segs.
 function placementFor (abs, st) {
-  if (!st.imagePlacement) return null
-  const direct = st.imagePlacement.get(abs)
-  if (direct) return direct
-  if (!st.component || !st.seg) return null
-  const segs = abs.split('/') // ['', component, donorSeg, …]
-  if (segs[1] !== st.component) return null
-  segs[2] = st.seg
-  return st.imagePlacement.get(segs.join('/')) || null
+  return st.imagePlacement ? st.imagePlacement.get(abs) || null : null
 }
 
 // An image reference is RELATIVE to the consuming file, so webpack resolves,
@@ -1468,6 +1504,8 @@ function isComplexCell ($, cell) {
   // ...except a single-line literal cell, which is inline monospace (`code`).
   if (literalInlineCell($, cell) != null) return false
   if ($c.find('ul, ol, pre, table, .admonitionblock, .ulist, .olist, .listingblock, .dlist').length) return true
+  // A snapshot-conditional wrapper (collapseSentinels) is a block of its own.
+  if ($c.find('hzifsnapshot, hzifnotsnapshot').length) return true
   if ($c.find('.paragraph').length > 1) return true
   if ($c.children('p').length > 1) return true // multi-paragraph non-AsciiDoc cell
   return false
@@ -1625,9 +1663,21 @@ function cellMarkdown ($, cell, st) {
   // Only this branch: every child here IS a `<p>`. The `.content` branch above
   // holds arbitrary blocks (lists, fences, admonitions), which must not be put
   // inside a paragraph.
-  if (ps.length > 1) {
-    return ps.map((p) => escapeBlockStart(inline($, p, st).trim())).filter(Boolean)
-      .map((md) => `<p>${md}</p>`).join('\n\n')
+  const paragraphs = (list) => list.map((p) => escapeBlockStart(inline($, p, st).trim())).filter(Boolean)
+    .map((md) => `<p>${md}</p>`).join('\n\n')
+  if (ps.length > 1) return paragraphs(ps)
+  // The same paragraphs split between the two halves of a snapshot conditional
+  // (collapseSentinels): each half keeps its explicit `<p>`s for the same reason.
+  const kids = (cell.children || []).filter((c) => c.type === 'tag')
+  const isWrapper = (c) => c.name === 'hzifsnapshot' || c.name === 'hzifnotsnapshot'
+  if (kids.some(isWrapper) && kids.every((c) => c.name === 'p' || (isWrapper(c) &&
+      (c.children || []).filter((k) => k.type === 'tag').every((k) => k.name === 'p')))) {
+    return kids.map((c) => {
+      if (!isWrapper(c)) return paragraphs([c])
+      const tag = c.name === 'hzifsnapshot' ? 'IfSnapshot' : 'IfNotSnapshot'
+      const inner = paragraphs((c.children || []).filter((k) => k.type === 'tag'))
+      return inner ? `<${tag}>\n\n${inner}\n\n</${tag}>` : ''
+    }).filter(Boolean).join('\n\n')
   }
   // Block/inline decision for the remaining cases: a cell may hold a block with
   // no `.content` wrapper (e.g. a `<div class="literal">` code block), which must
@@ -1848,7 +1898,11 @@ function inlineTag ($, node, st, opt) {
       // `{attr}` token in the visible text, resolved per version by <Variable> /
       // by the raw <a> fallback — never baked.
       const tokenText = markerText($, node)
-      const single = singleSourcedLink(rawHref, href, tokenText, st)
+      // A label that is exactly one code span (`[`clc sql`]`) keeps its code
+      // formatting through <Variable>'s `code` flag, as a code-wrapped link does.
+      const labelKids = (node.children || []).filter((c) => !(c.type === 'text' && !c.data.trim()))
+      const labelIsCode = labelKids.length === 1 && labelKids[0].type === 'tag' && labelKids[0].name === 'code'
+      const single = singleSourcedLink(rawHref, href, tokenText, st, { code: labelIsCode })
       if (single) return anchorEl + single
       // A href with literal angle brackets (a placeholder pseudo-URL like
       // `http://<mc-ip-address>:8080`) cannot be a link in Docusaurus: it fails

@@ -34,7 +34,7 @@ const { foldTypographic } = require('./lib/mdx')
 const { collectOccurrences, decide, consumerAttrs } = require('./lib/partials')
 // Link targets written with an `{attribute}` in them — the exact-match href path
 // (see buildTemplates); shared with the selftest so the grammar has one definition.
-const { attrHrefTemplates, resolveHref } = require('./lib/links')
+const { attrHrefTemplates, attrVersionXrefs, resolveHref } = require('./lib/links')
 // The verbatim-block counterpart: the source's own code LINES carrying an
 // `{attribute}`, so a fence keeps the right NAME where several attributes share
 // one value (hazelcast's os-/ee-/full-version are all `5.8.0-SNAPSHOT`).
@@ -65,7 +65,7 @@ const substitute = require('../../plugins/lib/substitute-attributes')
 const { allRegions } = require('../../plugins/lib/slice-region')
 // The marking pass's branch grammar, reused so the converter's idea of an
 // `ifdef`/`ifndef` snapshot branch cannot drift from the marker's.
-const { branchesAt } = require('../antora-extension/mark-conditionals')
+const { mergeSnapshotHalves } = require('./lib/snapshot-merge')
 // Layout/source config shared with the reference checker (refcheck/run.js) so
 // the two resolve source branches and output paths identically (no drift):
 // which mirror + branch each component reads (NAV_SOURCES), which versions are
@@ -724,65 +724,6 @@ function buildPageVars (names, lookup) {
   return m
 }
 
-// --- snapshot conditionals: give every version tree BOTH branches ------------
-//
-// A paired `ifdef::snapshot[]` / `ifndef::snapshot[]` renders ONE half per
-// version: the snapshot render carries the then-branch, a release render the
-// else-branch. So each tree's golden shows only its own half, and wrapping what is
-// there leaves every tree missing the other one. That matters in two ways:
-//
-//   * the CURRENT tree is what `docusaurus docs:version` copies, so a cut would
-//     produce a release with the snapshot half hidden and no else half at all;
-//   * MC@5.9 renders the THEN half today (its antora.yml wrongly sets
-//     `snapshot: true`), so as a released version it would show neither.
-//
-// The missing half is not lost — this run has every version's golden in hand, so
-// it is taken from a version whose render kept it. Two rules make that safe:
-//   1. the branch's SOURCE text must be identical on both branches (the pinned
-//      sources are read per version anyway), else the donor is not what this
-//      version would have rendered — skipped and reported, never guessed;
-//   2. the donor's region is converted with the DONOR's variable maps but the
-//      RECIPIENT's page URL. Values are baked per version, so mapping them back to
-//      references needs the donor's values; link resolution depends on where the
-//      page LIVES, so it needs the recipient's. Getting this pair the wrong way
-//      round bakes the donor's version number, or points relative links at the
-//      donor's tree.
-// Because the spliced region carries `{attribute}` references rather than values,
-// it is correct in the recipient at any version — which is only true now that
-// href templates recover `…/tree/v{page-latest-supported-hazelcast}.0/…`.
-// The sentinel token for a branch kind: `ifdef` regions are marked `hz-if`,
-// `ifndef` regions `hz-ifnot` (mark-conditionals.js START/NOT_START).
-const SENTINEL_KIND = { ifdef: 'if', ifndef: 'ifnot' }
-const condRegionRe = (kind) => {
-  const s = SENTINEL_KIND[kind]
-  return new RegExp(`<!--hz-${s}:snapshot:start-->[\\s\\S]*?<!--hz-${s}:snapshot:end-->`, 'g')
-}
-const condRegions = (html, kind) => html.match(condRegionRe(kind)) || []
-
-// The body text of a source file's `ifdef`/`ifndef` snapshot branch, or null.
-// Uses the marking pass's own grammar so the two cannot disagree about what a
-// branch is.
-function sourceBranchText (text, kind) {
-  const lines = String(text || '').split('\n')
-  for (let i = 0; i < lines.length; i++) {
-    const bs = branchesAt(lines, i)
-    if (!bs) continue
-    const b = bs.find((x) => x.kind === kind)
-    if (b) return lines.slice(b.start + 1, b.end).join('\n').trim()
-    i = bs[bs.length - 1].end
-  }
-  return null
-}
-
-// A page resource's source path in its repo, e.g.
-// `docs/modules/clusters/pages/update-config.adoc`.
-function sourcePathFor (component, rec) {
-  const src = NAV_SOURCES[component]
-  if (!src || !rec || !rec.module || !rec.relative) return null
-  const modules = path.posix.dirname(path.posix.dirname(src.file)) // .../modules
-  return `${modules}/${rec.module}/pages/${rec.relative}`
-}
-
 // Resolved URL -> the source link target that produced it, for the page's own
 // targets that carry an `{attribute}` reference. Substituting this version's
 // values into the template reproduces exactly the href Antora wrote into the
@@ -818,13 +759,14 @@ function sourcePathFor (component, rec) {
 // `resources` is a list so a FACTORED PARTIAL can be built from the union of its
 // consuming pages' closures -- a partial is converted once, on its own, and had no
 // template maps at all until now.
-function buildTemplates (component, resources, seg, sourcesDir, lookup) {
+function buildTemplates (component, resources, seg, sourcesDir, lookup, manifest) {
   const known = new Set(SINGLE_SOURCE_ATTRS[component] || [])
   const code = { blocks: new Map(), lines: new Map() }
-  if (!known.size) return { code, hrefs: new Map(), named: new Set() }
+  if (!known.size) return { code, hrefs: new Map(), xrefs: new Map(), named: new Set() }
   const lines = new Set()
   const blocks = new Set()
   const hrefs = new Set()
+  const xrefs = []
   for (const resource of resources) {
     if (!resource) continue
     for (const text of collectPageTexts(resource, seg, sourcesDir, lookup)) {
@@ -832,6 +774,7 @@ function buildTemplates (component, resources, seg, sourcesDir, lookup) {
       for (const line of t.lines) lines.add(line)
       for (const block of t.blocks) blocks.add(block)
       for (const href of attrHrefTemplates(text)) hrefs.add(href)
+      xrefs.push(...attrVersionXrefs(text))
     }
   }
   const resolvedCode = buildCodeTemplates({ lines, blocks }, known, lookup, substitute)
@@ -849,7 +792,53 @@ function buildTemplates (component, resources, seg, sourcesDir, lookup) {
       for (const m of tpl.matchAll(/\{([A-Za-z0-9_][A-Za-z0-9_-]*)\}/g)) named.add(m[1])
     }
   }
-  return { code: resolvedCode, hrefs: resolveTemplates(hrefs, known, lookup, substitute), named }
+  return {
+    code: resolvedCode,
+    hrefs: resolveTemplates(hrefs, known, lookup, substitute),
+    xrefs: resolveXrefTemplates(xrefs, known, lookup, manifest),
+    named,
+  }
+}
+
+// Resolved page path (no trailing slash) + the xref's own `#fragment` ->
+// `/<comp>/{attr}/<rest>`, for each
+// attribute-versioned cross-component xref (attrVersionXrefs). Resolved through
+// the manifest with THIS version's value, following an alias to its target as
+// Antora does. The fragment is part of the key because one page can hold both an
+// attributed and a versionless xref to the same target page (MC client-filtering,
+// `clients:java.adoc`), which only their anchors tell apart. A key two different
+// templates resolve to identifies neither, so it is dropped and the link keeps its
+// ordinary treatment.
+const trimSlash = (p) => p.replace(/\/+$/, '')
+const manifestCoords = new WeakMap()
+function resolveXrefTemplates (xrefs, known, lookup, manifest) {
+  const out = new Map()
+  if (!xrefs.length || !manifest) return out
+  if (!manifestCoords.has(manifest)) {
+    const idx = new Map()
+    for (const r of manifest.resources || []) {
+      if (r.family !== 'page' && r.family !== 'alias') continue
+      idx.set(`${r.component}@${r.version}:${r.module}:${r.relative}`, r)
+    }
+    manifestCoords.set(manifest, idx)
+  }
+  const idx = manifestCoords.get(manifest)
+  const collided = new Set()
+  for (const { attr, component, module, relative, fragment } of xrefs) {
+    const value = lookup[attr]
+    if (!known.has(attr) || value == null || value === '') continue
+    const r = idx.get(`${component}@${value}:${module}:${relative}`)
+    if (!r) continue
+    const url = trimSlash(r.family === 'alias' ? r.aliasTo : r.url)
+    const prefix = `/${component}/${value}`
+    if (url !== prefix && !url.startsWith(prefix + '/')) continue
+    const tpl = `/${component}/{${attr}}${url.slice(prefix.length)}`
+    const key = url + fragment
+    if (out.has(key) && out.get(key) !== tpl) collided.add(key)
+    else out.set(key, tpl)
+  }
+  for (const key of collided) out.delete(key)
+  return out
 }
 
 // `pageVars` minus the names the code templates already account for — the value
@@ -1045,8 +1034,6 @@ function convertVersion (ver, ctx) {
   // seg), matching versionedVariables; global (unversioned) values fill in
   // behind. `kind` already distinguishes current from a release, so we key off it
   // rather than re-deriving the current seg here.
-  // Parameterised by version so a DONOR version's values can be resolved too, for
-  // conditional-branch splicing (see withBothConditionalBranches).
   const lookupFor = (v) => {
     const name = v.seg == null ? null : (v.kind === 'current' ? 'current' : v.seg)
     const per = (name && ctx.versioned.get(component) && ctx.versioned.get(component).get(name)) || new Map()
@@ -1122,9 +1109,27 @@ function convertVersion (ver, ctx) {
   // boundary sentinel regions, then make the version-wide factoring decision.
   // Collection always spans the WHOLE version (not the --id subset) so a
   // single-page run makes the same decisions a full run would.
+  //
+  // A versioned page is read MERGED with its snapshot-flipped render, so the
+  // HTML every later step sees carries both halves of each snapshot conditional
+  // (lib/snapshot-merge.js). A page whose regions cannot be placed is read as its
+  // plain golden and reported: its conditional bakes, as it always did.
   const htmlByUrl = new Map()
+  const snapshotMerged = []
+  const snapshotRefused = []
   const readGoldenRaw = (p) => {
-    if (!htmlByUrl.has(p.url)) htmlByUrl.set(p.url, fs.readFileSync(p.file, 'utf8'))
+    if (!htmlByUrl.has(p.url)) {
+      let html = fs.readFileSync(p.file, 'utf8')
+      const flipFile = seg != null && path.join(opts.goldenDir, 'flip', 'pages', p.rel)
+      if (flipFile && fs.existsSync(flipFile)) {
+        const goldenIsSnapshot = ctx.flipMeta.goldenSnapshot[`${p.versionSeg}@${component}`]
+        if (goldenIsSnapshot == null) throw new Error(`flip/meta.json has no ${p.versionSeg}@${component}`)
+        const m = mergeSnapshotHalves(html, fs.readFileSync(flipFile, 'utf8'), goldenIsSnapshot)
+        if (m.refused) snapshotRefused.push(p.url)
+        else if (m.regions) { html = m.html; snapshotMerged.push({ url: p.url, regions: m.regions }) }
+      }
+      htmlByUrl.set(p.url, html)
+    }
     return htmlByUrl.get(p.url)
   }
   const pagesOcc = allPages.map((p) => ({ url: p.url, occ: collectOccurrences(readGoldenRaw(p)) }))
@@ -1171,94 +1176,6 @@ function convertVersion (ver, ctx) {
   // source references, so a value is only ever matched on a page that uses it.
   const attrsByKey = scanPageAttrs(component, seg, opts.sourcesDir)
 
-  // Snapshot-conditional splicing (see the block comment above condRegionRe).
-  // Same page, other versions: slug -> seg -> golden file. Keyed by slug because
-  // that is version-independent, and built from every version's golden because the
-  // donor half lives in a version this pass is not converting.
-  const goldenBySlug = new Map()
-  for (const gp of allGoldenForComponent) {
-    const s = urlToSlug(gp.url, component, gp.versionSeg)
-    if (!goldenBySlug.has(s)) goldenBySlug.set(s, new Map())
-    goldenBySlug.get(s).set(gp.versionSeg, gp.file)
-  }
-  // Donor order: the else-branch is kept by RELEASE renders (newest first, so the
-  // content is the most current authored form); the then-branch only by the
-  // snapshot render. Versions this component does not publish are not candidates.
-  const releaseSegs = (VERSIONS[component] && VERSIONS[component].releases) || []
-  const donorOrder = { ifndef: releaseSegs, ifdef: [currentSegFor(component)] }
-  const spliced = []
-  const spliceSkips = []
-  const srcText = (ref, file) => {
-    try {
-      return execFileSync('git', ['-C', path.join(opts.sourcesDir, NAV_SOURCES[component].repo), 'show', `${ref}:${file}`], { encoding: 'utf8' })
-    } catch { return null }
-  }
-
-  // Add whichever conditional branch this version's render did not keep, taken
-  // from a version that kept it. No-op unless the page has exactly one branch.
-  function withBothConditionalBranches (mdx, { page, rec, relFile, pageVars, proseVars, hrefVars, codeVars, codeValueVars }) {
-    if (seg == null) return mdx // unversioned component: no cut, no other version
-    const has = { ifdef: /<IfSnapshot>/.test(mdx), ifndef: /<IfNotSnapshot>/.test(mdx) }
-    if (has.ifdef === has.ifndef) return mdx // neither, or already both
-    const missing = has.ifdef ? 'ifndef' : 'ifdef'
-    const srcPath = sourcePathFor(component, rec)
-    const mine = srcPath && sourceBranchText(srcText(refFor(component, seg), srcPath), missing)
-    if (!mine) return mdx // this version's source has no such branch: nothing to add
-
-    const bySeg = goldenBySlug.get(urlToSlug(page.url, component, seg)) || new Map()
-    for (const donor of donorOrder[missing] || []) {
-      if (donor === seg || !bySeg.has(donor)) continue
-      const theirs = sourceBranchText(srcText(refFor(component, donor), srcPath), missing)
-      if (theirs !== mine) {
-        spliceSkips.push({ url: page.url, donor, reason: 'source-differs' })
-        continue
-      }
-      const regions = condRegions(fs.readFileSync(bySeg.get(donor), 'utf8'), missing)
-      if (regions.length !== 1) {
-        spliceSkips.push({ url: page.url, donor, reason: `donor has ${regions.length} regions` })
-        continue
-      }
-      // Donor's variable maps (its values are what is baked in that render),
-      // recipient's page URL (links must resolve where this page lives).
-      const donorVer = { seg: donor, kind: donor === currentSegFor(component) ? 'current' : 'release' }
-      const donorLookup = lookupFor(donorVer)
-      const donorAttrs = scanPageAttrs(component, donor, opts.sourcesDir).get(keyOf(rec))
-      const dPageVars = buildPageVars(donorAttrs && donorAttrs.all, donorLookup)
-      const { body: fragment } = convertBody(regions[0], {
-        pageUrl: page.url, relFile, component, seg, partials: new Map(), linkVars: ctx.linkVars, examples,
-        pageVars: dPageVars,
-        proseVars: proseVarsFor(dPageVars, (donorAttrs && donorAttrs.prose) || new Set(), markedAttrsFor(component)),
-        ...(() => {
-          const t = buildTemplates(component, [rec], donor, opts.sourcesDir, donorLookup)
-          return {
-            hrefVars: t.hrefs,
-            codeVars: t.code,
-            codeValueVars: codeValueVarsFor(dPageVars, t.named),
-          }
-        })(),
-        latestVersions: ctx.latestVersions,
-        urlToRelFile,
-        redirectRetargets,
-        imagePlacement,
-      })
-      if (!fragment.trim()) { spliceSkips.push({ url: page.url, donor, reason: 'empty' }); continue }
-      spliced.push({ url: page.url, missing, donor })
-      // Match the counterpart's INDENTATION. These regions are often inside a list
-      // item or a <TabItem> (install.adoc's are), where Markdown reads a block at
-      // column 0 as ending the item — so an unindented splice would silently move
-      // the content out of the tab it belongs to.
-      // Anchored to the whole LINE so the counterpart's own indent is captured and
-      // reapplied to every line of the fragment, its opening tag included.
-      // Keep the source order: then-branch first, else-branch second.
-      const anchor = missing === 'ifndef' ? /^([ \t]*)<\/IfSnapshot>/m : /^([ \t]*)<IfNotSnapshot>/m
-      const indentAll = (indent) => fragment.split('\n').map((l) => (l.trim() ? indent + l : l)).join('\n')
-      return mdx.replace(anchor, (line, indent) => (missing === 'ifndef'
-        ? `${indent}</IfSnapshot>\n\n${indentAll(indent)}`
-        : `${indentAll(indent)}\n\n${indent}<IfNotSnapshot>`))
-    }
-    return mdx
-  }
-
   let written = 0
   let dropped = 0
   const orphans = []
@@ -1288,7 +1205,7 @@ function convertVersion (ver, ctx) {
     const attrsHere = attrsByKey.get(key)
     const pageVars = buildPageVars(attrsHere && attrsHere.all, exampleLookup)
     const proseVars = proseVarsFor(pageVars, (attrsHere && attrsHere.prose) || new Set(), markedAttrsFor(component))
-    const tpl = buildTemplates(component, [rec], seg, opts.sourcesDir, exampleLookup)
+    const tpl = buildTemplates(component, [rec], seg, opts.sourcesDir, exampleLookup, ctx.manifest)
     // The example files this page's own source includes -- the tie-breaker when
     // several files hold identical content (see chooseExample).
     // `example$/foo.java` (the corpus writes the leading slash) resolves to a
@@ -1306,13 +1223,13 @@ function convertVersion (ver, ctx) {
       }))
       : new Set()
     const hrefVars = tpl.hrefs
+    const xrefVars = tpl.xrefs
     const codeVars = tpl.code
     const codeValueVars = codeValueVarsFor(pageVars, tpl.named)
 
     let body, imports
     try {
-      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageExampleFiles, pageVars, proseVars, hrefVars, codeVars, codeValueVars, latestVersions: ctx.latestVersions, urlToRelFile, redirectRetargets, imagePlacement }))
-      body = withBothConditionalBranches(body, { page: p, rec, relFile, pageVars, proseVars, hrefVars, codeVars, codeValueVars })
+      ({ body, imports } = convertBody(html, { pageUrl: p.url, relFile, component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageExampleFiles, pageVars, proseVars, hrefVars, xrefVars, codeVars, codeValueVars, latestVersions: ctx.latestVersions, urlToRelFile, redirectRetargets, imagePlacement }))
     } catch (err) {
       problems.push({ url: p.url, error: err.message })
       continue
@@ -1372,18 +1289,19 @@ function convertVersion (ver, ctx) {
   const partialVarsFor = (d) => {
     const { all, prose } = consumerAttrs(d.pages, keyForUrl, attrsByKey)
     const pageVars = buildPageVars(all, exampleLookup)
-    const tpl = buildTemplates(component, (d.pages || []).map((u) => byUrl.get(u)), seg, opts.sourcesDir, exampleLookup)
+    const tpl = buildTemplates(component, (d.pages || []).map((u) => byUrl.get(u)), seg, opts.sourcesDir, exampleLookup, ctx.manifest)
     return {
       pageVars,
       proseVars: proseVarsFor(pageVars, prose, markedAttrsFor(component)),
       hrefVars: tpl.hrefs,
+      xrefVars: tpl.xrefs,
       codeVars: tpl.code,
       codeValueVars: codeValueVarsFor(pageVars, tpl.named),
     }
   }
   for (const [id, d] of decisions) {
     try {
-      const { pageVars, proseVars, hrefVars, codeVars, codeValueVars } = partialVarsFor(d)
+      const { pageVars, proseVars, hrefVars, xrefVars, codeVars, codeValueVars } = partialVarsFor(d)
       // Resolve against a page that ACTUALLY INCLUDES this partial, not `pages[0]`
       // — the component's first page, which is what this used to pass. The golden
       // stores a partial's links as hrefs RELATIVE to the including page
@@ -1397,7 +1315,7 @@ function convertVersion (ver, ctx) {
       // different depths would resolve the same xref to different relative hrefs
       // — so such a partial is declined as content-varies before it reaches here.
       const partialPageUrl = (d.pages && d.pages[0]) || pages[0].url
-      const { body, imports } = convertBody(d.representative, { pageUrl: partialPageUrl, relFile: path.join('_partials', d.slug + '.mdx'), component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, hrefVars, codeVars, codeValueVars, latestVersions: ctx.latestVersions, urlToRelFile, redirectRetargets, imagePlacement })
+      const { body, imports } = convertBody(d.representative, { pageUrl: partialPageUrl, relFile: path.join('_partials', d.slug + '.mdx'), component, seg, partials: decisions, linkVars: ctx.linkVars, examples, pageVars, proseVars, hrefVars, xrefVars, codeVars, codeValueVars, latestVersions: ctx.latestVersions, urlToRelFile, redirectRetargets, imagePlacement })
       const importBlock = imports.size ? [...imports].join('\n') + '\n\n' : ''
       d.mdx = importBlock + body + '\n'
     } catch (err) {
@@ -1427,7 +1345,7 @@ function convertVersion (ver, ctx) {
   // same component do not overwrite each other.
   writePartialsReport(opts, component, seg, report, new Set(pages.map((p) => p.url)))
 
-  return { seg, kind, outDir, written, dropped, cats, partialsWritten, orphans, problems, partialProblems, spliced, spliceSkips, duplicates: plan.duplicates, imagePlacement }
+  return { seg, kind, outDir, written, dropped, cats, partialsWritten, orphans, problems, partialProblems, snapshotMerged, snapshotRefused, duplicates: plan.duplicates, imagePlacement }
 }
 
 // Per-version partials audit: what was factored, declined, or left inline
@@ -1531,6 +1449,14 @@ function main () {
     console.error(`[convert] no golden pages for component=${opts.component}`)
     process.exit(1)
   }
+  // The snapshot-flipped render (build-snapshot.js). Without it every snapshot
+  // conditional would silently bake, so its absence is fatal.
+  const flipMetaFile = path.join(opts.goldenDir, 'flip', 'meta.json')
+  if (isVersioned(opts.component) && !fs.existsSync(flipMetaFile)) {
+    console.error(`[convert] ${flipMetaFile} is missing: rebuild the golden (npm run fidelity:snapshot) so snapshot conditionals keep both halves`)
+    process.exit(1)
+  }
+  const flipMeta = fs.existsSync(flipMetaFile) ? JSON.parse(fs.readFileSync(flipMetaFile, 'utf8')) : { goldenSnapshot: {} }
 
   // Guard the `--releases` subset selector against the canonical set so a typo
   // ('5.6' for '5.16') can't quietly produce an off-target run, and so it is
@@ -1557,7 +1483,7 @@ function main () {
   // contributes a {from,to} to src/redirects.ts, and keep-in-nav pages are
   // injected into the nav. Loaded once per run and passed through ctx.
   const dispositions = loadDispositions()
-  const ctx = { component: opts.component, manifest, allGoldenForComponent, linkVars, flat, versioned, opts, latestVersions, dispositions }
+  const ctx = { component: opts.component, manifest, allGoldenForComponent, linkVars, flat, versioned, opts, latestVersions, dispositions, flipMeta }
 
   const results = []
   for (const ver of versions) {
@@ -1606,17 +1532,15 @@ function main () {
     console.log(`[convert] ${tag}: ${r.written} page(s)` +
       (opts.dry ? ' converted (dry-run)' : ` + ${r.cats} categor${r.cats === 1 ? 'y' : 'ies'} + ${r.partialsWritten} partial(s) -> ${where}`))
     if (r.duplicates.length) console.log(`   nav duplicates (kept first): ${[...new Set(r.duplicates)].join(', ')}`)
-    // Conditional branches taken from another version's render, and the ones
-    // refused. Reported rather than silent: a skip means that version's page
-    // carries only one half of a snapshot conditional, so a cut from it (or, for a
-    // release, the page itself) is missing content.
-    if (r.spliced.length) {
-      console.log(`   ${r.spliced.length} conditional branch(es) added from another version:`)
-      for (const s of r.spliced) console.log(`     + ${s.missing === 'ifndef' ? '<IfNotSnapshot>' : '<IfSnapshot>'} from @${s.donor}  ${s.url}`)
+    // Snapshot conditionals: the pages carrying both halves, and the ones whose
+    // regions could not be placed, which bake one half into this version.
+    if (r.snapshotMerged.length) {
+      const n = r.snapshotMerged.reduce((a, m) => a + m.regions, 0)
+      console.log(`   ${r.snapshotMerged.length} page(s) carry both halves of a snapshot conditional (${n} region(s))`)
     }
-    if (r.spliceSkips.length) {
-      console.log(`   ${r.spliceSkips.length} conditional branch(es) NOT added (that half stays absent):`)
-      for (const s of r.spliceSkips) console.log(`     - ${s.url} from @${s.donor}: ${s.reason}`)
+    if (r.snapshotRefused.length) {
+      console.log(`   ${r.snapshotRefused.length} page(s) whose snapshot conditional could not be placed (it BAKES):`)
+      for (const u of r.snapshotRefused) console.log(`     - ${u}`)
     }
     if (r.orphans.length) console.log(`   ${r.orphans.length} page(s) NOT in nav (placed flat): ${r.orphans.map((u) => u.replace(/\/$/, '').split('/').pop()).join(', ')}`)
     if (r.partialProblems.length) {

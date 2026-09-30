@@ -33,6 +33,36 @@ If you prefer to use Maven, make sure you have added the appropriate `hazelcast`
 <Tabs groupId="enterprise-product-name-enterprise-edition--open-source-product-name-community-edition">
 <TabItem value="enterprise-product-name-enterprise-edition" label="Enterprise Edition">
 
+<IfSnapshot>
+
+```xml vars
+<repositories>
+    <repository>
+        <id>private-repository</id>
+        <name>Hazelcast Private Repository</name>
+        <url>https://repository.hazelcast.com/release/</url>
+        <releases>
+            <enabled>true</enabled>
+        </releases>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </repository>
+</repositories>
+
+<dependencies>
+    <dependency>
+        <groupId>com.hazelcast</groupId>
+        <artifactId>hazelcast-enterprise</artifactId>
+        <version>{ee-version}</version>
+    </dependency>
+</dependencies>
+```
+
+</IfSnapshot>
+
+<IfNotSnapshot>
+
 ```xml vars
 <repositories>
     <repository>
@@ -56,6 +86,8 @@ If you prefer to use Maven, make sure you have added the appropriate `hazelcast`
     </dependency>
 </dependencies>
 ```
+
+</IfNotSnapshot>
 
 </TabItem>
 <TabItem value="open-source-product-name-community-edition" label="Community Edition">

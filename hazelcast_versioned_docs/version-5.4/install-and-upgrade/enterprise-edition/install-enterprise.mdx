@@ -52,7 +52,17 @@ wget -O - 'https://repository.hazelcast.com/download/hazelcast-enterprise/hazelc
 </TabItem>
 <TabItem value="windows" label="Windows">
 
+<IfSnapshot>
+
+Download and extract the <Variable href="https://repository.hazelcast.com/snapshot/com/hazelcast/hazelcast-enterprise/hazelcast-enterprise-{full-version}.zip" text="Hazelcast ZIP file" />.
+
+</IfSnapshot>
+
+<IfNotSnapshot>
+
 Download and extract the <Variable href="https://repository.hazelcast.com/download/hazelcast-enterprise/hazelcast-enterprise-{full-version}.zip" text="Hazelcast ZIP file" />.
+
+</IfNotSnapshot>
 
 </TabItem>
 </Tabs>
@@ -75,6 +85,36 @@ The Java package includes both a member API and a Java client API. The member AP
 
 1. Download and install a [supported JDK](../overview/versioning-compatibility.mdx#supported-java-virtual-machines).
 2. Add the following to your `pom.xml` file.
+
+   <IfSnapshot>
+
+   ```xml vars
+   <repositories>
+       <repository>
+           <id>private-repository</id>
+           <name>Hazelcast Private Repository</name>
+           <url>https://repository.hazelcast.com/release/</url>
+           <releases>
+               <enabled>true</enabled>
+           </releases>
+           <snapshots>
+               <enabled>true</enabled>
+           </snapshots>
+       </repository>
+   </repositories>
+
+   <dependencies>
+       <dependency>
+           <groupId>com.hazelcast</groupId>
+           <artifactId>hazelcast-enterprise</artifactId>
+           <version>{full-version}</version>
+       </dependency>
+   </dependencies>
+   ```
+
+   </IfSnapshot>
+
+   <IfNotSnapshot>
 
    ```xml vars
    <repositories>
@@ -99,6 +139,8 @@ The Java package includes both a member API and a Java client API. The member AP
        </dependency>
    </dependencies>
    ```
+
+   </IfNotSnapshot>
 3. [Start the cluster](../../get-started/start-a-local-cluster/get-started-java.mdx).
 
 ### Using Modular Java
@@ -212,7 +254,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-Add your license to the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/Config.html#setLicenseKey-java.lang.String-" text="setLicenseKey()" /> method.
+Add your license to the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/Config.html#setLicenseKey-java.lang.String-" text="setLicenseKey()" code /> method.
 
 ```java
 Config config = new Config();

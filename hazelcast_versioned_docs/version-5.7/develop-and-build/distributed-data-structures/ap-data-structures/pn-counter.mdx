@@ -87,7 +87,7 @@ PN Counter has the following configuration elements:
 
 - `name`: Name of your PN Counter.
 - `replica-count`: Number of replicas on which state for this PN counter is kept. This number applies in quiescent state, if there are currently membership changes or clusters are merging, the state may be temporarily kept on more replicas. Its default value is Integer.MAX\_VALUE. Generally, keeping the state on more replicas means that more Hazelcast members are able to perform updates locally but it also means that the PN counter state is kept on more replicas, increasing the network traffic, decreasing the speed at which replica states converge and increasing the size of the PN counter state kept on each replica.
-- `statistics-enabled`: Specifies whether the statistics gathering is enabled for your PN Counter. If set to `false`, you cannot collect statistics in your implementation (using `getLocalPNCounterStats()`) and also [Hazelcast Management Center](/management-center/latest/data-structures/overview#monitoring-pn-counters) will not show them. Its default value is `true`.
+- `statistics-enabled`: Specifies whether the statistics gathering is enabled for your PN Counter. If set to `false`, you cannot collect statistics in your implementation (using `getLocalPNCounterStats()`) and also <Variable href="/management-center/{page-latest-supported-mc}/data-structures/overview#monitoring-pn-counters" text="Hazelcast Management Center" /> will not show them. Its default value is `true`.
 
 Following is an equivalent snippet of Java configuration:
 

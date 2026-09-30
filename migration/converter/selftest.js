@@ -399,6 +399,45 @@ const renderedCode = (md) => {
   ok('same-component cross-version links return to the page\'s own version, deliberate pins do not')
 }
 
+// --- an attribute-versioned xref follows its attribute, not /latest/ ---------
+// SPEC: `xref:{page-latest-supported-mc}@management-center:…` names the MC version
+// this Platform version supports. Its golden href carries whatever that attribute
+// resolved to, and when that equals MC's latest release TODAY it looks exactly
+// like a versionless xref. Only the versionless one may float to `/latest/`: the
+// attributed one must stay a reference, or the next MC release moves it.
+{
+  const src = [
+    'See xref:{page-latest-supported-mc}@management-center:clusters:members.adoc#view[members].',
+    'Use xref:{page-latest-supported-clc}@clc::overview.adoc[CLC] or xref:management-center:ROOT:index.adoc[MC].',
+    'Pinned xref:5.5@hazelcast:getting-started:install.adoc[install].',
+  ].join('\n')
+  assert.deepStrictEqual(require('./lib/links').attrVersionXrefs(src), [
+    { attr: 'page-latest-supported-mc', component: 'management-center', module: 'clusters', relative: 'members.adoc', fragment: '#view' },
+    { attr: 'page-latest-supported-clc', component: 'clc', module: 'ROOT', relative: 'overview.adoc', fragment: '' },
+  ], 'only attribute-versioned xrefs are collected, `comp::page` is the ROOT module')
+
+  const ctx = {
+    pageUrl: '/hazelcast/5.7/maintain-cluster/monitoring',
+    component: 'hazelcast',
+    seg: '5.7',
+    latestVersions: { 'management-center': '5.11' },
+    xrefVars: new Map([['/management-center/5.11/clusters/members#view', '/management-center/{page-latest-supported-mc}/clusters/members']]),
+  }
+  const body = (href) => convertBody(`<p>see <a href="${href}">members</a>.</p>`, ctx).body
+  const attributed = body('/management-center/5.11/clusters/members#view')
+  assert(attributed.includes('<Variable href="/management-center/{page-latest-supported-mc}/clusters/members#view"'),
+    'the attributed link stays a reference, with its anchor')
+  assert(!/management-center\/latest/.test(attributed), 'and is never floated to /latest/')
+  assert(body('/management-center/5.11/clusters/dashboard').includes('(/management-center/latest/clusters/dashboard)'),
+    'a versionless xref to the same latest release still floats')
+  const coded = convertBody('<p>see <a href="/management-center/5.11/clusters/members#view"><code>members</code></a>.</p>', ctx).body
+  assert(/<Variable href="[^"]*" text="members" code \/>/.test(coded), 'a code-span label keeps its code formatting')
+  // One page can link the same target page both ways; the anchors tell them apart.
+  assert(body('/management-center/5.11/clusters/members#filter').includes('(/management-center/latest/clusters/members#filter)'),
+    'a versionless xref to the attributed target page, at another anchor, still floats')
+  ok('attribute-versioned xrefs keep their attribute even when its value is the latest release')
+}
+
 // --- heal a `link:`-macro doc ref (foo.adoc/.html -> the real page) -----------
 // Antora leaves an unresolved `link:clc-script.adoc[…]` as a literal `.adoc`
 // href (dead in prod). When the extensionless target is a real page, the
@@ -1611,19 +1650,12 @@ const renderedCode = (md) => {
     assert(ref.startsWith('.'), 'a co-located reference must be relative, so webpack resolves and hashes it')
   }
 
-  // A SPLICED conditional branch is converted from another version's golden with
-  // this page's context, so its image URLs carry the DONOR's segment. Same
-  // image, so it must find the same planned destination.
-  const donor = emit('cluster/dashboard.mdx', '/mc/5.11/cluster/dashboard', '/mc/5.10/_images/Dashboard.png')
-  assert.strictEqual(resolveFrom('cluster/dashboard.mdx', donor), 'cluster/images/Dashboard.png',
-    "a donor version's image URL resolves through this version's plan")
-
   // No plan (or an image the plan does not cover) must NOT invent a path: the
   // site-absolute src is left alone so the build's onBrokenMarkdownImages
   // rejects it, rather than a wrong relative path resolving silently.
   const unplanned = emit('cluster/dashboard.mdx', '/mc/5.11/cluster/dashboard', '/mc/5.11/_images/Absent.png')
   assert.strictEqual(unplanned, '/mc/5.11/_images/Absent.png', 'an unplanned image is left as-is, not guessed')
-  ok('imageSrc: emits the planned file as a relative path, from any depth, donor segs included')
+  ok('imageSrc: emits the planned file as a relative path, from any depth')
 }
 
 
@@ -2031,6 +2063,57 @@ const renderedCode = (md) => {
     assert.strictEqual(got.pinned, expectPin, `pinned only when Docusaurus would otherwise differ: ${id}`)
   }
   ok('heading ids: a Badge heading pins the golden id; a plain one stays unpinned')
+}
+
+// --- snapshot conditionals: both halves, in every AsciiDoc context -----------
+// SPEC: a versioned page's MDX carries both halves of each `ifdef::snapshot` /
+// `ifndef::snapshot`, each in the wrapper that shows it in the right version, and
+// with the other half dropped the merged page IS Antora's render in that state.
+// Asciidoctor is the oracle, on the shapes the Platform corpus uses (each one a
+// context source marking could not reach).
+{
+  const adoc = require('@asciidoctor/core')()
+  const { mergeSnapshotHalves, renderedHalf } = require('./lib/snapshot-merge')
+  const render = (src, snapshot) => adoc.convert(src, { safe: 'safe', attributes: snapshot ? { snapshot: '' } : {} })
+  const W = (s) => s.replace(/>\s+</g, '><')
+  const shapes = {
+    'table cell': ['|===', '|File |Use', '', '|', 'ifdef::snapshot[]', 'link:https://x/master/a.xml[a.xml]', 'endif::[]',
+      'ifndef::snapshot[]', 'link:https://x/v1/a.xml[a.xml]', 'endif::[]', '|Default file.', '|==='],
+    'list continuation': ['. Add the repository:', '+', 'ifdef::snapshot[]', '[source,xml]', '----', '<snapshot/>', '----', 'endif::[]',
+      'ifndef::snapshot[]', '[source,xml]', '----', '<release/>', '----', 'endif::[]', '. Build it.'],
+    'tag comment and list item': ['. First step.', '// tag::step[]', 'ifdef::snapshot[]', '. Download the snapshot.', 'endif::[]',
+      'ifndef::snapshot[]', '. Download the release.', 'endif::[]', '// end::step[]', '. Last step.'],
+    'inside a listing': ['[source,xml]', '----', '<repositories>', 'ifdef::snapshot[]', '  <snapshots/>', 'endif::[]',
+      'ifndef::snapshot[]', '  <releases/>', 'endif::[]', '</repositories>', '----'],
+    'release-only section': ['== Install', '', 'Install it.', '', '// releases only', 'ifndef::snapshot[]', '=== Package managers', '',
+      'Use a package manager.', 'endif::[]'],
+  }
+  for (const [name, lines] of Object.entries(shapes)) {
+    const src = lines.join('\n')
+    const on = render(src, true), off = render(src, false)
+    assert.notStrictEqual(on, off, `${name}: the fixture really is conditional`)
+    for (const goldenIsSnapshot of [true, false]) {
+      const m = mergeSnapshotHalves(goldenIsSnapshot ? on : off, goldenIsSnapshot ? off : on, goldenIsSnapshot)
+      assert.strictEqual(m.refused, 0, `${name}: the region is placed`)
+      assert.strictEqual(W(renderedHalf(m.html, true)), W(on), `${name}: dropping the release half gives the snapshot render`)
+      assert.strictEqual(W(renderedHalf(m.html, false)), W(off), `${name}: dropping the snapshot half gives the release render`)
+    }
+    const mdx = convertBody(mergeSnapshotHalves(on, off, true).html, { pageUrl: '/hazelcast/6.0-snapshot/x', component: 'hazelcast', seg: '6.0-snapshot' }).body
+    const inside = (tag) => (mdx.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`)) || [])[1] || ''
+    const [snapWord, relWord] = {
+      'table cell': ['master', 'v1'], 'list continuation': ['snapshot/', 'release/'],
+      'tag comment and list item': ['snapshot', 'release'], 'inside a listing': ['snapshots', 'releases'],
+      'release-only section': [null, 'Package managers'],
+    }[name]
+    if (snapWord) assert(inside('IfSnapshot').includes(snapWord) && !inside('IfSnapshot').includes(relWord), `${name}: the snapshot half is in <IfSnapshot>`)
+    assert(inside('IfNotSnapshot').includes(relWord), `${name}: the release half is in <IfNotSnapshot>`)
+    if (snapWord) assert(!mdx.replace(/<IfSnapshot>[\s\S]*?<\/IfSnapshot>/g, '').includes(snapWord), `${name}: the snapshot half appears nowhere else`)
+    // MDX renders a JSX-only block bare, so each cell paragraph needs its own <p> or two links run together.
+    if (name === 'table cell') assert(/<IfNotSnapshot>\s*<p>/.test(mdx) && /<IfSnapshot>\s*<p>/.test(mdx), 'table cell: each half keeps its explicit <p> paragraphs')
+  }
+  assert.deepStrictEqual(mergeSnapshotHalves('<p>same</p>', '<p>same</p>', true), { html: '<p>same</p>', regions: 0, refused: 0 },
+    'a page with no conditional is returned untouched')
+  ok('snapshot conditionals: both halves in every context, and each half round-trips to its render')
 }
 
 console.log(`\n[converter selftest] ${n} groups passed.`)

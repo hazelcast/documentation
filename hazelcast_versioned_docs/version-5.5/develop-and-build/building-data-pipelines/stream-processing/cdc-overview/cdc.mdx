@@ -115,6 +115,41 @@ mysql> SELECT * FROM customers;
 
 ## Step 4. Start Hazelcast
 
+<IfSnapshot>
+
+1. [Download Hazelcast](../../../../install-and-upgrade/community-edition/install-hazelcast.mdx).
+
+   If you already have Hazelcast and you skipped the above steps, make sure to follow from here on.
+
+Download and extract the <Variable href="https://repository.hazelcast.com/snapshot/com/hazelcast/hazelcast-enterprise/hazelcast-enterprise-{ee-version}.zip" text="Hazelcast ZIP file" />. . Make sure the MySQL CDC plugin is in the `lib/` directory. You must manually download the MySQL CDC plugin's `jar-with-dependencies` from <Variable href="https://hazelcast.jfrog.io/artifactory/snapshot/com/hazelcast/jet/hazelcast-enterprise-cdc-mysql/{ee-version}" text="Hazelcast's Maven repository" /> and then copy it to the `lib/` directory.
+
+\+
+
+```bash
+ls lib/
+```
+
+\+ You should see the following jars:
+
+\+ \* hazelcast-enterprise-cdc-debezium-<Variable name="ee-version" />-jar-with-dependencies.jar \* hazelcast-enterprise-cdc-mysql-<Variable name="ee-version" />-jar-with-dependencies.jar \* hazelcast-enterprise-cdc-postgres-<Variable name="ee-version" />-jar-with-dependencies.jar
+
+1. Start Hazelcast.
+
+   ```bash
+   bin/hz-start
+   ```
+2. When you see output like this, Hazelcast is up:
+
+   ```none
+   Members {size:1, ver:1} [
+       Member [192.168.1.5]:5701 - e7c26f7c-df9e-4994-a41d-203a1c63480e this
+   ]
+   ```
+
+</IfSnapshot>
+
+<IfNotSnapshot>
+
 1. [Download Hazelcast](../../../../install-and-upgrade/community-edition/install-hazelcast.mdx).
 
    If you already have Hazelcast and you skipped the above steps, make sure to follow from here on.
@@ -141,6 +176,8 @@ mysql> SELECT * FROM customers;
        Member [192.168.1.5]:5701 - e7c26f7c-df9e-4994-a41d-203a1c63480e this
    ]
    ```
+
+</IfNotSnapshot>
 
 ## Step 5. Create a New Java Project
 

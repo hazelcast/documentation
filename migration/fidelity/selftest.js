@@ -8,7 +8,7 @@
 //      if canonicalize over-normalizes, a real regression reduces equal and the
 //      diff stays silently empty. So we pin both that fidelity-SAFE folds happen
 //      AND that genuinely different content still diffs.
-//   2. Golden de-instrumentation (mark-partials / mark-conditionals): readGolden
+//   2. Golden de-instrumentation (mark-partials): readGolden
 //      strips their sentinels before comparing, so if a stripper removed one byte
 //      too many or too few the baseline would drift. We pin strip == byte-exact.
 //
@@ -21,7 +21,6 @@ const {
   GOLDEN_STRIP, GOLDEN_TABLE, DOCUSAURUS_STRIP,
 } = require('./lib/layer1')
 const { stripSentinels, createPartialMarker } = require('../antora-extension/mark-partials')
-const { wrapConditionals, markability, stripConditionalSentinels, START, END } = require('../antora-extension/mark-conditionals')
 const { literalizeMonospace } = require('../antora-extension/normalize-monospace')
 const { lockfileKey } = require('./lockfile-key')
 const { buildIndex, variants } = require('./lib/manifest-index')
@@ -154,10 +153,6 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
   assert.strictEqual(stripSentinels(clean), clean, 'mark-partials: strip is a no-op on un-instrumented HTML')
   ok('mark-partials: sentinel strip is byte-exact and idempotent')
 
-  const cleanIf = '<p>before</p>\n<p>inside</p>\n<p>after</p>\n'
-  const markedIf = `<p>before</p>\n${START}\n<p>inside</p>\n${END}\n<p>after</p>\n`
-  assert.strictEqual(stripConditionalSentinels(markedIf), cleanIf, 'mark-conditionals: strip reproduces golden byte-for-byte')
-  ok('mark-conditionals: rendered-sentinel strip is byte-exact')
 }
 
 // --- mark-partials: an include's content lands INSIDE its sentinels ----------
@@ -265,156 +260,6 @@ const renderAdoc = (src) => adoc.convert(src, { standalone: false }) // real ren
   assert.strictEqual(between(fused.html, 'test:ROOT:partial$admon.adoc').includes('Page-authored follow-up.'), false,
     'fused site: page content is NOT dragged inside the sentinels')
   ok('mark-partials: a `+`-fused include keeps page content outside the sentinels')
-}
-
-// --- mark-conditionals: source wrap correctness ------------------------------
-{
-  const plain = 'no conditionals here\njust text\n'
-  assert.strictEqual(wrapConditionals(plain), plain, 'no snapshot conditional -> text unchanged')
-
-  const unterminated = 'ifdef::snapshot[]\ncontent with no endif\n'
-  assert.strictEqual(wrapConditionals(unterminated), unterminated, 'unterminated ifdef left as-is')
-
-  const src = 'ifdef::snapshot[]\ncontent line\nendif::[]'
-  const wrapped = wrapConditionals(src)
-  assert(wrapped.includes('ifdef::snapshot[]') && wrapped.includes('endif::[]'), 'directives kept intact')
-  const iIf = wrapped.indexOf('ifdef::snapshot[]')
-  const iStart = wrapped.indexOf(START)
-  const iBody = wrapped.indexOf('content line')
-  const iEnd = wrapped.indexOf(END)
-  const iEndif = wrapped.indexOf('endif::[]')
-  assert(iIf < iStart && iStart < iBody && iBody < iEnd && iEnd < iEndif,
-    'sentinels sit INSIDE the conditional, around the body')
-  ok('wrapConditionals: injects sentinels inside the block, leaves non-snapshot text alone')
-}
-
-// --- mark-conditionals: marking must not change the parse --------------------
-// THE invariant the whole approach rests on: strip(marked golden) === clean
-// golden. Asciidoctor is the oracle — render each source with the `snapshot`
-// attribute set, once marked and once bare, strip the sentinels, and require the
-// two to agree. An `ifdef` is invisible to the block parser, so a padded sentinel
-// injected next to a line that was continuing a block ends that block and the
-// render genuinely improves — which is a broken baseline, not a win.
-{
-  const render = (src) => adoc.convert(src, { attributes: { snapshot: '' }, safe: 'safe' })
-  const roundTrips = (src) =>
-    stripConditionalSentinels(render(wrapConditionals(src))) === render(src)
-
-  // The management-center install.adoc shape: no blank line before the directive,
-  // so Asciidoctor absorbs `.Debian` into the preceding paragraph. Marking would
-  // promote it to a block title.
-  const glued = [
-    'Use either of these package managers:',
-    'ifdef::snapshot[]',
-    '.Debian',
-    '[source,shell]',
-    '----',
-    'apt install hazelcast',
-    '----',
-    'endif::[]',
-    '',
-  ].join('\n')
-  assert(/\.Debian/.test(render(glued)),
-    'precondition: with no blank line, Asciidoctor absorbs `.Debian` into the paragraph')
-  // This shape IS marked, and is the one case where the render deliberately
-  // changes: the swallowed `.Debian` becomes the block title it was written as.
-  assert.strictEqual(markability(glued.split('\n'), 1, 7), 'promotes-title',
-    'a paragraph above a branch whose first line is a block title marks as promotes-title')
-  assert(!roundTrips(glued), 'so it does NOT round-trip — the divergence is the point')
-  // Bounded: the ONLY change is the promotion. Oracle is the visible text, which
-  // must be identical once the title loses the leading dot it had as prose.
-  const visible = (html) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-  assert.strictEqual(
-    visible(stripConditionalSentinels(render(wrapConditionals(glued)))),
-    visible(render(glued)).replace(' .Debian', ' Debian'),
-    'nothing else about the render moves — same text, one dot fewer')
-  assert(/<div class="title">Debian<\/div>/.test(render(wrapConditionals(glued))),
-    'and the promotion really is a block title in the output')
-
-  // A block that continues AFTER the endif is the mirror image of the same hazard.
-  const gluedAfter = [
-    '',
-    'ifdef::snapshot[]',
-    'snapshot text',
-    'endif::[]',
-    '.Trailing',
-    'more text',
-    '',
-  ].join('\n')
-  assert.strictEqual(wrapConditionals(gluedAfter), gluedAfter,
-    'a line glued to the endif is left unmarked too (the hazard is symmetric)')
-  assert(roundTrips(gluedAfter), 'round-trip holds for the trailing case')
-
-  // The safe shape — blank lines on both sides — IS marked, and round-trips.
-  const spaced = ['Intro paragraph.', '', 'ifdef::snapshot[]', 'snapshot only', 'endif::[]', '', 'Outro.', ''].join('\n')
-  assert.notStrictEqual(wrapConditionals(spaced), spaced, 'a properly separated block is marked')
-  assert(roundTrips(spaced), 'and round-trips byte-for-byte')
-
-  // Counters are reported, so a skip is never silent.
-  const stats = {}
-  wrapConditionals(spaced, stats)
-  wrapConditionals(glued, stats)
-  wrapConditionals(gluedAfter, stats)
-  assert.deepStrictEqual(stats, { marked: 1, markedPromotingTitle: 1, skipped: 1 },
-    'the three outcomes are counted separately — a promoting mark is never hidden in `marked`')
-  ok('wrapConditionals: only marks where injection is parse-neutral (Asciidoctor oracle)')
-}
-
-// --- the ifdef/ifndef PAIR, and comment-transparency -------------------------
-// The pair is the corpus's normal shape (38 of 41 live `ifdef`s are one half of
-// one), and it has no blank line between the halves by construction — so it can
-// only be judged, and marked, as a UNIT.
-//
-// Asciidoctor is again the oracle, now in BOTH attribute states: the then-branch
-// renders only with `snapshot` set and the else-branch only without it, so a pair
-// that round-trips in one state proves nothing about the other.
-{
-  const renderWith = (src, attrs) => adoc.convert(src, { attributes: attrs, safe: 'safe' })
-  const roundTripsBoth = (src) => {
-    const marked = wrapConditionals(src)
-    for (const attrs of [{ snapshot: '' }, {}]) {
-      if (stripConditionalSentinels(renderWith(marked, attrs)) !== renderWith(src, attrs)) return false
-    }
-    return true
-  }
-
-  // The MC update-config shape: `endif::[]` immediately followed by the else
-  // directive. Judged as one unit on its OUTER boundaries, so it marks — where
-  // testing each half alone would reject it for want of an interior blank line.
-  const pair = ['Intro.', '', 'ifdef::snapshot[]', 'master link', 'endif::[]',
-    'ifndef::snapshot[]', 'tag link', 'endif::[]', '', 'Outro.', ''].join('\n')
-  const markedPair = wrapConditionals(pair)
-  assert(markedPair.includes('hz-if:snapshot:start') && markedPair.includes('hz-ifnot:snapshot:start'),
-    'both halves of the pair are marked, each with its own sentinel')
-  assert(roundTripsBoth(pair), 'and the render round-trips with `snapshot` both set and unset')
-  const pairStats = {}
-  wrapConditionals(pair, pairStats)
-  assert.deepStrictEqual(pairStats, { marked: 1 }, 'a pair counts as ONE unit, not two')
-
-  // Each branch renders only in its own state — the reason both states must be
-  // checked, and the reason the current tree cannot simply wrap what it has.
-  assert(/master link/.test(renderWith(pair, { snapshot: '' })) && !/tag link/.test(renderWith(pair, { snapshot: '' })),
-    'with snapshot set, only the then-branch renders')
-  assert(/tag link/.test(renderWith(pair, {})) && !/master link/.test(renderWith(pair, {})),
-    'with snapshot unset, only the else-branch renders')
-
-  // A standalone `ifndef` is marked as the else-branch on its own.
-  const soloElse = ['Intro.', '', 'ifndef::snapshot[]', 'released only', 'endif::[]', '', 'Outro.', ''].join('\n')
-  assert(wrapConditionals(soloElse).includes('hz-ifnot:snapshot:start'), 'a standalone ifndef is marked')
-  assert(roundTripsBoth(soloElse), 'and round-trips in both states')
-
-  // A `// tag::name[]` line above the directive keeps the unit UNMARKED, so it
-  // bakes. Deliberate: see canMark. Treating the comment as transparent marks
-  // hz-docs' install-enterprise, whose then-branch is a list item, and the padded
-  // sentinel then closes the `<ol>` — parse-neutral by the blank-line test and
-  // still a changed render. The shape below is that page's, reduced.
-  const taggedList = ['Intro.', '', '// tag::x[]', 'ifdef::snapshot[]',
-    '. first item', 'endif::[]', 'ifndef::snapshot[]', '. other first item', 'endif::[]',
-    '. second item', '', 'Outro.', ''].join('\n')
-  assert.strictEqual(wrapConditionals(taggedList), taggedList,
-    'a tag comment above the directive is not read as a boundary, so the unit bakes')
-  assert(roundTripsBoth(taggedList), 'and the golden is therefore untouched')
-  ok('wrapConditionals: pairs judged as one unit; a comment is not a boundary')
 }
 
 // --- normalize-monospace: recover literal `__x` / `_` from Antora's mangling --

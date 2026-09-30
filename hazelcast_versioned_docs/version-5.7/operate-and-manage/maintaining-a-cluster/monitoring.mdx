@@ -47,7 +47,7 @@ In addition to the Management Center, we recommend that you use `jstat` and keep
 
 Hazelcast Management Center enables you to monitor and manage your cluster members running Hazelcast. In addition to monitoring the overall state of your clusters, you can also analyze and browse your data structures in detail, update map configurations and take thread dumps from members. You can run scripts (JavaScript, Groovy, etc.) and commands on your members with its scripting and console modules.
 
-See the [Management Center documentation](/management-center/latest/getting-started/overview) for more information and find details about its clustered JMX and clustered REST APIs
+See the <Variable href="/management-center/{page-latest-supported-mc}/getting-started/overview" text="Management Center documentation" /> for more information and find details about its clustered JMX and clustered REST APIs
 
 Because Management Center is a client that connects to the cluster, you can control the following aspects of Management Center in the member configuration file:
 
@@ -65,7 +65,7 @@ By default, scripting is disabled for security. Scripting engines give code acce
 
 :::important
 
-When scripting is enabled, it grants full, unrestricted access to the cluster and is **not** limited by the permissions assigned to individual Management Center users. Enable it with caution, especially in production, and consider leaving it disabled if granular access control is critical. See the [Management Center scripting documentation](/management-center/latest/tools/scripting) for details.
+When scripting is enabled, it grants full, unrestricted access to the cluster and is **not** limited by the permissions assigned to individual Management Center users. Enable it with caution, especially in production, and consider leaving it disabled if granular access control is critical. See the <Variable href="/management-center/{page-latest-supported-mc}/tools/scripting" text="Management Center scripting documentation" /> for details.
 
 :::
 
@@ -127,7 +127,7 @@ hazelcast:
 </TabItem>
 </Tabs>
 
-See the [Management Center documentation](/management-center/latest/tools/console) for more information.
+See the <Variable href="/management-center/{page-latest-supported-mc}/tools/console" text="Management Center documentation" /> for more information.
 
 ### Managing data access
 
@@ -396,7 +396,7 @@ Management Center receives the metrics used for building its view about the Haze
 
 As mentioned earlier, the client metrics are also stored in these blobs on the member side with timestamps assigned to them on the client side.
 
-See the [Management Center documentation](/management-center/latest/deploy-manage/historical-metrics) for more information .
+See the <Variable href="/management-center/{page-latest-supported-mc}/deploy-manage/historical-metrics" text="Management Center documentation" /> for more information .
 
 #### Over JMX
 
@@ -426,7 +426,7 @@ The metrics are available on `http://localhost:8080`.
 
 :::note
 
-You will need to configure Prometheus to scrape each member individually, manage changes from scaling and restarts, and collate the metrics from all members. If you are an Enterprise customer, you can configure Prometheus to scrape metrics from Management Center to easily collect metrics for the whole cluster. See [Prometheus Monitoring](/management-center/latest/integrate/prometheus-monitoring).
+You will need to configure Prometheus to scrape each member individually, manage changes from scaling and restarts, and collate the metrics from all members. If you are an Enterprise customer, you can configure Prometheus to scrape metrics from Management Center to easily collect metrics for the whole cluster. See <Variable href="/management-center/{page-latest-supported-mc}/integrate/prometheus-monitoring" text="Prometheus Monitoring" />.
 
 :::
 
@@ -434,7 +434,7 @@ For a guide on how to set up Prometheus server go to the [Prometheus website](ht
 
 #### Via Job API
 
-The `Job` class has a <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/Job.html#getMetrics--" text="getMetrics()" /> method which returns a <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/metrics/JobMetrics.html" text="JobMetrics" /> instance. It contains the latest known metric values for the job.
+The `Job` class has a <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/Job.html#getMetrics--" text="getMetrics()" code /> method which returns a <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/metrics/JobMetrics.html" text="JobMetrics" /> instance. It contains the latest known metric values for the job.
 
 This functionality has been developed primarily to give access to metrics of finished jobs, but can in fact be used for jobs in any state.
 
@@ -1056,7 +1056,7 @@ You can also turn diagnostic logging off automatically after a set period by con
 
 Operator also allows you to control the diagnostic plugins.
 
-For information on how to enable dynamic diagnostic logging and the auto turn-off feature, see the [Platform Operator](https://docs.hazelcast.com/operator/latest-snapshot/configure-diagnostic-logging) or [Management Center](/management-center/latest/clusters/diagnostic-logging) documentation.
+For information on how to enable dynamic diagnostic logging and the auto turn-off feature, see the [Platform Operator](https://docs.hazelcast.com/operator/latest-snapshot/configure-diagnostic-logging) or <Variable href="/management-center/{page-latest-supported-mc}/clusters/diagnostic-logging" text="Management Center" /> documentation.
 
 :::note
 
@@ -2182,12 +2182,12 @@ This is an <Variable name="enterprise-product-name" /> feature. See <Variable hr
 
 ### AppDynamics
 
-You can use the [Clustered JMX](/management-center/latest/integrate/jmx) interface to integrate the [Hazelcast Management Center](#management-center) with **AppDynamics**. To perform this integration, attach the AppDynamics Java agent to the Management Center.
+You can use the <Variable href="/management-center/{page-latest-supported-mc}/integrate/jmx" text="Clustered JMX" /> interface to integrate the [Hazelcast Management Center](#management-center) with **AppDynamics**. To perform this integration, attach the AppDynamics Java agent to the Management Center.
 
-This is an <Variable name="enterprise-product-name" /> feature. See [Integrating JMX with AppDynamics](/management-center/latest/integrate/jmx#integrating-jmx-with-appdynamics) for details.
+This is an <Variable name="enterprise-product-name" /> feature. See <Variable href="/management-center/{page-latest-supported-mc}/integrate/jmx#integrating-jmx-with-appdynamics" text="Integrating JMX with AppDynamics" /> for details.
 
 ### New Relic
 
-You can use the [Clustered JMX](/management-center/latest/integrate/jmx) interface to integrate the [Hazelcast Management Center](#management-center) with New Relic. To perform this integration, attach the New Relic Java agent and provide an extension file that describes which metrics will be sent to New Relic.
+You can use the <Variable href="/management-center/{page-latest-supported-mc}/integrate/jmx" text="Clustered JMX" /> interface to integrate the [Hazelcast Management Center](#management-center) with New Relic. To perform this integration, attach the New Relic Java agent and provide an extension file that describes which metrics will be sent to New Relic.
 
-This is an <Variable name="enterprise-product-name" /> feature. See [Integrating JMX with New Relic](/management-center/latest/integrate/jmx#integrating-jmx-with-new-relic) for details.
+This is an <Variable name="enterprise-product-name" /> feature. See <Variable href="/management-center/{page-latest-supported-mc}/integrate/jmx#integrating-jmx-with-new-relic" text="Integrating JMX with New Relic" /> for details.

@@ -51,6 +51,50 @@ In this step, you'll set up a Java project that you can later execute to start a
 
    Replace the `${jdk.version}` placeholder with your JDK version.
 
+   <IfSnapshot>
+
+   ```xml vars
+   <?xml version="1.0" encoding="UTF-8"?>
+   <project xmlns="http://maven.apache.org/POM/4.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+       <modelVersion>4.0.0</modelVersion>
+
+       <groupId>org.example</groupId>
+       <artifactId>hz-example</artifactId>
+       <version>0.1.0</version>
+
+       <repositories>
+         <repository>
+           <id>snapshot-repository</id>
+           <name>Maven2 Snapshot Repository</name>
+           <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+           <releases>
+             <enabled>false</enabled>
+           </releases>
+         </repository>
+       </repositories>
+
+       <dependencies>
+           <dependency>
+               <groupId>com.hazelcast</groupId>
+               <artifactId>hazelcast</artifactId>
+               <version>{full-version}</version>
+           </dependency>
+       </dependencies>
+
+       <properties>
+           <maven.compiler.source>${jdk.version}</maven.compiler.source>
+           <maven.compiler.target>${jdk.version}</maven.compiler.target>
+       </properties>
+
+   </project>
+   ```
+
+   </IfSnapshot>
+
+   <IfNotSnapshot>
+
    ```xml vars
    <?xml version="1.0" encoding="UTF-8"?>
    <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -77,6 +121,8 @@ In this step, you'll set up a Java project that you can later execute to start a
 
    </project>
    ```
+
+   </IfNotSnapshot>
 
 ## Step 2. Build a Hazelcast Cluster
 
@@ -349,5 +395,5 @@ Or, if you're interested in learning more about topics that we introduced in thi
 
 - [Java Client](../../clients-and-apis/clients/java.mdx)
 - Get detailed information about maps and other [data structures](../../develop-and-build/distributed-data-structures/distributed-data-structures.mdx).
-- Learn more about how to use the [Management Center](/management-center/latest/getting-started/overview).
+- Learn more about how to use the <Variable href="/management-center/{page-latest-supported-mc}/getting-started/overview" text="Management Center" />.
 - Learn how Hazelcast can [handle network partitions](../../operate-and-manage/fault-tolerance/handling-network-partitions/network-partitioning.mdx) with a feature called split-brain protection.

@@ -72,8 +72,8 @@ function resolveHref (rawIn, pageUrl) {
 // Two macro forms carry a target: explicit `link:TARGET[` and a bare
 // `https://TARGET[` (Asciidoctor auto-links a URL followed by a label). `xref:`
 // is deliberately excluded: its attribute references are version COORDINATES,
-// resolved by Antora during classification and handled by the latestVersions
-// path, not by substitution. Targets cannot contain whitespace.
+// resolved by Antora during classification, not by substitution (see
+// attrVersionXrefs). Targets cannot contain whitespace.
 const LINK_TARGET = /(?:link:|(?<![\w:])(?=https?:\/\/))(\S*?)\[/g
 function attrHrefTemplates (text) {
   const out = new Set()
@@ -81,6 +81,22 @@ function attrHrefTemplates (text) {
   for (const m of String(text).matchAll(LINK_TARGET)) {
     const target = m[1]
     if (target && /\{[A-Za-z0-9_][A-Za-z0-9_-]*\}/.test(target)) out.add(target)
+  }
+  return out
+}
+
+// Every cross-component xref whose VERSION coordinate is an attribute:
+//   `xref:{page-latest-supported-mc}@management-center:clusters:members.adoc[…]`
+// (`component::page` is the ROOT module). The golden only shows the version the
+// attribute resolved to, and when that happens to be the target's latest release
+// it is indistinguishable from a versionless xref, which floats to `/latest/`.
+// These are what tell the two apart.
+const ATTR_VERSION_XREF = /xref:\{([A-Za-z0-9_][A-Za-z0-9_-]*)\}@([A-Za-z0-9_-]+):([A-Za-z0-9_-]*):([^\s[#]+?\.adoc)(#[^\s[]*)?/g
+function attrVersionXrefs (text) {
+  const out = []
+  if (!text) return out
+  for (const m of String(text).matchAll(ATTR_VERSION_XREF)) {
+    out.push({ attr: m[1], component: m[2], module: m[3] || 'ROOT', relative: m[4], fragment: m[5] || '' })
   }
   return out
 }
@@ -155,5 +171,5 @@ module.exports = {
   // LINK_TARGET is exported for antora-extension/mark-attributes.js: the marking
   // pass must SKIP exactly the targets attrHrefTemplates recovers references from,
   // so the grammar has one definition.
-  resolveHref, EXTERNAL, LINK_TARGET, attrHrefTemplates, unmangleSubscripts, repairApiDeepLink,
+  resolveHref, EXTERNAL, LINK_TARGET, attrHrefTemplates, attrVersionXrefs, unmangleSubscripts, repairApiDeepLink,
 }

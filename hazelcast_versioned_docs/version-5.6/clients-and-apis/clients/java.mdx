@@ -33,6 +33,33 @@ If you prefer to use Maven, make sure you have added the appropriate `hazelcast`
 <Tabs groupId="enterprise-product-name-enterprise-edition--open-source-product-name-community-edition">
 <TabItem value="enterprise-product-name-enterprise-edition" label="Enterprise Edition">
 
+<IfSnapshot>
+
+```xml conums vars
+<repositories>
+    <repository>
+        <id>private-repository</id>
+        <name>Hazelcast Private Snapshot Repository</name>
+        <url>https://repository.hazelcast.com/snapshot/</url> <1>
+        <releases>
+            <enabled>false</enabled>
+        </releases>
+    </repository>
+</repositories>
+
+<dependencies>
+    <dependency>
+        <groupId>com.hazelcast</groupId>
+        <artifactId>hazelcast-enterprise</artifactId> <2>
+        <version>{ee-version}</version> <3>
+    </dependency>
+</dependencies>
+```
+
+</IfSnapshot>
+
+<IfNotSnapshot>
+
 ```xml conums vars
 <repositories>
     <repository>
@@ -53,6 +80,8 @@ If you prefer to use Maven, make sure you have added the appropriate `hazelcast`
     </dependency>
 </dependencies>
 ```
+
+</IfNotSnapshot>
 
 <CodeCallouts>
 

@@ -51,6 +51,8 @@ In this step, you'll set up a Java project that you can later execute to start a
 
    Replace the `${jdk.version}` placeholder with your JDK version.
 
+   <IfSnapshot>
+
    ```xml vars
    <?xml version="1.0" encoding="UTF-8"?>
    <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -88,6 +90,39 @@ In this step, you'll set up a Java project that you can later execute to start a
 
    </project>
    ```
+
+   </IfSnapshot>
+
+   <IfNotSnapshot>
+
+   ```xml vars
+   <?xml version="1.0" encoding="UTF-8"?>
+   <project xmlns="http://maven.apache.org/POM/4.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+       <modelVersion>4.0.0</modelVersion>
+
+       <groupId>org.example</groupId>
+       <artifactId>hz-example</artifactId>
+       <version>0.1.0</version>
+
+       <dependencies>
+           <dependency>
+               <groupId>com.hazelcast</groupId>
+               <artifactId>hazelcast</artifactId>
+               <version>{full-version}</version>
+           </dependency>
+       </dependencies>
+
+       <properties>
+           <maven.compiler.source>${jdk.version}</maven.compiler.source>
+           <maven.compiler.target>${jdk.version}</maven.compiler.target>
+       </properties>
+
+   </project>
+   ```
+
+   </IfNotSnapshot>
 
 ## Step 2. Build a Hazelcast Cluster
 

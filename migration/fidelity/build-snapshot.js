@@ -34,7 +34,6 @@ const { buildLockfile } = require('../antora-extension/emit-manifest')
 const { registerPageAliases } = require('../antora-extension/register-page-aliases')
 const { createPartialMarker } = require('../antora-extension/mark-partials')
 const { wrapRefs, spanify, hasSentinelResidue, hasAttrSpanLeak } = require('../antora-extension/mark-attributes')
-const { wrapConditionals } = require('../antora-extension/mark-conditionals')
 const { literalizeMonospace } = require('../antora-extension/normalize-monospace')
 const { poisonComponentVersions, preResolveTargets } = require('../antora-extension/poison-attributes')
 const { markedAttrsFor } = require('../lib/layout')
@@ -75,16 +74,8 @@ function parseArgs (argv) {
   //     readGolden() strips off the golden side, so a bare census matches.
   //   - normalize-monospace: ON. It changes the render (it fixes Antora's mangled
   //     inline monospace), so the census must carry it to match.
-  //   - mark-conditionals: ON. Mostly instrumentation, but NOT always: a unit whose
-  //     markability is 'promotes-title' deliberately changes the render (a block
-  //     title the preceding paragraph had swallowed becomes a real title), so an
-  //     unmarked census cannot reproduce the golden there — which is exactly how
-  //     it failed on management-center's install.adoc. Its sentinels ARE strippable
-  //     and refcheck reads the census through stripConditionalSentinels, so turning
-  //     it on costs nothing and buys back the guard. It also buys refcheck the only
-  //     per-page evidence of WHICH conditional branch this version resolved, which
-  //     is how a spliced page (both branches in the MDX) gets counted correctly —
-  //     see refcheck/lib/census-ledger.js hiddenBranchComponents.
+  //   - the snapshot-flipped render: OFF. It is a second tree for the converter,
+  //     not a change to this one.
   const census = args.includes('--census')
   return {
     census,
@@ -108,14 +99,12 @@ function parseArgs (argv) {
     // default; the spans strip byte-for-byte in readGolden(), so the golden is
     // byte-equivalent to the bare render. --no-mark-attributes renders bare.
     markAttributes: !census && !args.includes('--no-mark-attributes'),
-    // Instrument `ifdef::snapshot[]` / `ifndef::snapshot[]` branches with
-    // passthrough comment sentinels (see antora-extension/mark-conditionals.js) so
-    // the converter can wrap the region in <IfSnapshot>/<IfNotSnapshot> instead of
-    // baking it per-version. ON by default; the sentinels sit inside the branch (so
-    // they gate with it) and strip byte-for-byte in readGolden().
-    // --no-mark-conditionals renders bare. Unlike the other two mark-* passes this
-    // one runs for the CENSUS too -- see the census comment above for why.
-    markConditionals: !args.includes('--no-mark-conditionals'),
+    // Render every page of a versioned component a second time with `snapshot`
+    // flipped, into <out>/flip/pages (only the pages that differ), so the converter
+    // can give every version tree both halves of each `ifdef::snapshot` /
+    // `ifndef::snapshot` conditional (converter/lib/snapshot-merge.js). The
+    // golden itself stays a plain render. --no-flip skips it.
+    flip: !census && !args.includes('--no-flip'),
     // Backslash-escape emphasis chars inside inline monospace so Asciidoctor
     // renders `__trace` / `_` literally instead of mis-parsing the underscores as
     // emphasis (see antora-extension/normalize-monospace.js). Unlike the mark-*
@@ -215,7 +204,7 @@ function tutorialListHtml (contentCatalog, product) {
 }
 
 async function main () {
-  const { census, playbookFile, outDir, lockfileFile, component, markPartials, markAttributes, markConditionals, normalizeMonospace } = parseArgs(process.argv)
+  const { census, playbookFile, outDir, lockfileFile, component, markPartials, markAttributes, flip, normalizeMonospace } = parseArgs(process.argv)
   // Which components this run renders. Shared by the census poisoning pass and
   // the page filter so they cannot disagree: poisoning a component we do not
   // render would leak a foreign token into an in-scope page through a
@@ -342,43 +331,6 @@ async function main () {
     if (marked) console.log(`[snapshot] attribute marking: instrumented ${marked} source file(s)`)
   }
 
-  // Conditional marking: inject sentinels inside `ifdef::snapshot[]` blocks so
-  // the converter can wrap snapshot-only content in <IfSnapshot> (see
-  // mark-conditionals.js). Same in-memory-catalog rewrite as attribute marking;
-  // sentinels gate with the conditional and strip byte-for-byte in readGolden().
-  // Runs for the census render as well, so the two stay comparable and the census
-  // records which branch each version resolved -- see parseArgs.
-  if (markConditionals) {
-    const tag = census ? '[census]' : '[snapshot]'
-    let marked = 0
-    // Blocks left unmarked because injecting a sentinel there would change the
-    // parse (mark-conditionals canMark). Reported rather than silent: each one is
-    // a snapshot-only region that will BAKE into the version tree instead of
-    // becoming <IfSnapshot>, which is a real (if safe) loss to know about.
-    const stats = {}
-    for (const file of contentCatalog.getFiles()) {
-      const fam = file.src && file.src.family
-      if ((fam !== 'page' && fam !== 'partial') || !file.contents) continue
-      const wrapped = wrapConditionals(file.contents.toString(), stats)
-      if (wrapped !== file.contents.toString()) { file.contents = Buffer.from(wrapped); marked++ }
-    }
-    if (marked) console.log(`${tag} conditional marking: instrumented ${marked} source file(s)`)
-    // Units marked even though the injection CHANGES the render, in the one way
-    // that is an improvement: a block title the preceding paragraph had swallowed
-    // is promoted to a real title (mark-conditionals markability 'promotes-title').
-    // Printed every run because it is the only record — the golden carries the
-    // promotion, so the converted output matches it and no gate can see that we
-    // deliberately diverge from what Antora renders on the live site.
-    if (stats.markedPromotingTitle) {
-      console.log(`${tag} conditional marking: ${stats.markedPromotingTitle} unit(s) marked WITH a promoted block title ` +
-        '(the golden deliberately differs from Antora there: a swallowed `.Title` becomes a real one)')
-    }
-    if (stats.skipped) {
-      console.log(`${tag} conditional marking: skipped ${stats.skipped} block(s) with no blank line ` +
-        'around the directive (marking there would change the parse; they bake instead)')
-    }
-  }
-
   const pagesDir = path.join(outDir, 'pages')
   fs.rmSync(pagesDir, { recursive: true, force: true })
 
@@ -398,6 +350,29 @@ async function main () {
   console.log(
     `[snapshot] rendering ${pages.length} pages` + (component ? ` (component=${component})` : '') + ' ...'
   )
+
+  // The snapshot-flipped tree (see parseArgs `flip`). Its own partial marker, so
+  // the second render does not add a second copy of every include to the
+  // partials registry.
+  const flipDir = path.join(outDir, 'flip')
+  fs.rmSync(flipDir, { recursive: true, force: true })
+  const flipMarker = flip && markPartials ? createPartialMarker() : null
+  const snapshotSet = (cfg) => {
+    const v = (cfg.attributes || {}).snapshot
+    return v != null && v !== false
+  }
+  const flipped = (cfg) => {
+    const attributes = { ...(cfg.attributes || {}) }
+    if (snapshotSet(cfg)) delete attributes.snapshot
+    else attributes.snapshot = ''
+    const out = { ...cfg, attributes }
+    return flipMarker ? { ...out, sourcemap: true, extensions: [...(cfg.extensions || []), flipMarker] } : out
+  }
+  // version@component -> whether its GOLDEN render had `snapshot` set: which half
+  // of a merged conditional the golden is.
+  const flipVersions = {}
+  const flipErrors = []
+  let flippedPages = 0
 
   const errors = []
   const attrLeaks = []
@@ -432,9 +407,31 @@ async function main () {
       fs.mkdirSync(path.dirname(dest), { recursive: true })
       fs.writeFileSync(dest, html.endsWith('\n') ? html : html + '\n')
       written++
+      if (flip && page.src.version) {
+        const cfg = configs.get(cvKey) || siteConfig
+        flipVersions[cvKey] = snapshotSet(cfg)
+        try {
+          let other = loadAsciiDoc(page, contentCatalog, flipped(cfg)).convert()
+          if (markAttributes) other = spanify(other)
+          if (other !== html) {
+            const flipDest = path.join(flipDir, 'pages', page.out.path)
+            fs.mkdirSync(path.dirname(flipDest), { recursive: true })
+            fs.writeFileSync(flipDest, other.endsWith('\n') ? other : other + '\n')
+            flippedPages++
+          }
+        } catch (err) {
+          flipErrors.push({ id: `${cvKey}:${page.src.module}:${page.src.relative}`, message: err.message })
+        }
+      }
     } catch (err) {
       errors.push({ id: `${cvKey}:${page.src.module}:${page.src.relative}`, message: err.message })
     }
+  }
+  if (flip) {
+    fs.mkdirSync(flipDir, { recursive: true })
+    fs.writeFileSync(path.join(flipDir, 'meta.json'), JSON.stringify({ lockfileKey: renderedKey, goldenSnapshot: flipVersions, errors: flipErrors }, null, 2) + '\n')
+    console.log(`[snapshot] snapshot-flipped render: ${flippedPages} page(s) differ -> ${path.join(flipDir, 'pages')}` +
+      (flipErrors.length ? ` (${flipErrors.length} failed, see flip/meta.json)` : ''))
   }
   if (attrLeaks.length) {
     console.error(`[snapshot] WARNING: attribute-marker leak on ${attrLeaks.length} page(s) -- a marker landed in a context it cannot be spanified into:`)

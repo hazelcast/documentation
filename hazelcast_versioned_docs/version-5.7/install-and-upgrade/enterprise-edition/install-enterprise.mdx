@@ -50,6 +50,25 @@ For further information on the available editions and distributions, see the [Ha
 
 ## Use <Variable name="enterprise-product-name" /> binary {/* #use-enterprise-edition-binary */}
 
+<IfSnapshot>
+
+1. Download and extract the <Variable name="enterprise-product-name" /> zip file from <Variable href="https://repository.hazelcast.com/snapshot/com/hazelcast/hazelcast-enterprise-distribution/{ee-version}" text="the Hazelcast repository" />.
+2. Check that Hazelcast Platform is correctly installed, using the following command:
+
+   ```bash
+   hz -V
+   ```
+
+   You should see something like:
+
+   ```bash vars
+   Version: {ee-version}
+   ```
+
+</IfSnapshot>
+
+<IfNotSnapshot>
+
 Download and extract the binaries.
 
 <Tabs groupId="os">
@@ -86,6 +105,8 @@ Download and extract the <Variable href="https://repository.hazelcast.com/downlo
    Version: {ee-version}
    ```
 
+</IfNotSnapshot>
+
 ## Use <Variable name="enterprise-product-name" /> with Java {/* #use-enterprise-edition-with-java */}
 
 To install Hazelcast with Java, you can use one of the following:
@@ -102,6 +123,33 @@ The Java package includes both a member API and a Java client API. The member AP
 
 1. Download and install a [supported JDK](../overview/versioning-compatibility.mdx#supported-java-virtual-machines).
 2. Add the following to your `pom.xml` file.
+
+   <IfSnapshot>
+
+   ```xml conums vars
+   <repositories>
+       <repository>
+           <id>hazelcast-public-snapshot-repository</id>
+           <name>Hazelcast Public Snapshot Repository</name>
+           <url>https://repository.hazelcast.com/snapshot/</url> <1>
+           <releases>
+               <enabled>false</enabled>
+           </releases>
+       </repository>
+   </repositories>
+
+   <dependencies>
+       <dependency>
+           <groupId>com.hazelcast</groupId>
+           <artifactId>hazelcast-enterprise</artifactId> <2>
+           <version>{ee-version}</version> <3>
+       </dependency>
+   </dependencies>
+   ```
+
+   </IfSnapshot>
+
+   <IfNotSnapshot>
 
    ```xml conums vars
    <repositories>
@@ -123,6 +171,8 @@ The Java package includes both a member API and a Java client API. The member AP
        </dependency>
    </dependencies>
    ```
+
+   </IfNotSnapshot>
 
    <CodeCallouts>
 
@@ -218,6 +268,8 @@ Hazelcast <Variable name="enterprise-product-name" /> license keys are only requ
 
 :::
 
+<IfSnapshot>
+
 <Tabs groupId="environment-variable--java--system-property--xml--yaml">
 <TabItem value="xml" label="XML">
 
@@ -242,7 +294,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-Replace `<YOUR_LICENSE_KEY>` with your official license key. Add your license using the <Variable href="https://docs.hazelcast.org/docs/{ee-version}/javadoc/com/hazelcast/config/Config.html#setLicenseKey-java.lang.String-" text="setLicenseKey()" /> method:
+Replace `<YOUR_LICENSE_KEY>` with your official license key. Add your license using the <Variable href="https://docs.hazelcast.org/docs/{ee-version}/javadoc/com/hazelcast/config/Config.html#setLicenseKey-java.lang.String-" text="setLicenseKey()" code /> method:
 
 ```java
 Config config = new Config();
@@ -265,6 +317,60 @@ HZ_LICENSEKEY=<YOUR_LICENSE_KEY>
 
 </TabItem>
 </Tabs>
+
+</IfSnapshot>
+
+<IfNotSnapshot>
+
+<Tabs groupId="environment-variable--java--system-property--xml--yaml">
+<TabItem value="xml" label="XML">
+
+Replace `<YOUR_LICENSE_KEY>` with your official license key.
+
+```xml
+<hazelcast>
+    <license-key><YOUR_LICENSE_KEY></license-key>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+Replace `<YOUR_LICENSE_KEY>` with your official license key.
+
+```yaml
+hazelcast:
+  license-key: <YOUR_LICENSE_KEY>
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+Replace `<YOUR_LICENSE_KEY>` with your official license key. Add your license using the <Variable href="https://docs.hazelcast.org/docs/{ee-version}/javadoc/com/hazelcast/config/Config.html#setLicenseKey-java.lang.String-" text="setLicenseKey()" code /> method:
+
+```java
+Config config = new Config();
+config.setLicenseKey( "<YOUR_LICENSE_KEY>" );
+```
+
+</TabItem>
+<TabItem value="environment-variable" label="Environment Variable">
+
+```shell
+HZ_LICENSEKEY=<YOUR_LICENSE_KEY>
+```
+
+</TabItem>
+<TabItem value="system-property" label="System Property">
+
+```shell
+-Dhazelcast.enterprise.license.key=<YOUR_LICENSE_KEY>
+```
+
+</TabItem>
+</Tabs>
+
+</IfNotSnapshot>
 
 ## Next steps
 
