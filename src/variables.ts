@@ -267,8 +267,8 @@ export const versionedVariables: Record<string, Record<string, Record<string, st
     },
     "5.11": {
       "enterprise-product-name": "Enterprise Edition",
-      "full-version": "5.11.1",
-      "mc-repo-swagger-branch": "5.11.1",
+      "full-version": "5.11.6",
+      "mc-repo-swagger-branch": "5.11.6",
       "open-source-product-name": "Community Edition",
       "page-latest-supported-clc": "5.5.1",
       "page-latest-supported-hazelcast": "5.7"
