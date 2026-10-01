@@ -723,6 +723,7 @@ export const redirects: {from: string; to: string}[] = [
   { from: "/management-center/5.11/prometheus", to: "/management-center/5.11/integrate/prometheus-monitoring" },
   { from: "/management-center/5.11/release-notes/5-11-0", to: "/management-center/5.11/release-notes/release-notes" },
   { from: "/management-center/5.11/release-notes/5-11-1", to: "/management-center/5.11/release-notes/release-notes" },
+  { from: "/management-center/5.11/release-notes/5-11-44", to: "/management-center/5.11/release-notes/release-notes" },
   { from: "/management-center/5.11/sql-browser", to: "/management-center/5.11/tools/sql-browser" },
   { from: "/management-center/5.11/troubleshooting", to: "/management-center/5.11/troubleshoot/management-center" },
   { from: "/management-center/5.11/ui-logs", to: "/management-center/5.11/troubleshoot/management-center" },
