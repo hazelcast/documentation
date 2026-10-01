@@ -63,7 +63,7 @@ The site is hosted on Netlify. Netlify reads its build settings from `netlify.to
 
 Netlify builds a deploy preview for every PR from a branch in this repo, and links it from the PR. PRs from forks do not get a preview.
 
-The build fetches the OpenAPI specs from private repos, so the Netlify build needs a GitHub token. See [GitHub token](#github-token).
+The Netlify build needs a GitHub token to fetch the OpenAPI specs from private repos. See [GitHub token](#github-token).
 
 TODO: document how a merge to `main` reaches production, where the Netlify site and its environment variables are managed, and who has access.
 
@@ -80,7 +80,7 @@ These GitHub Actions workflows run in this repo:
 | `validate-docs-on-schedule.yml`                    | Every Monday, or by hand                                                                     | Builds the site and checks every external link. A link that returns 404 fails the run, and the run summary lists where it appears. |
 | `version-update.yml`, `package.yml`, `promote.yml` | By hand, or from a release pipeline                                                          | See [Releasing a version](#releasing-a-version)                                                                                    |
 
-The release workflows push branches and open PRs with the built-in Actions `GITHUB_TOKEN`. GitHub holds the `pull_request` workflows on a PR opened that way until someone with write access approves them, so the workflows approve them with `.github/scripts/approve-pr-checks`. If that fails, the run warns, and you click **Approve workflows to run** on the PR before Promote Release or the merge. The organization secret `GH_TOKEN` is only used where a workflow reads other repos. The scheduled runs post failures to the `#docs-notifications` Slack channel through the `SLACK_WEBHOOK_DOCS` secret.
+The release workflows push branches and open PRs with the built-in Actions `GITHUB_TOKEN`. GitHub holds the `pull_request` workflows on a PR opened that way until someone with write access approves them. The workflows approve them with `.github/scripts/approve-pr-checks`. If that fails, the run warns, and you click **Approve workflows to run** on the PR before Promote Release or the merge. The organization secret `GH_TOKEN` is only used where a workflow reads other repos. The scheduled runs post failures to the `#docs-notifications` Slack channel through the `SLACK_WEBHOOK_DOCS` secret.
 
 ## Search
 
