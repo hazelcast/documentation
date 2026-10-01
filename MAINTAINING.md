@@ -80,6 +80,8 @@ A ruleset on `main` controls how changes reach it:
 
 Every release PR changes `src/variables.ts`, which means a member of the docs team must approve it. The release workflows open their PRs as `github-actions[bot]`, which cannot approve its own PR.
 
+A second ruleset, a push ruleset, applies to every branch in this repo and in its forks. Only repository admins can push a commit that changes a file in `.github/`. A workflow on any branch can read the repo's secrets, and this rule stops anyone else from adding one. To change a workflow without admin access, send the change to an admin, who pushes it and opens the PR. Anyone else's push that changes `.github/` fails with a "repository rule violations" error.
+
 ## CI workflows
 
 These GitHub Actions workflows run in this repo:
