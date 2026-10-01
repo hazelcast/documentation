@@ -205,6 +205,19 @@ test('an Operator patch updates its line and leaves the supported versions alone
   assert.deepEqual(release(OPERATOR, '5.19.1', {next: '5.20.0'}).next, expected)
 })
 
+test('an Operator patch without --next keeps main on its upcoming snapshot', () => {
+  const expected = base()
+  expected.variables[OPERATOR]['5.19']['operator-chart-version'] = '5.19.1'
+  assert.deepEqual(release(OPERATOR, '5.19.1').next, expected)
+})
+
+test('an Operator patch with a new --next moves main to that snapshot', () => {
+  const expected = base()
+  expected.variables[OPERATOR]['5.19']['operator-chart-version'] = '5.19.1'
+  expected.variables[OPERATOR].current['operator-chart-version'] = '5.21.0-snapshot'
+  assert.deepEqual(release(OPERATOR, '5.19.1', {next: '5.21.0'}).next, expected)
+})
+
 test('a CLC release freezes main as the outgoing version and renames main', () => {
   const {steps, next} = release(CLC, '5.5.2')
   const expected = base()
@@ -223,6 +236,8 @@ test('rejects product releases the tool cannot make', () => {
   rejects(MC, '5.12.0', {next: '5.12.0-SNAPSHOT'}, /is not after/)
   rejects(MC, '5.13.0', {next: '5.14.0-SNAPSHOT'}, /not the line main is on/)
   rejects(OPERATOR, '5.20.0', {}, /needs --next/)
+  rejects(OPERATOR, '5.20.3', {}, /needs --next/)
+  rejects(OPERATOR, '5.19.1', {next: '5.19.0'}, /is not after/)
   rejects(OPERATOR, '5.20.0', {next: '5.20.0'}, /is not after/)
   rejects(CLC, '5.5.1', {}, /not after the current version/)
   rejects(CLC, '5.4.9', {}, /not after the current version/)
@@ -235,6 +250,10 @@ test('an Operator release of a version that is not live changes nothing, includi
   const {steps, notes} = planRelease(OPERATOR, '5.17.5', {next: '5.20.0', hazelcast: '5.8.0'}, base())
   assert.deepEqual(steps, [])
   assert.match(notes.join('\n'), /5\.17 is not a live version/)
+})
+
+test('an Operator release of a version that is not live needs no --next', () => {
+  assert.deepEqual(planRelease(OPERATOR, '5.17.5', {}, base()).steps, [])
 })
 
 test('a patch of an MC version that is not live changes nothing', () => {

@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Approves the pull_request runs that GitHub holds on a PR opened with GITHUB_TOKEN, so that the PR's checks run.
+# Usage: approve-pr-checks <branch> <PR URL>
+set -uo pipefail
+branch=$1
+url=$2
+
+held_runs () {
+  gh run list --branch "${branch}" --event pull_request --json databaseId,conclusion \
+    --jq '.[] | select(.conclusion == "action_required") | .databaseId'
+}
+
+held=""
+for attempt in {1..12}; do
+  sleep 5
+  held=$(held_runs)
+  [[ -n "${held}" ]] && break
+done
+if [[ -z "${held}" ]]; then
+  echo "No held checks on ${url}"
+  exit 0
+fi
+# The PR's workflows are held one by one, so give the rest a moment to appear.
+sleep 5
+held=$(held_runs)
+
+for id in ${held}; do
+  if ! gh api --method POST "repos/${GITHUB_REPOSITORY}/actions/runs/${id}/approve" > /dev/null; then
+    echo "::warning::Could not approve the checks on ${url}. Click Approve workflows to run on the PR."
+    exit 0
+  fi
+done
+echo "Approved $(wc -w <<< "${held}" | tr -d ' ') held checks on ${url}"

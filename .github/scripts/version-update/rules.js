@@ -220,13 +220,15 @@ function planManagementCenter (release, {next}, state) {
   return {steps, notes}
 }
 
-// As hazelcast-platform-operator's docs-release workflow. Main is always `latest-snapshot`.
+// As hazelcast-platform-operator's docs-release workflow, except that a release of an existing line can leave out
+// --next: the upcoming release has not changed, so main's chart version stays. Main is always `latest-snapshot`.
 function planOperator (release, {next, hazelcast, mc}, state) {
   const {steps, notes, setVars} = plan(state)
   const {version, majorMinor: line} = release
-  if (!next) throw new Error(`An ${OPERATOR} release needs --next, the upcoming release (x.y.z)`)
-  parseRelease(next)
-  if (compareVersions(next, version) <= 0) throw new Error(`--next ${next} is not after ${version}`)
+  if (next) {
+    parseRelease(next)
+    if (compareVersions(next, version) <= 0) throw new Error(`--next ${next} is not after ${version}`)
+  }
   const supported = {[MC_HZ_VERSION]: hazelcast, [HZ_MC_VERSION]: mc}
   const releaseValues = {'operator-chart-version': version, ...supported}
 
@@ -238,6 +240,7 @@ function planOperator (release, {next, hazelcast, mc}, state) {
       notes.push(`${OPERATOR} ${line} is not a live version; nothing to change`)
       return {steps, notes}
     }
+    if (!next) throw new Error(`A new ${OPERATOR} line needs --next, the upcoming release (x.y.z)`)
     const current = state.current[OPERATOR]
     const variables = {...state.variables[OPERATOR].current}
     for (const [k, v] of Object.entries(releaseValues)) if (v !== undefined) variables[k] = v
@@ -245,7 +248,7 @@ function planOperator (release, {next, hazelcast, mc}, state) {
     steps.push({step: 'setLatestRedirects', component: OPERATOR, latest: line})
     steps.push({step: 'dropPlaceholders', component: OPERATOR, segs: [line]})
   }
-  setVars(OPERATOR, 'current', {'operator-chart-version': `${next}-snapshot`, ...supported})
+  setVars(OPERATOR, 'current', {'operator-chart-version': next ? `${next}-snapshot` : undefined, ...supported})
   return {steps, notes}
 }
 

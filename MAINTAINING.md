@@ -25,11 +25,11 @@ The command for each product:
 | ----------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | Platform          | `node .github/scripts/version-update hazelcast 5.7.2`               | `node .github/scripts/version-update hazelcast 6.0.0 --next 6.1.0-SNAPSHOT`           |
 | Management Center | `node .github/scripts/version-update management-center 5.11.2`      | `node .github/scripts/version-update management-center 5.12.0 --next 5.13.0-SNAPSHOT` |
-| Operator          | `node .github/scripts/version-update operator 5.19.1 --next 5.20.0` | `node .github/scripts/version-update operator 5.20.0 --next 5.21.0`                   |
+| Operator          | `node .github/scripts/version-update operator 5.19.1`               | `node .github/scripts/version-update operator 5.20.0 --next 5.21.0`                   |
 | CLC               | `node .github/scripts/version-update clc 5.5.2`                     | `node .github/scripts/version-update clc 5.6.0`                                       |
 
 The options:
-- `--next`: for a Platform or Management Center major or minor release, the development version that `main` moves to, e.g. `6.1.0-SNAPSHOT`. For Operator, the next planned release, e.g. `5.21.0`, which every Operator release needs. In the Version update workflow, these are the `next-snapshot` and `next-release` inputs.
+- `--next`: for a Platform or Management Center major or minor release, the development version that `main` moves to, e.g. `6.1.0-SNAPSHOT`. For Operator, the next planned release, e.g. `5.21.0`. A release of a new Operator line needs it. On a patch, leave it out to keep `main`'s value. In the Version update workflow, these are the `next-snapshot` and `next-release` inputs.
 - `--hazelcast` and `--mc`: Operator only, on any release. The newest Platform and Management Center versions that the release supports, e.g. `--hazelcast 5.7.1 --mc 5.11.1`. Leave them out to keep the current values. In the workflow, these are the `supported-hazelcast` and `supported-mc` inputs.
 
 ### What the script changes
@@ -44,7 +44,7 @@ A major or minor release makes a new version of the docs:
 
 Each product has its own differences:
 - **Platform and Management Center**: a release of one also updates the other's "latest supported" value, `page-latest-supported-mc` or `page-latest-supported-hazelcast`.
-- **Operator**: a release is a new version when its X.Y line does not exist yet, whatever its patch number. A release of an existing line updates that version's variables. `main` is always `latest-snapshot`, and the script never renames it. Every release sets `main`'s `operator-chart-version` from `--next`.
+- **Operator**: a release is a new version when its X.Y line does not exist yet, whatever its patch number. A release of an existing line updates that version's variables. `main` is always `latest-snapshot`, and the script never renames it. A release sets `main`'s `operator-chart-version` from `--next`, if given.
 - **CLC**: `main` is always the newest release, not a snapshot. Every CLC release, including a patch release, copies `main` to a version named after the outgoing release, and renames `main` to the new release. Merge the new release's content into `main` after the version update. The outgoing content then stays in the outgoing version.
 
 ### What the script refuses
@@ -80,7 +80,7 @@ These GitHub Actions workflows run in this repo:
 | `validate-docs-on-schedule.yml`                    | Every Monday, or by hand                                                                     | Builds the site and checks every external link. A link that returns 404 fails the run, and the run summary lists where it appears. |
 | `version-update.yml`, `package.yml`, `promote.yml` | By hand, or from a release pipeline                                                          | See [Releasing a version](#releasing-a-version)                                                                                    |
 
-The release workflows push branches and open PRs with the built-in Actions `GITHUB_TOKEN`. A PR opened that way triggers no `pull_request` workflows, so they start `tests.yml` and `maven-pr-builder.yaml` on the PR branch themselves. The organization secret `GH_TOKEN` is only used where a workflow reads other repos. The scheduled runs post failures to the `#docs-notifications` Slack channel through the `SLACK_WEBHOOK_DOCS` secret.
+The release workflows push branches and open PRs with the built-in Actions `GITHUB_TOKEN`. GitHub holds the `pull_request` workflows on a PR opened that way until someone with write access approves them, so the workflows approve them with `.github/scripts/approve-pr-checks`. If that fails, the run warns, and you click **Approve workflows to run** on the PR before Promote Release or the merge. The organization secret `GH_TOKEN` is only used where a workflow reads other repos. The scheduled runs post failures to the `#docs-notifications` Slack channel through the `SLACK_WEBHOOK_DOCS` secret.
 
 ## Search
 
