@@ -177,7 +177,7 @@ Every change reaches the site through a pull request (PR) against the `main` bra
 
 Netlify builds a deploy preview of the site for every PR from a branch in this repo, and links it from the PR. Use the preview to check your change as readers will see it. PRs from forks do not get a deploy preview.
 
-The docs team reviews every PR, and GitHub requests the review automatically. Add anyone else who needs to check the change, such as the engineers who own the feature.
+Every PR needs one approval before it can be merged. Request a review from someone who can check the change, such as an engineer who owns the feature. A PR that changes the build, the site code, the workflows, or these guides also needs an approval from the docs team, and GitHub requests that review automatically. If you have write access, merge the PR once it is approved.
 
 To report a problem without fixing it, [open an issue](https://github.com/hazelcast/documentation/issues/new) that links to the page, or use the feedback button on the page.
 

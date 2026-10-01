@@ -11,11 +11,11 @@ Run `npm run test:version-update` if you change the script.
 ### Run the version update script
 
 There are three ways to run the script:
-- **Platform release pipeline**: the Hazelcast release pipeline calls `package.yml`, which opens a draft PR, and then `promote.yml`, which marks the PR ready, waits for its checks, and merges it. Someone with write access must approve the PR before Promote Release runs, or the merge fails. If the pipeline cannot run, start Package Release and then Promote Release by hand from the Actions tab, or run the script locally.
-- **Version update workflow**: run `version-update.yml` from the Actions tab for Management Center, Operator, or CLC. It opens a PR. Tick **merge** to merge the PR once its checks pass and someone approves it. A product's own release workflow can start it with the GitHub CLI, e.g. `gh workflow run version-update.yml -R hazelcast/documentation -f component=clc -f version=5.5.2`.
+- **Platform release pipeline**: the Hazelcast release pipeline calls `package.yml`, which opens a draft PR, and then `promote.yml`, which marks the PR ready, waits for its checks, and merges it. A member of the docs team must approve the PR before Promote Release runs, or the merge fails. See [Reviews and merging](#reviews-and-merging). If the pipeline cannot run, start Package Release and then Promote Release by hand from the Actions tab, or run the script locally.
+- **Version update workflow**: run `version-update.yml` from the Actions tab for Management Center, Operator, or CLC. It opens a PR. Tick **merge** to merge the PR once its checks pass and a member of the docs team approves it. A product's own release workflow can start it with the GitHub CLI, e.g. `gh workflow run version-update.yml -R hazelcast/documentation -f component=clc -f version=5.5.2`.
 - **Locally**: run the script from the repo root on an up-to-date `main`, then open the PR yourself. Add `--dry-run` to list the changes without making them.
 
-Re-running a workflow for the same release closes the earlier PR and opens a new one. If the script fails partway through, it restores every file it changed.
+Re-running a workflow for the same release closes the earlier PR and opens a new one, which needs its own approval. If the script fails partway through, it restores every file it changed.
 
 ### Commands
 
@@ -68,6 +68,17 @@ The Netlify build needs a GitHub token to fetch the OpenAPI specs from private r
 TODO: document how a merge to `main` reaches production, where the Netlify site and its environment variables are managed, and who has access.
 
 The page redirects in `src/redirects` are processed by Docusaurus during the build, and are treated as instant meta refreshes.
+
+## Reviews and merging
+
+A ruleset on `main` controls how changes reach it:
+- Nobody can push to `main` directly, including admins. Every change goes through a PR.
+- A PR needs one approval before it can be merged. Anyone with write access can then merge it.
+- A PR that changes a path listed in `.github/CODEOWNERS` needs an approval from one of that path's listed reviewers. The file lists the build, the site code, the workflows, the release script's files, and the contributor guides, which the docs team (`@hazelcast/documentation`) reviews. CLC pages can also be approved by the CLC maintainer.
+- A new commit on a PR dismisses its approvals, and the approval must come from someone other than the author of the last push.
+- PRs are squash-merged.
+
+Every release PR changes `src/variables.ts`, which means a member of the docs team must approve it. The release workflows open their PRs as `github-actions[bot]`, which cannot approve its own PR.
 
 ## CI workflows
 
