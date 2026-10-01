@@ -176,9 +176,9 @@ export const versionedVariables: Record<string, Record<string, Record<string, st
       "url-cloud-signup": "https://cloud.hazelcast.com/sign-up"
     },
     "5.4": {
-      "ee-version": "5.4.5",
+      "ee-version": "5.4.33",
       "enterprise-product-name": "Enterprise Edition",
-      "full-version": "5.4.5",
+      "full-version": "5.4.33",
       "hazelcast-cloud": "Cloud",
       "minor-version": "5.4",
       "open-source-product-name": "Community Edition",
