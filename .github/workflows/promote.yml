@@ -1,12 +1,12 @@
 name: Promote Release
-run-name: ${{ github.workflow }} (`${{ inputs.VERSION }}`@${{ inputs.ENVIRONMENT }})
+run-name: ${{ github.workflow }} (Platform `${{ inputs.VERSION }}`@${{ inputs.ENVIRONMENT }})
 
 on:
   # Called from the release orchestrator
   workflow_dispatch:
     inputs:
       VERSION:
-        description: 'The version to promote (e.g. `5.4.1`)'
+        description: 'The Platform version to promote (e.g. `5.7.1`)'
         required: true
       RELEASE_TYPE:
         description: 'What should be promoted'
@@ -33,7 +33,7 @@ jobs:
       pull-requests: write
     env:
       VERSION: ${{ inputs.VERSION }}
-      TITLE: Update main to ${{ inputs.VERSION }}
+      TITLE: Update Platform to ${{ inputs.VERSION }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v7
@@ -55,7 +55,7 @@ jobs:
         id: find-pr
         run: |
           numbers=$(gh pr list --state open --search "\"${TITLE}\" in:title" --json number,title,headRefName \
-            --jq '.[] | select(.title == env.TITLE and (.headRefName | startswith("update_version_"))) | .number')
+            --jq '.[] | select(.title == env.TITLE and (.headRefName | startswith("update_platform_"))) | .number')
           if [[ $(grep -c . <<< "${numbers}") -gt 1 ]]; then
             echo "::error::More than one open PR titled '${TITLE}': $(tr '\n' ' ' <<< "${numbers}")"
             exit 1
@@ -67,7 +67,7 @@ jobs:
         run: |
           node .github/scripts/version-update --dry-run | tee dry-run.log
           if ! grep -q "^Nothing to change for ${VERSION}.$" dry-run.log; then
-            echo "::error::No open PR titled '${TITLE}', but ${VERSION} still has changes to make. Re-run Package Release."
+            echo "::error::No open PR titled '${TITLE}', but Platform ${VERSION} still has changes to make. Re-run Package Release."
             exit 1
           fi
         env:
