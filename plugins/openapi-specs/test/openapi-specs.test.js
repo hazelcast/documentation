@@ -172,7 +172,7 @@ test('without a token a build fails on an unstaged spec and makes no requests', 
   quiet(t)
   const calls = github(t, {main: specYaml('A')})
   const dir = site({pages: {[`${COMPONENT}/api.mdx`]: page()}})
-  await assert.rejects(load(dir), /no GitHub token/)
+  await assert.rejects(load(dir), /without a GitHub token/)
   assert.equal(calls.length, 0)
 })
 

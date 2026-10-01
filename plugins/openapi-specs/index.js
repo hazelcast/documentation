@@ -303,19 +303,18 @@ module.exports = function openapiSpecsPlugin (context, options) {
       // Without a token a build can't check the staged specs against the product repos; say so.
       if (!token && isBuild && staged.size) {
         console.warn(
-          '[openapi-specs] no GitHub token set, so the staged specs were published without being' +
-          ' checked against the repos that own them. Set GITHUB_TOKEN in CI.',
+          '[openapi-specs] no GitHub token set. The staged specs were published without being' +
+          ' checked against the repos that own them.',
         )
       }
       if (missingWithoutToken.length) {
         // One message per run: single cause, single fix.
         const message =
-          `[openapi-specs] ${missingWithoutToken.length} spec(s) are not staged and no GitHub token ` +
-          'is set, so they cannot be fetched — the repos that own them are private.' +
+          `[openapi-specs] ${missingWithoutToken.length} spec(s) are not staged and cannot be fetched ` +
+          'without a GitHub token. The repos that own them are private.' +
           `\n  ${missingWithoutToken.join('\n  ')}`
         if (isBuild) throw new Error(message)
-        console.warn(`${message}\n  Those API pages will not render. Stage them with:` +
-          '\n    GITHUB_TOKEN=$(gh auth token) npm start')
+        console.warn(`${message}\n  Those API pages will not render.`)
       }
       if (failures.length) {
         const message =
@@ -331,9 +330,8 @@ module.exports = function openapiSpecsPlugin (context, options) {
       )
       if (!token && !isBuild && unchecked) {
         console.warn(
-          '[openapi-specs] no GitHub token set, so the staged specs were not checked against the' +
-          ' repos that own them and may be out of date. To check them:' +
-          '\n    GITHUB_TOKEN=$(gh auth token) npm start',
+          '[openapi-specs] no GitHub token set. The staged specs were not checked against the' +
+          ' repos that own them and may be out of date.',
         )
       }
       return { anchorsByUrl, specs, specHashByUrl }
