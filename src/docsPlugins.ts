@@ -66,6 +66,8 @@ function contentDocs(options: Options): PluginConfig {
     '@docusaurus/plugin-content-docs',
     {
       ...options,
+      // Docusaurus appends each page's repo-relative path, so versioned pages link to their own copy under <id>_versioned_docs.
+      editUrl: 'https://github.com/hazelcast/documentation/edit/main/',
       sidebarItemsGenerator,
       beforeDefaultRemarkPlugins: [
         ...(options.beforeDefaultRemarkPlugins ?? []),

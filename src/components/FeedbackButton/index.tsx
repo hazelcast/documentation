@@ -4,7 +4,6 @@ import {Button} from '@hazelcast/ui/lib/components/Button';
 import {Edit3} from 'react-feather';
 
 import 'pushfeedback/dist/pushfeedback/pushfeedback.css';
-import styles from './styles.module.css';
 
 // Docs feedback button in the right-hand rail, rendered by src/theme/DocItem/Layout (which guarantees the
 // rail exists even on pages with no headings). The trigger is HIVE's Button calling <feedback-modal>.openModal().
@@ -49,10 +48,11 @@ export default function FeedbackButton(): ReactNode {
   useEffect(() => setMounted(true), []);
 
   return (
-    <div className={styles.feedback}>
+    <>
       <Button
         variant="outlined"
         color="secondary"
+        fullWidth
         iconLeft={Edit3}
         iconLeftAriaLabel="Feedback"
         onClick={() => {
@@ -73,6 +73,6 @@ export default function FeedbackButton(): ReactNode {
           />,
           document.body,
         )}
-    </div>
+    </>
   );
 }
