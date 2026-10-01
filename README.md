@@ -97,3 +97,7 @@ To fix or add a page, see [CONTRIBUTING.md](CONTRIBUTING.md). It covers page fro
 ## Maintaining the site
 
 Releases, deployment, external content, and third-party services are covered in [MAINTAINING.md](MAINTAINING.md).
+
+## License
+
+The documentation is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
