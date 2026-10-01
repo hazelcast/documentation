@@ -77,3 +77,27 @@ test('outside a versioned docs page, the global values are used', () => {
   const $ = cheerio.load(renderToStaticMarkup(React.createElement(Variable, {href: `https://example.com/{${name}}`, text: 'x'})))
   assert.equal($('a').attr('href'), `https://example.com/${variables[name]}`)
 })
+
+// Spec: a link within the site goes through Link, so the build checks it, unless it targets a version the site does
+// not build, which the build cannot check. Only an off-site link opens in a new tab.
+test('a site link is checked only when the site builds its version, and only an off-site link opens a new tab', () => {
+  client.allDocsData = {
+    'management-center': {path: '/management-center', versions: [{name: '5.11', path: '/management-center/5.11'}]},
+  }
+  client.active = {activePlugin: {pluginId: 'hazelcast'}, activeVersion: {name: 'current'}}
+  const anchor = (href) => cheerio.load(renderToStaticMarkup(React.createElement(Variable, {href, text: 'x'})))('a')
+
+  const built = anchor('/management-center/5.11/clusters/clients')
+  assert.equal(built.attr('data-docusaurus-link'), '')
+  assert.equal(built.attr('target'), undefined)
+
+  const unbuilt = anchor('/management-center/5.3/clusters/clients')
+  assert.equal(unbuilt.attr('data-docusaurus-link'), undefined)
+  assert.equal(unbuilt.attr('href'), '/management-center/5.3/clusters/clients')
+  assert.equal(unbuilt.attr('target'), undefined)
+
+  const offSite = anchor('https://example.com/x')
+  assert.equal(offSite.attr('data-docusaurus-link'), undefined)
+  assert.equal(offSite.attr('target'), '_blank')
+  client.allDocsData = undefined
+})

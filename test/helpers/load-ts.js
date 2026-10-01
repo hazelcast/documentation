@@ -1,7 +1,7 @@
 'use strict'
 
 // Loads the site's TypeScript/TSX modules in plain Node the way the build resolves them: `@site/` aliases,
-// extensionless imports, and the Docusaurus client hooks replaced by stubs a test drives through `client`.
+// extensionless imports, and the Docusaurus client hooks and Link replaced by stubs a test drives through `client`.
 
 const path = require('node:path')
 const babel = require('@babel/core')
@@ -31,6 +31,7 @@ const jiti = require('jiti')(path.join(site, 'package.json'), {
   alias: {
     '@site': site,
     '@docusaurus/router': path.join(__dirname, 'router.js'),
+    '@docusaurus/Link': path.join(__dirname, 'link.js'),
     '@docusaurus/plugin-content-docs/client': path.join(__dirname, 'docs-client.js'),
   },
 })
