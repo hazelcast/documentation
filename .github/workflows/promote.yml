@@ -34,7 +34,7 @@ jobs:
     env:
       VERSION: ${{ inputs.VERSION }}
       TITLE: Update main to ${{ inputs.VERSION }}
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -89,13 +89,17 @@ jobs:
           if [[ $(gh pr view "${number}" --json isDraft --jq .isDraft) == "true" ]]; then
             gh pr ready "${number}"
           fi
-          if ! checks=$(gh pr checks "${number}" --watch --fail-fast 2>&1); then
-            if grep -q "no checks reported" <<< "${checks}"; then
-              echo "No checks reported on #${number}"
-            else
+          for attempt in {1..30}; do
+            checks=$(gh pr checks "${number}" --watch --fail-fast 2>&1) && break
+            if ! grep -q "no checks reported" <<< "${checks}"; then
               echo "${checks}"
               echo "::error::Checks on #${number} did not pass"
               exit 1
             fi
-          fi
+            if [[ ${attempt} -eq 30 ]]; then
+              echo "::error::No checks reported on #${number}"
+              exit 1
+            fi
+            sleep 10
+          done
           gh pr merge "${number}" --squash --delete-branch

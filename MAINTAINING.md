@@ -80,7 +80,7 @@ These GitHub Actions workflows run in this repo:
 | `validate-docs-on-schedule.yml`                    | Every Monday, or by hand                                                                     | Builds the site and checks every external link. A link that returns 404 fails the run, and the run summary lists where it appears. |
 | `version-update.yml`, `package.yml`, `promote.yml` | By hand, or from a release pipeline                                                          | See [Releasing a version](#releasing-a-version)                                                                                    |
 
-The workflows use the organization secret `GH_TOKEN`. The scheduled runs post failures to the `#docs-notifications` Slack channel through the `SLACK_WEBHOOK_DOCS` secret.
+The release workflows push branches and open PRs with the built-in Actions `GITHUB_TOKEN`. A PR opened that way triggers no `pull_request` workflows, so they start `tests.yml` and `maven-pr-builder.yaml` on the PR branch themselves. The organization secret `GH_TOKEN` is only used where a workflow reads other repos. The scheduled runs post failures to the `#docs-notifications` Slack channel through the `SLACK_WEBHOOK_DOCS` secret.
 
 ## Search
 
