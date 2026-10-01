@@ -29,7 +29,7 @@ on:
         description: 'Operator only, optional: newest Management Center version this release supports, e.g. 5.11.1. Blank keeps the current value.'
         required: false
       merge:
-        description: 'Merge the PR automatically once its checks pass'
+        description: 'Merge the PR automatically once its checks pass and it is approved'
         type: boolean
         default: false
 
@@ -104,6 +104,7 @@ jobs:
           .github/scripts/approve-pr-checks "${branch}" "${url}"
 
       # Checks must pass: a red check on a version update means a broken site would go live.
+      # The ruleset does not require checks, so wait for them here. Auto-merge then waits for the approval the bot cannot give.
       - name: Merge the PR
         if: inputs.merge && steps.pr.outputs.url != ''
         run: |
@@ -121,4 +122,4 @@ jobs:
             fi
             sleep 10
           done
-          gh pr merge "${url}" --squash --delete-branch
+          gh pr merge "${url}" --auto --squash

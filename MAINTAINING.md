@@ -11,8 +11,8 @@ Run `npm run test:version-update` if you change the script.
 ### Run the version update script
 
 There are three ways to run the script:
-- **Platform release pipeline**: the Hazelcast release pipeline calls `package.yml`, which opens a draft PR, and then `promote.yml`, which marks the PR ready, waits for its checks, and merges it. If the pipeline cannot run, start Package Release and then Promote Release by hand from the Actions tab, or run the script locally.
-- **Version update workflow**: run `version-update.yml` from the Actions tab for Management Center, Operator, or CLC. It opens a PR. Tick **merge** to merge the PR once its checks pass. A product's own release workflow can start it with the GitHub CLI, e.g. `gh workflow run version-update.yml -R hazelcast/documentation -f component=clc -f version=5.5.2`.
+- **Platform release pipeline**: the Hazelcast release pipeline calls `package.yml`, which opens a draft PR, and then `promote.yml`, which marks the PR ready, waits for its checks, and merges it. Someone with write access must approve the PR before Promote Release runs, or the merge fails. If the pipeline cannot run, start Package Release and then Promote Release by hand from the Actions tab, or run the script locally.
+- **Version update workflow**: run `version-update.yml` from the Actions tab for Management Center, Operator, or CLC. It opens a PR. Tick **merge** to merge the PR once its checks pass and someone approves it. A product's own release workflow can start it with the GitHub CLI, e.g. `gh workflow run version-update.yml -R hazelcast/documentation -f component=clc -f version=5.5.2`.
 - **Locally**: run the script from the repo root on an up-to-date `main`, then open the PR yourself. Add `--dry-run` to list the changes without making them.
 
 Re-running a workflow for the same release closes the earlier PR and opens a new one. If the script fails partway through, it restores every file it changed.
