@@ -21,12 +21,12 @@ Re-running a workflow for the same release closes the earlier PR and opens a new
 
 The command for each product:
 
-| Product           | Patch release                                                       | Major or minor release                                                                |
-| ----------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Platform          | `node .github/scripts/version-update hazelcast 5.7.2`               | `node .github/scripts/version-update hazelcast 6.0.0 --next 6.1.0-SNAPSHOT`           |
-| Management Center | `node .github/scripts/version-update management-center 5.11.2`      | `node .github/scripts/version-update management-center 5.12.0 --next 5.13.0-SNAPSHOT` |
-| Operator          | `node .github/scripts/version-update operator 5.19.1`               | `node .github/scripts/version-update operator 5.20.0 --next 5.21.0`                   |
-| CLC               | `node .github/scripts/version-update clc 5.5.2`                     | `node .github/scripts/version-update clc 5.6.0`                                       |
+| Product           | Patch release                                                  | Major or minor release                                                                |
+| ----------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Platform          | `node .github/scripts/version-update hazelcast 5.7.2`          | `node .github/scripts/version-update hazelcast 6.0.0 --next 6.1.0-SNAPSHOT`           |
+| Management Center | `node .github/scripts/version-update management-center 5.11.2` | `node .github/scripts/version-update management-center 5.12.0 --next 5.13.0-SNAPSHOT` |
+| Operator          | `node .github/scripts/version-update operator 5.19.1`          | `node .github/scripts/version-update operator 5.20.0 --next 5.21.0`                   |
+| CLC               | `node .github/scripts/version-update clc 5.5.2`                | `node .github/scripts/version-update clc 5.6.0`                                       |
 
 The options:
 - `--next`: for a Platform or Management Center major or minor release, the development version that `main` moves to, e.g. `6.1.0-SNAPSHOT`. For Operator, the next planned release, e.g. `5.21.0`. A release of a new Operator line needs it. On a patch, leave it out to keep `main`'s value. In the Version update workflow, these are the `next-snapshot` and `next-release` inputs.
@@ -65,7 +65,9 @@ Netlify builds a deploy preview for every PR from a branch in this repo, and lin
 
 The Netlify build needs a GitHub token to fetch the OpenAPI specs from private repos. See [GitHub token](#github-token).
 
-TODO: document how a merge to `main` reaches production, where the Netlify site and its environment variables are managed, and who has access.
+Other repos start a production build with `build-site.yml`, a reusable workflow that calls a Netlify build hook. The calling workflow passes the hook's ID as the `netlify_build_hook_id` secret. The Platform and Management Center product repos call it when their REST API specs change. The API reference pages fetch those specs when the site builds, and a new build is the only way a spec change reaches the site.
+
+<!-- TODO: document how a merge to `main` reaches production, where the Netlify site and its environment variables are managed, and who has access. -->
 
 The page redirects in `src/redirects` are processed by Docusaurus during the build, and are treated as instant meta refreshes.
 
@@ -88,6 +90,7 @@ These GitHub Actions workflows run in this repo:
 
 | Workflow                                           | Runs                                                                                         | What it does                                                                                                                       |
 | -------------------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `build-site.yml`                                   | When another repo's workflow calls it                                                        | Starts a production build on Netlify through a build hook. See [Deployment](#deployment).                                          |
 | `maven-pr-builder.yaml`                            | On PRs that change `hazelcast/examples/`, `pom.xml`, or `src/variables.ts`, and every Sunday | Compiles the Java examples against the Platform version and minimum Java version of `main`, from `src/variables.ts`                |
 | `tests.yml`                                        | On every PR                                                                                  | Runs `npm test`: the unit tests for the plugins, remark plugins, and scripts                                                       |
 | `validate-docs-on-schedule.yml`                    | Every Monday, or by hand                                                                     | Builds the site and checks every external link. A link that returns 404 fails the run, and the run summary lists where it appears. |
@@ -103,7 +106,7 @@ The crawler indexes only the latest release of each product. After a major or mi
 
 `contextualSearch` is off on purpose. With it on, a search on an older version returns no results, because older versions are not indexed.
 
-TODO: replace the test index name in `docusaurus.config.ts` with the production index, and remove the temporary `algolia-site-verification` tag from `headTags`, before cutover. Document who has access to the Algolia dashboard.
+<!-- TODO: replace the test index name in `docusaurus.config.ts` with the production index, and remove the temporary `algolia-site-verification` tag from `headTags`, before cutover. Document who has access to the Algolia dashboard. -->
 
 ## Build outputs used by other systems
 
@@ -155,7 +158,7 @@ Each entry in `tutorials/examples.json` and `operator/examples.json` pins one fi
 
 4. Run `npm run start` or `npm run build`. The build fails if the hash does not match.
 
-TODO: add a script that updates the pins, to replace these manual steps once the migration tooling is removed.
+<!-- TODO: add a script that updates the pins, to replace these manual steps once the migration tooling is removed. -->
 
 ### Fetched from Wordpress
 
@@ -200,7 +203,7 @@ Before this repo, the site was built with Antora from separate repos. The conten
 
 In the versioned repos, each released version has its own branch, e.g. `v/5.7` in `hz-docs`.
 
-TODO: state that the repos are archived, once they are.
+<!-- TODO: state that the repos are archived, once they are. -->
 
 ## Migration tooling
 
