@@ -157,6 +157,8 @@ module.exports = function llmsTxtPlugin () {
     // postBuild only: a published artifact written from the same build its URLs point at. No timestamp, so output is deterministic.
     async postBuild ({ outDir, siteConfig, plugins }) {
       const labels = productLabels(siteConfig)
+      // Positions index every navbar item, not only the docSidebar ones.
+      const afterNavbar = siteConfig.themeConfig?.navbar?.items?.length ?? 0
       const products = plugins
         .filter((plugin) => plugin.name === DOCS_PLUGIN_NAME)
         .map((plugin, index) => {
@@ -166,7 +168,7 @@ module.exports = function llmsTxtPlugin () {
           return {
             label: named?.label ?? titleCase(id),
             // Instances the navbar doesn't name sort last, in config order.
-            order: named?.position ?? labels.size + index,
+            order: named?.position ?? afterNavbar + index,
             segment: versionSegment(plugin, version, siteConfig.baseUrl),
             ...sections(version, publishedDocs(version)),
           }

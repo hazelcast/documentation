@@ -44,7 +44,11 @@ function listChanges (siteDir, commit) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'backport-index-'))
   try {
     const index = path.join(dir, 'index')
-    fs.copyFileSync(path.resolve(siteDir, git(siteDir, ['rev-parse', '--git-path', 'index']).toString().trim()), index)
+    const original = path.resolve(siteDir, git(siteDir, ['rev-parse', '--git-path', 'index']).toString().trim())
+    fs.copyFileSync(original, index)
+    // Keep the index's mtime: git detects a same-size edit made within its timestamp granularity by comparing against it.
+    const {atime, mtime} = fs.statSync(original)
+    fs.utimesSync(index, atime, mtime)
     const env = {...process.env, GIT_INDEX_FILE: index}
     git(siteDir, ['add', '-A'], env)
     return parseNameStatus(git(siteDir, ['diff', '--cached', ...DIFF, 'HEAD', '--'], env))

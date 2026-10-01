@@ -64,6 +64,7 @@ These commands are also available:
 | `npm run typecheck`                      | Type-check the TypeScript in `src/`, `plugins/`, and `docusaurus.config.ts`.               |
 | `npm run clear`                          | Delete Docusaurus caches and generated files. Use it when the site behaves inconsistently. |
 | `npm run backport -- <version>...`       | Apply your changes to other versions. See [Changing content for several versions](CONTRIBUTING.md#changing-content-for-several-versions). |
+| `npm test`                               | Run every unit test: the site's plugins, remark plugins, and scripts.                      |
 | `npm run test:version-update`            | Run the tests for the release script.                                                      |
 | `npm run test:backport`                  | Run the tests for the backport script.                                                     |
 | `mvn test -Dversion.hazelcast=<version>` | Compile-check the Java in `hazelcast/examples/`.                                           |
@@ -84,6 +85,7 @@ The code that builds the site is in these folders:
   -  `src/redirects.ts` holds redirects from old page URLs.
 - `plugins/` holds local Docusaurus plugins.
 - `static/` holds files served as-is, such as `static/_redirects`.
+- A `test/` folder next to the code holds that code's unit tests, e.g. `plugins/llms-txt/test/`. The top-level `test/helpers/` loads the site's TypeScript and React modules into those tests.
 - `.github/` holds CI workflows and the release script.
 - `migration/` holds throwaway tooling from the Antora migration. See [Migration tooling](MAINTAINING.md#migration-tooling).
 - `AGENTS.md` holds instructions for AI coding agents working in this repo.

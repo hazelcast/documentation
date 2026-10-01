@@ -57,6 +57,7 @@ Run the checks that match what you changed:
 | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `npm run build`                          | Anything. It fails on a broken internal link, a broken Markdown link, or a missing image. It does not check anchors (`#fragment`), so verify cross-page anchors yourself.  |
 | `npm run typecheck`                      | TypeScript in `src/`, `plugins/`, or `docusaurus.config.ts`.                                                                                                               |
+| `npm test`                               | Code in `src/`, `plugins/`, `scripts/`, or `.github/scripts/`, `docusaurus.config.ts`, or any file the release script rewrites. It runs every unit test in the repo. |
 | `npm run test:version-update`            | `.github/scripts/version-update/`, or any file it rewrites: `src/variables.ts`, `src/redirects.ts`, `src/currentVersions.json`, `*_versions.json`, or `static/_redirects`. |
 | `npm run test:backport`                  | `scripts/backport/`, or `versionLink` in `.github/scripts/version-update/files.js`, which the backport script uses to rewrite links.                              |
 | `mvn test -Dversion.hazelcast=<version>` | Java in `hazelcast/examples/`.                                                                                                                                             |
