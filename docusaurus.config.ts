@@ -5,6 +5,15 @@ import {redirects} from './src/redirects';
 import {docs, versionedDocs, versionedInstances, latestSegs, isSnapshotUrl} from './src/docsPlugins';
 import {variables, versionedVariables} from './src/variables';
 
+// Retired versions served as static Antora HTML from a separate site. See plugins/archived-versions.
+const archivedVersions: {origin: string; versions: Record<string, string[]>} = require('./src/archivedVersions.json');
+
+// Links from a product's version dropdown to its newest archived version, whose own picker lists the rest.
+// `pathname://` keeps the link out of the router and the broken-link check, because the page is not in this build.
+const archivedVersionsItem = (product: string) => [
+  {href: `pathname:///${product}/${archivedVersions.versions[product][0]}/`, label: 'Archived versions', target: '_self'},
+];
+
 const config: Config = {
   title: 'Hazelcast Documentation',
   tagline: 'Hazelcast product documentation',
@@ -101,6 +110,7 @@ const config: Config = {
     './plugins/tutorial-examples',
     './plugins/tutorials-index',
     './plugins/llms-txt',
+    ['./plugins/archived-versions', archivedVersions],
   ],
 
   // Lets the landing page resolve its `/<comp>/latest/` links (no remark pass runs on React pages).
@@ -187,21 +197,25 @@ const config: Config = {
           type: 'docsVersionDropdown',
           docsPluginId: 'hazelcast',
           position: 'right',
+          dropdownItemsAfter: archivedVersionsItem('hazelcast'),
         },
         {
           type: 'docsVersionDropdown',
           docsPluginId: 'operator',
           position: 'right',
+          dropdownItemsAfter: archivedVersionsItem('operator'),
         },
         {
           type: 'docsVersionDropdown',
           docsPluginId: 'clc',
           position: 'right',
+          dropdownItemsAfter: archivedVersionsItem('clc'),
         },
         {
           type: 'docsVersionDropdown',
           docsPluginId: 'management-center',
           position: 'right',
+          dropdownItemsAfter: archivedVersionsItem('management-center'),
         },
         // Declared explicitly so search sits before Ask AI and the CTA.
         {type: 'search', position: 'right'},

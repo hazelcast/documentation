@@ -48,6 +48,8 @@ npm run start
 
 This command starts a local server at http://localhost:3000. The server reloads most changes without a restart. The first start downloads external content into gitignored folders.
 
+The local server does not show archived versions. The **Archived versions** link in a version dropdown opens an empty page. See [Archived versions](MAINTAINING.md#archived-versions).
+
 ### Build and check
 
 ```bash
