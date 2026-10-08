@@ -29,7 +29,8 @@ const { collectOccurrences, decide, slugFor, componentNameFor, parseId, consumer
 const { normalizeValues, groupIdFor } = require('./lib/tabs')
 const { attrCodeTemplates, buildCodeTemplates } = require('./lib/code-templates')
 const substituteAttrs = require('../../plugins/lib/substitute-attributes')
-const { parseNav, buildPlan, injectNavEntries, resolveNavIncludes, parseTarget, pageKey, folderName } = require('./lib/nav')
+const { navAttrLookup, parseNav, buildPlan, injectNavEntries, resolveNavIncludes, parseTarget, pageKey, folderName } = require('./lib/nav')
+const { decodeHTML } = require('entities')
 const {
   wrapRefs, wrappableRefs, hasSentinelResidue, hasAttrSpanLeak, stripAttrSpans,
 } = require('../antora-extension/mark-attributes')
@@ -1505,6 +1506,20 @@ const renderedCode = (md) => {
   assert.strictEqual(substitute('Keep {not-an-attribute}', lookup), 'Keep {not-an-attribute}',
     'an unknown name is left literal, as Antora leaves an undefined attribute')
   ok('nav labels: attribute references are resolved before they become YAML')
+}
+
+// --- nav labels: Asciidoctor's intrinsic attributes resolve too --------------
+// `{cpp}` is built into Asciidoctor, not defined by any component, so it is
+// absent from the manifest's attribute table. Antora renders it as "C++" in the
+// nav. The oracle is Asciidoctor's own rendering of the same reference.
+{
+  const adoc = require('@asciidoctor/core')()
+  const rendered = decodeHTML(adoc.convert('{cpp} {plus}', { doctype: 'inline' }))
+  const roots = parseNav(substitute('.Clients\n* xref:cpp.adoc[Get started with {cpp} {plus}]\n', navAttrLookup({})))
+  assert.strictEqual(roots[0].children[0].label, `Get started with ${rendered}`, 'an intrinsic resolves as Asciidoctor renders it')
+  assert.strictEqual(roots[0].children[0].label, 'Get started with C++ +', 'entity-encoded values are decoded for YAML')
+  assert.strictEqual(navAttrLookup({ cpp: 'Override' }).cpp, 'Override', 'a version attribute wins over the intrinsic')
+  ok('nav labels: intrinsic attributes resolve and decode')
 }
 
 // --- swagger_ui:: block macro -> <ApiReference> ------------------------------

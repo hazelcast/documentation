@@ -47,7 +47,7 @@ const { attrCodeTemplates, buildCodeTemplates, resolveTemplates } = require('./l
 // the source line can tell them apart.
 const { collectPageTexts, collectPageExamples, stagedIdOf } = require('../refcheck/lib/source-refs')
 const { hasLockedSources, lockedRoots } = require('../lib/locked-sources')
-const { parseNav, buildPlan, injectNavEntries, resolveNavIncludes, pageKey } = require('./lib/nav')
+const { navAttrLookup, parseNav, buildPlan, injectNavEntries, resolveNavIncludes, pageKey } = require('./lib/nav')
 const { decodeHTML } = require('entities')
 const { loadDispositions, isUnpublished, redirectRoute, urlBase, redirectPairs, publishedPageUrls, navInjectionsFor } = require('../lib/dispositions')
 // Co-located image placement, computed from the reference graph. The converter
@@ -1060,7 +1060,7 @@ function convertVersion (ver, ctx) {
   // `substitute`, exactly as Antora leaves an undefined attribute.
   // refcheck's `inert` finding is the gate on this: a token in frontmatter is a
   // failure to bake, not a reference.
-  const navAttrs = attrTableFor(manifest, component, seg)
+  const navAttrs = navAttrLookup(attrTableFor(manifest, component, seg))
   const navAdoc = withAttrs(loadNavAdoc(component, seg, opts.sourcesDir), navAttrs)
   const injections = navInjectionsFor(ctx.dispositions, component, seg).filter((i) => titleByKey.has(i.key))
   const plan = navAdoc

@@ -20,6 +20,7 @@
 // a `slug` on every page.
 
 const path = require('node:path')
+const { decodeHTML } = require('entities')
 const { foldTypographic } = require('./mdx')
 
 const CATEGORY_RE = /^\.(\S.*)$/
@@ -341,4 +342,19 @@ function buildPlan (roots, titles = new Map()) {
   return { pages, categories, duplicates }
 }
 
-module.exports = { parseNav, buildPlan, injectNavEntries, resolveNavIncludes, parseTarget, pageKey, keyStem, folderName }
+// The attribute lookup a nav.adoc is resolved against: the version's own table
+// over Asciidoctor's intrinsics (`{cpp}`, `{nbsp}`, `{plus}`, …), which Antora
+// resolves in the nav but the manifest never lists. Read from Asciidoctor itself
+// rather than copied. Its values are HTML entities (`C&#43;&#43;`) and nothing
+// downstream decodes a nav label, so they are decoded here.
+let intrinsics
+function navAttrLookup (attrs) {
+  if (!intrinsics) {
+    require('@asciidoctor/core')()
+    const table = globalThis.Opal.Asciidoctor.$$const.INTRINSIC_ATTRIBUTES
+    intrinsics = Object.fromEntries(table.$keys().map((k) => [k, decodeHTML(table['$[]'](k))]))
+  }
+  return { ...intrinsics, ...attrs }
+}
+
+module.exports = { navAttrLookup, parseNav, buildPlan, injectNavEntries, resolveNavIncludes, parseTarget, pageKey, keyStem, folderName }
