@@ -11,6 +11,7 @@ declare global {
 }
 
 // Kapa AI widget. Loads on the dev server too (not gated on NODE_ENV); with no consent cookie it loads cookieless.
+// The bundle (~2 MB plus reCAPTCHA) loads on the first `Kapa('open')`, not on page load.
 
 const WIDGET_SRC = 'https://widget.kapa.ai/kapa-widget.bundle.js';
 const KAPA_COOKIE = 'kapa_web_id';
@@ -93,13 +94,19 @@ function deleteKapaCookie(): void {
   }
 }
 
-// Queueing stub so an early navbar click is replayed once the bundle loads.
+// Queueing stub: the first `open` loads the bundle, which replays the queue (callbacks, then the open).
+let widgetRequested = false;
+
 function installStub(): void {
   if (window.Kapa) {
     return;
   }
   const stub = ((...args: unknown[]) => {
     stub.c!(args);
+    if (args[0] === 'open' && !widgetRequested) {
+      widgetRequested = true;
+      loadWidget();
+    }
   }) as NonNullable<Window['Kapa']>;
   stub.q = [];
   stub.c = (args: unknown[]) => {
@@ -115,7 +122,7 @@ function loadWidget(): void {
   for (const [name, value] of Object.entries({...CONFIG, ...resolveThemeTokens()})) {
     script.setAttribute(name, value);
   }
-  // Read once at init. An ABSENT attribute means cookies are enabled, so pass `false` explicitly.
+  // Read once, at first open. An ABSENT attribute means cookies are enabled, so pass `false` explicitly.
   script.setAttribute(
     'data-user-analytics-cookie-enabled',
     analyticsGranted() ? 'true' : 'false',
@@ -158,6 +165,5 @@ if (ExecutionEnvironment.canUseDOM) {
   if (!analyticsGranted()) {
     deleteKapaCookie();
   }
-  loadWidget();
   watchConsent();
 }
