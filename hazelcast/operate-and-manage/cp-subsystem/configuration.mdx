@@ -3,17 +3,18 @@ title: "Configure the CP Subsystem"
 sidebar_label: "Configuration"
 sidebar_position: 2
 slug: /cp-subsystem/configuration
-enterprise: true
 ---
 
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
+import PartialRequiresEnterprise from "@site/hazelcast/_partials/requires-enterprise.mdx";
+import PartialRequiresAdvancedCp from "@site/hazelcast/_partials/requires-advanced-cp.mdx";
 
 You can configure clusters to enable the CP Subsystem and adjust other options such as CP groups sizes and persistence of CP state.
 
 ## Quickstart
 
-Use this quickstart to test the CP Subsystem in development. The CP Subsystem is disabled by default, with any CP data structures operating in [unsafe mode](./cp-subsystem.mdx#unsafe-mode).
+Use this quickstart to enable the CP Subsystem for development and testing. The CP Subsystem is disabled by default; you must configure CP members before you can create or use [CP data structures](./cp-subsystem.mdx#cp-data-structures).
 
 :::note
 
@@ -48,7 +49,7 @@ Running clusters must be [restarted](../maintaining-a-cluster/restart-cluster.md
    </TabItem>
    <TabItem value="java" label="Java">
 
-   Use the <Variable href="https://javadoc.io/doc/com.hazelcast/hazelcast/{full-version}/com/hazelcast/config/cp/CPSubsystemConfig.html" text="CPSubsystemConfig" code /> object.
+   Use the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/cp/CPSubsystemConfig.html" text="CPSubsystemConfig" code /> object.
 
    ```java
    Config config = new Config();
@@ -62,6 +63,8 @@ Running clusters must be [restarted](../maintaining-a-cluster/restart-cluster.md
 2. [Restart the cluster](../maintaining-a-cluster/restart-cluster.mdx).
 
 ## Persist CP data structures {/* #persistence */}
+
+<PartialRequiresEnterprise />
 
 To enable [CP Subsystem persistence](./cp-subsystem.mdx#persistence), set the [`persistence-enabled`](#persistence-enabled) option to `true`.
 
@@ -118,11 +121,7 @@ Only CP members that are part of a CP group can become leaders. CP members that 
 
 ## Configure members to automatically step down from leadership {/* #autostepdown */}
 
-:::note
-
-This capability is only available in the <Variable name="enterprise-product-name" />. Your license must include ADVANCED\_CP to activate this feature.
-
-:::
+<PartialRequiresAdvancedCp />
 
 In some deployment scenarios, you may want to prevent a CP group member from becoming the leader. For example, if your CP group is distributed across two local data centers and one remote data center for geographic redundancy, there may be a higher latency to the remote data center. The following diagram shows an example deployment distributed across three data centers.
 
@@ -216,7 +215,7 @@ Use these options to configure the CP Subsystem.
 <tr>
 <td><Anchor id="cp-member-count" />`cp-member-count`</td>
 <td>Number of CP members to initialize the CP Subsystem. If set, must be greater than or equal to [`group-size`](#group-size).</td>
-<td>[`0 (disabled, running in unsafe mode)`](./cp-subsystem.mdx#unsafe-mode)</td>
+<td>`0 (CP Subsystem disabled)`</td>
 <td>
 
 <Tabs groupId="config-format">
@@ -654,7 +653,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-Add configuration options to the <Variable href="https://javadoc.io/doc/com.hazelcast/hazelcast/{full-version}/com/hazelcast/config/cp/FencedLockConfig.html" text="FencedLockConfig object" />.
+Add configuration options to the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/cp/FencedLockConfig.html" text="FencedLockConfig object" />.
 
 ```java
 Config config = new Config();
@@ -814,7 +813,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-Add configuration options to the <Variable href="https://javadoc.io/doc/com.hazelcast/hazelcast/{full-version}/com/hazelcast/config/cp/SemaphoreConfig.html" text="SemaphoreConfig object" />.
+Add configuration options to the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/cp/SemaphoreConfig.html" text="SemaphoreConfig object" />.
 
 ```java
 Config config = new Config();
@@ -1023,7 +1022,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-Add configuration options to the <Variable href="https://javadoc.io/doc/com.hazelcast/hazelcast/{full-version}/com/hazelcast/config/cp/CPMapConfig.html" text="CPMap object" />.
+Add configuration options to the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/cp/CPMapConfig.html" text="CPMap object" />.
 
 ```java
 Config config = new Config();
@@ -1187,7 +1186,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java" label="Java">
 
-Add configuration options to the <Variable href="https://javadoc.io/doc/com.hazelcast/hazelcast/{full-version}/com/hazelcast/config/cp/RaftAlgorithmConfig.html" text="RaftAlgorithmConfig object" />.
+Add configuration options to the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/cp/RaftAlgorithmConfig.html" text="RaftAlgorithmConfig object" />.
 
 ```java
 Config config = new Config();

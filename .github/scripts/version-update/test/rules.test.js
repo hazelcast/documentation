@@ -162,21 +162,32 @@ test('an MC patch whose alias already exists does not add it again', () => {
   assert.ok(!release(MC, '5.11.2', {}, state).steps.some((step) => step.step === 'addAlias'))
 })
 
-test('an MC major/minor adds the release, moves main to the next snapshot and points Platform main at it', () => {
+// Expected values as upstream set them by hand for MC 5.12.0 (management-center-docs v/5.12, hz-docs #2319).
+test('an MC major/minor adds the release on the newest Platform release, moves main to the next snapshot and points Platform at both', () => {
   const {steps, next} = release(MC, '5.12.0', {next: '5.13.0-SNAPSHOT'})
   const expected = base()
   const {current, ...releases} = expected.variables[MC]
   expected.variables[MC] = {
     current: {...current, 'full-version': '5.13.0-SNAPSHOT'},
-    '5.12': {...current, 'full-version': '5.12.0', 'mc-repo-swagger-branch': '5.12.0'},
+    '5.12': {'full-version': '5.12.0', 'mc-repo-swagger-branch': '5.12.0', 'page-latest-supported-hazelcast': '5.7'},
     ...releases,
   }
   expected.releases[MC] = ['5.12', '5.11']
   Object.assign(expected.current[MC], {currentSeg: '5.13-snapshot', currentLabel: '5.13-SNAPSHOT'})
   expected.variables[PLATFORM].current['page-latest-supported-mc'] = '5.13-snapshot'
+  expected.variables[PLATFORM]['5.7']['page-latest-supported-mc'] = '5.12'
   assert.deepEqual(next, expected)
   assert.deepEqual(steps.find((step) => step.step === 'setLatestRedirects'), {step: 'setLatestRedirects', component: MC, latest: '5.12', latestDev: '5.13-snapshot'})
   assert.equal(steps.find((step) => step.step === 'addAlias').from, '/management-center/5.12/release-notes/5-12-0')
+})
+
+test('an MC major/minor keeps the Platform version main supports when it is already a release', () => {
+  const state = base()
+  state.variables[MC].current['page-latest-supported-hazelcast'] = '5.6'
+  const {next} = release(MC, '5.12.0', {next: '5.13.0-SNAPSHOT'}, state)
+  assert.equal(next.variables[MC]['5.12']['page-latest-supported-hazelcast'], '5.6')
+  assert.equal(next.variables[PLATFORM]['5.6']['page-latest-supported-mc'], '5.12')
+  assert.equal(next.variables[PLATFORM]['5.7']['page-latest-supported-mc'], '5.11')
 })
 
 test('an MC release points the Platform version it supports at it', () => {

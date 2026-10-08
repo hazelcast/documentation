@@ -1,0 +1,316 @@
+---
+title: "User management"
+sidebar_position: 6
+slug: /deploy-manage/user-management
+---
+
+Users in Management Center have roles that determine what permissions they have. For example, an admin user has access to all features, whereas a metrics-only user can only view metrics and can't see the data. How you create and manage users depends on the security provider you are using.
+
+## User roles
+
+All users need one of the following roles:
+
+| Role | Permissions |
+| --- | --- |
+| **Admin** | Administrator privileges give users access to all features. Only admin users can update user passwords, create new users, or manage Enterprise licenses. |
+| **User** | Users have read and write access to Management Center. |
+| **Read-Only User** | Users cannot do anything that requires write permissions such as updating map configurations, running garbage collection, triggering a thread dump on a cluster member, or shutting down members or clusters. |
+| **Metrics-Only User** | Users can only view metrics that are displayed in Management Center. |
+
+The following table shows details of the actions that can or cannot be performed for each user role.
+
+<table>
+<colgroup>
+<col style={{width:'22.2222%'}} />
+<col style={{width:'33.3333%'}} />
+<col style={{width:'11.1111%'}} />
+<col style={{width:'11.1111%'}} />
+<col style={{width:'11.1111%'}} />
+<col style={{width:'11.1112%'}} />
+</colgroup>
+<thead>
+<tr>
+<th>Panel/Tab</th>
+<th>Action</th>
+<th>Admin</th>
+<th>User</th>
+<th>Read-Only</th>
+<th>Metrics-Only</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td rowSpan={4}>[Storage → Map](../storage-compute-messaging/map.mdx)</td>
+<td>[Clear Data](../storage-compute-messaging/map.mdx#clear-map)</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[Reset Time](../get-started/user-interface-overview/tables.mdx#current-and-historical-metrics)</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>[Map Browser](../storage-compute-messaging/map.mdx#map-browser)</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[Map Config](../storage-compute-messaging/map.mdx#configuring-a-map)</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td rowSpan={3}>[Clients → View Preset](../get-started/user-interface-overview/tables.mdx#presets)</td>
+<td>Add</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>Edit</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Remove</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td rowSpan={4}>[Client Filtering](../cluster/client-filtering/overview.mdx)</td>
+<td>Add</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>Edit</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>Remove</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>Enable/Disable</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td rowSpan={3}>[Members](../cluster/members.mdx)</td>
+<td>[Shutdown](../cluster/members.mdx#actions)</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[Run GC](../cluster/members.mdx#actions)</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[Thread Dump](../cluster/members.mdx#actions)</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[Scripting](../tools/scripting.mdx)</td>
+<td>[Execute Script](../tools/scripting.mdx#scripting-in-javascript)</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[Healthcheck](../cluster/healthcheck.mdx)</td>
+<td>[Run Healthcheck](../cluster/healthcheck.mdx)</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td rowSpan={7}>[Administration](../cluster/administration/administration.mdx)</td>
+<td>[Cluster Shutdown](../cluster/administration/cluster-states/shutting-down-cluster.mdx#shut-down-a-cluster)</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[Change Cluster State](../cluster/administration/cluster-states/changing-cluster-state.mdx#change-the-state-of-a-cluster)</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[Rolling Upgrade](../cluster/administration/triggering-rolling-upgrade.mdx)</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[Force Start](../cluster/administration/persistence/triggering-force-start.mdx)</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[Partial Start](../cluster/administration/persistence/triggering-partial-start.mdx)</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[Hot Backup](../cluster/administration/persistence/triggering-hot-backup.mdx)</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[Update Config](../cluster/administration/update-config.mdx)</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td rowSpan={2}>Settings</td>
+<td>[Add/Remove Users](#new-users)</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[Update License](./license-management/license-management.mdx)</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[Console](../tools/console.mdx)</td>
+<td>Execute Console Commands</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td rowSpan={4}>[WAN Replication](../cluster/wan-replication.mdx)</td>
+<td>[Change State](../cluster/wan-replication.mdx#changing-wan-publisher-state)</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[WAN Sync](../cluster/wan-replication.mdx#wan-sync)</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[WAN Sync Check](../cluster/wan-replication.mdx#wan-consistency-check)</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[Add Configuration](../cluster/wan-replication.mdx#add-temporary-wan-replication-config)</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>Streaming (SQL)</td>
+<td>[All](../streaming/jobs.mdx#job-management)</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td rowSpan={4}>CP Subsystem</td>
+<td>[Promote](../cp-subsystem/dashboard.mdx#promote)</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[Remove](../cp-subsystem/dashboard.mdx#remove)</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[Restart](../cp-subsystem/dashboard.mdx#Restart)</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>𐄂</td>
+</tr>
+<tr>
+<td>[View Metrics](../cp-subsystem/dashboard.mdx)</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+
+:::important
+
+The [Scripting](../tools/scripting.mdx) and [Console](../tools/console.mdx) features are an exception to the role-based permissions shown above. When these features are enabled on the cluster, any user who can access them has full, unrestricted access to the cluster, regardless of their assigned Management Center role. If granular access control is critical, consider leaving scripting and the console disabled.
+
+:::
+
+## New users
+
+You can create new users and assign those users a role. The way in which you create new users depends on the security provider that you use to authenticate users in Management Center. For information, see [Security Providers](./security/user-authentication/security-providers.mdx).
+
+## Authentication tokens
+
+To use the REST API, users need an authentication token, unless you are an admin user and you are using dev mode.
+
+The way in which you generate an authentication token depends on your chosen security provider. For information, see [Clustered REST](../integrate/clustered-rest/clustered-rest.mdx).

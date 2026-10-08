@@ -3,8 +3,9 @@ title: "CP Subsystem"
 sidebar_label: "Overview"
 sidebar_position: 1
 slug: /cp-subsystem/cp-subsystem
-enterprise: true
 ---
+
+import PartialRequiresEnterprise from "@site/hazelcast/_partials/requires-enterprise.mdx";
 
 The CP Subsystem is a component of a Hazelcast cluster that builds a strongly consistent layer for a set of distributed data structures. The CP Subsystem withstands network partitions, server failures, and client failures.
 
@@ -30,9 +31,24 @@ The CP Subsystem supports the following Hazelcast data structures:
 
 :::important
 
-By default, CP data structures operate in [unsafe mode](#unsafe-mode). You must configure your cluster with [CP members](#cp-members) to benefit from the strong consistency guarantees of the CP Subsystem.
+CP data structures require a running CP Subsystem. You must configure your cluster with [CP members](#cp-members) before you create any CP data structure. If no CP members are configured, CP data structures cannot be created.
 
 :::
+
+## Availability by edition
+
+CP Subsystem core and all CP data structures are available in <Variable name="open-source-product-name" />. They tolerate crash-stop failures as long as a majority of the CP group remains available.
+
+<Variable name="enterprise-product-name" /> adds CP persistence, allowing members to restore their Raft state after individual member failures or cluster-wide crashes. It also provides additional operational controls.
+
+| **Capability** | **<Variable name="open-source-product-name" />** | **<Variable name="enterprise-product-name" />** | **<Variable name="enterprise-product-name" /> with ADVANCED\_CP** |
+| --- | :---: | :---: | :---: |
+| CP Subsystem core: CP members, CP groups, Raft consensus, sessions, discovery, and runtime fault tolerance | <Icon role="success" /> | <Icon role="success" /> | <Icon role="success" /> |
+| CP data structures: [CPMap](../../develop-and-build/distributed-data-structures/cp-data-structures/cpmap.mdx), [FencedLock](../../develop-and-build/distributed-data-structures/cp-data-structures/fencedlock.mdx), [IAtomicLong](../../develop-and-build/distributed-data-structures/cp-data-structures/iatomiclong.mdx), [ISemaphore](../../develop-and-build/distributed-data-structures/cp-data-structures/isemaphore.mdx), [IAtomicReference](../../develop-and-build/distributed-data-structures/cp-data-structures/iatomicreference.mdx), and [ICountDownLatch](../../develop-and-build/distributed-data-structures/cp-data-structures/icountdownlatch.mdx) | <Icon role="success" /> | <Icon role="success" /> | <Icon role="success" /> |
+| [CP Subsystem Persistence](#persistence) | <Icon role="error" /> | <Icon role="success" /> | <Icon role="success" /> |
+| [CP Subsystem on Kubernetes](#kubernetes) | <Icon role="error" /> | <Icon role="success" /> | <Icon role="success" /> |
+| [Leader auto step-down](./configuration.mdx#autostepdown) | <Icon role="error" /> | <Icon role="error" /> | <Icon role="success" /> |
+| [CP direct-to-leader client routing](../../clients-and-apis/clients/java.mdx#configuring-direct-to-leader-routing) | <Icon role="error" /> | <Icon role="error" /> | <Icon role="success" /> |
 
 ## CP members
 
@@ -50,18 +66,6 @@ When a member becomes a CP member, it generates an additional UUID that other CP
 - Responses from REST endpoints in the CP group
 - Member logs
 - Management Center
-
-### Unsafe mode
-
-When a cluster is not configured with [CP members](#cp-members), the CP Subsystem is disabled and any CP data structures operate in *unsafe mode*.
-
-In this mode, the following restrictions apply:
-
-- CP data structures use [partitioning and lazy replication mechanisms](../../develop-and-build/architecture/data-partitioning.mdx) instead of the [Raft consensus mechanism](#consensus).
-- CP Subsystem management APIs are not available.
-- Split-brain protection is not supported.
-
-Unsafe mode does not provide strong consistency guarantees. For example, when you increment an atomic long in unsafe mode, even though you may receive a success response, operations such as increments can be lost if a member fails. As a result, unsafe mode is only suitable for development or testing.
 
 ## CP groups
 
@@ -126,6 +130,8 @@ By default, the CP Subsystem works only in memory without persisting any state t
 
 ### Persistence
 
+<PartialRequiresEnterprise />
+
 CP Subsystem Persistence can be [enabled in the member configuration](./configuration.mdx#persistence) to make CP members persist their local CP state to stable storage.
 
 CP Subsystem Persistence enables CP members to recover from member or cluster-wide crashes. As long as a majority of CP members are available after the recovery, the CP Subsystem remains operational, and guarantees that no committed operations are lost after recovery. When you restart a majority of CP members, they restore their local state and resume working as if they had never crashed.
@@ -155,6 +161,8 @@ When the CP member count is greater than the CP group size, CP groups are formed
 - If the majority of the `METADATA` CP group permanently crash, it is equivalent to the permanent crash of the majority CP members of the whole CP Subsystem, even though other CP groups are running. Existing CP groups continue serving to incoming requests, but because the `METADATA` CP group is not available, no management tasks can be performed on the CP Subsystem. For example, a new CP group cannot be created. In this case, the only solution is to wipe out the whole CP Subsystem state by performing a force reset. See [CP Subsystem Management](./management.mdx#cp-subsystem-management-apis).
 
 ## Kubernetes
+
+<PartialRequiresEnterprise />
 
 :::important
 

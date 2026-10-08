@@ -2,9 +2,9 @@
 title: "CPMap"
 sidebar_position: 1
 slug: /data-structures/cpmap
-enterprise: true
 ---
 
+import PartialDataStructuresNoteCpRequired from "@site/hazelcast/_partials/data-structures-note-cp-required.mdx";
 import CodeBlock from "@theme/CodeBlock";
 import Ex_dds_cpmap_ExampleCPMap_java_tag_cpm from "../../../examples/dds/cpmap/ExampleCPMap.java?tag=cpm";
 
@@ -22,13 +22,7 @@ Hazelcast `CPMap` is a distributed implementation of a minimal key-value interfa
 
 Due to `CPMap`s distributed nature, above operations involve remote calls. This means that the calls might take longer to complete than non-distributed counterparts, such as `HashMap`s.
 
-:::note
-
-`CPMap` is only available in the <Variable name="enterprise-product-name" />. Your license must include `ADVANCED_CP` to activate this feature and you must use the <Variable name="enterprise-product-name" /> client.
-
-:::
-
-There is no unsafe variant of `CPMap`, unlike other CP data structures. Therefore, CP must be [enabled](../../../operate-and-manage/cp-subsystem/configuration.mdx#quickstart-configuration) before using `CPMap`.
+<PartialDataStructuresNoteCpRequired />
 
 The following example creates an instance of a `CPMap` in the `default` CP group, then updates its contents using the operations listed previously.
 

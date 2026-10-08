@@ -40,9 +40,9 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
   assert.notStrictEqual(currentSegFor('clc'), CURRENT_SEG,
     'clc must NOT reuse the default latest-snapshot seg (it has no such render)')
   // MC overrides the seg for the OTHER reason: its main is a snapshot line, but a
-  // NUMBERED one (`5.12-snapshot`), so the override is not a clc-style "main is
+  // NUMBERED one (`5.13-snapshot`), so the override is not a clc-style "main is
   // released" case -- see the refFor group, where MC still reads main.
-  assert.strictEqual(currentSegFor('management-center'), '5.12-snapshot',
+  assert.strictEqual(currentSegFor('management-center'), '5.13-snapshot',
     'MC main declares a numbered snapshot -> that number is its current seg')
   ok('currentSegFor: default for -snapshot mains, per-component override for clc')
 }
@@ -78,7 +78,7 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
   assert.strictEqual(refFor('clc', '5.5.0'), 'v/5.5.0', 'clc release -> its v/ branch')
   // MC has an overridden current seg like clc, but for an unrelated reason, so it
   // must NOT inherit clc's "read a v/ tag for the current seg" behaviour: its
-  // 5.12-snapshot IS main, and there is no v/5.12-snapshot branch to read.
+  // 5.13-snapshot IS main, and there is no v/5.13-snapshot branch to read.
   assert.strictEqual(refFor('management-center', currentSegFor('management-center')), 'main',
     'MC current seg is main, despite the seg being overridden')
   assert.strictEqual(refFor('management-center', '5.11'), 'v/5.11', 'MC release -> its v/ branch')

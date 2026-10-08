@@ -1403,7 +1403,8 @@ function writePartialsReport (opts, component, seg, report, pageUrls) {
 // MERGED, not overwritten, and scoped to the segments this run actually
 // regenerated — for the same reason `--releases` must not shrink versions.json:
 // a subset run leaves the other versions' trees (and their images) on disk and
-// live, so their placements must survive it.
+// live, so their placements must survive it. A full run replaces the whole
+// component, so a version that left the live set loses its placements too.
 function writeImagePlacement (opts, results) {
   if (opts.dry) return null
   const file = path.join(path.dirname(opts.goldenDir), 'image-placement.json')
@@ -1412,7 +1413,9 @@ function writeImagePlacement (opts, results) {
     placements = JSON.parse(fs.readFileSync(file, 'utf8')).placements || {}
   } catch { /* first run — start empty */ }
 
-  const prefixes = results.map((r) => `/${opts.component}/` + (r.seg ? r.seg + '/' : ''))
+  const prefixes = opts.releases || opts.id
+    ? results.map((r) => `/${opts.component}/` + (r.seg ? r.seg + '/' : ''))
+    : [`/${opts.component}/`]
   for (const url of Object.keys(placements)) {
     if (prefixes.some((pre) => url.startsWith(pre))) delete placements[url]
   }

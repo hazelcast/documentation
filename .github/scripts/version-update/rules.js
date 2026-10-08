@@ -208,7 +208,10 @@ function planManagementCenter (release, {next}, state) {
   if (state.releases[MC].includes(line)) throw new Error(`${MC} ${line} has already been released`)
   const nextLine = nextSnapshot(release, next, MC)
   const nextSeg = `${nextLine}-snapshot`
-  const releaseVars = {...state.variables[MC].current, 'full-version': version, 'mc-repo-swagger-branch': version}
+  // Main supports the Platform snapshot; a release supports the newest Platform release.
+  const mainPlatform = state.variables[MC].current[MC_HZ_VERSION]
+  const releasePlatform = state.releases[PLATFORM].includes(mainPlatform) ? mainPlatform : state.releases[PLATFORM][0]
+  const releaseVars = {...state.variables[MC].current, 'full-version': version, 'mc-repo-swagger-branch': version, [MC_HZ_VERSION]: releasePlatform}
   steps.push({step: 'addRelease', component: MC, version: line, fromSeg: current.currentSeg, variables: releaseVars})
   steps.push({step: 'setCurrent', component: MC, fromSeg: current.currentSeg, currentSeg: nextSeg, currentLabel: `${nextLine}-SNAPSHOT`})
   setVars(MC, 'current', {'full-version': `${nextLine}.0-SNAPSHOT`})

@@ -87,7 +87,7 @@ export const versionedVariables: Record<string, Record<string, Record<string, st
       "page-latest-supported-cplusplus-client": "5.7.1",
       "page-latest-supported-csharp-client": "5.7.0",
       "page-latest-supported-go-client": "1.6.0",
-      "page-latest-supported-mc": "5.12-snapshot",
+      "page-latest-supported-mc": "5.13-snapshot",
       "page-latest-supported-mc-installer": "latest-snapshot",
       "page-latest-supported-nodejs-client": "5.7.0",
       "page-latest-supported-po": "latest-snapshot",
@@ -114,7 +114,7 @@ export const versionedVariables: Record<string, Record<string, Record<string, st
       "page-latest-supported-cplusplus-client": "5.7.0",
       "page-latest-supported-csharp-client": "5.6.0",
       "page-latest-supported-go-client": "1.5.0",
-      "page-latest-supported-mc": "5.11",
+      "page-latest-supported-mc": "5.12",
       "page-latest-supported-mc-installer": "latest-snapshot",
       "page-latest-supported-nodejs-client": "5.6.0",
       "page-latest-supported-po": "latest-snapshot",
@@ -259,11 +259,19 @@ export const versionedVariables: Record<string, Record<string, Record<string, st
   "management-center": {
     "current": {
       "enterprise-product-name": "Enterprise Edition",
-      "full-version": "5.12.0-SNAPSHOT",
+      "full-version": "5.13.0-SNAPSHOT",
       "mc-repo-swagger-branch": "master",
       "open-source-product-name": "Community Edition",
       "page-latest-supported-clc": "5.5.1",
       "page-latest-supported-hazelcast": "6.0-snapshot"
+    },
+    "5.12": {
+      "enterprise-product-name": "Enterprise Edition",
+      "full-version": "5.12.0",
+      "mc-repo-swagger-branch": "5.12.0",
+      "open-source-product-name": "Community Edition",
+      "page-latest-supported-clc": "5.5.1",
+      "page-latest-supported-hazelcast": "5.7"
     },
     "5.11": {
       "enterprise-product-name": "Enterprise Edition",

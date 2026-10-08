@@ -6,6 +6,7 @@ slug: /clients/java
 
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
+import PartialRequiresAdvancedCp from "@site/hazelcast/_partials/requires-advanced-cp.mdx";
 import CodeBlock from "@theme/CodeBlock";
 import Ex_clients_ExampleClientConfiguration_java_tag_scc from "../../examples/clients/ExampleClientConfiguration.java?tag=scc";
 import Ex_clients_ExampleClientAwsConfig_java_tag_clientaws from "../../examples/clients/ExampleClientAwsConfig.java?tag=clientaws";
@@ -459,6 +460,8 @@ For more information, see <Variable href="https://docs.hazelcast.org/docs/{os-ve
 You can configure a custom `classLoader` for your client. It is used by the serialization service and loads any class specified in the configuration, including event listeners or ProxyFactories.
 
 ### Configure CP direct-to-leader operation routing for clients {/* #configuring-direct-to-leader-routing */}
+
+<PartialRequiresAdvancedCp />
 
 When operating a Hazelcast Enterprise cluster with the `ADVANCED_CP` license it is possible to configure clients to leverage direct-to-leader routing for [CP Subsystem](../../operate-and-manage/cp-subsystem/cp-subsystem.mdx) operations. When enabled, this functionality enables clients to receive a mapping of CP group leadership from the cluster and use it to send CP data structure operations directly to the relevant group leader. This leadership mapping is also updated whenever leadership changes occur.
 

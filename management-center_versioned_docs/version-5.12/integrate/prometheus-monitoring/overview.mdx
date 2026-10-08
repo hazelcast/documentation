@@ -1,0 +1,243 @@
+---
+title: "Prometheus monitoring"
+sidebar_label: "Overview"
+sidebar_position: 0
+slug: /integrate/prometheus-monitoring
+enterprise: true
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+Prometheus is an open source monitoring system for metrics. You can export Hazelcast cluster metrics to a scrape endpoint in Management Center that Prometheus can consume. This allows you to monitor Hazelcast along with your other applications in the same monitoring tool.
+
+Management Center's Prometheus Exporter automatically updates with any cluster changes and allows you to collect metrics easily for the whole cluster, or multiple clusters, from a single endpoint. Without it, you would have to scrape each member individually, manage any changes from scaling, restarts, and IP configuration, and collate the metrics from all members.
+
+## Enable the Prometheus Exporter
+
+To start exposing metrics via the Prometheus Exporter, set the `hazelcast.mc.prometheusExporter.enabled` system property to `true`.
+
+Metrics are exposed to the `/metrics` endpoint, which is the Prometheus default. The endpoint provides metrics for all clusters that Management Center is connected to.
+
+:::note
+
+Management Center also reformats the metrics to align with Prometheus best practice recommendations. See [Prometheus metrics](./prometheus-metrics.mdx) for details.
+
+:::
+
+## Disable timestamps
+
+Management Center collects metrics with the timestamp of individual members, and sends this timestamp to Prometheus. Prometheus discards metrics with the oldest timestamps. You can disable sending timestamps so that your monitoring system continues to operate when clock shifts happen in the cluster.
+
+To stop sending timestamps to Prometheus, set the [`hazelcast.mc.prometheusExporter.timestamp.enabled`](#prometheus-timestamp) property to `false`.
+
+## Configure Prometheus
+
+After enabling the Prometheus Exporter, you can configure your Prometheus YAML file to scrape metrics from Management Center.
+
+:::tip
+
+For guidance, see the [Prometheus configuration documentation](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#scrape_config).
+
+:::
+
+To allow Prometheus to scrape metrics from Management Center, set the `static_configs.targets` parameter to the URL of your Management Center instance.
+
+```yaml
+scrape_configs:
+  - job_name: 'HZ MC'
+    # scheme defaults to HTTP.
+    static_configs:
+    - targets: ['localhost:8080'] # replace this address with the network address of Hazelcast Management Center
+```
+
+### Authenticate the scrape endpoint
+
+To secure the scrape endpoint, you can set up basic authentication.
+
+To do this, use the `set prometheus-auth` task of the `hz-mc conf` tool. Replace the `<my-user>` and `<my-pass>` placeholders with your chosen username and password.
+
+<Tabs groupId="os">
+<TabItem value="linux-and-mac" label="Linux and Mac">
+
+```bash
+hz-mc conf set prometheus-auth <my-user> <my-pass>
+```
+
+</TabItem>
+<TabItem value="windows" label="Windows">
+
+```bash
+mc-conf.bat set prometheus-auth <my-user> <my-pass>
+```
+
+</TabItem>
+</Tabs>
+
+:::tip
+
+You can also set this with the `prometheusAuth` key of a [YAML declarative configuration file (Beta)](../../deploy-and-manage/configuration/declarative-configuration/overview.mdx#prometheus-auth), so Management Center applies it automatically on every start.
+
+:::
+
+Then, add the credentials to the `basic_auth` parameter of the Prometheus YAML file:
+
+```yaml
+  - job_name: 'HZ MC'
+    static_configs:
+    - targets: ['localhost:8080']
+    basic_auth:
+      username: my-user
+      password: my-pass
+```
+
+### Reset the authentication credentials
+
+To reset authentication credentials for the scrape endpoint, use the `security reset` task of the `hz-mc conf` tool. You must stop Management Center to apply this change.
+
+:::warning
+
+This task will also delete all users from the database.
+
+:::
+
+<Tabs groupId="os">
+<TabItem value="linux-and-mac" label="Linux and Mac">
+
+```bash
+hz-mc conf security reset
+```
+
+</TabItem>
+<TabItem value="windows" label="Windows">
+
+```bash
+mc-conf.bat security reset
+```
+
+</TabItem>
+</Tabs>
+
+## Filter metrics
+
+By default, Management Center exports all metrics that are reported by the cluster.
+
+To filter the metrics that are exposed to the scrape endpoint, use the `hazelcast.mc.prometheusExporter.filter.metrics.included` and `hazelcast.mc.prometheusExporter.filter.metrics.excluded` system properties.
+
+Both properties accept comma-separated metric names and support the `*` wildcard character for pattern matching.
+
+For example, this configuration exposes only the following metrics:
+
+- `hz_topic_totalReceivedMessages`
+- `hz_map_totalPutLatency`
+
+<Tabs groupId="os">
+<TabItem value="linux-and-mac" label="Linux and Mac">
+
+```bash
+hz-mc start -Dhazelcast.mc.prometheusExporter.enabled=true \
+  -Dhazelcast.mc.prometheusExporter.filter.metrics.included=hz_topic_totalReceivedMessages,hz_map_totalPutLatency
+```
+
+</TabItem>
+<TabItem value="windows" label="Windows">
+
+```bash
+mc-start.cmd -Dhazelcast.mc.prometheusExporter.enabled=true ^
+  -Dhazelcast.mc.prometheusExporter.filter.metrics.included=hz_topic_totalReceivedMessages,hz_map_totalPutLatency
+```
+
+</TabItem>
+</Tabs>
+
+This configuration exposes all metrics except the following:
+
+- `hz_os_systemLoadAverage,hz_memory_freeHeap`
+
+<Tabs groupId="os">
+<TabItem value="linux-and-mac" label="Linux and Mac">
+
+```bash
+hz-mc start -Dhazelcast.mc.prometheusExporter.enabled=true \
+  -Dhazelcast.mc.prometheusExporter.filter.metrics.excluded=hz_os_systemLoadAverage,hz_memory_freeHeap
+```
+
+</TabItem>
+<TabItem value="windows" label="Windows">
+
+```bash
+mc-start.cmd -Dhazelcast.mc.prometheusExporter.enabled=true ^
+  -Dhazelcast.mc.prometheusExporter.filter.metrics.excluded=hz_os_systemLoadAverage,hz_memory_freeHeap
+```
+
+</TabItem>
+</Tabs>
+
+This configuration exposes only map backup metrics by using the `*` wildcard:
+
+<Tabs groupId="os">
+<TabItem value="linux-and-mac" label="Linux and Mac">
+
+```bash
+hz-mc start -Dhazelcast.mc.prometheusExporter.enabled=true \
+  -Dhazelcast.mc.prometheusExporter.filter.metrics.included=*map*backup*
+```
+
+</TabItem>
+<TabItem value="windows" label="Windows">
+
+```bash
+mc-start.cmd -Dhazelcast.mc.prometheusExporter.enabled=true ^
+  -Dhazelcast.mc.prometheusExporter.filter.metrics.included=*map*backup*
+```
+
+</TabItem>
+</Tabs>
+
+:::note
+
+As described in [Prometheus metrics](./prometheus-metrics.mdx), Management Center reformats metrics to align with Prometheus best practice recommendations. Filtering matches against metrics in any format. For example, if you exclude `map.getCount`, you will exclude `hz_map_getCount` and `hazelcast_map_operations_total`.
+
+:::
+
+## Override the default port
+
+By default, metrics are exposed on the same port as the Management Center web interface. To override the port number, use the `-Dhazelcast.mc.prometheusExporter.port` system property.
+
+<Tabs groupId="os">
+<TabItem value="linux-and-mac" label="Linux and Mac">
+
+```bash
+hz-mc start -Dhazelcast.mc.prometheusExporter.enabled=true \
+  -Dhazelcast.mc.prometheusExporter.port=2222
+```
+
+</TabItem>
+<TabItem value="windows" label="Windows">
+
+```bash
+mc-start.cmd -Dhazelcast.mc.prometheusExporter.enabled=true ^
+  -Dhazelcast.mc.prometheusExporter.port=2222
+```
+
+</TabItem>
+</Tabs>
+
+In this example, the Prometheus endpoint will be available at `http://localhost:2222/metrics`. To allow Prometheus to scrape metrics from Management Center, make sure to set the `static_configs.targets` parameter to this port.
+
+```yaml
+scrape_configs:
+  - job_name: 'HZ MC'
+    static_configs:
+    - targets: ['localhost:2222']
+```
+
+## Visualize metrics in Grafana
+
+Grafana is an open source data visualization solution that allows you to build monitoring dashboards from your Prometheus metrics. To start visualizing Prometheus metrics in Grafana, refer to the [Grafana documentation](https://grafana.com/docs/grafana/latest/getting-started/get-started-grafana-prometheus/). Hazelcast provides an [example dashboard](https://grafana.com/grafana/dashboards/13183) to help you get started.
+
+## Next steps
+
+Learn more about the [`hz-mc conf` tool](../../deploy-and-manage/configuration/mc-conf.mdx).
+
+Explore [system properties](../../deploy-and-manage/configuration/system-properties.mdx) and their definitions.

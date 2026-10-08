@@ -47,7 +47,7 @@ const NAV_SOURCES = {
     refFor: (seg) => (seg === currentSegFor('hazelcast') ? 'main' : `v/${seg}`),
   },
   // management-center's main IS a snapshot line, but a NUMBERED one: it declares
-  // version `5.12-snapshot` (display `5.12-SNAPSHOT`), not operator's undated
+  // version `5.13-snapshot` (display `5.13-SNAPSHOT`), not operator's undated
   // `latest-snapshot`. So its current seg is that number (VERSIONS.current) and
   // main is the branch behind it — read via currentSegFor rather than repeated
   // here, so the seg is written down exactly once. nav.adoc lives in ROOT even
@@ -72,14 +72,14 @@ const NAV_SOURCES = {
 // CURRENT_SEG (see currentSegFor). clc's main == the released 5.5.1, so its
 // current seg is `5.5.1` and only the older 5.5.0 is cut as a versioned copy —
 // matching the two versions clc serves in production.
-// MC's main declares `5.12-snapshot`, so unlike operator its current seg is a
+// MC's main declares `5.13-snapshot`, so unlike operator its current seg is a
 // NUMBER, and unlike clc that number is an unreleased snapshot — the dropdown
-// still lands on the newest release (5.11). The three releases below are the live
+// still lands on the newest release (5.12). The four releases below are the live
 // set; 5.8 and older are frozen (freeze plan), which is why they stop at 5.9.
 const VERSIONS = {
   operator: { releases: ['5.20', '5.19', '5.18', '5.17', '5.16'] },
   clc: { current: '5.5.1', releases: ['5.5.0'] },
-  'management-center': { current: '5.12-snapshot', releases: ['5.11', '5.10', '5.9'] },
+  'management-center': { current: '5.13-snapshot', releases: ['5.12', '5.11', '5.10', '5.9'] },
   // Platform's main declares `6.0-snapshot` (an unreleased snapshot, as MC's is),
   // so its current seg is a NUMBER and the dropdown lands on the newest release
   // ('latest-release' in docusaurus.config.ts). Phase 1 converted the current

@@ -1,0 +1,29 @@
+---
+title: "Flake ID generators"
+sidebar_position: 14
+slug: /data-structures/flake-id-gen
+---
+
+You can see a list of all Flake ID Generators in your cluster by clicking on the **Flake ID Generators** menu item on the left panel. A new page appears on the right, as shown below.
+
+![Flake ID Generator Grid View](./images/FlakeIdGenGridView.png)
+
+You can filter the generators shown and you can also sort the table by clicking on the column headers. The monitoring data available are:
+
+- **Avg. Batch Requests:** Average count of batch requests coming from all the members to a generator, i.e., total batch requests from all members to a generator divided by the member count for that generator.
+- **Avg. Batch Size:** Average size of the ID batches created by a generator, i.e., total number of IDs generated (the sum of IDs for all batches) for all members divided by the total count of batch requests coming from all members.
+
+<Anchor id="id-generator-details" />Click on a generator name to open a new page for monitoring that specific generator instance, as shown below.
+
+![Monitoring Flake ID Generators](./images/MonitoringFlakeIdGens.png)
+
+Likewise, you can sort the table by clicking the column headers. It shows IP and port of the members that have a state for the specific generator named in the page's title. The monitoring data available are:
+
+- **Batch Requests:** Total count of batch requests to a generator by this member.
+- **Avg. Batch Size:** Average size of the ID batches created for this member, i.e., total number of IDs generated (the sum of IDs for all batches) for this member divided by the total count of batch requests coming from this member.
+
+:::note
+
+The operations per second is not the number of new IDs generated or used, but the number of ID batches. The batch size is configurable, and usually contains hundreds or thousands of IDs. A client uses all IDs from a batch before a new batch is requested.
+
+:::
