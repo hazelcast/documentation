@@ -1,0 +1,171 @@
+---
+title: "Local security provider"
+sidebar_position: 3
+slug: /deploy-manage/local-security-provider
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+You can use the local security provider to control authentication and authorization in Management Center. With this security provider, user accounts are stored in Management Center's database.
+
+## Set up the local security provider
+
+To set up the local security provider, you need to create an admin user, using the UI, the `hz-mc conf` tool, or a YAML declarative configuration file.
+
+<Tabs groupId="mc-conf--ui--yaml-beta">
+<TabItem value="ui" label="UI">
+
+To set up the local security provider in the UI, go to **Settings** \> **Security Providers** \> **Local**.
+
+</TabItem>
+<TabItem value="mc-conf" label="mc-conf">
+
+To create a new user with `hz-mc conf`, use the following command. Replace the `<username>` placeholder with your username. For details about the `mc-conf` tool, see [Management Center Configuration Tool](../../configuration/mc-conf.mdx).
+
+```bash title="Linux and Mac"
+hz-mc conf user create -n <username> -r admin -p
+```
+
+```bash title="Windows"
+mc-conf.bat user create -n <username> -r admin -p
+```
+
+</TabItem>
+<TabItem value="yaml-beta" label="YAML (Beta)">
+
+To set up the local security provider with a [YAML declarative configuration file](../../configuration/declarative-configuration/overview.mdx), declare the users you want under `securityProvider.local.users`:
+
+```yaml
+securityProvider:
+  local:
+    users:
+      - username: admin
+        role: admin
+        password: "file:/run/secrets/admin-password"
+```
+
+A `file:<path>` password value is resolved from that file's contents at load time — see [Secrets: the `file:` convention](../../configuration/declarative-configuration/overview.mdx#secrets-the-file-convention).
+
+</TabItem>
+</Tabs>
+
+- **Username:** Username for the initial administrator user account.
+- **Password:** Password for the initial administrator user account.
+
+Passwords **must** include the following:
+
+- Minimum of 8 characters
+- At least one letter
+- At least one digit
+- At least one special character, which is not a letter, digit or space
+
+Passwords **must not** include the following:
+
+- The username
+- Two or more of the same letter following each other.
+- A 3-character or longer sequence of letters following or preceding each other such as "abc" or "fed".
+- A 3-character or longer sequence of digits following or preceding each other such as "123" or "987".
+
+## Create users
+
+To create additional users, admin users can use the UI or you can use the `hz-mc conf` tool. You can also list additional users under `securityProvider.local.users` in a [YAML declarative configuration file (Beta)](../../configuration/declarative-configuration/overview.mdx); with `applyMode: upsert`, reapplying the file on a later restart creates any new users it lists.
+
+When creating users, be sure to give them a valid role. See [User management](../../user-management.mdx).
+
+<Tabs groupId="mc-config-method">
+<TabItem value="ui" label="UI">
+
+To set up the local security provider in the UI, go to **Settings** \> **Security Providers** \> **Local**.
+
+</TabItem>
+<TabItem value="mc-conf" label="mc-conf">
+
+To create a new user with `hz-mc conf`, use the following command. Replace the `<username>` placeholder with your username.
+
+```bash title="Linux and Mac"
+hz-mc conf user create -n <username> -r admin -p
+```
+
+```bash title="Windows"
+mc-conf.bat user create -n <username> -r admin -p
+```
+
+</TabItem>
+</Tabs>
+
+## Use a dictionary to prevent weak user passwords
+
+To prevent certain words from being included in user passwords, you can use a dictionary.
+
+1. Create a text file that contains the words that you want to prevent.
+
+   Each word must be on a new line and must contain at least three characters.
+2. Start Management Center with the `hazelcast.mc.security.dictionary.path` property where the path points to your text file.
+
+Words that are shorter than four characters are ignored to avoid blocking too many password combinations. You can configure the minimum length of words by starting Management Center with the `hazelcast.mc.security.dictionary.minWordLength` property.
+
+<Tabs groupId="os">
+<TabItem value="linux-and-mac" label="Linux and Mac">
+
+```bash
+hz-mc start -Dhazelcast.mc.security.dictionary.path=/usr/MCtext/pwd.txt \
+     -Dhazelcast.mc.security.dictionary.minWordLength=3
+```
+
+</TabItem>
+<TabItem value="windows" label="Windows">
+
+```bash
+mc-start.cmd -Dhazelcast.mc.security.dictionary.path=/usr/MCtext/pwd.txt ^
+     -Dhazelcast.mc.security.dictionary.minWordLength=3
+```
+
+</TabItem>
+</Tabs>
+
+## Change user passwords
+
+To change user passwords in the local security provider, admin users can use the UI or you can use the `hz-mc conf` tool.
+
+<Tabs groupId="mc-config-method">
+<TabItem value="ui" label="UI">
+
+1. Go to **Settings** \> **Users**.
+2. Click **Edit** in the row of the user whose password you want to change.
+3. Click **Change Password**.
+
+</TabItem>
+<TabItem value="mc-conf" label="hz-mc-conf">
+
+Use the following `hz-mc conf` command. Replace the `<username>` placeholder with your username.
+
+```bash title="Linux and Mac"
+hz-mc conf user update-password -n <username> -p
+```
+
+```bash title="Windows"
+mc-conf.bat user update-password -n <username> -p
+```
+
+:::note
+
+If you're on Linux or Mac devices, enclose passwords in single quotes only if you use the `--password` option. If you use the `-p` flag, do not use single quotes in the interactive prompt.
+
+:::
+
+</TabItem>
+</Tabs>
+
+## Using --force to configure the local security provider {/* #using-force-to-configure-the-local-security-provider */}
+
+Use the `-f` / `--force` flag with the `user configure` task to make configuration idempotent:
+
+- If the local security provider is not yet configured, it is set up.
+- If the local security provider is already configured with the same settings, the command succeeds without making any changes.
+- If the local security provider is already configured with different settings, the existing configuration is overwritten without needing to run `security reset` first.
+- If a **different** security provider is currently active, the command fails with an error even when `--force` is used.
+
+## Next steps
+
+For details about the `hz-mc conf` tool, see [Management Center Configuration Tool](../../configuration/mc-conf.mdx). For details about the YAML declarative configuration file, see [YAML declarative configuration](../../configuration/declarative-configuration/overview.mdx).

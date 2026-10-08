@@ -1,0 +1,38 @@
+---
+title: "Cluster connections"
+sidebar_label: "Overview"
+sidebar_position: 1
+slug: /deploy-manage/cluster-connections
+---
+
+To connect Management Center to a Hazelcast cluster, you need to configure at minimum the name of the cluster and the addresses of one or more members.
+
+To configure these settings, use one of the following options:
+
+- [Connect to a cluster from the web UI](./connecting-to-clusters-ui.mdx).
+- Preconfigure Management Center to connect to a cluster on start:
+
+  - [`hz-mc conf` tool](./connecting-to-clusters-mc-conf.mdx)
+  - [YAML declarative configuration file (Beta)](../configuration/declarative-configuration/overview.mdx#clusters)
+  - [Environment variables](#environment-variables)
+
+## Connect to clusters with TLS enabled
+
+If a Hazelcast cluster is configured to use TLS, you need to configure the truststore on Management Center, using a client configuration file.
+
+To configure Management Center with a client configuration file, use one of the following options:
+
+- [UI](./connecting-to-clusters-ui.mdx#using-a-client-configuration-file)
+- [`hz-mc conf` tool](./connecting-to-clusters-mc-conf.mdx)
+- [YAML declarative configuration file (Beta)](../configuration/declarative-configuration/overview.mdx#clusters), using the `clientConfigFile` key
+
+For more information about configuring a client configuration file for TLS, see <Variable href="/hazelcast/{page-latest-supported-hazelcast}/security/tls-ssl#tlsssl-for-hazelcast-clients" text="TLS for Hazelcast Clients" /> in the Platform documentation.
+
+## Environment variables
+
+If you use the terminal to start Management Center, for example by executing the JAR file or a script, you can set the following environment variables:
+
+| Variable | Description |
+| --- | --- |
+| `MC_DEFAULT_CLUSTER_MEMBERS` | A comma-separated list of cluster member addresses. |
+| `MC_DEFAULT_CLUSTER` | The cluster name. Default: `dev`. |
