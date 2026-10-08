@@ -1,11 +1,13 @@
 import type {ReactNode} from 'react';
 import Layout from '@theme/Layout';
+import Head from '@docusaurus/Head';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import {Card} from '@hazelcast/ui/lib/components/Card';
 import PromoBanner from '@site/src/components/PromoBanner';
 import {resolveLatest, type LatestSegs} from '../remark/latestLinks';
 import styles from './index.module.css';
+import heroImage from './green-flow.jpg';
 
 // Site landing page (`/`; `/home` redirects here via client-redirects in docusaurus.config.ts). It has no
 // source content page, so the cards live here. The navbar carries search and Ask AI, so they are not repeated.
@@ -109,6 +111,9 @@ export default function Home(): ReactNode {
     <Layout
       description="Find user guides, code samples, tutorials, API reference, and more."
       wrapperClassName={styles.wrapper}>
+      <Head>
+        <link rel="preload" as="image" href={heroImage} fetchPriority="high" />
+      </Head>
       {/* The hero and promo bar sit outside `.page` so both span the viewport; breaking out of the centred
           column would need a 100vw trick that overflows when a scrollbar is present. */}
       <header className={styles.hero}>

@@ -8,6 +8,12 @@
   [headers.values]
     Access-Control-Allow-Origin = "*"
 
+# Every file under /assets/ has a content hash in its name, so a cached copy is never stale.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
 # The Antora site published a sitemap index with one sitemap per component; this site has a single sitemap.
 [[redirects]]
   from = "/sitemap-clc.xml"
