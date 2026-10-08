@@ -2,7 +2,7 @@ import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 import {redirects} from './src/redirects';
-import {docs, versionedDocs, versionedInstances, latestSegs, isSnapshotUrl} from './src/docsPlugins';
+import {docs, versionedDocs, versionedInstances, latestSegs, canonicalSitemapItems} from './src/docsPlugins';
 import {variables, versionedVariables} from './src/variables';
 
 // Retired versions served as static Antora HTML from a separate site. See plugins/archived-versions.
@@ -69,12 +69,10 @@ const config: Config = {
         googleTagManager: {
           containerId: 'GTM-MQ59XD6',
         },
-        // Snapshot pages canonical to the latest release, so keep them out of the sitemap.
+        // The sitemap lists canonical URLs only, to agree with the cross-version canonicals.
         sitemap: {
-          createSitemapItems: async ({defaultCreateSitemapItems, ...params}) => {
-            const items = await defaultCreateSitemapItems(params);
-            return items.filter((item) => !isSnapshotUrl(item.url));
-          },
+          createSitemapItems: async ({defaultCreateSitemapItems, ...params}) =>
+            canonicalSitemapItems(await defaultCreateSitemapItems(params)),
         },
         theme: {
           customCss: [

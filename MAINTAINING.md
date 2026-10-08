@@ -60,6 +60,9 @@ The site is hosted on Netlify. Netlify reads its build settings from `netlify.to
 - It runs `npm run build` and publishes the `build/` folder.
 - It serves `static/_redirects`, which is copied into `build/`, as the site's redirect rules.
 - It sets a cross-origin header on `/api/*`, because the Hazelcast Cloud console fetches `/api/cloud.json` from another domain.
+- It redirects the per-product sitemaps of the previous Antora site, such as `/sitemap-hazelcast.xml`, to `/sitemap.xml`.
+
+The sitemap lists only pages that are their own canonical URL. A page in an older release has the same page in the latest release as its canonical URL, and the sitemap leaves it out. A page that exists only in an older release stays in. Snapshot pages are always left out.
 
 Netlify builds a deploy preview for every PR from a branch in this repo, and links it from the PR. PRs from forks do not get a preview.
 

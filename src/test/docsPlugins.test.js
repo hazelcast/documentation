@@ -1,7 +1,7 @@
 'use strict'
 
 // Spec for src/docsPlugins.ts: a page is a snapshot page exactly when Docusaurus treats its version as unreleased,
-// snapshot pages stay out of the sitemap, sidebar badges follow page frontmatter, and the committed version files
+// the sitemap lists canonical URLs only, sidebar badges follow page frontmatter, and the committed version files
 // are in the form the config reads. Docusaurus's own banner logic and the site CSS are the oracles.
 
 const test = require('node:test')
@@ -44,20 +44,37 @@ test('unversioned components and the site root are never snapshot URLs', () => {
   }
 })
 
-test('the sitemap drops snapshot pages and keeps every other page', async () => {
+// The sitemap must list only canonical URLs. The canonical is the same URL suffix in Docusaurus's `lastVersion` when
+// that page exists, and the page itself otherwise.
+test('the sitemap lists each page only at its canonical URL', async () => {
   const config = loadSiteConfig()
   const [, presetOptions] = config.presets.find((p) => Array.isArray(p) && p[0] === 'classic')
-  const snapshot = versionsOf('hazelcast').find((v) => v.banner === 'unreleased')
-  const release = versionsOf('hazelcast').find((v) => v.banner === null)
-  const urls = [
-    `${SITE_URL}/hazelcast/${snapshot.seg}/maps`,
-    `${SITE_URL}/hazelcast/${release.seg}/maps`,
-    `${SITE_URL}/cloud/overview`,
-  ]
+  const urls = []
+  const expected = []
+  for (const id of ids) {
+    const versions = versionsOf(id)
+    const lastSeg = configs[id].versions[configs[id].lastVersion].path
+    const older = versions.find((v) => v.banner === 'unmaintained')
+    const snapshot = versions.find((v) => v.banner === 'unreleased')
+    const add = (url, kept) => { urls.push(SITE_URL + url); if (kept) expected.push(SITE_URL + url) }
+    add(`/${id}/${lastSeg}`, true)
+    add(`/${id}/${lastSeg}/shared/page`, true)
+    if (older) {
+      add(`/${id}/${older.seg}`, false)
+      add(`/${id}/${older.seg}/shared/page`, false)
+      add(`/${id}/${older.seg}/only-in-older`, true)
+    }
+    if (snapshot) {
+      add(`/${id}/${snapshot.seg}/shared/page`, false)
+      add(`/${id}/${snapshot.seg}/only-in-snapshot`, false)
+    }
+  }
+  for (const url of ['/', '/cloud/overview', '/tutorials', '/privacy']) urls.push(SITE_URL + url), expected.push(SITE_URL + url)
+  assert.ok(urls.length - expected.length >= ids.length, 'every versioned component contributes a dropped page')
   const items = await presetOptions.sitemap.createSitemapItems({
     defaultCreateSitemapItems: async () => urls.map((url) => ({url})),
   })
-  assert.deepEqual(items.map((item) => item.url), urls.slice(1))
+  assert.deepEqual(items.map((item) => item.url), expected)
 })
 
 // The badge classes are only useful if the site CSS draws them.

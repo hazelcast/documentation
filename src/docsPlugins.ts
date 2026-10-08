@@ -30,6 +30,23 @@ export function isSnapshotUrl(url: string): boolean {
   );
 }
 
+// Keeps only the sitemap items that are their own canonical: drops snapshot pages, and an older release's page whenever
+// the latest release has a page at the same URL suffix (src/theme/SiteMetadata canonicals it there).
+export function canonicalSitemapItems<T extends {url: string}>(items: T[]): T[] {
+  const pathnames = new Set(items.map((item) => new URL(item.url).pathname));
+  return items.filter(({url}) => {
+    if (isSnapshotUrl(url)) {
+      return false;
+    }
+    const [, id, seg, ...rest] = new URL(url).pathname.split('/');
+    const latestSeg = id === undefined ? undefined : latestSegs[id];
+    if (latestSeg === undefined || seg === latestSeg) {
+      return true;
+    }
+    return !pathnames.has(['', id, latestSeg, ...rest].join('/'));
+  });
+}
+
 // `caution`/`important` are not default Docusaurus admonition keywords; fidelity Layer 2 compares admonition types.
 const admonitions = {keywords: ['caution', 'important'], extendDefaults: true};
 
