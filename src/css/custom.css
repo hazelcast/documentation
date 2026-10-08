@@ -184,6 +184,42 @@ html:root {
   }
 }
 
+/* The burger only takes over at 996px (hardcoded in Docusaurus JS), so the desktop navbar narrows in three tiers.
+   The widths are measured on a docs page, which also shows the version dropdown. Adding a navbar tab means remeasuring them.
+   - 1,400px and up (needs ~1,360px): everything.
+   - 1,120-1,399px (needs ~1,105px): no Ask AI, CTA, or theme toggle; all three are in the burger menu below 997px.
+   - 997-1,119px: the product tabs collapse into the "Products" dropdown.
+   Infima lets the brand shrink, so without these two rules an overfull navbar draws its links over the logo and wraps long labels. */
+.navbar__brand {
+  flex-shrink: 0;
+}
+.navbar__link {
+  white-space: nowrap;
+}
+
+@media (min-width: 997px) and (max-width: 1399px) {
+  .navbar__items--right > .navbar-ask-ai,
+  .navbar__items--right > .navbar-cta,
+  .navbar__items--right > [class*='colorModeToggle'] {
+    display: none;
+  }
+}
+
+/* Docusaurus puts a dropdown's className on its inner link, so `:has()` reaches the wrapper. The burger menu lists the tabs instead. */
+.navbar__item:has(> .navbar-products-dropdown),
+.menu__list-item:has(> .menu__list-item-collapsible > .navbar-products-dropdown) {
+  display: none;
+}
+
+@media (min-width: 997px) and (max-width: 1119px) {
+  .navbar__item:has(> .navbar-products-dropdown) {
+    display: inline-flex;
+  }
+  .navbar__items > .navbar-product-tab {
+    display: none;
+  }
+}
+
 /* DocSearch hardcodes the placeholder font-size/weight with no variable; match the neighbouring HIVE buttons. */
 .navbar .DocSearch-Button-Placeholder {
   font-size: var(--hive-font-size-button-small);

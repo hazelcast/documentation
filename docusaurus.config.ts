@@ -14,6 +14,15 @@ const archivedVersionsItem = (product: string) => [
   {href: `pathname:///${product}/${archivedVersions.versions[product][0]}/`, label: 'Archived versions', target: '_self'},
 ];
 
+// Product tabs, also listed in a "Products" dropdown that replaces them at narrow desktop widths (see custom.css).
+const products = [
+  {docsPluginId: 'hazelcast', label: 'Platform'},
+  {docsPluginId: 'management-center', label: 'Management Center'},
+  {docsPluginId: 'operator', label: 'Operator'},
+  {docsPluginId: 'cloud', label: 'Cloud'},
+  {docsPluginId: 'clc', label: 'CLC'},
+].map((product) => ({type: 'docSidebar', sidebarId: 'defaultSidebar', ...product}));
+
 const config: Config = {
   title: 'Hazelcast Documentation',
   tagline: 'Hazelcast product documentation',
@@ -151,40 +160,13 @@ const config: Config = {
       },
       items: [
         {
-          type: 'docSidebar',
-          docsPluginId: 'hazelcast',
-          sidebarId: 'defaultSidebar',
+          type: 'dropdown',
+          label: 'Products',
           position: 'left',
-          label: 'Platform',
+          className: 'navbar-products-dropdown',
+          items: products,
         },
-        {
-          type: 'docSidebar',
-          docsPluginId: 'management-center',
-          sidebarId: 'defaultSidebar',
-          position: 'left',
-          label: 'Management Center',
-        },
-        {
-          type: 'docSidebar',
-          docsPluginId: 'operator',
-          sidebarId: 'defaultSidebar',
-          position: 'left',
-          label: 'Operator',
-        },
-        {
-          type: 'docSidebar',
-          docsPluginId: 'cloud',
-          sidebarId: 'defaultSidebar',
-          position: 'left',
-          label: 'Cloud',
-        },
-        {
-          type: 'docSidebar',
-          docsPluginId: 'clc',
-          sidebarId: 'defaultSidebar',
-          position: 'left',
-          label: 'CLC',
-        },
+        ...products.map((product) => ({...product, position: 'left' as const, className: 'navbar-product-tab'})),
         // Plain link: tutorials has no sidebar.
         {
           to: '/tutorials',
