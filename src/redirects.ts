@@ -771,6 +771,7 @@ export const redirects: {from: string; to: string}[] = [
   { from: "/management-center/5.12/phone-home", to: "/management-center/5.12/deploy-manage/phone-homes" },
   { from: "/management-center/5.12/prometheus", to: "/management-center/5.12/integrate/prometheus-monitoring" },
   { from: "/management-center/5.12/release-notes/5-12-0", to: "/management-center/5.12/release-notes/release-notes" },
+  { from: "/management-center/5.12/release-notes/5-12-1", to: "/management-center/5.12/release-notes/release-notes" },
   { from: "/management-center/5.12/release-notes/releases", to: "/management-center/5.12/release-notes/release-notes" },
   { from: "/management-center/5.12/sql-browser", to: "/management-center/5.12/tools/sql-browser" },
   { from: "/management-center/5.12/troubleshooting", to: "/management-center/5.12/troubleshoot/management-center" },
