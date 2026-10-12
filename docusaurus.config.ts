@@ -11,7 +11,7 @@ const archivedVersions: {origin: string; versions: Record<string, string[]>} = r
 // Links from a product's version dropdown to its newest archived version, whose own picker lists the rest.
 // `pathname://` keeps the link out of the router and the broken-link check, because the page is not in this build.
 const archivedVersionsItem = (product: string) => [
-  {href: `pathname:///${product}/${archivedVersions.versions[product][0]}/`, label: 'Archived versions', target: '_self'},
+  {href: `pathname:///${product}/${archivedVersions.versions[product][0]}/`, label: 'Archived versions', target: '_self', className: 'archived-versions-link'},
 ];
 
 // Product tabs, also listed in a "Products" dropdown that replaces them at narrow desktop widths (see custom.css).
