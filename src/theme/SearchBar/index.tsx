@@ -10,7 +10,8 @@ import {ButtonGroup} from '@hazelcast/ui/lib/components/ButtonGroup';
 import AskAiIcon from '@site/src/components/NavbarAskAi/AskAiIcon';
 import type SearchBarType from '@theme/SearchBar';
 import type {WrapperProps} from '@docusaurus/types';
-import type {DocSearchHit} from '@docsearch/react';
+import type {DocSearchHit, DocSearchTransformClient} from '@docsearch/react';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import {useSearchResultUrlProcessor} from '@docusaurus/theme-search-algolia/client';
 import {pushDataLayer} from '@site/src/lib/analytics';
 import styles from './styles.module.css';
@@ -79,15 +80,12 @@ function withNavPath(item: DocSearchHit): DocSearchHit {
 }
 
 // Re-run the current query. DocSearch doesn't expose autocomplete's refresh(), so dispatch a native `input` event,
-// which React routes to onChange like a keystroke.
+// which React routes to onChange like a keystroke. React drops the event when the value matches what it last saw, so
+// its internal `_valueTracker` (read off React 19; re-check on upgrade) is cleared first.
 function requery(): void {
   const input = document.querySelector<HTMLInputElement>('.DocSearch-Input');
   if (!input) return;
-  const setValue = Object.getOwnPropertyDescriptor(
-    HTMLInputElement.prototype,
-    'value',
-  )?.set;
-  setValue?.call(input, input.value);
+  (input as HTMLInputElement & {_valueTracker?: {setValue(value: string): void}})._valueTracker?.setValue('');
   input.dispatchEvent(new Event('input', {bubbles: true}));
   // The click moved focus to the button; put the caret back so typing continues.
   input.focus();
@@ -151,44 +149,70 @@ export default function SearchBarWrapper(props: Props): ReactNode {
   // at query time, so mutating this array in place changes the next query without remounting. A ref so identity survives renders.
   const facetFilters = useRef<string[][]>([filtersFor(null)]).current;
 
-  // Deeper pool (DocSearch asks for 20): otherwise Platform fills it and smaller products show few or no hits.
-  // The per-product cap in transformItems below stops Platform re-filling the panel.
+  // Deeper pool for a single product (DocSearch asks for 20). Under "All" the search client fans out instead.
   const searchParameters = useRef({
     facetFilters,
     hitsPerPage: HITS_PER_PAGE,
     attributesToRetrieve: ATTRIBUTES_TO_RETRIEVE,
   }).current;
   const [selected, setSelected] = useState<string | null>(null);
-  const selectedRef = useRef<string | null>(null);
 
   const onSelect = useCallback(
     (id: string | null) => {
       setSelected(id);
-      selectedRef.current = id;
       facetFilters[0] = filtersFor(id);
       requery();
     },
     [facetFilters],
   );
 
-  // Per-product cap, only under "All". DocSearch's `maxResultsPerGroup` is captured at first open and would cap a single
-  // product too, so it is set to the pool size and this caps instead. It runs before grouping by `hierarchy.lvl0` and is
-  // captured once, so it reads the selection from a ref.
+  // Under "All", one OR query over every product returns the top hits by relevance, which a large product (Platform)
+  // can fill entirely. So the search client sends one query per product instead and merges the hits in PRODUCTS order.
+  // A single product is passed through. Algolia bills each query, so "All" costs one per product.
+  const {
+    siteMetadata: {docusaurusVersion},
+  } = useDocusaurusContext();
+  const transformSearchClient = useCallback(
+    (client: DocSearchTransformClient): DocSearchTransformClient => {
+      // Docusaurus's own transform, which a `transformSearchClient` prop replaces.
+      client.addAlgoliaAgent('docusaurus', docusaurusVersion);
+      const search = client.search.bind(client) as (...args: any[]) => Promise<any>;
+      client.search = (async (params: any, ...rest: any[]) => {
+        const [base] = params?.requests ?? [];
+        const first = base?.facetFilters?.[0];
+        const isAll = params.requests.length === 1 && Array.isArray(first) && first.length === ALL_PRODUCTS.length;
+        if (!isAll) return search(params, ...rest);
+        const {results} = await search(
+          {
+            ...params,
+            requests: PRODUCTS.map(({id}) => ({
+              ...base,
+              facetFilters: [`product:${id}`],
+              hitsPerPage: ALL_PER_PRODUCT,
+            })),
+          },
+          ...rest,
+        );
+        return {
+          results: [
+            {
+              ...results[0],
+              hits: results.flatMap((r: {hits: unknown[]}) => r.hits),
+              nbHits: results.reduce((n: number, r: {nbHits?: number}) => n + (r.nbHits ?? 0), 0),
+            },
+          ],
+        };
+      }) as typeof client.search;
+      return client;
+    },
+    [docusaurusVersion],
+  );
+
   // Passing transformItems replaces stock's, which makes URLs site-relative; the same processor does that here, plus withNavPath.
   const processUrl = useSearchResultUrlProcessor();
   const transformItems = useCallback(
-    (items: DocSearchHit[]): DocSearchHit[] => {
-      const counts = new Map<string, number>();
-      return items
-        .filter((item) => {
-          if (selectedRef.current !== null) return true;
-          const group = item.hierarchy.lvl0;
-          const n = counts.get(group) ?? 0;
-          counts.set(group, n + 1);
-          return n < ALL_PER_PRODUCT;
-        })
-        .map((item) => withNavPath({...item, url: processUrl(item.url)}));
-    },
+    (items: DocSearchHit[]): DocSearchHit[] =>
+      items.map((item) => withNavPath({...item, url: processUrl(item.url)})),
     [processUrl],
   );
 
@@ -229,6 +253,9 @@ export default function SearchBarWrapper(props: Props): ReactNode {
   }, [modal]);
 
   // Mirror the typed query for the Ask AI label; listens rather than controls, as DocSearch owns the input.
+  // The listener is on `document`, not the input: React's onChange listens on the body, and a listener on the input
+  // runs first. Chrome flushes our setState in a microtask before onChange fires, so React resets the controlled
+  // input to its old value and the keystroke is lost. `document` is reached after React's handler has run.
   const [query, setQuery] = useState('');
   useEffect(() => {
     const input = modal?.querySelector<HTMLInputElement>('.DocSearch-Input');
@@ -236,10 +263,13 @@ export default function SearchBarWrapper(props: Props): ReactNode {
       setQuery('');
       return undefined;
     }
-    const sync = () => setQuery(input.value);
+    const sync = (event?: Event) => {
+      if (event && event.target !== input) return;
+      setQuery(input.value);
+    };
     sync();
-    input.addEventListener('input', sync);
-    return () => input.removeEventListener('input', sync);
+    document.addEventListener('input', sync);
+    return () => document.removeEventListener('input', sync);
   }, [modal]);
 
   // Hand the query to Kapa and close the search modal. Reads the DOM input, not `query`, so it is current at click time.
@@ -313,6 +343,7 @@ export default function SearchBarWrapper(props: Props): ReactNode {
         {...props}
         searchParameters={searchParameters}
         transformItems={transformItems}
+        transformSearchClient={transformSearchClient}
         maxResultsPerGroup={HITS_PER_PAGE}
       />
       {host &&
