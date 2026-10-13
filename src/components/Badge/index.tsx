@@ -11,7 +11,7 @@ import {
   type BadgeType,
 } from '@hazelcast/ui/lib/components/Badge';
 // HIVE's compiled Badge styles, borrowed so the inline pill tracks upstream style changes.
-import hive from '@hazelcast/ui/lib/components/Badge.module.scss';
+import hive from '@hazelcast/ui/lib/components/Badge.module.css';
 import styles from './styles.module.css';
 
 // Single source of truth for every badge type. Inline `<Badge type/>` is a <span> wearing HIVE's Badge classes

@@ -4,7 +4,7 @@ import Translate from '@docusaurus/Translate';
 import {ThemeClassNames} from '@docusaurus/theme-common';
 import {useDocsVersion} from '@docusaurus/plugin-content-docs/client';
 // HIVE's compiled Badge styles, borrowed as in src/components/Badge.
-import hive from '@hazelcast/ui/lib/components/Badge.module.scss';
+import hive from '@hazelcast/ui/lib/components/Badge.module.css';
 import type {Props} from '@theme/DocVersionBadge';
 import styles from './styles.module.css';
 
