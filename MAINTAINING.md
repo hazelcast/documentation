@@ -44,7 +44,7 @@ A major or minor release makes a new version of the docs:
 
 Each product has its own differences:
 - **Platform and Management Center**: a release of one also updates the other's "latest supported" value, `page-latest-supported-mc` or `page-latest-supported-hazelcast`.
-- **Operator**: a release is a new version when its X.Y line does not exist yet, whatever its patch number. A release of an existing line updates that version's variables. `main` is always `latest-snapshot`, and the script never renames it. A release sets `main`'s `operator-chart-version` from `--next`, if given.
+- **Operator**: a release is a new version when its X.Y line does not exist yet, whatever its patch number. A release of an existing line updates that version's variables. `main` is always `latest-snapshot`, and the script never renames it. A release sets `main`'s `operator-chart-version` from `--next`, if given. The Version update workflow also regenerates the release's `reference/api-ref.mdx` from the CRD types at the release tag, with the generator in `apidocgen/` on the Operator repo's `main`. The script does not, so a local run leaves the page as it is.
 - **CLC**: `main` is always the newest release, not a snapshot. Every CLC release, including a patch release, copies `main` to a version named after the outgoing release, and renames `main` to the new release. Merge the new release's content into `main` after the version update. The outgoing content then stays in the outgoing version.
 
 ### What the script refuses
@@ -114,7 +114,7 @@ These GitHub Actions workflows run in this repo:
 | `validate-docs-on-schedule.yml`                    | Every Monday, or by hand                                                                     | Builds the site and checks every external link. A link that returns 404 fails the run, and the run summary lists where it appears. |
 | `version-update.yml`, `package.yml`, `promote.yml` | By hand, or from a release pipeline                                                          | See [Releasing a version](#releasing-a-version)                                                                                    |
 
-The release workflows push branches and open PRs with the built-in Actions `GITHUB_TOKEN`. GitHub holds the `pull_request` workflows on a PR opened that way until someone with write access approves them. The workflows approve them with `.github/scripts/approve-pr-checks`. If that fails, the run warns, and you click **Approve workflows to run** on the PR before Promote Release or the merge. The organization secret `GH_TOKEN` is only used where a workflow reads other repos. The scheduled runs post failures to the `#docs-notifications` Slack channel through the `SLACK_WEBHOOK_DOCS` secret.
+The release workflows push branches and open PRs with the built-in Actions `GITHUB_TOKEN`. GitHub holds the `pull_request` workflows on a PR opened that way until someone with write access approves them. The workflows approve them with `.github/scripts/approve-pr-checks`. If that fails, the run warns, and you click **Approve workflows to run** on the PR before Promote Release or the merge. The organization secret `GH_TOKEN` is only used where a workflow reads other repos. The Version update workflow reads the internal `hazelcast/hazelcast-platform-operator` repo with the `OPERATOR_REPO_TOKEN` secret, a token that can only read that repo's contents. The scheduled runs post failures to the `#docs-notifications` Slack channel through the `SLACK_WEBHOOK_DOCS` secret.
 
 ## Search
 

@@ -84,9 +84,46 @@ jobs:
           SUPPORTED_HAZELCAST: ${{ inputs.supported-hazelcast }}
           SUPPORTED_MC: ${{ inputs.supported-mc }}
 
+      # The API reference is generated from the release's CRD types, with the generator from main: older tags have one that writes AsciiDoc.
+      - name: Check out the Operator release
+        if: inputs.component == 'operator'
+        uses: actions/checkout@v7
+        with:
+          repository: hazelcast/hazelcast-platform-operator
+          ref: v${{ inputs.version }}
+          token: ${{ secrets.OPERATOR_REPO_TOKEN }}
+          path: .operator-src
+
+      - uses: actions/setup-go@v7
+        if: inputs.component == 'operator'
+        with:
+          go-version-file: .operator-src/go.mod
+          cache: false
+
+      - name: Generate the Operator API reference
+        id: api-ref
+        if: inputs.component == 'operator'
+        run: |
+          trap 'rm -rf .operator-src' EXIT
+          page="operator_versioned_docs/version-${VERSION%.*}/reference/api-ref.mdx"
+          if [[ ! -f "${page}" ]]; then
+            echo "No ${page}: ${VERSION%.*} is not a live version"
+            exit 0
+          fi
+          git -C .operator-src fetch --depth 1 origin main
+          git -C .operator-src checkout FETCH_HEAD -- apidocgen
+          (cd .operator-src && go run ./apidocgen ./api/v1alpha1/*.go) > "${RUNNER_TEMP}/api-ref.mdx"
+          if [[ "$(head -1 "${RUNNER_TEMP}/api-ref.mdx")" != "---" ]]; then
+            echo "::error::The generator did not write MDX"
+            exit 1
+          fi
+          mv "${RUNNER_TEMP}/api-ref.mdx" "${page}"
+          [[ -n "$(git status --porcelain -- "${page}")" ]] && echo "changes=true" >> "${GITHUB_OUTPUT}"
+          true
+
       - name: Open PR
         id: pr
-        if: steps.update.outputs.changes == 'true'
+        if: steps.update.outputs.changes == 'true' || steps.api-ref.outputs.changes == 'true'
         run: |
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
