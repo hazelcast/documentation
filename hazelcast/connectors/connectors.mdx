@@ -28,6 +28,7 @@ You can use the following connectors in SQL by configuring them in the [`CREATE 
 | Connector | Module | Batch/Streaming | Processing guarantee |
 | --- | --- | --- | --- |
 | [`Apache Kafka`](../develop-and-build/sql/sql-over-kafka/mapping-to-kafka.mdx) | hazelcast-jet-kafka | streaming | exactly-once |
+| [`Apache Pulsar`](../develop-and-build/sql/sql-over-pulsar/mapping-to-pulsar.mdx) | hazelcast-jet-pulsar | streaming | exactly-once |
 | [`File`](../develop-and-build/sql/sql-over-file-systems/mapping-to-a-file-system.mdx) | Depends on the file format and/or storage system. | Depends on the storage system. | Depends on the storage system. |
 | [`IMap`](../develop-and-build/sql/sql-over-maps/mapping-to-maps.mdx) | hazelcast-sql | batch | N/A |
 | [`JDBC`](../develop-and-build/sql/sql-over-jdbc/mapping-to-jdbc.mdx) | hazelcast-sql | batch | N/A |
@@ -38,6 +39,7 @@ You can use the following connectors in SQL by configuring them in the [`CREATE 
 | Connector | Module | Batch/Streaming | Processing guarantee |
 | --- | --- | --- | --- |
 | [`Apache Kafka`](../develop-and-build/sql/sql-over-kafka/mapping-to-kafka.mdx) | hazelcast-jet-kafka | streaming | exactly-once |
+| [`Apache Pulsar`](../develop-and-build/sql/sql-over-pulsar/mapping-to-pulsar.mdx) | hazelcast-jet-pulsar | streaming | exactly-once |
 | [`IMap`](../develop-and-build/sql/sql-over-maps/mapping-to-maps.mdx) | hazelcast-sql | batch | N/A |
 | [`JDBC`](../develop-and-build/sql/sql-over-jdbc/mapping-to-jdbc.mdx) | hazelcast-sql | batch | N/A |
 | [`MongoDB`](../develop-and-build/sql/sql-over-mongodb/mapping-to-mongo.mdx) | hazelcast-sql and hazelcast-jet-mongodb | batch | exactly-once |
@@ -73,8 +75,8 @@ The Jet API supports more connectors than SQL.
 | [`KinesisSources.kinesis`](./messaging-system-connectors/kinesis-connector.mdx) | `hazelcast-jet-kinesis` | streaming | exactly-once |
 | [`MongoSources.batch`](./database-connectors/mongodb-connector.mdx) | `hazelcast-jet-mongodb` | batch | exactly-once |
 | [`MongoSources.stream`](./database-connectors/mongodb-connector.mdx) | `hazelcast-jet-mongodb` | streaming | exactly-once |
-| [`PulsarSources.pulsarConsumer`](./community-connectors/pulsar-connector.mdx) | `hazelcast-jet-contrib-pulsar` | streaming | N/A |
-| [`PulsarSources.pulsarReader`](./community-connectors/pulsar-connector.mdx) | `hazelcast-jet-contrib-pulsar` | streaming | exactly-once |
+| [`PulsarSources.pulsarConsumer`](./community-connectors/pulsar-connector.mdx) | `hazelcast-jet-pulsar` | streaming (many consumer per topic to distribute reading) | exactly-once |
+| [`PulsarSources.pulsarReader`](./community-connectors/pulsar-connector.mdx) | `hazelcast-jet-pulsar` | streaming (single reader per topic) | exactly-once |
 | [`S3Sources.s3`](./file-connectors/legacy-file-connector.mdx) | `hazelcast-jet-s3` | batch | N/A |
 | [`Sources.cache`](./hazelcast-data-structure-connectors/jcache-connector.mdx), [`Sources.remoteCache`](./hazelcast-data-structure-connectors/jcache-connector.mdx) | `hazelcast` | batch | N/A |
 | [`Sources.cacheJournal`](./hazelcast-data-structure-connectors/jcache-connector.mdx), [`Sources.remoteCacheJournal`](./hazelcast-data-structure-connectors/jcache-connector.mdx) | `hazelcast` | streaming | exactly-once |
@@ -163,9 +165,9 @@ The Jet API supports more connectors than SQL.
 </tr>
 <tr>
 <td>[`PulsarSources.pulsarSink`](./community-connectors/pulsar-connector.mdx)</td>
-<td>`hazelcast-jet-contrib-pulsar`</td>
+<td>`hazelcast-jet-pulsar`</td>
 <td>streaming</td>
-<td>at-least-once</td>
+<td>exactly-once</td>
 </tr>
 <tr>
 <td>[`S3Sinks.s3`](./file-connectors/legacy-file-connector.mdx)</td>

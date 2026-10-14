@@ -25,6 +25,11 @@ export const variables: Record<string, string> = Object.assign(
 export const versionedVariables: Record<string, Record<string, Record<string, string>>> = {
   "clc": {
     "current": {
+      "full-version": "5.7.0",
+      "hazelcast-cloud": "Cloud",
+      "page-latest-supported-mc": "5.8"
+    },
+    "5.5.1": {
       "full-version": "5.5.1",
       "hazelcast-cloud": "Cloud",
       "page-latest-supported-mc": "5.8"
@@ -98,9 +103,9 @@ export const versionedVariables: Record<string, Record<string, Record<string, st
       "version": "6.0-SNAPSHOT"
     },
     "5.7": {
-      "ee-version": "5.7.1",
+      "ee-version": "5.7.2",
       "enterprise-product-name": "Enterprise Edition",
-      "full-version": "5.7.1",
+      "full-version": "5.7.2",
       "hazelcast-cloud": "Cloud",
       "hz-repo-swagger-branch": "master",
       "java-client": "Java Client and Embedded Server",
@@ -267,8 +272,8 @@ export const versionedVariables: Record<string, Record<string, Record<string, st
     },
     "5.12": {
       "enterprise-product-name": "Enterprise Edition",
-      "full-version": "5.12.0",
-      "mc-repo-swagger-branch": "5.12.0",
+      "full-version": "5.12.1",
+      "mc-repo-swagger-branch": "5.12.1",
       "open-source-product-name": "Community Edition",
       "page-latest-supported-clc": "5.5.1",
       "page-latest-supported-hazelcast": "5.7"

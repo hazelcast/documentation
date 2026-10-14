@@ -10,13 +10,37 @@ These release notes list any new features, enhancements, fixes, security issues 
 
 For help downloading Hazelcast <Variable name="enterprise-product-name" />, see [Install Hazelcast Enterprise Edition](./install-enterprise.mdx) or [request a trial license key](https://hazelcast.com/trial-request/?utm_source=docs-website).
 
+## 5.7.2 {/* #5-7-2 */}
+
+**Release date**: 2026-10-09
+
+This is a maintenance release for Enterprise Edition.
+
+### Security
+
+- **Masked SSL passwords in external configuration logs**: Prevented some passwords supplied through environment variables from being written in startup logs.
+- **Resolved high and critical CVEs**: CVE-2026-56740, CVE-2026-56741, CVE-2026-59902, CVE-2026-59903, CVE-2026-62380, CVE-2026-65182, CVE-2026-65183, CVE-2026-65637, CVE-2026-65905, CVE-2026-65927, CVE-2026-66422, CVE-2026-68525, CVE-2026-68569, CVE-2026-68763, CVE-2026-71290, CVE-2026-73334, CVE-2026-75595, and CVE-2026-75596.
+
+### Fixes
+
+- **Clarified CP member restart errors**: Removed misleading reset warnings and added cleanup instructions when restarting a removed CP member.
+- **Fixed client cleanup timeout handling**: Corrected `ClientLifecycleMonitor` so timeouts configured in milliseconds are compared against elapsed time in the same unit.
+- **Clarified locking behavior**: Updated IMap and MultiMap class documentation.
+- **Fixed networking CPU spikes**: Prevented NIO threads from spinning when a member connection remains established but is dead.
+
+### Contributors
+
+We would like to thank the contributor from our open source community who worked on this release:
+
+- [guss77](https://github.com/guss77)
+
 ## 5.7.1 {/* #5-7-1 */}
 
 **Release date**: 2026-08-13
 
 This is a maintenance release for Enterprise Edition.
 
-### Security
+### Security {/* #security-2 */}
 
 - **Improved validation for serializable Jet functions**: Added additional validation to prevent serializable functions from connecting to attacker-controlled clusters or arbitrary addresses without a valid execution context.
 - **Prevented arbitrary file read through Jet**: Hardened Jet usage in serializable contexts to prevent crafted operations from reading files from members, including configuration, secrets, or data stored on disk.
@@ -32,7 +56,7 @@ This is a maintenance release for Enterprise Edition.
 - **Resolved vulnerabilities in Jackson**: Addressed reported vulnerabilities, including Jackson Core async parser [DoS GHSA-72hv-8253-57qq](https://github.com/advisories/GHSA-72hv-8253-57qq) and CVEs CVE-2026-54512 and CVE-2026-54513.
 - **Resolved high and critical CVEs identified by security scans**: Updated affected components to resolve high and critical CVEs CVE-2026-56816, CVE-2026-2332, CVE-2026-33117, CVE-2026-41293, CVE-2026-41855, CVE-2026-42579, CVE-2026-42581, CVE-2026-42584, CVE-2026-43512, CVE-2026-43515, CVE-2026-45674, CVE-2026-47691, CVE-2026-53434, CVE-2026-55276, CVE-2026-59083, CVE-2026-59084, CVE-2025-37731, CVE-2026-24051, CVE-2026-33870, CVE-2026-33871, CVE-2026-39883, CVE-2026-41284, CVE-2026-41838, CVE-2026-41842, CVE-2026-41848, CVE-2026-41850, CVE-2026-41851, CVE-2026-42498, CVE-2026-42583, CVE-2026-42585, CVE-2026-42586, CVE-2026-42587, CVE-2026-43513, CVE-2026-44248, CVE-2026-44249, CVE-2026-44250, CVE-2026-44890, CVE-2026-44891, CVE-2026-44893, CVE-2026-45416, CVE-2026-46340, CVE-2026-48006, CVE-2026-48043, CVE-2026-48059, CVE-2026-50010, CVE-2026-50011, CVE-2026-53404, CVE-2026-54291, CVE-2026-54399, CVE-2026-54428, CVE-2026-54512, CVE-2026-54513, CVE-2026-55831, CVE-2026-55833, CVE-2026-5795.
 
-### Fixes
+### Fixes {/* #fixes-2 */}
 
 - **Fixed `IndexOutOfBoundsException` in HD IMap SetOperation with `MapStore` and TTL**: Resolved an issue where a slow `MapStore` store operation could outlive an entry TTL and cause an `IndexOutOfBoundsException` while returning the old value for an HD IMap update. The fix prevents unexpected operation failures in this scenario.
 - **Fixed Kafka sink failures caused by duplicate transactional IDs**: Resolved an issue where Jet jobs writing to Kafka could suspend with `ProducerFencedException` when a newer producer with the same transactional ID fenced the current producer.
@@ -103,7 +127,7 @@ For more details on new features, see [What's new](../../get-started/whats-new.m
 - **Added state size metric for `mapStateful` processors**: Introduced a new `totalStates` metric that reports the number of states maintained by each `mapStateful` processor. This helps users identify jobs where state growth may lead to excessive memory usage or potential out-of-memory conditions.
 - **Added MapFlush sink API for snapshot-driven persistence**: Introduced `EnterpriseSinks.mapFlushSink` to enable Jet pipelines to flush an IMap to its configured MapStore during snapshot phases. This is particularly useful for deduplication and other scenarios requiring consistent commit semantics to the backing store.
 
-### Fixes {/* #fixes-2 */}
+### Fixes {/* #fixes-3 */}
 
 - **Fixed failures and inconsistent results in `IMap.containsValue()` for maps in HD Memory with TTL**: Resolved an issue where entry expiration during iteration could interfere with map traversal, causing operation failures and missed values. The fix ensures stable iteration by checking expiration instead of modifying entries during traversal, resulting in reliable results.
 - **Reduced CPU spike on Near Cache with HD and TTL**: Resolved a performance issue affecting Near Caches using on-heap in-memory format when TTL or max-idle was configured. Previously, the expiration task scanned all cache entries every 5 seconds, leading to excessive CPU usage for large caches with long TTLs. The fix introduces a time-bound expiration cycle that limits CPU consumption per run and resumes from the last examined entry in the next cycle if needed. This preserves the existing guarantee that expired entries are never returned, while significantly reducing unnecessary CPU load.
@@ -129,7 +153,7 @@ For more details on new features, see [What's new](../../get-started/whats-new.m
 - **Spring 5 Support**: Spring 5 support is deprecated and will be removed in Hazelcast Platform 6.0. Users are encouraged to upgrade to Spring 6.0 or later.
 - **`operation.operationTimeoutCount` metric**: Deprecated because its functionality is already covered by `InvocationMonitor` timeout metrics. It will be removed in Hazelcast Platform 6.0.
 
-### Security {/* #security-2 */}
+### Security {/* #security-3 */}
 
 - **Improved permission checks for IMap ServiceFactory used in Jet pipelines**: Resolved an issue where some mutating IMap operations executed through the ServiceFactory did not enforce the required permissions. As a result, Jet jobs submitted by users without sufficient permissions may now fail when performing IMap operations that require permissions beyond read access.
 - **Fixed missing permission checks for `EntryProcessor` execution through `ExecutorService`**: Resolved an issue where `EntryProcessor` operations submitted via `submitToKey`, `submitToKeys`, or `executeOnKeys` from an `ExecutorService` callable only validated the `remove` permission, while the required `put` permission was not enforced.
@@ -148,7 +172,7 @@ For more details on new features, see [What's new](../../get-started/whats-new.m
 - **`@ExposeHazelcastObjects` with dependent Hazelcast configuration or instance beans**: When running an application with Spring integration and `@ExposeHazelcastObjects` (explicit or implicit via autoconfiguration), beans with Hazelcast `Config` and/or `HazelcastInstance` cannot rely on dependencies such as classes marked as `@ConfigurationProperties`. The system incorrectly triggers early initialization of those beans before `@ConfigurationProperties` are injected.
 - **[CVE-2024-6763](https://nvd.nist.gov/vuln/detail/CVE-2024-6763) may be flagged as unresolved in Jetty despite the fix**: Although CVE-2024-6763 was resolved in Hazelcast Platform 5.6.1 by upgrading the Jetty dependency, the vulnerability may continue to be reported as present in security scans. This occurs because Jetty 9 has reached End of Life and scanners may flag it regardless of the fix. Hazelcast is aware of this and is working to upgrade Jetty in a future release.
 
-### Contributors
+### Contributors {/* #contributors-2 */}
 
 We would like to thank the contributors from our open source community who worked on this release:
 

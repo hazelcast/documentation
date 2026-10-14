@@ -1,6 +1,6 @@
 ---
 title: "Group Messages from Apache Pulsar"
-sidebar_position: 3
+sidebar_position: 2
 slug: /pipelines/pulsar
 ---
 
@@ -55,14 +55,14 @@ Create a blank Java project named `pulsar-example` and copy the Maven file into 
             <version>{os-version}</version>
         </dependency>
         <dependency>
-            <groupId>com.hazelcast.jet.contrib</groupId>
-            <artifactId>pulsar</artifactId>
-            <version>0.1</version>
+            <groupId>com.hazelcast.jet</groupId>
+            <artifactId>hazelcast-jet-pulsar</artifactId>
+            <version>{os-version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.pulsar</groupId>
             <artifactId>pulsar-client</artifactId>
-            <version>2.5.0</version>
+            <version>5.0.0-M1</version>
         </dependency>
     </dependencies>
     <build>
@@ -131,31 +131,7 @@ import java.util.concurrent.TimeUnit;
 
 public class MessagePublisher {
 
-    public static class Event {
-        public String user;
-        public Long eventCount;
-        public String message;
-
-        public Event() {
-        }
-
-        public Event(String user, Long eventCount, String message) {
-            this.user = user;
-            this.eventCount = eventCount;
-            this.message = message;
-        }
-        public String getUser() {
-            return user;
-        }
-
-        public Long getEventCount() {
-            return eventCount;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
+    public record Event (String user, Long eventCount, String message) {
     }
 
     public static void main(String[] args) throws Exception {
@@ -164,20 +140,24 @@ public class MessagePublisher {
                                           .serviceUrl("pulsar://localhost:6650")
                                           .build();
         String[] userArray = {"user1", "user2", "user3", "user4", "user5"};
-        Producer<Event> producer = client
+        try (Producer<Event> producer = client
                 .newProducer(Schema.JSON(Event.class))
                 .topic(topicName)
                 .batchingMaxPublishDelay(10, TimeUnit.MILLISECONDS)
                 .sendTimeout(10, TimeUnit.SECONDS)
                 .blockIfQueueFull(true)
-                .create();
+                .create()) {
 
-        for (long eventCount = 0; ; eventCount++) {
-            String message = String.format("message-%0,4d", eventCount);
-            String user = getRandomUser(userArray);
-            producer.send(new Event(user, eventCount, message));
-            System.out.format("Published '%s' from '%s' to Pulsar topic '%s'%n", message, user, topicName);
-            Thread.sleep(20);
+
+           for (long eventCount = 0; ; eventCount++) {
+               String message = String.format("message-%0,4d", eventCount);
+               String user = getRandomUser(userArray);
+               producer.send(new Event(user, eventCount, message));
+               System.out.format("Published '%s' from '%s' to Pulsar topic '%s'%n", message, user, topicName);
+               Thread.sleep(20);
+           }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -210,7 +190,7 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.jet.*;
 import com.hazelcast.jet.config.JobConfig;
-import com.hazelcast.jet.contrib.pulsar.PulsarSources;
+import com.hazelcast.jet.pulsar.PulsarSources;
 import com.hazelcast.jet.pipeline.*;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClient;
@@ -227,6 +207,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.hazelcast.jet.aggregate.AggregateOperations.counting;
 import static com.hazelcast.jet.pipeline.WindowDefinition.sliding;
+import static com.hazelcast.jet.pulsar.PulsarSchema.json;
 
 public class JetJob {
     static final DateTimeFormatter TIME_FORMATTER =
@@ -235,16 +216,16 @@ public class JetJob {
     public static void main(String[] args) {
         String topicName = "hz-jet-topic";
 
-        StreamSource<Event> source = PulsarSources.pulsarReaderBuilder(
-                topicName,
-                () -> PulsarClient.builder().serviceUrl("pulsar://localhost:6650").build(),
-                () -> Schema.JSON(Event.class),
-                Message::getValue).build();
+        StreamSource<Event> source = PulsarSources.pulsarConsumerBuilder(json(Event.class))
+                .topic(topicName)
+                .connectionSupplier(() -> PulsarClient.builder().serviceUrl("pulsar://localhost:6650").build())
+                .projectionFn(Message::getValue)
+                .build();
 
         Pipeline p = Pipeline.create();
         p.readFrom(source)
          .withNativeTimestamps(0)
-         .groupingKey(Event::getUser)
+         .groupingKey(Event::user)
          .window(sliding(TimeUnit.SECONDS.toMillis(60), TimeUnit.SECONDS.toMillis(30)))
          .aggregate(counting())
          .writeTo(Sinks.logger(wr -> String.format(
