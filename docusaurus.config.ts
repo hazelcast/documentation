@@ -118,6 +118,12 @@ const config: Config = {
     './plugins/tutorials-index',
     './plugins/llms-txt',
     ['./plugins/archived-versions', archivedVersions],
+    // rspack's realContentHash string-replaces hashes in the SSG bundle, page text included.
+    () => ({
+      name: 'server-real-content-hash-off',
+      configureWebpack: (_config: unknown, isServer: boolean) =>
+        isServer ? {optimization: {realContentHash: false}} : {},
+    }),
   ],
 
   // Lets the landing page resolve its `/<comp>/latest/` links (no remark pass runs on React pages).
