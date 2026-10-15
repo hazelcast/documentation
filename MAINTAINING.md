@@ -79,7 +79,7 @@ The page redirects in `src/redirects` are processed by Docusaurus during the bui
 
 Retired versions are not in this repo. They are static HTML, rendered once from the previous Antora site, and hosted on a separate Netlify site. The `build-frozen-versions` workflow in the `hazelcast-docs` repo builds and deploys that site. Each archived page has a banner that links to the latest version, and has no search, Ask AI, feedback widget, or help and support card.
 
-The archived versions keep their `docs.hazelcast.com` URLs. After the build, `plugins/archived-versions` adds a rewrite to `build/_redirects` for each version listed in `src/archivedVersions.json`, which serves it from the archive site. Each product's version dropdown has an **Archived versions** link to its newest archived version.
+The archived versions keep their `docs.hazelcast.com` URLs. After the build, `plugins/archived-versions` adds a rewrite to `build/_redirects` for each version listed in `src/archivedVersions.json`, which serves it from the archive site. Each product's version dropdown has an **Archives** link to its newest archived version.
 
 Management Center 3.8 to 4.2020.10 and IMDG 2 to 3.11 are not archived. Their pages only linked to manuals on docs.hazelcast.org. The plugin redirects each of these versions to its manual, using the `redirects` entries in `src/archivedVersions.json`.
 
