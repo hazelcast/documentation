@@ -3,7 +3,6 @@
 // internals noted at their use sites, read off @docsearch/react v4; re-check when Docusaurus upgrades.
 import React, {useCallback, useEffect, useRef, useState, type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
-import clsx from 'clsx';
 import SearchBar from '@theme-original/SearchBar';
 import {Button} from '@hazelcast/ui/lib/components/Button';
 import {ButtonGroup} from '@hazelcast/ui/lib/components/ButtonGroup';
@@ -131,11 +130,12 @@ function ProductFilters({
         {/* Hands the typed query to Kapa; the label names it. */}
         <Button
           type="button"
-          variant="outlined"
+          variant="contained"
+          color="secondary"
           iconLeft={AskAiIcon}
           iconLeftAriaLabel="Ask AI"
           truncate
-          className={clsx(styles.outlined, styles.askAi)}
+          className={styles.askAi}
           onClick={onAskAi}>
           {query ? `Ask AI about "${query}"` : 'Ask AI'}
         </Button>

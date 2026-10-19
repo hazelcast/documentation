@@ -244,7 +244,12 @@ const config: Config = {
     },
     prism: {
       theme: prismThemes.github,
-      darkTheme: prismThemes.dracula,
+      // Dracula's token colours on HIVE's raised-surface background (`--hive-color-neutral-white-v4`, dark) instead of its own `#282a36`.
+      // A literal, not `var()`: the API reference passes this colour to Redoc, whose darken/transparentize cannot parse `var()`.
+      darkTheme: {
+        ...prismThemes.dracula,
+        plain: {...prismThemes.dracula.plain, backgroundColor: '#2a2d3a'},
+      },
       // A language missing here renders unhighlighted, silently.
       additionalLanguages: [
         'bash', 'java', 'properties', 'csharp',
