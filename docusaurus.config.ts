@@ -151,7 +151,7 @@ const config: Config = {
     // return no results on older versions.
     algolia: {
       appId: 'QK2EAH8GB0',
-      apiKey: '148f165428808580b7a2d0e96f53b707',
+      apiKey: '360d69c2e5f2f150cbf4322abb413956',
       indexName: 'mir-test-new-docs-test',
       contextualSearch: false,
       // No `/search` route; this also drops the modal's "See all results" footer.
