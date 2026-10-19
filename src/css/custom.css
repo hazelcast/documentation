@@ -249,6 +249,12 @@ html[data-theme='dark'] {
 .navbar__items--right > .dropdown--show .dropdown__menu {
   transform: none;
 }
+/* The menu opens on click (src/theme/NavbarItem/DocsVersionDropdownNavbarItem.tsx), so Infima's hover rule must not open it. */
+.navbar__items--right > .dropdown--hoverable:not(.dropdown--show):hover .dropdown__menu {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
 .navbar__items--right > .dropdown .dropdown__link--active {
   color: var(--ifm-color-primary);
 }
