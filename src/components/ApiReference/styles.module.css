@@ -97,6 +97,53 @@
   font-size: var(--ifm-h5-font-size);
 }
 
+/* oneOf buttons (a tablist, tagged by useTagOneOfButtons in Renderer.tsx): Redoc hardcodes white for both states, so style them as HIVE's Tabs (Tabs/Tab.module.css). */
+.apiReference.apiReference [role='tablist'] {
+  display: flex;
+  overflow-x: auto;
+  margin-bottom: 0.5em;
+  border-bottom: var(--hive-border-width) solid var(--hive-color-border-v4);
+}
+.apiReference.apiReference button[data-one-of] {
+  height: calc(var(--hive-grid) * 9);
+  margin: 0;
+  padding: 0 calc(var(--hive-grid) * 6);
+  border: none;
+  border-bottom: calc(var(--hive-border-width) * 2) solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--hive-color-text-secondary-v4);
+  font-family: var(--hive-font-family-text);
+  font-size: var(--hive-font-size-body-small);
+  font-weight: var(--hive-font-weight-text-medium);
+  line-height: 1;
+  white-space: nowrap;
+}
+.apiReference.apiReference button[data-one-of]:hover {
+  color: var(--hive-color-brand-v4);
+}
+.apiReference.apiReference button[data-one-of='on'] {
+  border-bottom-color: var(--hive-color-brand-v4);
+  color: var(--hive-color-brand-v4);
+}
+.apiReference.apiReference button[data-one-of]:focus {
+  box-shadow: none;
+}
+
+/* The media type beside "Request body schema" is hardcoded black in Redoc. */
+.apiReference.apiReference h5 > span {
+  color: var(--hive-color-text-secondary-v4);
+}
+
+/* Redoc leaves the browser's `auto` focus ring, in the response's own colour; use HIVE's focus ring, for keyboard focus only. */
+.apiReference.apiReference button:focus {
+  outline: none;
+}
+.apiReference.apiReference button:focus-visible {
+  outline: var(--hive-outline-width) solid var(--hive-color-primary-v4);
+  outline-offset: -2px;
+}
+
 /* A border rather than Redoc's ::after, so the rule sits above the heading it separates. */
 .operation + .operation {
   border-top: 1px solid var(--ifm-color-emphasis-200);

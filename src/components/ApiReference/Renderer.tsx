@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo} from 'react';
+import React, {useEffect, useMemo, useRef} from 'react';
 import {useActivePluginAndVersion} from '@docusaurus/plugin-content-docs/client';
 import {useHistory, useLocation} from '@docusaurus/router';
 import {useColorMode, useThemeConfig} from '@docusaurus/theme-common';
@@ -85,7 +85,42 @@ const currentHash = (): string => {
   }
 };
 
+// Redoc's oneOf buttons choose which schema variant is shown, but they are plain <button>s: the active state exists only as a generated class
+// (with `white` hardcoded in both states) and nothing tells assistive technology which is selected. Make them a tablist and tag each with data-one-of="on"|"off",
+// read from Redoc's own colours before our CSS applies, so styles.module.css can style them as HIVE tabs.
+// They are two or more buttons alone in their parent; the code blocks' copy and wrap buttons also sit in such a group, so those are left out.
+function useTagOneOfButtons(root: React.RefObject<HTMLElement>): void {
+  useEffect(() => {
+    const el = root.current;
+    if (!el) {
+      return undefined;
+    }
+    const tag = () => {
+      for (const button of el.querySelectorAll<HTMLButtonElement>('div:not(:has(> :not(button))) > button:not(:only-child)')) {
+        if (button.closest('.theme-code-block')) {
+          continue;
+        }
+        delete button.dataset.oneOf;
+        const selected = getComputedStyle(button).backgroundColor !== 'rgb(255, 255, 255)';
+        button.dataset.oneOf = selected ? 'on' : 'off';
+        button.parentElement!.setAttribute('role', 'tablist');
+        button.parentElement!.setAttribute('aria-label', 'One of');
+        button.setAttribute('role', 'tab');
+        button.setAttribute('aria-selected', String(selected));
+      }
+    };
+    tag();
+    const observer = new MutationObserver(tag);
+    observer.observe(el, {subtree: true, childList: true, attributes: true, attributeFilter: ['class']});
+    // styled-components injects each rule after its element renders, so the colours are not readable until the head changes.
+    observer.observe(document.head, {subtree: true, childList: true, characterData: true});
+    return () => observer.disconnect();
+  }, [root]);
+}
+
 function ApiContent({store, specUrl}: {store: AppStore; specUrl: string}): React.ReactElement {
+  const rootRef = useRef<HTMLDivElement>(null);
+  useTagOneOfButtons(rootRef);
   const publish = usePublishApiToc();
   const history = useHistory();
   const location = useLocation();
@@ -119,7 +154,7 @@ function ApiContent({store, specUrl}: {store: AppStore; specUrl: string}): React
     <ThemeProvider theme={store.options.theme}>
       <StoreProvider value={store}>
         <OptionsProvider value={store.options}>
-          <div className={styles.apiReference}>
+          <div ref={rootRef} className={styles.apiReference}>
             <ApiInfo store={store} />
             {/* Redoc's download link is hidden in styles.module.css and replaced with a HIVE Button. */}
             <div className={styles.download}>

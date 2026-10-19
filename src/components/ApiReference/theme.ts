@@ -7,6 +7,22 @@ import type {RedocRawOptions} from 'redoc';
 // Custom property backing each Redoc colour. Unresolvable ones are left off so Redoc's default applies.
 const TOKENS = {
   primary: {main: '--hive-color-primary-v4'},
+  // HIVE's status colours drive responses, "required", and the verbs below; Redoc derives its light/dark/contrast variants from `main`.
+  success: {main: '--hive-color-success-text-v4'},
+  warning: {main: '--hive-color-warning-text-v4'},
+  error: {main: '--hive-color-error-text-v4'},
+  // HIVE has no per-verb palette: reads are success, creates info, changes warning, deletes error, and the rare verbs neutral.
+  http: {
+    get: '--hive-color-success-text-v4',
+    post: '--hive-color-info-text-v4',
+    put: '--hive-color-warning-text-v4',
+    patch: '--hive-color-warning-text-v4',
+    delete: '--hive-color-error-text-v4',
+    options: '--hive-color-text-secondary-v4',
+    head: '--hive-color-text-secondary-v4',
+    basic: '--hive-color-text-secondary-v4',
+    link: '--hive-color-text-secondary-v4',
+  },
   text: {primary: '--ifm-font-color-base', secondary: '--ifm-color-emphasis-700'},
   border: {dark: '--ifm-color-emphasis-300', light: '--ifm-color-emphasis-200'},
   schema: {
@@ -54,16 +70,25 @@ function normaliseColor(value: string): string | null {
     : `rgba(${channel(r!)}, ${channel(g!)}, ${channel(b!)}, ${(a! / 255).toFixed(3)})`;
 }
 
+// HIVE colours are `light-dark()` pairs, which the canvas cannot parse and which only resolve against an element's `color-scheme`.
+// So a probe element in the document reads the computed colour, and that goes through the canvas to become sRGB.
 function resolve(group: Record<string, string>): Record<string, string> {
   const rootStyle = getComputedStyle(document.documentElement);
+  const element = document.createElement('span');
+  document.documentElement.appendChild(element);
   const resolved: Record<string, string> = {};
   for (const [key, property] of Object.entries(group)) {
-    const raw = rootStyle.getPropertyValue(property).trim();
-    const colour = raw ? normaliseColor(raw) : null;
+    // An undefined property would otherwise compute to the inherited colour.
+    if (!rootStyle.getPropertyValue(property).trim()) {
+      continue;
+    }
+    element.style.color = `var(${property})`;
+    const colour = normaliseColor(getComputedStyle(element).color);
     if (colour !== null) {
       resolved[key] = colour;
     }
   }
+  element.remove();
   return resolved;
 }
 
@@ -76,6 +101,10 @@ export function redocTheme(prismPlain: {color?: string; backgroundColor?: string
     breakpoints: {medium: '9999rem'},
     colors: {
       primary: resolve(TOKENS.primary),
+      success: resolve(TOKENS.success),
+      warning: resolve(TOKENS.warning),
+      error: resolve(TOKENS.error),
+      http: resolve(TOKENS.http),
       text: resolve(TOKENS.text),
       border: resolve(TOKENS.border),
     },
