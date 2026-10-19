@@ -1,6 +1,6 @@
 /* Global styles. */
 
-/* Light theme: Infima primary from HIVE's v4 token, with the shades derived via color-mix in oklch (v4 has only a single primary stop). Dark mode is stock. */
+/* Both themes: Infima primary from HIVE's v4 token, with the shades derived via color-mix in oklch (v4 has only a single primary stop). */
 :root {
   --ifm-color-primary: var(--hive-color-primary-v4);
   --ifm-color-primary-dark: color-mix(in oklch, var(--hive-color-primary-v4) 90%, black);
@@ -11,6 +11,8 @@
   --ifm-color-primary-lightest: color-mix(in oklch, var(--hive-color-primary-v4) 68%, white);
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  /* HIVE's page background (white in light, `#1e1e2e` in dark). */
+  --ifm-background-color: var(--hive-color-neutral-lighter-v4);
   /* Match the 8px corners of HIVE's Badge pills that sit just below the breadcrumbs. */
   --ifm-breadcrumb-border-radius: 8px;
 
@@ -25,6 +27,15 @@
   /* Tabs: active label + underline use brand-v4 (pinned to it rather than primary-v4). Hover and the strip rule are selector rules below. */
   --ifm-tabs-color-active: var(--hive-color-brand-v4);
   --ifm-tabs-color-active-border: var(--hive-color-brand-v4);
+
+  /* Body text, headings, and everything else that inherits Infima's base colour. */
+  --ifm-font-color-base: var(--hive-color-text-v4);
+  /* Inline code: HIVE's hover surface, translucent in dark. */
+  --ifm-code-background: var(--hive-color-surface-hover-v4);
+
+  /* Navigation text: the sidebar in HIVE's text colour, the table of contents in its secondary text colour. The active item stays primary. */
+  --ifm-menu-color: var(--hive-color-text-v4);
+  --ifm-toc-link-color: var(--hive-color-text-secondary-v4);
 }
 
 /* Feedback widget (PushFeedback): tokens pointed at HIVE's.
@@ -38,20 +49,12 @@ html:root {
   --feedback-primary-color: var(--hive-color-primary-v4);
 }
 
-/* Dark mode: HIVE's dark tokens drive the surfaces (they resolve through `light-dark()`, see `color-scheme` below); the brand accent stays Docusaurus's teal ramp. */
+/* Dark mode: HIVE's tokens resolve to their dark values through `light-dark()` (see `color-scheme` below), so the :root mappings, primary included, carry over; only the surfaces differ. */
 [data-theme='dark'] {
-  --ifm-background-color: var(--hive-color-neutral-lighter-v4);
   /* Raised surface: the navbar, footer, and cards sit above the page. */
   --ifm-background-surface-color: var(--hive-color-neutral-white-v4);
   --ifm-navbar-background-color: var(--hive-color-neutral-white-v4);
 
-  --ifm-color-primary: #25c2a0;
-  --ifm-color-primary-dark: #21af90;
-  --ifm-color-primary-darker: #1fa588;
-  --ifm-color-primary-darkest: #1a8870;
-  --ifm-color-primary-light: #29d5b0;
-  --ifm-color-primary-lighter: #32d8b4;
-  --ifm-color-primary-lightest: #4fddbf;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 
   /* HIVE sets `color-scheme: light` on :root, which pins every `light-dark()` token (e.g. the theme switcher's icon) to its light value. */
@@ -62,8 +65,20 @@ html:root {
 [data-theme='dark'] .navbar {
   border-bottom: var(--hive-border-width) solid var(--hive-color-neutral-v4);
 }
+/* Footer in HIVE colours: the Ask AI button's grey (secondary-v4) in light, the navbar's raised surface in dark. */
+.footer {
+  --ifm-footer-background-color: var(--hive-color-secondary-v4);
+  --ifm-footer-color: var(--hive-color-text-v4);
+  --ifm-footer-title-color: var(--hive-color-text-v4);
+  --ifm-footer-link-color: var(--hive-color-text-v4);
+  /* Same colour on hover, as every other link (underline only). */
+  --ifm-footer-link-hover-color: var(--hive-color-text-v4);
+  --ifm-footer-padding-vertical: 1.5rem;
+  border-top: var(--hive-border-width) solid var(--hive-color-border-v4);
+}
 [data-theme='dark'] .footer {
-  border-top: var(--hive-border-width) solid var(--hive-color-neutral-v4);
+  --ifm-footer-background-color: var(--hive-color-neutral-white-v4);
+  border-top-color: var(--hive-color-neutral-v4);
 }
 
 /* Tabs: HIVE puts a rule under the whole strip and colours the label on hover (no background); Infima variables can't express that. */
@@ -120,65 +135,85 @@ html:root {
   border-top: var(--hive-border-width) solid var(--table-border);
 }
 
-/* Admonitions and the version banner use HIVE's Alert recipe (Alert.module.css): text in the type's colour, a tint of it for the fill, a stronger tint for the border.
-   The Infima variant picks the type; the version banner is an `alert--warning`. HIVE has no neutral Alert, so a Note (`alert--secondary`) takes the info colour. */
+/* Admonitions and the version banner follow HIVE's Alert (Alert.module.css): text in the type's colour, a tint for the fill, a stronger one for the border.
+   The Infima variant picks the type; the version banner is an `alert--warning`. HIVE has no neutral Alert, so a Note (`alert--secondary`) takes the info colour.
+   Light mode uses HIVE's own pale status fills (`--hive-color-*-light`) and status colours for the border, softened towards white: HIVE's light Alert formula (`lab(from color 95% a b)`)
+   gives saturated fills, and mixing the dark text colours into white gives murky ones. Dark mode uses HIVE's Alert mix. */
 .theme-admonition[class*='alert--'],
 .theme-doc-version-banner {
   --alert-color: light-dark(var(--hive-color-text), var(--hive-color-text-v4));
   --alert-surface: light-dark(
-    lab(from var(--alert-color) 95% a b),
+    color-mix(in oklab, var(--alert-fill-light) 60%, white),
     color-mix(in oklab, var(--alert-color) 12%, var(--hive-color-neutral-white-v4))
   );
   --alert-border: light-dark(
-    lab(from var(--alert-color) 84% a b),
+    color-mix(in oklab, var(--alert-border-light) 70%, white),
     color-mix(in oklab, var(--alert-color) 40%, var(--hive-color-neutral-white-v4))
   );
   --ifm-alert-background-color: var(--alert-surface);
   --ifm-alert-border-color: var(--alert-border);
   --ifm-alert-foreground-color: var(--alert-color);
 }
+/* Links take the admonition's text colour (as HIVE's Alert does). Infima underlines them in the pale border colour, which hides them; a half-strength line of the text colour reads as a link without looking like underlined text. */
+.theme-admonition a,
+.theme-doc-version-banner a {
+  text-decoration-color: color-mix(in oklab, currentColor 60%, transparent);
+  text-underline-offset: 0.2em;
+}
 .theme-admonition.alert--success {
   --alert-color: var(--hive-color-success-text-v4);
+  --alert-fill-light: var(--hive-color-success-light);
+  --alert-border-light: var(--hive-color-success);
 }
 .theme-admonition.alert--info,
 .theme-admonition.alert--secondary {
   --alert-color: var(--hive-color-info-text-v4);
+  --alert-fill-light: var(--hive-color-info-light);
+  --alert-border-light: var(--hive-color-info);
 }
 .theme-admonition.alert--warning,
 .theme-doc-version-banner {
   --alert-color: var(--hive-color-warning-text-v4);
+  --alert-fill-light: var(--hive-color-warning-light);
+  --alert-border-light: var(--hive-color-warning);
 }
 .theme-admonition.alert--danger {
-  --alert-color: var(--hive-color-error-text-v4);
+  /* error-text-v4 is 2.7:1 on the pink fill in light; HIVE's darker error passes. */
+  --alert-color: light-dark(var(--hive-color-error-dark), var(--hive-color-error-text-v4));
+  --alert-fill-light: var(--hive-color-error-light);
+  --alert-border-light: var(--hive-color-error);
 }
 
-/* DocSearch's dark palette is navy. Point its variables at HIVE tokens (it sets them on `html[data-theme=dark]`, so match that specificity). */
-html[data-theme='dark'] {
+/* DocSearch's palette is Algolia's: navy in dark, blue and purple-grey in light. Point its variables at HIVE tokens, which resolve per theme
+   (DocSearch sets them on `:root` and `html[data-theme=dark]`, so match that specificity). Light keeps Algolia's layout of white hits on a grey modal;
+   dark puts page-coloured hits on the raised surface. */
+html[data-theme] {
   --docsearch-text-color: var(--hive-color-text-v4);
   --docsearch-secondary-text-color: var(--hive-color-text-secondary-v4);
   --docsearch-icon-color: var(--hive-color-text-secondary-v4);
   --docsearch-muted-color: var(--hive-color-text-secondary-v4);
   --docsearch-highlight-color: var(--hive-color-brand-v4);
   --docsearch-subtle-color: var(--hive-color-border-v4);
-  --docsearch-container-background: rgb(30 30 46 / 0.8);
-  --docsearch-modal-background: var(--hive-color-neutral-white-v4);
-  --docsearch-modal-shadow: 0 0 0 1px var(--hive-color-border-v4), 0 3px 8px 0 rgb(0 0 0 / 0.5);
-  --docsearch-searchbox-background: var(--hive-color-neutral-lighter-v4);
-  --docsearch-searchbox-focus-background: var(--hive-color-neutral-lighter-v4);
-  --docsearch-hit-background: var(--hive-color-neutral-lighter-v4);
+  --docsearch-container-background: light-dark(rgb(0 0 0 / 0.4), rgb(30 30 46 / 0.8));
+  --docsearch-modal-background: light-dark(var(--hive-color-surface-hover-v4), var(--hive-color-neutral-white-v4));
+  --docsearch-modal-shadow: 0 0 0 1px var(--hive-color-border-v4), 0 3px 8px 0 light-dark(rgb(0 0 0 / 0.15), rgb(0 0 0 / 0.5));
+  --docsearch-searchbox-background: light-dark(var(--hive-color-neutral-white-v4), var(--hive-color-neutral-lighter-v4));
+  --docsearch-searchbox-focus-background: light-dark(var(--hive-color-neutral-white-v4), var(--hive-color-neutral-lighter-v4));
+  --docsearch-hit-background: light-dark(var(--hive-color-neutral-white-v4), var(--hive-color-neutral-lighter-v4));
   --docsearch-hit-color: var(--hive-color-text-v4);
+  --docsearch-hit-shadow: none;
   --docsearch-background-color: var(--hive-color-neutral-v4);
   --docsearch-soft-primary-color: var(--hive-color-surface-active-v4);
   --docsearch-hit-highlight-color: var(--hive-color-surface-active-v4);
-  --docsearch-key-pressed-shadow: inset 0 2px 4px rgb(0 0 0 / 0.4);
+  --docsearch-key-pressed-shadow: inset 0 2px 4px light-dark(rgb(0 0 0 / 0.15), rgb(0 0 0 / 0.4));
   --docsearch-key-background: var(--hive-color-neutral-v4);
   --docsearch-key-color: var(--hive-color-text-secondary-v4);
-  --docsearch-footer-background: var(--hive-color-neutral-white-v4);
+  --docsearch-footer-background: light-dark(var(--hive-color-surface-hover-v4), var(--hive-color-neutral-white-v4));
   --docsearch-footer-shadow: 0 -1px 0 0 var(--hive-color-border-v4);
 }
 
 /* The Algolia logo's SVG hardcodes its own blue fill in an embedded <style>, so `--docsearch-logo-color` never reaches it. */
-[data-theme='dark'] .DocSearch-Logo svg * {
+.DocSearch-Logo svg * {
   fill: var(--hive-color-text-secondary-v4);
 }
 
@@ -191,11 +226,6 @@ html[data-theme='dark'] {
 }
 .DocSearch-Footer {
   border-radius: 0 0 var(--hive-border-radius) var(--hive-border-radius);
-}
-
-/* The `dark` footer style pins its own colour on the element, so the root variable above does not reach it. */
-[data-theme='dark'] .footer--dark {
-  --ifm-footer-background-color: var(--hive-color-neutral-white-v4);
 }
 
 /* Footer: a single centered row of links rather than Infima's stacked columns. */
@@ -225,58 +255,59 @@ html[data-theme='dark'] {
   order: -2;
 }
 
-/* The version selector behaves like the theme switcher: borderless, with HIVE's hover surface, at the same 36px height. The menu matches the theme switcher's. */
-.navbar__items--right > .navbar__item.dropdown {
+/* Navbar dropdowns (the version selectors and, at narrow widths, Products) behave like the theme switcher: borderless, with HIVE's hover surface, at the same 36px height.
+   Their menus match the theme switcher's. */
+.navbar__item.dropdown {
   display: flex;
   align-items: center;
   height: calc(var(--hive-grid) * 9);
   padding-block: 0;
   border-radius: var(--hive-border-radius);
 }
-.navbar__items--right > .navbar__item.dropdown:hover,
-.navbar__items--right > .navbar__item.dropdown--show {
+.navbar__item.dropdown:hover,
+.navbar__item.dropdown--show {
   background: var(--hive-color-surface-hover-v4);
 }
 /* Infima tucks the menu under the trigger, which would hide the trigger's bottom border; open it below with the theme menu's 4px offset.
    Infima also slides the menu down 9px as it fades, which reads as a wiggle; open and close instantly, as the theme menu does. */
-.navbar__items--right > .dropdown .dropdown__menu {
+.navbar__item.dropdown .dropdown__menu {
   top: calc(100% + var(--hive-grid));
   transform: none;
   transition: none;
+  box-shadow: var(--hive-shadow-popover-v4);
+  padding: var(--hive-grid);
   border: var(--hive-border-width) solid var(--hive-color-border-v4);
   border-radius: var(--hive-border-radius);
 }
-.navbar__items--right > .dropdown--show .dropdown__menu {
+.navbar__item.dropdown--show .dropdown__menu,
+.navbar__item.dropdown--hoverable:hover .dropdown__menu {
   transform: none;
 }
-/* The menu opens on click (src/theme/NavbarItem/DocsVersionDropdownNavbarItem.tsx), so Infima's hover rule must not open it. */
-.navbar__items--right > .dropdown--hoverable:not(.dropdown--show):hover .dropdown__menu {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-.navbar__items--right > .dropdown .dropdown__link--active {
-  color: var(--ifm-color-primary);
-}
-[data-theme='dark'] .navbar__items--right > .dropdown .dropdown__link--active {
-  color: var(--hive-color-brand-v4);
-}
-.navbar__items--right > [class*='colorModeToggle'] {
-  order: -1;
-}
-/* The menu opens 4px below the trigger; this strip keeps the pointer inside the toggle while it crosses that gap (the mouseleave in src/theme/ColorModeToggle closes the menu). */
-.navbar__items--right > [class*='colorModeToggle'] {
-  position: relative;
-}
-.navbar__items--right > [class*='colorModeToggle']::after {
+/* Products still opens on hover, so a strip under the trigger keeps the pointer over it while crossing the 4px gap; the menu's `overflow-y: auto` would clip it there. */
+.navbar__item.dropdown--hoverable:hover::after {
   content: '';
   position: absolute;
   inset: 100% 0 auto;
   height: var(--hive-grid);
 }
+/* The version menu opens on click (src/theme/NavbarItem/DocsVersionDropdownNavbarItem.tsx), so Infima's hover rule must not open it. */
+.navbar__items--right > .dropdown--hoverable:not(.dropdown--show):hover .dropdown__menu {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.navbar__item.dropdown .dropdown__link--active {
+  color: var(--ifm-color-primary);
+}
+[data-theme='dark'] .navbar__item.dropdown .dropdown__link--active {
+  color: var(--hive-color-brand-v4);
+}
+.navbar__items--right > [class*='colorModeToggle'] {
+  order: -1;
+}
 /* Navbar links fade their colour (Infima's `a` transition); the HIVE trigger has none, so its teal hover was instant. */
 .navbar [data-test='theme-switcher'],
-.navbar__items--right > .navbar__item.dropdown {
+.navbar__item.dropdown {
   transition:
     color var(--ifm-transition-fast) var(--ifm-transition-timing-default),
     background-color var(--ifm-transition-fast) var(--ifm-transition-timing-default);
@@ -294,6 +325,21 @@ html[data-theme='dark'] {
    The popover's class is a CSS-module hash, so match the menu it wraps. */
 div:has(> [role='menu'][aria-label='Color theme']) {
   z-index: calc(var(--ifm-z-index-fixed) + 1);
+}
+
+/* HIVE's AutocompleteField marks the selected option with grey and weight only; give it the teal accent the version menu's current item has.
+   HIVE sets the option colour with a four-class selector, so this needs five. */
+html[data-theme] .hz-autocomplete-field__menu .hz-autocomplete-field__menu-list .hz-autocomplete-field__option.hz-autocomplete-field__option--is-selected {
+  color: var(--ifm-color-primary);
+}
+html[data-theme='dark'] .hz-autocomplete-field__menu .hz-autocomplete-field__menu-list .hz-autocomplete-field__option.hz-autocomplete-field__option--is-selected {
+  color: var(--hive-color-brand-v4);
+}
+
+/* Code blocks take HIVE's corner radius; inline code keeps Infima's smaller one. */
+.theme-code-block {
+  --ifm-code-border-radius: var(--hive-border-radius);
+  --ifm-pre-border-radius: var(--hive-border-radius);
 }
 
 /* Kapa widget: give its host its own stacking context. Raising `data-modal-z-index` lifts the modal but puts Mantine's tooltips beneath it,
@@ -360,9 +406,14 @@ div:has(> [role='menu'][aria-label='Color theme']) {
   font-weight: var(--hive-font-weight-text-bold);
 }
 .theme-doc-sidebar-menu {
-  --ifm-menu-link-padding-vertical: 0.35rem;
+  /* 0.35rem before the line-height below took 2.25px of it, so a one-line row stays 30px. */
+  --ifm-menu-link-padding-vertical: 0.28rem;
   /* Between body-small and body-normal; no token at this step. */
   font-size: 0.9375rem;
+}
+/* Open Sans needs 1.33em for its ascent and descent, more than Infima's 1.25 line-height. The label's `overflow: hidden` (for its two-line clamp) then cut off descenders. */
+.theme-doc-sidebar-menu .menu__link {
+  line-height: 1.4;
 }
 .theme-doc-sidebar-menu .menu__list-item:not(:first-child) {
   margin-top: 0.2rem;

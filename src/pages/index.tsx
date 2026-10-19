@@ -129,7 +129,6 @@ export default function Home(): ReactNode {
             <Card
               key={card.title}
               variant="bordered"
-              className={styles.card}
               headingContent={<h4 className={styles.cardTitle}>{card.title}</h4>}>
               <ul className={styles.links}>
                 {card.links.map((link) => (

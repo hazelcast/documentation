@@ -5,9 +5,9 @@ import Link from '@docusaurus/Link';
 import {usePluginData} from '@docusaurus/useGlobalData';
 import {Badge} from '@hazelcast/ui/lib/components/Badge';
 import {Button} from '@hazelcast/ui/lib/components/Button';
+import {ButtonGroup} from '@hazelcast/ui/lib/components/ButtonGroup';
 import {Card} from '@hazelcast/ui/lib/components/Card';
 import {EmptyState} from '@hazelcast/ui/lib/components/EmptyState';
-import {SegmentedControl} from '@hazelcast/ui/lib/components/SegmentedControl';
 import {AutocompleteField} from '@hazelcast/ui/lib/components/AutocompleteField';
 import {TextField} from '@hazelcast/ui/lib/components/TextField';
 import {Toggle} from '@hazelcast/ui/lib/components/Toggle';
@@ -114,14 +114,19 @@ export default function Tutorials(): ReactNode {
         <div className={styles.filters}>
           <div className={styles.product}>
             <span className={styles.filterLabel}>Product</span>
-            <SegmentedControl
-              value={product}
-              onChange={setProduct}
-              options={[
-                {value: ALL, label: 'All'},
-                ...products.map((p) => ({value: p, label: label(PRODUCT_LABELS, p)})),
-              ]}
-            />
+            {/* Same control as the search modal's product filter (src/theme/SearchBar). */}
+            <ButtonGroup ariaLabel="Filter tutorials by product">
+              {[ALL, ...products].map((p) => (
+                <Button
+                  key={p}
+                  type="button"
+                  variant={product === p ? 'contained' : 'outlined'}
+                  {...({'aria-pressed': product === p} as React.AriaAttributes)}
+                  onClick={() => setProduct(p)}>
+                  {p === ALL ? 'All' : label(PRODUCT_LABELS, p)}
+                </Button>
+              ))}
+            </ButtonGroup>
           </div>
           <div className={styles.fields}>
             <TextField

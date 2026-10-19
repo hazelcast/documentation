@@ -210,7 +210,7 @@ const config: Config = {
       ],
     },
     footer: {
-      style: 'dark',
+      style: 'light',
       links: [
         {
           items: [
@@ -243,9 +243,12 @@ const config: Config = {
       ],
     },
     prism: {
-      theme: prismThemes.github,
-      // Dracula's token colours on HIVE's raised-surface background (`--hive-color-neutral-white-v4`, dark) instead of its own `#282a36`.
-      // A literal, not `var()`: the API reference passes this colour to Redoc, whose darken/transparentize cannot parse `var()`.
+      // The GitHub and Dracula token colours on HIVE backgrounds: `--hive-color-surface-hover-v4` in light, the raised surface `--hive-color-neutral-white-v4` in dark.
+      // Literals, not `var()`: the API reference passes these colours to Redoc, whose darken/transparentize cannot parse `var()`.
+      theme: {
+        ...prismThemes.github,
+        plain: {...prismThemes.github.plain, backgroundColor: '#f5f5f5'},
+      },
       darkTheme: {
         ...prismThemes.dracula,
         plain: {...prismThemes.dracula.plain, backgroundColor: '#2a2d3a'},

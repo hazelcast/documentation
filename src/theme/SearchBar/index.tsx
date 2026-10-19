@@ -110,9 +110,7 @@ function ProductFilters({
             <Button
               key={id ?? 'all'}
               type="button"
-              // HIVE's `active` is too faint on outlined buttons; use the filled variant.
               variant={selected === id ? 'contained' : 'outlined'}
-              active={selected === id}
               // Only the outlined buttons need the dark-mode fix; see the CSS.
               className={selected === id ? undefined : styles.outlined}
               {...({'aria-pressed': selected === id} as React.AriaAttributes)}

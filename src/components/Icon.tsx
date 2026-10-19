@@ -5,17 +5,18 @@ import {Icon as HiveIcon} from '@hazelcast/ui/lib/components/Icon';
 // Icons that are content (the feature matrix ticks/crosses), not decoration.
 // Rendered as icons rather than ✓/✗ text so no text is added to the page.
 // Keyed by role, which carries the meaning; add an entry for any new `icon:` role.
+// The *-text-v4 tokens: HIVE's foreground variants (success-v4 is a pale fill, 1.6:1 on the light page).
 const ICONS = {
   success: {
     icon: CheckCircle,
     ariaLabel: 'Supported',
-    color: 'var(--hive-color-success-v4)',
+    color: 'var(--hive-color-success-text-v4)',
   },
   error: {
     // Circled XCircle reads as "no", not "warning" (HIVE's AlertCircle).
     icon: XCircle,
     ariaLabel: 'Not supported',
-    color: 'var(--hive-color-error-v4)',
+    color: 'var(--hive-color-error-text-v4)',
   },
 } as const;
 

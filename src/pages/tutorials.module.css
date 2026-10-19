@@ -1,4 +1,6 @@
 .page {
+  /* The layout wrapper is a flex column, where an auto-margined item shrinks to its content; without a width the page narrows when the filters leave short cards. */
+  width: 100%;
   max-width: 1180px;
   margin: 0 auto;
   padding: 2.5rem 1rem 4rem;
@@ -25,11 +27,15 @@
   margin-bottom: 1.25rem;
 }
 
-/* The segmented control sizes to its options — five products need ~560px, far
-   more than a grid track — so it gets its own full-width row rather than
-   overflowing the field beside it. */
+/* The product buttons size to their options, far more than a grid track, so they
+   get their own full-width row rather than overflowing the field beside it. */
 .product {
   margin-bottom: 1rem;
+}
+
+/* HIVE's ButtonGroup draws a drop shadow, which none of the page's other controls have. */
+.product [role='group'] {
+  box-shadow: none;
 }
 
 /* Fields align at the TOP, not the bottom: the three HIVE field types have
@@ -42,10 +48,9 @@
   align-items: start;
 }
 
-/* SegmentedControl and Toggle each ship their own label element, in a different
+/* The product buttons have no label of their own, and Toggle ships one in a different
    colour and size from the FieldHeader that TextField and AutocompleteField use.
-   Ours is suppressed on those two and replaced with this, so every filter reads
-   the same. */
+   This one stands in, so every filter reads the same. */
 .filterLabel {
   display: block;
   color: var(--hive-color-text-secondary);
@@ -61,7 +66,7 @@
 }
 
 /* The Toggle's label is part of the control, not a field header, so it cannot be
-   replaced the way the SegmentedControl's is. Recolour it to match instead. */
+   replaced like the product one. Recolour it to match instead. */
 .edition [class*='labelText'] {
   color: var(--hive-color-text-secondary);
 }
@@ -93,8 +98,16 @@
   margin-bottom: 0.6rem;
 }
 
+/* HIVE's light Badge fill (`lab(from color 95% a b)`) turns the Enterprise chip saturated yellow; use HIVE's pale warning fill instead, softened like the admonitions. Dark keeps HIVE's own mix. */
+.chips [class*='warning'] {
+  background-color: light-dark(
+    color-mix(in oklab, var(--hive-color-warning-light) 60%, white),
+    color-mix(in oklab, var(--badge-color) 12%, var(--hive-color-neutral-white-v4))
+  );
+}
+
 .blurb {
-  color: var(--ifm-color-emphasis-800);
+  color: var(--hive-color-text-secondary-v4);
   flex: 1 1 auto;
   margin: 0 0 1rem;
 }
@@ -106,7 +119,7 @@
 }
 
 .meta {
-  color: var(--hive-color-text-secondary);
+  color: var(--hive-color-text-secondary-v4);
   font-size: 0.85rem;
   margin-bottom: 0.35rem;
 }
