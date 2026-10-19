@@ -215,6 +215,7 @@ export const redirects: {from: string; to: string}[] = [
   { from: "/hazelcast/5.4/storage/encryption-at-rest", to: "/hazelcast/5.4/storage/configuring-persistence" },
   { from: "/hazelcast/5.4/storage/recover-single-member", to: "/hazelcast/5.4/storage/configuring-persistence" },
   { from: "/hazelcast/5.4/topologies", to: "/hazelcast/5.4/deploy/choosing-a-deployment-option" },
+  { from: "/hazelcast/5.4/what-is-hazelcast", to: "/hazelcast/5.4" },
   { from: "/hazelcast/5.5/clients/clc", to: "/clc/5.7.0/overview" },
   { from: "/hazelcast/5.5/clients/rest", to: "/hazelcast/5.5/maintain-cluster/rest-api" },
   { from: "/hazelcast/5.5/cluster-performance/performance-tuning", to: "/hazelcast/5.5/cluster-performance/performance-tips" },

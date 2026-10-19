@@ -77,10 +77,14 @@ function loadPlan (planFile, component) {
     )
     process.exit(1)
   }
+  // dest -> url. Scoped by where the copy goes, not by the image's home product:
+  // a tutorial can show a Cloud image.
   const entries = Object.entries(raw.placements || {})
-    .filter(([url]) => !component || url.split('/')[1] === component)
+    .filter(([dest]) => !component || componentOfDest(dest) === component)
   return new Map(entries)
 }
+
+const componentOfDest = (dest) => dest.split('/')[0].replace(/_versioned_docs$/, '')
 
 // The version trees the plan covers, so pruning can be scoped to directories
 // this tool owns. Derived from the canonical layout helpers rather than by
@@ -140,7 +144,9 @@ async function main () {
     console.error(`[extract-images] the plan places no images${component ? ` for component=${component}` : ''}.`)
     process.exit(1)
   }
-  const components = new Set([...plan.keys()].map((url) => url.split('/')[1]))
+  const components = new Set([...plan.keys()].map(componentOfDest))
+  const destsByUrl = new Map()
+  for (const [dest, url] of plan) destsByUrl.set(url, [...(destsByUrl.get(url) || []), dest])
   console.log(`[extract-images] plan: ${plan.size} image(s) across ${[...components].sort().join(', ')}`)
 
   const playbook = buildPlaybook(['--playbook', playbookFile], {})
@@ -168,7 +174,7 @@ async function main () {
   } catch { /* no committed lockfile yet -- nothing to check against */ }
 
   const images = contentCatalog.findBy({ family: 'image' })
-    .filter((file) => file.pub && file.pub.url && plan.has(file.pub.url))
+    .filter((file) => file.pub && file.pub.url && destsByUrl.has(file.pub.url))
 
   const perComponent = {}
   const placed = new Set()
@@ -208,27 +214,29 @@ function stripDrawioSource (file, contents) {
   for (const file of images) {
     const contents = stripDrawioSource(file, file.contents)
     if (!contents || !contents.length) { skipped++; continue }
-    const dest = path.join(rootDir, plan.get(file.pub.url))
-    placed.add(dest)
     if (contents.length > SIZE_WARN_BYTES) heavy.push({ bytes: contents.length, url: file.pub.url })
+    for (const rel of destsByUrl.get(file.pub.url)) {
+      const dest = path.join(rootDir, rel)
+      placed.add(dest)
 
-    let changed = true
-    try {
-      changed = !fs.readFileSync(dest).equals(contents)
-    } catch { /* absent -> write it */ }
+      let changed = true
+      try {
+        changed = !fs.readFileSync(dest).equals(contents)
+      } catch { /* absent -> write it */ }
 
-    const key = file.src.component + (file.src.version ? `@${file.src.version}` : '')
-    perComponent[key] = perComponent[key] || { written: 0, unchanged: 0 }
-    if (!changed) { unchanged++; perComponent[key].unchanged++; continue }
-    if (!dryRun) {
-      fs.mkdirSync(path.dirname(dest), { recursive: true })
-      fs.writeFileSync(dest, contents)
+      const key = file.src.component + (file.src.version ? `@${file.src.version}` : '')
+      perComponent[key] = perComponent[key] || { written: 0, unchanged: 0 }
+      if (!changed) { unchanged++; perComponent[key].unchanged++; continue }
+      if (!dryRun) {
+        fs.mkdirSync(path.dirname(dest), { recursive: true })
+        fs.writeFileSync(dest, contents)
     }
     written++
     perComponent[key].written++
+    }
   }
 
-  const missing = [...plan.keys()].filter((url) => !images.some((f) => f.pub.url === url))
+  const missing = [...destsByUrl.keys()].filter((url) => !images.some((f) => f.pub.url === url))
   const removed = pruneImages(ownedTrees(rootDir, components), placed, dryRun)
 
   console.log(

@@ -1,6 +1,6 @@
 'use strict'
 
-// Umbrella for the three migration gates (fidelity, refs, constructs). Replaces
+// Umbrella for the migration gates (fidelity, refs, constructs, orphans, sidebars). Replaces
 // the old `&&` npm-script chain, which had two defects: it fail-fast aborted on
 // the first gate's findings (so a failure in one gate hid the others' results),
 // and it could not forward a scope flag -- npm appends passthrough args only to
@@ -23,6 +23,7 @@ const GATES = [
   { name: 'refs', script: 'refcheck/run.js' },
   { name: 'constructs', script: 'constructcheck/run.js' },
   { name: 'orphans', script: 'orphancheck/run.js' },
+  { name: 'sidebars', script: 'sidebarcheck/run.js' },
 ]
 
 process.exit(runScripts('check', GATES, process.argv.slice(2), __dirname) ? 1 : 0)

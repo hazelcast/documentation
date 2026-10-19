@@ -236,7 +236,29 @@ function applyAllowlist (orphans, allow, component, inScopePages = null) {
   return { flagged, allowed, staleKeys, staleScopes }
 }
 
+// The converter's output must agree with the nav the source declares. The
+// converter parses nav.adoc with its own parser and writes `unlisted: true` for
+// any page it finds no entry for; Antora resolves the nav separately, and
+// `navIds` is what it says. A page Antora lists but the converter emitted as
+// unlisted has silently lost its sidebar entry (sitemap and search too).
+//   emittedUnlisted: Set of `${component}|${version}|${slug}` for each emitted
+//     page carrying `unlisted: true`; `slugOf(row)` gives the same key for a page.
+// `inNav` fails the gate. `startPages` (a component/version landing page that no
+// nav lists) is reported for a human to decide, not failed: Antora never treats
+// it as an orphan, so there is no allowlist entry that could clear it.
+function crossCheckUnlisted ({ pages, navIds, startIds, emittedUnlisted, slugOf }) {
+  const inNav = []
+  const startPages = []
+  for (const p of pages) {
+    if (!emittedUnlisted.has(slugOf(p))) continue
+    if (navIds.has(p.id)) inNav.push(p)
+    else if (startIds.has(p.id)) startPages.push(p)
+  }
+  return { inNav, startPages }
+}
+
 module.exports = {
+  crossCheckUnlisted,
   DISPOSITIONS,
   xrefTargets,
   includeTargets,

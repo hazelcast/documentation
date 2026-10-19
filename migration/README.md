@@ -52,26 +52,27 @@ Out of scope, staying on Antora for now: the external `hazelcast-code-samples` r
 
 ## Running the gates
 
-Four gates must all pass before a converted page is trusted. They're described in detail below (fidelity harness, reference checker, construct-coverage gate, orphan gate); this is the operational summary.
+Five gates must all pass before a converted page is trusted. They're described in detail below (fidelity harness, reference checker, construct-coverage gate, orphan gate, sidebar gate); this is the operational summary.
 
-The fidelity, refs and constructs gates **read the converted output from the root Docusaurus build**, so build the site first. The orphan gate is the exception: it reads the **Antora sources directly** (orphan-ness is a source-side structural fact, independent of what has been converted yet) and needs no build. Run the gates from `migration/`:
+The fidelity, refs, constructs and sidebar gates **read the converted output from the root Docusaurus build**, so build the site first (the sidebar gate reads the sidebars Docusaurus generated into `../.docusaurus`, which a running `npm start` also writes). The orphan gate needs no build: it reads the **Antora sources directly** (orphan-ness is a source-side structural fact), plus the converted `.mdx` frontmatter for its `unlisted` cross-check. Run the gates from `migration/`:
 
 ```
 (cd .. && npm run build)   # produces the converted "after" the first three gates read
 npm run census             # poisoned render the refs gate reads its expectations from (~1 min)
-npm run check              # runs all four gates, then a pass/fail summary
+npm run check              # runs all five gates, then a pass/fail summary
 ```
 
 Like the golden snapshot, the census render is a **build input**, not part of `check`: rebuild it when the pin changes (the refs gate hard-stops on a stale one, so it cannot silently compare against another revision's expectations).
 
-`npm run check` is the one command to remember. It runs **all four** gates regardless of individual outcome (no fail-fast — a failure in one no longer hides the others), prints a one-line summary, and exits non-zero if any gate failed. Scope the whole set the same way the gates scope individually — `npm run check -- --component cloud` forwards the flag to all four (the `--` separator is required, else npm swallows it). Individually:
+`npm run check` is the one command to remember. It runs **all five** gates regardless of individual outcome (no fail-fast — a failure in one no longer hides the others), prints a one-line summary, and exits non-zero if any gate failed. Scope the whole set the same way the gates scope individually — `npm run check -- --component cloud` forwards the flag to all five (the `--` separator is required, else npm swallows it). Individually:
 
 | Script | Gate | Also needs |
 |---|---|---|
 | `npm run check:fidelity` | rendered golden vs rendered Docusaurus (3 layers) | the golden snapshot (`npm run fidelity:snapshot`) |
 | `npm run check:refs` | no-baking: every attribute occurrence the source resolved is still a reference | the census render (`npm run census`) + golden + manifest |
 | `npm run check:constructs` | construct-coverage allowlist (deny-by-default) | `.sources` mirrors + manifest |
-| `npm run check:orphans` | published pages in no navigation tree (deny-by-default) | `.sources` mirrors |
+| `npm run check:orphans` | published pages in no navigation tree (deny-by-default), and nav-listed pages the converter emitted `unlisted` | `.sources` mirrors + converted output |
+| `npm run check:sidebars` | each Docusaurus sidebar equals the Antora nav: entries, labels, URLs, nesting, order | `.sources` mirrors + a site build |
 
 Each takes `--component X` to scope to a subset (fidelity/refs also take `--id /url`; orphans also takes `--include-resolution-only`), `--json` for machine output, and writes a full report under `build/`. All exit non-zero on findings.
 
@@ -92,7 +93,7 @@ Reach for `harness-limit` only after checking the **rendered** output — a comp
 
 Supporting scripts, **not** part of `check`:
 
-- `npm run selftest` — unit tests for the pure logic the gates and converter depend on (needs no golden/build): the shared layout config (`lib/layout.js`); the converter's MDX escapers, link classifiers, partial-factoring, and nav→sidebar plan; the fidelity harness's Layer 1/2/3, golden de-instrumentation, manifest URL resolver, snapshot-pin key, and page pairing; the reference-checker matchers; the construct detectors; and the orphan gate's reachability logic (xref/include extraction, logical-page key, orphan classification, allowlist schema + deny-by-default). Like `check`, it runs **all** suites regardless of individual outcome and exits non-zero if any failed. Run after editing any of them. Individually: `selftest:layout`, `selftest:converter`, `check:fidelity:selftest`, `check:refs:selftest`, `check:constructs:selftest`, `check:orphans:selftest`.
+- `npm run selftest` — unit tests for the pure logic the gates and converter depend on (needs no golden/build): the shared layout config (`lib/layout.js`); the converter's MDX escapers, link classifiers, partial-factoring, and nav→sidebar plan; the fidelity harness's Layer 1/2/3, golden de-instrumentation, manifest URL resolver, snapshot-pin key, and page pairing; the reference-checker matchers; the construct detectors; and the orphan gate's reachability logic (xref/include extraction, logical-page key, orphan classification, allowlist schema + deny-by-default). Like `check`, it runs **all** suites regardless of individual outcome and exits non-zero if any failed. Run after editing any of them. Individually: `selftest:layout`, `selftest:converter`, `check:fidelity:selftest`, `check:refs:selftest`, `check:constructs:selftest`, `check:orphans:selftest`, `check:sidebars:selftest`.
 - `npm run diagnose:layer3` — a human-facing calibration report (no pass/fail): histograms Layer 3's unresolved links over the golden so you can tell resolver bugs from fidelity-neutral pre-existing broken links. Needs the golden snapshot.
 
 There is no CI or git hook yet — running the gates is manual and on-demand (per the direct-to-main strategy). Wiring `npm run check` into CI is the intended durable backstop, still to be built.
@@ -186,6 +187,18 @@ The gate validates that schema (bad disposition, or a `redirect` with no `to`, f
 
 Baseline at wire-up: **73 logical orphan pages** across the migrated set (50 unreachable + 23 referenced; 237 version-instances) — clc 8, cloud 2, hazelcast 58, management-center 4, operator 1. GA shows these are low-traffic (single-digit 2026 views on the ones sampled), which makes `drop-404` defensible for most; reserve redirects for pages with real external traffic or (for referenced orphans) live internal referrers.
 
+### Sidebar gate
+
+`npm run check:sidebars [-- --component X]` compares each migrated version's sidebar with its Antora nav. Neither side comes from the converter. The Antora side is `@antora/navigation-builder` run over the pinned sources, which is what renders the live nav. The Docusaurus side is the sidebar Docusaurus generated, read from the version metadata in `../.docusaurus`. Both are flattened into ordered lines of label path plus URL, and diffed, so a missing, extra, moved, re-nested, relabelled or reordered entry is a finding. Non-zero exit on any difference; report at `build/sidebarcheck-report.json`.
+
+The Antora side is first put through the converter's documented sidebar transforms, and the report counts what each one removed:
+- An item with children becomes a category, and its own page is the category's first child, labelled "Overview".
+- A `.Title` whose only child is a parent page is merged with that page.
+- An entry for a page in another product is dropped. Platform 5.3's link to the Operator docs is the only one.
+- A page is listed once. Antora's later listings of it are dropped, because an autogenerated Docusaurus sidebar cannot list a doc twice. Platform 5.4 drops the most: 14 entries.
+
+A Docusaurus-only entry is expected when the orphan allowlist injects that page into that version's nav (`nav.after`). Docs marked `unlisted` are skipped, because a production build hides them. The dev server shows them in the sidebar regardless, and its metadata marks every item `unlisted: false`, so the gate reads the flag from the doc's frontmatter.
+
 ## Gotchas worth remembering
 
 - The pin is enforced by the mirrors **not moving**, not by the lockfile: Antora builds branch *tips*, so `lockfile.json` only *records* the SHAs — freezing them means never updating the mirror. `runtime.fetch: false` guarantees a build never moves a ref.
@@ -202,7 +215,7 @@ Baseline at wire-up: **73 logical orphan pages** across the migrated set (50 unr
 
 ## Status
 
-Built: index pass, golden-snapshot builder (with `--component` scoping for smoke tests), all four gates (fidelity harness, reference checker, construct-coverage gate, orphan gate) and the converter. Not yet built: CI wiring for `npm run check`, orphan triage (populating `orphancheck/allowlist.json` + the redirect-generation step that reads its dispositions), the include graph, Swagger handling.
+Built: index pass, golden-snapshot builder (with `--component` scoping for smoke tests), all five gates (fidelity harness, reference checker, construct-coverage gate, orphan gate, sidebar gate) and the converter. Not yet built: CI wiring for `npm run check`, orphan triage (populating `orphancheck/allowlist.json` + the redirect-generation step that reads its dispositions), the include graph, Swagger handling.
 
 ## Antora attachment
 

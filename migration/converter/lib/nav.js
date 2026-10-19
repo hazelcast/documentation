@@ -47,9 +47,8 @@ const GROUP_RE = /^(\*+)\s+(\S.*?)\s*$/
 //
 // Grammar: `[version@][component:][module:]relative/path.adoc[#fragment]`. The
 // module is the LAST coordinate segment, so a component-qualified target keys off
-// its module too; a target in ANOTHER component is a phantom either way (it
-// matches no page in this component's manifest and so plans nothing), which is
-// the pre-existing behaviour and not something a component-less planner can fix.
+// its module too. `component` is set when the target names one (`comp:mod:page`
+// or `comp::page`), so buildPlan can tell a target in ANOTHER component.
 function parseTarget (target) {
   const clean = target.trim().replace(/#.*$/, '')
   const at = clean.indexOf('@')
@@ -57,7 +56,8 @@ function parseTarget (target) {
   const relative = segs.pop().replace(/\.adoc$/, '')
   const stem = relative.split('/').pop()
   const module = segs.length ? segs[segs.length - 1] : ''
-  return { key: pageKey(module, relative), stem }
+  const component = segs.length >= 2 ? segs[0] : null
+  return { key: pageKey(module, relative), stem, component }
 }
 
 // The plan/nav key for a page: Antora's `module:relative` coordinate, with the
@@ -72,12 +72,40 @@ function pageKey (module, relative) {
 // and humanised labels, which are per-page names, not identifiers.
 const keyStem = (key) => key.split(':').pop().split('/').pop()
 
+// The node an item at `depth` nests under: the nearest shallower node on the
+// stack. Antora does the same, so `** item` directly under a `.Title` (Platform
+// 5.3/5.4 per-module partials open that way) is a child of the title. Throws
+// when nothing is open at all: a skipped item silently loses its page's sidebar entry.
+function navParent (stack, depth, line) {
+  for (let d = depth - 1; d >= 0; d--) if (stack[d]) return stack[d]
+  throw new Error(`nav item has no enclosing category or item: ${line.trim()}`)
+}
+
+// A nav label as the sidebar shows it. Antora renders `` `x` `` in a nav label as
+// code; a Docusaurus sidebar label is plain text, so the backticks would show.
+const navLabel = (s) => s.trim().replace(/`([^`]+)`/g, '$1')
+
 function parseNav (adoc) {
   const roots = []
   let stack = [] // stack[d] = node whose children receive depth d+1 items
+  // A list continuation (`+`) followed by an open block (`--`) attaches the
+  // block's list to the item above it, so its `*` items are that item's
+  // children. Platform 5.3 includes whole module partials this way. Inside a
+  // block, an item's depth is its stars plus the depth of the item it attaches to.
+  let offset = 0
+  const blocks = []
+  let lastDepth = 0
+  let continued = false
   for (const raw of adoc.split('\n')) {
     const line = raw.replace(/\s+$/, '')
     if (!line.trim()) continue
+    if (line.trim() === '+') { continued = true; continue }
+    if (line.trim() === '--') {
+      if (continued) { blocks.push(offset); offset = lastDepth } else if (blocks.length) offset = blocks.pop()
+      continued = false
+      continue
+    }
+    continued = false
     const cat = line.match(CATEGORY_RE)
     if (cat) {
       const node = { type: 'category', label: cat[1].trim(), children: [] }
@@ -87,22 +115,22 @@ function parseNav (adoc) {
     }
     const item = line.match(ITEM_RE)
     if (item) {
-      const depth = item[1].length // 1..4
-      const { key, stem } = parseTarget(item[2])
-      const node = { type: 'page', key, stem, label: item[3].trim(), children: [] }
-      const parent = stack[depth - 1]
-      if (!parent) continue // malformed depth jump; skip defensively
+      const depth = offset + item[1].length
+      const { key, stem, component } = parseTarget(item[2])
+      const node = { type: 'page', key, stem, label: navLabel(item[3]), children: [] }
+      if (component) node.component = component
+      const parent = navParent(stack, depth, line)
       parent.children.push(node)
       stack[depth] = node
       stack.length = depth + 1
+      lastDepth = depth
       continue
     }
     const group = line.match(GROUP_RE)
     if (group) {
-      const depth = group[1].length
-      const node = { type: 'category', label: group[2].trim(), children: [] }
-      const parent = stack[depth - 1]
-      if (!parent) continue // grouping with no parent (depth jump); skip
+      const depth = offset + group[1].length
+      const node = { type: 'category', label: navLabel(group[2]), children: [] }
+      const parent = navParent(stack, depth, line)
       // A grouping nests inside its parent's children — but the plan walker only
       // recurses into a category's children when the category is a top-level
       // root or reached via walk(); nested groupings ARE reached via walk()
@@ -110,6 +138,7 @@ function parseNav (adoc) {
       parent.children.push(node)
       stack[depth] = node
       stack.length = depth + 1
+      lastDepth = depth
     }
   }
   return roots
@@ -226,6 +255,35 @@ function injectNavEntries (adoc, injections) {
   return lines.join('\n')
 }
 
+// Hand a nav item to another page: `replacements` is [{ key, by }] (nav keys).
+// The item for `key` keeps its place and its label and points at `by` instead.
+// Used for a dropped duplicate (duplicates.json `navTakenBy`), whose kept copy
+// must inherit the slot. Throws when the item is missing or has no label to keep:
+// silently skipping would leave the kept page out of the sidebar.
+function replaceNavTargets (adoc, replacements) {
+  if (!replacements || !replacements.length) return adoc
+  const lines = adoc.split('\n')
+  for (const { key, by } of replacements) {
+    const at = lines.findIndex((l) => { const m = l.match(ITEM_RE); return m && parseTarget(m[2]).key === key })
+    if (at === -1) throw new Error(`nav replacement: no nav item for "${key}"`)
+    const [, stars, , label] = lines[at].match(ITEM_RE)
+    if (!label.trim()) throw new Error(`nav replacement: the item for "${key}" has no label to keep`)
+    lines[at] = `${stars} xref:${by}.adoc[${label}]`
+  }
+  return lines.join('\n')
+}
+
+// A parent page's folder is named after its file, which is also the end of its
+// URL. A file named `overview` or `index` says nothing, so that folder takes the
+// page's module instead, as the URL does (`cache:overview` -> `cache/`), or its
+// label for a ROOT-module page.
+const GENERIC_STEMS = new Set(['overview', 'index'])
+const parentFolder = (node, label) => {
+  if (!GENERIC_STEMS.has(node.stem)) return node.stem
+  const module = node.key.includes(':') ? node.key.slice(0, node.key.indexOf(':')) : ''
+  return module || folderName(label)
+}
+
 const folderName = (label) => label.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 const humanize = (stem) => stem.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 
@@ -234,6 +292,10 @@ const humanize = (stem) => stem.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c
 //           module-qualified plan key) — used for category labels of parent pages
 //           whose nav label is empty, and to decide whether a leaf needs an
 //           explicit sidebar_label.
+//   options.component: this nav's component. An item for a page in ANOTHER
+//           component is dropped: an autogenerated sidebar holds only this
+//           component's docs, and the one such item (Platform 5.3's link to the
+//           Operator docs) is not worth a custom sidebar item (decided 2026-10-19).
 // Returns { pages: Map<key, {relFile, sidebarLabel, sidebarPosition}>,
 //           categories: [{relFile, content}], duplicates: [key] }
 //
@@ -241,7 +303,7 @@ const humanize = (stem) => stem.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c
 // must NOT guess, because it is what preserves the published URL. convert.js
 // derives it from the page's real URL (urlToSlug), which is the only source that
 // carries the module segment a nav-derived guess would drop.
-function buildPlan (roots, titles = new Map()) {
+function buildPlan (roots, titles = new Map(), { component = null } = {}) {
   const pages = new Map()
   const categories = []
   const duplicates = []
@@ -281,6 +343,7 @@ function buildPlan (roots, titles = new Map()) {
   // dedicated `.Release Notes` section); the first placement wins, the second
   // collapses away. The duplicate is still recorded for the caller's report.
   function walk (node, parentDir, position) {
+    if (node.type === 'page' && node.component && component && node.component !== component) return false
     if (node.type === 'category') {
       const dir = path.join(parentDir, folderName(node.label))
       // Collapse a redundant level: a category whose ONLY child is itself a
@@ -314,8 +377,8 @@ function buildPlan (roots, titles = new Map()) {
     if (pages.has(node.key)) { duplicates.push(node.key); return false }
     if (node.children.length) {
       // Parent page -> category folder + an Overview page holding its content.
-      const dir = path.join(parentDir, node.stem)
       const label = node.label || titles.get(node.key) || humanize(node.stem)
+      const dir = path.join(parentDir, parentFolder(node, label))
       categoryFile(dir, label, position)
       pages.set(node.key, {
         relFile: claimFile(path.join(dir, 'overview.mdx'), node.key),
@@ -357,4 +420,4 @@ function navAttrLookup (attrs) {
   return { ...intrinsics, ...attrs }
 }
 
-module.exports = { navAttrLookup, parseNav, buildPlan, injectNavEntries, resolveNavIncludes, parseTarget, pageKey, keyStem, folderName }
+module.exports = { navAttrLookup, parseNav, buildPlan, injectNavEntries, replaceNavTargets, resolveNavIncludes, parseTarget, pageKey, keyStem, folderName }

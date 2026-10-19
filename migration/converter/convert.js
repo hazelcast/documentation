@@ -47,13 +47,13 @@ const { attrCodeTemplates, buildCodeTemplates, resolveTemplates } = require('./l
 // the source line can tell them apart.
 const { collectPageTexts, collectPageExamples, stagedIdOf } = require('../refcheck/lib/source-refs')
 const { hasLockedSources, lockedRoots } = require('../lib/locked-sources')
-const { navAttrLookup, parseNav, buildPlan, injectNavEntries, resolveNavIncludes, pageKey } = require('./lib/nav')
+const { navAttrLookup, parseNav, buildPlan, injectNavEntries, replaceNavTargets, resolveNavIncludes, pageKey } = require('./lib/nav')
 const { decodeHTML } = require('entities')
-const { loadDispositions, isUnpublished, redirectRoute, urlBase, redirectPairs, publishedPageUrls, navInjectionsFor } = require('../lib/dispositions')
+const { loadDispositions, isUnpublished, redirectRoute, urlBase, redirectPairs, publishedPageUrls, navInjectionsFor, navReplacementsFor } = require('../lib/dispositions')
 // Co-located image placement, computed from the reference graph. The converter
 // is the only thing that knows every page's OUTPUT FILE (the nav plan decides
 // it, not the URL), so it owns the plan and writes it out for extract-images.js.
-const { planImagePlacement } = require('../lib/image-placement')
+const { planImagePlacement, mergePlacements } = require('../lib/image-placement')
 // Single-sources "which contexts render into flow text" with the marking pass, so
 // prose reverse-mapping and marking can never disagree — see scanPageAttrs.
 const { wrappableRefs } = require('../antora-extension/mark-attributes')
@@ -1063,8 +1063,9 @@ function convertVersion (ver, ctx) {
   const navAttrs = navAttrLookup(attrTableFor(manifest, component, seg))
   const navAdoc = withAttrs(loadNavAdoc(component, seg, opts.sourcesDir), navAttrs)
   const injections = navInjectionsFor(ctx.dispositions, component, seg).filter((i) => titleByKey.has(i.key))
+  const replacements = navReplacementsFor(ctx.dispositions, component, seg).filter((r) => titleByKey.has(r.key) && titleByKey.has(r.by))
   const plan = navAdoc
-    ? buildPlan(parseNav(injectNavEntries(navAdoc, injections)), titleByKey)
+    ? buildPlan(parseNav(injectNavEntries(replaceNavTargets(navAdoc, replacements), injections)), titleByKey, { component })
     : { pages: new Map(), categories: [], duplicates: [] }
 
   const allPages = allGoldenForComponent.filter((p) => (seg ? p.versionSeg === seg : true))
@@ -1393,8 +1394,10 @@ function writePartialsReport (opts, component, seg, report, pageUrls) {
   return { factored, declined, unmarked }
 }
 
-// `build/image-placement.json`: image URL -> repo-relative destination file, the
-// handover to extract-images.js. The converter is the producer because placement
+// `build/image-placement.json`: repo-relative destination file -> image URL, the
+// handover to extract-images.js. Keyed by destination because one image can be
+// placed in several products (a tutorial shows a Cloud image), and clearing is by
+// destination too: a run owns the trees it writes, not the images' home product. The converter is the producer because placement
 // follows the reference graph and each page's output file, both of which only
 // exist here; extract-images is a pure consumer that writes bytes where this
 // says. That replaces the previous design, where the same URL-rewriting rule was
@@ -1413,16 +1416,12 @@ function writeImagePlacement (opts, results) {
     placements = JSON.parse(fs.readFileSync(file, 'utf8')).placements || {}
   } catch { /* first run — start empty */ }
 
+  const treeOf = (r) => path.relative(opts.outRoot, r.outDir).split(path.sep).join('/') + '/'
   const prefixes = opts.releases || opts.id
-    ? results.map((r) => `/${opts.component}/` + (r.seg ? r.seg + '/' : ''))
-    : [`/${opts.component}/`]
-  for (const url of Object.keys(placements)) {
-    if (prefixes.some((pre) => url.startsWith(pre))) delete placements[url]
-  }
-  for (const r of results) {
-    const treeRel = path.relative(opts.outRoot, r.outDir).split(path.sep).join('/')
-    for (const [url, dest] of r.imagePlacement) placements[url] = path.posix.join(treeRel, dest)
-  }
+    ? results.map(treeOf)
+    : [`${opts.component}/`, `${opts.component}_versioned_docs/`]
+  placements = mergePlacements(placements, prefixes,
+    results.flatMap((r) => [...r.imagePlacement].map(([url, dest]) => [path.posix.join(treeOf(r), dest), url])))
 
   fs.mkdirSync(path.dirname(file), { recursive: true })
   const sorted = Object.fromEntries(Object.keys(placements).sort().map((k) => [k, placements[k]]))

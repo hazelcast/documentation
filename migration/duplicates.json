@@ -1,0 +1,12 @@
+{
+  "description": "Pages the migration does NOT publish because they duplicate another page in the same version. Same schema as orphancheck/allowlist.json (a `redirect` disposition with `to`, optional `versions`, a `note`), and lib/dispositions merges the two, so the converter and every gate treat a dropped duplicate exactly like a redirected orphan: no .mdx is emitted, its URL redirects to the kept copy, and inbound links are retargeted. Kept apart from the allowlist because these pages are NOT orphans (they are in the nav), and the orphan gate would report them as stale entries. One extra field: `navTakenBy` names the kept page (a logical key without the component, as in the key) that takes over the dropped page's nav entry, label included, so the sidebar keeps the slot and only the URL changes.",
+  "drop": {
+    "hazelcast:what-is-hazelcast": {
+      "disposition": "redirect",
+      "to": "/",
+      "versions": ["5.4"],
+      "navTakenBy": "index",
+      "note": "At 5.4 the version landing page ROOT/index.adoc and ROOT/what-is-hazelcast.adoc are the same page: identical source apart from a trailing space in the title. Only what-is-hazelcast is in the nav. User decision 2026-10-19: keep index at the version root, give it what-is-hazelcast's nav entry, and redirect /hazelcast/5.4/what-is-hazelcast to /hazelcast/5.4. From 5.5 index.adoc is a separate 'Hazelcast Platform overview' page, so this applies to 5.4 only."
+    }
+  }
+}

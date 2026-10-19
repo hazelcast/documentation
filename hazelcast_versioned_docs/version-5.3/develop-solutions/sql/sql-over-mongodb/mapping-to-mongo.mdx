@@ -1,0 +1,326 @@
+---
+title: "Mapping to MongoDB"
+sidebar_label: "Mappings"
+sidebar_position: 1
+slug: /sql/mapping-to-mongo
+beta: true
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+To query MongoDB data connections, you can create a mapping to them with the Mongo connector.
+
+## What is the Mongo Connector
+
+The Mongo connector allows you to read from/write to a MongoDB database, and to execute SQL queries on Mongo collections directly from Hazelcast.
+
+## Supported SQL Statements
+
+For the [batch mode](../../connector-guides/databases/mongodb-connector.mdx#batch):
+
+- [`SELECT`](../statements/select.mdx)
+- [`UPDATE`](../statements/update.mdx)
+- [`INSERT INTO/SINK INTO`](../statements/sink-into.mdx)
+
+For the [streaming mode](../../connector-guides/databases/mongodb-connector.mdx#stream):
+
+- [`SELECT`](../statements/select.mdx)
+
+## Installing the Connector
+
+The Mongo Connector artifacts are published on the Maven repositories. Add the following lines to your `pom.xml` to include it as a dependency to your project:
+
+```xml vars
+<dependency>
+    <groupId>com.hazelcast.jet</groupId>
+    <artifactId>hazelcast-jet-mongodb</artifactId>
+    <version>${full-version}</version>
+</dependency>
+```
+
+or if you are using Gradle:
+
+```plain vars
+compile group: 'com.hazelcast.jet', name: 'hazelcast-jet-mongodb', version: ${full-version}.
+```
+
+:::note
+
+To be able to use SQL over MongoDB, you have to include `hazelcast-sql` as well as a dependency.
+
+:::
+
+## Permissions
+
+<Badge type="enterprise" />
+
+The Mongo connector does not yet support permissions.
+
+## Before you Begin
+
+Before you can create a mapping to a MongoDB, you must have the following:
+
+- A `$jsonSchema` validation in the collection (see the [schema documentation](https://www.mongodb.com/docs/manual/reference/operator/query/jsonSchema/)), or you have to have at least one element in the collection you want to create mapping for (for property type validation).
+- Enabled operations log (oplog) if you want to use streaming mappings.
+
+## Creating a MongoDB Mapping
+
+The following example creates a mapping to a MongoDB database.
+
+1. In a MongoDB database, create a `people` collection. For example in Java, you would run the following command.
+
+   ```java
+   CreateCollectionOptions options = new CreateCollectionOptions();
+   ValidationOptions validationOptions = new ValidationOptions();
+   validationOptions.validator(BsonDocument.parse(
+          "{\n" +
+                  "    $jsonSchema: {\n" +
+                  "      bsonType: \"object\",\n" +
+                  "      title: \"Object Validation\",\n" +
+                  "      properties: {" +
+                  "        \"personId\": { \"bsonType\": \"int\" },\n" +
+                  "        \"name\": { \"bsonType\": \"string\" }\n" +
+                  "      }\n" +
+                  "    }\n" +
+                  "  }\n"
+   ));
+   options.validationOptions(validationOptions);
+   database.createCollection(collectionName, options);
+   ```
+
+   The `ValidationOptions` are not required, but recommended.
+2. Configure the data connection so that the client can be reused by multiple mappings.
+
+   <Tabs groupId="config-format">
+   <TabItem value="xml" label="XML">
+
+   ```xml conums
+   <hazelcast>
+       <data-connection name="myMongo">
+           <type>Mongo</type>
+           <properties>
+               <property name="connectionString">stringForMongo</property> <1>
+           </properties>
+           <shared>false</shared> <2>
+       </data-connection>
+   </hazelcast>
+   ```
+
+   </TabItem>
+   <TabItem value="yaml" label="YAML">
+
+   ```yaml conums
+   data-connection:
+     name: myMongo
+     type: Mongo
+     properties:
+       connectionString: stringforMongo <1>
+     shared: false <2>
+   ```
+
+   </TabItem>
+   <TabItem value="java" label="Java">
+
+   ```java conums
+   DataConnectionConfig dataConnectionConfig = new DataConnectionConfig()
+           .setName("myMongo")
+           .setType("Mongo")
+           .setProperty("connectionString", connectionStringToMongo) <1>
+           .setShared(false); <2>
+   config.addDataConnectionConfig(dataConnectionConfig);
+   ```
+
+   </TabItem>
+   </Tabs>
+
+   <CodeCallouts>
+
+   1. Your connection string.
+   2. Set to `true` if the connection is reusable.
+
+      Instead of providing a single `connectionString` parameter, you may also want to provide host, username, password and (optionally) `authDb`.
+
+      Instead of providing the configuration in YAML or XML, you can also run the following SQL query.
+
+      ```xml
+      CREATE DATA CONNECTION myMongo type Mongo SHARED
+      OPTIONS (
+      	‘connectionString’ = ‘<your connection string>’
+      )
+      ```
+
+   </CodeCallouts>
+3. Create the mapping.
+
+   ```sql conums
+   CREATE MAPPING people
+   TYPE MONGO <1>
+   DATA CONNECTION myMongo; <2>
+   ```
+
+   <CodeCallouts>
+
+   1. The type of the connector.
+   2. The name of the data connection configuration on your members (see Step 2 above).
+
+      In the above case, automatic schema inference will be used. You may also want to provide the schema explicitly as shown below.
+
+      ```sql
+      CREATE MAPPING people (
+          firstName VARCHAR(100),
+          lastName VARCHAR(100),
+          age INT
+      )
+      DATA CONNECTION myMongo
+      ```
+
+      Notice that there is no mention of `TYPE MONGO` this time; it's automatically assumed by the SQL engine when you provide MongoDB data connection. This works with both schema provided or not.
+
+   </CodeCallouts>
+
+## Type Mapping
+
+The type system in MongoDB and SQL is not exactly the same. That leads to potential confusions and the need of type coercion.
+
+<table>
+<colgroup>
+<col style={{width:'33.3333%'}} />
+<col style={{width:'33.3333%'}} />
+<col style={{width:'33.3334%'}} />
+</colgroup>
+<thead>
+<tr>
+<th>BSON Type</th>
+<th>SQL Type</th>
+<th>Java Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`DOUBLE`</td>
+<td>`DOUBLE`</td>
+<td>`DOUBLE`</td>
+</tr>
+<tr>
+<td>`STRING`</td>
+<td>`VARCHAR`</td>
+<td>`STRING`</td>
+</tr>
+<tr>
+<td>`OBJECT`</td>
+<td>`OBJECT`</td>
+<td>`org.bson.Document`</td>
+</tr>
+<tr>
+<td>`ARRAY`</td>
+<td>`OBJECT`</td>
+<td>`LIST`</td>
+</tr>
+<tr>
+<td>`BINDATA`</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>`UNDEFINED`</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>`OBJECTID`</td>
+<td>`OBJECT`</td>
+<td>`org.bson.ObjectId`</td>
+</tr>
+<tr>
+<td>`BOOL`</td>
+<td>`BOOLEAN`</td>
+<td>`BOOLEAN`</td>
+</tr>
+<tr>
+<td>
+
+<p>`DATE`</p>
+
+<p>This represents seconds from Unix epoch in UTC timezone. Therefore, it's not mapped to pure `DATE` SQL type nor `LOCALDATE` in Java (nor any formats with timezones).</p>
+
+</td>
+<td>`DATE_TIME` or `TIMESTAMP`</td>
+<td>`LOCALDATETIME`</td>
+</tr>
+<tr>
+<td>`TIMESTAMP`</td>
+<td>`DATE_TIME` or `TIMESTAMP`</td>
+<td>`LOCALDATETIME`</td>
+</tr>
+<tr>
+<td>`NULL`</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>`REGEX`</td>
+<td>`OBJECT`</td>
+<td>`org.bson.BsonRegularExpression`</td>
+</tr>
+<tr>
+<td>`DBPOINTER`</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>`JAVASCRIPT`</td>
+<td>`VARCHAR`</td>
+<td>`STRING`</td>
+</tr>
+<tr>
+<td>`JAVASCRIPTWITHSCOPE`</td>
+<td>`OBJECT`</td>
+<td>`org.bson.CodeWithScope`</td>
+</tr>
+<tr>
+<td>`SYMBOL`</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>`INT (32 BIT)`</td>
+<td>`INT`</td>
+<td>`INT`</td>
+</tr>
+<tr>
+<td>`LONG (64 BIT)`</td>
+<td>`BIGINT`</td>
+<td>`LONG`</td>
+</tr>
+<tr>
+<td>`DECIMAL (128 BIT)`</td>
+<td>`DECIMAL`</td>
+<td>`BIGDECIMAL`</td>
+</tr>
+<tr>
+<td>`MINKEY`</td>
+<td>`OBJECT`</td>
+<td>`org.bson.MinKey`</td>
+</tr>
+<tr>
+<td>`MAXKEY`</td>
+<td>`OBJECT`</td>
+<td>`org.bson.MaxKey`</td>
+</tr>
+</tbody>
+</table>
+
+The **Java Type** column represents an object returned by the SQL query if the object put into the collection is of given BSON type.
+
+Note that, while Hazelcast is able to convert MongoDB type to the requested SQL type in the projection, the argument binding will not always work the same due to technical limitations. For example, you can have an object with the type `TIMESTAMP` represented as `DATE_TIME`, that after execution of `SELECT` it will give you `LocalDateTime` in Java client. However, binding `LocalDateTime` as an argument will not work, as only native MongoDB types will work for arguments. Same applies to, for example, having BSON column of type `STRING` mapped to `INTEGER` in SQL.
+
+### Type Coercion
+
+The following table shows the possible and supported type coercions. All the default mappings from the previous section are always valid.
+
+| Type of Provided Argument | Resolved Insertion Type |
+| --- | --- |
+| `LOCALDATETIME` | `BSONDATETIME` |
+| `OFFSETDATETIME` | `BSONDATETIME` |
+| `HazelcastJsonValue (JSON column)` | `DOCUMENT` |

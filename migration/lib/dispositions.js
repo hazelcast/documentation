@@ -22,10 +22,17 @@ const path = require('node:path')
 const { logicalKey } = require('../orphancheck/lib/reachability')
 
 const ALLOWLIST = path.join(__dirname, '..', 'orphancheck', 'allowlist.json')
+// Dropped duplicates (see its description): not orphans, but the same decision.
+const DUPLICATES = path.join(__dirname, '..', 'duplicates.json')
 
-function loadDispositions (file = ALLOWLIST) {
-  const raw = JSON.parse(fs.readFileSync(file, 'utf8'))
-  return new Map(Object.entries(raw.allow || {}))
+function loadDispositions (file = ALLOWLIST, duplicatesFile = DUPLICATES) {
+  const map = new Map(Object.entries(JSON.parse(fs.readFileSync(file, 'utf8')).allow || {}))
+  if (!duplicatesFile || !fs.existsSync(duplicatesFile)) return map
+  for (const [key, entry] of Object.entries(JSON.parse(fs.readFileSync(duplicatesFile, 'utf8')).drop || {})) {
+    if (map.has(key)) throw new Error(`${key} is in both ${path.basename(file)} and ${path.basename(duplicatesFile)}; decide it in one place`)
+    map.set(key, entry)
+  }
+  return map
 }
 
 // The logical key of a manifest-shaped resource ({component, module, relative}).
@@ -217,6 +224,27 @@ function navInjectionsFor (dispositions, component, seg = null) {
   return out
 }
 
+// Nav entries handed to another page: a dropped duplicate whose `navTakenBy`
+// names the kept copy. Returns [{ key, by }] as nav keys, scoped like
+// navInjectionsFor. The converter rewrites that item's target and keeps its label.
+function navReplacementsFor (dispositions, component, seg = null) {
+  const out = []
+  for (const [key, entry] of dispositions) {
+    if (!entry || !entry.navTakenBy || entryFor(dispositions, { ...splitKey(key), version: seg }) !== entry) continue
+    if (key.slice(0, key.indexOf(':')) !== component) continue
+    out.push({ key: navKey(key.slice(key.indexOf(':') + 1)), by: navKey(entry.navTakenBy) })
+  }
+  return out
+}
+
+// A logical key -> the {component, module, relative} it was built from.
+const splitKey = (key) => {
+  const component = key.slice(0, key.indexOf(':'))
+  const rest = key.slice(key.indexOf(':') + 1)
+  const i = rest.indexOf('/')
+  return i === -1 ? { component, module: 'ROOT', relative: rest } : { component, module: rest.slice(0, i), relative: rest.slice(i + 1) }
+}
+
 // A logical key's page part (`[module/]relative`) -> the nav coordinate
 // (`[module:]relative`). ROOT-module pages carry no module segment in either form.
 const navKey = (rest) => {
@@ -226,5 +254,5 @@ const navKey = (rest) => {
 
 module.exports = {
   loadDispositions, keyOf, entryFor, isUnpublished, redirectDest, redirectRoute, unpublishedUrls,
-  urlBase, redirectPairs, publishedPageUrls, normalizeRoute, navInjectionsFor, ALLOWLIST,
+  urlBase, redirectPairs, publishedPageUrls, normalizeRoute, navInjectionsFor, navReplacementsFor, ALLOWLIST, DUPLICATES,
 }

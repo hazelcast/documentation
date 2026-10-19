@@ -28,15 +28,15 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
 
 // --- current-seg is per component -----------------------------------------
 // A component whose main IS a distinct `-snapshot` line uses the default seg;
-// one whose main declares a numbered release (clc: 5.5.1) overrides it. This is
+// one whose main declares a numbered release (clc: 5.7.0) overrides it. This is
 // the pivot the whole clc mapping turns on, so it gets its own group.
 {
   assert.strictEqual(currentSegFor('operator'), CURRENT_SEG,
     'operator has a real -snapshot main -> default current seg (latest-snapshot)')
   assert.strictEqual(currentSegFor('cloud'), CURRENT_SEG,
     'unversioned component falls back to the default current seg')
-  assert.strictEqual(currentSegFor('clc'), '5.5.1',
-    'clc has no -snapshot line: its current seg is the released 5.5.1')
+  assert.strictEqual(currentSegFor('clc'), '5.7.0',
+    'clc has no -snapshot line: its current seg is the released 5.7.0')
   assert.notStrictEqual(currentSegFor('clc'), CURRENT_SEG,
     'clc must NOT reuse the default latest-snapshot seg (it has no such render)')
   // MC overrides the seg for the OTHER reason: its main is a snapshot line, but a
@@ -73,8 +73,8 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
   assert.strictEqual(refFor('operator', '5.18'), 'v/5.18', 'a release segment -> its v/ branch')
   assert.strictEqual(refFor('nope', '5.18'), null, 'unknown component -> null')
   // clc reads a v/ tag for EVERY seg, current included -- it has no main source.
-  assert.strictEqual(refFor('clc', currentSegFor('clc')), 'v/5.5.1',
-    'clc current seg reads its v/5.5.1 tag, NOT main')
+  assert.strictEqual(refFor('clc', currentSegFor('clc')), 'v/5.7.0',
+    'clc current seg reads its v/5.7.0 tag, NOT main')
   assert.strictEqual(refFor('clc', '5.5.0'), 'v/5.5.0', 'clc release -> its v/ branch')
   // MC has an overridden current seg like clc, but for an unrelated reason, so it
   // must NOT inherit clc's "read a v/ tag for the current seg" behaviour: its
@@ -104,12 +104,12 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
   assert(live.slice(1).every((v) => v.kind === 'release'), 'every later entry is a release')
   ok('versionsToProcess: live config leads with current, rest are releases')
 
-  // clc's live plan: current is 5.5.1 (not latest-snapshot), then the 5.5.0 copy
+  // clc's live plan: current is 5.7.0 (not latest-snapshot), and no versioned
+  // copies since 5.5.x was archived
   assert.deepStrictEqual(versionsToProcess('clc'), [
-    { seg: '5.5.1', kind: 'current' },
-    { seg: '5.5.0', kind: 'release' },
-  ], 'clc: current 5.5.1 first, then the 5.5.0 versioned copy')
-  ok('versionsToProcess: clc leads with 5.5.1 as current')
+    { seg: '5.7.0', kind: 'current' },
+  ], 'clc: current 5.7.0 only')
+  ok('versionsToProcess: clc leads with 5.7.0 as current')
 }
 
 // --- output directory -----------------------------------------------------

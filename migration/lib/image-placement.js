@@ -92,4 +92,14 @@ function planImagePlacement (refs) {
   return plan
 }
 
-module.exports = { IMAGES_DIR, commonAncestorDir, imageTail, planImagePlacement }
+// The whole-site plan (dest -> url) after one converter run: entries under the
+// trees this run owns (`clearPrefixes`) are replaced by `additions`; every other
+// tree's entries survive, whichever product the image itself comes from.
+function mergePlacements (placements, clearPrefixes, additions) {
+  const out = {}
+  for (const [dest, url] of Object.entries(placements)) if (!clearPrefixes.some((p) => dest.startsWith(p))) out[dest] = url
+  for (const [dest, url] of additions) out[dest] = url
+  return out
+}
+
+module.exports = { IMAGES_DIR, commonAncestorDir, imageTail, planImagePlacement, mergePlacements }

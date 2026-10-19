@@ -22,6 +22,7 @@ const SUITES = [
   { name: 'refs', script: 'refcheck/selftest.js' },
   { name: 'constructs', script: 'constructcheck/selftest.js' },
   { name: 'orphans', script: 'orphancheck/selftest.js' },
+  { name: 'sidebars', script: 'sidebarcheck/selftest.js' },
 ]
 
 process.exit(runScripts('selftest', SUITES, process.argv.slice(2), __dirname) ? 1 : 0)

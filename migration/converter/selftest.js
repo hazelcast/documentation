@@ -29,7 +29,7 @@ const { collectOccurrences, decide, slugFor, componentNameFor, parseId, consumer
 const { normalizeValues, groupIdFor } = require('./lib/tabs')
 const { attrCodeTemplates, buildCodeTemplates } = require('./lib/code-templates')
 const substituteAttrs = require('../../plugins/lib/substitute-attributes')
-const { navAttrLookup, parseNav, buildPlan, injectNavEntries, resolveNavIncludes, parseTarget, pageKey, folderName } = require('./lib/nav')
+const { navAttrLookup, parseNav, buildPlan, injectNavEntries, replaceNavTargets, resolveNavIncludes, parseTarget, pageKey, folderName } = require('./lib/nav')
 const { decodeHTML } = require('entities')
 const {
   wrapRefs, wrappableRefs, hasSentinelResidue, hasAttrSpanLeak, stripAttrSpans,
@@ -606,16 +606,16 @@ const renderedCode = (md) => {
 // so an injected nav line can be written with it verbatim. The bare `stem` remains
 // the page's NAME, for folders and humanised labels.
 {
-  assert.deepStrictEqual(parseTarget('install.adoc'), { key: 'install', stem: 'install' },
+  assert.deepStrictEqual(parseTarget('install.adoc'), { key: 'install', stem: 'install', component: null },
     'plain (ROOT-module) target: key is the bare stem')
-  assert.deepStrictEqual(parseTarget('mymod:page.adoc#frag'), { key: 'mymod:page', stem: 'page' },
+  assert.deepStrictEqual(parseTarget('mymod:page.adoc#frag'), { key: 'mymod:page', stem: 'page', component: null },
     'module coordinate is kept in the key; the fragment is dropped')
-  assert.deepStrictEqual(parseTarget('ROOT:page.adoc'), { key: 'page', stem: 'page' },
+  assert.deepStrictEqual(parseTarget('ROOT:page.adoc'), { key: 'page', stem: 'page', component: null },
     'an explicit ROOT coordinate keys the same as writing no coordinate at all')
-  assert.deepStrictEqual(parseTarget('mymod:dir/page.adoc'), { key: 'mymod:dir/page', stem: 'page' },
+  assert.deepStrictEqual(parseTarget('mymod:dir/page.adoc'), { key: 'mymod:dir/page', stem: 'page', component: null },
     'a page in a module subdir keeps its path in the key, but not in the stem')
   assert.deepStrictEqual(parseTarget('5.7@comp:mymod:page.adoc'),
-    { key: 'mymod:page', stem: 'page' }, 'version@ and component coordinates are stripped; the module is the last one')
+    { key: 'mymod:page', stem: 'page', component: 'comp' }, 'version@ and component are not in the key; the module is the last coordinate')
   // The two same-stem pages that used to collide must now be distinct keys.
   assert.notStrictEqual(parseTarget('clusters:dashboard.adoc').key, parseTarget('cp-subsystem:dashboard.adoc').key,
     'same stem in two modules -> two different keys')
@@ -644,6 +644,55 @@ const renderedCode = (md) => {
   assert(data.type === 'category' && data.label === 'Data', 'a bullet with no xref is a grouping (sub-category)')
   assert(data.children[0].stem === 'maps', 'grouping nests its page children')
   ok('parseNav: a bullet item without an xref becomes a grouping category')
+
+  // Platform 5.3/5.4 module partials open `** item` straight under a `.Title`.
+  const jump = parseNav('.Upgrade\n** xref:a.adoc[A]\n*** xref:b.adoc[B]\n** xref:c.adoc[C]')
+  assert.deepStrictEqual(jump[0].children.map((n) => n.stem), ['a', 'c'], 'depth-2 items under a title are its children')
+  assert.strictEqual(jump[0].children[0].children[0].stem, 'b', 'depth-3 still nests under its depth-2 item')
+  assert.throws(() => parseNav('** xref:a.adoc[A]'), /no enclosing/, 'an item with nothing open fails instead of vanishing')
+  ok('parseNav: a depth jump under a title nests under the title; a parentless item throws')
+
+  // A dropped duplicate's nav entry goes to its kept copy: same place, same label.
+  const nav = '.Get started\n* xref:whats-new.adoc[What is new]\n* xref:what-is.adoc[What is it]'
+  const kept = buildPlan(parseNav(replaceNavTargets(nav, [{ key: 'what-is', by: 'index' }])))
+  assert(!kept.pages.has('what-is'), 'the dropped page has no sidebar entry')
+  assert.deepStrictEqual(kept.pages.get('index'), { relFile: require('node:path').join('get-started', 'index.mdx'), sidebarLabel: 'What is it', sidebarPosition: 2 },
+    'the kept page takes its folder, label and position')
+  assert.throws(() => replaceNavTargets(nav, [{ key: 'missing', by: 'index' }]), /no nav item/, 'a replacement with no item fails')
+  assert.throws(() => replaceNavTargets('.A\n* xref:what-is.adoc[]', [{ key: 'what-is', by: 'index' }]), /no label/, 'an unlabelled item fails')
+  ok('replaceNavTargets: the kept copy inherits the dropped page\'s nav entry')
+
+  // AsciiDoc: `+` then an open block attaches the block's list to the item above,
+  // so its `*` items are that item's children (Platform 5.3 includes partials so).
+  const attached = parseNav('.Dev\n* xref:cache:overview.adoc[]\n+\n--\n* xref:mapstore:w.adoc[]\n** xref:mapstore:x.adoc[]\n--\n* SQL\n+\n--\n* xref:sql:o.adoc[Overview]\n--\n* xref:p:q.adoc[After]')
+  const [cache, sql, after] = attached[0].children
+  assert.deepStrictEqual(attached[0].children.map((c) => c.key || c.label), ['cache:overview', 'SQL', 'p:q'], 'block items are not siblings of the item they attach to')
+  assert.strictEqual(cache.children[0].key, 'mapstore:w', 'the block list nests under the item')
+  assert.strictEqual(cache.children[0].children[0].key, 'mapstore:x', 'depth inside the block is relative to the item')
+  assert.strictEqual(sql.children[0].key, 'sql:o', 'a grouping takes a block list too')
+  assert.strictEqual(after.children.length, 0, 'after the block closes, depth is back to normal')
+  ok('parseNav: a list continuation + open block nests the block\'s list under the item')
+
+  // Antora renders `` `x` `` in a nav label as code; a sidebar label is plain text.
+  const [statement, group] = parseNav('.Ref\n* `SQL` statements\n** xref:sql:sink-into.adoc[`INSERT INTO`/`SINK INTO`]')[0].children.flatMap((g) => [g.children[0], g])
+  assert.strictEqual(statement.label, 'INSERT INTO/SINK INTO', 'backticks are dropped from an item label')
+  assert.strictEqual(group.label, 'SQL statements', 'and from a grouping label')
+  ok('parseNav: monospace backticks are not part of a sidebar label')
+
+  // A nav item for a page in another component is dropped, and takes no place.
+  const cross = buildPlan(parseNav('.Deploy\n* Kubernetes\n** xref:kubernetes:a.adoc[A]\n** xref:operator:ROOT:get-started.adoc[Operator]\n** xref:kubernetes:b.adoc[B]\n* Only elsewhere\n** xref:operator:ROOT:x.adoc[X]'),
+    new Map(), { component: 'hazelcast' })
+  assert.deepStrictEqual([...cross.pages.keys()], ['kubernetes:a', 'kubernetes:b'], 'only this component\'s pages are placed')
+  assert(!cross.categories.some((c) => c.content.label === 'Only elsewhere'), 'a category holding only such items is not emitted')
+  ok('buildPlan: a nav item in another component is dropped')
+
+  // A parent page's folder says what is in it, even when its file is `overview`.
+  const named = buildPlan(parseNav('.Dev\n* xref:cache:overview.adoc[Caching Data]\n** xref:mapstore:w.adoc[W]\n* xref:overview.adoc[Hazelcast Cloud]\n** xref:a.adoc[A]\n* xref:sql:sql-overview.adoc[SQL]\n** xref:sql:b.adoc[B]'))
+  const fileOf = (k) => named.pages.get(k).relFile.split(require('node:path').sep).join('/')
+  assert.strictEqual(fileOf('cache:overview'), 'dev/cache/overview.mdx', 'an `overview` page in a module: folder named after the module, as in its URL')
+  assert.strictEqual(fileOf('overview'), 'dev/hazelcast-cloud/overview.mdx', 'a ROOT-module `overview` page: folder named after its label')
+  assert.strictEqual(fileOf('sql:sql-overview'), 'dev/sql-overview/overview.mdx', 'any other file name is the folder name')
+  ok('buildPlan: a parent page called overview or index gets a meaningful folder')
 }
 
 // --- nav: build the emission plan --------------------------------------------

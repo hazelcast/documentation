@@ -28,9 +28,10 @@ const path = require('node:path')
 
 const { buildContentCatalog } = require('../lib/catalog')
 const { registerPageAliases } = require('../antora-extension/register-page-aliases')
-const { NAV_SOURCES, versionsToProcess } = require('../lib/layout')
+const { NAV_SOURCES, versionsToProcess, outDirFor, urlToSlug } = require('../lib/layout')
 const {
   xrefTargets, includeTargets, scopeToMigrated, classifyOrphans, validateAllowlist, applyAllowlist,
+  crossCheckUnlisted,
 } = require('./lib/reachability')
 
 function parseArgs (argv) {
@@ -69,6 +70,35 @@ const idOf = (file) => {
 function loadAllowlist () {
   const raw = JSON.parse(fs.readFileSync(path.join(__dirname, 'allowlist.json'), 'utf8'))
   return raw.allow || {}
+}
+
+// Every emitted page carrying `unlisted: true`, as `${component}|${version}|${slug}`.
+// Read from the converter's output tree (the sibling of migration/), so this needs
+// the pages converted but no site build. A tree that is not there is skipped: the
+// version simply has nothing emitted to disagree with yet.
+function emittedUnlistedSet (migratedVersions) {
+  const out = new Set()
+  const walk = (dir, visit) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const f = path.join(dir, e.name)
+      if (e.isDirectory()) { if (e.name !== '_partials' && e.name !== 'images') walk(f, visit) } else if (e.name.endsWith('.mdx')) visit(f)
+    }
+  }
+  for (const [component, versions] of migratedVersions) {
+    for (const vp of versionsToProcess(component)) {
+      const seg = vp.seg === null ? '' : vp.seg
+      if (!versions.has(seg)) continue
+      const dir = outDirFor(path.resolve(__dirname, '../..'), component, vp)
+      if (!fs.existsSync(dir)) continue
+      walk(dir, (file) => {
+        const fm = (fs.readFileSync(file, 'utf8').match(/^---\n([\s\S]*?)\n---/) || [])[1] || ''
+        if (!/^unlisted: true$/m.test(fm)) return
+        const slug = (fm.match(/^slug: (\S+)$/m) || [])[1]
+        if (slug) out.add(`${component}|${seg}|${slug}`)
+      })
+    }
+  }
+  return out
 }
 
 async function main () {
@@ -152,8 +182,11 @@ async function main () {
   const orphans = classifyOrphans({ pages: inScope, navIds, startIds, linkedBy: linkedByIds })
   const { flagged, allowed, staleKeys, staleScopes } = applyAllowlist(orphans, allow, opts.component, inScope)
 
-  report(opts, migratedVersions, { scanned: inScope.length, orphans: orphans.length }, flagged, allowed, staleKeys, allowErrors, staleScopes)
-  process.exit(flagged.length > 0 || allowErrors.length > 0 ? 1 : 0)
+  const slugOf = (p) => `${p.component}|${p.version}|${urlToSlug(p.url, p.component, p.version)}`
+  const unlisted = crossCheckUnlisted({ pages: inScope, navIds, startIds, emittedUnlisted: emittedUnlistedSet(migratedVersions), slugOf })
+
+  report(opts, migratedVersions, { scanned: inScope.length, orphans: orphans.length }, flagged, allowed, staleKeys, allowErrors, staleScopes, unlisted)
+  process.exit(flagged.length > 0 || allowErrors.length > 0 || unlisted.inNav.length > 0 ? 1 : 0)
 }
 
 // Collapse per-version orphan instances into one row per logical page for the
@@ -180,7 +213,7 @@ const fmtVersions = (versions) => {
   return real.length ? real.join(', ') : 'unversioned'
 }
 
-function report (opts, migratedVersions, counts, flagged, allowed, staleKeys, allowErrors, staleScopes = []) {
+function report (opts, migratedVersions, counts, flagged, allowed, staleKeys, allowErrors, staleScopes = [], unlisted = { inNav: [], startPages: [] }) {
   const outFile = path.resolve('build/orphancheck-report.json')
   const flaggedPages = byLogicalPage(flagged)
   const allowedPages = byLogicalPage(allowed)
@@ -203,6 +236,8 @@ function report (opts, migratedVersions, counts, flagged, allowed, staleKeys, al
     staleAllowlistScopes: staleScopes,
     flagged: flaggedPages,
     allowed: allowedPages,
+    unlistedButInNav: unlisted.inNav.map((p) => p.url),
+    unlistedStartPages: unlisted.startPages.map((p) => p.url),
   }, null, 2) + '\n')
 
   if (opts.json) { console.log(JSON.stringify({ counts, flagged: flaggedPages, allowlistErrors: allowErrors, staleAllowlistKeys: staleKeys })); return }
@@ -233,8 +268,18 @@ function report (opts, migratedVersions, counts, flagged, allowed, staleKeys, al
     for (const { key, versions } of staleScopes) console.log(`      ${key}    (${versions.join(', ')})`)
   }
 
+  // The converter and Antora disagree about the nav: see crossCheckUnlisted.
+  if (unlisted.inNav.length) {
+    console.log(`\n[orphancheck] ✗ ${unlisted.inNav.length} page(s) are in the nav but were converted as \`unlisted: true\` (no sidebar entry; the converter's nav parse lost them):`)
+    for (const p of unlisted.inNav) console.log(`      ${p.url}`)
+  }
+  if (unlisted.startPages.length) {
+    console.log(`\n[orphancheck] ⚠ ${unlisted.startPages.length} landing page(s) in no nav were converted as \`unlisted: true\` (not failed; decide whether they need a sidebar entry):`)
+    for (const p of unlisted.startPages) console.log(`      ${p.url}`)
+  }
+
   if (!flaggedPages.length) {
-    if (!allowErrors.length) console.log('[orphancheck] every orphan is triaged & allowlisted. ✓')
+    if (!allowErrors.length && !unlisted.inNav.length) console.log('[orphancheck] every orphan is triaged & allowlisted. ✓')
     console.log(`\n[orphancheck] report -> ${path.relative(process.cwd(), outFile)}`)
     return
   }

@@ -12,7 +12,7 @@ const assert = require('node:assert')
 
 const {
   DISPOSITIONS, xrefTargets, includeTargets, logicalKey, scopeToMigrated,
-  classifyOrphans, validateAllowlist, applyAllowlist,
+  classifyOrphans, validateAllowlist, applyAllowlist, crossCheckUnlisted,
 } = require('./lib/reachability')
 
 let n = 0
@@ -275,6 +275,31 @@ const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
     applyAllowlist(navved, { 'c:a': { disposition: 'drop-404', versions: ['5.4'] } }, 'c').staleScopes,
     [], 'scope staleness is only claimed when the in-scope page set is supplied')
   ok('versions: deny-by-default per version, and a drifted narrowing is surfaced')
+}
+
+// --- SPEC: the converter's sidebar must agree with the nav -------------------
+// A page Antora puts in a nav must not be emitted unlisted; a page in no nav is
+// the orphan gate's business, not this check's; a landing page in no nav is
+// reported separately because nothing can allowlist it.
+{
+  const pg = (id) => ({ id, component: 'c', version: '5.3', url: `/c/5.3/${id}` })
+  const pages = [pg('listed'), pg('lost'), pg('orphan'), pg('start'), pg('fine')]
+  const slugOf = (p) => `c|5.3|/${p.id}`
+  const r = crossCheckUnlisted({
+    pages,
+    navIds: new Set(['listed', 'lost', 'fine']),
+    startIds: new Set(['start']),
+    emittedUnlisted: new Set(['c|5.3|/lost', 'c|5.3|/orphan', 'c|5.3|/start']),
+    slugOf,
+  })
+  assert.deepStrictEqual(r.inNav.map((p) => p.id), ['lost'], 'in nav + emitted unlisted is the only failure')
+  assert.deepStrictEqual(r.startPages.map((p) => p.id), ['start'], 'an unlisted landing page is reported apart')
+  // The same slug in another version is a different page.
+  assert.deepStrictEqual(crossCheckUnlisted({
+    pages: [{ ...pg('lost'), version: '5.4' }], navIds: new Set(['lost']), startIds: new Set(),
+    emittedUnlisted: new Set(['c|5.3|/lost']), slugOf: (p) => `c|${p.version}|/${p.id}`,
+  }).inNav, [], 'matching is per version')
+  ok('crossCheckUnlisted: nav-listed pages emitted unlisted fail; orphans and landing pages do not')
 }
 
 console.log(`\n[orphancheck selftest] ${n} groups passed.`)

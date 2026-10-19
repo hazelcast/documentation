@@ -7,7 +7,7 @@ slug: /integrate/connectors
 
 Hazelcast comes with a wide range of built-in connectors for accessing data in other platforms. You can also use Hazelcast with pre-built connectors for importing data from external systems. Both types of connector are configured to read and write data in the most efficient way for their respective platform.
 
-Built-in connectors are available as either sources or sinks. Sources allow Hazelcast to read data from the required platform either for [queries](../sql-overview.mdx) or as part of a larger [data pipeline](../building-data-pipelines/overview.mdx). Sinks allow Hazelcast to write data, such as query results, to a target system.
+Built-in connectors are available as either sources or sinks. Sources allow Hazelcast to read data from the required platform either for [queries](../sql/sql-overview.mdx) or as part of a larger [data pipeline](../building-data-pipelines/overview.mdx). Sinks allow Hazelcast to write data, such as query results, to a target system.
 
 You can also use pre-built [Kafka Connect Source connectors](https://www.confluent.io/hub/) with Hazelcast. These low-code connectors allow you to stream events from non-Kafka external systems into a data pipeline ready for stream processing. Kafka Connect Source connectors are available for many popular platforms, including RabbitMQ, Neo4j, Couchbase, Scylla, SAP and Redis.
 
@@ -21,24 +21,24 @@ Connectors that do not support streaming do not have any processing guarantees. 
 
 ## Connectors for SQL
 
-You can use the following connectors in SQL by configuring them in the [`CREATE MAPPING` statement](../statements/create-mapping.mdx).
+You can use the following connectors in SQL by configuring them in the [`CREATE MAPPING` statement](../sql/statements/create-mapping.mdx).
 
 ### Sources
 
 | Connector | Module | Batch/Streaming | Processing guarantee |
 | --- | --- | --- | --- |
-| [`Apache Kafka`](../sql-over-kafka/mapping-to-kafka.mdx) | hazelcast-jet-kafka | streaming | exactly-once |
-| [`File`](../sql-over-file-systems/mapping-to-a-file-system.mdx) | Depends on the file format and/or storage system. | Depends on the storage system. | Depends on the storage system. |
-| [`IMap`](../sql-over-maps/mapping-to-maps.mdx) | hazelcast-sql | batch | N/A |
-| [`JDBC`](../sql-over-jdbc/mapping-to-jdbc.mdx) | hazelcast-sql | batch | N/A |
+| [`Apache Kafka`](../sql/sql-over-kafka/mapping-to-kafka.mdx) | hazelcast-jet-kafka | streaming | exactly-once |
+| [`File`](../sql/sql-over-file-systems/mapping-to-a-file-system.mdx) | Depends on the file format and/or storage system. | Depends on the storage system. | Depends on the storage system. |
+| [`IMap`](../sql/sql-over-maps/mapping-to-maps.mdx) | hazelcast-sql | batch | N/A |
+| [`JDBC`](../sql/sql-over-jdbc/mapping-to-jdbc.mdx) | hazelcast-sql | batch | N/A |
 
 ### Sinks
 
 | Connector | Module | Batch/Streaming | Processing guarantee |
 | --- | --- | --- | --- |
-| [`Apache Kafka`](../sql-over-kafka/mapping-to-kafka.mdx) | hazelcast-jet-kafka | streaming | exactly-once |
-| [`IMap`](../sql-over-maps/mapping-to-maps.mdx) | hazelcast-sql | batch | N/A |
-| [`JDBC`](../sql-over-jdbc/mapping-to-jdbc.mdx) | hazelcast-sql | batch | N/A |
+| [`Apache Kafka`](../sql/sql-over-kafka/mapping-to-kafka.mdx) | hazelcast-jet-kafka | streaming | exactly-once |
+| [`IMap`](../sql/sql-over-maps/mapping-to-maps.mdx) | hazelcast-sql | batch | N/A |
+| [`JDBC`](../sql/sql-over-jdbc/mapping-to-jdbc.mdx) | hazelcast-sql | batch | N/A |
 
 ## Kafka Connect Connectors
 

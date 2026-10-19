@@ -10,7 +10,7 @@
 const assert = require('node:assert')
 const path = require('node:path')
 
-const { IMAGES_DIR, commonAncestorDir, imageTail, planImagePlacement } = require('./image-placement')
+const { IMAGES_DIR, commonAncestorDir, imageTail, planImagePlacement, mergePlacements } = require('./image-placement')
 
 let n = 0
 const ok = (label) => { n++; console.log(`  ✓ ${label}`) }
@@ -139,6 +139,27 @@ function oracleAncestor (dirs) {
   assert.deepStrictEqual([...planImagePlacement(a)].sort(), [...planImagePlacement(b)].sort(),
     'the plan must not depend on the order references are collected in')
   ok('planImagePlacement: deterministic regardless of reference order')
+}
+
+// --- SPEC: a run replaces only the copies in the trees it wrote ------------
+// A tutorial shows a Cloud image; reconverting Cloud must not drop the tutorial's
+// copy, and one image placed in two products keeps both copies.
+{
+  const before = {
+    'cloud/images/a.png': '/cloud/_images/a.png',
+    'cloud/images/old.png': '/cloud/_images/old.png',
+    'tutorials/images/maploader.png': '/cloud/_images/maploader.png',
+  }
+  const after = mergePlacements(before, ['cloud/', 'cloud_versioned_docs/'], [
+    ['cloud/images/a.png', '/cloud/_images/a.png'],
+    ['cloud/x/images/maploader.png', '/cloud/_images/maploader.png'],
+  ])
+  assert.deepStrictEqual(after, {
+    'cloud/images/a.png': '/cloud/_images/a.png',
+    'cloud/x/images/maploader.png': '/cloud/_images/maploader.png',
+    'tutorials/images/maploader.png': '/cloud/_images/maploader.png',
+  }, 'Cloud\'s stale copy goes, the tutorial\'s copy of a Cloud image stays, and both copies of the shared image exist')
+  ok('mergePlacements: a run owns the trees it writes, not the images\' home product')
 }
 
 console.log(`\n[image-placement selftest] ${n} groups passed.`)

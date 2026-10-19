@@ -1,0 +1,167 @@
+---
+title: "Mapping to Hazelcast Maps"
+sidebar_label: "Mappings"
+sidebar_position: 3
+slug: /sql/mapping-to-maps
+---
+
+To query entries in maps, you need to create a mapping with the map connector so that the SQL service knows how to access the entries.
+
+## What is the Map Connector
+
+The map connector allows you to create mappings to a distributed map in a local Hazelcast cluster.
+
+## Installing the Connector
+
+This connector is included in Hazelcast.
+
+## Permissions
+
+<Badge type="enterprise" />
+
+If [security](../../../configure-and-manage-clusters/securing-a-cluster/enabling-jaas.mdx) is enabled, you can set up permissions to restrict clients' access to maps.
+
+For example, to restrict reads on maps, you can use the `create` and `read` permissions. To restrict inserts, you can use the `put` permission.
+
+For details, see [Client Security](../../../configure-and-manage-clusters/securing-a-cluster/native-client-security.mdx).
+
+## Creating a Mapping to a Map
+
+To create a mapping to a map in SQL, you must tell Hazelcast how to serialize/deserialize the keys and values by specifying the `keyFormat` and `valueFormat` options in the `CREATE MAPPING` statement.
+
+For maps whose keys and values are primitives, you need to set these options to the SQL type that corresponds to the primitive:
+
+- `keyFormat`
+- `valueFormat`
+
+For example, to create a mapping for `IMap<Integer, String>`:
+
+```sql
+CREATE MAPPING my_map
+TYPE IMap
+OPTIONS (
+    'keyFormat'='int',
+    'valueFormat'='varchar'
+)
+```
+
+For a reference, see [SQL Data Types](../data-types.mdx).
+
+For object formats, you must specify other options, depending on the serialization format:
+
+- [Portable](#portable-objects)
+- [Compact](#compact-objects)
+- [JSON](#json-objects)
+- [Java](#java-objects)
+
+### Portable Objects
+
+If your map's keys or values are portable, you need to provide the following additional options:
+
+- `keyPortableFactoryId`/ `valuePortableFactoryId`
+- `keyPortableClassId`/ `valuePortableClassId`
+- `keyPortableVersion`/ `valuePortableVersion` (optional, default is `0`)
+
+For example, to create a mapping for a map where both key and value are Portable:
+
+```sql
+CREATE MAPPING my_map
+TYPE IMap
+OPTIONS (
+    'keyFormat' = 'portable',
+    'keyPortableFactoryId' = '123',
+    'keyPortableClassId' = '456',
+    'keyPortableVersion' = '0',  -- optional
+    'valueFormat' = 'portable',
+    'valuePortableFactoryId' = '123',
+    'valuePortableClassId' = '789',
+    'valuePortableVersion' = '0'  -- optional
+)
+```
+
+If you omit a column list from the `CREATE MAPPING` statement, Hazelcast will resolve the column names and types by looking at the `ClassDefinition` with the given factory ID, class ID, and version.
+
+If the `ClassDefinition` with the given IDs is not known to the cluster, you must provide a column list so that Hazelcast can use it to create the `ClassDefinition`.
+
+For more information about this serialization option, see [Implementing Portable Serialization](../../serialization/other-serialization-options/implementing-portable-serialization.mdx).
+
+### Compact Objects
+
+If your map's keys or values have `Compact` format, you need to provide the following additional options:
+
+- `keyCompactTypeName` / `valueCompactTypeName`
+
+The column list is mandatory and Hazelcast will create the `Compact` objects schema based on the column list.
+
+The benefit of this format is that it doesn't deserialize the whole key or value when reading only a subset of fields. Also it doesn't require a custom Java class to be defined on the cluster, so it's usable for non-Java clients similar to `Portable`. And it is more space-efficient than `Portable`.
+
+Example mapping where both key and value are `Compact`:
+
+```sql
+CREATE MAPPING my_map (
+	id INT EXTERNAL NAME "__key.id",
+	name VARCHAR,
+	surname VARCHAR,
+	age INT)
+TYPE IMap
+OPTIONS (
+    'keyFormat' = 'compact',
+    'keyCompactTypeName' = 'personId',
+    'valueFormat' = 'compact',
+    'valueCompactTypeName' = 'person'
+)
+```
+
+For more information about this serialization option, see [Compact Serialization](../../serialization/compact-serialization.mdx).
+
+### JSON Objects
+
+If values are in the JSON format, configure the `valueFormat` field as [`json` or `json-flat`](../working-with-json.mdx).
+
+```sql title="JSON"
+CREATE MAPPING my_map
+TYPE IMap
+OPTIONS (
+    'keyFormat' = 'bigint',
+    'valueFormat' = 'json');
+```
+
+```sql title="JSON-FLAT"
+CREATE MAPPING my_map(
+    __key BIGINT,
+    ticker VARCHAR,
+    amount INT)
+TYPE IMap
+OPTIONS (
+    'keyFormat' = 'bigint',
+    'valueFormat' = 'json-flat');
+```
+
+### Java Objects
+
+For maps whose keys or values are serialized with Java serialization, `DataSerializable` or `IdentifiedDataSerializable`, you need to provide the name of the Java class into which you want to serialize data, using the following additional options:
+
+- `keyJavaClass` / `valueJavaClass`
+
+For example:
+
+```sql
+CREATE MAPPING my_map
+TYPE IMap
+OPTIONS (
+    'keyFormat' = 'java',
+    'keyJavaClass' = 'java.lang.Long',
+    'valueFormat' = 'java',
+    'valueJavaClass' = 'com.example.Person')
+```
+
+If the Java class corresponds to one of the basic data types (numbers, dates, strings), that type will be used for the key or value and mapped as a column named `__key` for keys and `this` for values. In the example above, the key will be mapped with the `BIGINT` type. In fact, the above `keyFormat` and `keyJavaClass` duo is equivalent to `'keyFormat'='bigint'`.
+
+If the Java class is not one of the basic types:
+
+- Hazelcast will analyze the class using reflection and use its properties as column names.
+
+  Hazelcast recognizes public fields and JavaBean-style getters. If some property has a non-primitive type, it will be mapped under the `OBJECT` type.
+- The class must be available to the cluster.
+
+  You can either add the class to the members' classpaths by creating a JAR file and adding it to the `lib` directory, or you can use user code deployment. User code deployment must be enabled on the members, see [Deploying User Code from Clients](../../adding-java-classes-to-members/deploying-code-from-clients.mdx) for details.
