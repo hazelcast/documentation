@@ -48,6 +48,9 @@ html:root {
   --ifm-color-primary-lighter: #32d8b4;
   --ifm-color-primary-lightest: #4fddbf;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+
+  /* HIVE sets `color-scheme: light` on :root, which pins every `light-dark()` token (e.g. the theme switcher's icon) to its light value. */
+  color-scheme: dark;
 }
 
 /* Tabs: HIVE puts a rule under the whole strip and colours the label on hover (no background); Infima variables can't express that. */
@@ -154,18 +157,16 @@ html:root {
 }
 .navbar__items--right > [class*='colorModeToggle'] {
   order: -1;
-
-  /* The 32px toggle has ~7px of invisible space per side; a negative margin corrects the optical gap while keeping the hit target.
-   * The extra left gap separates it from the borderless version dropdown. */
-  --toggle-optical: -7px;
-  --toggle-extra-left: 8px;
-
-  margin-right: var(--toggle-optical);
-  margin-left: calc(var(--toggle-optical) + var(--toggle-extra-left));
 }
 .navbar__items--right .navbar-cta {
   order: 1;
   margin-left: var(--ifm-navbar-item-padding-horizontal);
+}
+
+/* The HIVE popover is portaled to <body> at z-index 20, beneath the sticky navbar (200), which clips the top of the theme menu.
+   The popover's class is a CSS-module hash, so match the menu it wraps. */
+div:has(> [role='menu'][aria-label='Color theme']) {
+  z-index: calc(var(--ifm-z-index-fixed) + 1);
 }
 
 /* Kapa widget: give its host its own stacking context. Raising `data-modal-z-index` lifts the modal but puts Mantine's tooltips beneath it,
