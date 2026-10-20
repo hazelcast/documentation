@@ -13,6 +13,8 @@
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
   /* HIVE's page background (white in light, `#1e1e2e` in dark). */
   --ifm-background-color: var(--hive-color-neutral-lighter-v4);
+  /* Navbar: HIVE's raised surface (white in light, `#2a2d3a` in dark). */
+  --ifm-navbar-background-color: var(--hive-color-neutral-white-v4);
   /* Match the 8px corners of HIVE's Badge pills that sit just below the breadcrumbs. */
   --ifm-breadcrumb-border-radius: 8px;
 
@@ -53,7 +55,6 @@ html:root {
 [data-theme='dark'] {
   /* Raised surface: the navbar, footer, and cards sit above the page. */
   --ifm-background-surface-color: var(--hive-color-neutral-white-v4);
-  --ifm-navbar-background-color: var(--hive-color-neutral-white-v4);
 
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 
@@ -61,9 +62,13 @@ html:root {
   color-scheme: dark;
 }
 
-/* The raised navbar gets a bottom border, and the footer a matching top one. */
+/* The navbar gets a bottom border in place of Infima's shadow, and the footer a matching top one. */
+.navbar {
+  --ifm-navbar-shadow: none;
+  border-bottom: var(--hive-border-width) solid var(--hive-color-border-v4);
+}
 [data-theme='dark'] .navbar {
-  border-bottom: var(--hive-border-width) solid var(--hive-color-neutral-v4);
+  border-bottom-color: var(--hive-color-neutral-v4);
 }
 /* Footer in HIVE colours: the Ask AI button's grey (secondary-v4) in light, the navbar's raised surface in dark. */
 .footer {
@@ -210,6 +215,11 @@ html[data-theme] {
   --docsearch-key-color: var(--hive-color-text-secondary-v4);
   --docsearch-footer-background: light-dark(var(--hive-color-surface-hover-v4), var(--hive-color-neutral-white-v4));
   --docsearch-footer-shadow: 0 -1px 0 0 var(--hive-color-border-v4);
+}
+
+/* DocSearch adds a faint 1px border to the navbar button's keys; HIVE's keys are a plain grey fill. */
+.DocSearch-Button-Key {
+  border: 0;
 }
 
 /* The Algolia logo's SVG hardcodes its own blue fill in an embedded <style>, so `--docsearch-logo-color` never reaches it. */

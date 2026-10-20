@@ -1,7 +1,6 @@
 import {useMemo, useState, type ReactNode} from 'react';
 import Layout from '@theme/Layout';
 import {Search} from 'react-feather';
-import Link from '@docusaurus/Link';
 import {usePluginData} from '@docusaurus/useGlobalData';
 import {Badge} from '@hazelcast/ui/lib/components/Badge';
 import {Button} from '@hazelcast/ui/lib/components/Button';
@@ -187,9 +186,7 @@ export default function Tutorials(): ReactNode {
                     .filter(Boolean)
                     .join(' · ')}
                 </div>
-                <h3>
-                  <Link to={c.href}>{c.title}</Link>
-                </h3>
+                <h3>{c.title}</h3>
                 <div className={styles.chips}>
                   {c.enterprise && <Badge type="warning" content="Enterprise" />}
                   {c.categories.map((cat) => (
