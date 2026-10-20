@@ -268,7 +268,6 @@ html[data-theme] {
 /* Navbar dropdowns (the version selectors and, at narrow widths, Products) behave like the theme switcher: borderless, with HIVE's hover surface, at the same 36px height.
    Their menus match the theme switcher's. */
 .navbar__item.dropdown {
-  display: flex;
   align-items: center;
   height: calc(var(--hive-grid) * 9);
   padding-block: 0;
@@ -374,11 +373,23 @@ html[data-theme='dark'] .hz-autocomplete-field__menu .hz-autocomplete-field__men
    - 1,120-1,399px (needs ~1,105px): no Ask AI, CTA, or theme toggle; all three are in the burger menu below 997px.
    - 997-1,119px: the product tabs collapse into the "Products" dropdown.
    Infima lets the brand shrink, so without these two rules an overfull navbar draws its links over the logo and wraps long labels. */
-.navbar__brand {
-  flex-shrink: 0;
-}
 .navbar__link {
   white-space: nowrap;
+}
+/* Desktop only: below 997px Infima hides the navbar items (the burger lists them), and an unshrinkable 240px logo would push the drawer's close button off its edge. */
+@media (min-width: 997px) {
+  .navbar__brand {
+    flex-shrink: 0;
+  }
+  .navbar__item.dropdown {
+    display: flex;
+  }
+}
+/* Below the burger breakpoint the drawer is 83vw (311px on a 375px phone): a smaller logo leaves room for the theme toggle and close button. */
+@media (max-width: 996px) {
+  .navbar__logo {
+    height: 1.5rem;
+  }
 }
 
 @media (min-width: 997px) and (max-width: 1399px) {
