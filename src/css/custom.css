@@ -364,6 +364,10 @@ html[data-theme] {
 div:has(> [role='menu'][aria-label='Color theme']) {
   z-index: calc(var(--ifm-z-index-fixed) + 1);
 }
+/* With no <body> to portal into, the HIVE popover server-renders the menu inline in the navbar, which shifts it until hydration. */
+.navbar [role='menu'][aria-label='Color theme'] {
+  display: none;
+}
 
 /* HIVE's AutocompleteField marks the selected option with grey and weight only; give it the teal accent the version menu's current item has.
    HIVE sets the option colour with a four-class selector, so this needs five. */
