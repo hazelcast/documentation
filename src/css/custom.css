@@ -187,6 +187,11 @@ html:root {
   --ifm-alert-background-color: var(--alert-surface);
   --ifm-alert-border-color: var(--alert-border);
   --ifm-alert-foreground-color: var(--alert-color);
+  /* Infima tints inline code with this, in its own per-type colours. Light mode tints from the status colour, as the fill does, to avoid murk. */
+  --ifm-alert-background-color-highlight: light-dark(
+    color-mix(in oklab, var(--alert-border-light) 4%, transparent),
+    color-mix(in oklab, var(--alert-color) 8%, transparent)
+  );
 }
 /* Links take the admonition's text colour (as HIVE's Alert does). Infima underlines them in the pale border colour, which hides them; a half-strength line of the text colour reads as a link without looking like underlined text. */
 .theme-admonition a,
@@ -205,13 +210,16 @@ html:root {
   --alert-fill-light: var(--hive-color-info-light);
   --alert-border-light: var(--hive-color-info);
 }
+/* Important is Docusaurus's alias for Info and Warning shares Infima's warning variant; their type classes recolour them (Important yellow, Warning red). */
 .theme-admonition.alert--warning,
+.theme-admonition.theme-admonition-important,
 .theme-doc-version-banner {
   --alert-color: var(--hive-color-warning-text-v4);
   --alert-fill-light: var(--hive-color-warning-light);
   --alert-border-light: var(--hive-color-warning);
 }
-.theme-admonition.alert--danger {
+.theme-admonition.alert--danger,
+.theme-admonition.theme-admonition-warning {
   /* error-text-v4 is 2.7:1 on the pink fill in light; HIVE's darker error passes. */
   --alert-color: light-dark(var(--hive-color-error-dark), var(--hive-color-error-text-v4));
   --alert-fill-light: var(--hive-color-error-light);
