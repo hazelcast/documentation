@@ -19,8 +19,9 @@ const KAPA_COOKIE = 'kapa_web_id';
 const CONFIG: Record<string, string> = {
   'data-website-id': '6b326171-dd1e-40c6-a948-1f9bb6c0ed52',
   'data-project-name': 'Hazelcast',
-  // White fill is baked in: it renders on the teal modal header.
   'data-project-logo': '/img/kapa/ask-ai-icon.svg',
+  // Follow the site's theme toggle: Kapa re-matches this against <html> whenever `data-theme` changes.
+  'data-color-scheme-selector': "[data-theme='dark']",
   // Hide the floating launcher; the navbar button opens the widget.
   'data-button-hide': 'true',
   'data-mcp-enabled': 'true',
@@ -32,9 +33,11 @@ const CONFIG: Record<string, string> = {
   'data-modal-y-offset': '70px',
   'data-modal-title': 'Ask AI',
   'data-modal-title-font-size': '24px',
-  'data-modal-title-font-weight': '400',
-  'data-modal-image-width': '34',
-  'data-modal-image-height': '34',
+  // Telegraf's capitals sit high in a centred line box: 1px in Chrome, 3px in Firefox (different vertical metrics).
+  // The header centres the padded box, so 4px leaves each browser 1px off centre, in opposite directions.
+  'data-modal-title-padding-top': '4px',
+  // No header icon: it is a fixed-colour image, and Kapa has no dark-mode logo to swap in.
+  'data-modal-image-hide': 'true',
   'data-modal-disclaimer':
     "This is an experimental custom LLM for answering technical questions about Hazelcast. Answers are based **only** on Hazelcast documentation and support sources, but may not be fully accurate so please use your best judgement. Don't forget to rate the answers and give feedback!",
   'data-modal-example-questions':
@@ -45,29 +48,74 @@ const CONFIG: Record<string, string> = {
     '["docs.hazelcast.com", "Java API Docs", "C# API Docs", "Go Client Docs"]',
 };
 
-// Kapa takes literal values, not `var(--hive-...)`, so HIVE tokens are resolved once at load
-// (safe: they don't vary with theme). Fallbacks apply if the stylesheet hasn't loaded yet.
-const THEMED: Record<string, [token: string, fallback: string]> = {
-  'data-project-color': ['--hive-color-brand-secondary', '#061727'],
-  'data-modal-header-bg-color': ['--hive-color-brand-text', '#10a4b3'],
-  'data-modal-title-color': ['--hive-color-neutral-white', '#fff'],
-  'data-modal-disclaimer-bg-color': ['--hive-color-neutral-white', '#fff'],
-  'data-modal-disclaimer-text-color': ['--hive-color-text-secondary', '#707482'],
-  // Dropped straight into a CSS `font-family`, so the token's whole stack is valid.
-  'data-modal-title-font-family': [
-    '--hive-font-family-heading',
-    "'PP Telegraf', 'Helvetica', 'Arial', sans-serif",
-  ],
+// Kapa attributes with a `-dark` twin, and the HIVE v4 colour each follows.
+const SCHEMED: Record<string, string> = {
+  'data-project-color': 'brand',
+  'data-surface-color': 'neutral-white',
+  'data-surface-elevated-color': 'neutral-lighter',
+  'data-surface-hover-color': 'surface-hover',
+  'data-text-color': 'text',
+  'data-text-muted-color': 'text-secondary',
+  'data-border-color': 'border',
+  'data-anchor-color': 'link',
 };
 
+// Kapa takes literal values, not `var(--hive-...)`, so HIVE tokens are resolved once at load. HIVE's v4 colours are
+// `light-dark()` pairs; each half is also its own token (`-light-mode`/`-dark-mode`), read here per scheme.
+// If the stylesheet hasn't loaded, nothing is set and Kapa keeps its defaults.
 function resolveThemeTokens(): Record<string, string> {
   const root = getComputedStyle(document.documentElement);
-  return Object.fromEntries(
-    Object.entries(THEMED).map(([attribute, [token, fallback]]) => [
-      attribute,
-      root.getPropertyValue(token).trim() || fallback,
-    ]),
-  );
+  const token = (name: string) => root.getPropertyValue(name).trim();
+  // Kapa's colour parser throws on `oklch()`, so plain colours go in as hex.
+  const pixel = document.createElement('canvas').getContext('2d', {willReadFrequently: true})!;
+  const hex = (colour: string) => {
+    pixel.clearRect(0, 0, 1, 1);
+    pixel.fillStyle = colour;
+    pixel.fillRect(0, 0, 1, 1);
+    const [r, g, b, a] = pixel.getImageData(0, 0, 1, 1).data;
+    return '#' + [r, g, b, ...(a < 255 ? [a] : [])].map((n) => n.toString(16).padStart(2, '0')).join('');
+  };
+  const light = (colour: string) => hex(token(`--hive-color-${colour}-v4-light-mode`));
+  const dark = (colour: string) => hex(token(`--hive-color-${colour}-v4-dark-mode`));
+  // For attributes with no `-dark` twin: Kapa's Mantine root sets `color-scheme`, which picks the half.
+  const both = (colour: string) => `light-dark(${light(colour)}, ${dark(colour)})`;
+  // HIVE Modal's header: 20% primary over the page background (Modal.module.css `.header`). The canvas can't parse
+  // `color-mix()`, so an element's computed colour resolves it first.
+  const probe = document.createElement('span');
+  document.body.appendChild(probe);
+  const headerFor = (scheme: (colour: string) => string) => {
+    probe.style.color = `color-mix(in oklab, ${scheme('primary')} 20%, ${scheme('neutral-lighter')})`;
+    return hex(getComputedStyle(probe).color);
+  };
+  const header = `light-dark(${headerFor(light)}, ${headerFor(dark)})`;
+  probe.remove();
+  if (!token('--hive-color-text-v4-light-mode')) {
+    return {};
+  }
+  return {
+    ...Object.fromEntries(
+      Object.entries(SCHEMED).flatMap(([attribute, colour]) => [
+        [attribute, light(colour)],
+        [`${attribute}-dark`, dark(colour)],
+      ]),
+    ),
+    'data-modal-header-bg-color': header,
+    'data-modal-title-color': both('text'),
+    'data-modal-disclaimer-bg-color': both('surface-hover'),
+    'data-modal-disclaimer-text-color': both('text-secondary'),
+    'data-example-question-button-bg-color': both('neutral-white'),
+    'data-example-question-button-hover-bg-color': both('surface-hover'),
+    'data-example-question-button-text-color': both('text'),
+    'data-example-question-button-border': `${token('--hive-border-width')} solid ${both('border')}`,
+    'data-example-question-button-border-radius': token('--hive-border-radius'),
+    'data-modal-border-radius': token('--hive-border-radius'),
+    // Any component takes `data-{component}-{css property}`; the MCP button is otherwise a hardcoded pill.
+    'data-mcp-button-border-radius': token('--hive-border-radius'),
+    // Dropped straight into a CSS `font-family`, so the token's whole stack is valid.
+    'data-font-family': token('--hive-font-family-text'),
+    'data-modal-title-font-family': token('--hive-font-family-heading'),
+    'data-modal-title-font-weight': token('--hive-font-weight-heading-bold'),
+  };
 }
 
 // Enzuzo writes `cookies-analytics=true` on analytics consent, however the banner was loaded.
