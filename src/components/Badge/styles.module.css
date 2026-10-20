@@ -41,7 +41,8 @@
   left: 0;
   z-index: 10;
   width: max-content;
-  max-width: 300px;
+  /* Fits a phone screen with 16px either side; the component shifts it left to stay on screen. */
+  max-width: min(300px, 100vw - 32px);
   padding: 0.75rem 0.9rem;
   font-size: 0.85rem;
   font-weight: 400;
@@ -53,9 +54,8 @@
   border: 1px solid var(--ifm-color-emphasis-300);
   border-radius: 8px;
   box-shadow: var(--ifm-global-shadow-md);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.15s ease;
+  /* `display`, not `visibility`: a hidden popover still widens the page, so a badge near the right edge made phones scroll sideways. */
+  display: none;
 }
 
 /* Transparent bridge over the 6px gap so the pointer can travel from the
@@ -71,8 +71,7 @@
 
 .badge:hover .popover,
 .badge:focus-within .popover {
-  opacity: 1;
-  visibility: visible;
+  display: block;
 }
 
 .popover a {

@@ -19,6 +19,22 @@
   display: none;
 }
 
+/* Phones: separate, wrapping buttons instead of the joined bar, so every product shows without scrolling. */
+@media (max-width: 996px) {
+  .filters [role='group'] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    box-shadow: none;
+  }
+  /* Tighter padding keeps the seven buttons to two lines on a 375px phone. */
+  .filters [role='group'] > button {
+    margin-left: 0;
+    border-radius: var(--hive-border-radius);
+    padding-inline: 8px;
+  }
+}
+
 /* Caption and Ask AI share a row; the caption yields first. */
 .footer {
   display: flex;

@@ -4,6 +4,8 @@
    Nothing sets a colour, so dark mode needs no overrides. */
 
 .page {
+  /* The layout wrapper is a flex column, where an auto-margined item sizes to its content; without a width the wide tables stretch the page past a phone screen. */
+  width: 100%;
   /* Measure: 56rem keeps prose readable while giving the wide tables room. */
   max-width: 56rem;
   margin: 0 auto;
@@ -15,6 +17,15 @@
   color: var(--hive-color-text-secondary-v4);
   text-align: center;
   padding: calc(var(--hive-grid) * 16) 0;
+}
+
+/* The payload's Bootstrap grid classes (`row`, `col`, `col-md-8`) collide with Infima's `.row`/`.col`, whose negative
+   margins are only cancelled by Infima columns; nested rows shifted the title 16px left of the text, flush with a phone's edge. */
+.policy :global(.row) {
+  margin-inline: 0;
+}
+.policy :global(.col) {
+  padding-inline: 0;
 }
 
 /* Legal prose is read in long unbroken stretches, so it gets more leading than

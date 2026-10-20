@@ -127,7 +127,15 @@ export function ApiOperation({
         >
           {operation.httpVerb}
         </span>
-        <code>{operation.path}</code>
+        {/* <wbr> after each `/`: Chrome and Safari otherwise keep a long path on one line, widening the page on a phone. */}
+        <code>
+          {operation.path.split(/(?<=\/)/).map((segment, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && <wbr />}
+              {segment}
+            </React.Fragment>
+          ))}
+        </code>
       </p>
       {!usesDescription && operation.description !== undefined && (
         <Markdown source={operation.description} />

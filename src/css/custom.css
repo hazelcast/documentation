@@ -94,6 +94,10 @@ html:root {
   color: var(--hive-color-brand-v4);
   background-color: transparent;
 }
+/* Labels never wrap (Firefox would otherwise split "C++" between the + signs); a strip too wide for the page scrolls. */
+.tabs__item {
+  white-space: nowrap;
+}
 
 /* Inline code: Infima's `vertical-align: middle` drops the chip below the text; Antora's baseline and padding are restored. Scoped off `pre`. */
 :not(pre) > code {
@@ -511,6 +515,18 @@ html[data-theme='dark'] .hz-autocomplete-field__menu .hz-autocomplete-field__men
   table-layout: fixed;
   /* Required: under `fixed` the percentages need an explicit table width to resolve against, or the table collapses. */
   width: 100%;
+}
+/* Phones: fixed widths squeeze code columns until the code overlaps the next column. Columns size to their content instead,
+   and a table still wider than the page scrolls inside its border. `max-content` keeps short tables from leaving a gap inside the border. */
+@media (max-width: 996px) {
+  .markdown table,
+  .markdown table:has(> colgroup) {
+    display: block;
+    overflow-x: auto;
+    table-layout: auto;
+    width: max-content;
+    max-width: 100%;
+  }
 }
 
 /* Block-image captions (<figure>/<figcaption> from the converter): muted caption under a centred image. */

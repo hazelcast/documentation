@@ -31,11 +31,17 @@ const ALL = 'all';
 
 // Facet labels for the values the guides actually use. A value with no entry
 // here falls back to itself, so a new tag shows up rather than disappearing.
+// Key order is the product filter's button order; unlisted values follow, alphabetically.
 const PRODUCT_LABELS: Record<string, string> = {
-  cloud: 'Cloud',
   platform: 'Platform',
   operator: 'Operator',
+  cloud: 'Cloud',
   imdg: 'IMDG',
+};
+const PRODUCT_ORDER = Object.keys(PRODUCT_LABELS);
+const productRank = (p: string) => {
+  const i = PRODUCT_ORDER.indexOf(p);
+  return i < 0 ? PRODUCT_ORDER.length : i;
 };
 
 const LANG_LABELS: Record<string, string> = {
@@ -72,7 +78,7 @@ export default function Tutorials(): ReactNode {
   const [includeEnterprise, setIncludeEnterprise] = useState(true);
 
   const products = useMemo(
-    () => uniqueSorted(cards.flatMap(productsOf)),
+    () => uniqueSorted(cards.flatMap(productsOf)).sort((a, b) => productRank(a) - productRank(b)),
     [cards],
   );
   const languages = useMemo(

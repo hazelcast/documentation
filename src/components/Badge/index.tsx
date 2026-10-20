@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useRef} from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import {useDocsVersion} from '@docusaurus/plugin-content-docs/client';
@@ -69,10 +69,35 @@ export const BADGES: Record<string, BadgeDef> = {
 // Frontmatter keys that map to a page-level badge, in registry (display) order.
 export const BADGE_KEYS = Object.keys(BADGES);
 
+// Gap kept between an open popover and the viewport's right edge.
+const EDGE = 16;
+
 // Shared hover/focus popover: explanatory text + optional "Learn more" link.
+// It opens from the badge's left edge; near the right of a narrow screen it is shifted left to stay on screen.
 function Popover({def}: {def: BadgeDef}): React.ReactElement {
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const popover = ref.current;
+    const badge = popover?.parentElement;
+    if (!popover || !badge) return;
+    // Placed before it is shown: a tap fires `pointerenter` at touch-down, but applies `:hover` only after it.
+    // Shown inline just long enough to measure; nothing paints in between.
+    const place = () => {
+      popover.style.left = '';
+      popover.style.display = 'block';
+      const overflow = popover.getBoundingClientRect().right - (document.documentElement.clientWidth - EDGE);
+      popover.style.display = '';
+      if (overflow > 0) popover.style.left = `${-overflow}px`;
+    };
+    badge.addEventListener('pointerenter', place);
+    badge.addEventListener('focusin', place);
+    return () => {
+      badge.removeEventListener('pointerenter', place);
+      badge.removeEventListener('focusin', place);
+    };
+  }, []);
   return (
-    <span role="note" className={styles.popover}>
+    <span ref={ref} role="note" className={styles.popover}>
       {def.tooltip}
       {def.href ? (
         <>

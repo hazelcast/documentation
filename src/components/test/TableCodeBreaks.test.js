@@ -1,7 +1,7 @@
 'use strict'
 
 // Spec: inline code in a table cell reads and copies exactly as written, and the browser may break it only at
-// whitespace, after `/`, `_` or `.` inside a name, and between the words of a camelCase name.
+// whitespace, after `/`, `_`, `.` or `-` inside a name, and between the words of a camelCase name.
 // The oracle for a break opportunity is the rendered markup: a <wbr> or whitespace between `white-space: nowrap` spans.
 
 const test = require('node:test')
@@ -30,7 +30,8 @@ function render (code) {
 const CASES = {
   'instance/losslessRestartEnabled': ['instance/', 'lossless', 'Restart', 'Enabled'],
   persistenceEnabled: ['persistence', 'Enabled'],
-  '--value-type, -v': ['--value-type,', '-v'],
+  '--value-type, -v': ['--value-', 'type,', '-v'],
+  'cooperative-thread-count': ['cooperative-', 'thread-', 'count'],
   hazelcast_jet_enabled: ['hazelcast_', 'jet_', 'enabled'],
   'hazelcast.map.size': ['hazelcast.', 'map.', 'size'],
   HTTPServer: ['HTTPServer'],

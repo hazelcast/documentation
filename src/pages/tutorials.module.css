@@ -38,6 +38,19 @@
   box-shadow: none;
 }
 
+/* Phones: the joined product buttons can't wrap, so tighter padding fits all five on a 360px screen; narrower ones scroll the row. */
+@media (max-width: 996px) {
+  .filters {
+    padding: 0.75rem;
+  }
+  .product {
+    overflow-x: auto;
+  }
+  .product [role='group'] button {
+    padding-inline: 8px;
+  }
+}
+
 /* Fields align at the TOP, not the bottom: the three HIVE field types have
    different heights (AutocompleteField reserves a row for an error message that
    TextField does not), so bottom-alignment scatters their labels. */
