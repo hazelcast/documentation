@@ -7,6 +7,7 @@ import IfNotSnapshot from '@site/src/components/IfNotSnapshot';
 import Icon from '@site/src/components/Icon';
 import Anchor from '@site/src/components/Anchor';
 import ApiReference from '@site/src/components/ApiReference';
+import TableCodeBreaks from '@site/src/components/TableCodeBreaks';
 
 // Components registered here are available in every MDX page without an import.
 export default {
@@ -19,4 +20,5 @@ export default {
   Icon,
   Anchor,
   ApiReference,
+  TableCodeBreaks,
 };

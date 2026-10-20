@@ -11,6 +11,7 @@ import type {Options} from '@docusaurus/plugin-content-docs';
 import latestLinks, {type LatestSegs} from './remark/latestLinks';
 import headingVariables from './remark/headingVariables';
 import imageAltUnescape from './remark/imageAltUnescape';
+import tableCodeBreaks from './remark/tableCodeBreaks';
 
 const siteDir = path.resolve(__dirname, '..');
 
@@ -94,6 +95,7 @@ function contentDocs(options: Options): PluginConfig {
         ...(options.remarkPlugins ?? []),
         [latestLinks, {latest: latestSegs}],
         imageAltUnescape,
+        tableCodeBreaks,
       ],
     },
   ];
