@@ -20,6 +20,15 @@ import 'pushfeedback/dist/pushfeedback/pushfeedback.css';
 
 const PROJECT = '3m7dkbl46s';
 
+// The footer note as HIVE help text. The widget centres it at 11px #666 inside its shadow root, with no variable or
+// exposed part for the inner element, and its sanitizer strips `style`. Safe to target its classes: the package is pinned.
+// `:host` outranks the widget's own sheet, which it adopts after this one.
+const FOOTER_CSS = `:host .feedback-modal-footer, :host .feedback-footer-combined {
+  text-align: start;
+  font-size: var(--hive-font-size-body-smaller);
+  color: var(--hive-color-text-secondary-v4);
+}`;
+
 type FeedbackModalElement = HTMLElement & {
   openModal?: () => Promise<void>;
 };
@@ -36,6 +45,7 @@ declare module 'react' {
         'fetch-data'?: string;
         'custom-font'?: string;
         'hide-email'?: string;
+        'footer-text'?: string;
       };
     }
   }
@@ -46,6 +56,17 @@ export default function FeedbackButton(): ReactNode {
   // Client-only: the portal needs a DOM to target.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    void customElements.whenDefined('feedback-modal').then(() => {
+      const root = modal.current?.shadowRoot;
+      if (!root) return;
+      const sheet = new CSSStyleSheet();
+      sheet.replaceSync(FOOTER_CSS);
+      root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
+    });
+  }, [mounted]);
 
   return (
     <>
@@ -70,6 +91,8 @@ export default function FeedbackButton(): ReactNode {
             fetch-data="false"
             custom-font="true"
             hide-email="true"
+            // Shown under Send. "Add a screenshot" triggers the browser's screen-capture prompt, which readers don't expect.
+            footer-text="To add a screenshot, your browser needs permission to capture your screen. Choose this tab. You can mark up the screenshot before you attach it, and nothing is sent until you select Send."
           />,
           document.body,
         )}

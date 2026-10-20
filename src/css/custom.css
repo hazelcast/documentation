@@ -49,8 +49,33 @@ html:root {
   --feedback-modal-content-font-family: var(--hive-font-family-text);
   /* Modal Send button and selected-rating accents. The widget's own button is not rendered; the trigger is src/components/FeedbackButton. */
   --feedback-primary-color: var(--hive-color-primary-v4);
-}
 
+  /* Drawer (the screenshot editor is left on the widget's palette). HIVE's v4 tokens switch with the theme, and `html:root` also beats
+     the widget's own `[data-theme='dark']` greys, so one mapping covers both themes. Surfaces match the navbar and Ask AI modal. */
+  --feedback-modal-content-bg-color: var(--hive-color-neutral-white-v4);
+  --feedback-modal-content-border-color: var(--hive-color-border-v4);
+  --feedback-modal-content-text-color: var(--hive-color-text-v4);
+  --feedback-modal-header-text-color: var(--hive-color-text-v4);
+  --feedback-modal-footer-link: var(--hive-color-text-v4);
+  --feedback-modal-close-color: var(--hive-color-text-v4);
+  --feedback-modal-close-bg-color: transparent;
+  /* Rating and screenshot buttons: HIVE's outlined button. */
+  --feedback-modal-button-bg-color: var(--hive-color-neutral-white-v4);
+  --feedback-modal-button-border-color: var(--hive-color-border-v4);
+  --feedback-modal-button-text-color: var(--hive-color-text-v4);
+  --feedback-modal-button-icon-color: var(--hive-color-text-v4);
+  --feedback-modal-button-border-radius: var(--hive-border-radius);
+  --feedback-modal-rating-button-color: var(--hive-color-text-v4);
+  /* Send: HIVE's contained primary button, whose label is dark on the mint in both themes. */
+  --feedback-modal-button-submit-text-color: var(--hive-color-text-on-primary-v4);
+  --feedback-modal-button-submit-text-color-hover: var(--hive-color-text-on-primary-v4);
+  /* Comment box: HIVE's text field. */
+  --feedback-modal-input-bg-color: var(--hive-color-neutral-lighter-v4);
+  --feedback-modal-input-border-color: var(--hive-color-border-v4);
+  --feedback-modal-input-border-color-hover: var(--hive-color-text-secondary-v4);
+  --feedback-modal-input-text-color: var(--hive-color-text-v4);
+  --feedback-modal-input-border-radius: var(--hive-border-radius);
+}
 /* Dark mode: HIVE's tokens resolve to their dark values through `light-dark()` (see `color-scheme` below), so the :root mappings, primary included, carry over; only the surfaces differ. */
 [data-theme='dark'] {
   /* Raised surface: the navbar, footer, and cards sit above the page. */
