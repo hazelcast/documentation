@@ -1,6 +1,7 @@
-import {useMemo, useState, type ReactNode} from 'react';
+import {useEffect, useMemo, useState, type ReactNode} from 'react';
 import Layout from '@theme/Layout';
 import {Search} from 'react-feather';
+import {useHistory, useLocation} from '@docusaurus/router';
 import {usePluginData} from '@docusaurus/useGlobalData';
 import {Badge} from '@hazelcast/ui/lib/components/Badge';
 import {Button} from '@hazelcast/ui/lib/components/Button';
@@ -71,11 +72,36 @@ export default function Tutorials(): ReactNode {
   const data = usePluginData('tutorials-index') as {cards?: Card[]} | undefined;
   const cards = data?.cards ?? [];
 
-  const [query, setQuery] = useState('');
-  const [product, setProduct] = useState(ALL);
-  const [language, setLanguage] = useState(ALL);
-  const [category, setCategory] = useState(ALL);
-  const [includeEnterprise, setIncludeEnterprise] = useState(true);
+  // The filters live in the query string so a filtered view can be linked to.
+  const history = useHistory();
+  const {search} = useLocation();
+  const initial = new URLSearchParams(search);
+  const [query, setQuery] = useState(initial.get('q') ?? '');
+  const [product, setProduct] = useState(initial.get('product') ?? ALL);
+  const [language, setLanguage] = useState(initial.get('language') ?? ALL);
+  const [category, setCategory] = useState(initial.get('category') ?? ALL);
+  const [includeEnterprise, setIncludeEnterprise] = useState(initial.get('enterprise') !== '0');
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (query) params.set('q', query);
+    if (product !== ALL) params.set('product', product);
+    if (language !== ALL) params.set('language', language);
+    if (category !== ALL) params.set('category', category);
+    if (!includeEnterprise) params.set('enterprise', '0');
+    const next = params.toString();
+    if (next !== search.replace(/^\?/, '')) history.replace({search: next ? `?${next}` : ''});
+  }, [query, product, language, category, includeEnterprise]);
+
+  const filtered =
+    query !== '' || product !== ALL || language !== ALL || category !== ALL || !includeEnterprise;
+  const clearFilters = () => {
+    setQuery('');
+    setProduct(ALL);
+    setLanguage(ALL);
+    setCategory(ALL);
+    setIncludeEnterprise(true);
+  };
 
   const products = useMemo(
     () => uniqueSorted(cards.flatMap(productsOf)).sort((a, b) => productRank(a) - productRank(b)),
@@ -172,9 +198,16 @@ export default function Tutorials(): ReactNode {
           </div>
         </div>
 
-        <p className={styles.count}>
-          {shown.length} of {cards.length} tutorials
-        </p>
+        <div className={styles.countRow}>
+          <p className={styles.count}>
+            {shown.length} of {cards.length} tutorials
+          </p>
+          {filtered && (
+            <Button type="button" variant="link" onClick={clearFilters}>
+              Clear all filters
+            </Button>
+          )}
+        </div>
 
         {shown.length === 0 ? (
           <EmptyState
