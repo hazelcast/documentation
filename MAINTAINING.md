@@ -44,7 +44,7 @@ A major or minor release makes a new version of the docs:
 
 Each product has its own differences:
 - **Platform and Management Center**: a release of one also updates the other's "latest supported" value, `page-latest-supported-mc` or `page-latest-supported-hazelcast`.
-- **Operator**: a release is a new version when its X.Y line does not exist yet, whatever its patch number. A release of an existing line updates that version's variables. `main` is always `latest-snapshot`, and the script never renames it. A release sets `main`'s `operator-chart-version` from `--next`, if given. The Version update workflow also regenerates the release's `reference/api-ref.mdx` from the CRD types at the release tag, with the generator in `apidocgen/` on the Operator repo's `main`. The script does not, so a local run leaves the page as it is.
+- **Operator**: a release is a new version when its X.Y line does not exist yet, whatever its patch number. A release of an existing line updates that version's variables. `main` is always `latest-snapshot`, and the script never renames it. A release sets `main`'s `operator-chart-version` from `--next`, if given. The Version update workflow also regenerates the release's `reference/api-ref.mdx` from the CRD types at the release tag, with the generator in `apidocgen/` on the Operator repo's `main`. The script does not. A local run therefore leaves the page as it is.
 - **CLC**: `main` is always the newest release, not a snapshot. Every CLC release, including a patch release, copies `main` to a version named after the outgoing release, and renames `main` to the new release. Merge the new release's content into `main` after the version update. The outgoing content then stays in the outgoing version.
 
 ### What the script refuses
@@ -60,7 +60,7 @@ The site is hosted on Netlify. Netlify reads its build settings from `netlify.to
 - It runs `npm run build` and publishes the `build/` folder.
 - It serves `static/_redirects`, which is copied into `build/`, as the site's redirect rules.
 - It sets a cross-origin header on `/api/*`, because the Hazelcast Cloud console fetches `/api/cloud.json` from another domain.
-- It tells browsers to cache files under `/assets/` for a year without checking for a newer copy. Docusaurus puts a content hash in the name of every file there, so a changed file always gets a new name.
+- It tells browsers to cache files under `/assets/` for a year without checking for a newer copy. Docusaurus puts a content hash in the name of every file there. A changed file therefore always gets a new name.
 - It redirects the per-product sitemaps of the previous Antora site, such as `/sitemap-hazelcast.xml`, to `/sitemap.xml`.
 
 The sitemap lists only pages that are their own canonical URL. A page in an older release has the same page in the latest release as its canonical URL, and the sitemap leaves it out. A page that exists only in an older release stays in. Snapshot pages are always left out.

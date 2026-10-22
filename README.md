@@ -58,7 +58,7 @@ The local server does not show archived versions. The **Archives** link in a ver
 npm run build
 ```
 
-This command generates the static site into `build/`. It fails on a broken internal link, a broken Markdown link, or a missing image. The dev server does not check links, so a broken link only shows up in the build. A missing image does show as an error in the dev server, until you fix the path. Neither checks anchors (`#fragment`), so verify cross-page anchors yourself.
+This command generates the static site into `build/`. It fails on a broken internal link, a broken Markdown link, or a missing image. The dev server does not check links. A broken link therefore only shows up in the build. A missing image does show as an error in the dev server, until you fix the path. Neither checks anchors (`#fragment`). Verify cross-page anchors yourself.
 
 These commands are also available:
 

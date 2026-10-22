@@ -55,7 +55,7 @@ Run the checks that match what you changed:
 
 | Command                                  | Run it after changing                                                                                                                                                      |
 | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run build`                          | Anything. It fails on a broken internal link, a broken Markdown link, or a missing image. It does not check anchors (`#fragment`), so verify cross-page anchors yourself.  |
+| `npm run build`                          | Anything. It fails on a broken internal link, a broken Markdown link, or a missing image. It does not check anchors (`#fragment`). Verify cross-page anchors yourself.  |
 | `npm run typecheck`                      | TypeScript in `src/`, `plugins/`, or `docusaurus.config.ts`.                                                                                                               |
 | `npm test`                               | Code in `src/`, `plugins/`, `scripts/`, or `.github/scripts/`, `docusaurus.config.ts`, or any file the release script rewrites. It runs every unit test in the repo. |
 | `npm run test:version-update`            | `.github/scripts/version-update/`, or any file it rewrites: `src/variables.ts`, `src/redirects.ts`, `src/currentVersions.json`, `*_versions.json`, or `static/_redirects`. |
@@ -69,4 +69,4 @@ Check your work:
 2. Run the other checks from [Commands and checks](#commands-and-checks) that match your change.
 3. Check that you have not changed generated files, and that you have not reformatted files the release script rewrites.
 4. If you added or moved a page, check that it appears in the side navigation and that its URL is what you intended. If a page's URL changed, check that you added a redirect.
-5. If you wrote or edited prose, reread it against [Writing style](CONTRIBUTING.md#writing-style) and fix anything that breaks a rule. Check only the text you changed.
+5. If you wrote or edited prose, reread every line you added against [Writing style](CONTRIBUTING.md#writing-style), one sentence at a time. Habits such as ", so" come back while you write. Reread the diff, not your memory of it. Fix anything that breaks a rule. Check only the text you changed.

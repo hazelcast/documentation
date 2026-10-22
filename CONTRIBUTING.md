@@ -11,7 +11,7 @@ Each documentation page is built from an MDX file. Each file starts with YAML fr
 - `slug`: used to maintain URLs from the previous documentation platform. Don't add a slug for new pages, or edit existing slugs.
 - `enterprise: true`, `beta: true`, or `experimental: true`: shows a badge at the top of the page. The `enterprise` and `beta` badges also show next to the page in the side navigation.
 
-Pages in `cloud/` and `tutorials/` can also have `cloud_title`, `cloud_tags`, and `cloud_order` keys. The Hazelcast Cloud console reads them, so do not remove or rename them.
+Pages in `cloud/` and `tutorials/` can also have `cloud_title`, `cloud_tags`, and `cloud_order` keys. The Hazelcast Cloud console reads them. Do not remove or rename them.
 
 ## Adding a page
 
@@ -71,7 +71,7 @@ npm run backport -- 5.7 5.6
 
 The script takes your uncommitted changes, including new files, and applies them to the same files in each version you name. Name a release by its number, and `main` as `current`. To apply a commit instead, add `--commit <ref>`. To see what would happen without changing any files, add `--dry-run`.
 
-The script merges your change into each version's copy of the file, so text that differs between versions is kept. It lists each file with one of these results:
+The script merges your change into each version's copy of the file. Text that differs between versions is therefore kept. It lists each file with one of these results:
 - `applied`: the change is in the file.
 - `unchanged`: the file already had the change.
 - `conflict`: the change clashed with that version's text. Resolve the `<<<<<<<` markers in the file.
@@ -208,9 +208,11 @@ Write in a plain, direct, and formal voice:
 - Use a neutral, direct register. Avoid contractions in new text, unless the expanded form reads badly.
 - Do not rewrite a page's style as a side effect of an unrelated change.
 - Write one idea per sentence. Keep to about fifteen words on average, and split anything over thirty.
+- Keep a paragraph to one topic and about five sentences. Split anything over 100 words, because a reader scanning for one fact cannot find it in a block.
 - Use the present tense. Avoid "will": write "Hazelcast rejects the request", not "Hazelcast will reject the request".
-- Address the reader as "you". Every sentence has a real agent: "The member closes the connection", not "the connection is closed". Avoid "we", "let's", and "our".
+- Address the reader as "you". Prefer a real agent: "The member closes the connection", not "the connection is closed". Keep the passive where naming the agent makes the sentence awkward or ambiguous. Avoid "we", "let's", and "our".
 - Be precise. Name the thing and the action: "set the path with `--config`", not "point it somewhere else".
+- State what the reader observes and does, not how Hazelcast works inside.
 - Be concrete. No metaphors, and no "seamlessly", "robust", "powerful", "simply", "easily", "quickly", "effortlessly", or "very".
 - Avoid the ", so" construction, which reads as either consequence or purpose. Split the sentence, or write "because" or "to".
 - A value "increases" or "decreases". It never "rises", "grows", or "climbs".
@@ -234,6 +236,7 @@ Structure pages with these headings:
 - Use H2 for main sections and H3 for subsections. Use H4 only rarely, and never go below H4.
 - Use sentence case: "Configure a cluster", not "Configure A Cluster". Do not end a heading with punctuation.
 - Prefer imperative headings: "Configure a cluster", not "Cluster configuration".
+- Split a section whose prose runs past about 400 words into subsections, each opening with its own sentence. Lists and tables do not count towards the limit.
 - Never follow a heading directly with another heading. Open every section with at least one sentence saying what it covers.
 
 ### Lists and tables
