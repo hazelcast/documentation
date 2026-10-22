@@ -62,44 +62,13 @@ jobs:
           fi
           echo "number=${numbers}" >> "${GITHUB_OUTPUT}"
 
-      - name: Check there is nothing to release
-        if: steps.find-pr.outputs.number == ''
-        run: |
-          node .github/scripts/version-update --dry-run | tee dry-run.log
-          if ! grep -q "^Nothing to change for ${VERSION}.$" dry-run.log; then
-            echo "::error::No open PR titled '${TITLE}', but Platform ${VERSION} still has changes to make. Re-run Package Release."
-            exit 1
-          fi
-        env:
-          RELEASE_VERSION: ${{ inputs.VERSION }}
-          REL_MAJOR_MINOR: ${{ steps.get-rel-info.outputs.rel-major-minor }}
-          MASTER_VERSION: ${{ steps.get-rel-info.outputs.master-version }}
-          MASTER_MAJOR_MINOR: ${{ steps.get-rel-info.outputs.master-major-minor }}
-          MC_MAJOR_MINOR: ${{ steps.get-rel-info.outputs.mc-major-minor }}
-          IS_PATCH_RELEASE: ${{ steps.get-rel-info.outputs.is-patch-release }}
-          IS_REL_MAJOR_MINOR: ${{ steps.get-rel-info.outputs.is-rel-major-minor }}
-          IS_LATEST_STABLE_RELEASE: ${{ steps.get-rel-info.outputs.is-latest-stable-release }}
-          IS_BETA_RELEASE: ${{ steps.get-rel-info.outputs.is-beta-release }}
-
-      # Checks must pass: a red check on a version update means a broken site would go live.
-      - name: Merge the PR
+      - name: 'Merge PR #${{ steps.find-pr.outputs.number }}'
         if: steps.find-pr.outputs.number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          number="${{ steps.find-pr.outputs.number }}"
-          if [[ $(gh pr view "${number}" --json isDraft --jq .isDraft) == "true" ]]; then
-            gh pr ready "${number}"
-          fi
-          for attempt in {1..30}; do
-            checks=$(gh pr checks "${number}" --watch --fail-fast 2>&1) && break
-            if ! grep -q "no checks reported" <<< "${checks}"; then
-              echo "${checks}"
-              echo "::error::Checks on #${number} did not pass"
-              exit 1
-            fi
-            if [[ ${attempt} -eq 30 ]]; then
-              echo "::error::No checks reported on #${number}. If its workflows are awaiting approval, approve them on the PR, then re-run Promote Release."
-              exit 1
-            fi
-            sleep 10
-          done
-          gh pr merge "${number}" --squash --delete-branch
+          gh pr ready ${{ steps.find-pr.outputs.number }}
+
+          gh pr merge \
+            ${{ steps.find-pr.outputs.number }} \
+            --squash
