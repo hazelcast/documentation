@@ -53,15 +53,6 @@ jobs:
           release-version: ${{ inputs.VERSION }}
           github-token: ${{ secrets.GH_TOKEN }}
 
-      - name: Close an earlier PR for this release
-        run: |
-          gh pr list --state open --search "\"${TITLE}\" in:title" --json number,title,headRefName \
-            --jq '.[] | select(.title == env.TITLE and (.headRefName | startswith("update_platform_"))) | .number' |
-          while read -r number; do
-            gh pr close "${number}" --delete-branch \
-              --comment "Replaced by ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."
-          done
-
       - name: Update versions
         id: update
         run: node .github/scripts/version-update
@@ -78,6 +69,8 @@ jobs:
 
       - name: Open PR
         if: steps.update.outputs.changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
