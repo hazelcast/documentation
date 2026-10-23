@@ -13,7 +13,7 @@ Each documentation page is built from an MDX file. Each file starts with YAML fr
 
 Pages in `cloud/` and `tutorials/` can also have `cloud_title`, `cloud_tags`, and `cloud_order` keys. The Hazelcast Cloud console reads them. Do not remove or rename them.
 
-## Adding a page
+## Add a page
 
 To add a page:
 1. Create an `.mdx` file in the folder where a reader would look for it. Use a lowercase, hyphenated file name, e.g. `configure-tls.mdx`.
@@ -61,7 +61,7 @@ This feature is in beta.
 </IfSnapshot>
 ```
 
-## Changing content for several versions
+## Change content for several versions
 
 Each version of a product has its own folder: `<product>/` for `main`, and `<product>_versioned_docs/version-X.Y/` for each release. Make the change in one version, then copy it to the others with the backport script:
 
@@ -167,12 +167,46 @@ Images are co-located with the pages that use them, in an `images/` folder next 
 
 Webpack resolves and content-hashes each image, and a missing image fails the build. `static/` is for the exceptions: files that must keep a fixed URL, such as `static/_redirects` and downloadable attachments.
 
-## Submitting a change
+## Check your writing with Vale
+
+[Vale](https://vale.sh) checks prose against the writing style in this guide and the [Google developer documentation style guide](https://developers.google.com/style). It does not check code in paragraphs or in code blocks. The configuration is in `.vale.ini`, and the house rules and vocabulary are in `.vale/`.
+
+To set up Vale:
+1. Install Vale 3.18 or later, for example with `brew install vale`. Earlier versions cannot read MDX.
+2. In the repository root, run `vale sync` to download the Google style.
+
+To check a file, pass its path:
+
+```bash
+vale hazelcast/get-started/editions.mdx
+```
+
+Vale reports each problem at one of three levels:
+- `error`: a wrong product name, a vocabulary term with the wrong capitalization, a repeated word, or a merge conflict marker. Fix every error.
+- `warning`: a style rule. Fix the warnings in text you changed.
+- `suggestion`: a preference. Consider it in context.
+
+Fix only the text you changed. Do not fix alerts in the rest of a page as a side effect of an unrelated change.
+
+If Vale flags a correct term, such as a third-party product name, add it to `.vale/config/vocabularies/Hazelcast/accept.txt` with its exact capitalization. Do not add code identifiers. Put them in backticks instead.
+
+### Check your writing in VS Code
+
+The [Vale VS Code](https://marketplace.visualstudio.com/items?itemName=ChrisChinchilla.vale-vscode) extension shows Vale's alerts in the editor and in the **Problems** panel. It uses the same configuration as the command line.
+
+To set up the extension:
+1. Set up Vale as described in [Check your writing with Vale](#check-your-writing-with-vale).
+2. Install the Vale VS Code extension.
+3. Open the repository root as the workspace folder.
+
+The extension checks a file when you save it. To check as you type, turn on the `vale.valeCLI.lintOnChange` setting. To hide suggestions, set `vale.valeCLI.minAlertLevel` to `warning`.
+
+## Submit a change
 
 Every change reaches the site through a pull request (PR) against the `main` branch:
 1. Fork the repo, or create a branch if you have write access.
-2. Make your change, following this guide. If the change applies to several versions, see [Changing content for several versions](#changing-content-for-several-versions).
-3. Run `npm run build` and fix any errors it reports.
+2. Make your change, following this guide. If the change applies to several versions, see [Change content for several versions](#change-content-for-several-versions).
+3. Run `npm run build`, and run `vale` on the files you changed. Fix any errors.
 4. Open a PR that says what you changed and why.
 
 Netlify builds a deploy preview of the site for every PR from a branch in this repo, and links it from the PR. Use the preview to check your change as readers will see it. PRs from forks do not get a deploy preview.
@@ -210,7 +244,9 @@ Write in a plain, direct, and formal voice:
 - Write one idea per sentence. Keep to about fifteen words on average, and split anything over thirty.
 - Keep a paragraph to one topic and about five sentences. Split anything over 100 words, because a reader scanning for one fact cannot find it in a block.
 - Use the present tense. Avoid "will": write "Hazelcast rejects the request", not "Hazelcast will reject the request".
-- Address the reader as "you". Prefer a real agent: "The member closes the connection", not "the connection is closed". Keep the passive where naming the agent makes the sentence awkward or ambiguous. Avoid "we", "let's", and "our".
+- Address the reader as "you". Prefer a real agent: "The member closes the connection", not "the connection is closed". Keep the passive where naming the agent makes the sentence awkward or ambiguous.
+- Use "we" only for Hazelcast, and only where the reader cannot mistake who it means: "We recommend at least three members." When it is unclear whether "we" means Hazelcast, the reader, or both, name the subject instead.
+- In a tutorial or a procedure, the reader does the work. Write "you create a map", not "we create a map" or "let's create a map".
 - Be precise. Name the thing and the action: "set the path with `--config`", not "point it somewhere else".
 - State what the reader observes and does, not how Hazelcast works inside.
 - Be concrete. No metaphors, and no "seamlessly", "robust", "powerful", "simply", "easily", "quickly", "effortlessly", or "very".

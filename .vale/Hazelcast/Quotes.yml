@@ -1,0 +1,8 @@
+# Straight quotes only: flags curly double and single quotes (including curly apostrophes), and single quotes used for quotation
+extends: existence
+message: "Use straight quotes instead of '%s': double quotes (\") for quotation, and ' for an apostrophe."
+level: warning
+nonword: true
+tokens:
+  - '[“”‘’]'
+  - "(?<![\\w'’])'[A-Za-z][^'\\n]{0,40}'(?![\\w'’])"

@@ -1,0 +1,8 @@
+# A sentence must not open with an always-lowercase word or a code item
+extends: existence
+message: "Do not start a sentence with '%s'. Rewrite the sentence."
+level: warning
+scope: paragraph
+nonword: true
+tokens:
+  - '(?:^|(?<=[.?!] ))(?:npm|kubectl|kubelet|containerd|iptables|macOS|minikube|gRPC|pgAdmin|systemd|vSphere|cgroup|memcache)\b'

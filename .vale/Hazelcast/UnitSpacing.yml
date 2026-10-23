@@ -1,0 +1,10 @@
+# Google.Units with binary units added; Google.Units is off
+extends: existence
+message: "Put a space between the number and the unit in '%s'."
+level: warning
+nonword: true
+tokens:
+  - '\b\d+(?:\.\d+)?(?:B|KB|kB|MB|GB|TB|PB|KiB|MiB|GiB|TiB|PiB)\b'
+  - '\b\d+(?:\.\d+)?(?:ns|ms|min|h|d)\b'
+  # Seconds are split out so a decade ('1990s') isn't read as a unit.
+  - '\b\d+s\b(?<!\b(?:19|20)\d\ds\b)'

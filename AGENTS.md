@@ -26,11 +26,12 @@ Follow these rules in addition to CONTRIBUTING.md:
 - Ignore `migration/` unless your task is the migration, and never import from it. It holds throwaway Antora conversion tooling with its own `package.json`. Its checks need local mirrors of the Antora source repos. Read `migration/README.md` before running them.
 - Before you change a `cloud_*` frontmatter key, read `plugins/cloud-console-index/index.js`. The keys feed `/api/cloud.json`, which the Hazelcast Cloud console reads.
 - An imported code example can contain `{attribute}` placeholders. The build replaces them with the version's values. Do not replace them with literal values.
+- Do not change `.vale.ini` or the files in `.vale/` to silence an alert, unless the user asks. If you think a rule is wrong, tell the user.
 - When you are unsure how to write something, follow the pattern of the neighboring pages.
 
 ## Versions
 
-When the user asks you to apply or backport a change to other versions, follow [Changing content for several versions](CONTRIBUTING.md#changing-content-for-several-versions). In addition:
+When the user asks you to apply or backport a change to other versions, follow [Change content for several versions](CONTRIBUTING.md#change-content-for-several-versions). In addition:
 - Use the backport script. Do not copy the change into each folder by hand.
 - Before you run it, confirm with the user which versions the change applies to, even if they named versions in the request. List the versions you will apply it to, and point out any where the change might not be true, such as a release that does not have the feature.
 - When you resolve a conflict, keep that version's own text, and apply only the change you are backporting.
@@ -61,6 +62,7 @@ Run the checks that match what you changed:
 | `npm run test:version-update`            | `.github/scripts/version-update/`, or any file it rewrites: `src/variables.ts`, `src/redirects.ts`, `src/currentVersions.json`, `*_versions.json`, or `static/_redirects`. |
 | `npm run test:backport`                  | `scripts/backport/`, or `versionLink` in `.github/scripts/version-update/files.js`, which the backport script uses to rewrite links.                              |
 | `mvn test -Dversion.hazelcast=<version>` | Java in `hazelcast/examples/`.                                                                                                                                             |
+| `vale <file>`                            | Prose in any `.md` or `.mdx` file. See [Check your writing with Vale](CONTRIBUTING.md#check-your-writing-with-vale).                                                     |
 
 ## Before you finish
 
@@ -69,4 +71,5 @@ Check your work:
 2. Run the other checks from [Commands and checks](#commands-and-checks) that match your change.
 3. Check that you have not changed generated files, and that you have not reformatted files the release script rewrites.
 4. If you added or moved a page, check that it appears in the side navigation and that its URL is what you intended. If a page's URL changed, check that you added a redirect.
-5. If you wrote or edited prose, reread every line you added against [Writing style](CONTRIBUTING.md#writing-style), one sentence at a time. Habits such as ", so" come back while you write. Reread the diff, not your memory of it. Fix anything that breaks a rule. Check only the text you changed.
+5. Run `vale --minAlertLevel=warning` on each file you changed. Fix every error, and every warning in the lines you added or changed. Vale does not replace the reread in the next step, because it cannot check most of the Writing style rules.
+6. If you wrote or edited prose, reread every line you added against [Writing style](CONTRIBUTING.md#writing-style), one sentence at a time. Habits such as ", so" come back while you write. Reread the diff, not your memory of it. Fix anything that breaks a rule. Check only the text you changed.

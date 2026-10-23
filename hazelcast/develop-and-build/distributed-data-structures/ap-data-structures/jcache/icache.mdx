@@ -90,6 +90,7 @@ Given a configuration file named `hazelcast-jcache.xml` in the package `com.doma
   CachingProvider caching = Caching.getCachingProvider();
   CacheManager cacheManager = caching.getCacheManager(new URI("classpath:com/domain/hazelcast-jcache.xml"), null);
   ```
+
 - By specifying the configuration file location as a property:
 
   ```java
@@ -402,19 +403,18 @@ hazelcast:
 - `async-backup-count`: Number of asynchronous backups. Those backups are executed asynchronously so the mutating operation is not blocked and it is done immediately. Its default value is 0.
 - `in-memory-format`: Internal storage format. For more information, see the [in-memory format section](../../distributed-data-structures.mdx#setting-in-memory-format). Its default value is `BINARY`.
 - `eviction`: Defines the used eviction strategies and sizes for the cache. For more information about eviction, see the [JCache Eviction section](#jcache-eviction).
-
   - `size`: Maximum number of records or maximum size in bytes depending on the `max-size-policy` property. Size can be any integer between `0` and `Integer.MAX_VALUE`. The default `max-size-policy` is `ENTRY_COUNT` and its default size is `10.000`.
   - `max-size-policy`: Maximum size. If maximum size is reached, the cache is evicted based on the eviction policy. Default `max-size-policy` is `ENTRY_COUNT` and its default size is `10.000`. The following eviction policies are available:
-
     - `ENTRY_COUNT`: Maximum number of the entries in cache. Based on this number, Hazelcast calculates an approximate maximum size for each partition. See the [Eviction Algorithm section](#eviction-algorithm) for more details. **Available on heap based cache record store only.**
     - `USED_NATIVE_MEMORY_SIZE`: Maximum used native memory size in megabytes per cache for each Hazelcast instance. **Available on High-Density Memory cache record store only.**
     - `USED_NATIVE_MEMORY_PERCENTAGE`: Maximum used native memory size percentage per cache for each Hazelcast instance. **Available on High-Density Memory cache record store only.**
     - `FREE_NATIVE_MEMORY_SIZE`: Minimum free native memory size in megabytes for each Hazelcast instance. **Available on High-Density Memory cache record store only.**
     - `FREE_NATIVE_MEMORY_PERCENTAGE`: Minimum free native memory size percentage for each Hazelcast instance. **Available on High-Density Memory cache record store only.**
-  - `eviction-policy`: Eviction policy that compares values to find the best matching eviction candidate. Its default value is `LRU`.
 
+  - `eviction-policy`: Eviction policy that compares values to find the best matching eviction candidate. Its default value is `LRU`.
     - <Anchor id="jcache-lru" />`LRU`: Less Recently Used - finds the best eviction candidate based on the `lastAccessTime`.
     - `LFU`: Less Frequently Used - finds the best eviction candidate based on the number of hits.
+
 - `partition-lost-listeners` : Defines listeners for dispatching partition lost events for the cache. For more information, see the [ICache Partition Lost Listener section](#icache-partition-lost-listener).
 - `split-brain-protection-ref` : Name of the split-brain protection configuration that you want this cache to use.
 - `disable-per-entry-invalidation-events` : Disables invalidation events for each entry; but full-flush invalidation events are still enabled. Full-flush invalidation means the invalidation of events for all entries when `clear` is called. Its default value is `false`.
@@ -442,40 +442,39 @@ stage.thenAcceptAsync(v -> System.out.println("Previous value: " + v));
 Following methods are available in asynchronous versions:
 
 - `get(key)`:
-
   - `getAsync(key)`
   - `getAsync(key, expiryPolicy)`
-- `put(key, value)`:
 
+- `put(key, value)`:
   - `putAsync(key, value)`
   - `putAsync(key, value, expiryPolicy)`
-- `putIfAbsent(key, value)`:
 
+- `putIfAbsent(key, value)`:
   - `putIfAbsentAsync(key, value)`
   - `putIfAbsentAsync(key, value, expiryPolicy)`
-- `getAndPut(key, value)`:
 
+- `getAndPut(key, value)`:
   - `getAndPutAsync(key, value)`
   - `getAndPutAsync(key, value, expiryPolicy)`
+
 - `remove(key)`:
-
   - `removeAsync(key)`
+
 - `remove(key, value)`:
-
   - `removeAsync(key, value)`
+
 - `getAndRemove(key)`:
-
   - `getAndRemoveAsync(key)`
-- `replace(key, value)`:
 
+- `replace(key, value)`:
   - `replaceAsync(key, value)`
   - `replaceAsync(key, value, expiryPolicy)`
-- `replace(key, oldValue, newValue)`:
 
+- `replace(key, oldValue, newValue)`:
   - `replaceAsync(key, oldValue, newValue)`
   - `replaceAsync(key, oldValue, newValue, expiryPolicy)`
-- `getAndReplace(key, value)`:
 
+- `getAndReplace(key, value)`:
   - `getAndReplaceAsync(key, value)`
   - `getAndReplaceAsync(key, value, expiryPolicy)`
 
@@ -511,31 +510,30 @@ unwrappedCache.put( 1, "value", new AccessedExpiryPolicy( Duration.ONE_DAY ) );
 The `ExpiryPolicy` instance can be pre-created, cached and re-used, but only for each cache instance. This is because `ExpiryPolicy` implementations can be marked as `java.io.Closeable`. The following list shows the provided method overloads over `javax.cache.Cache` by `com.hazelcast.cache.ICache` featuring the `ExpiryPolicy` parameter:
 
 - `get(key)`:
-
   - `get(key, expiryPolicy)`
+
 - `getAll(keys)`:
-
   - `getAll(keys, expirePolicy)`
+
 - `put(key, value)`:
-
   - `put(key, value, expirePolicy)`
+
 - `getAndPut(key, value)`:
-
   - `getAndPut(key, value, expirePolicy)`
+
 - `putAll(map)`:
-
   - `putAll(map, expirePolicy)`
+
 - `putIfAbsent(key, value)`:
-
   - `putIfAbsent(key, value, expirePolicy)`
+
 - `replace(key, value)`:
-
   - `replace(key, value, expirePolicy)`
+
 - `replace(key, oldValue, newValue)`:
-
   - `replace(key, oldValue, newValue, expirePolicy)`
-- `getAndReplace(key, value)`:
 
+- `getAndReplace(key, value)`:
   - `getAndReplace(key, value, expirePolicy)`
 
 Asynchronous method overloads are not listed here. See the [ICache Async Methods section](#icache-async-methods) for the list of asynchronous method overloads.

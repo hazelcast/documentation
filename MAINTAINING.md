@@ -2,7 +2,7 @@
 
 This guide is for the Hazelcast docs team. It covers releases, deployment, external content, and the third-party services the site loads.
 
-## Releasing a version
+## Release a version
 
 When a product is released, its docs need new version numbers, and a major or minor release also needs a new version of the docs. The script `.github/scripts/version-update` makes these changes for every versioned product.
 

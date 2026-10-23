@@ -1,0 +1,8 @@
+# After a number use the symbol ("50-100 MB"); in general prose use the word ("how many megabytes")
+extends: existence
+message: "Use the symbol after a number ('5 MB') and the word otherwise ('megabytes'): '%s'."
+level: warning
+nonword: true
+tokens:
+  - '\b\d+(?:\.\d+)?[\s -]?(?i:kilo|mega|giga|tera|peta|kibi|mebi|gibi|tebi|pebi)bytes?\b'
+  - '(?<!\d[\s -]?)(?<!\d[\s ]?(?:-|–|to)[\s ]?)\b(?:KB|kB|MB|GB|TB|PB|KiB|MiB|GiB|TiB|PiB)\b'

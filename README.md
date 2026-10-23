@@ -67,7 +67,7 @@ These commands are also available:
 | `npm run serve`                          | Serve the last build locally.                                                                                                             |
 | `npm run typecheck`                      | Type-check the TypeScript in `src/`, `plugins/`, and `docusaurus.config.ts`.                                                              |
 | `npm run clear`                          | Delete Docusaurus caches and generated files. Use it when the site behaves inconsistently.                                                |
-| `npm run backport -- <version>...`       | Apply your changes to other versions. See [Changing content for several versions](CONTRIBUTING.md#changing-content-for-several-versions). |
+| `npm run backport -- <version>...`       | Apply your changes to other versions. See [Change content for several versions](CONTRIBUTING.md#change-content-for-several-versions). |
 | `npm test`                               | Run every unit test: the site's plugins, remark plugins, and scripts.                                                                     |
 | `npm run test:version-update`            | Run the tests for the release script.                                                                                                     |
 | `npm run test:backport`                  | Run the tests for the backport script.                                                                                                    |

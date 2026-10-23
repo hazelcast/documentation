@@ -1,0 +1,12 @@
+# "Set up" and "log in" are verbs; "setup" and "login" are nouns
+extends: substitution
+message: "Use '%s' instead of '%s'."
+level: warning
+ignorecase: true
+action:
+  name: replace
+swap:
+  set-up: set up|setup
+  log-in: log in|login
+  'setup (?:the|a|an|your|Hazelcast)\b': set up
+  'login (?:to|with|as)\b': log in
