@@ -22,8 +22,8 @@ Hazelcast instances from each application replica will all automatically discove
 - [Docker](https://docs.docker.com/install/) ([Docker for Desktop](https://www.docker.com/products/docker-desktop) is good enough)
 - [Kubernetes](https://kubernetes.io/) cluster ([Docker for Desktop](https://www.docker.com/products/docker-desktop) or [Minikube](https://minikube.sigs.k8s.io/docs/) is good enough)
 - [Git](https://git-scm.com/)
-- JDK 1.8+
-- Apache Maven 3.2+
+- JDK 17+
+- Apache Maven 3.6.3+
 
 ## Create an Application
 
@@ -51,13 +51,12 @@ hazelcast:
         enabled: false
       kubernetes:
         enabled: true
+        service-port: 5701
 ```
 
-To include this file inside your Spring Boot project, copy it into `hazelcast-embedded-springboot/src/resources/`.
+By default, Hazelcast looks for other members among all pods in its own namespace. The `service-port` setting makes it connect to them on Hazelcast's port, 5701. Without it, Hazelcast uses the first container port each pod declares, so pods that declare an application port, such as 8080, don't find each other.
 
-```
-cp hazelcast.yaml hazelcast-embedded-springboot/src/main/resources/
-```
+Save this configuration as `hazelcast.yaml` in the directory that contains `hazelcast-embedded-springboot`. You'll add it to the Docker image in the next step, so the application uses it only when it runs in Kubernetes.
 
 Now, you can build the project with the following command.
 
@@ -69,27 +68,31 @@ As an output, the JAR file with our application should be created at `hazelcast-
 
 ## Containerize the Application
 
-To containerize the application, you need to have Docker installed. Then, you can use the following `Dockerfile`.
+To containerize the application, you need to have Docker installed. Then, save the following `Dockerfile` in the same directory as `hazelcast.yaml`.
 
 ```dockerfile
-FROM openjdk:8-jre-alpine
+FROM eclipse-temurin:25-jre
 COPY hazelcast-embedded-springboot/target/*.jar app.jar
+COPY hazelcast.yaml hazelcast.yaml
+ENV SPRING_HAZELCAST_CONFIG=file:/hazelcast.yaml
 ENTRYPOINT ["java","-jar","app.jar"]
 ```
+
+The `SPRING_HAZELCAST_CONFIG` environment variable tells Spring Boot to use this file instead of the `hazelcast.yaml` packaged in the application, which uses multicast for running locally.
 
 In order to build the Docker image, run the following command.
 
 ```
-docker build -t hazelcastguides/hazelcast-embedded-kubernetes .
+docker build -t hazelcast-embedded-kubernetes:0.1 .
 ```
 
-If you build the image by yourself, then you need to use your Docker Hub account instead of `hazelcastguides`. Then, you can push the image into your Docker Hub registry with the following command.
+Then, make the image available to your Kubernetes cluster:
 
-```
-docker push hazelcastguides/hazelcast-embedded-kubernetes
-```
+- Docker Desktop: Kubernetes in Docker Desktop can use the images you build with Docker, so there's nothing to do.
+- Minikube: `minikube image load hazelcast-embedded-kubernetes:0.1`
+- kind: `kind load docker-image hazelcast-embedded-kubernetes:0.1`
 
-If you want to use your image in the following steps, please also make sure your Docker Hub registry is public. However, for the purpose of this guide, you can use the already built `hazelcastguides/hazelcast-embedded-kubernetes` Docker image.
+For other clusters, push the image to a registry that the cluster can pull from, and use that image name in the following steps. The image has a version tag rather than `latest`, so Kubernetes uses the image you built instead of trying to pull it from Docker Hub.
 
 ## Configure RBAC
 
@@ -109,7 +112,7 @@ Note that:
 Assuming you have a running Kubernetes cluster, you can run the following commands to deploy your application and scale it to 2 replicas.
 
 ```
-kubectl create deployment my-app --image=hazelcastguides/hazelcast-embedded-kubernetes
+kubectl create deployment my-app --image=hazelcast-embedded-kubernetes:0.1
 kubectl scale deployment my-app --replicas=2
 ```
 

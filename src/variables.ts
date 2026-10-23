@@ -9,7 +9,7 @@ export const variablesBySource: Record<string, Record<string, string>> = {
   },
   // hazelcast/cloud-docs — docs/antora.yml
   "cloud": {
-    "full-version": "5.7.1",
+    "full-version": "5.7.2",
     "page-cloud-console": "https://cloud.hazelcast.com/",
     "page-cloud-platform-version": "5.7",
     "page-cloud-signup": "https://cloud.hazelcast.com/sign-up"
@@ -25,6 +25,11 @@ export const variables: Record<string, string> = Object.assign(
 export const versionedVariables: Record<string, Record<string, Record<string, string>>> = {
   "clc": {
     "current": {
+      "full-version": "5.7.1",
+      "hazelcast-cloud": "Cloud",
+      "page-latest-supported-mc": "5.8"
+    },
+    "5.7.0": {
       "full-version": "5.7.0",
       "hazelcast-cloud": "Cloud",
       "page-latest-supported-mc": "5.8"

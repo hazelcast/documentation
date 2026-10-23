@@ -1,0 +1,119 @@
+---
+title: "clc serializer (Beta)"
+sidebar_position: 18
+slug: /clc-serializer
+---
+
+Generates serialization code.
+
+Usage:
+
+```bash
+clc serializer [command] [flags]
+```
+
+## Commands
+
+- [clc serializer generate](#clc-serializer-generate)
+
+## clc serializer generate
+
+Generates compact serialization code from the given schema for the target language. See [Compact Serialization](https://docs.hazelcast.com/hazelcast/latest/serialization/compact-serialization#implementing-compactserializer) documentation for more information.
+
+Usage:
+
+```bash
+clc serializer generate [schema] [flags]
+```
+
+Parameters:
+
+| Parameter | Required | Description | Default |
+| --- | --- | --- | --- |
+| `output-dir, -o` | Optional | Output directory for the serialization files. | Current working directory. |
+| `language, -l` | Required | Programming language that the serializer created for. |  |
+| `--yes` | Optional | Skip confirming the destroy operation. | `false` |
+
+Example:
+
+```bash
+clc serializer generate my-schema.yaml --language java --output-dir my-dir
+```
+
+### Schema Creation
+
+A schema allows you to describe the contents of a compact class using supported field types. Schemas are written in YAML, and the schema files must have the `.schema.yaml` extension. The schema format is as follows:
+
+```yaml
+serializer:
+    namespace: <optional package/namespace of the serializer>
+classes:
+    - name: <full name of the class, including the package/namespace>
+      typename: <an optional unique string that distinguishes this class in the cluster>
+      fields:
+         - name: <field name>
+           type: <full name of the field type, including the package/namespace>
+```
+
+#### serializer
+
+Contains the options for the serializer classes. The options apply to all serializer classes generated from the classes in this file.
+
+- `namespace`: Optional package/namespace of the serializers. If not specified, the package/namespace of the class is used for the serializer.
+
+#### classes
+
+Defines class information in the schema.
+
+All class informations have the following attributes:
+
+- `name`: Full name of the class, including package/namespace.
+- `typename`: This is an optional type name to be used. The compact serialization mechanism distinguishes data types in the cluster using their type names. This means that type names must be unique across the cluster. If not specified, the full type name of the class is used.
+- `fields`: Field information of the class
+
+A field information has the following attributes:
+
+- `name`: Name of the field
+- `type`: Either one of the built-in type names listed below, or the full name of the field type, including the package/namespace.
+
+#### Builtin types:
+
+- boolean
+- boolean\[\]
+- int8
+- int8\[\]
+- int16
+- int16\[\]
+- int32
+- int32\[\]
+- int64
+- int64\[\]
+- float32
+- float32\[\]
+- float64
+- float64\[\]
+- string
+- string\[\]
+- date
+- date\[\]
+- time
+- time\[\]
+- timestamp
+- timestamp\[\]
+- timestampWithTimezone
+- timestampWithTimezone\[\]
+- nullableBoolean
+- nullableBoolean\[\]
+- nullableInt8
+- nullableInt8\[\]
+- nullableInt16
+- nullableInt16\[\]
+- nullableInt32
+- nullableInt32\[\]
+- nullableInt64
+- nullableInt64\[\]
+- nullableFloat32
+- nullableFloat32\[\]
+- nullableFloat64
+- nullableFloat64\[\]
+- \<OtherCompactClass\[\]\>

@@ -13,8 +13,8 @@ const path = require('node:path')
 // is also the golden/manifest version key AND the Docusaurus current-version
 // `path`. A component whose main is NOT a distinct `-snapshot` line overrides
 // this per-component (see VERSIONS[*].current and currentSegFor): clc's main
-// declares itself version 5.7.0, so clc has no `latest-snapshot` render and its
-// current seg is `5.7.0`.
+// declares itself version 5.7.1, so clc has no `latest-snapshot` render and its
+// current seg is `5.7.1`.
 const CURRENT_SEG = 'latest-snapshot'
 
 // Component -> source repo mirror (under .sources/), the nav.adoc path, and how
@@ -27,9 +27,9 @@ const NAV_SOURCES = {
     file: 'docs/modules/ROOT/nav.adoc',
     refFor: (seg) => (seg === CURRENT_SEG ? 'main' : `v/${seg}`),
   },
-  // clc has no separate `-snapshot` line: its main declares version 5.7.0 and the
+  // clc has no separate `-snapshot` line: its main declares version 5.7.1 and the
   // index-playbook sources it as `branches: [v/*]` only, so EVERY seg (current
-  // 5.7.0 included) reads its `v/<seg>` tag branch.
+  // 5.7.1 included) reads its `v/<seg>` tag branch.
   clc: {
     repo: 'clc-docs.git',
     file: 'docs/modules/ROOT/nav.adoc',
@@ -69,15 +69,15 @@ const NAV_SOURCES = {
 // are deliberately absent here.
 // `current` (optional) overrides the current-version golden/manifest seg when a
 // component's main is not a distinct `-snapshot` line; it defaults to
-// CURRENT_SEG (see currentSegFor). clc's main == the released 5.7.0, so its
-// current seg is `5.7.0`; 5.5.x is archived, so clc has no versioned copies.
+// CURRENT_SEG (see currentSegFor). clc's main == the released 5.7.1, so its
+// current seg is `5.7.1`; 5.7.0 is its one live release (5.5.x is archived).
 // MC's main declares `5.13-snapshot`, so unlike operator its current seg is a
 // NUMBER, and unlike clc that number is an unreleased snapshot — the dropdown
 // still lands on the newest release (5.12). The four releases below are the live
 // set; 5.8 and older are frozen (freeze plan), which is why they stop at 5.9.
 const VERSIONS = {
   operator: { releases: ['5.20', '5.19', '5.18', '5.17', '5.16'] },
-  clc: { current: '5.7.0', releases: [] },
+  clc: { current: '5.7.1', releases: ['5.7.0'] },
   'management-center': { current: '5.13-snapshot', releases: ['5.12', '5.11', '5.10', '5.9'] },
   // Platform's main declares `6.0-snapshot` (an unreleased snapshot, as MC's is),
   // so its current seg is a NUMBER and the dropdown lands on the newest release

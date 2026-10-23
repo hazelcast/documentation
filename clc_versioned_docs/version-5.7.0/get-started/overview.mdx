@@ -1,0 +1,154 @@
+---
+title: "Hazelcast Command-Line Client (CLC)"
+sidebar_label: "What is Hazelcast CLC?"
+sidebar_position: 1
+slug: /overview
+---
+
+You can use the Hazelcast Command Line Client (CLC) to connect to and interact with clusters on Hazelcast <Variable name="hazelcast-cloud" /> and Hazelcast Platform direct from the command line or through scripts.
+
+The Hazelcast CLC is a single binary with no dependencies. Within minutes of installation, you can start to perform common tasks on clusters.
+
+## Install
+
+See [installation documentation](../manage/install-clc.mdx).
+
+## Use Cases
+
+Example use cases for the Hazelcast CLC.
+
+### Run SQL Queries
+
+Run [SQL](../reference/clc-commands/clc-sql.mdx) queries against your cluster and display the output as a table or in a variety of text formats, such as JSON and CSV.
+
+### Manage <Variable name="hazelcast-cloud" /> Clusters {/* #manage-cloud-clusters */}
+
+[Create and manage](../reference/clc-commands/clc-cloud.mdx) <Variable name="hazelcast-cloud" /> clusters, and the custom classes on those clusters.
+
+### Create Data Pipelines
+
+[Create and manage](../reference/clc-commands/clc-job.mdx) data pipelines using the Hazelcast CLC. Check out the [Platform documentation](/hazelcast/latest/pipelines/overview) for more information about data pipelines.
+
+### Access Data for Debugging
+
+Get [direct access to map data](../reference/clc-commands/clc-map.mdx) for quick debugging of prototypes or production applications. Easily read or query data on a cluster using SQL queries.
+
+### Scripting for Automation
+
+Write scripts to execute repetitive administration, integration, or testing tasks.
+
+## Modes
+
+The Hazelcast CLC works in three modes:
+
+- Non-interactive
+- Interactive
+- Scripting
+
+You can easily switch between modes to suit the context in which you're working.
+
+### Non-Interactive Mode
+
+This is the default mode for the Hazelcast CLC. You need to manually enter and execute commands at the command line. This mode is useful for quickly running one-off commands and using CLC in shell scripts.
+
+```bash
+clc map --name my-map set my-key my-value
+```
+
+### Interactive Mode
+
+Interactive mode presents a shell to you. This mode is useful for running CLC commands and SQL. In this mode, CLC opens a persistent connection to the cluster if necessary. That makes running commands that require a cluster connection slightly faster.
+
+To start the Hazelcast CLC in interactive mode, do the following:
+
+```bash
+clc
+```
+
+In the interactive mode, you can run SQL queries directly. Make sure to add a semicolumn (`;`) to the end of the query, otherwise it is assumed that you want to enter a multiline query.
+
+```
+> select * from cities;
+---------------------------------------------------------------------------------
+      __key | country                   | city                      | population
+---------------------------------------------------------------------------------
+          1 | United Kingdom            | London                    |    9540576
+          6 | Turkey                    | Istanbul                  |   15636243
+          4 | United States             | Los Angeles               |    3985520
+---------------------------------------------------------------------------------
+```
+
+To run CLC commands, prefix them with a backslash (`\`):
+
+```
+> \object list
+------------------------------------
+ Service Name | Object Name
+------------------------------------
+ executor     | hot-backup-executor
+ map          | cities
+ map          | currency
+ map          | default
+------------------------------------
+```
+
+You can enter multi-line CLC commands by adding a backslash (`\`) character at the very end of every line, except the last one. The continuation lines are concatenated, so you might need to add one or more spaces before the backslash:
+
+```
+  > \map --name \
+... set my-map \
+... key1 value1
+```
+
+If a value contains whitespace, you can wrap it with single or double quotes:
+
+```
+> \map --name set my-map "key with whitespace" "value with whitespace"
+> \map --name get my-map "key with whitespace"
+-----------------------
+ this
+-----------------------
+ value with whitespace
+-----------------------
+```
+
+Alternatively, you can escape the space character with a backslash:
+
+```
+> \map --name my-map set key\ with\ whitespace value\ with\ whitespace
+> \map --name my-map entry-set
+---------------------------------------------
+ __key               | this
+---------------------------------------------
+ key with whitespace | value with whitespace
+---------------------------------------------
+```
+
+You must escape backslash characters in values with another backslash:
+
+```
+> \map --name my-map set doc1 "C:\\Users\\Celine L Carmack\\report.doc"
+> \map --name my-map get doc1
+--------------------------------------
+ this
+--------------------------------------
+ C:\Users\Celine L Carmack\report.doc
+--------------------------------------
+```
+
+To return to non-interactive mode, use either of the following methods:
+
+- Press <kbd>Ctrl</kbd>+<kbd>D</kbd>
+- Type `\exit`.
+
+## Limitations
+
+- **Client authentication:** The Hazelcast CLC supports only simple authentication (username and password) for Hazelcast Platform. The Hazelcast CLC does not currently support any other client authentication. If your Hazelcast Platform cluster uses other methods of client authentication, you cannot use Hazelcast CLC to connect to it.
+
+## Next Steps
+
+Install, configure, and explore Hazelcast CLC:
+
+- [Get Started with the Hazelcast CLC](./get-started.mdx).
+- [Configuration for Hazelcast CLC](../manage/configuration/overview.mdx).
+- [clc commands](../reference/clc-commands/overview.mdx).

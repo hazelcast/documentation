@@ -27,6 +27,9 @@ This is a maintenance release for Enterprise Edition.
 - **Fixed client cleanup timeout handling**: Corrected `ClientLifecycleMonitor` so timeouts configured in milliseconds are compared against elapsed time in the same unit.
 - **Clarified locking behavior**: Updated IMap and MultiMap class documentation.
 - **Fixed networking CPU spikes**: Prevented NIO threads from spinning when a member connection remains established but is dead.
+- **Fixed `FencedLock` memory leak**: Prevented a memory leak, and the resulting slowdown of CP and other operations, when a CP session closed while holding a `FencedLock`.
+- **Fixed CP group stall after leader change**: Prevented a CP group from being unable to commit operations when a leader change happened while a member was partway through receiving a snapshot.
+- **Fixed delays after CP Subsystem reset**: Prevented clients that kept using CP objects across a reset from causing repeated retries.
 
 ### Contributors
 

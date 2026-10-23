@@ -1,0 +1,93 @@
+---
+title: "clc object"
+sidebar_position: 14
+slug: /clc-object
+---
+
+Generic distributed data structure commands.
+
+Usage:
+
+```bash
+clc object [command] [options]
+```
+
+## Commands
+
+- [clc object list](#clc-object-list)
+
+## clc object list
+
+Prints the distributed objects in the cluster as type-name pairs.
+
+Usage:
+
+```bash
+clc object list [object-type] [flags]
+```
+
+Available object types (*case insensitive*):
+
+Parameters:
+
+<table>
+<colgroup>
+<col style={{width:'20%'}} />
+<col style={{width:'20%'}} />
+<col style={{width:'40%'}} />
+<col style={{width:'20%'}} />
+</colgroup>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Required</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`type`</td>
+<td>Optional</td>
+<td>
+
+Type of the objects to be listed. If not specified, the command lists all the objects. Available types (*case insensitive*):
+
+- cache
+- cardinalityEstimator
+- countdownLatch
+- eventJournal
+- flakeIdGenerator
+- list
+- map
+- multiMap
+- pnCounter
+- queue
+- replicatedMap
+- ringBuffer
+- semaphore
+- set
+- topic
+
+Note that CP subsystem objects cannot be listed.
+
+</td>
+<td>All types</td>
+</tr>
+<tr>
+<td>`--show-hidden`</td>
+<td>Optional</td>
+<td>Lists the objects with names starting with "\_\_"</td>
+<td>N/A</td>
+</tr>
+</tbody>
+</table>
+
+Example output:
+
+Assuming you have a map named `currency` in your cluster:
+
+```bash
+clc object list
+map currency
+```
