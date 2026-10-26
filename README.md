@@ -4,8 +4,6 @@
 
 # Hazelcast Documentation
 
-> We're in the process of transferring our docs content to this repo. It's not published yet.
-
 This repository holds the user documentation for [Hazelcast](https://hazelcast.com/).
 
 Use Hazelcast's unified real-time data platform to process streaming data, enrich it with historical context, and take instant action with standard or ML/AI-driven automation.
@@ -62,16 +60,16 @@ This command generates the static site into `build/`. It fails on a broken inter
 
 These commands are also available:
 
-| Command                                  | Purpose                                                                                                                                   |
-| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run serve`                          | Serve the last build locally.                                                                                                             |
-| `npm run typecheck`                      | Type-check the TypeScript in `src/`, `plugins/`, and `docusaurus.config.ts`.                                                              |
-| `npm run clear`                          | Delete Docusaurus caches and generated files. Use it when the site behaves inconsistently.                                                |
+| Command                                  | Purpose                                                                                                                               |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run serve`                          | Serve the last build locally.                                                                                                         |
+| `npm run typecheck`                      | Type-check the TypeScript in `src/`, `plugins/`, and `docusaurus.config.ts`.                                                          |
+| `npm run clear`                          | Delete Docusaurus caches and generated files. Use it when the site behaves inconsistently.                                            |
 | `npm run backport -- <version>...`       | Apply your changes to other versions. See [Change content for several versions](CONTRIBUTING.md#change-content-for-several-versions). |
-| `npm test`                               | Run every unit test: the site's plugins, remark plugins, and scripts.                                                                     |
-| `npm run test:version-update`            | Run the tests for the release script.                                                                                                     |
-| `npm run test:backport`                  | Run the tests for the backport script.                                                                                                    |
-| `mvn test -Dversion.hazelcast=<version>` | Compile-check the Java in `hazelcast/examples/`.                                                                                          |
+| `npm test`                               | Run every unit test: the site's plugins, remark plugins, and scripts.                                                                 |
+| `npm run test:version-update`            | Run the tests for the release script.                                                                                                 |
+| `npm run test:backport`                  | Run the tests for the backport script.                                                                                                |
+| `mvn test -Dversion.hazelcast=<version>` | Compile-check the Java in `hazelcast/examples/`.                                                                                      |
 
 ## Repository layout
 
