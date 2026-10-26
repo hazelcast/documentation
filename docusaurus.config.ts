@@ -41,14 +41,6 @@ const config: Config = {
   // it) with no explicit redirects.
   trailingSlash: false,
 
-  headTags: [
-    {
-      tagName: 'meta',
-      // temp Algolia validation tag
-      attributes: {name: 'algolia-site-verification', content: '4C927B5F6BF53C1B'},
-    },
-  ],
-
   // '.api-specs' is staged by plugins/openapi-specs; listing it here serves it like `static`.
   staticDirectories: ['static', '.api-specs'],
 
@@ -152,7 +144,7 @@ const config: Config = {
     algolia: {
       appId: 'QK2EAH8GB0',
       apiKey: '360d69c2e5f2f150cbf4322abb413956',
-      indexName: 'mir-test-new-docs-test',
+      indexName: 'new-docs',
       contextualSearch: false,
       // No `/search` route; this also drops the modal's "See all results" footer.
       searchPagePath: false,
