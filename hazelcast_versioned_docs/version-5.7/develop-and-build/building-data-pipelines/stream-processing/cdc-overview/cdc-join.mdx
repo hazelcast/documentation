@@ -29,22 +29,22 @@ This tutorial uses [Docker](https://www.docker.com/) to simplify the setup of da
 
 Exact instructions for starting the supported databases are as follows:
 
-- [MySQL](./cdc.mdx#2-start-mysql-database)
-- [Postgres](./cdc-postgres.mdx#2-start-postgresql-database).
+- [MySQL](./cdc.mdx#step-2-start-mysql-database)
+- [Postgres](./cdc-postgres.mdx#step-2-start-postgresql-database).
 
 ## Step 3. Start the Command Line Client
 
 Exact instructions for starting the specific command line client of the supported databases are as follows:
 
-- [MySQL](./cdc.mdx#3-start-mysql-command-line-client)
-- [Postgres](./cdc-postgres.mdx#3-start-postgresql-command-line-client)
+- [MySQL](./cdc.mdx#step-3-start-the-mysql-command-line-client)
+- [Postgres](./cdc-postgres.mdx#step-3-start-the-postgresql-command-line-client)
 
 ## Step 4. Create a New Java Project
 
 We'll assume you're using an IDE. Create a blank Java project named `cdc-tutorial` and copy the provided Maven file into it. They differ slightly depending on which database you use:
 
-- [MySQL](./cdc.mdx#5-create-a-new-java-project)
-- [Postgres](./cdc-postgres.mdx#5-create-a-new-java-project)
+- [MySQL](./cdc.mdx#step-5-create-a-new-java-project)
+- [Postgres](./cdc-postgres.mdx#step-5-create-a-new-java-project)
 
 ## Step 5. Define a Data Pipeline
 
@@ -613,7 +613,7 @@ This will produce a JAR file called `cdc-tutorial-1.0-SNAPSHOT.jar` in the `targ
 
 ## Step 8. Submit the Job for Execution
 
-Assuming our cluster is [running](#7-start-hazelcast-jet) and the database [is up](#2-start-database), all we need to issue is following command:
+Assuming our cluster is [running](#step-7-start-hazelcast) and the database [is up](#step-2-start-database), all we need to issue is following command:
 
 ```bash
 bin/hz-cli submit target/cdc-tutorial-1.0-SNAPSHOT.jar
@@ -631,7 +631,7 @@ The output in the Hazelcast member's log should look something like this (we see
 
 ## Step 9. Track Updates
 
-Let's see how our cache looks like at this time. If we execute the `CacheRead` code [defined above](#5-define-jet-job), we'll get:
+Let's see how our cache looks like at this time. If we execute the `CacheRead` code [defined above](#step-5-define-a-data-pipeline), we'll get:
 
 ```none
 Currently there are following customers in the cache:
@@ -641,7 +641,7 @@ Currently there are following customers in the cache:
     Customer: Customer {id=1001, firstName=Sally, lastName=Thomas, email=sally.thomas@acme.com}, Orders: {10001=Order {orderNumber=10001, orderDate=Sat Jan 16 02:00:00 EET 2016, purchaser=1001, quantity=1, productId=102}}
 ```
 
-Let's do some updates in our database. Go to the database CLI [we've started earlier](#3-start-command-line-client) and run following commands:
+Let's do some updates in our database. Go to the database CLI [we've started earlier](#step-3-start-the-command-line-client) and run following commands:
 
 ```sql
 INSERT INTO inventory.customers VALUES (1005, 'Jason', 'Bourne', 'jason@bourne.org');

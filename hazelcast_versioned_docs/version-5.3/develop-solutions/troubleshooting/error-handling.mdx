@@ -36,15 +36,15 @@ Streaming jobs with mutable state, those with a [processing guarantee](../../con
 
 :::note
 
-If you use the [CREATE JOB statement](../sql/statements/create-job.mdx#using-a-jobstatuslistener) to submit a job to your Hazelcast cluster, the job is automatically set to suspend on failure.
+If you use the [CREATE JOB statement](../sql/statements/create-job.mdx) to submit a job to your Hazelcast cluster, the job is automatically set to suspend on failure.
 
 :::
 
 A job in the suspended state has its snapshot preserved, and you can resume it without data loss once you have addressed the root cause of the failure.
 
-In the open-source version of Hazelcast, this scenario is limited to fixing the input data by some external means and then simply [resuming the job](../building-data-pipelines/job-management.mdx#restarting).
+In the open-source version of Hazelcast, this scenario is limited to fixing the input data by some external means and then simply [resuming the job](../building-data-pipelines/job-management.mdx#restarting-jobs).
 
-The Enterprise version of Hazelcast has the added option of [job upgrades](#pipelines:job-update). In that case you can:
+The Enterprise version of Hazelcast has the added option of [job upgrades](../building-data-pipelines/job-update.mdx). In that case you can:
 
 - export the latest snapshot
 - update the pipeline, if needed, for example, to cope with unexpected data

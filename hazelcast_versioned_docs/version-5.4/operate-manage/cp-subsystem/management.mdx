@@ -71,8 +71,8 @@ See [CP Membership Listeners](#cp-membership-listeners) to get notified about th
 
 When the majority of a CP group is lost, that CP group cannot make progress anymore. New CP members cannot even join a CP group that has lost majority because membership changes must also go through the Raft consensus algorithm.
 
-- If the group is not the `METADATA` CP group, it must be [force-destroyed](#destroy-group) immediately, because it can block the `METADATA` CP group from performing membership changes on the CP Subsystem.
-- If the majority of the `METADATA` CP group permanently crashes, it is equivalent to the permanent crash of the whole CP Subsystem, even though other CP groups are running fine. In this case, you must [reset the CP Subsystem](#reset).
+- If the group is not the `METADATA` CP group, it must be [force-destroyed](#destroying-a-cp-group-by-force) immediately, because it can block the `METADATA` CP group from performing membership changes on the CP Subsystem.
+- If the majority of the `METADATA` CP group permanently crashes, it is equivalent to the permanent crash of the whole CP Subsystem, even though other CP groups are running fine. In this case, you must [reset the CP Subsystem](#wiping-and-resetting-the-cp-subsystem).
 
 ## Listening for Events
 

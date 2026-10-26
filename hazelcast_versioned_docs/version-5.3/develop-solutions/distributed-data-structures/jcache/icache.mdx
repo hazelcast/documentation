@@ -400,7 +400,7 @@ hazelcast:
 
 - `backup-count`: Number of synchronous backups. Those backups are executed before the mutating cache operation is finished. The mutating operation is blocked. Its default value is 1.
 - `async-backup-count`: Number of asynchronous backups. Those backups are executed asynchronously so the mutating operation is not blocked and it is done immediately. Its default value is 0.
-- `in-memory-format`: Internal storage format. For more information, see the [in-memory format section](../distributed-data-structures.mdx#setting-in-memory-format). Its default value is `BINARY`.
+- `in-memory-format`: Internal storage format. For more information, see the [in-memory format section](../map/setting-data-format.mdx#configuring-in-memory-format). Its default value is `BINARY`.
 - `eviction`: Defines the used eviction strategies and sizes for the cache. For more information about eviction, see the [JCache Eviction section](#jcache-eviction).
 
   - `size`: Maximum number of records or maximum size in bytes depending on the `max-size-policy` property. Size can be any integer between `0` and `Integer.MAX_VALUE`. The default `max-size-policy` is `ENTRY_COUNT` and its default size is `10.000`.
@@ -803,7 +803,7 @@ See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/c
 
 ### Implementing BackupAwareEntryProcessor
 
-Another feature, especially interesting for distributed environments like Hazelcast, is the JCache specified `javax.cache.processor.EntryProcessor`. For more general information, see the [Implementing EntryProcessor section](#implementing-entryprocessor).
+Another feature, especially interesting for distributed environments like Hazelcast, is the JCache specified `javax.cache.processor.EntryProcessor`. For more general information, see the [Implementing EntryProcessor section](./api.mdx#implementing-entryprocessor).
 
 Since Hazelcast provides backups of cached entries on other members, the default way to backup an object changed by an `EntryProcessor` is to serialize the complete object and send it to the backup partition. This can be a huge network overhead for big objects.
 
@@ -811,7 +811,7 @@ Hazelcast offers a sub-interface for `EntryProcessor` called `com.hazelcast.cach
 
 The backup partition `EntryProcessor` can either be the currently running processor (by returning `this`) or it can be a specialized `EntryProcessor` implementation (different from the currently running one) that does different operations or leaves out operations, e.g., sending emails.
 
-If we again take the `EntryProcessor` example from the demonstration application provided in the [Implementing EntryProcessor section](#implementing-entryprocessor), the changed code looks like the following snippet:
+If we again take the `EntryProcessor` example from the demonstration application provided in the [Implementing EntryProcessor section](./api.mdx#implementing-entryprocessor), the changed code looks like the following snippet:
 
 ```java
 public class UserUpdateEntryProcessor

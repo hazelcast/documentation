@@ -252,7 +252,7 @@ For this, you need to create two client configurations for the same client, and 
 
    1. Number of times that the client will try to reconnect to each cluster before shutting down.
 
-      In this failover configuration file, you are directing the client to connect to the clusters in the given order from top to bottom; see [Ordering of Clusters](../../develop-solutions/connecting-to-a-cluster/java.mdx#ordering-of-clusters-when-clients-try-to-connect.adoc). So, when you start the client (see Step 4 below), it will initially connect to the `blue` cluster. Here is what may happen:
+      In this failover configuration file, you are directing the client to connect to the clusters in the given order from top to bottom; see [Ordering of Clusters](../../develop-solutions/connecting-to-a-cluster/java.mdx#ordering-of-clusters-when-clients-try-to-connect). So, when you start the client (see Step 4 below), it will initially connect to the `blue` cluster. Here is what may happen:
 
       - When the `blue` cluster fails, the client attempts to reconnect to it four times.
       - If the connection is unsuccessful, the client will try to connect to the `green` cluster four times.
@@ -267,7 +267,7 @@ In this step, you'll start the client.
 <Tabs groupId="client-language">
 <TabItem value="java" label="Java">
 
-1. Install the [Java client library](../../deploy-clusters/installation/install-hazelcast.mdx#use-java).
+1. Install the [Java client library](../../deploy-clusters/installation/install-hazelcast.mdx#using-java).
 2. Add the following to the `MyClient.java` file.
 
    ```java conums
@@ -391,5 +391,5 @@ Shut down the cluster you've created in this tutorial so that you can start a fr
 
 If you're interested in learning more about the topics introduced in this tutorial, see:
 
-- [Blue-Green Deployment](../../develop-solutions/connecting-to-a-cluster/java.mdx#blue-green-deployment-and-disaster-recovery.adoc).
+- [Blue-Green Deployment](../../develop-solutions/connecting-to-a-cluster/java.mdx#blue-green-deployment-and-disaster-recovery).
 - <Variable href="/management-center/{page-latest-supported-mc}/clusters/client-filtering" text="Filtering Client Connections" />.

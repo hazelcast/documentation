@@ -10,7 +10,7 @@ Capacity planning involves estimating and validating the capacity of a cluster i
 
 A Hazelcast cluster is a network of members that run Hazelcast software. The cluster performance depends on multiple factors, including data size, number of backups, queries, and which features are used. Therefore, planning the cluster remains a complex task that requires knowledge of Hazelcast's architecture and concepts. Here, we introduce some basic guidelines that help to size a cluster properly.
 
-We recommend always benchmarking your setup before deploying it to production. We also recommend that benchmarking systems resemble the production system as much as possible to avoid unexpected results. We provide a [benchmarking example](#benchmarking-and-sizing-example) that you can use as a starting point.
+We recommend always benchmarking your setup before deploying it to production. We also recommend that benchmarking systems resemble the production system as much as possible to avoid unexpected results. We provide a [benchmarking example](#benchmarking-and-sizing-examples) that you can use as a starting point.
 
 Hazelcast clusters will run both data processing and data storage workloads, so planning for both types of workload is important.
 
@@ -44,7 +44,7 @@ To make fault tolerance possible, your cluster must have at least three members.
 
 If you use the Jet stream processing engine, it can use hundreds of CPU cores efficiently by exploiting data and task parallelism. When you add more members to the cluster, the capacity for CPU-bound computation rises. You can achieve better performance by distributing the data partitions across the cluster to process them in parallel.
 
-Benchmark your jobs in a clustered setup to see the differences in performance, as in the [sizing example](#benchmarking-and-sizing-example).
+Benchmark your jobs in a clustered setup to see the differences in performance, as in the [sizing example](#benchmarking-and-sizing-examples).
 
 ## Memory Considerations
 
@@ -60,7 +60,7 @@ If you use only heap memory, each Hazelcast member with a 4 GB heap should accom
 
 If you use the High-Density Memory Store, Hazelcast automatically assigns a percentage of available off-heap memory to the internal memory manager. Since allocation happens lazily, if you want to be informed about how much off-heap memory is being used by the memory manager, you can set the metadata-space-percentage property to a percentage value and Hazelcast will log warnings when that value is reached. By default, this property is set to 12.5%.
 
-If you're using jobs, all operational data must fit within available memory. This design leads to a predictable performance but requires enough RAM not to run out. Estimate the memory requirements and plan with a headroom of 25% for normal memory fragmentation. For fault-tolerant operations, we recommend reserving extra memory to survive any failures. See [sizing for failures](#sizing-for-failures).
+If you're using jobs, all operational data must fit within available memory. This design leads to a predictable performance but requires enough RAM not to run out. Estimate the memory requirements and plan with a headroom of 25% for normal memory fragmentation. For fault-tolerant operations, we recommend reserving extra memory to survive any failures. See [sizing for failures](#size-for-failures).
 
 If your computation is memory-bound, consider:
 
@@ -274,7 +274,7 @@ Heap-only:
 
 The sample application is a [real-time trade analyzer](https://github.com/hazelcast/big-data-benchmark/tree/master/trade-monitor/jet-trade-monitor). Every second it counts the trades completed over the previous minute for each trading symbol. Hazelcast is also used to ingest and buffer the stream of trades. The remote trading applications write trade events to an IMap data structure in the cluster. The analytical job reads the IMap Event Journal and writes the processed results to a rolling file.
 
-The job is configured to be [fault-tolerant](../develop-solutions/building-data-pipelines/configuring-jobs.mdx#setting-a-processing-guarantee) with the [exactly-once](../develop-solutions/building-data-pipelines/configuring-jobs.mdx#job-configuration-options) processing guarantee.
+The job is configured to be [fault-tolerant](../develop-solutions/building-data-pipelines/configuring-jobs.mdx#setting-processing-guarantees) with the [exactly-once](../develop-solutions/building-data-pipelines/configuring-jobs.mdx#job-configuration-options) processing guarantee.
 
 The cluster is expected to process 50k trade events per second with 10k trade symbols (distinct keys).
 

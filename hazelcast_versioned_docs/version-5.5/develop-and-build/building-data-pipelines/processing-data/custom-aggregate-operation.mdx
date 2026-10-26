@@ -118,11 +118,11 @@ Let's stop for a second to look at the type we got: `AggregateOperation1<Long, L
 2. `LongLongAccumulator`: the type of the accumulator
 3. `Double`: the type of the result
 
-Specifically note the `1` at the end of the type's name: it signifies that it's the specialization of the general `AggregateOperation` to exactly one input stream. In Hazelcast you can also perform a [co-aggregating](./transforms.mdx#stateful-transforms#co-group%E2%80%94%E2%80%8Bjoin) operation, aggregating several input streams together. Since the number of input types is variable, the general `AggregateOperation` type cannot statically capture them and we need separate subtypes. We decided to statically support up to three input types; if you need more, you'll have to resort to the less type-safe, general `AggregateOperation`.
+Specifically note the `1` at the end of the type's name: it signifies that it's the specialization of the general `AggregateOperation` to exactly one input stream. In Hazelcast you can also perform a [co-aggregating](./transforms.mdx#co-group-join) operation, aggregating several input streams together. Since the number of input types is variable, the general `AggregateOperation` type cannot statically capture them and we need separate subtypes. We decided to statically support up to three input types; if you need more, you'll have to resort to the less type-safe, general `AggregateOperation`.
 
 ## Aggregating Over Multiple Inputs
 
-Hazelcast can join several streams and simultaneously perform aggregation on all them. You specify a separate aggregate operation for each input stream and have the opportunity to combine their results when done. You can use aggregate operations <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/aggregate/AggregateOperations.html" text="provided in the library" /> (see the section on [co-aggregating](./transforms.mdx#stateful-transforms#co-group%E2%80%94%E2%80%8Bjoin) for an example).
+Hazelcast can join several streams and simultaneously perform aggregation on all them. You specify a separate aggregate operation for each input stream and have the opportunity to combine their results when done. You can use aggregate operations <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/aggregate/AggregateOperations.html" text="provided in the library" /> (see the section on [co-aggregating](./transforms.mdx#co-group-join) for an example).
 
 If you cannot express your aggregation logic using this approach, you can also specify a custom multi-input aggregate operation that can combine the items into the accumulator immediately as it receives them.
 

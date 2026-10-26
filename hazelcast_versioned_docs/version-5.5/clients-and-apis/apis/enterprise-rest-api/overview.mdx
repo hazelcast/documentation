@@ -221,7 +221,7 @@ Config config = new Config()
 
 ### Authentication process
 
-You must obtain a token to authenticate against the REST server. For more info, see [Obtain a Token](#obtain-a-token). The token request requires a username and password, and the role(s) assigned to the user are included in the token as claims. You can use the token until it expires. You need to use the token in the `Authorization` header for each subsequent REST API call to ensure the call is authorized appropriately. If a valid token is not included in the header, the API will respond with a `401 Unauthorized` error.
+You must obtain a token to authenticate against the REST server. For more info, see [Obtain a Token](#obtaining-a-token). The token request requires a username and password, and the role(s) assigned to the user are included in the token as claims. You can use the token until it expires. You need to use the token in the `Authorization` header for each subsequent REST API call to ensure the call is authorized appropriately. If a valid token is not included in the header, the API will respond with a `401 Unauthorized` error.
 
 ## HTTPS Support
 
@@ -326,7 +326,7 @@ Config config = new Config()
 
 ## JWT-based authorization
 
-After successfully authenticating by making a request to the token endpoint (see [Obtain a Token](#obtain-a-token)), you will receive a short-lived JWT token with assigned role names as a claim for authorization checks in subsequent REST calls.
+After successfully authenticating by making a request to the token endpoint (see [Obtain a Token](#obtaining-a-token)), you will receive a short-lived JWT token with assigned role names as a claim for authorization checks in subsequent REST calls.
 
 :::note
 
@@ -373,7 +373,7 @@ Config config = new Config().setRestConfig(
 
 ## Obtain a Token {/* #obtaining-a-token */}
 
-To obtain a token, you must send a `POST` request to the token endpoint at `/hazelcast/rest/api/v1/token`. The request must include JSON-formatted `username` and `password` which you [have already configured](#configuring-authentication). If the authentication request is successful, you will get a response which contains a valid token for the duration period. For an example, see the following cURL request and response:
+To obtain a token, you must send a `POST` request to the token endpoint at `/hazelcast/rest/api/v1/token`. The request must include JSON-formatted `username` and `password` which you [have already configured](#configure-authentication). If the authentication request is successful, you will get a response which contains a valid token for the duration period. For an example, see the following cURL request and response:
 
 ```shell
 curl -X 'POST' \

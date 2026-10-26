@@ -120,7 +120,7 @@ Hazelcast performs scaling tests for each version of the software. Based on this
 - Maximum 1,000 clients using the `SINGLE_MEMBER` cluster routing mode per member
 - Maximum of 200GB [High-Density Memory Store](../../operate-and-manage/high-density-memory.mdx) per member
 
-Clients that use the `ALL_MEMBERS` cluster routing mode maintain a connection to each member. Clients that use the `MULTI_MEMBER` cluster routing mode maintain connections to a subset of members in the cluster. Clients that use the `SINGLE_MEMBER` cluster routing mode have a single connection to the entire cluster. You can also choose to connect to a partition group which provides direct connections to members in that group with those members acting as a gateway to the other members in the cluster. You can find more information about the cluster routing modes here: [Java Cluster Routing Modes](../../clients-and-apis/clients/java.mdx#java-cluster-routing-modes).
+Clients that use the `ALL_MEMBERS` cluster routing mode maintain a connection to each member. Clients that use the `MULTI_MEMBER` cluster routing mode maintain connections to a subset of members in the cluster. Clients that use the `SINGLE_MEMBER` cluster routing mode have a single connection to the entire cluster. You can also choose to connect to a partition group which provides direct connections to members in that group with those members acting as a gateway to the other members in the cluster. You can find more information about the cluster routing modes here: [Java Cluster Routing Modes](../../clients-and-apis/clients/java.mdx#client-cluster-routing-modes).
 
 ## Size for Failures {/* #sizing-for-failures */}
 
@@ -148,7 +148,7 @@ Consider the capacity of data sources and sinks when planning the Hazelcast clus
 
 Each Hazelcast job participates in a larger data pipeline: it continuously reads the data from the sources and writes the results to the sinks. The capacity of all components of the data pipeline must be balanced to avoid bottlenecks.
 
-If a data sink is slow, Hazelcast applies [backpressure](./overview.mdx#back-pressure) all the way to the source, slowing down data consumption. The data sources should be designed to participate by reducing the pace of data production or by buffering the data.
+If a data sink is slow, Hazelcast applies [backpressure](./back-pressure.mdx) all the way to the source, slowing down data consumption. The data sources should be designed to participate by reducing the pace of data production or by buffering the data.
 
 On the other hand, if the data source is slow, i.e., it can't produce or transmit the data fast enough, adding more resources to the Hazelcast cluster won't bring any performance benefits.
 
@@ -233,7 +233,7 @@ Heap-only:
 
 The sample application is a [real-time trade analyzer](https://github.com/hazelcast/big-data-benchmark/tree/master/trade-monitor/jet-trade-monitor). Every second it counts the trades completed over the previous minute for each trading symbol. Hazelcast is also used to ingest and buffer the stream of trades. The remote trading applications write trade events to an IMap data structure in the cluster. The analytical job reads the IMap Event Journal and writes the processed results to a rolling file.
 
-The job is configured to be [fault-tolerant](../building-data-pipelines/configuring-jobs.mdx#setting-a-processing-guarantee) with the [exactly-once](../building-data-pipelines/configuring-jobs.mdx#job-configuration-options) processing guarantee.
+The job is configured to be [fault-tolerant](../building-data-pipelines/configuring-jobs.mdx#setting-processing-guarantees) with the [exactly-once](../building-data-pipelines/configuring-jobs.mdx#job-configuration-options) processing guarantee.
 
 The cluster is expected to process 50k trade events per second with 10k trade symbols (distinct keys).
 

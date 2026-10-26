@@ -264,7 +264,7 @@ Collection<HazelcastJsonValue> peopleUnder21 = idPersonMap.values(Predicates.les
 
 When running the queries, Hazelcast treats values extracted from the JSON documents as Java types so they can be compared with the query attribute. JSON specification defines five primitive types to be used in the JSON documents: `number`,`string`, `true`, `false` and `null`. The `string`, `true/false` and `null` types are treated as `String`, `boolean` and `null`, respectively. We treat the extracted `number` values as `long` where possible. Otherwise, `number` types are treated as `double`.
 
-It is possible to query nested attributes and arrays in JSON documents, using the Predicates API. The query syntax is the same as [querying collections and arrays](#collections) in other Hazelcast objects.
+It is possible to query nested attributes and arrays in JSON documents, using the Predicates API. The query syntax is the same as [querying collections and arrays](#querying-in-collections-and-arrays) in other Hazelcast objects.
 
 ```java
 /**
@@ -756,7 +756,7 @@ Aggregations are available on `com.hazelcast.map.IMap` only. IMap offers the met
 
 :::note
 
-If the [in-memory format](./distributed-data-structures/distributed-data-structures.mdx#setting-in-memory-format) of your data is `NATIVE`, aggregations always run on the partition threads. If the data is of type `BINARY` or `OBJECT`, they also mostly run on the partition threads, however, they may run on the separate query threads to avoid blocking partition threads (if there are no ongoing migrations).
+If the [in-memory format](./distributed-data-structures/map/setting-data-format.mdx#configuring-in-memory-format) of your data is `NATIVE`, aggregations always run on the partition threads. If the data is of type `BINARY` or `OBJECT`, they also mostly run on the partition threads, however, they may run on the separate query threads to avoid blocking partition threads (if there are no ongoing migrations).
 
 :::
 
@@ -1031,15 +1031,15 @@ Continuous query caches have the following configuration elements:
 - `serialize-keys`: Whether Hazelcast serializes the query cache keys. Keys should be serialized if they are mutable and need to be cloned via serialization. Default value is false.
 - `include-value`: Specifies whether the value will be cached too. Its default value is true.
 - `predicate`: Predicate to filter events which are applied to the query cache.
-- `entry-listeners`: Adds listeners (listener classes) for your query cache entries. See the [Registering Map Listeners section](./listening-to-events/distributed-events.mdx#registering-map-listeners).
-- `in-memory-format`: Type of the data to be stored in your query cache. See the [in-memory format section](./distributed-data-structures/distributed-data-structures.mdx#setting-in-memory-format). Its default value is BINARY.
+- `entry-listeners`: Adds listeners (listener classes) for your query cache entries. See the [Registering Map Listeners section](./listening-to-events/object-events.mdx#registering-map-listeners).
+- `in-memory-format`: Type of the data to be stored in your query cache. See the [in-memory format section](./distributed-data-structures/map/setting-data-format.mdx#configuring-in-memory-format). Its default value is BINARY.
 - `populate`: Specifies whether the initial population of your query cache is enabled. Its default value is true.
 - `coalesce`: Specifies whether the coalescing of your query cache is enabled. Its default value is false.
 - `delay-seconds`: Minimum time in seconds that an event waits in the member's buffer. Its default value is 0.
 - `batch-size`: Batch size used to determine the number of events sent in a batch to your query cache. Its default value is 1.
 - `buffer-size`: Maximum number of events which can be stored in a partition buffer. Its default value is 16.
-- `eviction`: Configuration for the eviction of your query cache. See the [Configuring Map Eviction section](./distributed-data-structures/distributed-data-structures.mdx#configuring-map-eviction).
-- `indexes`: Indexes for your query cache defined by using this element's `<index>` sub-elements. See the [Configuring IMap Indexes section](./improving-query-performance/indexing-maps.mdx#configuring-imap-indexes).
+- `eviction`: Configuration for the eviction of your query cache. See the [Configuring Map Eviction section](./distributed-data-structures/map/managing-map-memory.mdx#eviction-policy).
+- `indexes`: Indexes for your query cache defined by using this element's `<index>` sub-elements. See the [Configuring IMap Indexes section](./improving-query-performance/indexing-maps.mdx).
 
 Please take the following configuration considerations and publishing logic into account:
 

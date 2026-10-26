@@ -36,7 +36,7 @@ CP Subsystem supports the following Hazelcast data structures:
 
 Because CP data structures do not maintain large states, not all members of a Hazelcast cluster need to take part in the CP Subsystem. The members that **do** take part in the CP Subsystem are called *CP members*.
 
-To [enable the CP Subsystem](./configuration.mdx#quickstart), you need to configure the number of CP members in the cluster. When a cluster is configured with `N` CP members, the first `N` members to start form the CP Subsystem.
+To [enable the CP Subsystem](./configuration.mdx#quickstart-configuration), you need to configure the number of CP members in the cluster. When a cluster is configured with `N` CP members, the first `N` members to start form the CP Subsystem.
 
 After CP Subsystem is initialized, more CP members can be added at runtime and the number of active CP members can go beyond the configured CP member count. The number of CP members can be smaller than the total size of the Hazelcast cluster. For instance, you can run 5 CP members in a Hazelcast cluster of 20 members.
 
@@ -118,7 +118,7 @@ The CP discovery process runs out of the box without requiring any custom config
 - The local Hazelcast member commits a CP member list which is different from other members' committed CP member lists
 - The local Hazelcast member fails to commit its discovered CP member list for any reason.
 
-When CP Subsystem is reset, the CP discovery process is triggered again. However, it does not terminate Hazelcast members if a soon-to-be CP member terminates itself, because Hazelcast members are likely to contain data for AP data structures and their termination can cause data loss. Hence, you need to observe the cluster and check if the CP discovery process completes successfully on the CP Subsystem reset. See the [CP Subsystem Management APIs section](./management.mdx#cp-subsystem-management-apis) for more details.
+When CP Subsystem is reset, the CP discovery process is triggered again. However, it does not terminate Hazelcast members if a soon-to-be CP member terminates itself, because Hazelcast members are likely to contain data for AP data structures and their termination can cause data loss. Hence, you need to observe the cluster and check if the CP discovery process completes successfully on the CP Subsystem reset. See the [CP Subsystem Management APIs section](./management.mdx) for more details.
 
 ## Fault Tolerance
 
@@ -153,4 +153,4 @@ CP groups that have lost their majority must be force-destroyed immediately, bec
 
 :::
 
-- If the majority of the `METADATA` CP group permanently crash, it is equivalent to the permanent crash of the majority CP members of the whole CP Subsystem, even though other CP groups are running fine. In fact, existing CP groups continue serving to incoming requests, but since the `METADATA` CP group is not available anymore, no management tasks can be performed on the CP Subsystem. For instance, a new CP group cannot be created. In this case, the only solution is to wipe-out the whole CP Subsystem state by performing a force-reset. See [CP Subsystem Management](./management.mdx#cp-subsystem-management-apis).
+- If the majority of the `METADATA` CP group permanently crash, it is equivalent to the permanent crash of the majority CP members of the whole CP Subsystem, even though other CP groups are running fine. In fact, existing CP groups continue serving to incoming requests, but since the `METADATA` CP group is not available anymore, no management tasks can be performed on the CP Subsystem. For instance, a new CP group cannot be created. In this case, the only solution is to wipe-out the whole CP Subsystem state by performing a force-reset. See [CP Subsystem Management](./management.mdx).

@@ -136,7 +136,7 @@ clientConfig.setClusterName("dev");
 clientConfig.getNetworkConfig().addAddress("10.90.0.1", "10.90.0.2:5702");
 ```
 
-For further information on client configuration, see [Configure the client](#configure-java-client).
+For further information on client configuration, see [Configure the client](#configure-the-client).
 
 After completing the client configuration, you must create an `HazelcastClient` instance that will initialize and connect to the client based on the specified configuration:
 
@@ -264,7 +264,7 @@ From <Variable name="enterprise-product-name" /> 5.5, you can use any of the fol
 
   Since clients are aware of [data partitions](../../develop-and-build/architecture/data-partitioning.mdx), they are able to send an operation directly to the cluster member that owns the partition holding their data, which increases the overall throughput and efficiency.
 
-  If [CP direct-to-leader routing](#configure-direct-to-leader-routing) is enabled on your clients, and the `ADVANCED_CP` license is present on your Enterprise cluster, then clients in this routing mode can use this to send CP operations directly to group leaders wherever possible, even after leadership changes.
+  If [CP direct-to-leader routing](#configuring-direct-to-leader-routing) is enabled on your clients, and the `ADVANCED_CP` license is present on your Enterprise cluster, then clients in this routing mode can use this to send CP operations directly to group leaders wherever possible, even after leadership changes.
 - **SINGLE\_MEMBER**
 
   In `SINGLE_MEMBER` cluster routing mode, clients only connect to one of the configured addresses. This is the equivalent of the legacy **Unisocket** client operation mode.
@@ -307,7 +307,7 @@ If using the `MULTI_MEMBER` cluster routing mode, and the cluster has multiple p
 
 #### Retry-able operations failure
 
-While sending the requests to related members, operations can fail due to various reasons. Read-only operations are retried by default. If you want to enable retry for the other operations, you can set the `redoOperation` to `true`. For more info, see [Enable redo operation](#enable-redo-operation).
+While sending the requests to related members, operations can fail due to various reasons. Read-only operations are retried by default. If you want to enable retry for the other operations, you can set the `redoOperation` to `true`. For more info, see [Enable redo operation](#enable-redo-operations).
 
 You can set a timeout for retrying the operations sent to a member. This can be provided by using the `hazelcast.client.invocation.timeout.seconds` property in `ClientProperties`. The client retries an operation within this given period, if it is a read-only operation, or if you enabled the `redoOperation` as described above. This timeout value is important when there is a failure caused by any of the following:
 
@@ -1222,10 +1222,10 @@ To connect to a single member, which can be used as a gateway to the other membe
 
 When using the `SINGLE_MEMBER` cluster routing mode, consider the following:
 
-- The absence of [backup acknowledgements](#configure-backup-acknowledgement), as the client does not have a view of the entire cluster
+- The absence of [backup acknowledgements](#configure-backup-acknowledgment), as the client does not have a view of the entire cluster
 - If you have multiple members on a single machine, we advise that [explicit ports are set for each member](#configure-address-list)
 - If CP group leader priority is assigned appropriately, and the client is explicitly set to connect to a CP group leader, connections to the [CP Subsystem](../../operate-and-manage/cp-subsystem/cp-subsystem.mdx) are direct-to-leader, which can result in improved performance. If leadership is reassigned while using `SINGLE_MEMBER` cluster routing, then this benefit may be lost.
-- [`LoadBalancer`](#configure-load-balancer) configuration is ignored
+- [`LoadBalancer`](#client-load-balancer) configuration is ignored
 - [Thread-Per-Core](../../operate-and-manage/thread-per-core-tpc.mdx) is not supported for `SINGLE_MEMBER` cluster routing and no benefit will be gained by enabling it with this routing mode.
 
 <Tabs groupId="config-format">
@@ -1277,13 +1277,13 @@ To use the `MULTI_MEMBER` cluster routing mode, you must also define the groupin
 
 When using the `MULTI_MEMBER` cluster routing mode, consider the following:
 
-- The [handling of connection failures](#handling-client-configuration-failure), which failover to another partition group where one is available. No retry attempt is made to connect to the lost member(s)
+- The [handling of connection failures](#client-connection-failure), which failover to another partition group where one is available. No retry attempt is made to connect to the lost member(s)
 
   In a split and heal scenario, where the client has no access to other group members, the client is re-assigned to the initial group.
 
   In a scenario where all group members are killed almost simultaneously, the client loses connection but reconnects when a member starts again.
-- The absence of [backup acknowledgements](#configure-backup-acknowledgement), as the client does not have a view of the entire cluster If [CP direct-to-leader routing](#configure-direct-to-leader-routing) is enabled on your clients, and the `ADVANCED_CP` license is present on your Enterprise cluster, then clients in this routing mode can use this to send CP operations directly to group leaders wherever possible, even after leadership changes.
-- Best efforts are made to route operations to the required member, but if this cannot be done operations are routed as defined in the [`LoadBalancer`](#configure-load-balancer)
+- The absence of [backup acknowledgements](#configure-backup-acknowledgment), as the client does not have a view of the entire cluster If [CP direct-to-leader routing](#configuring-direct-to-leader-routing) is enabled on your clients, and the `ADVANCED_CP` license is present on your Enterprise cluster, then clients in this routing mode can use this to send CP operations directly to group leaders wherever possible, even after leadership changes.
+- Best efforts are made to route operations to the required member, but if this cannot be done operations are routed as defined in the [`LoadBalancer`](#client-load-balancer)
 - [Thread-Per-Core](../../operate-and-manage/thread-per-core-tpc.mdx) is not supported for `MULTI_MEMBER` cluster routing and may lead to event inconsistency if used.
 
 <Tabs groupId="config-format">
@@ -1808,10 +1808,10 @@ You need to restart clients after modifying system properties.
 | <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#IO_OUTPUT_THREAD_COUNT" text="hazelcast.client.io.output.thread.count" code /> | -1 | int | Controls the number of I/O output threads. Defaults to -1, i.e., the system decides. If the client is using either the `ALL_MEMBERS` or the `MULTI_MEMBER` cluster routing mode, it defaults to 3, otherwise it defaults to 1. If there are more than 8 processors, it defaults to 3 threads. |
 | <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#IO_WRITE_THROUGH_ENABLED" text="hazelcast.client.io.write.through" code /> | true | bool | Optimization that allows sending of packets over the network to be done on the calling thread if the conditions are right. This can reduce the latency and increase the performance for low threaded environments. |
 | <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#MAX_CONCURRENT_INVOCATIONS" text="hazelcast.client.max.concurrent.invocations" code /> | Integer.MAX\_VALUE | int | Maximum allowed number of concurrent invocations. You can apply a constraint on the number of concurrent invocations in order to prevent the system from overloading. If the maximum number of concurrent invocations is exceeded and a new invocation comes in, Hazelcast throws `HazelcastOverloadException`. |
-| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#METRICS_COLLECTION_FREQUENCY" text="hazelcast.client.metrics.collection.frequency" code /> | 5 | int | Frequency, in seconds, of the [metrics](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics) collection cycle. Note that the preferred way for controlling this setting is [Metrics Configuration](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics#metrics-configuration). |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#METRICS_COLLECTION_FREQUENCY" text="hazelcast.client.metrics.collection.frequency" code /> | 5 | int | Frequency, in seconds, of the [metrics](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics) collection cycle. Note that the preferred way for controlling this setting is [Metrics Configuration](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#configuration). |
 | <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#METRICS_DEBUG" text="hazelcast.client.metrics.debug.enabled" code /> | false | bool | Enables collecting debug metrics if set to `true`, disables it otherwise. Note that this is meant to be enabled only if diagnostics is enabled, since currently only diagnostics consumes the debug metrics. |
-| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#METRICS_ENABLED" text="hazelcast.client.metrics.enabled" code /> | true | bool | Enables the [metrics collection](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics) if set to `true`, disables it otherwise. Note that the preferred way for controlling this setting is [Metrics Configuration](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics#metrics-configuration). When it is `true` you can monitor metrics of the clients that are connected to your Hazelcast cluster, using Hazelcast Management Center. See <Variable href="/management-center/{page-latest-supported-mc}/clusters/clients" text="here" /> for more information. |
-| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#METRICS_JMX_ENABLED" text="hazelcast.client.metrics.jmx.enabled" code /> | true | bool | Enables exposing the collected [metrics](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics) over JMX if set to `true`, disables it otherwise. Note that the preferred way for controlling this setting is [Metrics Configuration](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics#metrics-configuration). |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#METRICS_ENABLED" text="hazelcast.client.metrics.enabled" code /> | true | bool | Enables the [metrics collection](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics) if set to `true`, disables it otherwise. Note that the preferred way for controlling this setting is [Metrics Configuration](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#configuration). When it is `true` you can monitor metrics of the clients that are connected to your Hazelcast cluster, using Hazelcast Management Center. See <Variable href="/management-center/{page-latest-supported-mc}/clusters/clients" text="here" /> for more information. |
+| <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#METRICS_JMX_ENABLED" text="hazelcast.client.metrics.jmx.enabled" code /> | true | bool | Enables exposing the collected [metrics](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics) over JMX if set to `true`, disables it otherwise. Note that the preferred way for controlling this setting is [Metrics Configuration](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#configuration). |
 | <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#OPERATION_BACKUP_TIMEOUT_MILLIS" text="hazelcast.client.operation.backup.timeout.millis" code /> | 5000 | int | If an operation has sync backups, this property specifies how long the invocation will wait for acks from the backup replicas. If acks are not received from some backups, there will not be any rollback on other successful replicas. |
 | <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#FAIL_ON_INDETERMINATE_OPERATION_STATE" text="hazelcast.client.operation.fail.on.indeterminate.state" code /> | false | bool | When this configuration is enabled, if an operation has sync backups and acks are not received from backup replicas in time, or the member which owns primary replica of the target partition leaves the cluster, then the invocation fails with `IndeterminateOperationStateException`. However, even if the invocation fails, there will not be any rollback on other successful replicas. |
 | <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/properties/ClientProperty.html#RESPONSE_THREAD_COUNT" text="hazelcast.client.response.thread.count" code /> | 2 | int | Number of the response threads. By default, there are two response threads; this gives stable and good performance. If set to 0, the response threads are bypassed and the response handling is done on the I/O threads. Under certain conditions this can give a higher throughput, but setting to 0 should be regarded as an experimental feature. If set to 0, the IO\_OUTPUT\_THREAD\_COUNT is really going to matter because the inbound thread will have more work to do. By default when TLS is not enabled, there is just one inbound thread. |
@@ -1857,7 +1857,7 @@ For [Client cluster routing modes](#client-cluster-routing-modes), the behaviour
 
 :::note
 
-If you are using smart or unisocket client operation modes, see [previous documentation on this topic](#configuring-client-load-balancer).
+If you are using smart or unisocket client operation modes, see [previous documentation on this topic](#client-load-balancer).
 
 :::
 
@@ -2095,7 +2095,7 @@ See the [High-Density Memory Store section](../../operate-and-manage/high-densit
 
 Blue-green deployment refers to a client connection technique that reduces system downtime by deploying two mirrored clusters: blue (active) and green (idle). One of these clusters is running in production while the other is on standby.
 
-Using the blue-green mechanism, clients can connect to another cluster automatically when they are blacklisted from their currently connected cluster. See the <Variable href="/management-center/{page-latest-supported-mc}/clusters/clients#changing-cluster-client-filtering" text="Hazelcast Management Center Reference Manual" /> for information about blacklisting the clients.
+Using the blue-green mechanism, clients can connect to another cluster automatically when they are blacklisted from their currently connected cluster. See the <Variable href="/management-center/{page-latest-supported-mc}/clusters/client-filtering#changing-cluster-client-filtering" text="Hazelcast Management Center Reference Manual" /> for information about blacklisting the clients.
 
 The client's behavior after this disconnection depends on its [`reconnect-mode`](#java-client-connection-strategy). The following are the options when you are using the blue-green mechanism, i.e., you have alternative clusters for your clients to connect:
 
@@ -2113,7 +2113,7 @@ Consider the following notes for the blue-green mechanism (also valid for the di
 
 - When a client disconnects from a cluster and connects to a new one the `InitialMemberEvent` and `CLIENT_CHANGED_CLUSTER` events are fired.
 - When switching clusters, the client reuses its UUID.
-- The client's listener service re-registers its listeners on the new cluster; the listener service opens a new connection to all members in the current [member list](#client-network) and registers the listeners for each connection.
+- The client's listener service re-registers its listeners on the new cluster; the listener service opens a new connection to all members in the current [member list](#configure-client-network) and registers the listeners for each connection.
 - The client's Near Caches and Continuous Query Caches are cleared when the client joins a new cluster successfully.
 - If the new cluster's partition size is different, the client is rejected by the cluster. The client is not able to connect to a cluster with different partition count.
 - The state of any running job on the original cluster will be undefined. \* Streaming jobs may continue running on the original cluster if the cluster is still alive and the switching happened due to a network problem. If you try to query the state of the job using the Job interface, you'll get a `JobNotFoundException`.
@@ -2126,7 +2126,7 @@ The client's behavior after this disconnection depends on its [`reconnect-mode`]
 
 If you have provided alternative clusters for your clients to connect, the client tries to connect to those alternative clusters (depending on the `reconnect-mode`).
 
-When a failover starts, i.e., the client is disconnected and was configured to connect to alternative clusters, the current [member list](#client-network) is not considered; the client cuts all the connections before attempting to connect to a new cluster and tries the clusters as configured. See the below configuration related sections.
+When a failover starts, i.e., the client is disconnected and was configured to connect to alternative clusters, the current [member list](#configure-client-network) is not considered; the client cuts all the connections before attempting to connect to a new cluster and tries the clusters as configured. See the below configuration related sections.
 
 ### Reconnect order for clusters
 
@@ -2241,7 +2241,7 @@ For the Ping Failure Detector to rely **only** on the ICMP Echo requests, the fo
 - The file `ld.conf` must be edited to overcome the rejection by the dynamic linker when loading libs from untrusted paths.
 - ICMP Echo Requests must not be blocked by the receiving hosts.
 
-The details of these requirements are explained in the [Requirements section](../../operate-and-manage/fault-tolerance/detecting-failures/failure-detector-configuration.mdx#requirements-and-linuxunix-configuration) of Hazelcast members' [Ping Failure Detector](../../operate-and-manage/fault-tolerance/detecting-failures/failure-detector-configuration.mdx#ping-failure-detector).
+The details of these requirements are explained in the [Requirements section](../../operate-and-manage/fault-tolerance/detecting-failures/ping-detector.mdx#requirements-and-linuxunix-configuration) of Hazelcast members' [Ping Failure Detector](../../operate-and-manage/fault-tolerance/detecting-failures/ping-detector.mdx).
 
 If any of the above criteria isn't met, then `isReachable` will always fall back on TCP Echo attempts on port 7.
 
@@ -2309,7 +2309,7 @@ The following are the descriptions of configuration elements and attributes:
 
 In the above example configuration, the Ping Failure Detector attempts 2 pings, one every second, and waits up to 1 second for each to complete. If there is no successful ping after 2 seconds, the member gets suspected.
 
-To enforce the [Requirements](../../operate-and-manage/fault-tolerance/detecting-failures/failure-detector-configuration.mdx#requirements-and-linuxunix-configuration), the property `echo-fail-fast-on-startup` can also be set to `true`, in which case Hazelcast fails to start if any of the requirements isn't met.
+To enforce the [Requirements](../../operate-and-manage/fault-tolerance/detecting-failures/ping-detector.mdx#requirements-and-linuxunix-configuration), the property `echo-fail-fast-on-startup` can also be set to `true`, in which case Hazelcast fails to start if any of the requirements isn't met.
 
 Unlike the Hazelcast members, Ping Failure Detector works always in parallel with Deadline Failure Detector on the clients. Below is a summary table of all possible configuration combinations of the Ping Failure Detector.
 

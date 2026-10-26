@@ -232,7 +232,7 @@ If members have backup reads enabled, some in-memory data may appear to have bee
 
 While the member is down, operations on partitions that are owned by that member will be retried until they either time out or the member restarts and executes the requested operation. As a result, this option is best when you prefer a latency spike rather than migrating data over the network.
 
-If member B does not restart within the rebalance delay, the cluster recovers member B's data from backups and repartitions the data among the remaining members (members A and C in this case). If member B is later restarted, it recovers its persisted data from disk and brings it up-to-date with data from members A and C. If Merkle trees are enabled on available data structures, members use those to request only missing persisted data. For details about how members use Merkle trees, see [Synchronizing Persisted Data Faster](#synch-data).
+If member B does not restart within the rebalance delay, the cluster recovers member B's data from backups and repartitions the data among the remaining members (members A and C in this case). If member B is later restarted, it recovers its persisted data from disk and brings it up-to-date with data from members A and C. If Merkle trees are enabled on available data structures, members use those to request only missing persisted data. For details about how members use Merkle trees, see [Synchronizing Persisted Data Faster](#sync-data).
 
 :::note
 
@@ -1162,7 +1162,7 @@ config.addMapConfig(mapConfig);
 <td>[`merkle-tree`](#merkle)</td>
 <td>Allows restarting members to synchronize their persisted map or JCache data faster with the rest of the cluster.</td>
 <td>`enabled`</td>
-<td>See [Synchronizing Data Faster](#synch-data) for more information.</td>
+<td>See [Synchronizing Data Faster](#sync-data) for more information.</td>
 </tr>
 </tbody>
 </table>

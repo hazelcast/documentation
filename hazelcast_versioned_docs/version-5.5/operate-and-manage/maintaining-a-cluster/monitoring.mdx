@@ -38,7 +38,7 @@ In addition to the Management Center, we recommend that you use `jstat` and keep
   - When a member is added to or removed from a Hazelcast cluster, the clients may see a little pause time, but this is normal. This is essentially the time required by Hazelcast members to rebalance the data upon the arrival or departure of a member.
   - There is no need to change anything on the clients when adding more members to the running cluster. The clients update themselves automatically to connect to the new member once it has successfully joined the cluster.
   - Rebalancing of data (primary plus backup) on arrival or departure (forced or unforced) of a member is an automated process and no manual intervention is required.
-  - You can promote your lite members to become data members. To do this, either use the [Cluster API](./cluster-utilities.mdx#promoting-lite-members-to-data-member) or Management Center.
+  - You can promote your lite members to become data members. To do this, either use the [Cluster API](./lite-members.mdx#promoting-lite-members-to-data-members) or Management Center.
   - Setting `hazelcast.initial.min.cluster.size` to 4 and starting members one by one (empty cluster, no operation) can result in unexpected cluster partitioning behavior: After reaching `hazelcast.initial.min.cluster.size`, partition table arrangement is initialized even though there's no data. When used in large clusters (\>100), this adds an unnecessary overhead of partition assignment on each member addition.
 - Check that you have configured an adequate backup count based on your SLAs.
 - When using distributed computing features, such as executor service or entry processors, any change in the client application logic or in the implementation of these must also be applied to the members. All the members must be restarted after the new code is deployed using the typical cluster re-deployment process: first shutdown the members, then deploy the new application JARs in the members' classpath, and start the members.
@@ -339,7 +339,7 @@ The metric collection runs in regular intervals on each member, but note that th
 There are a wide range of metrics and statistics provided by Hazelcast:
 
 - cluster-wide metrics
-- statistics of distributed data structures (see [member statistics](#getting-member-statistics))
+- statistics of distributed data structures (see [member statistics](#member-statistics))
 - executor statistics (see [executor statistics](#executor-statistics))
 - partition related statistics (state, migration, replication)
 - garbage collection statistics
@@ -353,7 +353,7 @@ See the full list of Hazelcast metrics in [List of Metrics appendix](../../refer
 
 ### User-defined Metrics
 
-User-defined metrics are actually a subset of [job metrics](../../reference/list-of-metrics.mdx#job-specific-metrics). What distinguishes them from regular job-specific metrics is exactly what their name implies: they are not built-in, but defined when processing pipelines are written.
+User-defined metrics are actually a subset of [job metrics](../../reference/list-of-metrics.mdx#job-metrics). What distinguishes them from regular job-specific metrics is exactly what their name implies: they are not built-in, but defined when processing pipelines are written.
 
 Since user-defined metrics are also job metrics, they will have all the tags job metrics have. They also have an extra tag, called `user` which is of type `boolean` and is set to `true`.
 
@@ -2096,7 +2096,7 @@ Hazelcast alerts you through various channels as listed below.
   ```
 - Prometheus: You can use this 3rd party tool to filter alert metrics. See the [Prometheus section](#prometheus-2) for details.
 
-Besides the above channels, you can also benefit from Hazelcast logging mechanism as an indirect way of getting alerts. See the [Logging section](#logging) for details.
+Besides the above channels, you can also benefit from Hazelcast logging mechanism as an indirect way of getting alerts. See the [Logging section](../logging.mdx) for details.
 
 To learn the possible actions on the alerts, see the [Actions and Remedies for Alerts section](../../develop-and-build/troubleshooting/remedies-for-alerts.mdx).
 
