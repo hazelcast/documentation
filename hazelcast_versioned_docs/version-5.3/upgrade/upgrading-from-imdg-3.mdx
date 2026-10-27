@@ -67,7 +67,7 @@ Both the write-through and response-through are enabled by default. If Hazelcast
 
 ## Removing Deprecated Client Configurations
 
-The following methods of <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/client/config/ClientConfig.html" text="ClientConfig" /> have been refactored:
+The following methods of <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/config/ClientConfig.html" text="ClientConfig" /> have been refactored:
 
 - `addNearCacheConfig(String, NearCacheConfig)` → `addNearCacheConfig(NearCacheConfig)`
 - `setSmartRouting(boolean)` → `getNetworkConfig().setSmartRouting(boolean);`
@@ -85,7 +85,7 @@ The following methods of <Variable href="https://docs.hazelcast.org/docs/{full-v
 - `setSocketOptions()` → `getNetworkConfig().setSocketOptions(SocketOptions);`
 - `getNetworkConfig().setAwsConfig(new ClientAwsConfig());` → `getNetworkConfig().setAwsConfig(new AwsConfig());`
 
-Also the `ClientAwsConfig` class has been renamed as <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/AwsConfig.html" text="AwsConfig" code />
+Also the `ClientAwsConfig` class has been renamed as <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/AwsConfig.html" text="AwsConfig" code />
 
 The naming for the declarative configuration elements have not been changed.
 
@@ -400,8 +400,8 @@ mapConfig.addAttributeConfig(attributeConfig);
 
 Also, some custom query attribute classes were previously abstract classes with one abstract method. They have been converted into functional interfaces:
 
-- <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/query/extractor/ValueCallback.html" text="ValueCallback" />
-- <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/query/extractor/ValueExtractor.html" text="ValueExtractor" />
+- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/query/extractor/ValueCallback.html" text="ValueCallback" />
+- <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/query/extractor/ValueExtractor.html" text="ValueExtractor" />
 
 <table>
 <colgroup>
@@ -580,7 +580,7 @@ public class ClusterMigrationListener implements MigrationListener {
 </tbody>
 </table>
 
-See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/partition/MigrationListener.html" text="MigrationListener" /> Javadoc for a full insight.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/partition/MigrationListener.html" text="MigrationListener" /> Javadoc for a full insight.
 
 ## Defaulting to OpenSSL
 
@@ -772,7 +772,7 @@ With this change, the `Credentials` object is not referenced from the principals
 
 Also, `DefaultPermissionPolicy` which was consuming `ClusterPrincipal` and also reading the endpoint address from it works with the new `ClusterRolePrincipals` and `ClusterEndpointPrincipals` principal types.
 
-See the following table for the before/after sample <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/security/IPermissionPolicy.html" text="IPermissionPolicy" /> implementations.
+See the following table for the before/after sample <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/security/IPermissionPolicy.html" text="IPermissionPolicy" /> implementations.
 
 <table>
 <colgroup>
@@ -1101,7 +1101,7 @@ See the [Split-Brain Protection section](../configure-and-manage-clusters/config
 
 ## Renaming getID to getClassId in IdentifiedDataSerializable
 
-The `getId()` method of the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/nio/serialization/IdentifiedDataSerializable.html" text="IdentifiedDataSerializable" /> interface is a method with a common name, meaning a naming conflict would happen frequently. For example, database entities also have a `getId()` method. Therefore, it has been renamed as `getClassId()`.
+The `getId()` method of the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/nio/serialization/IdentifiedDataSerializable.html" text="IdentifiedDataSerializable" /> interface is a method with a common name, meaning a naming conflict would happen frequently. For example, database entities also have a `getId()` method. Therefore, it has been renamed as `getClassId()`.
 
 See the following table showing the interface code before and 5.3.
 
@@ -1154,7 +1154,7 @@ See [here](../develop-solutions/serialization/implementing-identifieddataseriali
 
 ### Entry Processor
 
-The `EntryBackupProcessor` interface has been removed in favor of <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/EntryProcessor.html" text="EntryProcessor" /> which now defines how the entries will be processed both on the primary and the backup replicas.
+The `EntryBackupProcessor` interface has been removed in favor of <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/EntryProcessor.html" text="EntryProcessor" /> which now defines how the entries will be processed both on the primary and the backup replicas.
 
 Because of this, the `AbstractEntryProcessor` interface has been removed. This should make writing entry processors more lambda friendly.
 
@@ -1233,7 +1233,7 @@ map.executeOnKey(key, new EntryProcessor<Object, Object, Object>() {
 
 Introduces interfaces with single abstract method which declares a checked exception. The interfaces are also `Serializable` and can be readily used when providing a lambda which is then serialized.
 
-The <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/projection/Projection.html" text="Projection" /> class was an abstract interface for historical reasons. It has been turned into a functional interface so it's more lambda-friendly.
+The <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/projection/Projection.html" text="Projection" /> class was an abstract interface for historical reasons. It has been turned into a functional interface so it's more lambda-friendly.
 
 See the following table for the before/after sample implementations.
 
@@ -1906,19 +1906,19 @@ The following deprecated methods have been removed:
 - `getServiceImpl()`, replaced by `getImplementation()`.
 - `setServiceImpl(Object)`, replaced by `setImplementation(Object)`.
 
-See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/config/ServiceConfig.html" text="here" /> for `ServiceConfig`s Javadoc.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/ServiceConfig.html" text="here" /> for `ServiceConfig`s Javadoc.
 
 ## Removal of Deprecations in `TransactionContext`
 
 Deprecated `getXaResource()` method has been removed. `HazelcastInstance.getXAResource()` should be used instead.
 
-See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/core/HazelcastInstance.html" text="here" /> for `HazelcastInstance`s Javadoc.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/core/HazelcastInstance.html" text="here" /> for `HazelcastInstance`s Javadoc.
 
 ## Removal of Deprecations in `DistributedObjectEvent`
 
 Deprecated `getObjectId()` method has been removed, `getObjectName()` should be used instead.
 
-See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/core/DistributedObjectEvent.html" text="here" /> for `DistributedObjectEvents`s Javadoc.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/core/DistributedObjectEvent.html" text="here" /> for `DistributedObjectEvents`s Javadoc.
 
 ## Removal of Deprecated `EntryListener`-based Listener API in `IMap`
 

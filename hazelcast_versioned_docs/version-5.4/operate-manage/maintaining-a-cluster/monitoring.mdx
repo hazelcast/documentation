@@ -428,11 +428,11 @@ For a guide on how to set up Prometheus server go to the [Prometheus website](ht
 
 #### Via Job API
 
-The `Job` class has a <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/jet/Job.html#getMetrics--" text="getMetrics()" code /> method which returns a <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/jet/core/metrics/JobMetrics.html" text="JobMetrics" /> instance. It contains the latest known metric values for the job.
+The `Job` class has a <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/Job.html#getMetrics--" text="getMetrics()" code /> method which returns a <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/metrics/JobMetrics.html" text="JobMetrics" /> instance. It contains the latest known metric values for the job.
 
 This functionality has been developed primarily to give access to metrics of finished jobs, but can in fact be used for jobs in any state.
 
-For details on how to use and filter the metric values consult the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/jet/core/metrics/JobMetrics.html" text="JobMetrics API docs" />. A simple example for computing the number of data items emitted by a certain vertex (let's call it vertexA), excluding items emitted to the snapshot, would look like this:
+For details on how to use and filter the metric values consult the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/metrics/JobMetrics.html" text="JobMetrics API docs" />. A simple example for computing the number of data items emitted by a certain vertex (let's call it vertexA), excluding items emitted to the snapshot, would look like this:
 
 ```java
 Predicate<Measurement> vertexOfInterest =
@@ -564,7 +564,7 @@ The following are some of the metrics that you can access via the `LocalMapStats
 - Number of get and put operations on the map (`getPutOperationCount()` and `getGetOperationCount()`).
 - Number of queries executed on the map (`getQueryCount()` and `getIndexedQueryCount()`) (it may be imprecise for queries involving partition predicates (`PartitionPredicate`) on the off-heap storage).
 
-See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/map/LocalMapStats.html" text="LocalMapStats Javadoc" /> to see all the metrics.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/LocalMapStats.html" text="LocalMapStats Javadoc" /> to see all the metrics.
 
 ### Map Index Statistics
 
@@ -583,7 +583,7 @@ The following are some of the metrics that you can obtain via the `LocalIndexSta
 - Total latencies of insert, update and remove operations (`getTotalInsertLatency()`, `getTotalUpdateLatency()`, `getTotalRemoveLatency()`): To compute an average latency divide the returned value by the number of operations of a corresponding type.
 - Memory cost of an index (`getMemoryCost()`): For on-heap storages, this memory cost metric value is a best-effort approximation and doesn't indicate a precise on-heap memory usage of an index.
 
-See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/query/LocalIndexStats.html" text="LocalIndexStats Javadoc" /> to see all the metrics.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/query/LocalIndexStats.html" text="LocalIndexStats Javadoc" /> to see all the metrics.
 
 To compute an aggregated value of `getAverageHitSelectivity()` for all cluster members, you can use a simple averaging computation as shown below:
 
@@ -622,7 +622,7 @@ The following are some of the metrics that you can access via the `NearCacheStat
 - memory cost (number of bytes) of owned entries in the Near Cache (`getOwnedEntryMemoryCost()`)
 - number of hits (reads) of the locally owned entries (`getHits()`)
 
-See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/nearcache/NearCacheStats.html" text="NearCacheStats Javadoc" /> to see all the metrics.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/nearcache/NearCacheStats.html" text="NearCacheStats Javadoc" /> to see all the metrics.
 
 ### MultiMap Statistics
 
@@ -642,7 +642,7 @@ The following are some of the metrics that you can access via the `LocalMultiMap
 - number of hits (reads) of the locally owned entries (`getHits()`)
 - number of get and put operations on the map (`getPutOperationCount()` and `getGetOperationCount()`)
 
-See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/multimap/LocalMultiMapStats.html" text="LocalMultiMapStats Javadoc" /> to see all the metrics.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/multimap/LocalMultiMapStats.html" text="LocalMultiMapStats Javadoc" /> to see all the metrics.
 
 ### Queue Statistics
 
@@ -659,7 +659,7 @@ The following are some of the metrics that you can access via the \`LocalQueueSt
 - minimum and maximum ages of the items in the member (`getMinAge()` and `getMaxAge()`)
 - number of offer, put and add operations (`getOfferOperationCount()`)
 
-See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/collection/LocalQueueStats.html" text="LocalQueueStats Javadoc" /> to see all the metrics.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/collection/LocalQueueStats.html" text="LocalQueueStats Javadoc" /> to see all the metrics.
 
 ### Topic Statistics
 
@@ -675,7 +675,7 @@ The following are the metrics that you can access via the \`LocalTopicStats \` o
 - total number of published messages of the topic on the member (`getPublishOperationCount()`)
 - total number of received messages of the topic on the member (`getReceiveOperationCount()`)
 
-See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/topic/LocalTopicStats.html" text="LocalTopicStats Javadoc" /> to see all the metrics.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/topic/LocalTopicStats.html" text="LocalTopicStats Javadoc" /> to see all the metrics.
 
 ### Executor Statistics
 
@@ -691,7 +691,7 @@ The following are some of the metrics that you can access via the \`LocalExecuto
 - number of started operations of the executor service (`getStartedTaskCount()`)
 - number of completed operations of the executor service (`getCompletedTaskCount()`)
 
-See the <Variable href="https://docs.hazelcast.org/docs/{full-version}/javadoc/com/hazelcast/executor/LocalExecutorStats.html" text="LocalExecutorStats Javadoc" /> to see all the metrics.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/executor/LocalExecutorStats.html" text="LocalExecutorStats Javadoc" /> to see all the metrics.
 
 ## Health Check and Monitoring
 

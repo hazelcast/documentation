@@ -71,12 +71,14 @@ If you already have a MongoDB database that is accessible to the Internet, you c
    Make a note of these credentials because you will need to give them to <Variable name="hazelcast-cloud" /> Standard later.
 
    :::
+
 7. Go to **Database** in the left navigation under **Deployment**.
 8. Go to the **Collections** tab, click **Add My Own Data**, and create a database called **Hazelcast** with a collection called **person**.
 
    Your <Variable name="hazelcast-cloud" /> Standard cluster will store your data in this **person** collection.
 
    ![Set up a database on MongoDB](./images/mongo-db-atlas-setup.gif)
+
 9. Go to **Network Access** in the left navigation under **Security**, and click **Add IP Address**.
 10. Select **Allow Access From Anywhere** and click **Confirm**.
 
@@ -160,24 +162,24 @@ In this step, you'll use the <a href="/cloud/maven-plugin-hazelcast">Hazelcast <
 2. Configure the Maven plugin with values for the following elements:
 
    <table>
-   <colgroup>
-   <col style={{width:'50%'}} />
-   <col style={{width:'50%'}} />
-   </colgroup>
-   <thead>
-   <tr>
-   <th>Element</th>
-   <th>Location in the <Variable name="hazelcast-cloud" /> console</th>
-   </tr>
-   </thead>
-   <tbody>
-   <tr>
-   <td>`<clusterName>`</td>
-   <td>Next to **Connect Client**, select any client, and then go to **Advanced Setup**. The cluster name/ID is at the top of the list.</td>
-   </tr>
-   <tr>
-   <td>`<apiKey>` and `<apiSecret>`</td>
-   <td>
+<colgroup>
+<col style={{width:'50%'}} />
+<col style={{width:'50%'}} />
+</colgroup>
+<thead>
+<tr>
+<th>Element</th>
+<th>Location in the <Variable name="hazelcast-cloud" /> console</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`<clusterName>`</td>
+<td>Next to **Connect Client**, select any client, and then go to **Advanced Setup**. The cluster name/ID is at the top of the list.</td>
+</tr>
+<tr>
+<td>`<apiKey>` and `<apiSecret>`</td>
+<td>
 
    :::note
 
@@ -186,12 +188,12 @@ In this step, you'll use the <a href="/cloud/maven-plugin-hazelcast">Hazelcast <
    :::
 
    To create a set of API credentials, do the following:
-
    1. Sign into the <Variable href="{page-cloud-console}" text="{hazelcast-cloud} console" />
    2. Select **Account** from the side navigation bar
    3. Select **Developer** from the **Account** options
 
       The Developer screen displays.
+
    4. Select the **Generate New API Key** button
 
    Use these credentials in your applications to manage all clusters in your account.
@@ -199,11 +201,12 @@ In this step, you'll use the <a href="/cloud/maven-plugin-hazelcast">Hazelcast <
    After creating your credentials, ensure that you applications are correctly configured to use the API credentials.
 
    </td>
-   </tr>
-   </tbody>
-   </table>
+</tr>
+</tbody>
+</table>
 
    <CodeBlock language="xml">{Ex_write_through_cache_mongodb_mapstore_pom_xml_tag_maven_plugin_indent_0}</CodeBlock>
+
 3. Execute the following goal of the Maven plugin to package the project into a JAR file and deploy that file to your <Variable name="hazelcast-cloud" /> Standard cluster:
 
    ```bash
@@ -229,29 +232,30 @@ To use a MapStore, it must be configured for a specific map in your <Variable na
 7. Leave the **Write Delay Seconds** field set to 0 to configure a write-through cache.
 
    In this configuration, when you add new entries to the **person** map, Hazelcast will invoke the MapStore's `store()` method before adding the entry to the map.
+
 8. In the **Properties** section, enter the following.
 
    Hazelcast encrypts these properties to keep them safe.
 
    <table>
-   <colgroup>
-   <col style={{width:'33.3333%'}} />
-   <col style={{width:'66.6667%'}} />
-   </colgroup>
-   <thead>
-   <tr>
-   <th>Name</th>
-   <th>Value</th>
-   </tr>
-   </thead>
-   <tbody>
-   <tr>
-   <td>**uri**</td>
-   <td>Your MongoDB connection string. You can find this connection string in the [Atlas console](https://www.mongodb.com/docs/guides/atlas/connection-string/).</td>
-   </tr>
-   <tr>
-   <td>**database**</td>
-   <td>
+<colgroup>
+<col style={{width:'33.3333%'}} />
+<col style={{width:'66.6667%'}} />
+</colgroup>
+<thead>
+<tr>
+<th>Name</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>**uri**</td>
+<td>Your MongoDB connection string. You can find this connection string in the [Atlas console](https://www.mongodb.com/docs/relational-migrator/database-connections/mongodb/).</td>
+</tr>
+<tr>
+<td>**database**</td>
+<td>
 
    The name of the database that you created in [step 1](#step-one).
 
@@ -260,9 +264,10 @@ To use a MapStore, it must be configured for a specific map in your <Variable na
    ```
 
    </td>
-   </tr>
-   </tbody>
-   </table>
+</tr>
+</tbody>
+</table>
+
 9. Click **Save Configuration**.
 
 ## Step 5. Test the MapStore
@@ -288,6 +293,7 @@ To test that the MapStore is working, you need to create a map, add some entries
      1, 1, 'Cahill', 'Jake'
    );
    ```
+
 5. Open your database in MongoDB Atlas and click on the **person** collection.
 
    You should see that the collection has a new document, which contains the same data as the map entry you added to the map in Serverless.
