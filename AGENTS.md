@@ -56,7 +56,7 @@ Run the checks that match what you changed:
 
 | Command                                  | Run it after changing                                                                                                                                                      |
 | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run build`                          | Anything. It fails on a broken internal link, a broken Markdown link, or a missing image. It does not check anchors (`#fragment`). Verify cross-page anchors yourself.  |
+| `npm run build`                          | Anything. It fails on a broken internal link, a broken Markdown link, or a missing image. It reports a broken anchor (`#fragment`) as a warning. Fix the warnings for the links you changed.  |
 | `npm run typecheck`                      | TypeScript in `src/`, `plugins/`, or `docusaurus.config.ts`.                                                                                                               |
 | `npm test`                               | Code in `src/`, `plugins/`, `scripts/`, or `.github/scripts/`, `docusaurus.config.ts`, or any file the release script rewrites. It runs every unit test in the repo. |
 | `npm run test:version-update`            | `.github/scripts/version-update/`, or any file it rewrites: `src/variables.ts`, `src/redirects.ts`, `src/currentVersions.json`, `*_versions.json`, or `static/_redirects`. |

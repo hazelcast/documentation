@@ -6,7 +6,7 @@ slug: /troubleshoot/clc
 
 ## Limitations of the "config import-java" command
 
-CLC can import a limited subset of Hazelcast client XML configuration using the `config import-java` command. However, configuration features that depend on Java-specific XML features, such as replacers, are not supported. See the [CLC Documentation](https://docs.hazelcast.com/clc/latest/clc-config#clc-config-import-java) for further information. The recommended workaround is to remove any use of, or references to, variable replacers in your config file.
+CLC can import a limited subset of Hazelcast client XML configuration using the `config import-java` command. However, configuration features that depend on Java-specific XML features, such as replacers, are not supported. See the [CLC Documentation](/clc/latest/clc-config#clc-config-import-java) for further information. The recommended workaround is to remove any use of, or references to, variable replacers in your config file.
 
 ## CLC fails to connect when client passwords are used
 
@@ -17,7 +17,7 @@ As a workaround, you can either:
 
 :::note
 
-[mTLS](https://docs.hazelcast.com/hazelcast/5.5/security/tls-ssl#mutual-authentication) can be supported to maintain a secure cluster.
+[mTLS](/hazelcast/5.5/security/tls-ssl#mutual-authentication) can be supported to maintain a secure cluster.
 
 :::
 
@@ -30,7 +30,7 @@ Management Center's embedded CLC does not connect when the security certificates
 CLC can only use PEM files for SSL certificates. As a workaround, you can either:
 
 - Enable the original Management Center console, which runs directly on the members (and therefore does not require a TLS certificate) by setting `hazelcast.mc.original.console.enabled` to true.
-- Convert your JKS certs to PEM. For more information, see [Configuring Hazelcast for OpenSSL](https://docs.hazelcast.com/hazelcast/5.5/security/integrating-openssl#configuring-hazelcast-for-openssl). Note that:
+- Convert your JKS certs to PEM. For more information, see [Configuring Hazelcast for OpenSSL](/hazelcast/5.5/security/integrating-openssl#configuring-hazelcast-for-openssl). Note that:
 
   - If you use trustStore, using the `trustStore` property is not recommended — use `trustCertCollectionFile` instead.
   - If you use keyStore, using the `keyStore` property is not recommended — use `keyFile` and `keyCertChainFile` instead. If you must use it, then it must be converted to PKCS12.

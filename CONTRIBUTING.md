@@ -36,6 +36,12 @@ Prefer a new section in an existing page to a new page, unless the topic is dist
 
 Link to another page in the same product with a relative path to its file, including the extension, e.g. `../mc-conf.mdx`. Link to a page in another product with its URL path, starting with `/`. For a versioned product, use `latest` as the version, e.g. `/hazelcast/latest/sql/sql-statements`. The build resolves `latest` to the newest release. For Cloud and Tutorials, leave out the version, e.g. `/tutorials/write-through-cache-serverless-mapstore`. Do not hardcode a version number in an internal link.
 
+A Platform page that links to Management Center, CLC, or Operator links to the version that its Platform version supports, not `latest`. Write the link with the `Variable` component and the matching variable from `src/variables.ts`: `page-latest-supported-mc`, `page-latest-supported-clc`, or `page-latest-supported-po`. For example:
+
+```mdx
+<Variable href="/management-center/{page-latest-supported-mc}/getting-started/overview" text="Management Center"/>
+```
+
 If a change alters a page's URL, add a redirect from the old URL to the new one in `src/redirects.ts`, e.g. `{ from: "/hazelcast/6.0-snapshot/old-name", to: "/hazelcast/6.0-snapshot/new-name" },`. A page's URL changes when you edit its `slug`, or when you rename or move a page that has no `slug`. The build fails if a redirect points at a page that does not exist. Do not edit `static/_redirects`. The release script maintains it.
 
 ## Variables and versions

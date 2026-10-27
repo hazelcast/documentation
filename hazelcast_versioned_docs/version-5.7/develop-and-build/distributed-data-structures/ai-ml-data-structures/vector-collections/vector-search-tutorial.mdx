@@ -46,7 +46,7 @@ This tutorial environment downloads several Python packages and Docker images. Y
 
 This tutorial makes use of the Hazelcast Pipeline API. If you are not familiar with the structure of a pipeline, refer to the links below.
 
-- [https://docs.hazelcast.com/hazelcast/latest/pipelines/overview](https://docs.hazelcast.com/hazelcast/latest/pipelines/overview)
+- [About Data Pipelines](../../../building-data-pipelines/overview.mdx)
 - [https://docs.hazelcast.org/docs/latest/javadoc/com/hazelcast/jet/pipeline/StreamStage.html](https://docs.hazelcast.org/docs/latest/javadoc/com/hazelcast/jet/pipeline/StreamStage.html)
 
 ## Tutorial Setup
@@ -92,7 +92,7 @@ This tutorial makes use of the Hazelcast Pipeline API. If you are not familiar w
              metric: COSINE
    ```
 
-   - `hazelcast.partition.count`: Vector search performs better with fewer partitions. On the other hand, fewer partitions means larger partitions, which can cause problems during migration. A discussion of the tradeoffs can be found [here](https://docs.hazelcast.com/hazelcast/latest/data-structures/vector-search-overview#partition-count-impact).
+   - `hazelcast.partition.count`: Vector search performs better with fewer partitions. On the other hand, fewer partitions means larger partitions, which can cause problems during migration. A discussion of the tradeoffs can be found [here](./vector-search-overview.mdx#partition-count-impact).
    - `jet`: This is the Hazelcast stream processing engine. Hazelcast pipelines are a scalable way to rapidly ingest or process large amounts of data. This example uses a pipeline to compute embeddings and load them into a vector collection, so stream processing must be enabled.
    - `vector-collection`: If you are using a vector collection, you must configure the index settings. There are no defaults. In this case, the name of the collection is `images` and it has one index, which is called `semantic-search`. The dimension and distance metric are dependent on the embedding being used. The `dimension` must match the size of the vectors produced by the embedding. The `metric` defines the algorithm used to compute the distance between 2 vectors and it must match the one used to train the embedding. This tutorial uses the CLIP sentence transformer for embeddings. CLIP uses a dimension of 512 and cosine distance metric (literally the cosine of the angle between 2 vectors, adjusted to be non-negative). For more detail on supported options, see [Vector Collection](./overview.mdx).
 2. Start the tutorial environment.

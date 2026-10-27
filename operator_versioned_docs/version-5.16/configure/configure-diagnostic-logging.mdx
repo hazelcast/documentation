@@ -39,11 +39,11 @@ The following properties are available for configuration:
 - pvcName: bind diagnostics to a PVC (see below).
 - fileNamePrefix: add a custom prefix.
 
-For more information, see: [Diagnostics](https://docs.hazelcast.com/operator/latest/api-ref#diagnostics). The diagnostics file rolls by default (10 files, 50 MB each) and contains plugin sections. For information about the default plugins, see [Diagnostics Plugins](https://docs.hazelcast.com/hazelcast/latest/maintain-cluster/monitoring#diagnostics-plugins).
+For more information, see: [Diagnostics](../reference/api-ref.mdx#diagnostics). The diagnostics file rolls by default (10 files, 50 MB each) and contains plugin sections. For information about the default plugins, see [Diagnostics Plugins](/hazelcast/latest/maintain-cluster/monitoring#diagnostics-plugins).
 
 ## Configure auto turn-off
 
-To prevent diagnostic logs from running indefinitely and having a performance impact on the cluster, set the Operator's `autoOffTimerInMinutes` to automatically disable diagnostic logging after the specified number of minutes. See [Diagnostics](https://docs.hazelcast.com/operator/latest/api-ref#diagnostics).
+To prevent diagnostic logs from running indefinitely and having a performance impact on the cluster, set the Operator's `autoOffTimerInMinutes` to automatically disable diagnostic logging after the specified number of minutes. See [Diagnostics](../reference/api-ref.mdx#diagnostics).
 
 You can combine this with rolling limits: maxRolledFileSize, maxRolledFileCount.
 
@@ -51,7 +51,7 @@ You can combine this with rolling limits: maxRolledFileSize, maxRolledFileCount.
 
 Instead of file output, you can forward diagnostics to your logging framework by setting the value of `outputType` to `LOGGER`.
 
-Then configure the com.hazelcast.diagnostics logger (e.g. a Log4j2 logger and rolling appender) to control size and rollover using time/size policies. For information, see [Diagnostics using Logging Frameworks](https://docs.hazelcast.com/hazelcast/latest/maintain-cluster/monitoring#diagnostics-using-logging-frameworks).
+Then configure the com.hazelcast.diagnostics logger (e.g. a Log4j2 logger and rolling appender) to control size and rollover using time/size policies. For information, see [Diagnostics using Logging Frameworks](/hazelcast/latest/maintain-cluster/monitoring#diagnostics-using-logging-frameworks).
 
 ## Persist diagnostics to a PVC
 
@@ -84,7 +84,7 @@ spec:
 
 :::note
 
-System log diagnostics (cluster activity and optional partition migration details) can be enabled/tuned via `hazelcast.diagnostics.systemlog.enabled` and `hazelcast.diagnostics.systemlog.partitions` if needed. For more information, see [SystemLog](https://docs.hazelcast.com/hazelcast/latest/maintain-cluster/monitoring#systemlog).
+System log diagnostics (cluster activity and optional partition migration details) can be enabled/tuned via `hazelcast.diagnostics.systemlog.enabled` and `hazelcast.diagnostics.systemlog.partitions` if needed. For more information, see [SystemLog](/hazelcast/latest/maintain-cluster/monitoring#systemlog).
 
 :::
 
@@ -94,4 +94,4 @@ Diagnostic logging can also be configured *statically* via system properties set
 
 However, if you enable or disable diagnostic logging using system properties, these settings will override any configuration settings applied using the CRD, and you will be unable to switch logging on and off *dynamically* at runtime.
 
-For more information about system properties, see [Enable diagnostics](https://docs.hazelcast.com/hazelcast/latest/maintain-cluster/monitoring#diagnostics).
+For more information about system properties, see [Enable diagnostics](/hazelcast/latest/maintain-cluster/monitoring#diagnostics).
