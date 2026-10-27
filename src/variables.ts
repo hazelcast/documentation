@@ -391,13 +391,13 @@ export const versionedVariables: Record<string, Record<string, Record<string, st
   "operator": {
     "current": {
       "operator-chart-version": "5.21.0-snapshot",
-      "page-latest-supported-hazelcast": "5.7.1",
-      "page-latest-supported-mc": "5.11.1"
+      "page-latest-supported-hazelcast": "5.7.2",
+      "page-latest-supported-mc": "5.12.1"
     },
     "5.20": {
       "operator-chart-version": "5.20.0",
-      "page-latest-supported-hazelcast": "5.7.1",
-      "page-latest-supported-mc": "5.11.1"
+      "page-latest-supported-hazelcast": "5.7.2",
+      "page-latest-supported-mc": "5.12.1"
     },
     "5.19": {
       "operator-chart-version": "5.19.0",
