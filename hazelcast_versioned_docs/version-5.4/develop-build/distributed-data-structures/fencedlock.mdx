@@ -24,7 +24,7 @@ The following diagram illustrates the idea. Client-1 acquires the lock first and
 
 ![Fenced Lock](./images/FencedLock.png)
 
-You can read more about the fencing token idea in Martin Kleppmann's [How to do distributed locking](https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html) blog post and Google's [Chubby paper](https://ai.google/research/pubs/pub27897). `FencedLock` integrates this idea with the `j.u.c.locks.Lock` abstraction, excluding `j.u.c.locks.Condition`. `newCondition()` is not implemented and throws `UnsupportedOperationException`.
+You can read more about the fencing token idea in Martin Kleppmann's [How to do distributed locking](https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html) blog post and Google's [Chubby paper](https://research.google/pubs/the-chubby-lock-service-for-loosely-coupled-distributed-systems/). `FencedLock` integrates this idea with the `j.u.c.locks.Lock` abstraction, excluding `j.u.c.locks.Condition`. `newCondition()` is not implemented and throws `UnsupportedOperationException`.
 
 All the API methods in the new `FencedLock` abstraction offer exactly-once execution semantics. For instance, even if a `lock()` call is internally retried because of a crashed CP member, the lock is acquired only once. The same rule also applies to the other methods in the API.
 

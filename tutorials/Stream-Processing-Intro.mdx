@@ -48,6 +48,7 @@ In this step, you will set up connections to an external streaming source and an
    Your screen or prompt will display your cluster name where the examples above say "EdSrvs1".
 
    :::
+
 2. Paste the following code to establish a connection to the streaming data source.
 
    ```sql
@@ -64,6 +65,7 @@ In this step, you will set up connections to an external streaming source and an
              'session.timeout.ms'='45000'
              );
    ```
+
 3. Paste the following code to subscribe to the streaming topic for sales data.
 
    ```sql
@@ -81,6 +83,7 @@ In this step, you will set up connections to an external streaming source and an
        'valueFormat' = 'json-flat'
         );
    ```
+
 4. Verify that you are receiving streaming data from the topic `orders_topic`.
 
    ```sql
@@ -88,6 +91,7 @@ In this step, you will set up connections to an external streaming source and an
    ```
 
    If you are using the query tab, press Execute Query. If you are using CLC, press enter to start the query.
+
 5. Stop the query. If you are using the query tab press Stop Query. If you are using CLC, press CTRL-C.
 
 ## Step 2. Load Fast Data Store
@@ -108,6 +112,7 @@ In this step, you'll load the in-memory data stores that will be used for stream
              'password'='h@zelcast!'
              );
    ```
+
 2. Create the mapping for the customer database stored in the Postgres server.
 
    ```sql
@@ -122,6 +127,7 @@ In this step, you'll load the in-memory data stores that will be used for stream
    )
    DATA CONNECTION "TrainingPostgresConnection";
    ```
+
 3. Create the mapping for the IMap that will store the local copy of the customer database. Note that the data fields are identical.
 
    ```sql
@@ -139,11 +145,13 @@ In this step, you'll load the in-memory data stores that will be used for stream
        'valueFormat' = 'json-flat'
    );
    ```
+
 4. Verify that the local IMap is currently empty.
 
    ```sql
    SELECT * from customers;
    ```
+
 5. Copy the data from the external database to the local IMap.
 
    ```sql
@@ -152,6 +160,7 @@ In this step, you'll load the in-memory data stores that will be used for stream
    SELECT cust_id, cust_id, last_name, first_name, address1, address2, phone
    FROM external_customers;
    ```
+
 6. Verify that the data has been added to the `customers` map.
 
    ```sql
@@ -159,6 +168,7 @@ In this step, you'll load the in-memory data stores that will be used for stream
    ```
 
    You should see the complete list of customers.
+
 7. Create the mapping for the external inventory database.
 
    ```sql
@@ -170,6 +180,7 @@ In this step, you'll load the in-memory data stores that will be used for stream
    )
    DATA CONNECTION "TrainingPostgresConnection";
    ```
+
 8. Create the mapping for the IMap that will store the local copy of the inventory.
 
    ```sql
@@ -183,6 +194,7 @@ In this step, you'll load the in-memory data stores that will be used for stream
         'keyFormat'='varchar',
         'valueFormat'='json-flat');
    ```
+
 9. Copy the inventory data from the external database into the IMap
 
    ```sql
@@ -191,6 +203,7 @@ In this step, you'll load the in-memory data stores that will be used for stream
    SELECT item_num, item_num, unit_price, quantity
    FROM external_inventory;
    ```
+
 10. Verify that the data has been added to the `inventory` database.
 
     ```sql
@@ -222,15 +235,16 @@ In this step, you will join the streaming order information with the customer sh
    'keyFormat'='bigint',
    'valueFormat'='json-flat');
    ```
+
 2. Verify that the IMap has been created, but holds no data.
 
    ```sql
    SELECT * FROM PickOrder;
    ```
+
 3. Join the streaming order data with the customer database to produce records to be added to the `PickOrder` IMap. Only add records if there are sufficient items in inventory.
 
    The following fields will come from the `orders_topic` stream
-
    - Order ID (Use as \_\_key for the IMap)
    - Order timestamp
    - Order item number
@@ -238,6 +252,7 @@ In this step, you will join the streaming order information with the customer sh
    - Customer ID
 
      The following fields will come from the `customers` data store.
+
    - Customer last name
    - Customer first name
    - Customer address line 1
@@ -265,6 +280,7 @@ In this step, you will join the streaming order information with the customer sh
    JOIN inventory ON ord.item_num = inventory.item_num
    WHERE ord.quantity < inventory.quantity;
    ```
+
 4. Press CTRL-C to stop the join.
 5. Create a job that generates the PickOrder. Creating a job places the process into the background so it is running continuously without user intervention.
 
@@ -287,11 +303,13 @@ In this step, you will join the streaming order information with the customer sh
         JOIN inventory ON ord.item_num = inventory.item_num
         WHERE ord.quantity < inventory.quantity;
    ```
+
 6. Verify that the `PickOrder` IMap now contains data.
 
    ```sql
    SELECT * FROM PickOrder;
    ```
+
 7. From your cloud console, monitor memory utilization. You should see it increasing.
 8. From Management Center, under Storage, select Maps. You should see the PickOrder map entries increasing.
 9. From Management Center, under Streaming, select Jobs. You should see the PickOrder job running. Select the job, then click the Suspend button to pause the job.
@@ -319,6 +337,7 @@ In this step, you will perform a three-way join with the streaming order informa
        'keyFormat' = 'bigint',
        'valueFormat' = 'json-flat');
    ```
+
 2. Join the order stream and the customer database to generate the amount due information and publish it to the `amount_due` topic you just created.
 
    ```sql
@@ -337,6 +356,7 @@ In this step, you will perform a three-way join with the streaming order informa
         JOIN customers AS cust ON ord.cust_id = cust.cust_id
         JOIN inventory AS inv ON ord.item_num = inv.item_num;
    ```
+
 3. Verify that data is being published to the `amount_due` map.
 
    ```sql
@@ -358,6 +378,5 @@ In this tutorial, you learned to:
 
 ## See Also
 
-- [The Introduction to Stream Processing with Hazelcast course](http://training.hazelcast.com/introduction-to-stream-processing)
 - [Documentation on pipeline concepts](https://docs.hazelcast.com/hazelcast/5.3/pipelines/building-pipelines)
 - [Documentation on Hazelcast's implementation of SQL](https://docs.hazelcast.com/hazelcast/5.3/sql/sql-overview)
