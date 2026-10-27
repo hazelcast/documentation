@@ -67,7 +67,7 @@ This document was generated from comments in the Go code in the api/ directory.
 - [ExternalConnectivityIngress](#externalconnectivityingress)
 - [ExternalConnectivityRoute](#externalconnectivityroute)
 - [ExternalConnectivityServiceType](#externalconnectivityservicetype)
-- [ExternalConnectivityType](#ExternalConnectivityType)
+- [ExternalConnectivityType](#externalconnectivitytype)
 - [FullBehaviorSetting](#fullbehaviorsetting)
 - [GCType](#gctype)
 - [GlobalSerializer](#globalserializer)
@@ -98,7 +98,7 @@ This document was generated from comments in the Go code in the api/ directory.
 - [InitContainerConfiguration](#initcontainerconfiguration)
 - [InitialModeType](#initialmodetype)
 - [JAASAuthItem](#jaasauthitem)
-- [JAASPropertiesSource](#JAASPropertiesSource)
+- [JAASPropertiesSource](#jaaspropertiessource)
 - [JAASPropertyFromSource](#jaaspropertyfromsource)
 - [JVMConfiguration](#jvmconfiguration)
 - [JVMDebugConfiguration](#jvmdebugconfiguration)
@@ -265,8 +265,8 @@ This document was generated from comments in the Go code in the api/ directory.
 
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
-| `name` | Name of the attribute [Predicates API](/hazelcast/latest/query/predicate-overview#creating-custom-query-attributes) | `string` | true | - |
-| `extractorClassName` | Name of the extractor class [Predicates API](/hazelcast/latest/query/predicate-overview#implementing-a-valueextractor) | `string` | true | - |
+| `name` | Name of the attribute [https://docs.hazelcast.com/hazelcast/latest/query/predicate-overview#creating-custom-query-attributes](https://docs.hazelcast.com/hazelcast/latest/query/predicate-overview#creating-custom-query-attributes) | `string` | true | - |
+| `extractorClassName` | Name of the extractor class [https://docs.hazelcast.com/hazelcast/latest/query/predicate-overview#implementing-a-valueextractor](https://docs.hazelcast.com/hazelcast/latest/query/predicate-overview#implementing-a-valueextractor) | `string` | true | - |
 
 [Back to TOC](#table-of-contents)
 
@@ -302,7 +302,7 @@ This document was generated from comments in the Go code in the api/ directory.
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
 | `secretName` | Name of the secret with credentials for cloud providers. | `string` | false | - |
-| `bucketURI` | URL of the bucket to download folders. AWS S3, GCP Bucket and Azure Blob storage buckets are supported. Example bucket URIs: - AWS S3 → s3://bucket-name/path/to/folder - GCP Bucket → gs://bucket-name/path/to/folder - Azure Blob → azblob://bucket-name/path/to/folder | `string` | true | - |
+| `bucketURI` | URL of the bucket to download folders. AWS S3, GCP Bucket and Azure Blob storage buckets are supported. Example bucket URIs: - AWS S3     -\> s3://bucket-name/path/to/folder - GCP Bucket -\> gs://bucket-name/path/to/folder - Azure Blob -\> azblob://bucket-name/path/to/folder | `string` | true | - |
 
 #### Deprecated
 
@@ -319,7 +319,7 @@ BucketSource defines the configuration for a single cloud storage bucket.
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
 | `secretName` | Name of the secret with credentials for cloud providers. | `string` | false | - |
-| `bucketURI` | URL of the bucket to download folders. AWS S3, GCP Bucket and Azure Blob storage buckets are supported. Example bucket URIs: - AWS S3 → s3://bucket-name/path/to/folder - GCP Bucket → gs://bucket-name/path/to/folder - Azure Blob → azblob://bucket-name/path/to/folder | `string` | true | - |
+| `bucketURI` | URL of the bucket to download folders. AWS S3, GCP Bucket and Azure Blob storage buckets are supported. Example bucket URIs: - AWS S3     -\> s3://bucket-name/path/to/folder - GCP Bucket -\> gs://bucket-name/path/to/folder - Azure Blob -\> azblob://bucket-name/path/to/folder | `string` | true | - |
 
 [Back to TOC](#table-of-contents)
 
@@ -443,7 +443,7 @@ ClientTLS is used for client TLS configuration in Hazelcast CR
 
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
-| `mutualAuthentication` | mutualAuthentication is deprecated. Use clientAuthentication field instead. Mutual authentication configuration. It's None by default which means the client side of connection is not authenticated. | [`MutualAuthentication`](#mutualauthentication) | false | - |
+| `mutualAuthentication` | mutualAuthentication is deprecated. Use clientAuthentication field instead. Mutual authentication configuration. It’s None by default which means the client side of connection is not authenticated. | [`MutualAuthentication`](#mutualauthentication) | false | - |
 
 [Back to TOC](#table-of-contents)
 
@@ -836,10 +836,10 @@ HazelcastSpec defines the desired state of Hazelcast
 | `agent` | B&R Agent configurations | [`AgentConfiguration`](#agentconfiguration) | false | - |
 | `initContainer` | InitContainer configurations. | [`*InitContainerConfiguration`](#initcontainerconfiguration) | false | - |
 | `jet` | Jet Engine configuration | [`*JetEngineConfiguration`](#jetengineconfiguration) | false | \{enabled: true, resourceUploadEnabled: false\} |
-| `executorServices` | Java Executor Service configurations, see [Java Executor Service](/hazelcast/latest/computing/executor-service) | [`[]ExecutorServiceConfiguration`](#executorserviceconfiguration) | false | - |
-| `durableExecutorServices` | Durable Executor Service configurations, see [Durable Executor Service](/hazelcast/latest/computing/durable-executor-service) | [`[]DurableExecutorServiceConfiguration`](#durableexecutorserviceconfiguration) | false | - |
-| `scheduledExecutorServices` | Scheduled Executor Service configurations, see [Scheduled Executor Service](/hazelcast/latest/computing/scheduled-executor-service) | [`[]ScheduledExecutorServiceConfiguration`](#scheduledexecutorserviceconfiguration) | false | - |
-| `properties` | Hazelcast system properties, see [System Properties](/hazelcast/latest/system-properties) | `map[string]string` | false | - |
+| `executorServices` | Java Executor Service configurations, see [https://docs.hazelcast.com/hazelcast/latest/computing/executor-service](https://docs.hazelcast.com/hazelcast/latest/computing/executor-service) | [`[]ExecutorServiceConfiguration`](#executorserviceconfiguration) | false | - |
+| `durableExecutorServices` | Durable Executor Service configurations, see [https://docs.hazelcast.com/hazelcast/latest/computing/durable-executor-service](https://docs.hazelcast.com/hazelcast/latest/computing/durable-executor-service) | [`[]DurableExecutorServiceConfiguration`](#durableexecutorserviceconfiguration) | false | - |
+| `scheduledExecutorServices` | Scheduled Executor Service configurations, see [https://docs.hazelcast.com/hazelcast/latest/computing/scheduled-executor-service](https://docs.hazelcast.com/hazelcast/latest/computing/scheduled-executor-service) | [`[]ScheduledExecutorServiceConfiguration`](#scheduledexecutorserviceconfiguration) | false | - |
+| `properties` | Hazelcast system properties, see [https://docs.hazelcast.com/hazelcast/latest/system-properties](https://docs.hazelcast.com/hazelcast/latest/system-properties) | `map[string]string` | false | - |
 | `loggingLevel` | Logging level for Hazelcast members | [`LoggingLevel`](#logginglevel) | false | "INFO" |
 | `loggingConfiguration` | LoggingConfiguration specify the logging configuration file to be mounted to the Hazelcast members. | [`*LoggingConfiguration`](#loggingconfiguration) | false | - |
 | `highAvailabilityMode` | Configuration to create clusters resilient to node and zone failures | [`HighAvailabilityMode`](#highavailabilitymode) | false | - |
@@ -923,7 +923,7 @@ HotBackupSpec defines the Spec of HotBackup
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
 | `hazelcastResourceName` | HazelcastResourceName defines the name of the Hazelcast resource | `string` | true | - |
-| `bucketURI` | URL of the bucket to download HotBackup folders. AWS S3, GCP Bucket and Azure Blob storage buckets are supported. Example bucket URIs: - AWS S3 → s3://bucket-name/path/to/folder - GCP Bucket → gs://bucket-name/path/to/folder - Azure Blob → azblob://bucket-name/path/to/folder | `string` | false | - |
+| `bucketURI` | URL of the bucket to download HotBackup folders. AWS S3, GCP Bucket and Azure Blob storage buckets are supported. Example bucket URIs: - AWS S3     -\> s3://bucket-name/path/to/folder - GCP Bucket -\> gs://bucket-name/path/to/folder - Azure Blob -\> azblob://bucket-name/path/to/folder | `string` | false | - |
 | `secretName` | Name of the secret with credentials for cloud providers. | `string` | false | - |
 
 #### Deprecated {/* #deprecated-6 */}
@@ -961,9 +961,9 @@ HotBackupStatus defines the observed state of HotBackup
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
 | `name` | Name of the index config. | `string` | false | - |
-| `type` | Type of the index. See [Indexing Maps](/hazelcast/latest/query/indexing-maps#index-types) | [`IndexType`](#indextype) | true | - |
+| `type` | Type of the index. See [https://docs.hazelcast.com/hazelcast/latest/query/indexing-maps#index-types](https://docs.hazelcast.com/hazelcast/latest/query/indexing-maps#index-types) | [`IndexType`](#indextype) | true | - |
 | `attributes` | Attributes of the index. At least one attribute is required; duplicates are not allowed. | `[]string` | true | - |
-| `bitMapIndexOptions` | Options for "BITMAP" index type only. See [Indexing Maps](/hazelcast/latest/query/indexing-maps#configuring-bitmap-indexes) | [`*BitmapIndexOptionsConfig`](#bitmapindexoptionsconfig) | false | - |
+| `bitMapIndexOptions` | Options for "BITMAP" index type only. See [https://docs.hazelcast.com/hazelcast/latest/query/indexing-maps#configuring-bitmap-indexes](https://docs.hazelcast.com/hazelcast/latest/query/indexing-maps#configuring-bitmap-indexes) | [`*BitmapIndexOptionsConfig`](#bitmapindexoptionsconfig) | false | - |
 
 [Back to TOC](#table-of-contents)
 
@@ -992,8 +992,8 @@ JAASPropertyFromSource represents the source for the JAAS Properties
 
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
-| `configMapRef` | The ConfigMap to select from | [`*JAASPropertiesSource`](#JAASPropertiesSource) | false | - |
-| `secretRef` | The Secret to select from | [`*JAASPropertiesSource`](#JAASPropertiesSource) | false | - |
+| `configMapRef` | The ConfigMap to select from | [`*JAASPropertiesSource`](#jaaspropertiessource) | false | - |
+| `secretRef` | The Secret to select from | [`*JAASPropertiesSource`](#jaaspropertiessource) | false | - |
 
 [Back to TOC](#table-of-contents)
 
@@ -1269,7 +1269,7 @@ MCClientTLS is used by Management Center CR, MC has nothing to do with MemberAut
 
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
-| `mutualAuthentication` | mutualAuthentication is deprecated. Use clientAuthentication field instead. Mutual authentication configuration. It's None by default which means the client side of connection is not authenticated. | [`MutualAuthentication`](#mutualauthentication) | false | - |
+| `mutualAuthentication` | mutualAuthentication is deprecated. Use clientAuthentication field instead. Mutual authentication configuration. It’s None by default which means the client side of connection is not authenticated. | [`MutualAuthentication`](#mutualauthentication) | false | - |
 
 [Back to TOC](#table-of-contents)
 
@@ -1405,12 +1405,12 @@ MapSpec defines the desired state of Hazelcast Map Config
 | `timeToLiveSeconds` | Maximum time in seconds for each entry to stay in the map. If it is not 0, entries that are older than this time and not updated for this time are evicted automatically. It can be updated. | `int32` | false | 0 |
 | `maxIdleSeconds` | Maximum time in seconds for each entry to stay idle in the map. Entries that are idle for more than this time are evicted automatically. It can be updated. | `int32` | false | 0 |
 | `eviction` | Configuration for removing data from the map when it reaches its max size. It can be updated. | [`EvictionConfig`](#evictionconfig) | false | - |
-| `indexes` | Indexes to be created for the map data. You can learn more at [Indexing Maps](/hazelcast/latest/query/indexing-maps). It cannot be updated after map config is created successfully. | [`[]IndexConfig`](#indexconfig) | false | - |
-| `attributes` | Attributes to be used with Predicates API. You can learn more at [Predicates API](/hazelcast/latest/query/predicate-overview#creating-custom-query-attributes) | [`[]AttributeConfig`](#attributeconfig) | false | - |
+| `indexes` | Indexes to be created for the map data. You can learn more at [https://docs.hazelcast.com/hazelcast/latest/query/indexing-maps](https://docs.hazelcast.com/hazelcast/latest/query/indexing-maps). It cannot be updated after map config is created successfully. | [`[]IndexConfig`](#indexconfig) | false | - |
+| `attributes` | Attributes to be used with Predicates API. You can learn more at [https://docs.hazelcast.com/hazelcast/latest/query/predicate-overview#creating-custom-query-attributes](https://docs.hazelcast.com/hazelcast/latest/query/predicate-overview#creating-custom-query-attributes) | [`[]AttributeConfig`](#attributeconfig) | false | - |
 | `persistenceEnabled` | When enabled, map data will be persisted. It cannot be updated after map config is created successfully. | `bool` | false | false |
-| `mapStore` | Configuration options when you want to load/store the map entries from/to a persistent data store such as a relational database You can learn more at [Building a Cache with MapStore](/hazelcast/latest/mapstore/working-with-external-data) | [`*MapStoreConfig`](#mapstoreconfig) | false | - |
+| `mapStore` | Configuration options when you want to load/store the map entries from/to a persistent data store such as a relational database You can learn more at [https://docs.hazelcast.com/hazelcast/latest/data-structures/working-with-external-data](https://docs.hazelcast.com/hazelcast/latest/data-structures/working-with-external-data) | [`*MapStoreConfig`](#mapstoreconfig) | false | - |
 | `inMemoryFormat` | InMemoryFormat specifies in which format data will be stored in your map | [`InMemoryFormatType`](#inmemoryformattype) | false | BINARY |
-| `entryListeners` | EntryListeners contains the configuration for the map-level or entry-based events listeners provided by the Hazelcast's eventing framework. You can learn more at [Distributed Object Events](/hazelcast/latest/events/object-events). | [`[]EntryListenerConfiguration`](#entrylistenerconfiguration) | false | - |
+| `entryListeners` | EntryListeners contains the configuration for the map-level or entry-based events listeners provided by the Hazelcast’s eventing framework. You can learn more at [https://docs.hazelcast.com/hazelcast/latest/events/object-events](https://docs.hazelcast.com/hazelcast/latest/events/object-events). | [`[]EntryListenerConfiguration`](#entrylistenerconfiguration) | false | - |
 | `nearCache` | InMemoryFormat specifies near cache configuration for map | [`*NearCache`](#nearcache) | false | - |
 | `eventJournal` | EventJournal specifies event journal configuration of the Map | [`*EventJournal`](#eventjournal) | false | - |
 | `merkleTree` | MerkleTree defines the configuration for the Merkle tree data structure. | [`*MerkleTreeConfig`](#merkletreeconfig) | false | - |
@@ -1556,7 +1556,7 @@ NativeMemoryConfiguration is a Hazelcast HD memory configuration
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
 | `name` |  | `string` | true | - |
-| `accessModes` | AccessModes contains the actual access modes of the volume backing the PVC has. More info: [https://kubernetes.io/docs/concepts/storage/persistent-volumes\#access-modes-1](https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1) | [`[]corev1.PersistentVolumeAccessMode`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#persistentvolumeaccessmode-v1-core) | true | - |
+| `accessModes` | AccessModes contains the actual access modes of the volume backing the PVC has. More info: [https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1](https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1) | [`[]corev1.PersistentVolumeAccessMode`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#persistentvolumeaccessmode-v1-core) | true | - |
 | `requestStorage` | A description of the PVC request capacity. | `*resource.Quantity` | false | "8Gi" |
 | `storageClassName` | Name of StorageClass which this persistent volume belongs to. | `*string` | false | - |
 
@@ -1621,7 +1621,7 @@ PermissionWithName is used for instance permissions like map, queue etc.
 
 | Field | Description | Type | Required | Default |
 | --- | --- | --- | --- | --- |
-| `accessModes` | AccessModes contains the actual access modes of the volume backing the PVC has. More info: [https://kubernetes.io/docs/concepts/storage/persistent-volumes\#access-modes-1](https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1) | [`[]corev1.PersistentVolumeAccessMode`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#persistentvolumeaccessmode-v1-core) | true | - |
+| `accessModes` | AccessModes contains the actual access modes of the volume backing the PVC has. More info: [https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1](https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1) | [`[]corev1.PersistentVolumeAccessMode`](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#persistentvolumeaccessmode-v1-core) | true | - |
 | `requestStorage` | A description of the PVC request capacity. | `*resource.Quantity` | false | "8Gi" |
 | `storageClassName` | Name of StorageClass which this persistent volume belongs to. | `*string` | false | - |
 
@@ -1674,7 +1674,7 @@ QueueSpec defines the desired state of Queue It cannot be updated after the Queu
 | `userCodeNamespace` | Name of the User Code Namespace applied to this instance | `string` | false | - |
 | `maxSize` | Max size of the queue. | `int32` | false | 0 |
 | `emptyQueueTTLSeconds` | Time in seconds after which the Queue will be destroyed if it stays empty or unused. If the values is not provided the Queue will never be destroyed. | `*int32` | false | -1 |
-| `priorityComparatorClassName` | The name of the comparator class. If the class name is provided, the Queue becomes Priority Queue. You can learn more at [Priority Queue](/hazelcast/latest/data-structures/priority-queue). | `string` | false | - |
+| `priorityComparatorClassName` | The name of the comparator class. If the class name is provided, the Queue becomes Priority Queue. You can learn more at [https://docs.hazelcast.com/hazelcast/latest/data-structures/priority-queue](https://docs.hazelcast.com/hazelcast/latest/data-structures/priority-queue). | `string` | false | - |
 
 [Back to TOC](#table-of-contents)
 
