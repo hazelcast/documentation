@@ -35,7 +35,7 @@ To configure an expiration policy, use the elements `time-to-live-seconds` and `
 This element is relative to the time of a map's last write. For example a time to live (TTL) of 60 seconds means that an entry will be removed if it is not written to at least every 60 seconds.
 
 - Default value: 0 (disabled)
-- Accepted values: Integers between 0 and `Integer.MAX VALUE`.
+- Accepted values: Integers between 0 and `Integer.MAX_VALUE`.
 
 By default, this configuration element applies to all entries in a map. To configure TTL for specific entries, see [Setting an Expiration Policy for Specific Entries](#evicting-specific-entries).
 
@@ -44,7 +44,7 @@ By default, this configuration element applies to all entries in a map. To confi
 This element is relative to the time of the last `get()`, `put()`, `EntryProcessor.process()` or `containsKey()` method called on it. For example a setting of 60 seconds means that an entry will be removed if it is not written to or read from at least every 60 seconds.
 
 - Default value: 0 (disabled)
-- Accepted values: Integers between 0 and `Integer.MAX VALUE`.
+- Accepted values: Integers between 0 and `Integer.MAX_VALUE`.
 
 By default, this configuration element applies to all entries in a map. To configure TTL for specific entries, see [Setting an Expiration Policy for Specific Entries](#evicting-specific-entries).
 
@@ -93,7 +93,7 @@ An eviction policy limits the size of a map. If the size of the map grows larger
 This element defines the maximum size of a map. When the maximum size is reached, map entries are removed based on the value of the `eviction-policy` element.
 
 - Default value: 0 (no limit)
-- Accepted values: Integers between 0 and `Integer.MAX VALUE`.
+- Accepted values: Integers between 0 and `Integer.MAX_VALUE`.
 
 If you want to set this element to any size other than 0, you must also set the `eviction-policy` property to a value other than `NONE`.
 

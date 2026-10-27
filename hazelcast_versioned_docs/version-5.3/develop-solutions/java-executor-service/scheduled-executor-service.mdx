@@ -107,7 +107,7 @@ The following are the descriptions of each configuration element and attribute:
   - `PER_NODE`: Capacity policy that counts tasks for each Hazelcast member. It rejects new tasks when the `capacity` value is reached.
   - `PER_PARTITION`: Capacity policy that counts tasks for each partition. It rejects new tasks when the `capacity` value is reached. Storage size depends on the partition count in a Hazelcast member. This policy option should not be used often - avoid using it with a small cluster: if the cluster is small, it hosts more partitions, and therefore tasks, than that of a larger cluster. This policy has no effect when scheduling is done using the `OnMember` APIs, e.g., `IScheduledExecutorService#scheduleOnMember(Runnable, Member, long, TimeUnit)`.
 - `durability`: Durability of the executor.
-- `split-brain-protection-ref`: Name of the split-brain protection configuration that you want this Scheduled Executor Service to use. See [Split-Brain Protection for IScheduled Executor Service](#split-brain-protection-for-ischeduled-executor-service).
+- `split-brain-protection-ref`: Name of the split-brain protection configuration that you want this Scheduled Executor Service to use. See [Split-Brain Protection for `IScheduledExecutorService`](#split-brain-protection-for-ischeduled-executor-service).
 - `merge-policy`: The default policy is `PutIfAbsentMergePolicy` with a batch size of 100. This is the policy used when merging entries from sub-clusters (after split-brain recovery). See [Merge Policies](../../configure-and-manage-clusters/configuring-for-fault-tolerance/handling-network-partitions/split-brain-recovery.mdx#merge-policies).
 
 ## Examples {/* #scheduled-exec-srv-examples */}
@@ -142,7 +142,7 @@ future.dispose(); // Always dispose futures that are not in use any more, to rel
 long totalTaskRuns = stats.getTotalRuns(); // = 1
 ```
 
-## Split-Brain Protection for IScheduled Executor Service
+## Split-Brain Protection for `IScheduledExecutorService` {/* #split-brain-protection-for-ischeduled-executor-service */}
 
 IScheduledExecutorService can be configured to check for a minimum number of available members before applying its operations (see the [Split-Brain Protection section](../../configure-and-manage-clusters/configuring-for-fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful queue operations on all parts of a cluster during a network partition.
 
