@@ -11,7 +11,7 @@ If Hazelcast doesn't natively support the data source/sink you need, you can bui
 To make a custom source connector you need two basic ingredients:
 
 - a *context* object that holds all the resources and state you need to keep track of
-- a stateless function, *\`fillBufferFn\`*, taking two parameters: the state object and a buffer object provided by the Jet API
+- a stateless function, *`fillBufferFn`*, taking two parameters: the state object and a buffer object provided by the Jet API
 
 Hazelcast repeatedly calls `fillBufferFn` whenever it needs more data items. Optimally, the function will fill the buffer with the items it can acquire without blocking. A hundred items at a time is enough to eliminate any per-call overheads within Hazelcast. The function is allowed to block as well, but taking longer than a second to complete can have negative effects on the overall performance of the processing pipeline.
 
@@ -39,7 +39,7 @@ For a more involved example (which reads data in *batches* for efficiency, deals
 To make your custom sink connector you need two basic ingredients:
 
 - a *context* object that holds all the resources and state you need to keep track of
-- a stateless function, *\`receiveFn\`*, taking two parameters: the state object and a data item sent to the sink
+- a stateless function, *`receiveFn`*, taking two parameters: the state object and a data item sent to the sink
 
 In the following example we build a simple sink which writes the `toString()` form of objects to a file:
 

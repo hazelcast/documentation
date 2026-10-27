@@ -385,7 +385,7 @@ After migration:
 
 - **V1 to V2:** Additive, compatible change: same map and `typeName`.
 - **V2 to V3:** Rename and partitioning change: incompatible, new map and migration required.
-- Stable \`typeName\`s, deterministic writes, and explicit migration steps ensure safe schema evolution and predictable behavior.
+- Stable `typeName`s, deterministic writes, and explicit migration steps ensure safe schema evolution and predictable behavior.
 
 ## Integrate schema evolution with MapStore
 
@@ -640,7 +640,7 @@ When you update an SQL mapping to include an extra field that did not exist in o
 
 - **Missing fields read as `NULL`.** If a row's underlying Compact schema has no such field, the column resolves to `NULL` at query time. This is schema-on-read; it does not error.
 - **Filters and expressions follow SQL three-valued logic.** Predicates like `WHERE currency = 'GBP'` will **exclude** rows where `currency` is `NULL`. Use `IS NULL`, `COALESCE`, or explicit backfill if you want different behavior.
-- **Aggregations handle ``NULL`s normally.``**``  `COUNT(currency) `` ignores ``NULL`s; `COUNT(*)`` counts all rows; `SUM`/`AVG` ignore \`NULL\`s.
+- **Aggregations handle `NULL`s normally.** `COUNT(currency)` ignores `NULL`s; `COUNT(*)` counts all rows; `SUM`/`AVG` ignore `NULL`s.
 - **Type must be compatible across versions.** If you widened the type (e.g., `INT` → `BIGINT`), SQL will unify correctly. Narrowing across mixed rows can fail and should be avoided or migrated.
 
 ### Incompatible schema changes {/* #incompatible-schema-changes-3 */}
