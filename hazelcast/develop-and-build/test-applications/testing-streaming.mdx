@@ -309,7 +309,7 @@ Hazelcast Jet guarantees at-least-once delivery for items: each record will be w
 
 For example, if you write to `Sinks.list("out")`, after a member failure and job restart, some items could appear twice in the list. This is correct behaviour according to at-least-once semantics.
 
-Because duplicates are possible, asserting strict sequence equality (e.g., \[1,2,3\]) may fail even though the pipeline is correct. Instead, design assertions that are idempotent—not affected by duplicates. Examples:
+Because duplicates are possible, asserting strict sequence equality (e.g., `[1,2,3]`) may fail even though the pipeline is correct. Instead, design assertions that are idempotent—not affected by duplicates. Examples:
 
 - Assert the set of values (`{1,2,3}`), not the exact list with ordering.
 - Assert that at least N items were produced.
