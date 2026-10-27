@@ -45,7 +45,7 @@ const config: Config = {
   staticDirectories: ['static', '.api-specs'],
 
   onBrokenLinks: 'throw',
-  onBrokenAnchors: 'ignore',
+  onBrokenAnchors: 'warn',
 
   markdown: {
     hooks: {

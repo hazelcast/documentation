@@ -76,6 +76,7 @@ Package managers are the fastest way to install Hazelcast. This option is for de
 
    </TabItem>
    </Tabs>
+
 2. Check that Hazelcast Platform is correctly installed:
 
    ```shell
@@ -96,6 +97,7 @@ For more information about the packages, see the [GitHub repository](https://git
    ```
 
    If you do not see a version number, see the [Docker documentation](https://docs.docker.com/config/daemon/) for troubleshooting information.
+
 3. Pull the Hazelcast Docker image:
 
    ```shell vars
@@ -143,9 +145,15 @@ The Java package includes both a member API and a Java client API. The member AP
 
    </CodeCallouts>
 
-<IfNotSnapshot>
-
 ### Use the JAR
+
+<IfSnapshot>
+
+JAR files are not available for snapshot versions.
+
+</IfSnapshot>
+
+<IfNotSnapshot>
 
 If you aren't using a build tool:
 
@@ -165,12 +173,12 @@ If you use JPMS, it enforces stricter visibility rules and Hazelcast uses the in
 Hazelcast needs the `java.se` module and access to the following Java packages:
 
 - `java.base/jdk.internal.ref`
-- `java.base/java.nio` *(reflective access)*
-- `java.base/sun.nio.ch` *(reflective access)*
-- `java.base/java.lang` *(reflective access)*
-- `jdk.management/com.ibm.lang.management.internal` *(reflective access)*
-- `jdk.management/com.sun.management.internal` *(reflective access)*
-- `java.management/sun.management` *(reflective access)*
+- `java.base/java.nio` _(reflective access)_
+- `java.base/sun.nio.ch` _(reflective access)_
+- `java.base/java.lang` _(reflective access)_
+- `jdk.management/com.ibm.lang.management.internal` _(reflective access)_
+- `jdk.management/com.sun.management.internal` _(reflective access)_
+- `java.management/sun.management` _(reflective access)_
 
 You can provide access to these packages by using simple `--add-exports` and `--add-opens` (for reflective access) Java arguments.
 
