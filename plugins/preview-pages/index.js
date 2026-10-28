@@ -1,16 +1,17 @@
 'use strict'
 
-const path = require('node:path')
-const fs = require('node:fs')
-
-// Emits /preview-pages.json in Netlify deploy previews: every doc's source file mapped to its URL path,
-// e.g. { "hazelcast/sql/index.mdx": "/hazelcast/6.0-snapshot/sql" }. The preview-links workflow reads it
-// to link a PR's changed pages. Taken from the docs plugins' loaded content, so slugs and versions resolve
-// exactly as the site serves them.
+// In Netlify deploy previews, comments on the PR with direct links to the pages it changes. The URLs come from
+// the docs plugins' loaded content, so slugs and versions resolve exactly as the site serves them. Files with no
+// page of their own, such as partials and images, are left out. A failure only logs a warning.
+// Netlify sets CONTEXT, REVIEW_ID (the PR number), and DEPLOY_PRIME_URL (the preview URL). The token needs
+// write access to the repo's pull requests.
 
 const DOCS_PLUGIN_NAME = 'docusaurus-plugin-content-docs'
-const OUT_PATH = 'preview-pages.json'
+const REPO = 'hazelcast/documentation'
+const HEADING = 'Direct preview link'
+const MAX_LINKS = 10
 
+// Each doc's source file mapped to its URL path, e.g. { "hazelcast/sql/index.mdx": "/hazelcast/6.0-snapshot/sql" }.
 function pageMap (plugins) {
   const map = {}
   for (const plugin of plugins.filter((p) => p.name === DOCS_PLUGIN_NAME)) {
@@ -21,16 +22,67 @@ function pageMap (plugins) {
   return map
 }
 
+// The comment text, or '' if no page changed.
+function renderComment (changedFiles, pages, previewUrl) {
+  const urls = [...new Set(changedFiles.filter((file) => pages[file]).map((file) => pages[file]))]
+  if (urls.length === 0) return ''
+  const heading = urls.length === 1 ? `${HEADING} to changed page:` : `${HEADING}s to changed pages:`
+  const lines = [heading, '']
+  for (const url of urls.slice(0, MAX_LINKS)) lines.push(`- [${url}](${previewUrl.replace(/\/$/, '')}${url})`)
+  if (urls.length > MAX_LINKS) lines.push(`- and ${urls.length - MAX_LINKS} more`)
+  return lines.join('\n') + '\n'
+}
+
+async function github (token, method, path, body) {
+  const res = await fetch(`https://api.github.com${path}`, {
+    method,
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
+    body: body && JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error(`${method} ${path} returned ${res.status}`)
+  return res.json()
+}
+
+// Every item of a paginated GitHub list.
+async function githubList (token, path) {
+  const items = []
+  for (let page = 1; ; page++) {
+    const batch = await github(token, 'GET', `${path}?per_page=100&page=${page}`)
+    items.push(...batch)
+    if (batch.length < 100) return items
+  }
+}
+
+// Posts the comment, or edits the one an earlier build posted. If no page changed, it posts no comment.
+async function commentOnPr ({ token, pr, previewUrl, pages }) {
+  const files = await githubList(token, `/repos/${REPO}/pulls/${pr}/files`)
+  const body = renderComment(files.map((file) => file.filename), pages, previewUrl)
+  if (!body) return
+  const comments = await githubList(token, `/repos/${REPO}/issues/${pr}/comments`)
+  const earlier = comments.find((comment) => comment.body.startsWith(HEADING))
+  if (earlier) await github(token, 'PATCH', `/repos/${REPO}/issues/comments/${earlier.id}`, { body })
+  else await github(token, 'POST', `/repos/${REPO}/issues/${pr}/comments`, { body })
+}
+
 module.exports = function previewPagesPlugin () {
   return {
     name: 'preview-pages',
 
-    async postBuild ({ outDir, plugins }) {
-      // Netlify sets CONTEXT; production and local builds don't publish the file.
-      if (process.env.CONTEXT !== 'deploy-preview') return
-      fs.writeFileSync(path.join(outDir, OUT_PATH), JSON.stringify(pageMap(plugins)), 'utf8')
+    async postBuild ({ plugins }) {
+      const { CONTEXT, REVIEW_ID, DEPLOY_PRIME_URL } = process.env
+      if (CONTEXT !== 'deploy-preview') return
+      try {
+        await commentOnPr({
+          token: process.env.GITHUB_TOKEN || process.env.GH_TOKEN,
+          pr: REVIEW_ID,
+          previewUrl: DEPLOY_PRIME_URL,
+          pages: pageMap(plugins),
+        })
+      } catch (err) {
+        console.warn(`[preview-pages] Could not comment on PR ${REVIEW_ID}: ${err.message}`)
+      }
     },
   }
 }
 
-module.exports.pageMap = pageMap
+Object.assign(module.exports, { pageMap, renderComment, commentOnPr })
