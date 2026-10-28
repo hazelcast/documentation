@@ -13,7 +13,8 @@ const MAX_LINKS = 10
 function renderComment (changedFiles, pages, previewUrl) {
   const urls = [...new Set(changedFiles.filter((file) => pages[file]).map((file) => pages[file]))]
   if (urls.length === 0) return ''
-  const lines = ['Direct preview links to changed pages:', '']
+  const heading = urls.length === 1 ? 'Direct preview link to changed page:' : 'Direct preview links to changed pages:'
+  const lines = [heading, '']
   for (const url of urls.slice(0, MAX_LINKS)) lines.push(`- [${url}](${previewUrl.replace(/\/$/, '')}${url})`)
   if (urls.length > MAX_LINKS) lines.push(`- and ${urls.length - MAX_LINKS} more`)
   return lines.join('\n') + '\n'

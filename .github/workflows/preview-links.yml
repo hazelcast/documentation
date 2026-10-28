@@ -22,8 +22,7 @@ jobs:
           gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$pr/files" --jq ".[].filename" > "$RUNNER_TEMP/files.txt"
           node .github/scripts/preview-links "$RUNNER_TEMP/files.txt" "$RUNNER_TEMP/pages.json" "$PREVIEW_URL" > "$RUNNER_TEMP/body.md"
           [ -s "$RUNNER_TEMP/body.md" ] || exit 0
-          export HEADER=$(head -n 1 "$RUNNER_TEMP/body.md")
-          id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$pr/comments" --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith(env.HEADER))) | .id' | head -n 1)
+          id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$pr/comments" --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("Direct preview link"))) | .id' | head -n 1)
           if [ -n "$id" ]; then
             gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@"$RUNNER_TEMP/body.md" > /dev/null
           else

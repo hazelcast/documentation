@@ -28,3 +28,8 @@ test('caps the list and counts the rest', () => {
 test('prints nothing when no page changed', () => {
   assert.equal(renderComment(['README.md'], {}, PREVIEW), '')
 })
+
+test('uses the singular for one page', () => {
+  const pages = { 'cloud/overview.mdx': '/cloud/overview' }
+  assert.match(renderComment(['cloud/overview.mdx'], pages, PREVIEW), /^Direct preview link to changed page:\n/)
+})
