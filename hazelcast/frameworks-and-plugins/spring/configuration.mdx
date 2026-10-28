@@ -6,6 +6,8 @@ slug: /spring/configuration
 
 This section describes how to set up Hazelcast in a new or existing Spring application.
 
+test
+
 ## Enable Spring integration
 
 These instructions assume you are using Apache Maven. If you use another build system, you will need to adjust the definition of dependencies as required.
@@ -22,6 +24,7 @@ To enable Spring integration:
        <version>{os-version}</version>
    </dependency>
    ```
+
 3. If you are an Enterprise customer and you want to use `hazelcast-spring` with `hazelcast-enterprise`, you also need to exclude the transitive `hazelcast` dependency:
 
    ```xml vars
@@ -285,6 +288,7 @@ The `hazelcast` XML namespace supports the following configuration:
       </hz:config>
   </hz:hazelcast>
   ```
+
 - Configure a Hazelcast client
 
   ```xml
@@ -302,13 +306,13 @@ The `hazelcast` XML namespace supports the following configuration:
   :::warning
 
   If you connect to a cluster in a Spring Boot application via the Hazelcast client with security enabled, and you want to see the health of that cluster, you must enable permissions for transactions. For further information, see the following topics:
-
   - [Authentication overview](../../operate-and-manage/securing-a-cluster/authentication/authentication-overview.mdx)
   - [Java Client Security](../../clients-and-apis/clients/java.mdx#client-security-configuration)
   - [Enabling health check for a cluster](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#health-check-and-monitoring)
   - [Configuring transaction permissions on the members](../../operate-and-manage/securing-a-cluster/client-authorization.mdx#transaction-permission)
 
   :::
+
 - Configure MapStore and NearCache
 
   For `map-store`, you should set either the `class-name` or the `implementation` attribute.

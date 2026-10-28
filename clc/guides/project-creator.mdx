@@ -7,6 +7,8 @@ slug: /project-creator
 
 This guide shows you how to create projects using the CLC \`project create\` command.
 
+test
+
 ## Introduction
 
 Hazelcast CLC provides a solution that simplifies the creation of Hazelcast projects. The created projects do not require further configuration.
@@ -44,18 +46,18 @@ go-client-getting-started
 └── ...
 ```
 
-The `.template` extension specifies that the file is a [Go template](https://pkg.go.dev/text/template) that includes placeholders and actions. The `.keep` extension identifies files to keep as they are required for the project. For example, a file named *README.md* in the template is replaced by a file named *README.md.keep* when the project is created.
+The `.template` extension specifies that the file is a [Go template](https://pkg.go.dev/text/template) that includes placeholders and actions. The `.keep` extension identifies files to keep as they are required for the project. For example, a file named _README.md_ in the template is replaced by a file named _README.md.keep_ when the project is created.
 
-Let's look a bit deeper to *config.go.template* to see what placeholders are included:
+Let's look a bit deeper to _config.go.template_ to see what placeholders are included:
 
 - config
-- cluster\_name
-- cluster\_discovery\_token
-- cluster\_address
-- ssl\_key\_path
-- ssl\_cert\_path
-- ssl\_key\_password
-- cluster\_api\_base
+- cluster_name
+- cluster_discovery_token
+- cluster_address
+- ssl_key_path
+- ssl_cert_path
+- ssl_key_password
+- cluster_api_base
 
 that are used in this template. You can find a full list of placeholders in the [clc project](../reference/clc-commands/clc-project.mdx) topic.
 
@@ -72,11 +74,10 @@ This project is created in the current working directory. To create the project 
 If preferred, you can use templates that you have created. When creating your templates, keep the following points in mind:
 
 - Use the format used in the [Go template](https://pkg.go.dev/text/template).
-- To add default values, create a *template.yaml* file, add a `defaults` node, and save it in the template root directory.
-- Template files must have the *.template* extension.
-- File names that start with a period (`.`) or underscore (`_`) are ignored, unless they also have a *.keep* extensions.
-- Any files with a *.keep* extension are copied to the project with the *.keep* extension removed. All other files are copied without changes. \*Properties are read from the following resources in order:
-
+- To add default values, create a _template.yaml_ file, add a `defaults` node, and save it in the template root directory.
+- Template files must have the _.template_ extension.
+- File names that start with a period (`.`) or underscore (`_`) are ignored, unless they also have a _.keep_ extensions.
+- Any files with a _.keep_ extension are copied to the project with the _.keep_ extension removed. All other files are copied without changes. \*Properties are read from the following resources in order:
   1. The defaults node of the templates.yaml file.
 
      :::note
@@ -84,6 +85,7 @@ If preferred, you can use templates that you have created. When creating your te
      The keys must not contain any punctuation characters.
 
      :::
+
   2. `config.yaml`
   3. User passed key-values in the "KEY=VALUE" format.
 
