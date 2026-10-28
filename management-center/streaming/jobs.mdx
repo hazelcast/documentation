@@ -6,6 +6,8 @@ slug: /monitor-streaming/jobs
 
 The **Jobs** menu item provides a general overview of the jobs in a Hazelcast cluster that have Jet enabled.
 
+Test
+
 ![Jobs](./images/jobs.png)
 
 ## Active Jobs
@@ -145,7 +147,6 @@ This section displays all the processors this vertex has in the cluster and show
 - **Items In:** Total number of items received by this processor.
 - **Items Out:** Total number of items sent by this processor.
 - <Anchor id="latency" />**Latency:** Time difference between the wall-clock time and the last forwarded watermark ("event time, time of the stream"). Multiple factors contribute to the total latency:
-
   - **latency in the external system**; events arrive already delayed to Stream source
   - **allowed lag**; if you allow for some time to wait for delayed events, watermarks will always be delayed by this lag. Note that the actual output might not be delayed.
   - **event-to-event interval**; if there is a time period between two events, the event time "stops" for that time. In other words, until a new event occurs, the current time is the time of the last event. As "current event time" is tracked independently for each partition, this can be the major source of skew. If your events are irregular, you might consider adding heartbeat events. This factor also applies if you use `withIngestionTimestamps` since a new wall-clock time is assigned only if a new event occurs.
