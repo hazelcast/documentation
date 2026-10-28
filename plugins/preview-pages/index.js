@@ -73,7 +73,7 @@ module.exports = function previewPagesPlugin () {
       if (CONTEXT !== 'deploy-preview') return
       try {
         await commentOnPr({
-          token: process.env.GITHUB_TOKEN || process.env.GH_TOKEN,
+          token: process.env.GITHUB_TOKEN || process.env.GH_TOKEN || new URL(process.env.GIT_CREDENTIALS).username,
           pr: REVIEW_ID,
           previewUrl: DEPLOY_PRIME_URL,
           pages: pageMap(plugins),
