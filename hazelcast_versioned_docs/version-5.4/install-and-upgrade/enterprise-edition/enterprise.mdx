@@ -57,7 +57,7 @@ For help downloading Hazelcast <Variable name="enterprise-product-name" />, see 
 
 ### Fixes
 
-- **Fixed delayed cleanup of job resources in Jet jobs:** Resolved an issue where job resource IMaps were not deleted swiftly on job completion and instead lingered until the 2-hour default expiration, increasing memory usage and cleanup overhead. The fix restores immediate deletion of job resources and corrects cleanup when resource uploads partially fail for files and directories.
+- **Fixed delayed cleanup of job resources in Jet jobs:** Resolved an issue where job resource `IMap`s were not deleted swiftly on job completion and instead lingered until the 2-hour default expiration, increasing memory usage and cleanup overhead. The fix restores immediate deletion of job resources and corrects cleanup when resource uploads partially fail for files and directories.
 - **Fixed incorrect filtering of non-expired entries in global indexes:** Enhanced the thread-safe handling of expired entries in global indexes (originally addressed in 5.4.3), where a race condition allowed one thread to modify expiry metadata while another was reading it. This bug could cause non-expired entries to be incorrectly filtered out from query results. The fix ensures consistent expiry metadata access across threads so that only truly expired entries are excluded.
 
 ## 5.4.3 {/* #5-4-3 */}

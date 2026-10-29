@@ -326,7 +326,7 @@ The possible values for the `mode` placeholder:
 
 Hazelcast exposes various metrics to facilitate monitoring of the cluster state. They are `<string,value>` key-value pairs of data that capture the runtime information about the members and clients in a Hazelcast cluster. Such a metric can be the number of entries stored in a particular `IMap` on a given member, JVM metrics like used heap, OS metrics like load average, and so on.
 
-The metrics system is responsible for collecting these metrics and making them available for the [consumers](#exposing-metrics) of the metrics. There are a few hundred metrics collected during every metrics collection cycle by default, but the number of metrics grows as more features and data structures are used. This is because every data structure provides its own metrics. For example, if there are two IMaps used in a cluster, both IMaps produce their metrics on every member.
+The metrics system is responsible for collecting these metrics and making them available for the [consumers](#exposing-metrics) of the metrics. There are a few hundred metrics collected during every metrics collection cycle by default, but the number of metrics grows as more features and data structures are used. This is because every data structure provides its own metrics. For example, if there are two `IMap`s used in a cluster, both `IMap`s produce their metrics on every member.
 
 Metrics have associated **tags** which describe which object the metric applies to. For example, the tags for job metrics typically indicate the specific DAG vertex and processor the metric belongs to.
 
@@ -535,9 +535,9 @@ Note that the metric names may change between MINOR versions but not between PAT
 
 ### Notes on the performance
 
-The metrics system is designed with care to make the least possible impact on the performance of the cluster. Since the metrics collection takes place periodically with a few seconds frequency, the main focus is keeping allocation rates and memory footprint at minimum. Therefore, the blobs that store the metrics for Management Center are stored in the memory in a compressed format. The measurements, that use multiple IMaps to scale up the number of metrics, show that one blob occupies only a few KBs and it grows above 10KB only if there are more than 1000 IMaps.
+The metrics system is designed with care to make the least possible impact on the performance of the cluster. Since the metrics collection takes place periodically with a few seconds frequency, the main focus is keeping allocation rates and memory footprint at minimum. Therefore, the blobs that store the metrics for Management Center are stored in the memory in a compressed format. The measurements, that use multiple `IMap`s to scale up the number of metrics, show that one blob occupies only a few KBs and it grows above 10KB only if there are more than 1000 `IMap`s.
 
-The allocation rate of a metric collection cycle is also low. With both Management Center and JMX consumers enabled, the allocation rate with 100 IMaps is below 256KB per cycle, and it grows above 1MB with 1000 IMaps. This means that metrics collection does not increase the frequency of the garbage collection (GC) noticeably.
+The allocation rate of a metric collection cycle is also low. With both Management Center and JMX consumers enabled, the allocation rate with 100 `IMap`s is below 256KB per cycle, and it grows above 1MB with 1000 `IMap`s. This means that metrics collection does not increase the frequency of the garbage collection (GC) noticeably.
 
 While the metrics collection is considered GC friendly, it should be noted that the blobs are not recycled: configuring the retention time should be done with taking the frequency of the GC into account to prevent the blobs from getting promoted into the tenured region of the heap that in the end contributes to major GCs after time.
 
