@@ -9,9 +9,9 @@ import TabItem from "@theme/TabItem";
 import CodeBlock from "@theme/CodeBlock";
 import Ex_distributedcomputing_ScheduledExecutorConfiguration_java_tag_sec from "../../examples/distributedcomputing/ScheduledExecutorConfiguration.java?tag=sec";
 
-Hazelcast's scheduled executor service (IScheduledExecutorService) is a data structure which implements `java.util.concurrent.ScheduledExecutorService`, partially. By partially, we mean the behavior difference in scheduling a task at a fixed rate (`scheduleAtFixedRate()`). Hazelcast's behavior guarantees that a task is not executed by multiple threads concurrently: a scheduled execution is skipped, instead of postponing, if another thread is still running the same task.
+Hazelcast's scheduled executor service (`IScheduledExecutorService`) is a data structure which implements `java.util.concurrent.ScheduledExecutorService`, partially. By partially, we mean the behavior difference in scheduling a task at a fixed rate (`scheduleAtFixedRate()`). Hazelcast's behavior guarantees that a task is not executed by multiple threads concurrently: a scheduled execution is skipped, instead of postponing, if another thread is still running the same task.
 
-On top of the Vanilla Scheduling API, IScheduledExecutorService allows additional methods such as the following:
+On top of the Vanilla Scheduling API, `IScheduledExecutorService` allows additional methods such as the following:
 
 - `scheduleOnMember`: On a specific cluster member.
 - `scheduleOnKeyOwner`: On the partition owning that key.
@@ -144,11 +144,11 @@ long totalTaskRuns = stats.getTotalRuns(); // = 1
 
 ## Split-Brain Protection for `IScheduledExecutorService` {/* #split-brain-protection-for-ischeduled-executor-service */}
 
-IScheduledExecutorService can be configured to check for a minimum number of available members before applying its operations (see the [Split-Brain Protection section](../../configure-and-manage-clusters/configuring-for-fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful queue operations on all parts of a cluster during a network partition.
+`IScheduledExecutorService` can be configured to check for a minimum number of available members before applying its operations (see the [Split-Brain Protection section](../../configure-and-manage-clusters/configuring-for-fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful queue operations on all parts of a cluster during a network partition.
 
 The following is a list of methods, grouped by the operations, that support split-brain protection checks:
 
-- WRITE, READ\_WRITE:
+- `WRITE`, `READ_WRITE`:
 
   - `schedule`
   - `scheduleAtFixedRate`
@@ -161,7 +161,7 @@ The following is a list of methods, grouped by the operations, that support spli
   - `scheduleOnMembers`
   - `scheduleOnMembersAtFixedRate`
   - `shutdown`
-- READ, READ\_WRITE:
+- `READ`, `READ_WRITE`:
 
   - `getAllScheduledFutures`
 

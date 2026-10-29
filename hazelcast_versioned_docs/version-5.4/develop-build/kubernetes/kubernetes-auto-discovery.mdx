@@ -327,10 +327,10 @@ All these properties are already set in [Hazelcast Operator](/operator/latest/).
 
 :::
 
-- `terminationGracePeriodSeconds`: in your StatefulSet (or Deployment) configuration; the value should be high enough to cover the data migration process
+- `terminationGracePeriodSeconds`: in your `StatefulSet` (or Deployment) configuration; the value should be high enough to cover the data migration process
 - `-Dhazelcast.shutdownhook.policy=GRACEFUL`: in the JVM parameters
 - `-Dhazelcast.graceful.shutdown.max.wait`: in the JVM parameters; the value should be high enough to cover the data migration process
-- If you use Deployment (not StatefulSet), you need to set your strategy to [RollingUpdate](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#updating-a-deployment) and ensure Pods are updated one by one.
+- If you use Deployment (not `StatefulSet`), you need to set your strategy to [RollingUpdate](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#updating-a-deployment) and ensure Pods are updated one by one.
 - If you upgrade by the minor version, e.g., `3.11.4 ⇒ 3.12` (Enterprise feature), you need to set the `-Dhazelcast.cluster.version.auto.upgrade.enabled=true` JVM property to make sure the cluster version updates automatically.
 
 ## Discovering Members from Hazelcast Clients
@@ -401,7 +401,7 @@ For the complete example, please check [Hazelcast Guides: Hazelcast for Kubernet
 
 ### Outside Kubernetes Cluster
 
-If your Hazelcast cluster is deployed on Kubernetes, but your Hazelcast client is in a completely different network, then it can connect only through the public Internet. This requires exposing each Hazelcast member pod with a dedicated NodePort or LoadBalancer Kubernetes service. For details and a complete example, please check [Hazelcast Guides: Connect External Hazelcast Client to Kubernetes](https://guides.hazelcast.org/kubernetes-external-client/).
+If your Hazelcast cluster is deployed on Kubernetes, but your Hazelcast client is in a completely different network, then it can connect only through the public Internet. This requires exposing each Hazelcast member pod with a dedicated NodePort or `LoadBalancer` Kubernetes service. For details and a complete example, please check [Hazelcast Guides: Connect External Hazelcast Client to Kubernetes](https://guides.hazelcast.org/kubernetes-external-client/).
 
 ## Running Hazelcast Enterprise with Persistence under Kubernetes
 

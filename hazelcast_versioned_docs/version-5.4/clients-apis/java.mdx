@@ -144,9 +144,9 @@ map.remove(1);
 
 Locality is ambiguous for the client, so `addLocalEntryListener()` and `localKeySet()` methods are not supported. See [Distributed Map](../develop-build/distributed-data-structures/map/map.mdx) for more information.
 
-#### Using MultiMap with Java Client
+#### Using `MultiMap` with Java Client
 
-A MultiMap usage example is shown below.
+A `MultiMap` usage example is shown below.
 
 ```java
 MultiMap<Integer, String> multiMap = client.getMultiMap("myMultiMap");
@@ -157,7 +157,7 @@ multiMap.put(1,"Mary");
 Collection<String> values = multiMap.get(1);
 ```
 
-The `addLocalEntryListener()`, `localKeySet()` and `getLocalMultiMapStats()` methods are not supported because locality is ambiguous for the client. See [MultiMap](../develop-build/distributed-data-structures/multimap.mdx) for more information.
+The `addLocalEntryListener()`, `localKeySet()` and `getLocalMultiMapStats()` methods are not supported because locality is ambiguous for the client. See [`MultiMap`](../develop-build/distributed-data-structures/multimap.mdx) for more information.
 
 #### Using Queue with Java Client
 
@@ -181,13 +181,13 @@ The distributed data structures listed below are also supported by the client. S
 - [Replicated Map](../develop-build/distributed-data-structures/replicated-map.mdx)
 - [List](../develop-build/distributed-data-structures/list.mdx)
 - [Set](../develop-build/distributed-data-structures/set.mdx)
-- [IAtomicLong](../develop-build/distributed-data-structures/iatomiclong.mdx)
-- [IAtomicReference](../develop-build/distributed-data-structures/iatomicreference.mdx)
-- [ICountDownLatch](../develop-build/distributed-data-structures/icountdownlatch.mdx)
-- [ISemaphore](../develop-build/distributed-data-structures/isemaphore.mdx)
-- [FlakeIdGenerator](../develop-build/distributed-data-structures/flake-id-generator.mdx)
+- [`IAtomicLong`](../develop-build/distributed-data-structures/iatomiclong.mdx)
+- [`IAtomicReference`](../develop-build/distributed-data-structures/iatomicreference.mdx)
+- [`ICountDownLatch`](../develop-build/distributed-data-structures/icountdownlatch.mdx)
+- [`ISemaphore`](../develop-build/distributed-data-structures/isemaphore.mdx)
+- [`FlakeIdGenerator`](../develop-build/distributed-data-structures/flake-id-generator.mdx)
 - [Lock](../develop-build/distributed-data-structures/fencedlock.mdx)
-- [CPMap](../develop-build/distributed-data-structures/cpmap.mdx)
+- [`CPMap`](../develop-build/distributed-data-structures/cpmap.mdx)
 
 ### Using Client Services
 
@@ -333,7 +333,7 @@ See the [code sample](https://github.com/hazelcast/hazelcast-code-samples/tree/m
 
 ### Client Listeners
 
-You can configure listeners to listen to various event types on the client side. You can configure global events not relating to any distributed object through [Client ListenerConfig](#configuring-client-listeners). You should configure distributed object listeners like map entry listeners or list item listeners through their proxies. See the related sections under each distributed data structure in this Reference Manual.
+You can configure listeners to listen to various event types on the client side. You can configure global events not relating to any distributed object through [Client `ListenerConfig`](#configuring-client-listeners). You should configure distributed object listeners like map entry listeners or list item listeners through their proxies. See the related sections under each distributed data structure in this Reference Manual.
 
 ### Client Transactions
 
@@ -863,11 +863,11 @@ See the [Socket Interceptor section](../operate-manage/securing-a-cluster/socket
 
 You can configure the network socket options using `SocketOptions`. It has the following methods:
 
-- `socketOptions.setKeepAlive(x)`: Enables/disables the **SO\_KEEPALIVE** socket option. Its default value is `true`.
-- `socketOptions.setTcpNoDelay(x)`: Enables/disables the **TCP\_NODELAY** socket option. Its default value is `true`.
-- `socketOptions.setReuseAddress(x)`: Enables/disables the **SO\_REUSEADDR** socket option. Its default value is `true`.
-- `socketOptions.setLingerSeconds(x)`: Enables/disables **SO\_LINGER** with the specified linger time in seconds. Its default value is `3`.
-- `socketOptions.setBufferSize(x)`: Sets the **SO\_SNDBUF** and **SO\_RCVBUF** options to the specified value in KB for this Socket. Its default value is `32`.
+- `socketOptions.setKeepAlive(x)`: Enables/disables the **`SO_KEEPALIVE`** socket option. Its default value is `true`.
+- `socketOptions.setTcpNoDelay(x)`: Enables/disables the **`TCP_NODELAY`** socket option. Its default value is `true`.
+- `socketOptions.setReuseAddress(x)`: Enables/disables the **`SO_REUSEADDR`** socket option. Its default value is `true`.
+- `socketOptions.setLingerSeconds(x)`: Enables/disables **`SO_LINGER`** with the specified linger time in seconds. Its default value is `3`.
+- `socketOptions.setBufferSize(x)`: Sets the **`SO_SNDBUF`** and **`SO_RCVBUF`** options to the specified value in KB for this Socket. Its default value is `32`.
 
 ```java
 SocketOptions socketOptions = clientConfig.getNetworkConfig().getSocketOptions();
@@ -884,7 +884,7 @@ socketOptions.setBufferSize(32)
 
 You can use TLS/SSL to secure the connection between the client and the members. If you want TLS/SSL enabled for the client-cluster connection, you should set `SSLConfig`. Once set, the connection (socket) is established out of an TLS/SSL factory defined either by a factory class name or factory implementation. See the [TLS/SSL section](../operate-manage/securing-a-cluster/tls-ssl/tls-ssl.mdx).
 
-As explained in the TLS/SSL section, Hazelcast members have keyStores used to identify themselves (to other members) and Hazelcast clients have trustStore used to define which members they can trust. The clients also have their keyStores and members have their trustStores so that the members can know which clients they can trust: see the [Mutual Authentication section](../operate-manage/securing-a-cluster/tls-ssl/tls-ssl.mdx#mutual-authentication).
+As explained in the TLS/SSL section, Hazelcast members have `keyStores` used to identify themselves (to other members) and Hazelcast clients have `trustStore` used to define which members they can trust. The clients also have their `keyStores` and members have their trustStores so that the members can know which clients they can trust: see the [Mutual Authentication section](../operate-manage/securing-a-cluster/tls-ssl/tls-ssl.mdx#mutual-authentication).
 
 #### Configuring Hazelcast <Variable name="hazelcast-cloud" /> {/* #configuring-hazelcast-cloud */}
 
@@ -1100,7 +1100,7 @@ In the cases where the security established with `Config` is not enough and you 
 
 For the client side serialization, use the Hazelcast configuration. See the [Serialization chapter](../develop-build/serialization/serialization.mdx).
 
-### Configuring ClassLoader {/* #classloader */}
+### Configuring `ClassLoader` {/* #classloader */}
 
 You can configure a custom `classLoader`. It is used by the serialization service and to load any class configured in configuration, such as event listeners or ProxyFactories.
 
@@ -1547,7 +1547,7 @@ You can find the complete Hazelcast client failover example configuration file (
 
 :::
 
-You should also configure your clients to forget DNS lookups using the [networkaddress.cache.ttl](https://docs.oracle.com/javase/7/docs/technotes/guides/net/properties.html) JVM parameter.
+You should also configure your clients to forget DNS lookups using the [`networkaddress.cache.ttl`](https://docs.oracle.com/javase/7/docs/technotes/guides/net/properties.html) JVM parameter.
 
 Configure the addresses in your clients' configuration to resolve to hostnames of Cluster A via CNAME so that the clients will connect to Cluster A when it starts:
 
@@ -1893,11 +1893,11 @@ The `<eviction>` element has the following attributes:
 - `size`: Maximum size (entry count) of the Near Cache.
 - `max-size-policy`: Maximum size policy for eviction of the Near Cache. Available values are as follows:
 
-  - ENTRY\_COUNT: Maximum entry count per member.
-  - USED\_NATIVE\_MEMORY\_SIZE: Maximum used native memory size in megabytes.
-  - USED\_NATIVE\_MEMORY\_PERCENTAGE: Maximum used native memory percentage.
-  - FREE\_NATIVE\_MEMORY\_SIZE: Minimum free native memory size to trigger cleanup.
-  - FREE\_NATIVE\_MEMORY\_PERCENTAGE: Minimum free native memory percentage to trigger cleanup.
+  - `ENTRY_COUNT`: Maximum entry count per member.
+  - `USED_NATIVE_MEMORY_SIZE`: Maximum used native memory size in megabytes.
+  - `USED_NATIVE_MEMORY_PERCENTAGE`: Maximum used native memory percentage.
+  - `FREE_NATIVE_MEMORY_SIZE`: Minimum free native memory size to trigger cleanup.
+  - `FREE_NATIVE_MEMORY_PERCENTAGE`: Minimum free native memory percentage to trigger cleanup.
 - `eviction-policy`: Eviction policy configuration. Its default values is NONE. Available values are as follows:
 
   - NONE: No items are evicted and the `size` property is ignored. You still can combine it with time-to-live-seconds.

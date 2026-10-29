@@ -22,7 +22,7 @@ Publish operation is async. It does not wait for operations to run in remote mem
 
 ## Getting a Topic and Publishing Messages
 
-Use the HazelcastInstance's `getTopic` method to get the topic, then use the topic's `publish` method to publish your messages. The following is an example publisher:
+Use the `HazelcastInstance`'s `getTopic` method to get the topic, then use the topic's `publish` method to publish your messages. The following is an example publisher:
 
 <CodeBlock language="java">{Ex_dds_topic_TopicPublisher_java_tag_tp}</CodeBlock>
 
@@ -86,7 +86,7 @@ This way we guarantee that all members see the events in the same order.
 
 ### Keeping Generated and Published Order the Same
 
-In both cases, there is a `StripedExecutor` in EventService that is responsible for dispatching the received message. For all events in Hazelcast, the order that events are generated and the order they are published to the user are guaranteed to be the same via this `StripedExecutor`.
+In both cases, there is a `StripedExecutor` in `EventService` that is responsible for dispatching the received message. For all events in Hazelcast, the order that events are generated and the order they are published to the user are guaranteed to be the same via this `StripedExecutor`.
 
 In `StripedExecutor`, there are as many threads as are specified in the property `hazelcast.event.thread.count` (default is five). For a specific event source (for a particular topic name), **hash of that source's name % 5** gives the ID of the responsible thread. Note that there can be another event source (entry listener of a map, item listener of a collection, etc.) corresponding to the same thread. In order not to make other messages to block, heavy processing should not be done in this thread. If there is time-consuming work that needs to be done, the work should be handed over to another thread. See the [Getting a Topic and Publishing Messages section](#getting-a-topic-and-publishing-messages).
 

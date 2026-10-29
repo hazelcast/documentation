@@ -138,7 +138,7 @@ The `javax.cache.configuration.Factory` implementations configure features like 
 
 To simplify the process for the users, JCache API offers a set of helper methods collected in `javax.cache. configuration.FactoryBuilder`. In the above configuration example, `FactoryBuilder.factoryOf()` creates a singleton factory for the given instance.
 
-## Implementing CacheLoader
+## Implementing `CacheLoader`
 
 `javax.cache.integration.CacheLoader` loads cache entries from any external backend resource.
 
@@ -150,7 +150,7 @@ If the cache is not configured to be `read-through`, nothing is loaded automatic
 
 For the bulk load operation (`loadAll()`), some keys may not be found in the returned result set. In this case, a `javax.cache.integration.CompletionListener` parameter can be used as an asynchronous callback after all the key-value pairs are loaded because loading many key-value pairs can take lots of time.
 
-### CacheLoader Example
+### `CacheLoader` Example
 
 Let's look at the `UserCacheLoader` implementation. This implementation is quite straight forward.
 
@@ -162,7 +162,7 @@ An important note is that any kind of exception has to be wrapped into `javax.ca
 
 <CodeBlock language="java">{Ex_jcache_UserCacheLoader_java_tag_ucl}</CodeBlock>
 
-## CacheWriter
+## `CacheWriter`
 
 You use a `javax.cache.integration.CacheWriter` to update an external backend resource. If the cache is configured to be `write-through`, this process is executed transparently to the user's code. Otherwise, there is currently no way to trigger writing changed entries to the external resource to a user-defined point in time.
 
@@ -180,11 +180,11 @@ The following example performs the following tasks:
 
 Again, the implementation is pretty straightforward and also as above all exceptions thrown by the external resource, like `java.sql.SQLException` has to be wrapped into a `javax.cache.integration.CacheWriterException`. Note this is a different exception from the one thrown by `CacheLoader`.
 
-## Implementing EntryProcessor
+## Implementing `EntryProcessor`
 
 With `javax.cache.processor.EntryProcessor`, you can apply an atomic function to a cache entry. In a distributed environment like Hazelcast, you can move the mutating function to the member that owns the key. If the value object is big, it might prevent traffic by sending the object to the mutator and sending it back to the owner to update it.
 
-By default, Hazelcast JCache sends the complete changed value to the backup partition. Again, this can cause a lot of traffic if the object is big. The Hazelcast ICache extension can also prevent this. Further information is available at [Implementing BackupAwareEntryProcessor](./icache.mdx#implementing-backupawareentryprocessor).
+By default, Hazelcast JCache sends the complete changed value to the backup partition. Again, this can cause a lot of traffic if the object is big. The Hazelcast `ICache` extension can also prevent this. Further information is available at [Implementing `BackupAwareEntryProcessor`](./icache.mdx#implementing-backupawareentryprocessor).
 
 An arbitrary number of arguments can be passed to the `Cache.invoke()` and `Cache.invokeAll()` methods. All of those arguments need to be fully serializable because in a distributed environment like Hazelcast, it is very likely that these arguments have to be passed around the cluster.
 
@@ -209,14 +209,14 @@ JCache `EntryProcessor` implementations are not allowed to call `javax.cache.Cac
 
 In addition, when using a `Cache.invokeAll()` method, a `java.util.Map` is returned that maps the key to its `javax.cache.processor.EntryProcessorResult`, which itself wraps the actual result or a thrown `javax.cache.processor.EntryProcessorException`.
 
-## CacheEntryListener
+## `CacheEntryListener`
 
 The `javax.cache.event.CacheEntryListener` implementation is straight forward. `CacheEntryListener` is a super-interface that is used as a marker for listener classes in JCache. The specification brings a set of sub-interfaces.
 
 - `CacheEntryCreatedListener`: Fires after a cache entry is added (even on read-through by a `CacheLoader`) to the cache.
 - `CacheEntryUpdatedListener`: Fires after an already existing cache entry updates.
 - `CacheEntryRemovedListener`: Fires after a cache entry was removed (not expired) from the cache.
-- `CacheEntryExpiredListener`: Fires after a cache entry has been expired. Expiry does not have to be a parallel process-- Hazelcast JCache implementation detects and removes expired entries periodically. Therefore, the expiration event may not be fired as soon as the entry expires. See [ExpiryPolicy](#expirypolicy) for details.
+- `CacheEntryExpiredListener`: Fires after a cache entry has been expired. Expiry does not have to be a parallel process-- Hazelcast JCache implementation detects and removes expired entries periodically. Therefore, the expiration event may not be fired as soon as the entry expires. See [`ExpiryPolicy`](#expirypolicy) for details.
 
 To configure `CacheEntryListener`, add a `javax.cache.configuration.CacheEntryListenerConfiguration` instance to the JCache configuration class, as seen in the above example configuration. In addition, listeners can be configured to be executed synchronously (blocking the calling thread) or asynchronously (fully running in parallel).
 
@@ -230,7 +230,7 @@ In this example application, the listener is implemented to print event informat
 
 <CodeBlock language="java">{Ex_jcache_UserCacheEntryListener_java_tag_ucel}</CodeBlock>
 
-## ExpiryPolicy
+## `ExpiryPolicy`
 
 In JCache, `javax.cache.expiry.ExpiryPolicy` implementations are used to automatically expire cache entries based on different rules.
 

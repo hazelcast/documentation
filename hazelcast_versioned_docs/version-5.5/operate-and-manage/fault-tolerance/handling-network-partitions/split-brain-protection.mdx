@@ -204,7 +204,7 @@ hazelcast:
 The split-brain protection configuration has the following elements:
 
 - `minimum-cluster-size`: Minimum number of members required in a cluster for the cluster to remain in an operational state. If the number of members is below the defined minimum at any time, the operations are rejected and the rejected operations return a `SplitBrainProtectionException` to their callers.
-- `protect-on`: Type of the cluster split-brain protection. Available values are READ, WRITE and `READ_WRITE`.
+- `protect-on`: Type of the cluster split-brain protection. Available values are `READ`, `WRITE` and `READ_WRITE`.
 - `split-brain-protection-function-class-name`: Class name of a `SplitBrainProtectionFunction` implementation, allows to configure split-brain protection with a custom split-brain protection function. It cannot be used in conjunction with `probabilistic-split-brain-protection` or `recently-active-split-brain-protection`.
 - `split-brain-protection-listeners`: Declaration of split-brain protection listeners which are notified on split-brain protection status changes.
 - `probabilistic-split-brain-protection`: Configures the split-brain protection with a probabilistic protection function. It cannot be used in conjunction with `split-brain-protection-function-class-name` or `recently-active-split-brain-protection`.

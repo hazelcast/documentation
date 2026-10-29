@@ -15,7 +15,7 @@ Hazelcast CP Subsystem can be used safely in Kubernetes only if [CP Subsystem Pe
 
 ### Why is Management Center EXTERNAL-IP not assigned?
 
-[Minikube](https://github.com/kubernetes/minikube) is a tool that makes it easy to run Kubernetes locally. However, It does not come with LoadBalancer so Management Center can't be accessible with external IP.
+[Minikube](https://github.com/kubernetes/minikube) is a tool that makes it easy to run Kubernetes locally. However, It does not come with `LoadBalancer` so Management Center can't be accessible with external IP.
 
 You can see below that `EXTERNAL-IP` is pending when you install hazelcast helm charts via `helm install`
 
@@ -83,14 +83,14 @@ You can see they are bound as above. If they are not, this is the list of potent
      zones: us-west-2a, us-west-2b, us-west-2c
    ```
 
-   Use storage class name defined in the storage.yaml file in helm installation.
+   Use storage class name defined in the `storage.yaml` file in helm installation.
 
    ```shell
    helm install my-release --set mancenter.persistence.storageClass=standard hazelcast/<chart>
    ```
 2. Persistent Volume Availability Zone
 
-   [AWS EKS](https://aws.amazon.com/eks/) requires your volume to be in the same Availability Zone as Kubernetes Nodes that Management Center Pod is running. Otherwise, Management Center Pod will be stuck in pending state. You can check `failure-domain.beta.kubernetes.io/zone` labels on the Kubernetes Nodes and Persistent Volume and see PersistentVolume is in one of the node's Availability Zone.
+   [AWS EKS](https://aws.amazon.com/eks/) requires your volume to be in the same Availability Zone as Kubernetes Nodes that Management Center Pod is running. Otherwise, Management Center Pod will be stuck in pending state. You can check `failure-domain.beta.kubernetes.io/zone` labels on the Kubernetes Nodes and Persistent Volume and see `PersistentVolume` is in one of the node's Availability Zone.
 
    ```shell
    kubectl get no --show-labels
@@ -105,7 +105,7 @@ You can see they are bound as above. If they are not, this is the list of potent
    pvc-539749c4-9f31-11e8-b9d0-0af5b0ce3266   8Gi        RWO            Delete           Bound     default/dining-serval-hazelcast-enterprise-mancenter   standard                 30s       failure-domain.beta.kubernetes.io/region=us-west-2,failure-domain.beta.kubernetes.io/zone=us-west-2c
    ```
 
-   You need to reinstall hazelcast helm chart until you have both PersistentVolume and Kubernetes Node in the same Availability Zone.
+   You need to reinstall hazelcast helm chart until you have both `PersistentVolume` and Kubernetes Node in the same Availability Zone.
 3. Persistent Volume Creation Time
 
    Creating Persistent Volume in some Kubernetes Environments take up to 5 minutes so you can wait for sometime to see if Persistent Volume is created.
@@ -143,7 +143,7 @@ When you face such an issue, you must pick the user and group ids between the al
 helm install my-release --set securityContext.runAsUser=1000560000,securityContext.runAsGroup=1000560000,securityContext.fsGroup=1000560000 hazelcast/<chart>
 ```
 
-### Jet engine is disabled via external ConfigMap but it did not work
+### Jet engine is disabled via external `ConfigMap` but it did not work
 
 In that case, you also need to turn off JET engine via chart parameter(`jet.enabled`):
 

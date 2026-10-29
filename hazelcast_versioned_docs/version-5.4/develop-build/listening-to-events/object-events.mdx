@@ -25,10 +25,10 @@ Here are the listeners for map-level and entry-based events:
 - `EntryExpiredListener`: It is notified when an entry is removed from the map due to expiration-based eviction (happens when time-to-live and/or maximum idle seconds are configured for the entries). If your listener implements both this one and `EntryEvictedListener` together, the listener may receive both expiration and eviction events for the same entry; this is because, size-based eviction removes entries regardless of whether entries are expired or not.
 - `EntryLoadedListener`: It is notified when an entry is loaded by a `MapLoader` implementation.
 - `EntryMergedListener`: It is notified when a WAN-replicated entry is merged.
-- `EntryRemovedListener`: It is notified when an entry is directly removed from the map, for example using IMap's `remove()` method or the REST `DELETE` [call](../../clients-apis/enterprise-rest-api/rest-api.mdx#removing-entries-from-a-map).
+- `EntryRemovedListener`: It is notified when an entry is directly removed from the map, for example using `IMap`'s `remove()` method or the REST `DELETE` [call](../../clients-apis/enterprise-rest-api/rest-api.mdx#removing-entries-from-a-map).
 - `EntryUpdatedListener`: It is notified when an entry is updated.
 - `EventLostListener`: It is notified when events are lost.
-- `MapClearedListener`: It is notified when all the entries of a map are removed using IMap's `clear()` method.
+- `MapClearedListener`: It is notified when all the entries of a map are removed using `IMap`'s `clear()` method.
 - ``MapEvictedListener: It is notified when all the entries of a map are removed using IMap’s `evictAll()`` method.
 - `MapPartitionLostListener`: It is notified when the owner and all backups of a partition is lost for a specific map. See the [Listening for Lost Map Partitions section](#listening-for-lost-map-partitions) for details.
 
@@ -68,7 +68,7 @@ Entry Removed:EntryEvent{entryEventType=REMOVED, member=Member [192.168.1.100]]:
 
 :::note
 
-Please note that the method `IMap.clear()` does not fire an "EntryRemoved" event, but fires a "MapCleared" event.
+Please note that the method `IMap.clear()` does not fire an `EntryRemoved` event, but fires a `MapCleared` event.
 
 :::
 
@@ -164,21 +164,21 @@ As you see, there are attributes of the map listeners in the above examples: `in
 
 The attribute `local` is also a boolean attribute that is optional, and if you set it to `true`, you can listen to the map on the local member. Its default value is `false`.
 
-## Listening for MultiMap Events
+## Listening for `MultiMap` Events
 
-You can listen to entry-based events in the MultiMap using an entry listener. The following is an example entry listener implementation for MultiMap.
+You can listen to entry-based events in the `MultiMap` using an entry listener. The following is an example entry listener implementation for `MultiMap`.
 
 :::note
 
-The entry listener for MultiMap supports only `entryAdded`, `entryRemoved` and `mapCleared` events.
+The entry listener for `MultiMap` supports only `entryAdded`, `entryRemoved` and `mapCleared` events.
 
 :::
 
 <CodeBlock language="java">{Ex_distributedevents_ExampleEntryListener_java_tag_mm}</CodeBlock>
 
-### Registering MultiMap Listeners
+### Registering `MultiMap` Listeners
 
-After you create your listener class, you can configure your cluster to include MultiMap listeners using the method `addEntryListener`. Below is the related portion from a code, showing how to register a map listener.
+After you create your listener class, you can configure your cluster to include `MultiMap` listeners using the method `addEntryListener`. Below is the related portion from a code, showing how to register a map listener.
 
 ```java
 HazelcastInstance hz = Hazelcast.newHazelcastInstance();
@@ -246,17 +246,17 @@ hazelcast:
 </TabItem>
 </Tabs>
 
-### MultiMap Listener Attributes
+### `MultiMap` Listener Attributes
 
-As you see, there are attributes of the MultiMap listeners in the above examples: `include-value` and `local`. The attribute `include-value` is a boolean attribute that is optional, and if you set it to `true`, the MultiMap event contains the map value. Its default value is `true`.
+As you see, there are attributes of the `MultiMap` listeners in the above examples: `include-value` and `local`. The attribute `include-value` is a boolean attribute that is optional, and if you set it to `true`, the `MultiMap` event contains the map value. Its default value is `true`.
 
-The attribute `local` is also a boolean attribute that is optional, and if you set it to `true`, you can listen to the MultiMap on the local member. Its default value is `false`.
+The attribute `local` is also a boolean attribute that is optional, and if you set it to `true`, you can listen to the `MultiMap` on the local member. Its default value is `false`.
 
 ## Listening for Item Events
 
 The Item Listener is used by the Hazelcast `IQueue`, `ISet` and `IList` interfaces.
 
-To write an Item Listener class, you implement the ItemListener interface and its methods `itemAdded` and `itemRemoved`. These methods are invoked when an item is added or removed.
+To write an Item Listener class, you implement the `ItemListener` interface and its methods `itemAdded` and `itemRemoved`. These methods are invoked when an item is added or removed.
 
 The following is an example Item Listener class for an `ISet` structure.
 
@@ -356,7 +356,7 @@ As you see, there is an attribute in the above examples: `include-value`. It is 
 
 The Message Listener is used by the `ITopic` interface. It notifies when a message is received for the registered topic.
 
-To write a Message Listener class, you implement the MessageListener interface and its method `onMessage`, which is invoked when a message is received for the registered topic.
+To write a Message Listener class, you implement the `MessageListener` interface and its method `onMessage`, which is invoked when a message is received for the registered topic.
 
 The following is an example Message Listener class.
 
@@ -372,7 +372,7 @@ public class ExampleMessageListener implements MessageListener<MyEvent> {
 
 ## Reliable Topic Messages
 
-[ReliableMessageListener](https://github.com/hazelcast/hazelcast/blob/master/hazelcast/src/main/java/com/hazelcast/topic/ReliableMessageListener.java) is a [MessageListener](https://github.com/hazelcast/hazelcast/blob/master/hazelcast/src/main/java/com/hazelcast/topic/MessageListener.java) to better integrate with the reliable topic.
+[`ReliableMessageListener`](https://github.com/hazelcast/hazelcast/blob/master/hazelcast/src/main/java/com/hazelcast/topic/ReliableMessageListener.java) is a [`MessageListener`](https://github.com/hazelcast/hazelcast/blob/master/hazelcast/src/main/java/com/hazelcast/topic/MessageListener.java) to better integrate with the reliable topic.
 
 If a standard `MessageListener` is registered on a reliable topic, it acts only as an asynchronous event handler for messages; however, a `ReliableMessageListener` allows you to control the behavior of the listener.
 

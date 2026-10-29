@@ -95,7 +95,7 @@ REST supports simple authentication based on username, password and user roles; 
 - **<mark>Enable Security:</mark>** You need to enable the security to use REST API.
 - **<mark>Configure Rest Realm:</mark>** You need to introduce a REST realm as the authentication mechanism. This realm will handle user authentication using a simple method based on username and password.
 - **<mark>Setup Users and Roles:</mark>** You should identify users and their roles within the REST realm.
-- **<mark>Configure AccessControlService:</mark>** To configure `AccessControlService`, you should provide a factory class that creates an instance of the service. `AccessControlService` delegates authentication to the configured security realm. You can either create a custom factory class, or use the default implementation. For the default implementation, you can use `DefaultAccessControlServiceFactory`, to produce `DefaultAccessControlService`. Authorization decisions in this service are based on three predefined roles: `reader`, who can make requests via GET endpoints only; `writer`, who can make requests including GET, POST, and DELETE; and `admin`, who can make all requests and access admin-specific endpoints.
+- **<mark>Configure `AccessControlService`:</mark>** To configure `AccessControlService`, you should provide a factory class that creates an instance of the service. `AccessControlService` delegates authentication to the configured security realm. You can either create a custom factory class, or use the default implementation. For the default implementation, you can use `DefaultAccessControlServiceFactory`, to produce `DefaultAccessControlService`. Authorization decisions in this service are based on three predefined roles: `reader`, who can make requests via GET endpoints only; `writer`, who can make requests including GET, POST, and DELETE; and `admin`, who can make all requests and access admin-specific endpoints.
 
 The following configuration example includes all the steps listed above.
 
@@ -307,7 +307,7 @@ Hazelcast REST API's Swagger UI provides information about each endpoint, includ
 
 1. Enable the REST API.
 2. Start a Hazelcast member.
-3. Go to `http://<host>:<port>/swagger-ui/index.html` where \<host\> and \<port\> are the running member's IP address/hostname and port, respectively.
+3. Go to `http://<host>:<port>/swagger-ui/index.html` where `<host>` and `<port>` are the running member's IP address/hostname and port, respectively.
 
 The following is an example view:
 
@@ -468,7 +468,7 @@ Whether a dynamic configuration can be applied or not depends on the request. Fo
 
 Let's walk through some example requests and responses.
 
-### Add New MapConfig Using XML Configuration
+### Add New `MapConfig` Using XML Configuration
 
 Here is an example POST request for adding a new `MapConfig` for my-map:
 
@@ -505,7 +505,7 @@ In response to this request we should receive a response body such as:
 
 As the response indicates, a new map config is added to the `map` section with the name `my-map` and the requested dynamic configurations are applied.
 
-### Add New MapConfig Using YAML Configuration
+### Add New `MapConfig` Using YAML Configuration
 
 Here is an example POST request for adding a new `MapConfig` for my-map-yaml using the YAML configuration:
 
@@ -541,7 +541,7 @@ When we send this request we receive the response body similar to this:
 
 As you can observe from the response, a new map config is added for map with name my-map-yaml and all the requested dynamic configurations are applied.
 
-### Add New Conflicting MapConfig For An Existing Map
+### Add New Conflicting `MapConfig` For An Existing Map
 
 If you like to add the config with the same map name and a different configuration, then you get response code 400 meaning an invalid configuration is provided since you can not change an existing map configuration. Let's try this:
 
@@ -569,7 +569,7 @@ The response has a `statusCode` of 400, and the error message adds further detai
 
 Within the response body you can see the explanation "as there is already a conflicting configuration 'MapConfig\{name='my-map'".
 
-### Add New MapConfig For An Existing Map But With No Configuration Change
+### Add New `MapConfig` For An Existing Map But With No Configuration Change
 
 As detailed above, you cannot add a map configuration with the same map name. If you send an update request with the same configuration and map name, this request will be ignored as there is no change. Let's look at this as an example:
 
@@ -604,7 +604,7 @@ This request receives an `OK (200)` response code and the following body:
 
 As the response confirms, no configs are added and the provided config is ignored.
 
-### Add New MapConfig With Duplicate Configs
+### Add New `MapConfig` With Duplicate Configs
 
 As you can see, you can not try adding a map config with the same map name. You can send an update request with the same configuration and map name, and you will observe that this update will be ignored since there is no change. Let's try the request again:
 
@@ -638,7 +638,7 @@ We receive a response code OK (200) and the following body:
 }
 ```
 
-As you see from the response, only one MapConfig is added since the duplicate one has exactly the same configuration.
+As you see from the response, only one `MapConfig` is added since the duplicate one has exactly the same configuration.
 
 ### Try Adding Non-dynamic Static Configuration
 

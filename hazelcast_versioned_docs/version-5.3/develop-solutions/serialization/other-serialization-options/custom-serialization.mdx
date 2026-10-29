@@ -12,19 +12,19 @@ import TabItem from "@theme/TabItem";
 import Ex_serialization_FooXmlSerializer_java_tag_fooxml from "../../../examples/serialization/FooXmlSerializer.java?tag=fooxml";
 import Ex_serialization_EmployeeByteArraySerializer_java_tag_empbas from "../../../examples/serialization/EmployeeByteArraySerializer.java?tag=empbas";
 
-Hazelcast lets you plug in a custom serializer for serializing your objects. You can use [StreamSerializer](#implementing-streamserializer) and [ByteArraySerializer](#implementing-bytearrayserializer) interfaces for this purpose.
+Hazelcast lets you plug in a custom serializer for serializing your objects. You can use [`StreamSerializer`](#implementing-streamserializer) and [`ByteArraySerializer`](#implementing-bytearrayserializer) interfaces for this purpose.
 
-## Implementing StreamSerializer
+## Implementing `StreamSerializer`
 
 You can use a stream to serialize and deserialize data by using `StreamSerializer`. This is a good option for your own implementations. It can also be adapted to external serialization libraries like Kryo, JSON and protocol buffers.
 
-### StreamSerializer Example Code 1
+### `StreamSerializer` Example Code 1
 
 First, let's create a simple object.
 
 <CodeBlock language="java">{Ex_serialization_EmployeeSS_java}</CodeBlock>
 
-Now, let's implement StreamSerializer for `Employee` class.
+Now, let's implement `StreamSerializer` for `Employee` class.
 
 <CodeBlock language="java">{Ex_serialization_EmployeeStreamSerializer_java_tag_empss}</CodeBlock>
 
@@ -67,7 +67,7 @@ hazelcast:
 
 :::
 
-### StreamSerializer Example Code 2
+### `StreamSerializer` Example Code 2
 
 Let's take a look at another example implementing `StreamSerializer`.
 
@@ -89,7 +89,7 @@ Assume that our custom serialization serializes Foo into XML. First you need to 
 
 <CodeBlock language="java">{Ex_serialization_FooXmlSerializer_java_tag_fooxml}</CodeBlock>
 
-### Configuring StreamSerializer
+### Configuring `StreamSerializer`
 
 Note that `typeId` must be unique because Hazelcast uses it to look up the `StreamSerializer` while it deserializes the object. The last required step is to register the `StreamSerializer` in your Hazelcast configuration. Below are the programmatic and declarative configurations for this step.
 
@@ -129,7 +129,7 @@ hazelcast:
 </TabItem>
 </Tabs>
 
-From now on, this Hazelcast example will use `FooXmlSerializer` to serialize Foo objects. In this way, you can write an adapter (StreamSerializer) for any Serialization framework and plug it into Hazelcast.
+From now on, this Hazelcast example will use `FooXmlSerializer` to serialize Foo objects. In this way, you can write an adapter (`StreamSerializer`) for any Serialization framework and plug it into Hazelcast.
 
 :::note
 
@@ -137,15 +137,15 @@ See the [Serialization Configuration Wrap-Up section](../serialization-configura
 
 :::
 
-## Implementing ByteArraySerializer
+## Implementing `ByteArraySerializer`
 
-`ByteArraySerializer` exposes the raw ByteArray used internally by Hazelcast. It is a good option if the serialization library you are using deals with ByteArrays instead of streams.
+`ByteArraySerializer` exposes the raw `ByteArray` used internally by Hazelcast. It is a good option if the serialization library you are using deals with ByteArrays instead of streams.
 
-Let's implement `ByteArraySerializer` for the `Employee` class mentioned in [Implementing StreamSerializer](#implementing-streamserializer).
+Let's implement `ByteArraySerializer` for the `Employee` class mentioned in [Implementing `StreamSerializer`](#implementing-streamserializer).
 
 <CodeBlock language="java">{Ex_serialization_EmployeeByteArraySerializer_java_tag_empbas}</CodeBlock>
 
-### Configuring ByteArraySerializer
+### Configuring `ByteArraySerializer`
 
 As usual, let's register the `EmployeeByteArraySerializer` in the configuration file `hazelcast.xml/yaml`, as shown below.
 

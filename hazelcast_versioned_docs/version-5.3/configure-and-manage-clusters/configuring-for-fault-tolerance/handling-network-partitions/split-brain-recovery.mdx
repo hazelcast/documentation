@@ -60,8 +60,8 @@ Additionally you can develop a custom merge policy by implementing the `SplitBra
 
 The following data structures support split-brain recovery:
 
-- `IMap` (including High-Density Memory Store backed IMap)
-- `ICache` (including High-Density Memory Store backed IMap)
+- `IMap` (including High-Density Memory Store backed `IMap`)
+- `ICache` (including High-Density Memory Store backed `IMap`)
 - `ReplicatedMap`
 - `MultiMap`
 - `IAtomicLong`
@@ -85,7 +85,7 @@ See also the [Merge Types section](#merge-types) for a complete overview of supp
 
 :::note
 
-For the other data structures, e.g., `ISemaphore`, `ICountdownLatch` and `ILock`, the instance from the smaller cluster is discarded during the split-brain recovery.
+For the other data structures, e.g., `ISemaphore`, `ICountDownLatch` and `ILock`, the instance from the smaller cluster is discarded during the split-brain recovery.
 
 :::
 
@@ -433,7 +433,7 @@ If you return `null` on a collection based data structure, the whole data struct
 
 :::
 
-### Accessing Hazelcast UserContext
+### Accessing Hazelcast `UserContext`
 
 If you need access to external references in your merge policy, you can use the Hazelcast `UserContext` to get them injected. An example would be a database connection to check which value is stored in your database. To achieve this your merge policy needs to implement `HazelcastInstanceAware` and call `HazelcastInstance.getUserContext()`:
 
@@ -551,7 +551,7 @@ curl --data-urlencode "<cluster-name>" --data-urlencode "" --data-urlencode "<me
 
 If [security](../../securing-a-cluster/overview.mdx) enabled and [custom member authentication](../../securing-a-cluster/authentication-types/simple-authentication.mdx) is used in your cluster, the cURL command to update the member list would look like the following.
 
-curl --data-urlencode "\<username\>" --data-urlencode "\<password\>" --data-urlencode "\<member1-address\>,\<member2-address\>,\<member3-address\>" http://\<member IP address\>:\<port\>/hazelcast/rest/config/tcp-ip/member-list
+curl --data-urlencode `<username>` --data-urlencode `<password>` --data-urlencode "\<member1-address\>,\<member2-address\>,\<member3-address\>" http://\<member IP address\>:\<port\>/hazelcast/rest/config/tcp-ip/member-list
 
 :::
 

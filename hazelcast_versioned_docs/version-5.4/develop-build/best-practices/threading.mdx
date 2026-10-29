@@ -48,11 +48,11 @@ Multiple components share the same event queues. If there are two topics, say A 
 
 If the events are produced at a higher rate than they are consumed, the queue grows in size. To prevent overloading the system and running into an `OutOfMemoryException`, the queue is given a capacity of one million items. When the maximum capacity is reached, the items are dropped. This means that the event system is a 'best effort' system. There is no guarantee that you are going to get an event. Topic A might have a lot of pending messages and therefore B cannot receive messages because the queue has no capacity and messages for B are dropped.
 
-## IExecutor Threading
+## `IExecutor` Threading
 
 Executor threading is straight forward. When a task is received to be executed on Executor E, then E will have its own `ThreadPoolExecutor` instance and the work is placed in the work queue of this executor. Thus, Executors are fully isolated, but still share the same underlying hardware - most importantly the CPUs.
 
-You can configure the IExecutor using the `ExecutorConfig` (programmatic configuration) or using `<executor>` (declarative configuration). See also the [Configuring Executor Service section](../java-executor-service/executor-service.mdx#configuring-executor-service).
+You can configure the `IExecutor` using the `ExecutorConfig` (programmatic configuration) or using `<executor>` (declarative configuration). See also the [Configuring Executor Service section](../java-executor-service/executor-service.mdx#configuring-executor-service).
 
 ## Operation Threading
 
@@ -195,7 +195,7 @@ If you want to configure 20 threads on NUMA node 0 and 20 threads on NUMA node 1
 
 Refer to [Non-uniform memory access](https://en.wikipedia.org/wiki/Non-uniform_memory_access) for information about NUMA nodes.
 
-## SlowOperationDetector
+## `SlowOperationDetector`
 
 The `SlowOperationDetector` monitors the operation threads and collects information about all slow operations. An `Operation` is a task executed by a generic or partition thread (see [Operation Threading](#operation-threading)). An operation is considered as slow when it takes more computation time than the configured threshold.
 

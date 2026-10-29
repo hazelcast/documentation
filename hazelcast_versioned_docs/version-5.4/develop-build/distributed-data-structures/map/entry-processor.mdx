@@ -68,7 +68,7 @@ class EntryDeletingProcessor implements EntryProcessor<String, MyData, Boolean> 
 }
 ```
 
-Related to above, IMap's `executeOnEntries()` method accepts predicates; you can also remove entries that match to a predicate that you provide.
+Related to above, `IMap`'s `executeOnEntries()` method accepts predicates; you can also remove entries that match to a predicate that you provide.
 
 :::note
 
@@ -167,7 +167,7 @@ We have two optimizations:
 
 These are enabled very simply by implementing these interfaces in your `EntryProcessor`.
 
-These optimizations apply to the following IMap methods only:
+These optimizations apply to the following `IMap` methods only:
 
 - `executeOnKey(Object, EntryProcessor)`
 - `submitToKey(Object, EntryProcessor)`
@@ -221,7 +221,7 @@ hazelcast:
 </TabItem>
 </Tabs>
 
-An example of an Offloadable called "OffloadedInventoryEntryProcessor" would be as follows:
+An example of an Offloadable called `OffloadedInventoryEntryProcessor` would be as follows:
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
@@ -254,7 +254,7 @@ hazelcast:
 
 Remember to set the `pool-size` (count of executor threads per member) according to your execution needs. See the [Configuring Executor Service section](../../java-executor-service/executor-service.mdx#configuring-executor-service) for the configuration details.
 
-### ReadOnly Entry Processor
+### `ReadOnly` Entry Processor
 
 By default, an entry processor does not run if the key is locked. It waits until the key has been unlocked (it applies to the `executeOnKey`, `submitToKey` methods, that were mentioned before).
 
@@ -262,7 +262,7 @@ If the entry processor implements the `ReadOnly` interface without implementing 
 
 If the entry processor implements `ReadOnly` and modifies the entry, an `UnsupportedOperationException` is thrown.
 
-### ReadOnly and Offloadable Entry Processor
+### `ReadOnly` and Offloadable Entry Processor
 
 If the entry processor implements both `ReadOnly` and `Offloadable` interfaces, we observe the combination of both optimizations described above.
 

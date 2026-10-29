@@ -9,7 +9,7 @@ import Ex_dds_ExampleFlakeIdGenerator_java_tag_fid from "../../examples/dds/Exam
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
-Hazelcast Flake ID Generator is used to generate cluster-wide unique identifiers. Generated identifiers are `long` primitive values and are k-ordered (roughly ordered). IDs are in the range from 0 to Long.MAX\_VALUE.
+Hazelcast Flake ID Generator is used to generate cluster-wide unique identifiers. Generated identifiers are `long` primitive values and are k-ordered (roughly ordered). IDs are in the range from 0 to `Long.MAX_VALUE`.
 
 ## Generating Cluster-Wide IDs {/* #generating-cluster-wide-flake-ids */}
 
@@ -84,7 +84,7 @@ hazelcast:
 The following are the descriptions of configuration elements and attributes:
 
 - `name`: Name of your Flake ID Generator. It is a required attribute.
-- `prefetch-count`: Count of IDs which are pre-fetched on the background when one call to FlakeIdGenerator.newId() is made. Its value must be in the range 1 -100,000. Its default value is 100. This setting pertains only to `newId()` calls made on the member that configured it.
+- `prefetch-count`: Count of IDs which are pre-fetched on the background when one call to `FlakeIdGenerator.newId()` is made. Its value must be in the range 1 -100,000. Its default value is 100. This setting pertains only to `newId()` calls made on the member that configured it.
 - `prefetch-validity-millis`: Specifies for how long the pre-fetched IDs can be used. After this time elapses, a new batch of IDs are fetched. Time unit is milliseconds. Its default value is 600,000 milliseconds (10 minutes). The IDs contain a timestamp component, which ensures a rough global ordering of them. If an ID is assigned to an object that was created later, it will be out of order. If ordering is not important, set this value to 0. This setting pertains only to `newId()` calls made on the member that configured it.
 - `epoch-start`: Offset of the timestamp component. Time unit is milliseconds, default is 1514764800000 (1.1.2018 0:00 UTC)
 - `node-id-offset`: Specifies the offset that is added to the node ID assigned to cluster member for this generator. Might be useful in A/B deployment scenarios where you have cluster A which you want to upgrade. You create cluster B and for some time both will generate IDs and you want to have them unique. In this case, configure node ID offset for generators on cluster B.

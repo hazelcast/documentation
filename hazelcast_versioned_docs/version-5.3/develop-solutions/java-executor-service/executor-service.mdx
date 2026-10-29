@@ -41,7 +41,7 @@ Note that, the distributed executor service (`IExecutorService`) is intended to 
 
 In Hazelcast, when you implement a task as `java.util.concurrent.Callable` (a task that returns a value), you implement Callable and Serializable.
 
-Below is an example of a Callable task. SumTask prints out map keys and returns the summed map values.
+Below is an example of a Callable task. `SumTask` prints out map keys and returns the summed map values.
 
 <CodeBlock language="java">{Ex_distributedcomputing_SumTask_java_tag_st}</CodeBlock>
 
@@ -66,7 +66,7 @@ Please note that the `Echo` callable in the above example also implements a Seri
 
 :::note
 
-When a task is deserialized, HazelcastInstance needs to be accessed. To do this, the task should implement `HazelcastInstanceAware` interface. See the [HazelcastInstanceAware Interface section](../serialization/other-serialization-options/implementing-hazelcastinstanceaware.mdx) for more information.
+When a task is deserialized, `HazelcastInstance` needs to be accessed. To do this, the task should implement `HazelcastInstanceAware` interface. See the [`HazelcastInstanceAware` Interface section](../serialization/other-serialization-options/implementing-hazelcastinstanceaware.mdx) for more information.
 
 :::
 
@@ -95,7 +95,7 @@ You can scale the Executor service both vertically (scale up) and horizontally (
 
 To scale up, you should improve the processing capacity of the cluster member (JVM). You can do this by increasing the `pool-size` property mentioned in [Configuring Executor Service](#configuring-executor-service) (i.e., increasing the thread count). However, please be aware of your member's capacity. If you think it cannot handle such an additional load caused by increasing the thread count, you may want to consider improving the member's resources (CPU, memory, etc.). As an example, set the `pool-size` to 5 and run the above `MasterMember`. You will see that `EchoTask` is run as soon as it is produced.
 
-To scale out, add more members instead of increasing only one member's capacity. In reality, you may want to expand your cluster by adding more physical or virtual machines. For example, in the EchoTask example in the [Runnable section](#implementing-a-runnable-task), you can create another Hazelcast instance. That instance automatically gets involved in the executions started in `MasterMember` and start processing.
+To scale out, add more members instead of increasing only one member's capacity. In reality, you may want to expand your cluster by adding more physical or virtual machines. For example, in the `EchoTask` example in the [Runnable section](#implementing-a-runnable-task), you can create another Hazelcast instance. That instance automatically gets involved in the executions started in `MasterMember` and start processing.
 
 ## Executing Code in the Cluster
 
@@ -267,15 +267,15 @@ Executor service configuration has the following elements:
 - `pool-size`: The number of executor threads per Member for the Executor. By default, Executor is configured to have 16 threads in the pool. You can change that with this element.
 - `queue-capacity`: Executor's task queue capacity; the number of tasks this queue can hold.
 - `statistics-enabled`: Specifies whether the statistics gathering is enabled for your Executor Service. If set to `false`, you cannot collect statistics in your implementation (using `getLocalExecutorStats()`) and also <Variable href="/management-center/{page-latest-supported-mc}/data-structures/overview#monitoring-executors" text="Hazelcast Management Center" /> will not show them. Its default value is `true`.
-- `split-brain-protection-ref`: Name of the split-brain protection configuration that you want this Executor Service to use. See the [Split-Brain Protection for IExecutorService section](#split-brain-protection-for-iexecutorservice).
+- `split-brain-protection-ref`: Name of the split-brain protection configuration that you want this Executor Service to use. See the [Split-Brain Protection for `IExecutorService` section](#split-brain-protection-for-iexecutorservice).
 
-## Split-Brain Protection for IExecutorService
+## Split-Brain Protection for `IExecutorService`
 
-IExecutorService can be configured to check for a minimum number of available members before applying its operations (see the [Split-Brain Protection section](../../configure-and-manage-clusters/configuring-for-fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful queue operations on all parts of a cluster during a network partition.
+`IExecutorService` can be configured to check for a minimum number of available members before applying its operations (see the [Split-Brain Protection section](../../configure-and-manage-clusters/configuring-for-fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful queue operations on all parts of a cluster during a network partition.
 
 The following is a list of methods, grouped by the operations, that support split-brain protection checks:
 
-- WRITE, READ\_WRITE:
+- `WRITE`, `READ_WRITE`:
 
   - `execute`
   - `executeOnAllMembers`
