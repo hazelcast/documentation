@@ -47,7 +47,7 @@ You cannot use Replicated Map from a lite member. A `com.hazelcast.replicatedmap
 
 ## Example Replicated Map Code
 
-Here is an example of Replicated Map code. The HazelcastInstance's `getReplicatedMap` method gets the Replicated Map, and the Replicated Map's `put` method creates map entries.
+Here is an example of Replicated Map code. The `HazelcastInstance`'s `getReplicatedMap` method gets the Replicated Map, and the Replicated Map's `put` method creates map entries.
 
 <CodeBlock language="java">{Ex_dds_replicatedmap_FillMapMember_java_tag_fmm}</CodeBlock>
 
@@ -156,17 +156,17 @@ Currently, you can use the following `in-memory-format` options with the Replica
 - `OBJECT` (default): The data is stored in deserialized form. This configuration is the default choice since the data replication is mostly used for high speed access. Please be aware that changing the values without a `Map.put()` is not reflected on the other members but is visible on the changing members for later value accesses.
 - `BINARY`: The data is stored in serialized binary format and has to be deserialized on every request. This option offers higher encapsulation since changes to values are always discarded as long as the newly changed object is not explicitly `Map.put()` into the map again.
 
-## Using EntryListener on Replicated Map
+## Using `EntryListener` on Replicated Map
 
 A `com.hazelcast.core.EntryListener` used on a Replicated Map serves the same purpose as it would on other data structures in Hazelcast. You can use it to react on add, update and remove operations. Replicated Maps do not yet support eviction.
 
-### Difference in EntryListener on Replicated Map
+### Difference in `EntryListener` on Replicated Map
 
-The fundamental difference in Replicated Map behavior, compared to the other data structures, is that an EntryListener only reflects changes on local data. Since replication is asynchronous, all listener events are fired only when an operation is finished on a local member. Events can fire at different times on different members.
+The fundamental difference in Replicated Map behavior, compared to the other data structures, is that an `EntryListener` only reflects changes on local data. Since replication is asynchronous, all listener events are fired only when an operation is finished on a local member. Events can fire at different times on different members.
 
-### Example of Replicated Map EntryListener
+### Example of Replicated Map `EntryListener`
 
-Here is a code example for using EntryListener on a Replicated Map.
+Here is a code example for using `EntryListener` on a Replicated Map.
 
 The `HazelcastInstance` s `getReplicatedMap` method gets a Replicated Map (customers), and the `ReplicatedMap` s `addEntryListener` method adds an entry listener to the Replicated Map. Then, the `ReplicatedMap` s `put` method adds a Replicated Map entry and updates it. The method `remove` removes the entry.
 
@@ -178,13 +178,13 @@ Replicated Map can be configured to check for a minimum number of available memb
 
 The following is a list of methods, grouped by the protection types, that support split-brain protection checks:
 
-- WRITE, READ\_WRITE:
+- `WRITE`, `READ_WRITE`:
 
   - `clear`
   - `put`
   - `putAll`
   - `remove`
-- READ, READ\_WRITE:
+- `READ`, `READ_WRITE`:
 
   - `containsKey`
   - `containsValue`

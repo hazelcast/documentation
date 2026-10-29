@@ -15,7 +15,6 @@ This tutorial uses [Docker](https://www.docker.com/) to simplify the setup of a 
 
 1. Follow Docker's [Get Started](https://www.docker.com/get-started) instructions and install it on your system.
 2. Test that it works:
-
    - Run `docker version` to check that you have the latest release installed.
    - Run `docker run hello-world` to verify that Docker is pulling images and running as expected.
 
@@ -29,7 +28,7 @@ docker run -it --rm --name postgres -p 5432:5432 \
     -e POSTGRES_PASSWORD=postgres debezium/example-postgres:1.2
 ```
 
-This runs a new container using version `1.2` of the [debezium/example-postgres](https://hub.docker.com/r/debezium/example-postgres) image (based on [postgres:11](https://hub.docker.com/_/postgres)). It defines and populates a sample "postgres" database and creates the `postgres` user with password `postgres` that has superuser privileges. The `debezium/example-postgres` image also initiates a schema called `inventory` with some sample tables and data in it.
+This runs a new container using version `1.2` of the [debezium/example-postgres](https://hub.docker.com/r/debezium/example-postgres) image (based on [`postgres:11`](https://hub.docker.com/_/postgres)). It defines and populates a sample `postgres` database and creates the `postgres` user with password `postgres` that has superuser privileges. The `debezium/example-postgres` image also initiates a schema called `inventory` with some sample tables and data in it.
 
 The command assigns the name `postgres` to the container so that it can be easily referenced later. The `-it` flag makes the container interactive, meaning it attaches the terminal's standard input and output to the container so that you can see what is going on in the container. The `--rm` flag instructs Docker to remove the container when it is stopped.
 
@@ -66,7 +65,7 @@ Type "help" for help.
 postgres=#
 ```
 
-We'll use the prompt to interact with the database. First, switch to the "inventory" schema:
+We'll use the prompt to interact with the database. First, switch to the `inventory` schema:
 
 ```bash
 SET search_path TO inventory;
@@ -104,6 +103,7 @@ SELECT * FROM customers;
 1. [Download Hazelcast](../../../../install-and-upgrade/community-edition/install-hazelcast.mdx).
 
    If you already have Jet and you skipped the above steps, make sure to follow from here on.
+
 2. Make sure the PostgreSQL CDC plugin is in the `lib/` directory.
 
    ```bash
@@ -131,6 +131,7 @@ SELECT * FROM customers;
    ```bash
    bin/hz-start
    ```
+
 4. When you see output like this, Hazelcast is up:
 
    ```none

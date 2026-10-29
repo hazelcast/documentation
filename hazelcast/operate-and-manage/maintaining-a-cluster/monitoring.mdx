@@ -410,7 +410,7 @@ And the Jet engine related beans are stored under `com.hazelcast.jet/Metrics/<in
 
 Prometheus is a popular monitoring system and time series database. Setting up monitoring via Prometheus consists of two steps. The first step is exposing an HTTP endpoint with metrics. The second step is setting up Prometheus server, which pulls the metrics in a specified interval.
 
-The Prometheus Java agent is already part of the Hazelcast distribution and just needs to be enabled. Enable the agent and expose all metrics via HTTP endpoint by setting an environment variable PROMETHEUS\_PORT, you can change the port to any available port:
+The Prometheus Java agent is already part of the Hazelcast distribution and just needs to be enabled. Enable the agent and expose all metrics via HTTP endpoint by setting an environment variable `PROMETHEUS_PORT`, you can change the port to any available port:
 
 ```bash
 PROMETHEUS_PORT=8080 bin/hz-start
@@ -1035,7 +1035,7 @@ The BIG-IP LTM monitors accept regular expressions in these strings allowing you
 
 As you can see, the HEAD request only checks for a `200 OK` response. A Hazelcast cluster member sends this status code when it is alive and running without an issue. This provides a very basic health check. For increased flexibility, we recommend using the GET request API.
 
-##### TCP\_HALF\_OPEN monitors
+##### `TCP_HALF_OPEN` monitors
 
 - Set the "Type" as `TCP Half Open`.
 - Optionally, set the "Alias Service Port" as the port of Hazelcast cluster member if you want to specify the port in the monitor
@@ -1445,7 +1445,7 @@ The diagnostic logs have the `DEBUG` level by default; if you don't want to see 
 
 ### Diagnostics plugins
 
-As it is stated in the introduction of this section and shown in the log file content above, diagnostics utility consists of plugins such as BuildInfo, SystemProperties and HazelcastInstance.
+As it is stated in the introduction of this section and shown in the log file content above, diagnostics utility consists of plugins such as BuildInfo, SystemProperties and `HazelcastInstance`.
 
 #### BuildInfo
 
@@ -1475,7 +1475,7 @@ See the [List of Hazelcast Metrics appendix](../../reference/list-of-metrics.mdx
 
 #### SlowOperations
 
-It shows the slow operations and invocations, See the [SlowOperationDetector section](../../develop-and-build/best-practices/threading.mdx#slowoperationdetector) for more information.
+It shows the slow operations and invocations, See the [`SlowOperationDetector` section](../../develop-and-build/best-practices/threading.mdx#slowoperationdetector) for more information.
 
 #### Invocations
 
@@ -1548,7 +1548,7 @@ You can control the frequency of scanning all operations using the following sys
 
 - `hazelcast.diagnostics.operation-profiler.period.seconds`: Set a value in seconds. Its default value is `5` seconds. You can set it to `0` to disable the plugin.
 
-#### HazelcastInstance
+#### `HazelcastInstance`
 
 It shows the basic state of your Hazelcast cluster including the count and addresses of current members and the address of oldest cluster member. It is useful to get a fast impression of the cluster without needing to analyze a lot of data.
 

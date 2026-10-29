@@ -9,19 +9,19 @@ import TabItem from "@theme/TabItem";
 import CodeBlock from "@theme/CodeBlock";
 import Ex_dds_multimap_MultiMapConfiguration_java_tag_mmc from "../../../examples/dds/multimap/MultiMapConfiguration.java?tag=mmc";
 
-Hazelcast MultiMap, also known as IMultiMap, is a specialized map where you can store multiple values under a single key. Just like any other distributed data structure implementation in Hazelcast, MultiMap is distributed and thread-safe.
+Hazelcast `MultiMap`, also known as `IMultiMap`, is a specialized map where you can store multiple values under a single key. Just like any other distributed data structure implementation in Hazelcast, `MultiMap` is distributed and thread-safe.
 
-MultiMap supports most features of Hazelcast Map except for indexing, predicates and MapLoader/MapStore. The entries are almost evenly distributed onto all cluster members. However, this distribution is based on the entry keys: if there are multiple entries having the same key but different values, such entries are stored on the same member, otherwise they are distributed among the members. When a new member joins the cluster, the same ownership logic used in the Hazelcast Map applies.
+`MultiMap` supports most features of Hazelcast `Map` except for indexing, predicates and `MapLoader`/`MapStore`. The entries are almost evenly distributed onto all cluster members. However, this distribution is based on the entry keys: if there are multiple entries having the same key but different values, such entries are stored on the same member, otherwise they are distributed among the members. When a new member joins the cluster, the same ownership logic used in the Hazelcast Map applies.
 
-## Creating a MultiMap
+## Creating a `MultiMap`
 
 <Anchor id="getting-a-multimap-and-putting-an-entry" />
 
-When you start a Hazelcast member with default configuration, it will have an empty MultiMap named `default`. See [Start a Local Cluster in Docker](../../../get-started/start-a-local-cluster/get-started-docker.mdx) for a quick cluster startup.
+When you start a Hazelcast member with default configuration, it will have an empty `MultiMap` named `default`. See [Start a Local Cluster in Docker](../../../get-started/start-a-local-cluster/get-started-docker.mdx) for a quick cluster startup.
 
-You can either use this `default` MultiMap or create your own using the MultiMap's getter methods as shown in the below example. If you pass a name other than `default` as the MultiMap name in these methods, it creates a new MultiMap with the given name; otherwise, it will use this existing MultiMap.
+You can either use this `default` `MultiMap` or create your own using the `MultiMap`'s getter methods as shown in the below example. If you pass a name other than `default` as the `MultiMap` name in these methods, it creates a new `MultiMap` with the given name; otherwise, it will use this existing `MultiMap`.
 
-In this example, we create a MultiMap called `multimap`, add entries to it, and print the entries.
+In this example, we create a `MultiMap` called `multimap`, add entries to it, and print the entries.
 
 <Tabs groupId="c-43-43--c-sharp--go--java--nodejs--python">
 <TabItem value="java" label="Java">
@@ -61,7 +61,7 @@ In this example, we create a MultiMap called `multimap`, add entries to it, and 
 
    <CodeCallouts>
 
-   1. Create or access the MultiMap called `multimap`.
+   1. Create or access the `MultiMap` called `multimap`.
    2. Add entries to `multimap`.
    3. Print the entries.
 
@@ -105,7 +105,7 @@ In this example, we create a MultiMap called `multimap`, add entries to it, and 
 
    <CodeCallouts>
 
-   1. Create or access the MultiMap called `multimap`.
+   1. Create or access the `MultiMap` called `multimap`.
    2. Add entries to `multimap`.
    3. Print the entries.
 
@@ -156,7 +156,7 @@ In this example, we create a MultiMap called `multimap`, add entries to it, and 
 
    <CodeCallouts>
 
-   1. Create or access the MultiMap called `multimap`.
+   1. Create or access the `MultiMap` called `multimap`.
    2. Add entries to `multimap`.
    3. Print the entries.
 
@@ -189,7 +189,7 @@ In this example, we create a MultiMap called `multimap`, add entries to it, and 
 
    <CodeCallouts>
 
-   1. Create or access the MultiMap called `multimap`.
+   1. Create or access the `MultiMap` called `multimap`.
    2. Add entries to `multimap`.
    3. Print the values for the key **`a`**.
 
@@ -238,7 +238,7 @@ In this example, we create a MultiMap called `multimap`, add entries to it, and 
 
    <CodeCallouts>
 
-   1. Create or access the MultiMap called `multimap`.
+   1. Create or access the `MultiMap` called `multimap`.
    2. Add entries to `multimap`.
    3. Print the entries.
 
@@ -317,7 +317,7 @@ In this example, we create a MultiMap called `multimap`, add entries to it, and 
 
    <CodeCallouts>
 
-   1. Create or access the MultiMap called `multimap`.
+   1. Create or access the `MultiMap` called `multimap`.
    2. Add entries to `multimap`.
    3. Get values for the key **`a`**.
    4. Print the values.
@@ -333,21 +333,21 @@ After you run the example code, you will see the key **`a`** has two values:
 
 `a → [2, 1]`
 
-Hazelcast MultiMap uses entry listeners to listen to events which occur when entries are added to, updated in or removed from the MultiMap. See the [Listening for MultiMap Events section](../../listening-to-events/object-events.mdx#listening-for-multimap-events) for information about how to create an entry listener class and register it.
+Hazelcast `MultiMap` uses entry listeners to listen to events which occur when entries are added to, updated in or removed from the `MultiMap`. See the [Listening for `MultiMap` Events section](../../listening-to-events/object-events.mdx#listening-for-multimap-events) for information about how to create an entry listener class and register it.
 
-## Configuring MultiMap
+## Configuring `MultiMap`
 
-When using MultiMap, the collection type of the values can be either **Set** or **List**. Configure the collection type with the `value-collection-type` parameter. If you choose Set, duplicate and null values are not allowed in your collection and ordering is irrelevant. If you choose List, ordering is relevant and your collection can include duplicate but not null values.
+When using `MultiMap`, the collection type of the values can be either `Set` or `List`. Configure the collection type with the `value-collection-type` parameter. If you choose `Set`, duplicate and null values are not allowed in your collection and ordering is irrelevant. If you choose `List`, ordering is relevant and your collection can include duplicate but not null values.
 
-You can also enable statistics for your MultiMap with the `statistics-enabled` parameter. If you enable `statisticsEnabled`, statistics can be retrieved with `getLocalMultiMapStats()` method.
+You can also enable statistics for your `MultiMap` with the `statistics-enabled` parameter. If you enable `statisticsEnabled`, statistics can be retrieved with `getLocalMultiMapStats()` method.
 
 :::note
 
-Currently, eviction is not supported for the MultiMap data structure.
+Currently, eviction is not supported for the `MultiMap` data structure.
 
 :::
 
-The following is an example MultiMap configuration.
+The following is an example `MultiMap` configuration.
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
@@ -400,19 +400,19 @@ The following are the configuration elements and their descriptions:
 - `backup-count`: Count of synchronous backups. For example, if it is set to `1`, backup of a partition is placed on one other member. If it is `2`, it is placed on two other members.
 - `async-backup-count`: Count of asynchronous backups. See [Backup Types](./map/backing-up-maps.mdx#in-memory-backup-types) to learn more about synchronous and asynchronous backups.
 - `value-collection-type`: Type of the value collection. It can be `SET` or `LIST`.
-- `statistics-enabled`: Specifies whether the statistics gathering is enabled for your MultiMap. If set to `false`, you cannot collect statistics in your implementation and also <Variable href="/management-center/{page-latest-supported-mc}/data-structures/multimap" text="Hazelcast Management Center" /> will not show them. Its default value is `true`.
+- `statistics-enabled`: Specifies whether the statistics gathering is enabled for your `MultiMap`. If set to `false`, you cannot collect statistics in your implementation and also <Variable href="/management-center/{page-latest-supported-mc}/data-structures/multimap" text="Hazelcast Management Center" /> will not show them. Its default value is `true`.
 - `entry-listeners`: Lets you add listeners (listener classes) for the map entries. You can also set the attribute `include-value` to `true` if you want the item event to contain the entry values. You can set `local` to `true` if you want to listen to the entries on the local member.
-- `split-brain-protection-ref`: Name of the split-brain protection configuration that you want this MultiMap to use. See the [Split-Brain Protection for MultiMap and TransactionalMultiMap section](../../../operate-and-manage/fault-tolerance/handling-network-partitions/split-brain-protection.mdx#configuring-split-brain-protection).
+- `split-brain-protection-ref`: Name of the split-brain protection configuration that you want this `MultiMap` to use. See the [Split-Brain Protection for `MultiMap` and `TransactionalMultiMap` section](../../../operate-and-manage/fault-tolerance/handling-network-partitions/split-brain-protection.mdx#configuring-split-brain-protection).
 
-## Split-Brain Protection for MultiMap and TransactionalMultiMap
+## Split-Brain Protection for `MultiMap` and `TransactionalMultiMap`
 
-MultiMap & TransactionalMultiMap can be configured to check for a minimum number of available members before applying their operations (see the [Split-Brain Protection section](../../../operate-and-manage/fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful multimap operations on all parts of a cluster during a network partition.
+`MultiMap` and `TransactionalMultiMap` can be configured to check for a minimum number of available members before applying their operations (see the [Split-Brain Protection section](../../../operate-and-manage/fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful multimap operations on all parts of a cluster during a network partition.
 
 The following is a list of methods that support split-brain protection checks. The list is grouped by the protection types.
 
-MultiMap:
+`MultiMap`:
 
-- WRITE, READ\_WRITE:
+- `WRITE`, `READ_WRITE`:
 
   - `clear`
   - `forceUnlock`
@@ -421,7 +421,7 @@ MultiMap:
   - `remove`
   - `tryLock`
   - `unlock`
-- READ, READ\_WRITE:
+- `READ`, `READ_WRITE`:
 
   - `containsEntry`
   - `containsKey`
@@ -435,13 +435,13 @@ MultiMap:
   - `valueCount`
   - `values`
 
-TransactionalMultiMap:
+`TransactionalMultiMap`:
 
-- WRITE, READ\_WRITE:
+- `WRITE`, `READ_WRITE`:
 
   - `put`
   - `remove`
-- READ, READ\_WRITE:
+- `READ`, `READ_WRITE`:
 
   - `size`
   - `get`

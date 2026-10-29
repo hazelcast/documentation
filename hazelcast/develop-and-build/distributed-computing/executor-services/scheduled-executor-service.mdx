@@ -9,16 +9,16 @@ import TabItem from "@theme/TabItem";
 import CodeBlock from "@theme/CodeBlock";
 import Ex_distributedcomputing_ScheduledExecutorConfiguration_java_tag_sec from "../../../examples/distributedcomputing/ScheduledExecutorConfiguration.java?tag=sec";
 
-Hazelcast's scheduled executor service (IScheduledExecutorService) is a data structure which implements `java.util.concurrent.ScheduledExecutorService`, partially. By partially, we mean the behavior difference in scheduling a task at a fixed rate (`scheduleAtFixedRate()`). Hazelcast's behavior guarantees that a task is not executed by multiple threads concurrently: a scheduled execution is skipped, instead of postponing, if another thread is still running the same task.
+Hazelcast's scheduled executor service (`IScheduledExecutorService`) is a data structure which implements `java.util.concurrent.ScheduledExecutorService`, partially. By partially, we mean the behavior difference in scheduling a task at a fixed rate (`scheduleAtFixedRate()`). Hazelcast's behavior guarantees that a task is not executed by multiple threads concurrently: a scheduled execution is skipped, instead of postponing, if another thread is still running the same task.
 
-On top of the Vanilla Scheduling API, IScheduledExecutorService allows additional methods such as the following:
+On top of the Vanilla Scheduling API, `IScheduledExecutorService` allows additional methods such as the following:
 
 - `scheduleOnMember`: On a specific cluster member.
 - `scheduleOnKeyOwner`: On the partition owning that key.
 - `scheduleOnAllMembers`: On all cluster members.
 - `scheduleOnMembers`: On all given members.
 
-See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/scheduledexecutor/IScheduledExecutorService.html" text="IScheduledExecutorService Javadoc" /> for its API details.
+See the <Variable code href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/scheduledexecutor/IScheduledExecutorService.html" text="IScheduledExecutorService" /> Javadoc for its API details.
 
 There are two different modes of durability for the service:
 
@@ -29,7 +29,7 @@ To accomplish the described durability, all tasks provide a unique identity/name
 
 Upon scheduling, the service returns an `IScheduledFuture`, which on top of the `java.util.concurrent.ScheduledFuture` functionality, provides an API to get the resource handler of the task `ScheduledTaskHandler` and also the runtime statistics of the task.
 
-Futures associated with a scheduled task, in order to be aware of lost partitions and/or members, act as listeners on the local member/client. Therefore, they are always strongly referenced, on the member/client side. In order to clean up their resources, once completed, you can use the method `dispose()`. This method also cancels further executions of the task if scheduled at a fixed rate. See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/scheduledexecutor/IScheduledFuture.html" text="IScheduledFuture Javadoc" /> for its API details.
+Futures associated with a scheduled task, in order to be aware of lost partitions and/or members, act as listeners on the local member/client. Therefore, they are always strongly referenced, on the member/client side. In order to clean up their resources, once completed, you can use the method `dispose()`. This method also cancels further executions of the task if scheduled at a fixed rate. See the <Variable code href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/scheduledexecutor/IScheduledFuture.html" text="IScheduledFuture" /> Javadoc for its API details.
 
 The task handler is a descriptor class holding information for the scheduled future, which is used to pinpoint the actual task in the cluster. It contains the name of the task, the owner (member or partition) and the scheduler name.
 
@@ -41,13 +41,13 @@ Stateful tasks can be created by implementing the `com.hazelcast.scheduledexecut
 
 :::note
 
-As with the tasks, Objects stored in the state Map need to be Hazelcast serializable.
+As with the tasks, Objects stored in the state `Map` need to be Hazelcast serializable.
 
 :::
 
-## Configuring Scheduled Executor Service
+## Configuring `ScheduledExecutorService` {/* #configuring-scheduled-executor-service */}
 
-This section presents example configurations for scheduled executor service along with the descriptions of its configuration elements and attributes.
+This section presents example configurations for `scheduled-executor-service` along with the descriptions of its configuration elements and attributes.
 
 **Declarative Configuration:**
 
@@ -144,11 +144,11 @@ long totalTaskRuns = stats.getTotalRuns(); // = 1
 
 ## Split-Brain Protection for `IScheduledExecutorService` {/* #split-brain-protection-for-ischeduled-executor-service */}
 
-IScheduledExecutorService can be configured to check for a minimum number of available members before applying its operations (see the [Split-Brain Protection section](../../../operate-and-manage/fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful queue operations on all parts of a cluster during a network partition.
+`IScheduledExecutorService` can be configured to check for a minimum number of available members before applying its operations (see the [Split-Brain Protection section](../../../operate-and-manage/fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful queue operations on all parts of a cluster during a network partition.
 
 The following is a list of methods, grouped by the operations, that support split-brain protection checks:
 
-- WRITE, READ\_WRITE:
+- `WRITE`, `READ_WRITE`:
 
   - `schedule`
   - `scheduleAtFixedRate`
@@ -161,13 +161,13 @@ The following is a list of methods, grouped by the operations, that support spli
   - `scheduleOnMembers`
   - `scheduleOnMembersAtFixedRate`
   - `shutdown`
-- READ, READ\_WRITE:
+- `READ`, `READ_WRITE`:
 
   - `getAllScheduledFutures`
 
 **Configuring Split-Brain Protection**
 
-Split-brain protection for Scheduled Executor Service can be configured programmatically using the method <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/ScheduledExecutorConfig.html" text="setSplitBrainProtectionName()" />, or declaratively using the element `split-brain-protection-ref`. Following is an example declarative configuration:
+Split-brain protection for Scheduled Executor Service can be configured programmatically using the method <Variable code href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/ScheduledExecutorConfig.html" text="setSplitBrainProtectionName()" />, or declaratively using the element `split-brain-protection-ref`. Following is an example declarative configuration:
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">

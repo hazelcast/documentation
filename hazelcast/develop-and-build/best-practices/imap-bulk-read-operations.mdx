@@ -6,11 +6,11 @@ slug: /cluster-performance/imap-bulk-read-operations
 
 <Anchor id="bulk-read-operations" />
 
-To safeguard your cluster and application from becoming Out of Memory (OOM), follow these best practices and consider using the described alternatives to IMap bulk read operations.
+To safeguard your cluster and application from becoming Out of Memory (OOM), follow these best practices and consider using the described alternatives to `IMap` bulk read operations.
 
 It's critical to avoid an Out of Memory Error (OOME) as its impact can be severe. Hazelcast strives to protect your data but an OOME can lead to a loss of cluster availability. This can result in increased operation latencies due to triggered migrations. From your application's perspective, an OOME could also cause a system crash.
 
-Some specific IMap API calls are particularly risky in this regard. Methods like `IMap#entrySet()` and `IMap#values()` can trigger an OOME, depending on the size of your map and the available memory on each member. To mitigate this risk, you should follow these best practices.
+Some specific `IMap` API calls are particularly risky in this regard. Methods like `IMap#entrySet()` and `IMap#values()` can trigger an OOME, depending on the size of your map and the available memory on each member. To mitigate this risk, you should follow these best practices.
 
 :::note
 
@@ -60,15 +60,15 @@ while (iterator.hasNext()) {
 }
 ```
 
-## Use PartitionPredicate
+## Use `PartitionPredicate`
 
-You can reduce memory overhead during bulk operations by filtering with **PartitionPredicate**.
+You can reduce memory overhead during bulk operations by filtering with **`PartitionPredicate`**.
 
-For more info, see [PartitionPredicate](../sql/predicate-overview.mdx#filtering-with-partition-predicate).
+For more info, see [`PartitionPredicate`](../sql/predicate-overview.mdx#filtering-with-partition-predicate).
 
 ## Use Entry Processor
 
-In some scenarios, reversing the traditional approach can be more effective. Instead of fetching all data to the local application for processing, you can send operations directly to the data. This *in-place* processing method saves both time and resources; **Entry Processor** is an excellent tool for this purpose.
+In some scenarios, reversing the traditional approach can be more effective. Instead of fetching all data to the local application for processing, you can send operations directly to the data. This _in-place_ processing method saves both time and resources; **Entry Processor** is an excellent tool for this purpose.
 
 For more info, see [Entry Processor](../distributed-data-structures/ap-data-structures/map/entry-processor.mdx).
 

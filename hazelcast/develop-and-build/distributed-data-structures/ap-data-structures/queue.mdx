@@ -14,19 +14,19 @@ import Ex_dds_queue_TheQueueStore_java_tag_qs from "../../../examples/dds/queue/
 
 Hazelcast distributed queue enables all cluster members and clients to interact with it; you can add an item in one cluster member and remove it from another member or a client.
 
-The Hazelcast Queue provides standard FIFO queue semantics. Operations on the queue (including those with a timeout) happen on a first-come, first-serve basis. The user objects that are enqueued or dequeued have to be `Serializable`.
+The Hazelcast `Queue` provides standard FIFO queue semantics. Operations on the queue (including those with a timeout) happen on a first-come, first-serve basis. The user objects that are enqueued or dequeued have to be `Serializable`.
 
 Hazelcast distributed queue performs no batching while iterating over the queue. All items are copied locally and iteration occurs locally.
 
-## Creating a Queue {/* #creating-an-example-queue */}
+## Creating a `Queue` {/* #creating-an-example-queue */}
 
 When you start a Hazelcast member with default configuration, it will have an empty Queue named `default`. See [Start a Local Cluster in Docker](../../../get-started/start-a-local-cluster/get-started-docker.mdx) for a quick cluster startup.
 
-You can either use this `default` Queue or create your own using the Queue's getter methods as shown in the below examples. If you pass a name other than `default` as the Queue name in these methods, it creates a new Queue with the given name; otherwise, it will use this existing Queue.
+You can either use this `default` `Queue` or create your own using the `Queue`'s getter methods as shown in the below examples. If you pass a name other than `default` as the `Queue` name in these methods, it creates a new `Queue` with the given name; otherwise, it will use this existing `Queue`.
 
-The following examples illustrate a distributed queue that connects a producer and consumer.
+The following examples illustrate a distributed `Queue` that connects a producer and consumer.
 
-### Putting Items on the Queue
+### Putting Items on the `Queue`
 
 The following creates a queue producer which adds one integer on the queue every second, 100 integers total.
 
@@ -218,14 +218,14 @@ The following creates a queue producer which adds one integer on the queue every
 
 <CodeCallouts>
 
-1. Create the Queue called `queue`.
+1. Create the `Queue` called `queue`.
 2. Add items to `queue`.
 
 </CodeCallouts>
 
 This producer puts a **-1** on the queue to show that adding items operation is finished.
 
-### Taking Items off the Queue
+### Taking Items off the `Queue`
 
 The following creates a queue consumer to take messages from this queue.
 
@@ -479,7 +479,7 @@ When you first start the producer and then start the consumer, items produced on
 
 Hazelcast distributed queue uses item listeners to listen to the events that occur when items are added to and removed from the queue. See the [Listening for Item Events section](../../listening-to-events/object-events.mdx#listening-for-item-events) for information about how to create an item listener class and register it.
 
-### Balancing the Queue Operations
+### Balancing the `Queue` Operations
 
 From the above example code, you can see that an item is produced every second and consumed every five seconds. Therefore, the consumer keeps growing. To balance the produce/consume operation, you can start another consumer by re-running the [consumer code](#taking-items-off-the-queue) in a new file. This way, consumption is distributed to these two consumers, as seen in the example outputs below.
 
@@ -511,7 +511,7 @@ The items are taken from the queue in the same order they were put on the queue.
 
 :::
 
-## Configuring Queue
+## Configuring `Queue`
 
 The following are examples of queue configurations. It includes the `QueueStore` configuration, which is explained in the [Queueing with Persistent Datastore](#queueing-with-persistent-datastore) section.
 
@@ -583,7 +583,7 @@ To set the maximum size of the queue, use the `max-size` element. To destroy emp
 The following is the full list of queue configuration elements with their descriptions:
 
 - `max-size`: Maximum number of items in the queue. It is used to set an upper bound for the queue. You will not be able to put more items when the queue reaches to this maximum size whether you have a queue store configured or not. See [Setting a Bounded Queue](#setting-a-bounded-queue).
-- `backup-count`: Number of synchronous backups. Queue is a non-partitioned data structure, so all entries of a queue reside in one partition. When this parameter is '1', it means there will be one backup of that queue in another member in the cluster. When it is '2', two members will have the backup.
+- `backup-count`: Number of synchronous backups. `Queue` is a non-partitioned data structure, so all entries of a queue reside in one partition. When this parameter is '1', it means there will be one backup of that queue in another member in the cluster. When it is '2', two members will have the backup.
 - `async-backup-count`: Number of asynchronous backups.
 - `empty-queue-ttl`: Used to destroy the queue once items have been removed and it has been empty empty for a given amount of time (seconds). Has no effect until the queue has been populated.
 - `item-listeners`: Adds listeners (listener classes) for the queue items. You can also set the attribute `include-value` to `true` if you want the item event to contain the item values. You can set `local` to `true` if you want to listen to the items on the local member.
@@ -591,7 +591,7 @@ The following is the full list of queue configuration elements with their descri
 - `statistics-enabled`: Specifies whether the statistics gathering is enabled for your queue. If set to `false`, you cannot collect statistics in your implementation (using `getLocalQueueStats()`) and also <Variable href="/management-center/{page-latest-supported-mc}/data-structures/queue" text="Hazelcast Management Center" /> will not show them. Its default value is `true`.
 - `split-brain-protection-ref` : Name of the split-brain protection configuration that you want this queue to use. See [Split-Brain Protection for Queue](#split-brain-protection-for-queue).
 
-### ItemIDs When Offering Items
+### Offering Items and `itemId`s {/* #itemids-when-offering-items */}
 
 Hazelcast gives an `itemId` for each item you offer, which is an incrementing sequence identification for the queue items. You should consider the following to understand the `itemId` assignment behavior:
 
@@ -701,13 +701,13 @@ The following are the descriptions for each queue store property:
 - **Memory Limit**: This is the number of items after which Hazelcast stores items only to the datastore. For example, if the memory limit is 1000, then the 1001st item is put only to the datastore. This feature is useful when you want to avoid out-of-memory conditions. If you want to always use memory, you can set it to `Integer.MAX_VALUE`. The default number for `memory-limit` is 1000.
 - **Bulk Load**: When the queue is initialized, items are loaded from `QueueStore` in bulks. Bulk load is the size of these bulks. The default value of `bulk-load` is 250.
 
-## Split-Brain Protection for Queue
+## Split-Brain Protection for `Queue`
 
 Queues can be configured to check for a minimum number of available members before applying queue operations (see the [Split-Brain Protection section](../../../operate-and-manage/fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful queue operations on all parts of a cluster during a network partition.
 
 The following is a list of methods, grouped by the protection types, that support split-brain protection checks:
 
-- WRITE, READ\_WRITE
+- `WRITE`, `READ_WRITE`
 
   - `Collection.addAll()`
   - `Collection.removeAll()`, `Collection.retainAll()`
@@ -715,7 +715,7 @@ The following is a list of methods, grouped by the protection types, that suppor
   - `BlockingQueue.drainTo()`
   - `IQueue.poll()`, `Queue.remove()`, `IQueue.take()`
   - `BlockingQueue.remove()`
-- READ, READ\_WRITE
+- `READ`, `READ_WRITE`
 
   - `Collection.clear()`
   - `Collection.containsAll()`, `BlockingQueue.contains()`
