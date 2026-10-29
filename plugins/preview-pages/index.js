@@ -11,27 +11,34 @@ const REPO = 'hazelcast/documentation'
 const HEADING = '### Direct preview links'
 const MAX_LINKS = 8
 
-// Product names from the navbar, as plugins/llms-txt does ('hazelcast' -> 'Platform'). Tutorials has no
-// navbar entry, so it falls back to its capitalized id.
-function productLabel (siteConfig, id) {
-  const item = (siteConfig.themeConfig?.navbar?.items ?? []).find((i) => i.type === 'docSidebar' && i.docsPluginId === id)
-  return item?.label ?? id.charAt(0).toUpperCase() + id.slice(1)
+// A product's name and position in the navbar, as plugins/llms-txt reads them ('hazelcast' -> 'Platform').
+// Tutorials has no navbar entry, so it takes its capitalized id and goes last.
+function navbarProduct (siteConfig, id) {
+  const items = siteConfig.themeConfig?.navbar?.items ?? []
+  const position = items.findIndex((i) => i.type === 'docSidebar' && i.docsPluginId === id)
+  if (position === -1) return { label: id.charAt(0).toUpperCase() + id.slice(1), position: items.length }
+  return { label: items[position].label, position }
 }
 
 // Each doc's source file mapped to its section, title, URL, and path within its version, e.g.
 // { "management-center/deploy-manage/phone-homes.mdx": { section: "Management Center 5.13-SNAPSHOT",
 //   title: "Usage analytics", url: "/management-center/5.13-snapshot/deploy-manage/phone-homes",
-//   path: "deploy-manage/phone-homes" } }. Sections follow plugin order, then version order (newest first).
+//   path: "deploy-manage/phone-homes" } }. Sections follow navbar order, then version order (newest first).
 function pageMap (plugins, siteConfig) {
   const map = {}
-  for (const plugin of plugins.filter((p) => p.name === DOCS_PLUGIN_NAME)) {
-    const product = productLabel(siteConfig, plugin.options.id)
+  const docsPlugins = plugins
+    .filter((p) => p.name === DOCS_PLUGIN_NAME)
+    .sort((a, b) => navbarProduct(siteConfig, a.options.id).position - navbarProduct(siteConfig, b.options.id).position)
+  for (const plugin of docsPlugins) {
+    const product = navbarProduct(siteConfig, plugin.options.id).label
     const versions = plugin.content?.loadedVersions ?? []
     for (const version of versions) {
       // An unversioned product has one version, served at the product root. Docusaurus labels a current version
       // with no label of its own "Next", so its URL segment stands in.
       const label = version.label === 'Next' ? version.path.split('/').pop() : version.label
-      const section = versions.length === 1 && version.path === `/${plugin.options.routeBasePath}` ? product : `${product} ${label}`
+      // Docusaurus normalizes routeBasePath to start with a slash, e.g. "/tutorials".
+      const atRoot = version.path.replace(/\/$/, '') === plugin.options.routeBasePath.replace(/\/$/, '')
+      const section = atRoot ? product : `${product} ${label}`
       for (const doc of version.docs) {
         map[doc.source.replace(/^@site\//, '')] = {
           section,

@@ -6,7 +6,7 @@ const { pageMap, renderComment, commentOnPr } = require('..')
 
 const PREVIEW = 'https://deploy-preview-45--hazelcast-documentation.netlify.app'
 
-const docsPlugin = (id, versions) => ({ name: 'docusaurus-plugin-content-docs', options: { id, routeBasePath: id }, content: { loadedVersions: versions } })
+const docsPlugin = (id, versions) => ({ name: 'docusaurus-plugin-content-docs', options: { id, routeBasePath: `/${id}` }, content: { loadedVersions: versions } })
 const SITE = { themeConfig: { navbar: { items: [{ type: 'docSidebar', docsPluginId: 'hazelcast', label: 'Platform' }] } } }
 
 test('maps each doc source to its section, title, URL, and path', () => {
@@ -113,4 +113,15 @@ test('deletes the earlier comment when no page changed', async (t) => {
   })
   await commentOnPr({ token: 't', pr: '53', previewUrl: PREVIEW, pages: {} })
   assert.deepEqual(requests.at(-1), { method: 'DELETE', url: '/repos/hazelcast/documentation/issues/comments/7', body: undefined })
+})
+
+test('orders sections like the navbar, with products it does not list last', () => {
+  const site = { themeConfig: { navbar: { items: [
+    { type: 'dropdown', label: 'Products' },
+    { type: 'docSidebar', docsPluginId: 'hazelcast', label: 'Platform' },
+    { type: 'docSidebar', docsPluginId: 'operator', label: 'Operator' },
+  ] } } }
+  const doc = (id) => ({ label: 'Next', path: `/${id}`, docs: [{ source: `@site/${id}/a.mdx`, title: 'A', permalink: `/${id}/a` }] })
+  const plugins = [docsPlugin('tutorials', [doc('tutorials')]), docsPlugin('operator', [doc('operator')]), docsPlugin('hazelcast', [doc('hazelcast')])]
+  assert.deepEqual(Object.values(pageMap(plugins, site)).map((page) => page.section), ['Platform', 'Operator', 'Tutorials'])
 })
