@@ -25,11 +25,11 @@ Learn how to deploy custom classes with the User Code Namespace
 
 In this tutorial, you'll do the following:
 
-- Deploy Hazelcast with userCodeNamespaces enabled.
+- Deploy Hazelcast with `userCodeNamespaces` enabled.
 - Create a custom `EntryListener` class and package it into a JAR.
 - Upload the JAR file to cloud storage.
-- Apply a UserCodeNamespace resource, referencing the JAR in storage.
-- Create a Map resource with the `EntryListener`, setting userCodeNamespaces the same as the UserCodeNamespace object.
+- Apply a `UserCodeNamespace` resource, referencing the JAR in storage.
+- Create a Map resource with the `EntryListener`, setting `userCodeNamespaces` the same as the `UserCodeNamespace` object.
 
 ## Before you Begin
 
@@ -93,12 +93,12 @@ In this step, you'll build the `EntryListener` JAR from the tutorial's GitHub re
    </Tabs>
 
    The sample code for this tutorial is in the [`simple-entry-listener/src/main/java/com/hazelcast/tutorial/`](https://github.com/hazelcast-guides/hazelcast-platform-operator-user-code-namespace/tree/master/simple-entry-listener/src/main/java/com/hazelcast/tutorial) directory:
-2. Build the SimpleEntryListener JAR.
+2. Build the `SimpleEntryListener` JAR.
 
    ```shell
    mvn package -f ./simple-entry-listener
    ```
-3. Upload the SimpleEntryListener JAR to the storage blob/bucket of your cloud provider, replacing the placeholder values.
+3. Upload the `SimpleEntryListener` JAR to the storage blob/bucket of your cloud provider, replacing the placeholder values.
 
    <Tabs groupId="object-storage">
    <TabItem value="s3" label="S3">
@@ -153,16 +153,16 @@ In this step, you'll build the `EntryListener` JAR from the tutorial's GitHub re
    </TabItem>
    </Tabs>
 
-## Step 3. Apply the UserCodeNamespace resource
+## Step 3. Apply the `UserCodeNamespace` resource
 
-1. Apply the UserCodeNamespace resource
+1. Apply the `UserCodeNamespace` resource
 
-   Run the following command to create the UserCodeNamespace, referencing to the bucket where the EntryLister JAR is located.
+   Run the following command to create the `UserCodeNamespace`, referencing to the bucket where the EntryLister JAR is located.
 
    <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_platform_operator_user_code_namespace_operator_user_code_namespace_ucn_yaml + 'EOF'}</CodeBlock>
-2. Check the status of the UserCodeNamespace resource
+2. Check the status of the `UserCodeNamespace` resource
 
-   Run the following command to check the status of the UserCodeNamespace resource
+   Run the following command to check the status of the `UserCodeNamespace` resource
 
    ```shell
    $ kubectl get ucn my-ucn
@@ -180,7 +180,7 @@ In this step, you'll build the `EntryListener` JAR from the tutorial's GitHub re
 
 1. Create the Map in a specific namespace
 
-   Run the following command to create the Map with the SimpleEntryListener class in the `my-ucn` namespace.
+   Run the following command to create the Map with the `SimpleEntryListener` class in the `my-ucn` namespace.
 
    <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_platform_operator_user_code_namespace_operator_user_code_namespace_map_yaml + 'EOF'}</CodeBlock>
 2. Check the status of the Map

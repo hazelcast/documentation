@@ -90,7 +90,7 @@ You can see they are bound as above. If they are not, this is the list of potent
    ```
 2. Persistent Volume Availability Zone
 
-   [AWS EKS](https://aws.amazon.com/eks/) requires your volume to be in the same Availability Zone as Kubernetes Nodes that Management Center Pod is running. Otherwise, Management Center Pod will be stuck in pending state. You can check `failure-domain.beta.kubernetes.io/zone` labels on the Kubernetes Nodes and Persistent Volume and see PersistentVolume is in one of the node's Availability Zone.
+   [AWS EKS](https://aws.amazon.com/eks/) requires your volume to be in the same Availability Zone as Kubernetes Nodes that Management Center Pod is running. Otherwise, Management Center Pod will be stuck in pending state. You can check `failure-domain.beta.kubernetes.io/zone` labels on the Kubernetes Nodes and Persistent Volume and see `PersistentVolume` is in one of the node's Availability Zone.
 
    ```shell
    kubectl get no --show-labels
@@ -105,7 +105,7 @@ You can see they are bound as above. If they are not, this is the list of potent
    pvc-539749c4-9f31-11e8-b9d0-0af5b0ce3266   8Gi        RWO            Delete           Bound     default/dining-serval-hazelcast-enterprise-mancenter   standard                 30s       failure-domain.beta.kubernetes.io/region=us-west-2,failure-domain.beta.kubernetes.io/zone=us-west-2c
    ```
 
-   You need to reinstall hazelcast helm chart until you have both PersistentVolume and Kubernetes Node in the same Availability Zone.
+   You need to reinstall hazelcast helm chart until you have both `PersistentVolume` and Kubernetes Node in the same Availability Zone.
 3. Persistent Volume Creation Time
 
    Creating Persistent Volume in some Kubernetes Environments take up to 5 minutes so you can wait for sometime to see if Persistent Volume is created.
