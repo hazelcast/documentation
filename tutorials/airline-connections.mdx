@@ -208,7 +208,7 @@ Why are we copying the Postgres data into local storage? We are using the data t
 
 :::
 
-IMap to store output of JOIN job:
+`IMap` to store output of JOIN job:
 
 ```sql
 CREATE OR REPLACE MAPPING live_connections(
@@ -319,7 +319,7 @@ Up to this point, you've used the SQL browser to run commands. This is useful fo
 
    :::note
 
-   The `JOIN` part of this file is identical to the code you ran at the end of [Step 2: Build and Test JOIN](#step-2-build-and-test-join). The new code is at the beginning; instead of writing the search output to the screen, the output is stored in an IMap called `live_connections`.
+   The `JOIN` part of this file is identical to the code you ran at the end of [Step 2: Build and Test JOIN](#step-2-build-and-test-join). The new code is at the beginning; instead of writing the search output to the screen, the output is stored in an `IMap` called `live_connections`.
 
    :::
 4. To submit the script in non-interactive mode, use the following command.
@@ -355,7 +355,7 @@ Up to this point, you've used the SQL browser to run commands. This is useful fo
    4. Select the job name.
 
    :::
-6. In either the SQL browser tab or the CLC, view the contents of the IMap that stores the output of the job.
+6. In either the SQL browser tab or the CLC, view the contents of the `IMap` that stores the output of the job.
 
    ```sql
    SELECT * FROM live_connections;
@@ -363,7 +363,7 @@ Up to this point, you've used the SQL browser to run commands. This is useful fo
 
 :::note
 
-Because you are searching the contents of an IMap, the results of the above `SELECT` are a "one and done" search. If you run the search multiple times, you will see different results, as the job is continuously updating the IMap. Your search will always display the latest data available *at the time of the search*.
+Because you are searching the contents of an `IMap`, the results of the above `SELECT` are a "one and done" search. If you run the search multiple times, you will see different results, as the job is continuously updating the `IMap`. Your search will always display the latest data available *at the time of the search*.
 
 :::
 
@@ -371,7 +371,7 @@ Because you are searching the contents of an IMap, the results of the above `SEL
 
 The connection data is now stored in Hazelcast and is being continually updated. Now let's make that data available to the end application that will use it.
 
-We've created a Java client that implements the Hazelcast `map_listener` function. The client connects to Hazelcast, retrieves the contents of the `update_connections` IMap, then updates the information any time there's a change to the IMap.
+We've created a Java client that implements the Hazelcast `map_listener` function. The client connects to Hazelcast, retrieves the contents of the `update_connections` `IMap`, then updates the information any time there's a change to the `IMap`.
 
 ![Client diagram](./images/client_diagram.jpg)
 

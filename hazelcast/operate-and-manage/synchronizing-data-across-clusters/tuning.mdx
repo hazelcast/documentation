@@ -160,7 +160,7 @@ wanConfig.addWanPublisherConfig(publisherConfig);
 
 ## Queue Capacity
 
-For clusters with high data mutation rates or with long expected periods of disrupted connectivity between clusters, you might need to increase the replication queue size. The default queue size for replication queues is `10000`. This means, if you have heavy put/update/remove rates or if the target/passive cluster is unavailable for too long, you might exceed the queue size so that the oldest, not yet replicated, updates might get lost. Separate queues are used for each WAN Replication configured for IMap and ICache.
+For clusters with high data mutation rates or with long expected periods of disrupted connectivity between clusters, you might need to increase the replication queue size. The default queue size for replication queues is `10000`. This means, if you have heavy put/update/remove rates or if the target/passive cluster is unavailable for too long, you might exceed the queue size so that the oldest, not yet replicated, updates might get lost. Separate queues are used for each WAN Replication configured for `IMap` and `ICache`.
 
 Two queues are used for each WAN Replication: Primary and Backup. The primary queue is offered events from owned partitions, while the backup queue is offered events from partitions owned by other members. The configured queue capacity applies separately to each of the primary and backup event queues. Metrics for WAN outbound queue sizes report the primary event queue size.
 

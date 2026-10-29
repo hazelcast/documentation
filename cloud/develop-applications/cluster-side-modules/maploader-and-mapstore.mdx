@@ -5,12 +5,12 @@ sidebar_position: 1
 slug: /maploader-and-mapstore
 ---
 
-The Hazelcast map module classes in the [Hazelcast Root API](https://docs.hazelcast.org/docs/latest/javadoc/com/hazelcast/map/package-summary.html) provide in-memory data stores. The MapStore module classes allow you to integrate data from external data sources, such as databases. This means that, if the requested value is not available in the in-memory data store, Hazelcast can attempt to load it from your external data sources. You can also use MapStore to store or delete values in your external data source. You can implement your own logic in the MapStore methods.
+The Hazelcast map module classes in the [Hazelcast Root API](https://docs.hazelcast.org/docs/latest/javadoc/com/hazelcast/map/package-summary.html) provide in-memory data stores. The `MapStore` module classes allow you to integrate data from external data sources, such as databases. This means that, if the requested value is not available in the in-memory data store, Hazelcast can attempt to load it from your external data sources. You can also use `MapStore` to store or delete values in your external data source. You can implement your own logic in the `MapStore` methods.
 
-MapStore builds a cache on top of Hazelcast with defined triggers for operations on a map. You can build a MapStore using either of the following module classes, depending on your requirements:
+`MapStore` builds a cache on top of Hazelcast with defined triggers for operations on a map. You can build a `MapStore` using either of the following module classes, depending on your requirements:
 
-- MapLoader allows you to load data to your cluster from external systems. It supports read-through caching only.
-- MapStore allows you to extend the functionality offered by MapLoader to store and delete data in your external systems. This ensures that all your data stores are synchronized. It supports read-through, write-through, and write-behind caching.
+- `MapLoader` allows you to load data to your cluster from external systems. It supports read-through caching only.
+- `MapStore` allows you to extend the functionality offered by `MapLoader` to store and delete data in your external systems. This ensures that all your data stores are synchronized. It supports read-through, write-through, and write-behind caching.
 
 The caching patterns are as follows:
 
@@ -60,20 +60,20 @@ The caching patterns are as follows:
 </tbody>
 </table>
 
-To develop a MapStore, you must do the following:
+To develop a `MapStore`, you must do the following:
 
-1. [Implement a MapStore](#implement)
-2. [Test the MapStore](#test)
-3. [Deploy the MapStore](#deploy)
-4. [Configure the MapStore](#configure)
+1. [Implement a `MapStore`](#implement)
+2. [Test the `MapStore`](#test)
+3. [Deploy the `MapStore`](#deploy)
+4. [Configure the `MapStore`](#configure)
 
-To [update a MapStore](#update), you must delete the existing MapStore and deploy a new one.
+To [update a `MapStore`](#update), you must delete the existing `MapStore` and deploy a new one.
 
-## Implement a MapStore {/* #implement */}
+## Implement a `MapStore` {/* #implement */}
 
-When implementing a MapStore for <Variable name="hazelcast-cloud" />, you must manage the lifecycle to ensure that connections to the external data store are not left open. Closing the connections prevents them from consuming unneccessary resources. You can use the [`MapLoaderLifeCycleSupport`](https://docs.hazelcast.org/docs/latest/javadoc/com/hazelcast/map/MapLoaderLifecycleSupport.html) interface to clean up the resources on graceful shutdown, including closing the connections.
+When implementing a `MapStore` for <Variable name="hazelcast-cloud" />, you must manage the lifecycle to ensure that connections to the external data store are not left open. Closing the connections prevents them from consuming unneccessary resources. You can use the [`MapLoaderLifeCycleSupport`](https://docs.hazelcast.org/docs/latest/javadoc/com/hazelcast/map/MapLoaderLifecycleSupport.html) interface to clean up the resources on graceful shutdown, including closing the connections.
 
-With this in mind, you can follow the [Hazelcast Platform documentation](/hazelcast/latest/mapstore/working-with-external-data) to implement a MapStore.
+With this in mind, you can follow the [Hazelcast Platform documentation](/hazelcast/latest/mapstore/working-with-external-data) to implement a `MapStore`.
 
 :::note
 
@@ -81,26 +81,26 @@ When you have finished, return to this page to continue with the testing of your
 
 :::
 
-## Test a MapStore {/* #test */}
+## Test a `MapStore` {/* #test */}
 
-Before you deploy the MapStore to <Variable name="hazelcast-cloud" />, ensure that:
+Before you deploy the `MapStore` to <Variable name="hazelcast-cloud" />, ensure that:
 
-- The MapStore connects to the data store without errors. Your data source accepts incoming connections from your <Variable name="hazelcast-cloud" /> cluster.
-- Operations on the map trigger your MapStore implementations. For a list of operations that trigger the MapStore, see the [Hazelcast Platform documentation](/hazelcast/latest/mapstore/mapstore-triggers). You can [use one of the available clients](../connect-to-cluster.mdx) to invoke map operations.
+- The `MapStore` connects to the data store without errors. Your data source accepts incoming connections from your <Variable name="hazelcast-cloud" /> cluster.
+- Operations on the map trigger your `MapStore` implementations. For a list of operations that trigger the `MapStore`, see the [Hazelcast Platform documentation](/hazelcast/latest/mapstore/mapstore-triggers). You can [use one of the available clients](../connect-to-cluster.mdx) to invoke map operations.
 
 For general guidance on testing cluster-side modules, see the [Working with Cluster-Side Modules in Cloud](./overview.mdx) topic.
 
-## Deploy a MapStore {/* #deploy */}
+## Deploy a `MapStore` {/* #deploy */}
 
-Before you can configure the MapStore, you must deploy it. To do this, package your classes into a file that includes any dependencies and upload that file to the cluster.
+Before you can configure the `MapStore`, you must deploy it. To do this, package your classes into a file that includes any dependencies and upload that file to the cluster.
 
-For further information on deploying your MapStore, see the [Deploying Cluster-Side Modules to Cloud Clusters](./custom-classes-upload.mdx) topic.
+For further information on deploying your `MapStore`, see the [Deploying Cluster-Side Modules to Cloud Clusters](./custom-classes-upload.mdx) topic.
 
-## Configure a MapStore {/* #configure */}
+## Configure a `MapStore` {/* #configure */}
 
-To use a MapStore, it must be configured for a specific map in <Variable name="hazelcast-cloud" />. When a map is configured with a MapStore, Hazelcast plugs the MapStore implementation into the lifecycle of the map to trigger the MapStore when certain map operations are invoked.
+To use a `MapStore`, it must be configured for a specific map in <Variable name="hazelcast-cloud" />. When a map is configured with a `MapStore`, Hazelcast plugs the `MapStore` implementation into the lifecycle of the map to trigger the `MapStore` when certain map operations are invoked.
 
-To configure a MapStore, complete the following steps:
+To configure a `MapStore`, complete the following steps:
 
 1. Sign into the <Variable href="{page-cloud-console}" text="{hazelcast-cloud} console" /> and select your cluster.
 2. Select **Manage** \> **Data Structures** from the navigation bar options, located on the left.
@@ -114,7 +114,7 @@ To configure a MapStore, complete the following steps:
 
    :::note
 
-   If you have not deployed the MapStore to the cluster, the classname dropdown menu is not displayed. Deploy your MapStore before continuing.
+   If you have not deployed the `MapStore` to the cluster, the classname dropdown menu is not displayed. Deploy your `MapStore` before continuing.
 
    :::
 6. Select a classname from the dropdown menu.
@@ -133,13 +133,13 @@ To configure a MapStore, complete the following steps:
 
 ### Configuration Fields {/* #config-fields */}
 
-The MapStore configuration elements and attributes are as follows:
+The `MapStore` configuration elements and attributes are as follows:
 
 <dl>
 <dt>**Class Name**</dt>
 <dd>
 
-Select the MapStore you require from the dropdown menu.
+Select the `MapStore` you require from the dropdown menu.
 
 The menu options are populated with uploaded files containing MapStores.
 
@@ -206,7 +206,7 @@ The menu options are as follows:
 <dt>**Properties**</dt>
 <dd>
 
-Enter the name and value of a property, which can be read inside the MapStore, in the text boxes.
+Enter the name and value of a property, which can be read inside the `MapStore`, in the text boxes.
 
 For example, the connection credentials for a database.
 
@@ -223,17 +223,17 @@ When you save the configuration, the properties are encrypted.
 </dd>
 </dl>
 
-## Update a MapStore {/* #update */}
+## Update a `MapStore` {/* #update */}
 
-To update a MapStore after you've deployed it, you must delete it and redeploy another one as follows:
+To update a `MapStore` after you've deployed it, you must delete it and redeploy another one as follows:
 
-1. Select **Upload Custom Classes** and remove the file that contains your MapStore.
-2. Optionally, [Test your new MapStore](#test).
-3. [Deploy](#deploy) the new version of your MapStore.
-4. If the name of your MapStore class is different to the one that you are updating, [Reconfigure](#configure) the MapStore.
+1. Select **Upload Custom Classes** and remove the file that contains your `MapStore`.
+2. Optionally, [Test your new `MapStore`](#test).
+3. [Deploy](#deploy) the new version of your `MapStore`.
+4. If the name of your `MapStore` class is different to the one that you are updating, [Reconfigure](#configure) the `MapStore`.
 
 ## Next Steps
 
-Build and run sample projects that use a MapStore in <Variable name="hazelcast-cloud" />. You can find the sample projects in the [Hazelcast Cloud Code Samples GitHub repository](https://github.com/hazelcast/hazelcast-cloud-code-samples/tree/master/mapstore).
+Build and run sample projects that use a `MapStore` in <Variable name="hazelcast-cloud" />. You can find the sample projects in the [Hazelcast Cloud Code Samples GitHub repository](https://github.com/hazelcast/hazelcast-cloud-code-samples/tree/master/mapstore).
 
 Work through the [tutorial](/tutorials/write-through-cache-serverless-mapstore) to build an application that writes changes to a map back to MongoDB Atlas.

@@ -45,7 +45,7 @@ These approaches are described in the following sections.
 
 ## Full WAN Synchronization {/* #synchronizing-wan-target-cluster */}
 
-Full WAN synchronization updates or adds entries in the target IMap to match the source IMap, but does not remove entries that exist only in the target. If you are concerned about extraneous entries on the target IMap, you should consider clearing it before initiating a WAN synchronization. Clearing an IMap can be done programmatically by calling `IMap#clear()`, through Management Center's <Variable href="/management-center/{page-latest-supported-mc}/data-structures/map#clear-map" text="Clear Data action" />, or using Hazelcast's [REST API](../../clients-and-apis/apis/enterprise-rest-api/rest-api-swagger.mdx#tag/Data-Controller/operation/clearMap).
+Full WAN synchronization updates or adds entries in the target `IMap` to match the source `IMap`, but does not remove entries that exist only in the target. If you are concerned about extraneous entries on the target `IMap`, you should consider clearing it before initiating a WAN synchronization. Clearing an `IMap` can be done programmatically by calling `IMap#clear()`, through Management Center's <Variable href="/management-center/{page-latest-supported-mc}/data-structures/map#clear-map" text="Clear Data action" />, or using Hazelcast's [REST API](../../clients-and-apis/apis/enterprise-rest-api/rest-api-swagger.mdx#tag/Data-Controller/operation/clearMap).
 
 Full WAN synchronization is useful if two remote clusters lost their synchronizations due to overflow in the WAN queue or in restart scenarios. This is the default synchronization option.
 
@@ -71,7 +71,7 @@ You need to add URL-encoded parameters to the request in the following order sep
 - WAN replication publisher ID/target cluster name
 - Map name to be synchronized
 
-Assume that you have configured an IMap with a WAN replication configuration as follows:
+Assume that you have configured an `IMap` with a WAN replication configuration as follows:
 
 <Tabs groupId="config-format">
 <TabItem value="yaml" label="YAML">
@@ -133,11 +133,11 @@ Synchronization for a target cluster operates only with the data residing in the
 
 As explained in the previous section, the default [Full WAN Synchronization](#synchronizing-wan-target-cluster) feature synchronizes the maps in different clusters by transferring all the entries from the source to the target cluster. This may be not efficient since some of the entries have remained unchanged on both clusters and do not require to be transferred. Also, for the entries to be transferred, they need to be copied to on-heap on the source cluster. This may cause spikes in the heap usage, especially if using large off-heap stores.
 
-In addition to the default Full WAN Synchronization, Hazelcast provides Delta WAN Synchronization which uses [Merkle tree](https://en.wikipedia.org/wiki/Merkle_tree) for the same purpose. It is a data structure used for efficient comparison of the difference in the contents of large data structures. The precision of this comparison is defined by Merkle tree's depth. Merkle tree hash exchanges can detect inconsistencies in the map data and synchronize only the different entries when using WAN synchronization, instead of sending all the map entries. As in a full WAN synchronization, entries that only exist in the target IMap are not removed.
+In addition to the default Full WAN Synchronization, Hazelcast provides Delta WAN Synchronization which uses [Merkle tree](https://en.wikipedia.org/wiki/Merkle_tree) for the same purpose. It is a data structure used for efficient comparison of the difference in the contents of large data structures. The precision of this comparison is defined by Merkle tree's depth. Merkle tree hash exchanges can detect inconsistencies in the map data and synchronize only the different entries when using WAN synchronization, instead of sending all the map entries. As in a full WAN synchronization, entries that only exist in the target `IMap` are not removed.
 
 :::note
 
-Currently, Delta WAN Synchronization is implemented only for Hazelcast IMap.
+Currently, Delta WAN Synchronization is implemented only for Hazelcast `IMap`.
 
 :::
 
@@ -190,7 +190,7 @@ hazelcast:
 </TabItem>
 </Tabs>
 
-2 - Bind that WAN synchronization configuration to the data structure (currently IMap): Simply set the WAN replication reference of your map to the name of the WAN replication configuration which uses the Merkle tree. Here is a declarative example:
+2 - Bind that WAN synchronization configuration to the data structure (currently `IMap`): Simply set the WAN replication reference of your map to the name of the WAN replication configuration which uses the Merkle tree. Here is a declarative example:
 
 <Tabs groupId="config-format">
 <TabItem value="yaml" label="YAML">
@@ -256,7 +256,7 @@ hazelcast:
 
 You can programmatically configure it, too, using the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/MerkleTreeConfig.html" text="MerkleTreeConfig" /> object.
 
-Here is the full declarative configuration example showing how to enable Delta WAN Synchronization, bind it to a Hazelcast data structure (an IMap in this case) and specify its depth:
+Here is the full declarative configuration example showing how to enable Delta WAN Synchronization, bind it to a Hazelcast data structure (an `IMap` in this case) and specify its depth:
 
 <Tabs groupId="config-format">
 <TabItem value="yaml" label="YAML">
@@ -316,8 +316,8 @@ Here, the element `consistency-check-strategy` sets the strategy for checking th
 
 The Merkle tree structure is enabled using its `enabled` attribute (default is `true`). Its `depth` element specifies the depth of Merkle tree. Valid values are between 2 and 27 (exclusive). Its default value is `10`.
 
-- A larger depth means that a data synchronization mechanism is able to pinpoint a smaller subset of the data structure (e.g., IMap) contents in which a change has occurred. This causes the synchronization mechanism to be more efficient. However, keep in mind that a large depth means that the Merkle tree will consume more memory. As the comparison mechanism is iterative, a larger depth also prolongs the comparison duration. Therefore, it is recommended not to have large tree depths if the latency of the comparison operation is high.
-- A smaller depth means that the Merkle tree is shallower and the data synchronization mechanism transfers larger chunks of the data structure (e.g., IMap) in which a possible change has happened. As you can imagine, a shallower Merkle tree will consume less memory.
+- A larger depth means that a data synchronization mechanism is able to pinpoint a smaller subset of the data structure (e.g., `IMap`) contents in which a change has occurred. This causes the synchronization mechanism to be more efficient. However, keep in mind that a large depth means that the Merkle tree will consume more memory. As the comparison mechanism is iterative, a larger depth also prolongs the comparison duration. Therefore, it is recommended not to have large tree depths if the latency of the comparison operation is high.
+- A smaller depth means that the Merkle tree is shallower and the data synchronization mechanism transfers larger chunks of the data structure (e.g., `IMap`) in which a possible change has happened. As you can imagine, a shallower Merkle tree will consume less memory.
 
 Also see the [Defining the Depth section](#defining-the-depth) for more insights.
 
@@ -329,7 +329,7 @@ If you do not specifically configure the `merkle-tree` in your Hazelcast configu
 
 :::note
 
-Merkle trees are created for each partition holding IMap data. Therefore, increasing the partition count also increases the efficiency of the Delta WAN Synchronization.
+Merkle trees are created for each partition holding `IMap` data. Therefore, increasing the partition count also increases the efficiency of the Delta WAN Synchronization.
 
 :::
 
@@ -987,7 +987,7 @@ In the configuration above, you can see that the WAN Replication configuration i
 
 The processing behavior is configured using the `consumer` element. It has the following sub-elements:
 
-- `persist-wan-replicated-data`: When set to `true`, incoming WAN events received on the target cluster will be passed to the configured MapStore (if present), allowing the data to be persisted to the external system defined by the MapStore implementation. When set to `false` (the default), WAN events are applied only to the in-memory data structures and are not passed to MapStore, so no persistence to the external system occurs as a result of WAN replication. This setting allows you to control whether WAN-replicated data should be synchronized with your external data store via MapStore, or kept only in memory on the target cluster.
+- `persist-wan-replicated-data`: When set to `true`, incoming WAN events received on the target cluster will be passed to the configured `MapStore` (if present), allowing the data to be persisted to the external system defined by the `MapStore` implementation. When set to `false` (the default), WAN events are applied only to the in-memory data structures and are not passed to `MapStore`, so no persistence to the external system occurs as a result of WAN replication. This setting allows you to control whether WAN-replicated data should be synchronized with your external data store via `MapStore`, or kept only in memory on the target cluster.
 
 ## Securing the Connections for WAN Replication {/* #securing-wan-connections */}
 

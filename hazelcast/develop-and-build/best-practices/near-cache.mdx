@@ -36,7 +36,7 @@ Near Cache is highly recommended for data structures that are mostly read.
 
 In a client/server system you must enable the Near Cache separately on the client, without the need to configure it on the server. Note that Near Cache configuration is specific to the server or client itself: a data structure on a server may not have Near Cache configured while the same data structure on a client may have Near Cache configured. They also can have different Near Cache configurations.
 
-If you are using Near Cache, take into account that your hits to the keys in the Near Cache are not reflected as hits to the original keys on the primary members. This has, for example, an impact on IMap's maximum idle seconds or time-to-live seconds expiration. Therefore, even though there is a hit on a key in Near Cache, your original key on the primary member may expire.
+If you are using Near Cache, take into account that your hits to the keys in the Near Cache are not reflected as hits to the original keys on the primary members. This has, for example, an impact on `IMap`'s maximum idle seconds or time-to-live seconds expiration. Therefore, even though there is a hit on a key in Near Cache, your original key on the primary member may expire.
 
 :::note
 
@@ -169,7 +169,7 @@ The following are the descriptions of all configuration elements and attributes:
   - `INVALIDATE`: Removes the Near Cache entry on mutation. After the mutative call to the member completes but before the operation returns to the caller, the Near Cache entry is removed. Until the mutative operation completes, the readers still continue to read the old value. But as soon as the update completes the Near Cache entry is removed. Any threads reading the key after this point will have a Near Cache miss and call through to the member, obtaining the new entry. This setting provides read-your-writes consistency. This is the default setting.
   - `CACHE_ON_UPDATE`: Updates the Near Cache entry on mutation. After the mutative call to the member completes but before the put returns to the caller, the Near Cache entry is updated. So a remove will remove the entry and one of the put methods will update it to the new value. Until the update/remove operation completes, the entry's old value can still be read from the Near Cache. But before the call completes the Near Cache entry is updated. Any threads reading the key after this point read the new entry. If the mutative operation was a remove, the key will no longer exist in the cache, both the Near Cache and the original copy in the member. The member initiates an invalidate event to any other Near Caches, however the caller Near Cache is not invalidated as it already has the new value. This setting also provides read-your-writes consistency.
 
-- `preloader`: Specifies if the Near Cache stores and preloads its keys for a faster re-population after a Hazelcast client restart. Is only available on IMap and JCache clients. It has the following attributes:
+- `preloader`: Specifies if the Near Cache stores and preloads its keys for a faster re-population after a Hazelcast client restart. Is only available on `IMap` and JCache clients. It has the following attributes:
   - `enabled`: Specifies whether the preloader for this Near Cache is enabled or not, `true` or `false`.
   - `directory`: Specifies the parent directory for the preloader of this Near Cache. The filenames for the preloader storage are generated from the Near Cache name. You can additionally specify the parent directory to have multiple clients on the same machine with the same Near Cache names.
   - `store-initial-delay-seconds`: Specifies the delay in seconds until the keys of this Near Cache are stored for the first time. Its default value is `600` seconds.
@@ -179,9 +179,9 @@ The following are the descriptions of all configuration elements and attributes:
 
 This section shows some configuration examples for different Hazelcast data structures.
 
-### Near Cache example for IMap
+### Near Cache example for `IMap`
 
-The following are configuration examples for IMap Near Caches for Hazelcast members and clients.
+The following are configuration examples for `IMap` Near Caches for Hazelcast members and clients.
 
 <Tabs groupId="java-api--xml--yaml">
 <TabItem value="xml" label="XML">

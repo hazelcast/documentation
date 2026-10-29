@@ -26,10 +26,10 @@ Learn how to deploy custom classes with the User Code Namespace
 In this tutorial, you'll do the following:
 
 - Deploy Hazelcast with userCodeNamespaces enabled.
-- Create a custom EntryListener class and package it into a JAR.
+- Create a custom `EntryListener` class and package it into a JAR.
 - Upload the JAR file to cloud storage.
 - Apply a UserCodeNamespace resource, referencing the JAR in storage.
-- Create a Map resource with the EntryListener, setting userCodeNamespaces the same as the UserCodeNamespace object.
+- Create a Map resource with the `EntryListener`, setting userCodeNamespaces the same as the UserCodeNamespace object.
 
 ## Before you Begin
 
@@ -65,9 +65,9 @@ You need the following:
    hazelcast   Running   1/1
    ```
 
-## Step 2. Deploy the EntryListener JAR to Cloud Storage
+## Step 2. Deploy the `EntryListener` JAR to Cloud Storage
 
-In this step, you'll build the EntryListener JAR from the tutorial's GitHub repository, and upload it to your cloud provider.
+In this step, you'll build the `EntryListener` JAR from the tutorial's GitHub repository, and upload it to your cloud provider.
 
 1. Clone the sample project.
 
@@ -176,7 +176,7 @@ In this step, you'll build the EntryListener JAR from the tutorial's GitHub repo
    - The jars in the bucket are downloaded into the members' classpath.
    - The classes in the jars are added to the `my-ucn` namespace.
 
-## Step 4. Create the Map with the EntryListener
+## Step 4. Create the Map with the `EntryListener`
 
 1. Create the Map in a specific namespace
 
@@ -193,9 +193,9 @@ In this step, you'll build the EntryListener JAR from the tutorial's GitHub repo
    my-map   Success
    ```
 
-   The status of `my-map` is `Success`, indicating that the map was successfully created with the user code namespace `my-ucn` and includes one EntryListener class, `com.hazelcast.tutorial.SimpleEntryListener`.
+   The status of `my-map` is `Success`, indicating that the map was successfully created with the user code namespace `my-ucn` and includes one `EntryListener` class, `com.hazelcast.tutorial.SimpleEntryListener`.
 
-   You can optionally put some entries to the map to observe the EntryListener in action.
+   You can optionally put some entries to the map to observe the `EntryListener` in action.
 
    ```shell
    $ kubectl logs hazelcast-0
