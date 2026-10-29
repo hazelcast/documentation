@@ -91,7 +91,7 @@ You will need the following installed on your system:
 
 ## Step 2: Get to Know the Data
 
-1. Access the Kafka UI at `http://localhost:8000` and observe the events in the "machine\_events" topic.
+1. Access the Kafka UI at `http://localhost:8000` and observe the events in the `machine_events` topic.
 
    ![events](./images/events.png)
 2. Open up the management center (`http://localhost:8080`) and select "SQL" from the menu on the left.
@@ -121,24 +121,24 @@ From this point forward, you can use either Management Center or CLC to run SQL 
 
 ## Step 3: Learn About Data Formats
 
-### GenericRecord
+### `GenericRecord`
 
 It is a best practice to avoid using POJOs in Pipelines if that POJO will be stored in a Hazelcast map. It can cause class loading problems.
 
 :::note
 
-When using *Compact* or *Portable* serialization, if a POJO is accessed in server-side code, it will be deserialized as a *GenericRecord* if the POJO class is not on the server's class path. Accordingly, server side code must be written to handle either a *GenericRecord* or a POJO depending on whether the POJO class is present.
+When using *Compact* or *Portable* serialization, if a POJO is accessed in server-side code, it will be deserialized as a `GenericRecord` if the POJO class is not on the server's class path. Accordingly, server side code must be written to handle either a `GenericRecord` or a POJO depending on whether the POJO class is present.
 
 :::
 
-In this lab, you will be working with *MachineProfile* objects and *MachineStatusSummary*, both of which are defined in `common/src/main/java`. However, those classes are not deployed with your job, so you will need to access them using GenericRecord. An example of GenericRecord usage is shown below.
+In this lab, you will be working with *MachineProfile* objects and *MachineStatusSummary*, both of which are defined in `common/src/main/java`. However, those classes are not deployed with your job, so you will need to access them using `GenericRecord`. An example of `GenericRecord` usage is shown below.
 
 ```java
 GenericRecord machineProfile;
 short bitTemperature = machineProfile.getInt16("warningTemp");
 ```
 
-For more information on GenericRecord and accessing domain objects without domain classes see [Accessing Domain Objects Without Domain Classes](/hazelcast/latest/clusters/accessing-domain-objects).
+For more information on `GenericRecord` and accessing domain objects without domain classes see [Accessing Domain Objects Without Domain Classes](/hazelcast/latest/clusters/accessing-domain-objects).
 
 :::note
 

@@ -41,7 +41,7 @@ Make sure you have the following:
 - Deployed [Hazelcast Platform Operator version 5.8 or above](/operator/latest/get-started)
 - Blob storage and access credentials on one of the following cloud providers: [AWS](https://aws.amazon.com/s3/), [GCP](https://cloud.google.com/storage/), [Azure](https://azure.microsoft.com/en-us/services/storage/blobs/)
 
-If you're unsure about how to submit JetJobs using the Hazelcast Platform Operator, it's recommended to start by following the [Jet](./hazelcast-platform-operator-jet.mdx) tutorial first. That tutorial also covers the steps for deploying a custom Jet pipeline JAR to Cloud storage and provides guidance on managing JetJob resources using the Hazelcast Platform Operator.
+If you're unsure about how to submit JetJobs using the Hazelcast Platform Operator, it's recommended to start by following the [Jet](./hazelcast-platform-operator-jet.mdx) tutorial first. That tutorial also covers the steps for deploying a custom Jet pipeline JAR to Cloud storage and provides guidance on managing `JetJob` resources using the Hazelcast Platform Operator.
 
 ## Step 1. Start the Hazelcast Cluster
 
@@ -91,7 +91,7 @@ Before submitting the Jet Job, you need to create a map from which the Jet Job w
 2. Run the following command to submit the Jet Job.
 
    <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_platform_operator_jet_job_snapshot_operator_jet_job_snapshot_job_v1_yaml + 'EOF'}</CodeBlock>
-3. Run the following command to check the status of the JetJob you have submitted.
+3. Run the following command to check the status of the `JetJob` you have submitted.
 
    ```shell
    $ kubectl get jetjob transaction-v1
@@ -143,7 +143,7 @@ When creating a new version of a data pipeline, it's essential to initialize the
 1. Continuing with the example, we will now move forward to create a new version of the previous Jet Job. To maintain simplicity in the example, the new version so similar to the old one. It takes entries from the 'transaction' map and logs them.
 
    <CodeBlock language="java">{Ex_hazelcast_platform_operator_jet_job_snapshot_operator_jet_job_snapshot_jet_pipelines_src_main_java_org_examples_jet_snapshot_JobV2_java}</CodeBlock>
-2. Differing from the previous JetJob definition, we will set the 'initialSnapshotResourceName' field to refer to the Snapshot exported in the preceding step. Execute the following command to submit the new Jet Job.
+2. Differing from the previous `JetJob` definition, we will set the 'initialSnapshotResourceName' field to refer to the Snapshot exported in the preceding step. Execute the following command to submit the new Jet Job.
 
    <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_platform_operator_jet_job_snapshot_operator_jet_job_snapshot_job_v2_yaml + 'EOF'}</CodeBlock>
 

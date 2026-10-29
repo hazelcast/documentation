@@ -38,7 +38,7 @@ Before starting this tutorial, make sure you have the following installed:
    docker compose up -d --scale hz=2
    ```
 4. Browse to `localhost:8080` to open Management Center. Access the cluster in Dev mode, then open the cluster view. Verify that the cluster is up with two members.
-5. Review the cluster configuration at hazelcast.yaml.
+5. Review the cluster configuration at `hazelcast.yaml`.
 
    ```yaml
    hazelcast:
@@ -63,7 +63,7 @@ Before starting this tutorial, make sure you have the following installed:
 
 1. In your IDE, open the `TransactionEntryProcessor` in the `common` project. Review the code.
 
-   The EntryProcessor will be invoked on the "cards" map which contains instances of `Card`. However, as you can see the type of the entry declared in the EntryProcessor is `GenericRecord`. This is the recommended approach for map entries. *It is not advisable to put the domain object in the user code namespace* because, when the contents of the namespace changes, a new class loader will be created and Java will consider a `Card` loaded from one class loader to be different from a `Card` loaded from another class loader, even if they are in the same user code namespace. This is the genesis of the "instance of class Card cannot be cast to Card" error message.
+   The `EntryProcessor` will be invoked on the "cards" map which contains instances of `Card`. However, as you can see the type of the entry declared in the `EntryProcessor` is `GenericRecord`. This is the recommended approach for map entries. *It is not advisable to put the domain object in the user code namespace* because, when the contents of the namespace changes, a new class loader will be created and Java will consider a `Card` loaded from one class loader to be different from a `Card` loaded from another class loader, even if they are in the same user code namespace. This is the genesis of the "instance of class Card cannot be cast to Card" error message.
 2. In your IDE, open the the `AuthorizationServiceController` in the `authorization-service` project.
 
    ```java
@@ -81,8 +81,8 @@ Before starting this tutorial, make sure you have the following installed:
        }
    ```
 
-   Notice how the `TransactionEntryProcessor` and `Transaction` classes are being added to the UserCodeNamespaceConfig every time at startup. Also notice that the `Card` class is *not* specified. If it is present in the user code namespace for the map, it will be deserialized as `Card` and not `GenericRecord`, leading to the issues mentioned above.
-3. Use `more` to review the contents of compose.yaml, the Docker configuration file. Note that nothing has been added to the Hazelcast class path when we start the cluster.
+   Notice how the `TransactionEntryProcessor` and `Transaction` classes are being added to the `UserCodeNamespaceConfig` every time at startup. Also notice that the `Card` class is *not* specified. If it is present in the user code namespace for the map, it will be deserialized as `Card` and not `GenericRecord`, leading to the issues mentioned above.
+3. Use `more` to review the contents of `compose.yaml`, the Docker configuration file. Note that nothing has been added to the Hazelcast class path when we start the cluster.
 
 ```yaml
   hz:
@@ -140,7 +140,7 @@ Before starting this tutorial, make sure you have the following installed:
    - A transaction over the available credit limit.
    - A transaction to the locked card.
 
-     Observe the output generated. With this version of the authorization code, you only get two possible responses: ACCEPTED and DECLINED\_OVER\_AUTH\_LIMIT.
+     Observe the output generated. With this version of the authorization code, you only get two possible responses: ACCEPTED and `DECLINED_OVER_AUTH_LIMIT`.
 
 ## Update the Transaction Entry Processor
 

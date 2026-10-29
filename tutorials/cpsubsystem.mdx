@@ -47,7 +47,7 @@ In this section, you'll launch a Hazelcast cluster and Management Center using D
    You should see four services up and running: three instances of Hazelcast, and one instance of Management Center.
 
 3. Open the file `hazelcast.yaml` to review the cluster member configuration.
-4. Open a web browser and connect to **localhost:8080**. This will open Management Center. Select Dev Mode to open the main dashboard. Go to **Settings**, then open **License**. Paste in the license key from `hazelcast.yaml`. Verify that the license includes Advanced CP, which is required for CPMap functionality.
+4. Open a web browser and connect to **`localhost:8080`**. This will open Management Center. Select Dev Mode to open the main dashboard. Go to **Settings**, then open **License**. Paste in the license key from `hazelcast.yaml`. Verify that the license includes Advanced CP, which is required for CPMap functionality.
 
    ![licensed features](./images/licensed_features.png)
 
@@ -175,7 +175,7 @@ In this section, you will pause and restart individual cluster members to simula
 
 In this step, we will add another cluster member, and configure the cluster for automatic member failure.
 
-1. Open the file compose.yaml. Add a fourth instance of Hazelcast to the file. Save your changes.
+1. Open the file `compose.yaml`. Add a fourth instance of Hazelcast to the file. Save your changes.
 
    ```cli
      hz4:
@@ -186,7 +186,7 @@ In this step, we will add another cluster member, and configure the cluster for 
          - ".:/project"
    ```
 
-2. Open the file hazelcast.yaml. Modify the configuration as follows:
+2. Open the file `hazelcast.yaml`. Modify the configuration as follows:
    1. Set the member count to 4
    2. Add the timeout and set it to 60 seconds
    3. Add the auto-removal and set it to 60 seconds
