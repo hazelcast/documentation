@@ -5,7 +5,7 @@ sidebar_position: 3
 slug: /project-creator
 ---
 
-This guide shows you how to create projects using the CLC \`project create\` command.
+This guide shows you how to create projects using the CLC `project create` command.
 
 ## Introduction
 
@@ -35,7 +35,7 @@ These flags are mutually exclusive, which means that you can only use one of the
 
 :::
 
-Let's create our first project by using [go-client-getting-startedˆ](https://github.com/hazelcast-templates/go-client-getting-started) template. This template includes the following extension files:
+Let's create our first project by using [`go-client-getting-started`](https://github.com/hazelcast-templates/go-client-getting-started) template. This template includes the following extension files:
 
 ```none
 go-client-getting-started
@@ -44,18 +44,18 @@ go-client-getting-started
 └── ...
 ```
 
-The `.template` extension specifies that the file is a [Go template](https://pkg.go.dev/text/template) that includes placeholders and actions. The `.keep` extension identifies files to keep as they are required for the project. For example, a file named *README.md* in the template is replaced by a file named *README.md.keep* when the project is created.
+The `.template` extension specifies that the file is a [Go template](https://pkg.go.dev/text/template) that includes placeholders and actions. The `.keep` extension identifies files to keep as they are required for the project. For example, a file named `README.md` in the template is replaced by a file named `README.md.keep` when the project is created.
 
-Let's look a bit deeper to *config.go.template* to see what placeholders are included:
+Let's look a bit deeper to `config.go.template` to see what placeholders are included:
 
-- config
-- cluster\_name
-- cluster\_discovery\_token
-- cluster\_address
-- ssl\_key\_path
-- ssl\_cert\_path
-- ssl\_key\_password
-- cluster\_api\_base
+- `config`
+- `cluster_name`
+- `cluster_discovery_token`
+- `cluster_address`
+- `ssl_key_path`
+- `ssl_cert_path`
+- `ssl_key_password`
+- `cluster_api_base`
 
 that are used in this template. You can find a full list of placeholders in the [clc project](../reference/clc-commands/clc-project.mdx) topic.
 
@@ -65,27 +65,27 @@ To create a project, run the following command:
 clc -c <your-config> project create go-client-getting-started
 ```
 
-This project is created in the current working directory. To create the project in a different directory, add the --output-dir flag to the command. Once created, the project can be run immediately as the placeholders are already configured.
+This project is created in the current working directory. To create the project in a different directory, add the `--output-dir` flag to the command. Once created, the project can be run immediately as the placeholders are already configured.
 
 ## Create and Use User-created Templates
 
 If preferred, you can use templates that you have created. When creating your templates, keep the following points in mind:
 
 - Use the format used in the [Go template](https://pkg.go.dev/text/template).
-- To add default values, create a *template.yaml* file, add a `defaults` node, and save it in the template root directory.
-- Template files must have the *.template* extension.
-- File names that start with a period (`.`) or underscore (`_`) are ignored, unless they also have a *.keep* extensions.
-- Any files with a *.keep* extension are copied to the project with the *.keep* extension removed. All other files are copied without changes. \*Properties are read from the following resources in order:
-
-  1. The defaults node of the templates.yaml file.
+- To add default values, create a `template.yaml` file, add a `defaults` node, and save it in the template root directory.
+- Template files must have the `.template` extension.
+- File names that start with a period (`.`) or underscore (`_`) are ignored, unless they also have a `.keep` extension.
+- Any files with a `.keep` extension are copied to the project with the `.keep` extension removed. All other files are copied without changes. Properties are read from the following resources in order:
+  1. The defaults node of the `templates.yaml` file.
 
      :::note
 
      The keys must not contain any punctuation characters.
 
      :::
+
   2. `config.yaml`
-  3. User passed key-values in the "KEY=VALUE" format.
+  3. User passed key-values in the `KEY=VALUE` format.
 
      :::note
 

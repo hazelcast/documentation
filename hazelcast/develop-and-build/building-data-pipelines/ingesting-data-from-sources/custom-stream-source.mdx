@@ -193,7 +193,7 @@ When Hazelcast resumes a job, it will:
 - create your context object the usual way, by calling `createFn`
 - retrieve the latest snapshot object from its storage
 - pass the context and snapshot objects to `restoreSnapshotFn`
-- start calling `fillBufferFn`, which must start by emitting the same item it was about to emit when createSnapshotFn was called.
+- start calling `fillBufferFn`, which must start by emitting the same item it was about to emit when `createSnapshotFn` was called.
 
 You'll find that `restoreSnapshotFn`, somewhat unexpectedly, accepts not one but a list of snapshot objects. If you're building a simple, non-distributed source, this list will have just one element. However, the same logic must work for distributed sources as well, and a distributed source runs on many parallel processors at the same time. Each of them will produce its own snapshot object. After a restart the number of parallel processors may be different than before (because you added a Hazelcast cluster member, for example), so there's no one-to-one mapping between the processors before and after the restart. This is why Hazelcast passes all the snapshot objects to all the processors, and your logic must work out which part of their data to use.
 

@@ -34,11 +34,11 @@ compile "org.springframework.integration:spring-integration-hazelcast:6.5.2"
 
 :::note
 
-Hazelcast can be used as a JCache compliant cache or as a Spring org.springframework.cache.CacheManager compliant cache. When setting configprop:spring.cache.type\[\] to `hazelcast`, Spring Boot will use the org.springframework.cache.CacheManager based implementation. If you want to use Hazelcast as a JCache compliant cache, set configprop:spring.cache.type\[\] to `jcache`. If you have multiple JCache compliant cache providers and want to force the use of Hazelcast, you have to [explicitly set the JCache provider](https://docs.spring.io/spring-boot/reference/io/caching.html#io.caching.provider.jcache).
+Hazelcast can be used as a JCache compliant cache or as a Spring `org.springframework.cache.CacheManager` compliant cache. When setting `spring.cache.type` to `hazelcast`, Spring Boot will use the `org.springframework.cache.CacheManager` based implementation. If you want to use Hazelcast as a JCache compliant cache, set `spring.cache.type` to `jcache`. If you have multiple JCache compliant cache providers and want to force the use of Hazelcast, you have to [explicitly set the JCache provider](https://docs.spring.io/spring-boot/reference/io/caching.html#io.caching.provider.jcache).
 
 :::
 
-The XML namespace and schemaLocation definitions for Hazelcast components are:
+The XML namespace and `schemaLocation` definitions for Hazelcast components are:
 
 ```xml
 xmlns:int-hazelcast="http://www.springframework.org/schema/integration/hazelcast"
@@ -64,7 +64,7 @@ It also provides event listeners in order to listen to modifications made to the
 - `com.hazelcast.collection.ItemListener`
 - `com.hazelcast.topic.MessageListener`
 
-The Hazelcast Event-Driven Inbound Channel Adapter listens to related cache events and sends event messages to the defined channel. It supports both XML and JavaConfig driven configurations.
+The Hazelcast Event-Driven Inbound Channel Adapter listens to related cache events and sends event messages to the defined channel. It supports both XML and `JavaConfig` driven configurations.
 
 ### XML Configuration : {/* #xml-configuration-: */}
 
@@ -266,7 +266,7 @@ It supports six attributes as follows:
 - `cache`: Specifies the distributed Map reference which is listened to. Mandatory;
 - `cache-events`: Specifies cache events which are listened for. Optional attribute with `ADDED` being its default value. Supported values are `ADDED`, `REMOVED`, `UPDATED`, `EVICTED`, `EVICT_ALL` and `CLEAR_ALL`;
 - `predicate`: Specifies a predicate to listen to the modifications performed on specific map entries. Mandatory;
-- `include-value`: Specifies including the value and oldValue in a continuous query result. Optional with `true` being the default;
+- `include-value`: Specifies including the value and `oldValue` in a continuous query result. Optional with `true` being the default;
 - `cache-listening-policy`: Specifies the cache listening policy as `SINGLE` or `ALL`. Optional with the default value being `SINGLE`. Each Hazelcast CQ inbound channel adapter listening to the same cache object with the same cache-events attribute, can receive a single event message or all event messages. If it is `ALL`, all Hazelcast CQ inbound channel adapters listening to the same cache object with the same cache-events attribute, will receive all event messages. If it is `SINGLE`, they will receive unique event messages.
 
 ## Hazelcast Cluster Monitor Inbound Channel Adapter {/* #hazelcast-cluster-monitor */}

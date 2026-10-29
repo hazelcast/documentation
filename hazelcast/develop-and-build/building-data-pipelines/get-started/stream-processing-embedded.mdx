@@ -126,7 +126,7 @@ With Hazelcast, you can specify data processing steps, using the Java Jet API. T
 
 The general pattern of a data processing pipeline is to read data from a data source, process (or transform) it, and write the results to a data sink. You can visualize these steps as a linear process:
 
-readFromSource → transform → writeToSink
+`readFromSource` → `transform` → `writeToSink`
 
 In this step, you create a pipeline that reads a stream of incrementing numbers from a test data source and prints only even numbers, using the console as a sink.
 
@@ -167,7 +167,7 @@ public class EvenNumberStream {
 4. Filter out any even numbers from the stream. The `filter()` method receives the `SimpleEvent` objects from the dummy source.
 5. Set the name of this processing stage. Naming a processing stage makes it easier to recognize in the [DAG view](./stream-processing-client.mdx#step-4-monitor-your-jobs-in-management-center) of Management Center.
 6. Send the result of the streaming process to the console. A pipeline without any sinks is not valid.
-7. Create a bootstrapped Hazelcast member. This bootstrapped member allows you to submit your pipeline as a packaged class to a running cluster, using the\`hazelcast submit\` command.
+7. Create a bootstrapped Hazelcast member. This bootstrapped member allows you to submit your pipeline as a packaged class to a running cluster, using the `hazelcast submit` command.
 8. Pass your pipeline to the bootstrapped Jet engine.
 
 </CodeCallouts>

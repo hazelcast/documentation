@@ -94,7 +94,7 @@ Before submitting the Jet job, you need to create a map from which the Jet job w
    transaction-v1   Running   741632319877545985   2023-08-09T12:22:04Z
    ```
 
-   As new entries are added to the 'transaction' map, the Jet job automatically retrieves and processes them. To observe the executed transactions, examine the logs. In the log example below, three transactions are processed with keys 'transaction-1', 'transaction-2', and 'transaction-3'. The entry values are not a concern in this context.
+   As new entries are added to the 'transaction' map, the Jet job automatically retrieves and processes them. To observe the executed transactions, examine the logs. In the log example below, three transactions are processed with keys `transaction-1`, `transaction-2`, and `transaction-3`. The entry values are not a concern in this context.
 
    ```shell
    $ kubectl logs -l app.kubernetes.io/name=hazelcast -c hazelcast | grep transaction-v1/Log
@@ -110,7 +110,7 @@ In data pipelines, saving and using computation process states is vital for accu
 1. Export a Snapshot from the Jet job:
 
    <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_job_snapshot_docs_modules_ROOT_examples_operator_jet_job_snapshot_snapshot_yaml + 'EOF'}</CodeBlock>
-2. Check the status of the exported JetJobSnapshot:
+2. Check the status of the exported `JetJobSnapshot`:
 
    ```shell
    $ kubectl get jetjobsnapshot transaction
@@ -120,7 +120,7 @@ In data pipelines, saving and using computation process states is vital for accu
 
    :::note
 
-   By configuring the 'spec.cancelJob' field to 'true', the Jet job named 'transaction-v1' is canceled after applying the JetJobSnapshot. This setting is particularly useful before submitting a new version of the existing data pipeline. With this approach, the snapshot will halt the ongoing job after preserving its current state.
+   By configuring the 'spec.cancelJob' field to 'true', the Jet job named 'transaction-v1' is canceled after applying the `JetJobSnapshot`. This setting is particularly useful before submitting a new version of the existing data pipeline. With this approach, the snapshot will halt the ongoing job after preserving its current state.
 
    :::
 3. The Jet job should not be in the Running state anymore. Use the following command to verify this:
@@ -138,11 +138,11 @@ When creating a new version of a data pipeline, it's essential to initialize the
 1. Continuing with the example, we will now create a new version of the previous Jet job. For simplicity, the new version is similar to the old one. It takes entries from the 'transaction' map and logs them.
 
    <CodeBlock language="java">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_job_snapshot_docs_modules_ROOT_examples_operator_jet_job_snapshot_job_v2_yaml}</CodeBlock>
-2. In contrast to the previous Jet job definition, we will set the 'initialSnapshotResourceName' field to refer to the Snapshot exported in the preceding step. Execute the following command to submit the new Jet job:
+2. In contrast to the previous Jet job definition, we will set the `initialSnapshotResourceName` field to refer to the Snapshot exported in the preceding step. Execute the following command to submit the new Jet job:
 
    <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_job_snapshot_docs_modules_ROOT_examples_operator_jet_job_snapshot_job_v2_yaml + 'EOF'}</CodeBlock>
 
-   This Jet job, named 'transaction-v2', will seamlessly resume processing entries from the state at which we exported the snapshot. In this way, transaction entries are processed only once within the pipeline.
+   This Jet job, named `transaction-v2`, will seamlessly resume processing entries from the state at which we exported the snapshot. In this way, transaction entries are processed only once within the pipeline.
 3. Now check the new Jet job status
 
    ```shell
@@ -151,7 +151,7 @@ When creating a new version of a data pipeline, it's essential to initialize the
    transaction-v2   Running   741650518446702593   2023-08-09T13:34:22Z
    ```
 
-   When you review the logs after submitting the pipeline, you will see only logs of transaction entries added after the time when we exported the Snapshot. This means that the new version of the transaction pipeline, named 'transaction-v2', won't execute transactions already processed by the first version of the pipeline named 'transaction-v1'.
+   When you review the logs after submitting the pipeline, you will see only logs of transaction entries added after the time when we exported the Snapshot. This means that the new version of the transaction pipeline, named `transaction-v2`, won't execute transactions already processed by the first version of the pipeline named 'transaction-v1'.
 
    ```shell
    $ kubectl logs -l app.kubernetes.io/name=hazelcast -c hazelcast | grep transaction-v2/Log
@@ -159,7 +159,7 @@ When creating a new version of a data pipeline, it's essential to initialize the
    {"time":"2023-08-09T12:47:53,791", "logger": "com.hazelcast.jet.impl.connector.WriteLoggerP", "level": "INFO", "msg": "[10.36.0.10]:5702 [dev] [5.4.0] [transaction-v2/Log Transactions#0] [Job V2] transaction:'transaction-5' payload:'{\"description\": \"Gasoline Refill\", \"amount\": 50.30, \"transactionDate\": \"2023-08-13T09:00:00Z\"}' "}
    ```
 
-   If the new version of the Jet job, named 'transaction-v2', is not initialized from the exported Snapshot 'transaction', it will begin data processing from the start of the map. This is undesirable, as we have already processed certain transaction entries in the previous version of the pipeline.
+   If the new version of the Jet job, named `transaction-v2`, is not initialized from the exported Snapshot 'transaction', it will begin data processing from the start of the map. This is undesirable, as we have already processed certain transaction entries in the previous version of the pipeline.
 
    :::note
 

@@ -82,7 +82,7 @@ Starting with this release of Hazelcast Platform, the minimum supported Java ver
 - Added the `IMap.localValues()` and `IMap.localValues(Predicate)` methods for a faster access to locally owned values in maps. [\#24763](https://github.com/hazelcast/hazelcast/pull/24673)
 - Added the `deleteAsync()` for maps to asynchronously remove a provided map entry key. [\#23509](https://github.com/hazelcast/hazelcast/pull/23509)
 - Fixed the Javadoc for caches where it was referring incorrectly to statistics instead of management, for the `setManagementEnabled()` method. [\#22575](https://github.com/hazelcast/hazelcast/pull/22575)
-- Implemented RAFT lifecycle interfaces for CPMap. \#6800
+- Implemented RAFT lifecycle interfaces for `CPMap`. \#6800
 - Added the `getCPObjectInfos()` method to create a snapshot of all existing CP objects for a given service on the group leader. \#615
 - Added the `getCPGroupIds()` method to the CP Subsystem API to allow listing all data structures within a CP group. \#591
 - The "last update time" record of the map entries recovered from the disk persistence is not used anymore when calculating the entries' expiration times. \#233
@@ -113,7 +113,7 @@ Starting with this release of Hazelcast Platform, the minimum supported Java ver
 - Enabled faster execution times and more efficient garbage collection by making method probes to use `MethodHandle` instead of reflection. [\#25279](https://github.com/hazelcast/hazelcast/pull/25279)
 - Improved the naming convention for CP Session, Lock, and Persistence metrics. [\#24843](https://github.com/hazelcast/hazelcast/pull/24843), [\#24836](https://github.com/hazelcast/hazelcast/pull/24836)
 - Added `status` and `userCancelled` flags to job metrics. [\#24716](https://github.com/hazelcast/hazelcast/pull/24716)
-- Added the `size` and `sizeBytes` metrics for CPMap. See [CP Subsystem Metrics](../../reference/list-of-metrics.mdx#cp-subsystem-metrics). \#6807
+- Added the `size` and `sizeBytes` metrics for `CPMap`. See [CP Subsystem Metrics](../../reference/list-of-metrics.mdx#cp-subsystem-metrics). \#6807
 - Added the `connectionHealth` and `failedTransmitCount` metrics to WAN Replication. [WAN Replication Metrics](../../reference/list-of-metrics.mdx#wan-replication-metrics). \#848
 - Added metrics for the User Code Namespaces feature and set the prefix for these metrics as `ucn`. \#745, \#625
 - Removed the stack trace for WAN connection exception since its content was the same as the exception log itself. \#578
@@ -190,7 +190,7 @@ Starting with this release of Hazelcast Platform, the minimum supported Java ver
 - Fixed an issue where replicating over WAN from a cluster to other clusters, when all clusters share the same cluster name, was failing. \#728
 - Fixed a race condition occurred when the execution of registration/deregistration operation for `JobStatusListener` is offloaded to the event striped executor; now, this offloading is waited to finish. \#673
 - Fixed an issue when querying JSON, elements that appear after an element containing nested JSON was not appearing in the query results. \#570
-- Fixed an issue where data was lost from the ICache data structure with `NATIVE` entries in a split-brain scenario. \#480
+- Fixed an issue where data was lost from the `ICache` data structure with `NATIVE` entries in a split-brain scenario. \#480
 - Fixed an issue where the `ANALYZE INSERT INTO` SQL statement did not generate metrics. \#444
 - Fixed an issue where map entries' metadata were replicated incorrectly over WAN after a merge, causing deserialization of values. \#225
 - Fixed an issue where the process of retrieving metrics for job executions was entering an infinite loop when a job execution is completed on a member, but continued on the other members. With this fix, only the members on which the jobs have not been completed are queried for metrics; for completed jobs, the metrics are already retrieved from the completed jobs context. \#194

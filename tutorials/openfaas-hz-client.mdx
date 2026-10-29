@@ -52,8 +52,8 @@ helm repo add openfaas https://openfaas.github.io/faas-netes/
 You can expose the OpenFaaS gateway with different resources. Update the `helm upgrade` command with your choice .
 
 - NodePort, (default) pass no additional flags
-- LoadBalancer, add --set serviceType=LoadBalancer
-- IngressController, add --set ingress.enabled=true
+- `LoadBalancer`, add `--set serviceType=LoadBalancer`
+- `IngressController`, add `--set ingress.enabled=true`
 
 When NodePort is used you can access the gateway by using `kubectl port-forward`. In this tutorial, we are going to use NodePort.
 
@@ -96,7 +96,7 @@ kubectl port-forward svc/gateway -n openfaas 8080:8080
 
 Now, we can access the gateway from `http://127.0.0.1:8080`.
 
-If you're using a managed cloud Kubernetes service then get the LoadBalancer's IP address or DNS entry from the EXTERNAL-IP field from the command below.
+If you're using a managed cloud Kubernetes service then get the `LoadBalancer`'s IP address or DNS entry from the EXTERNAL-IP field from the command below.
 
 ```none
 kubectl get svc -o wide gateway-external -n openfaas
@@ -130,9 +130,9 @@ helm install hz-hazelcast hazelcast/hazelcast
 
 ## Step 2. Create a Function with the Hazelcast Client
 
-OpenFaaS CLI provides function templates for different runtime environments and watchdogs. We are going to implement the functions in Java, Python and NodeJs. We will be using both `of-watchdog` and `Classic Watchdog`. By using `of-watchdog` we will preserve the database connections, so our clients will not need to connect to the cluster after each function call. You can find more information on watchdogs [here](https://docs.openfaas.com/architecture/watchdog/).
+OpenFaaS CLI provides function templates for different runtime environments and watchdogs. We are going to implement the functions in Java, Python and Node.js. We will be using both `of-watchdog` and `Classic Watchdog`. By using `of-watchdog` we will preserve the database connections, so our clients will not need to connect to the cluster after each function call. You can find more information on watchdogs [here](https://docs.openfaas.com/architecture/watchdog/).
 
-Clone the repository from templates:ROOT:page$/\[here\] and `cd` into the repository
+Clone the [openfaas-hz-client repository](https://github.com/hazelcast-guides/openfaas-hz-client) and `cd` into the repository.
 
 <Tabs groupId="client-language">
 <TabItem value="java" label="Java">
@@ -147,7 +147,7 @@ If you are not using a local Kubernetes cluster, you will also need to change th
 
 :::note
 
-If you deployed your Hazelcast cluster in a namespace other than `default` do not forget to change the `default` in `config.getNetworkConfig().addAddress` to your namespace in the file \`hz-client-java-ofwatchdog/src/…​/Handler.java'.
+If you deployed your Hazelcast cluster in a namespace other than `default` do not forget to change the `default` in `config.getNetworkConfig().addAddress` to your namespace in the file `hz-client-java-ofwatchdog/src/…​/Handler.java`.
 
 :::
 
@@ -170,7 +170,7 @@ If you are not using a local Kubernetes cluster, you will also need to change th
 
 :::note
 
-If you deployed your Hazelcast cluster in a namespace other than `default` do not forget to change the `default` in `cluster_members` to your namespace in the file 'hz-client-python-ofwatchdog/handler.py'.
+If you deployed your Hazelcast cluster in a namespace other than `default` do not forget to change the `default` in `cluster_members` to your namespace in the file `hz-client-python-ofwatchdog/handler.py`.
 
 :::
 
@@ -194,7 +194,7 @@ If you are not using a local Kubernetes cluster, you will also need to change th
 
 :::note
 
-If you deployed your Hazelcast cluster in a namespace other than `default` do not forget to change the `default` in `clusterMembers` to your namespace in the file 'hz-client-node-ofwatchdog/handler.js'.
+If you deployed your Hazelcast cluster in a namespace other than `default` do not forget to change the `default` in `clusterMembers` to your namespace in the file `hz-client-node-ofwatchdog/handler.js`.
 
 :::
 
@@ -266,7 +266,7 @@ If you are not using a local Kubernetes cluster, you will also need to change th
 
 :::note
 
-If you deployed your Hazelcast cluster in a namespace other than `default` do not forget to change the `default` in `cluster_members` to your namespace in the file 'hz-client-python-classic/handler.py'.
+If you deployed your Hazelcast cluster in a namespace other than `default` do not forget to change the `default` in `cluster_members` to your namespace in the file `hz-client-python-classic/handler.py`.
 
 :::
 
@@ -297,7 +297,7 @@ If you are not using a local Kubernetes cluster, you will also need to change th
 
 :::note
 
-If you deployed your Hazelcast cluster in a namespace other than `default` do not forget to change the `default` in `clusterMembers` to your namespace in the file 'hz-client-node-classic/handler.js'.
+If you deployed your Hazelcast cluster in a namespace other than `default` do not forget to change the `default` in `clusterMembers` to your namespace in the file `hz-client-node-classic/handler.js`.
 
 :::
 
@@ -318,7 +318,7 @@ This will invoke the function 100 times using 4 concurrent workers.
 </TabItem>
 </Tabs>
 
-Comparing the two deployed versions for `of-watchdog` and `Classic Watchdog`, you should see dramatic results between response times.Because `of-watchdog` allows clients to persist their connection, it will be considerably faster.
+Comparing the two deployed versions for `of-watchdog` and `Classic Watchdog`, you should see dramatic results between response times. Because `of-watchdog` allows clients to persist their connection, it will be considerably faster.
 
 ## Summary
 

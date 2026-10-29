@@ -118,6 +118,7 @@ When submitting a job using the Hazelcast client, no additional classes are sent
   If you need to use any code (libraries or your own code) that uses async cleanup or finalizers, consider using [User Code Namespaces](../distributed-computing/user-code-namespaces/overview.mdx) to upload job resources or place necessary JARs in the `lib` directory of Hazelcast distribution.
 
   :::
+
 - Add JAR files to the `<HAZELCAST_HOME>/lib` directory.
 
   Hazelcast automatically picks up any dependencies placed in this directory during startup.
@@ -127,6 +128,7 @@ When submitting a job using the Hazelcast client, no additional classes are sent
   After making changes to the `lib` directory, you must [restart](../../operate-and-manage/maintaining-a-cluster/restart-cluster.mdx) the member before it will recognize the new files.
 
   :::
+
 - Add the path to your JAR files, using the `CLASSPATH=<path_to_jar>` environment variable when starting a Hazelcast member.
 
 :::warning
@@ -134,7 +136,7 @@ When submitting a job using the Hazelcast client, no additional classes are sent
 You cannot upload the following classes using the Jet API or the CLI. These classes must be uploaded at the same time as the member starts.
 
 - [Custom Serializers](../serialization/custom-serialization.mdx)
-- Map features such as EntryProcessor or MapLoader and MapStore
+- Map features such as `EntryProcessor` or `MapLoader` and `MapStore`
 
 :::
 
@@ -153,6 +155,7 @@ This approach is particularly useful in the following situations:
   Before isolating your computation, ensure that the processing element of the job is substantially more resource-intensive than the data retrieval element. Although isolating computation from storage can mean that your storage components benefit from the reduced resource workload, serving the data still has some impact and you must ensure that isolated jobs provide the right balance for your needs.
 
   :::
+
 - When you want to run the job on an edge node to take advantage of edge computing
 
 Job placement supports the following:
@@ -202,6 +205,7 @@ If your job uses classes that aren't already in your members classpath, you can 
   After making changes to the `lib` directory, you must [restart](../../operate-and-manage/maintaining-a-cluster/restart-cluster.mdx) the member before it will recognize the new files.
 
   :::
+
 - Add the path to your JAR files, using the `CLASSPATH=<path_to_jar>` environment variable when starting a Hazelcast member.
 
 ## Submitting a Job from a Dockerfile
@@ -288,6 +292,6 @@ CLASSPATH=<path_to_jar> bin/hz-start
 You cannot upload the following classes using the API or the CLI. These classes must be uploaded at the same time as the member starts.
 
 - [Custom Serializers](../serialization/custom-serialization.mdx)
-- Map features such as EntryProcessor or MapLoader and MapStore
+- Map features such as `EntryProcessor` or `MapLoader` and `MapStore`
 
 :::

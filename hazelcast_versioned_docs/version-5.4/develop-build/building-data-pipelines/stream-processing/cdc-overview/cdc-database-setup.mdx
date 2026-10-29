@@ -35,10 +35,10 @@ expire_logs_days  = 10
 The semantics of these options are as follows:
 
 - **server-id**: must be unique withing the MySQL cluster ([5.7](https://dev.mysql.com/doc/refman/5.7/en/replication-options.html#sysvar_server_id), [8.0](https://dev.mysql.com/doc/refman/8.0/en/replication-options.html#sysvar_server_id))
-- **log_bin**: base name of the sequence of binlog files ([5.7](https://dev.mysql.com/doc/refman/5.7/en/replication-options-binary-log.html#option_mysqld_log-bin), [8.0](https://dev.mysql.com/doc/refman/8.0/en/replication-options-binary-log.html#option_mysqld_log-bin))
-- **binlog_format**: must be set to "ROW" in order for the CDC source to work properly ([5.7](https://dev.mysql.com/doc/refman/5.7/en/replication-options-binary-log.html#sysvar_binlog_format), [8.0](https://dev.mysql.com/doc/refman/8.0/en/replication-options-binary-log.html#sysvar_binlog_format))
-- **binlog_row_image**: must be set to "FULL" in order for the CDC source to work properly ([5.7](https://dev.mysql.com/doc/refman/5.7/en/replication-options-binary-log.html#sysvar_binlog_row_image), [8.0](https://dev.mysql.com/doc/refman/8.0/en/replication-options-binary-log.html#sysvar_binlog_row_image))
-- **expire_log_days**: number of days for automatic binlog file removal ([5.7](https://dev.mysql.com/doc/refman/5.7/en/replication-options-binary-log.html#sysvar_expire_logs_days), [8.0](https://dev.mysql.com/doc/refman/8.0/en/replication-options-binary-log.html#sysvar_expire_logs_days))
+- **`log_bin`**: base name of the sequence of binlog files ([5.7](https://dev.mysql.com/doc/refman/5.7/en/replication-options-binary-log.html#option_mysqld_log-bin), [8.0](https://dev.mysql.com/doc/refman/8.0/en/replication-options-binary-log.html#option_mysqld_log-bin))
+- **`binlog_format`**: must be set to "ROW" in order for the CDC source to work properly ([5.7](https://dev.mysql.com/doc/refman/5.7/en/replication-options-binary-log.html#sysvar_binlog_format), [8.0](https://dev.mysql.com/doc/refman/8.0/en/replication-options-binary-log.html#sysvar_binlog_format))
+- **`binlog_row_image`**: must be set to "FULL" in order for the CDC source to work properly ([5.7](https://dev.mysql.com/doc/refman/5.7/en/replication-options-binary-log.html#sysvar_binlog_row_image), [8.0](https://dev.mysql.com/doc/refman/8.0/en/replication-options-binary-log.html#sysvar_binlog_row_image))
+- **`expire_log_days`**: number of days for automatic binlog file removal ([5.7](https://dev.mysql.com/doc/refman/5.7/en/replication-options-binary-log.html#sysvar_expire_logs_days), [8.0](https://dev.mysql.com/doc/refman/8.0/en/replication-options-binary-log.html#sysvar_expire_logs_days))
 
 While the database server is running, the active values of these variables can be checked with the help of the "SHOW VARIABLES Statement" ([5.7](https://dev.mysql.com/doc/refman/5.7/en/show-variables.html), [8.0](https://dev.mysql.com/doc/refman/8.0/en/show-variables.html)). It's worth pointing out that the names of the options sometimes differ from the names of the MySQL system variables they set. For example:
 
@@ -48,7 +48,7 @@ SHOW VARIABLES LIKE 'server_id';
 
 ### Configure Session Timeouts
 
-When an initial consistent snapshot is made for large databases, your established connection could timeout while the tables are being read. You can prevent this behavior by configuring **interactive_timeout** ([5.0](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_interactive_timeout), [8.0](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_interactive_timeout)) and **wait_timeout** ([5.0](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_wait_timeout), [8.0](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_wait_timeout)) in your MySQL configuration file.
+When an initial consistent snapshot is made for large databases, your established connection could timeout while the tables are being read. You can prevent this behavior by configuring **`interactive_timeout`** ([5.0](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_interactive_timeout), [8.0](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_interactive_timeout)) and **`wait_timeout`** ([5.0](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_wait_timeout), [8.0](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_wait_timeout)) in your MySQL configuration file.
 
 On how to work with the MySQL config file consult the Reference Manual ([5.7](https://dev.mysql.com/doc/refman/5.7/en/option-files.html), [8.0](https://dev.mysql.com/doc/refman/8.0/en/option-files.html)).
 
@@ -145,7 +145,7 @@ Another reason why using a replica for CDC might be useful, is that for large da
 
 When using a replica for the CDC source and in general when the MySQL server cluster has multiple member it's a good idea to give yourself the option of connecting the CDC source to any one of the members. The source does track the transaction ids in the binlog and can connect to the binlog of another MySQL server on restart, but in order for the ids to match between servers Global Transaction Identifiers (GTIDs) must be enabled in them.
 
-This can be achieved by setting both of the **gtid_mode** ([5.0](https://dev.mysql.com/doc/refman/5.7/en/replication-options-gtids.html#sysvar_gtid_mode), [8.0](https://dev.mysql.com/doc/refman/8.0/en/replication-options-gtids.html#sysvar_gtid_mode)) and **enforce_gtid_consistency** ([5.0](https://dev.mysql.com/doc/refman/5.7/en/replication-options-gtids.html#sysvar_enforce_gtid_consistency), [8.0](https://dev.mysql.com/doc/refman/8.0/en/replication-options-gtids.html#sysvar_enforce_gtid_consistency)) options to "ON".
+This can be achieved by setting both of the **`gtid_mode`** ([5.0](https://dev.mysql.com/doc/refman/5.7/en/replication-options-gtids.html#sysvar_gtid_mode), [8.0](https://dev.mysql.com/doc/refman/8.0/en/replication-options-gtids.html#sysvar_gtid_mode)) and **`enforce_gtid_consistency`** ([5.0](https://dev.mysql.com/doc/refman/5.7/en/replication-options-gtids.html#sysvar_enforce_gtid_consistency), [8.0](https://dev.mysql.com/doc/refman/8.0/en/replication-options-gtids.html#sysvar_enforce_gtid_consistency)) options to "ON".
 
 On how to work with the MySQL config file consult the Reference Manual ([5.7](https://dev.mysql.com/doc/refman/5.7/en/option-files.html), [8.0](https://dev.mysql.com/doc/refman/8.0/en/option-files.html)).
 

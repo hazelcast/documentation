@@ -45,7 +45,7 @@ Enabling Hazelcast persistence requires the following configuration.
 <CodeCallouts>
 
 1. [Cluster recovery policy](#recovery-policy).
-2. Size of the PersistentVolumeClaim (PVC) where Hazelcast data is persisted.
+2. Size of the `PersistentVolumeClaim` (PVC) where Hazelcast data is persisted.
 3. Agent responsible for moving data from the local storage to external buckets. The agent configuration is optional. If you enable `persistence` and do not pass the agent configuration, Operator uses the latest agent version that is compatible with its version.
 
 </CodeCallouts>
@@ -246,7 +246,7 @@ To restore from local backups that are in an existing [persistent volume](https:
 2. If you configured maps with persistence, you must create them while creating the Hazelcast CR. To create them while creating the Hazelcast CR, you must use [custom configuration](../../configuration-properties/custom-config.mdx). You cannot apply the Hazelcast CR and then the Map CRs.
 3. `pvcNamePrefix` is the prefix of the existing PVCs. It can be set to `persistence` or `hot-restart-persistence` depending on the installation method of the old cluster. Run the `kubect get pvc` command to decide which setting best suits your requirements.
 4. `baseDir` is the root directory for persistence.
-5. `backupDir` is the directory that contains a backupFolder for each available backup.
+5. `backupDir` is the directory that contains a `backupFolder` for each available backup.
 6. `backupFolder` is the directory containing the backup for the restore.
 
 </CodeCallouts>

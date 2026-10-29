@@ -32,60 +32,60 @@ With `IExecutorService`, you can execute tasks asynchronously and perform other 
 
 In the Java Executor framework, you implement tasks two ways: Callable or Runnable.
 
-- Callable: If you need to return a value and submit it to Executor, implement the task as `java.util.concurrent.Callable`.
+- Callable: If you need to return a value and submit it to `Executor`, implement the task as `java.util.concurrent.Callable`.
 - Runnable: If you do not need to return a value, implement the task as `java.util.concurrent.Runnable`.
 
 Note that, the distributed executor service (`IExecutorService`) is intended to run processing where the data is hosted: on the server members. In general, you cannot run a Java Runnable or Callable on the clients as the clients may not be Java. Also, the clients do not host any data, so they would have to fetch what data they need from the servers potentially. If you want something to run on all or some clients connected to your cluster, you could implement this using the publish/subscribe mechanism; a payload could be sent to an [`ITopic`](../../distributed-data-structures/ap-data-structures/topic.mdx) with the necessary execution parameters, and clients listening can act on the message.
 
-## Implementing a Callable Task
+## Implementing a `Callable` Task
 
-In Hazelcast, when you implement a task as `java.util.concurrent.Callable` (a task that returns a value), you implement Callable and Serializable.
+In Hazelcast, when you implement a task as `java.util.concurrent.Callable` (a task that returns a value), you implement `Callable` and `Serializable`.
 
-Below is an example of a Callable task. SumTask prints out map keys and returns the summed map values.
+Below is an example of a `Callable` task. `SumTask` prints out map keys and returns the summed map values.
 
 <CodeBlock language="java">{Ex_distributedcomputing_SumTask_java_tag_st}</CodeBlock>
 
-Another example is the Echo callable below. In its call() method, it returns the local member and the input passed in. Remember that `instance.getCluster().getLocalMember()` returns the local member and `toString()` returns the member's address (IP + port) in String form, just to see which member actually executed the code for our example. Of course, the `call()` method can do and return anything you like.
+Another example is the `Echo` callable below. In its `call()` method, it returns the local member and the input passed in. Remember that `instance.getCluster().getLocalMember()` returns the local member and `toString()` returns the member's address (IP and port) in String form, just to see which member actually executed the code for our example. Of course, the `call()` method can do and return anything you like.
 
 <CodeBlock language="java">{Ex_distributedcomputing_Echo_java_tag_echo}</CodeBlock>
 
-### Executing a Callable Task
+### Executing a `Callable` Task
 
 To execute a callable task:
 
-- retrieve the Executor from `HazelcastInstance`
+- retrieve the `Executor` from `HazelcastInstance`
 - submit a task which returns a `Future`
 - after executing the task, you do not have to wait for the execution to complete, you can process other things
 - when ready, use the `Future` object to retrieve the result as shown in the code example below.
 
-Below, the Echo task is executed.
+Below, the `Echo` task is executed.
 
 <CodeBlock language="java">{Ex_distributedcomputing_MasterMember_java_tag_mm}</CodeBlock>
 
-Please note that the `Echo` callable in the above example also implements a Serializable interface, since it may be sent to another member to be processed.
+Please note that the `Echo` callable in the above example also implements a `Serializable` interface, since it may be sent to another member to be processed.
 
 :::note
 
-When a task is deserialized, HazelcastInstance needs to be accessed. To do this, the task should implement `HazelcastInstanceAware` interface. See the [HazelcastInstanceAware Interface section](../../serialization/other-serialization-options/implementing-hazelcastinstanceaware.mdx) for more information.
+When a task is deserialized, `HazelcastInstance` needs to be accessed. To do this, the task should implement `HazelcastInstanceAware` interface. See the [`HazelcastInstanceAware` Interface section](../../serialization/other-serialization-options/implementing-hazelcastinstanceaware.mdx) for more information.
 
 :::
 
-## Implementing a Runnable Task
+## Implementing a `Runnable` Task
 
-In Hazelcast, when you implement a task as `java.util.concurrent.runnable` (a task that does not return a value), you implement Runnable and Serializable.
+In Hazelcast, when you implement a task as `java.util.concurrent.runnable` (a task that does not return a value), you implement `Runnable` and `Serializable`.
 
-Below is Runnable example code. It is a task that waits for some time and echoes a message.
+Below is `Runnable` example code. It is a task that waits for some time and echoes a message.
 
 <CodeBlock language="java">{Ex_distributedcomputing_EchoTask_java_tag_et}</CodeBlock>
 
-### Executing a Runnable Task
+### Executing a `Runnable` Task
 
 To execute the runnable task:
 
-- retrieve the Executor from `HazelcastInstance`
-- submit the tasks to the Executor.
+- retrieve the `Executor` from `HazelcastInstance`
+- submit the tasks to the `Executor`.
 
-Now let's write a class that submits and executes these echo messages. Executor is retrieved from `HazelcastInstance` and 1000 echo tasks are submitted.
+Now let's write a class that submits and executes these echo messages. `Executor` is retrieved from `HazelcastInstance` and 1000 echo tasks are submitted.
 
 <CodeBlock language="java">{Ex_distributedcomputing_RunnableMasterMember_java_tag_rmm}</CodeBlock>
 
@@ -95,11 +95,11 @@ You can scale the Executor service both vertically (scale up) and horizontally (
 
 To scale up, you should improve the processing capacity of the cluster member (JVM). You can do this by increasing the `pool-size` property mentioned in [Configuring Executor Service](#configuring-executor-service) (i.e., increasing the thread count). However, please be aware of your member's capacity. If you think it cannot handle such an additional load caused by increasing the thread count, you may want to consider improving the member's resources (CPU, memory, etc.). As an example, set the `pool-size` to 5 and run the above `MasterMember`. You will see that `EchoTask` is run as soon as it is produced.
 
-To scale out, add more members instead of increasing only one member's capacity. In reality, you may want to expand your cluster by adding more physical or virtual machines. For example, in the EchoTask example in the [Runnable section](#implementing-a-runnable-task), you can create another Hazelcast instance. That instance automatically gets involved in the executions started in `MasterMember` and start processing.
+To scale out, add more members instead of increasing only one member's capacity. In reality, you may want to expand your cluster by adding more physical or virtual machines. For example, in the `EchoTask` example in the [`Runnable` section](#implementing-a-runnable-task), you can create another Hazelcast instance. That instance automatically gets involved in the executions started in `MasterMember` and start processing.
 
 ## Executing Code in the Cluster
 
-The distributed executor service is a distributed implementation of `java.util.concurrent.ExecutorService`. It allows you to execute your code in the cluster. In this section, the code examples are based on the [Echo class above](#implementing-a-callable-task) (please note that the Echo class is `Serializable`). The code examples show how Hazelcast can execute your code (`Runnable, Callable`):
+The distributed executor service is a distributed implementation of `java.util.concurrent.ExecutorService`. It allows you to execute your code in the cluster. In this section, the code examples are based on the [`Echo` class above](#implementing-a-callable-task) (please note that the `Echo` class is `Serializable`). The code examples show how Hazelcast can execute your code (`Runnable, Callable`):
 
 - `echoOnTheMember`: On a specific cluster member you choose with the `IExecutorService` `submitToMember` method.
 - `echoOnTheMemberOwningTheKey`: On the member owning the key you choose with the `IExecutorService` `submitToKeyOwner` method.
@@ -171,7 +171,7 @@ To cancel a task, you can use the standard Java executor framework's `cancel()` 
 
 ### Example Task to Cancel
 
-The Fibonacci callable class below calculates the Fibonacci number for a given number. In the `calculate` method, we check if the current thread is interrupted so that the code can respond to cancellations once the execution is started.
+The `Fibonacci` `Callable` class below calculates the Fibonacci number for a given number. In the `calculate` method, we check if the current thread is interrupted so that the code can respond to cancellations once the execution is started.
 
 <CodeBlock language="java">{Ex_distributedcomputing_FibonacciCallable_java_tag_fc}</CodeBlock>
 
@@ -189,7 +189,7 @@ You can use the `ExecutionCallback` offered by Hazelcast to asynchronously be no
 
 ### Example Task to Callback
 
-Let's use the Fibonacci series to explain this. The example code below is the calculation that is executed. Note that it is Callable and Serializable.
+Let's use the Fibonacci series to explain this. The example code below is the calculation that is executed. Note that it is `Callable` and `Serializable`.
 
 <CodeBlock language="java">{Ex_distributedcomputing_Fibonacci2_java_tag_ec}</CodeBlock>
 
@@ -264,19 +264,18 @@ hazelcast:
 
 Executor service configuration has the following elements:
 
-- `pool-size`: The number of executor threads per Member for the Executor. By default, Executor is configured to have 16 threads in the pool. You can change that with this element.
-- `queue-capacity`: Executor's task queue capacity; the number of tasks this queue can hold.
-- `statistics-enabled`: Specifies whether the statistics gathering is enabled for your Executor Service. If set to `false`, you cannot collect statistics in your implementation (using `getLocalExecutorStats()`) and also <Variable href="/management-center/{page-latest-supported-mc}/data-structures/executor" text="Hazelcast Management Center" /> will not show them. Its default value is `true`.
-- `split-brain-protection-ref`: Name of the split-brain protection configuration that you want this Executor Service to use. See the [Split-Brain Protection for IExecutorService section](#split-brain-protection-for-iexecutorservice).
+- `pool-size`: The number of executor threads per Member for the `Executor`. By default, `Executor` is configured to have 16 threads in the pool. You can change that with this element.
+- `queue-capacity`: `Executor`'s task queue capacity; the number of tasks this queue can hold.
+- `statistics-enabled`: Specifies whether the statistics gathering is enabled for your `ExecutorService`. If set to `false`, you cannot collect statistics in your implementation (using `getLocalExecutorStats()`) and also <Variable href="/management-center/{page-latest-supported-mc}/data-structures/executor" text="Hazelcast Management Center" /> will not show them. Its default value is `true`.
+- `split-brain-protection-ref`: Name of the split-brain protection configuration that you want this `ExecutorService` to use. See the [Split-Brain Protection for `IExecutorService` section](#split-brain-protection-for-iexecutorservice).
 
-## Split-Brain Protection for IExecutorService
+## Split-Brain Protection for `IExecutorService`
 
-IExecutorService can be configured to check for a minimum number of available members before applying its operations (see the [Split-Brain Protection section](../../../operate-and-manage/fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful queue operations on all parts of a cluster during a network partition.
+`IExecutorService` can be configured to check for a minimum number of available members before applying its operations (see the [Split-Brain Protection section](../../../operate-and-manage/fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful queue operations on all parts of a cluster during a network partition.
 
 The following is a list of methods, grouped by the operations, that support split-brain protection checks:
 
-- WRITE, READ\_WRITE:
-
+- `WRITE`, `READ_WRITE`:
   - `execute`
   - `executeOnAllMembers`
   - `executeOnKeyOwner`
@@ -292,7 +291,7 @@ The following is a list of methods, grouped by the operations, that support spli
 
 **Configuring Split-Brain Protection**
 
-Split-brain protection for Executor Service can be configured programmatically using the method <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/ExecutorConfig.html" text="setSplitBrainProtectionName()" />, or declaratively using the element `split-brain-protection-ref`. Following is an example declarative configuration:
+Split-brain protection for Executor Service can be configured programmatically using the method <Variable code href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/ExecutorConfig.html" text="setSplitBrainProtectionName()" />, or declaratively using the element `split-brain-protection-ref`. Following is an example declarative configuration:
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">

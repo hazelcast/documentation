@@ -94,7 +94,7 @@ public class SpringHazelcastConfiguration {
 }
 ```
 
-(1) The `HazelcastInstance` bean declaration is a standard way of declaring beans in Spring. It uses a plain old Java method. (2) Declaration of bean for `testMap` IMap, so that you will be able to inject IMap directly into a field.
+(1) The `HazelcastInstance` bean declaration is a standard way of declaring beans in Spring. It uses a plain old Java method. (2) Declaration of bean for `testMap` `IMap`, so that you will be able to inject `IMap` directly into a field.
 
 You can then use Spring's `@Autowired` dependency injection annotation to automatically configure objects such as `HazelcastInstance` and `IMap`. For example:
 
@@ -111,9 +111,9 @@ As `@SpringBootApplication` is also a `@Configuration` class, you could instead 
 
 ### Hazelcast data structures as beans
 
-From Hazelcast Platform version 5.6, all Hazelcast data structures declared in configuration are automatically registered as beans when using Spring Boot. For example, when using `addMapConfig` for an IMap.
+From Hazelcast Platform version 5.6, all Hazelcast data structures declared in configuration are automatically registered as beans when using Spring Boot. For example, when using `addMapConfig` for an `IMap`.
 
-You can configure this behavior using the `@ExposeHazelcastObjects` annotation. For example, to include only IMaps as beans:
+You can configure this behavior using the `@ExposeHazelcastObjects` annotation. For example, to include only `IMaps` as beans:
 
 ```java
 /// (...)
@@ -143,16 +143,16 @@ You can also use `@ExposeHazelcastObjects` to enable this feature on Spring appl
 
 `ExposeHazelcastObjects` has 4 properties:
 
-- includeByType - include only objects of given type (e.g. IMap, Ringbuffer, JetService, SqlService)
-- includeByName - include only objects with given name
-- excludeByType - exclude all objects of given type
-- excludeByName - exclude all objects with given name
+- `includeByType` - include only objects of given type (e.g. `IMap`, `Ringbuffer`, `JetService`, `SqlService`)
+- `includeByName` - include only objects with given name
+- `excludeByType` - exclude all objects of given type
+- `excludeByName` - exclude all objects with given name
 
 Please note, that there is an `AND` relation between those properties. For example: if user used code sample above and added `excludeByName = "testMap"`, then only `otherTestMap` would be registered as a bean.
 
 :::note
 
-JetService is registered with name `jetService`, SqlService as `sqlService`. You can use those names to include or exclude those services from being registered as beans.
+`JetService` is registered with name `jetService`, `SqlService` as `sqlService`. You can use those names to include or exclude those services from being registered as beans.
 
 :::
 
@@ -175,7 +175,7 @@ While Java-based configuration is now widely used and recommended, you may prefe
 
 ### Declare beans using the beans namespace
 
-The following example declares a Hazelcast cluster and IMap using the default Spring `beans` namespace:
+The following example declares a Hazelcast cluster and `IMap` using the default Spring `beans` namespace:
 
 ```xml
 <bean id="instance" class="com.hazelcast.core.Hazelcast" factory-method="newHazelcastInstance">
@@ -297,7 +297,8 @@ The `hazelcast` XML namespace supports the following configuration:
   - [Configuring transaction permissions on the members](../../operate-and-manage/securing-a-cluster/client-authorization.mdx#transaction-permission)
 
   :::
-- Configure MapStore and NearCache
+
+- Configure `MapStore` and `NearCache`
 
   For `map-store`, you should set either the `class-name` or the `implementation` attribute.
 
@@ -346,7 +347,7 @@ The following table lists all of the Hazelcast data structures you can use in yo
 | `countDownLatch` | - (needs manual bean addition) | `<hz:countDownLatch id="countDownLatch" instance-ref="instance" name="countDownLatch"/>` |
 | `lock` <sup><Variable name="enterprise-product-name" /></sup> | `config.getCPSubsystemConfig().addLockConfig(new FencedLockConfig("lock1").setLockAcquireLimit(5));` | `<hz:lock id="lock" instance-ref="instance" name="lock"/>` |
 | `cpmap` <sup><Variable name="enterprise-product-name" /></sup> | `config.getCPSubsystemConfig().addCPMapConfig(new CPMapConfig("cpMap1").setMaxSizeMb(150));` | `<hz:cpmap instance-ref="instance" name="cpmap" id="cpMap" />` |
-| `dataConnection` | + \[source,java,opts=novalidate\] ----- config.addDataConnectionConfig(new DataConnectionConfig() .setName("my-jdbc-data-connection") .setType("Jdbc") .setProperties(getProperties())); ----- + | `<hz:external-data-store name="externalStore"> <hz:class-name>com.hazelcast.datastore.JdbcDataStoreFactory</hz:class-name> <hz:properties> <hz:property name="jdbcUrl">jdbc:mysql://dummy:3306</hz:property> </hz:properties> </hz:external-data-store>` |
+| `dataConnection` | `config.addDataConnectionConfig(new DataConnectionConfig().setName("my-jdbc-data-connection").setType("Jdbc").setProperties(getProperties()));` | `<hz:external-data-store name="externalStore"> <hz:class-name>com.hazelcast.datastore.JdbcDataStoreFactory</hz:class-name> <hz:properties> <hz:property name="jdbcUrl">jdbc:mysql://dummy:3306</hz:property> </hz:properties> </hz:external-data-store>` |
 | `executorService` | `config.addExecutorConfig(new ExecutorConfig("executor1").setPoolSize(100));` | `<hz:executorService id="executorService" instance-ref="client" name="executorService"/>` |
 | `durableExecutorService` | `config.addDurableExecutorConfig(new DurableExecutorConfig("executor1").setPoolSize(100));` | `<hz:durableExecutorService id="durableExec" instance-ref="instance" name="durableExec"/>` |
 | `scheduledExecutorService` | `config.addScheduledExecutorConfig(new ScheduledExecutorConfig("executor1").setPoolSize(100));` | `<hz:scheduledExecutorService id="scheduledExec" instance-ref="instance" name="scheduledExec"/>` |
@@ -368,7 +369,7 @@ Hazelcast supports the `lazy-init`, `scope` and `depends-on` bean attributes.
 
 Once you've set up Hazelcast in your Spring application, you can refer to the following sections to configure Hazelcast for common use cases:
 
-- [Enable SpringAware data structures](./springaware.mdx)
+- [Enable `SpringAware` data structures](./springaware.mdx)
 - [Add caching to Spring](./add-caching.mdx)
 - [Configure Hibernate second-level cache](./hibernate.mdx)
 

@@ -58,14 +58,14 @@ OPTIONS (
 <CodeCallouts>
 
 1. The name of the Pulsar topic.
-2. The name of Data Connection that will be used. Since we specify Data Connection, we can omit "TYPE" specification.
+2. The name of Data Connection that will be used. Since we specify Data Connection, we can omit `TYPE` specification.
 3. The preferred number of parallel consumer processors on each member for input mappings. If not specified, the default is `4`. This option is optional.
 
 </CodeCallouts>
 
 :::note
 
-Any key/value pairs in the `OPTIONS()` function that are not recognized by Hazelcast and are prefixed with "pulsar." are passed directly to the Pulsar consumer/producer (with `pulsar.` prefix cut off).
+Any key/value pairs in the `OPTIONS()` function that are not recognized by Hazelcast and are prefixed with `pulsar.` are passed directly to the Pulsar consumer/producer (with the `pulsar.` prefix cut off).
 
 :::
 
@@ -76,7 +76,7 @@ When creating a Pulsar mapping, you must tell the Pulsar connector how to serial
 The Pulsar connector supports serializers for the following formats:
 
 - [Primitive](#primitive-messages)
-- [Avro (valueFormat = `pulsarAvro`)](#avro-messages)
+- [Avro (`valueFormat` = `pulsarAvro`)](#avro-messages)
 - [JSON](#json-messages) (values only)
 - [Java](#java-messages)
 
@@ -97,7 +97,7 @@ The Pulsar connector will apply a suitable Schema automatically, for example `Sc
 
 ### Avro Messages
 
-For Avro messages, you need to specify `valueFormat` as `pulsarAvro`. This way the connector will know to treat objects as POJOs and write them with schema `Schema.AVRO(ClassName)`. The ClassName comes from one mandatory (for Avro only) option: 'valueJavaClass', that contains the name of Java class representing your Avro objects.
+For Avro messages, you need to specify `valueFormat` as `pulsarAvro`. This way the connector will know to treat objects as POJOs and write them with schema `Schema.AVRO(ClassName)`. The `ClassName` comes from one mandatory (for Avro only) option: `valueJavaClass`, that contains the name of Java class representing your Avro objects.
 
 :::note
 

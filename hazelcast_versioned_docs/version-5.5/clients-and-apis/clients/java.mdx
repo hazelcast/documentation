@@ -170,7 +170,7 @@ Hazelcast offers distributed implementations of many common data structures, mos
 
 When you use clients in other languages, you should review the appropriate client documentation for exceptions and details. As a general rule, you should configure these data structures on the server side and access them through a proxy on the client side.
 
-### Use Map
+### Use `Map`
 
 You can use any distributed map object with the client, as follows:
 
@@ -184,9 +184,9 @@ map.remove(1);
 
 The `addLocalEntryListener()` and `localKeySet()` methods are not supported because locality is ambiguous for the client. For more information, see [Distributed Map](../../develop-and-build/distributed-data-structures/ap-data-structures/map/map.mdx).
 
-### Use MultiMap
+### Use `MultiMap`
 
-You can use a distributed multiMap object with the <Variable name="java-client" />, as follows:
+You can use a distributed `MultiMap` object with the <Variable name="java-client" />, as follows:
 
 ```java
 MultiMap<Integer, String> multiMap = client.getMultiMap("myMultiMap");
@@ -197,11 +197,11 @@ multiMap.put(1,"Mary");
 Collection<String> values = multiMap.get(1);
 ```
 
-The `addLocalEntryListener()`, `localKeySet()` and `getLocalMultiMapStats()` methods are not supported because locality is ambiguous for the client. For more information, see [MultiMap](../../develop-and-build/distributed-data-structures/ap-data-structures/multimap.mdx).
+The `addLocalEntryListener()`, `localKeySet()` and `getLocalMultiMapStats()` methods are not supported because locality is ambiguous for the client. For more information, see [`MultiMap`](../../develop-and-build/distributed-data-structures/ap-data-structures/multimap.mdx).
 
-### Use Queue
+### Use `Queue`
 
-You can use a distributed Queue object with the client, as follows:
+You can use a distributed `Queue` object with the client, as follows:
 
 ```java
 IQueue<String> myQueue = client.getQueue("theQueue");
@@ -210,7 +210,7 @@ myQueue.offer("John")
 
 The `getLocalQueueStats()` method is not supported because locality is ambiguous for the client. For more information, see [Queue](../../develop-and-build/distributed-data-structures/ap-data-structures/queue.mdx).
 
-### Use Topic
+### Use `Topic`
 
 The `getLocalTopicStats()` method is not supported because locality is ambiguous for the client.
 
@@ -218,16 +218,16 @@ The `getLocalTopicStats()` method is not supported because locality is ambiguous
 
 The distributed data structures listed below are also supported. The logic is the same for both member and client side, so see the specific sections for more information on usage.
 
-- [Replicated Map](../../develop-and-build/distributed-data-structures/ap-data-structures/replicated-map.mdx)
-- [List](../../develop-and-build/distributed-data-structures/ap-data-structures/list.mdx)
-- [Set](../../develop-and-build/distributed-data-structures/ap-data-structures/set.mdx)
-- [IAtomicLong](../../develop-and-build/distributed-data-structures/cp-data-structures/iatomiclong.mdx)
-- [IAtomicReference](../../develop-and-build/distributed-data-structures/cp-data-structures/iatomicreference.mdx)
-- [ICountDownLatch](../../develop-and-build/distributed-data-structures/cp-data-structures/icountdownlatch.mdx)
-- [ISemaphore](../../develop-and-build/distributed-data-structures/cp-data-structures/isemaphore.mdx)
-- [FlakeIdGenerator](../../develop-and-build/distributed-data-structures/ap-data-structures/flake-id-generator.mdx)
-- [Lock](../../develop-and-build/distributed-data-structures/cp-data-structures/fencedlock.mdx)
-- [CPMap](../../develop-and-build/distributed-data-structures/cp-data-structures/cpmap.mdx)
+- [`ReplicatedMap`](../../develop-and-build/distributed-data-structures/ap-data-structures/replicated-map.mdx)
+- [`List`](../../develop-and-build/distributed-data-structures/ap-data-structures/list.mdx)
+- [`Set`](../../develop-and-build/distributed-data-structures/ap-data-structures/set.mdx)
+- [`IAtomicLong`](../../develop-and-build/distributed-data-structures/cp-data-structures/iatomiclong.mdx)
+- [`IAtomicReference`](../../develop-and-build/distributed-data-structures/cp-data-structures/iatomicreference.mdx)
+- [`ICountDownLatch`](../../develop-and-build/distributed-data-structures/cp-data-structures/icountdownlatch.mdx)
+- [`ISemaphore`](../../develop-and-build/distributed-data-structures/cp-data-structures/isemaphore.mdx)
+- [`FlakeIdGenerator`](../../develop-and-build/distributed-data-structures/ap-data-structures/flake-id-generator.mdx)
+- [`Lock`](../../develop-and-build/distributed-data-structures/cp-data-structures/fencedlock.mdx)
+- [`CPMap`](../../develop-and-build/distributed-data-structures/cp-data-structures/cpmap.mdx)
 
 ## Configure the client
 
@@ -254,7 +254,7 @@ The client is updated whenever the cluster version, cluster topology, partition 
 
 From <Variable name="enterprise-product-name" /> 5.5, you can use any of the following cluster routing modes:
 
-- **ALL\_MEMBERS**
+- **`ALL_MEMBERS`**
 
   The default mode, and is the equivalent of the legacy **Smart** client operation mode.
 
@@ -263,22 +263,22 @@ From <Variable name="enterprise-product-name" /> 5.5, you can use any of the fol
   Since clients are aware of [data partitions](../../develop-and-build/architecture/data-partitioning.mdx), they are able to send an operation directly to the cluster member that owns the partition holding their data, which increases the overall throughput and efficiency.
 
   If [CP direct-to-leader routing](#configuring-direct-to-leader-routing) is enabled on your clients, and the `ADVANCED_CP` license is present on your Enterprise cluster, then clients in this routing mode can use this to send CP operations directly to group leaders wherever possible, even after leadership changes.
-- **SINGLE\_MEMBER**
+
+- **`SINGLE_MEMBER`**
 
   In `SINGLE_MEMBER` cluster routing mode, clients only connect to one of the configured addresses. This is the equivalent of the legacy **Unisocket** client operation mode.
 
   In some environments, clients must connect to only a single member instead of to each member in the cluster; for example, this can be enforced due to firewalls, security, or a custom network consideration. In these environments, `SINGLE_MEMBER` mode allows to you connect to a single member, while retaining the ability to work with other members in the cluster.
 
   The single connected member behaves as a gateway to the other members of the cluster. When the client makes a request, the connected member redirects the request to the relevant member and returns the response from that member to the client.
-- **MULTI\_MEMBER**
+
+- **`MULTI_MEMBER`**
 
   This mode provides most of the functionality of `ALL_MEMBERS` routing over a single partition group, falling back to the more restricted behavior of `SINGLE_MEMBER` mode for members outside that partition group as follows:
-
   - The client can connect to all members in the defined partition group
   - Outside the visible partition group, a member in the defined partition group acts as a gateway to the other members in the cluster
 
   In `MULTI_MEMBER` cluster routing mode, the client connection flow is as follows:
-
   1. Connect to the first member The client then has visibility of the partition group associated with the first member.
   2. Read the partition group information
   3. Connect to a limited subset of the cluster as defined by the partition grouping The client does not have a connection to any cluster members outside this partition group, but it will have knowledge of all cluster members
@@ -452,9 +452,9 @@ security:
 
 For more information, see <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/client/config/ClientSecurityConfig.html" text="ClientSecurityConfig API documentation" />
 
-### Configure ClassLoader {/* #classloader */}
+### Configure `ClassLoader` {/* #classloader */}
 
-You can configure a custom `classLoader` for your client. It is used by the serialization service and loads any class specified in the configuration, including event listeners or ProxyFactories.
+You can configure a custom `classLoader` for your client. It is used by the serialization service and loads any class specified in the configuration, including event listeners or `ProxyFactories`.
 
 ### Configure CP direct-to-leader operation routing for clients {/* #configuring-direct-to-leader-routing */}
 
@@ -735,7 +735,7 @@ You can find the complete Hazelcast client failover example configuration file (
 
 :::
 
-You should also configure your clients to forget DNS lookups using the [networkaddress.cache.ttl JVM parameter](https://docs.oracle.com/javase/7/docs/technotes/guides/net/properties.html).
+You should also configure your clients to forget DNS lookups using the [`networkaddress.cache.ttl` JVM parameter](https://docs.oracle.com/javase/7/docs/technotes/guides/net/properties.html).
 
 You should also configure the addresses in your clients' configuration to resolve to the hostnames of Cluster A via CNAME so that the clients will connect to Cluster A when it starts:
 
@@ -808,7 +808,7 @@ For more information on the configuration elements, see the following descriptio
 
 - `try-count`: count of connection retries by the client to the alternative clusters.
 
-When this value is reached, the client shuts down if it can't connect to a cluster. This value also applies to alternative clusters configured by the `client` element. For the above example, two alternative clusters are given with the `try-count` set as `4`. This means the number of connection attempts is 4 x 2 = 8.
+When this value is reached, the client shuts down if it can't connect to a cluster. This value also applies to alternative clusters configured by the `client` element. For the above example, two alternative clusters are given with the `try-count` set as `4`. This means the number of connection attempts is `4 x 2 = 8`.
 
 - `client`: path to the client configuration that corresponds to an alternative cluster that the client will try to connect to.
 
@@ -1001,7 +1001,7 @@ When an operation with sync backup is sent by a client to the Hazelcast member(s
 
 :::note
 
-Backup acknowledgement is sometimes referred to as *boomerang backups*.
+Backup acknowledgement is sometimes referred to as boomerang backups.
 
 :::
 
@@ -1169,7 +1169,7 @@ If your clients want to use temporary permissions defined in a member, see [Hand
 
 :::
 
-**Client ALL\_MEMBERS routing**
+**Client `ALL_MEMBERS` routing**
 
 To connect to all members, use the `ALL_MEMBERS` cluster routing mode, which can be defined as follows.
 
@@ -1214,7 +1214,7 @@ networkConfig.getClusterRoutingConfig().setRoutingMode(RoutingMode.ALL_MEMBERS);
 </TabItem>
 </Tabs>
 
-**Client SINGLE\_MEMBER routing**
+**Client `SINGLE_MEMBER` routing**
 
 To connect to a single member, which can be used as a gateway to the other members, use the `SINGLE_MEMBER` cluster routing mode, which can be defined as described below.
 
@@ -1267,7 +1267,7 @@ networkConfig.getClusterRoutingConfig().setRoutingMode(RoutingMode.SINGLE_MEMBER
 </TabItem>
 </Tabs>
 
-**Client MULTI\_MEMBER routing**
+**Client `MULTI_MEMBER` routing**
 
 To connect to a subset partition grouping of members, which allows direct connection to the specified group and gateway connections to other members, use the `MULTI_MEMBER` cluster routing mode, which can be defined as follows.
 
@@ -1280,6 +1280,7 @@ When using the `MULTI_MEMBER` cluster routing mode, consider the following:
   In a split and heal scenario, where the client has no access to other group members, the client is re-assigned to the initial group.
 
   In a scenario where all group members are killed almost simultaneously, the client loses connection but reconnects when a member starts again.
+
 - The absence of [backup acknowledgements](#configure-backup-acknowledgment), as the client does not have a view of the entire cluster If [CP direct-to-leader routing](#configuring-direct-to-leader-routing) is enabled on your clients, and the `ADVANCED_CP` license is present on your Enterprise cluster, then clients in this routing mode can use this to send CP operations directly to group leaders wherever possible, even after leadership changes.
 - Best efforts are made to route operations to the required member, but if this cannot be done operations are routed as defined in the [`LoadBalancer`](#client-load-balancer)
 - [Thread-Per-Core](../../operate-and-manage/thread-per-core-tpc.mdx) is not supported for `MULTI_MEMBER` cluster routing and may lead to event inconsistency if used.
@@ -1432,7 +1433,7 @@ public interface SocketInterceptor {
 
 The first method initializes the `SocketInterceptor` using the defined properties. The second method informs when the socket is connected using the `onConnect` method.
 
-The following example shows how to create a SocketInterceptor and add it to the client configuration:
+The following example shows how to create a `SocketInterceptor` and add it to the client configuration:
 
 ```java
 SocketInterceptorConfig socketInterceptorConfig = clientConfig
@@ -1469,11 +1470,11 @@ For more information, see [Socket interceptor](../../operate-and-manage/securing
 
 You can configure the network socket options using `SocketOptions`. It has the following methods:
 
-- `socketOptions.setKeepAlive(x)`: Enables/disables the **SO\_KEEPALIVE** socket option. The default value is `true`.
-- `socketOptions.setTcpNoDelay(x)`: Enables/disables the **TCP\_NODELAY** socket option. The default value is `true`.
-- `socketOptions.setReuseAddress(x)`: Enables/disables the **SO\_REUSEADDR** socket option. The default value is `true`.
-- `socketOptions.setLingerSeconds(x)`: Enables/disables **SO\_LINGER** with the specified linger time in seconds. The default value is `3`.
-- `socketOptions.setBufferSize(x)`: Sets the **SO\_SNDBUF** and **SO\_RCVBUF** options to the specified value in KB for this Socket. The default value is `32`.
+- `socketOptions.setKeepAlive(x)`: Enables/disables the **`SO_KEEPALIVE`** socket option. The default value is `true`.
+- `socketOptions.setTcpNoDelay(x)`: Enables/disables the **`TCP_NODELAY`** socket option. The default value is `true`.
+- `socketOptions.setReuseAddress(x)`: Enables/disables the **`SO_REUSEADDR`** socket option. The default value is `true`.
+- `socketOptions.setLingerSeconds(x)`: Enables/disables **`SO_LINGER`** with the specified linger time in seconds. The default value is `3`.
+- `socketOptions.setBufferSize(x)`: Sets the **`SO_SNDBUF`** and **`SO_RCVBUF`** options to the specified value in KB for this Socket. The default value is `32`.
 
 ```java
 SocketOptions socketOptions = clientConfig.getNetworkConfig().getSocketOptions();
@@ -1805,14 +1806,14 @@ You need to restart clients after modifying system properties.
 | `hazelcast.client.io.input.thread.count` | -1 | int | Controls the number of I/O input threads. Defaults to -1, i.e., the system decides. If the client is using either the `ALL_MEMBERS` or the `MULTI_MEMBER` cluster routing mode, it defaults to 3, otherwise it defaults to 1. |
 | `hazelcast.client.io.output.thread.count` | -1 | int | Controls the number of I/O output threads. Defaults to -1, i.e., the system decides. If the client is using either the `ALL_MEMBERS` or the `MULTI_MEMBER` cluster routing mode, it defaults to 3, otherwise it defaults to 1. |
 | `hazelcast.client.io.write.through` | true | bool | Optimization that allows sending of packets over the network to be done on the calling thread if the conditions are right. This can reduce the latency and increase the performance for low threaded environments. |
-| `hazelcast.client.max.concurrent.invocations` | Integer.MAX\_VALUE | int | Maximum allowed number of concurrent invocations. You can apply a constraint on the number of concurrent invocations in order to prevent the system from overloading. If the maximum number of concurrent invocations is exceeded and a new invocation comes in, Hazelcast throws `HazelcastOverloadException`. |
+| `hazelcast.client.max.concurrent.invocations` | `Integer.MAX_VALUE` | int | Maximum allowed number of concurrent invocations. You can apply a constraint on the number of concurrent invocations in order to prevent the system from overloading. If the maximum number of concurrent invocations is exceeded and a new invocation comes in, Hazelcast throws `HazelcastOverloadException`. |
 | `hazelcast.client.metrics.collection.frequency` | 5 | int | Frequency, in seconds, of the [metrics](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics) collection cycle. Note that the preferred way for controlling this setting is [Metrics Configuration](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#configuration). |
 | `hazelcast.client.metrics.debug.enabled` | false | bool | Enables collecting debug metrics if set to `true`, disables it otherwise. Note that this is meant to be enabled only if diagnostics is enabled, since currently only diagnostics consumes the debug metrics. |
 | `hazelcast.client.metrics.enabled` | true | bool | Enables the [metrics collection](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics) if set to `true`, disables it otherwise. Note that the preferred way for controlling this setting is [Metrics Configuration](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#configuration). When it is `true` you can monitor metrics of the clients that are connected to your Hazelcast cluster, using Hazelcast Management Center. See <Variable href="/management-center/{page-latest-supported-mc}/clusters/clients" text="here" /> for more information. |
 | `hazelcast.client.metrics.jmx.enabled` | true | bool | Enables exposing the collected [metrics](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics) over JMX if set to `true`, disables it otherwise. Note that the preferred way for controlling this setting is [Metrics Configuration](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#configuration). |
 | `hazelcast.client.operation.backup.timeout.millis` | 5000 | int | If an operation has sync backups, this property specifies how long the invocation will wait for acks from the backup replicas. If acks are not received from some backups, there will not be any rollback on other successful replicas. |
 | `hazelcast.client.operation.fail.on.indeterminate.state` | false | bool | When this configuration is enabled, if an operation has sync backups and acks are not received from backup replicas in time, or the member which owns primary replica of the target partition leaves the cluster, then the invocation fails with `IndeterminateOperationStateException`. However, even if the invocation fails, there will not be any rollback on other successful replicas. |
-| `hazelcast.client.response.thread.count` | 2 | int | Number of the response threads. By default, there are two response threads; this gives stable and good performance. If set to 0, the response threads are bypassed and the response handling is done on the I/O threads. Under certain conditions this can give a higher throughput, but setting to 0 should be regarded as an experimental feature. If set to 0, the IO\_OUTPUT\_THREAD\_COUNT is really going to matter because the inbound thread will have more work to do. By default when TLS is not enabled, there is just one inbound thread. |
+| `hazelcast.client.response.thread.count` | 2 | int | Number of the response threads. By default, there are two response threads; this gives stable and good performance. If set to 0, the response threads are bypassed and the response handling is done on the I/O threads. Under certain conditions this can give a higher throughput, but setting to 0 should be regarded as an experimental feature. If set to 0, the `IO_OUTPUT_THREAD_COUNT` is really going to matter because the inbound thread will have more work to do. By default when TLS is not enabled, there is just one inbound thread. |
 | `hazelcast.client.response.thread.dynamic` | true | bool | Enables dynamic switching between processing the responses on the I/O threads and offloading the response threads. Under certain conditions (single threaded clients) processing on the I/O thread can increase the performance because useless handover to the response thread is removed. Also the response thread is not created until it is needed. Especially for ephemeral clients, reducing the threads can lead to increased performance and reduced memory usage. |
 | `hazelcast.client.shuffle.member.list` | true | string | The client shuffles the given member list to prevent all the clients to connect to the same member when this property is `true`. When it is set to `false`, the client tries to connect to the members in the given order. |
 | `hazelcast.client.connectivity.logging.delay.seconds` | 10 | int | Delay in seconds after which the client logs connectivity statistics after member connection changes. If a member connection state changes before the delay period has elapsed, the delay is reset. The delay reduces noise from frequent connection updates that can occur in bursts. Note that only the last connectivity view will be logged when the task is run after this delay. |
@@ -1899,15 +1900,15 @@ For client side serialization, use the Hazelcast configuration. For more informa
 
 ### Configure reliable topic on client side {/* #configuring-reliable-topic-at-client-side */}
 
-Normally when a client uses a Hazelcast data structure, that structure is configured on the member side and the client uses that configuration. For the Reliable Topic structure, which is backed by Ringbuffer, you need to configure it on the client side instead. The class used for this configuration is `ClientReliableTopicConfig`.
+Normally when a client uses a Hazelcast data structure, that structure is configured on the member side and the client uses that configuration. For the `Reliable Topic` structure, which is backed by `Ringbuffer`, you need to configure it on the client side instead. The class used for this configuration is `ClientReliableTopicConfig`.
 
 Here is an example programmatic configuration:
 
 <CodeBlock language="java">{Ex_clients_ExampleRTClient_java_tag_rtclient}</CodeBlock>
 
-When you create a Reliable Topic structure on your client, a Ringbuffer (with the same name as the Reliable Topic) is automatically created on the member side, with the default configuration. See the [Configuring Ringbuffer section](../../develop-and-build/distributed-data-structures/ap-data-structures/ringbuffer.mdx) for the defaults. You can edit that configuration according to your needs.
+When you create a `Reliable Topic` structure on your client, a `Ringbuffer` (with the same name as the `Reliable Topic`) is automatically created on the member side, with the default configuration. See the [Configuring `Ringbuffer` section](../../develop-and-build/distributed-data-structures/ap-data-structures/ringbuffer.mdx) for the defaults. You can edit that configuration according to your needs.
 
-You can also declaratively configure a Reliable Topic structure on the client side, as the following declarative code example shows:
+You can also declaratively configure a `Reliable Topic` structure on the client side, as the following declarative code example shows:
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
@@ -2050,7 +2051,7 @@ Let's consider the Java client's Near Cache configuration (see the [Configure Cl
 </hazelcast-client>
 ```
 
-You can configure this Near Cache to use Hazelcast's High-Density Memory Store by setting the in-memory format to NATIVE. See the following configuration example:
+You can configure this Near Cache to use Hazelcast's High-Density Memory Store by setting the in-memory format to `NATIVE`. See the following configuration example:
 
 ```xml
 <hazelcast-client>
@@ -2069,17 +2070,16 @@ The `<eviction>` element has the following attributes:
 
 - `size`: Maximum size (entry count) of the Near Cache.
 - `max-size-policy`: Maximum size policy for eviction of the Near Cache. Available values are as follows:
+  - `ENTRY_COUNT`: Maximum entry count per member.
+  - `USED_NATIVE_MEMORY_SIZE`: Maximum used native memory size in megabytes.
+  - `USED_NATIVE_MEMORY_PERCENTAGE`: Maximum used native memory percentage.
+  - `FREE_NATIVE_MEMORY_SIZE`: Minimum free native memory size to trigger cleanup.
+  - `FREE_NATIVE_MEMORY_PERCENTAGE`: Minimum free native memory percentage to trigger cleanup.
 
-  - ENTRY\_COUNT: Maximum entry count per member.
-  - USED\_NATIVE\_MEMORY\_SIZE: Maximum used native memory size in megabytes.
-  - USED\_NATIVE\_MEMORY\_PERCENTAGE: Maximum used native memory percentage.
-  - FREE\_NATIVE\_MEMORY\_SIZE: Minimum free native memory size to trigger cleanup.
-  - FREE\_NATIVE\_MEMORY\_PERCENTAGE: Minimum free native memory percentage to trigger cleanup.
 - `eviction-policy`: Eviction policy configuration. The default value is NONE. Available values are as follows:
-
-  - NONE: No items are evicted and the `size` property is ignored. You can still combine it with time-to-live-seconds.
-  - LRU: Least Recently Used.
-  - LFU: Least Frequently Used.
+  - `NONE`: No items are evicted and the `size` property is ignored. You can still combine it with time-to-live-seconds.
+  - `LRU`: Least Recently Used.
+  - `LFU`: Least Frequently Used.
 
 Keep in mind that you should have already enabled the High-Density Memory Store usage for your client, using the `<native-memory>` element in the client's configuration.
 
@@ -2175,9 +2175,9 @@ If the client is disconnected from the cluster configured in `client-config2`, t
 
 ### Client deadline failure detector
 
-*Deadline Failure Detector* uses an absolute timeout for missing/lost heartbeats. After timeout, a member is considered as crashed/unavailable and marked as suspected.
+The Deadline Failure Detector uses an absolute timeout for missing/lost heartbeats. After timeout, a member is considered as crashed/unavailable and marked as suspected.
 
-*Deadline Failure Detector* has two configuration properties:
+It has two configuration properties:
 
 - `hazelcast.client.heartbeat.interval`: This is the interval at which client sends heartbeat messages to members.
 - `hazelcast.client.heartbeat.timeout`: This is the timeout which defines when a cluster member is suspected, because it has not sent any response back to client requests.
@@ -2300,12 +2300,12 @@ clientIcmpPingConfig.setIntervalMilliseconds(1000)
 The following are the descriptions of configuration elements and attributes:
 
 - `enabled`: Enables the legacy ICMP detection mode, works cooperatively with the existing failure detector and only kicks-in after a pre-defined period has passed with no heartbeats from a member. Its default value is `false`.
-- `timeout-milliseconds`: Number of milliseconds until a ping attempt is considered failed if there was no reply. Its default value is **1000** milliseconds.
-- `max-attempts`: Maximum number of ping attempts before the member gets suspected by the detector. Its default value is **3**.
-- `interval-milliseconds`: Interval, in milliseconds, between each ping attempt. 1000ms (1 sec) is also the minimum interval allowed. Its default value is **1000** milliseconds.
-- `ttl`: Maximum number of hops the packets should go through. Its default value is **255**. You can set to **0** to use your system's default TTL.
+- `timeout-milliseconds`: Number of milliseconds until a ping attempt is considered failed if there was no reply. Its default value is `1000 milliseconds`.
+- `max-attempts`: Maximum number of ping attempts before the member gets suspected by the detector. Its default value is `3`.
+- `interval-milliseconds`: Interval, in milliseconds, between each ping attempt. 1000ms (1 sec) is also the minimum interval allowed. Its default value is `1000` milliseconds.
+- `ttl`: Maximum number of hops the packets should go through. Its default value is `255`. You can set to `0` to use your system's default TTL.
 
-In the above example configuration, the Ping Failure Detector attempts 2 pings, one every second, and waits up to 1 second for each to complete. If there is no successful ping after 2 seconds, the member gets suspected.
+In the above example configuration, the Ping Failure Detector attempts two pings, one every second, and waits up to 1 second for each to complete. If there is no successful ping after 2 seconds, the member gets suspected.
 
 To enforce the [Requirements](../../operate-and-manage/fault-tolerance/detecting-failures/ping-detector.mdx#requirements-and-linuxunix-configuration), the property `echo-fail-fast-on-startup` can also be set to `true`, in which case Hazelcast fails to start if any of the requirements isn't met.
 

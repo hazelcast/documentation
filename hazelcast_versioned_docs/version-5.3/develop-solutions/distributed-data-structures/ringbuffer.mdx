@@ -16,7 +16,7 @@ Hazelcast Ringbuffer is a replicated but not partitioned data structure that sto
 
 ## Getting a Ringbuffer and Reading Items
 
-Reading from Ringbuffer is simple: get the Ringbuffer with the HazelcastInstance `getRingbuffer` method, get its current head with the `headSequence` method and start reading. Use the method `readOne` to return the item at the given sequence; `readOne` blocks if no item is available. To read the next item, increment the sequence by one.
+Reading from Ringbuffer is simple: get the Ringbuffer with the `HazelcastInstance` `getRingbuffer` method, get its current head with the `headSequence` method and start reading. Use the method `readOne` to return the item at the given sequence; `readOne` blocks if no item is available. To read the next item, increment the sequence by one.
 
 <CodeBlock language="java">{Ex_dds_ringbuffer_ExampleRB_java_tag_rb}</CodeBlock>
 
@@ -33,12 +33,12 @@ ringbuffer.add("someitem");
 
 Use the method `add` to return the sequence of the inserted item; the sequence value is always unique. You can use this as a very cheap way of generating unique IDs if you are already using Ringbuffer.
 
-## IQueue vs. Ringbuffer
+## `IQueue` vs. Ringbuffer
 
-Hazelcast Ringbuffer can sometimes be a better alternative than an Hazelcast IQueue. Unlike IQueue, Ringbuffer does not remove the items, it only reads items using a certain position. There are many advantages to this approach as described below:
+Hazelcast Ringbuffer can sometimes be a better alternative than an Hazelcast `IQueue`. Unlike `IQueue`, Ringbuffer does not remove the items, it only reads items using a certain position. There are many advantages to this approach as described below:
 
 - The same item can be read multiple times by the same thread. This is useful for realizing semantics of read-at-least-once or read-at-most-once.
-- The same item can be read by multiple threads. Normally you could use an IQueue per thread for the same semantic, but this is less efficient because of the increased remoting. A take from an IQueue is destructive, so the change needs to be applied for backup also, which is why a `queue.take()` is more expensive than a `ringBuffer.read(…​)`.
+- The same item can be read by multiple threads. Normally you could use an `IQueue` per thread for the same semantic, but this is less efficient because of the increased remoting. A take from an `IQueue` is destructive, so the change needs to be applied for backup also, which is why a `queue.take()` is more expensive than a `ringBuffer.read(…​)`.
 - Reads are extremely cheap since there is no change in the Ringbuffer. Therefore no replication is required.
 - Reads and writes can be batched to speed up performance. Batching can dramatically improve the performance of Ringbuffer.
 
@@ -147,7 +147,7 @@ hazelcast:
 Using the overflow policy, you can determine what to do if the oldest item in the Ringbuffer is not old enough to expire when more items than the configured Ringbuffer capacity are being added. The below options are currently available:
 
 - `OverflowPolicy.OVERWRITE`: The oldest item is overwritten.
-- `OverflowPolicy.FAIL`: The call is aborted. The methods that make use of the OverflowPolicy return `-1` to indicate that adding the item has failed.
+- `OverflowPolicy.FAIL`: The call is aborted. The methods that make use of the `OverflowPolicy` return `-1` to indicate that adding the item has failed.
 
 Overflow policy gives you fine control on what to do if the Ringbuffer is full. You can also use the overflow policy to apply a back pressure mechanism. The following example code shows the usage of an exponential backoff.
 
@@ -278,12 +278,12 @@ hazelcast:
 
 The following is a list of methods, grouped by the protection types, that support split-brain protection checks:
 
-- WRITE, READ\_WRITE:
+- `WRITE`, `READ_WRITE`:
 
   - `add`
   - `addAllAsync`
   - `addAsync`
-- READ, READ\_WRITE:
+- `READ`, `READ_WRITE`:
 
   - `capacity`
   - `headSequence`

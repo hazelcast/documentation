@@ -205,7 +205,7 @@ result, _ = countries.ReplaceIfSame( ctx, 3, "United States", "Canada" ) <3>
 </TabItem>
 </Tabs>
 
-If you are working with an external system of record such as a data store, you can use a [MapStore](../../../working-with-external-data/overview.mdx) to automatically push updates and maintain synchronization between in-memory data and the external store.
+If you are working with an external system of record such as a data store, you can use a [`MapStore`](../../../working-with-external-data/overview.mdx) to automatically push updates and maintain synchronization between in-memory data and the external store.
 
 ## Bulk Updates
 
@@ -337,13 +337,13 @@ There are several methods available for removing individual entries from a map. 
 | `map.clear(K)` | Y | Y | void |
 | `map.remove(K)` | Y | Y | removed value |
 
-If you are not using [MapStore](../../../working-with-external-data/overview.mdx) to work with an external system, `map.evict()` and `map.delete()` have the same effect.
+If you are not using [`MapStore`](../../../working-with-external-data/overview.mdx) to work with an external system, `map.evict()` and `map.delete()` have the same effect.
 
 ## Deleting Selected Map Entries
 
 To remove multiple entries from a map, you can use `map.removeAll` in combination with a predicate to remove entries that match a given criteria. If you are working with an external system, this will remove the entries from both the in-memory store and the external store. Unlike the `map.remove` method, this does not return the removed values.
 
-In the example below, assume a data set called Students. The data set has a field called gradYear. We want to remove all records of students with a gradYear of 2020.
+In the example below, assume a data set called Students. The data set has a field called `gradYear`. We want to remove all records of students with a `gradYear` of 2020.
 
 <Tabs groupId="c--c-sharp--go--java--nodejs--python">
 <TabItem value="java" label="Java">

@@ -10,12 +10,12 @@ You can mark Hazelcast Distributed Objects with `@SpringAware` if the object wan
 - factory callbacks such as `ApplicationContextAware`, `BeanNameAware`
 - bean post-processing annotations such as `InitializingBean`, `@PostConstruct`.
 
-Hazelcast Distributed `ExecutorService`, or more generally any Hazelcast managed object, can benefit from these features. To enable SpringAware objects, you must first configure `HazelcastInstance` using **hazelcast** namespace as explained in [Configuring Spring](./configuration.mdx) and add `<hz:spring-aware />` tag.
+Hazelcast Distributed `ExecutorService`, or more generally any Hazelcast managed object, can benefit from these features. To enable `SpringAware` objects, you must first configure `HazelcastInstance` using **hazelcast** namespace as explained in [Configuring Spring](./configuration.mdx) and add `<hz:spring-aware />` tag.
 
-## SpringAware Examples
+## `SpringAware` Examples
 
-- Configure a Hazelcast Instance via Spring Configuration and define **someBean** as Spring Bean.
-- Add `<hz:spring-aware />` to Hazelcast configuration to enable @SpringAware.
+- Configure a Hazelcast Instance via Spring Configuration and define **`someBean`** as Spring Bean.
+- Add `<hz:spring-aware />` to Hazelcast configuration to enable `@SpringAware`.
 
   ```xml
   <beans xmlns="http://www.springframework.org/schema/beans"
@@ -53,7 +53,7 @@ Hazelcast Distributed `ExecutorService`, or more generally any Hazelcast managed
   </beans>
   ```
 
-**Distributed Map SpringAware Example:**
+**Distributed Map `SpringAware` Example:**
 
 - Create a class called `SomeValue` which contains Spring Bean definitions like `ApplicationContext` and `SomeBean`.
 
@@ -103,9 +103,9 @@ Hazelcast Distributed `ExecutorService`, or more generally any Hazelcast managed
   Assert.assertTrue( value.init );
   ```
 
-**ExecutorService SpringAware Example:**
+**`ExecutorService` `SpringAware` Example:**
 
-- Create a Callable Class called SomeTask which contains Spring Bean definitions like `ApplicationContext`, `SomeBean`.
+- Create a Callable Class called `SomeTask` which contains Spring Bean definitions like `ApplicationContext`, `SomeBean`.
 
   ```java
   @SpringAware

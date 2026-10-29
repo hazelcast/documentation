@@ -159,7 +159,7 @@ With Hazelcast, you can specify data processing steps, using the Java Jet API. T
 
 The general pattern of a data processing pipeline is to read data from a data source, process (or transform) it, and write the results to a data sink. You can visualize these steps as a linear process:
 
-readFromSource → transform → writeToSink
+`readFromSource` → `transform` → `writeToSink`
 
 In this step, you create a pipeline that reads a stream of incrementing numbers from a test data source and prints only even numbers, using the console as a sink.
 
@@ -268,8 +268,8 @@ After building a pipeline, you can deploy it to your member by packaging the cod
 
    Replace the following placeholders:
 
-   - $PATH\_TO\_TARGET: The absolute path to your `target` directory.
-   - $MEMBER\_IP: The IP address of the member to which to submit the job.
+   - `$PATH_TO_TARGET`: The absolute path to your `target` directory.
+   - `$MEMBER_IP`: The IP address of the member to which to submit the job.
 
      ```bash vars
      docker run -it --network hazelcast-network -v $PATH_TO_TARGET:/jars --rm hazelcast/hazelcast:{full-version} hz-cli -t $MEMBER_IP submit -c org.example.EvenNumberStream /jars/hz-example-0.1.0.jar
@@ -364,7 +364,7 @@ With Management Center, you can monitor the status of your jobs and manage the l
 
    </TabItem>
    </Tabs>
-2. In a web browser, go to localhost:8080 and enable dev mode.
+2. In a web browser, go to `localhost:8080` and enable dev mode.
 
    ![Enabling dev mode in Management center](../../../images/mc-dev-mode.png)
 3. Enter your cluster's name (`dev`) and IP address.

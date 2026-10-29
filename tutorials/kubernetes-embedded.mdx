@@ -35,7 +35,7 @@ git clone https://github.com/hazelcast-guides/hazelcast-embedded-springboot.git
 
 :::tip
 
-You can use any other JVM-based application framework, but please make sure your project includes a dependency to 'hazelcast:hazelcast:$\{hazelcast.version\}' (or 'hazelcast:hazelcast-spring:$\{hazelcast.version\}').
+You can use any other JVM-based application framework, but please make sure your project includes a dependency to `hazelcast:hazelcast:${hazelcast.version}` (or `hazelcast:hazelcast-spring:${hazelcast.version}`).
 
 :::
 
@@ -96,7 +96,7 @@ For other clusters, push the image to a registry that the cluster can pull from,
 
 ## Configure RBAC
 
-[Hazelcast Kubernetes discovery plugin](https://github.com/hazelcast/hazelcast/tree/master/hazelcast/src/main/java/com/hazelcast/kubernetes) makes calls to Kubernetes API to provide automatic member discovery. Therefore, it needs to have specific ClusterRole rules granted. You can apply the minimal RBAC configuration (for the `default` service account in the `default` namespace) with the following command.
+[Hazelcast Kubernetes discovery plugin](https://github.com/hazelcast/hazelcast/tree/master/hazelcast/src/main/java/com/hazelcast/kubernetes) makes calls to Kubernetes API to provide automatic member discovery. Therefore, it needs to have specific `ClusterRole` rules granted. You can apply the minimal RBAC configuration (for the `default` service account in the `default` namespace) with the following command.
 
 ```
 kubectl apply -f https://raw.githubusercontent.com/hazelcast/hazelcast/master/kubernetes-rbac.yaml
@@ -104,7 +104,7 @@ kubectl apply -f https://raw.githubusercontent.com/hazelcast/hazelcast/master/ku
 
 Note that:
 
-- If you use service account other than `default` or namespace other than `default`, you need to modify [https://raw.githubusercontent.com/hazelcast/hazelcast/master/kubernetes-rbac.yaml](https://raw.githubusercontent.com/hazelcast/hazelcast/master/kubernetes-rbac.yaml)
+- If you use service account other than `default` or namespace other than `default`, you need to modify [`https://raw.githubusercontent.com/hazelcast/hazelcast/master/kubernetes-rbac.yaml`](https://raw.githubusercontent.com/hazelcast/hazelcast/master/kubernetes-rbac.yaml)
 - If your Kubernetes cluster does not use RBAC, you can skip the whole "Configure RBAC" step
 
 ## Deploy Application to Kubernetes

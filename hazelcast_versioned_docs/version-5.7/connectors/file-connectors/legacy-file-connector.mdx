@@ -193,7 +193,7 @@ You can use Hadoop connector to read/write files from/to Hadoop Distributed File
 - Azure Cloud Storage
 - Azure Data Lake
 
-The Hadoop source and sink require a configuration object of type [Configuration](https://hadoop.apache.org/docs/r2.10.0/api/org/apache/hadoop/conf/Configuration.html) which supplies the input and output paths and formats. They don't actually create a MapReduce job, this config is simply used to describe the required inputs and outputs. You can share the same `Configuration` instance between several source/sink instances.
+The Hadoop source and sink require a configuration object of type [Configuration](https://hadoop.apache.org/docs/r2.10.0/api/org/apache/hadoop/conf/Configuration.html) which supplies the input and output paths and formats. They don't actually create a `MapReduce` job, this config is simply used to describe the required inputs and outputs. You can share the same `Configuration` instance between several source/sink instances.
 
 For example, to do a canonical word count on a Hadoop data source, we can use the following pipeline:
 
@@ -213,7 +213,7 @@ p.readFrom(HadoopSources.inputFormat(configuration, (k, v) -> v.toString()))
  .writeTo(HadoopSinks.outputFormat(configuration));
 ```
 
-The Hadoop source and sink will use either the new or the old MapReduce API based on the input format configuration.
+The Hadoop source and sink will use either the new or the old `MapReduce` API based on the input format configuration.
 
 Each processor will write to a different file in the output directory identified by the unique processor id. The files will be in a temporary state until the job is completed and will be committed when the job is complete. For streaming jobs, they will be committed when the job is cancelled. We have plans to introduce a rolling sink for Hadoop in the future to have better streaming support.
 

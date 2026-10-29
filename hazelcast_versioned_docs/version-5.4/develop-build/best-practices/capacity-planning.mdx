@@ -72,7 +72,7 @@ Memory consumption is affected by:
 - **Resources deployed with your job:** Attaching big files such as models for ML inference pipelines can consume significant resources.
 - **State of the running jobs:** This varies, as it's affected by the shape of your pipeline and by the data being processed. Most of the memory is consumed by operations that aggregate and buffer data. Typically, the state also scales with the number of distinct keys seen within the time window. Learn how the operations in the pipeline store its state. Operators coming with Jet provide this information in the javadoc.
 - **State back-up:** For jobs configured as fault-tolerant, the state of the running jobs is regularly snapshotted and saved in the cluster. The cluster keeps two consecutive snapshots at a time (an old one is kept until the new one is successfully created). Both current and previous snapshots can be saved in multiple replicas to increase data safety. The memory required for state back-up can be calculated as `(Snapshot size * 2 * Number of replicas) / Cluster member count`. The snapshot size is displayed in the Management Center. You might want to keep some state snapshots residing in the cluster as points of recovery, so plan the memory requirements accordingly.
-- **Data stored inside Hazelcast cluster**: Any data hosted in the cluster. Notably the IMap and ICache Journal to store the streaming data.
+- **Data stored inside Hazelcast cluster**: Any data hosted in the cluster. Notably the `IMap` and `ICache` Journal to store the streaming data.
 
 Hazelcast offers lite members to prevent memory usage on these members. Lite members do not own any partitions, but they can access partitions that are owned by other members in the cluster. If there is no specific advantage to using non-homogeneous cluster members, we do not recommend using lite members as they increase network calls and thus increase the latency. See [Enabling Lite Members](../../operate-manage/maintaining-a-cluster/lite-members.mdx) for information about lite members.
 
@@ -129,7 +129,7 @@ When a cluster member fails, this reduces available resources and increases stre
 
 To tolerate the failure of one member, we recommend sizing your cluster so it can operate well with `n-1` members.
 
-Another approach to improve fault-tolerance is to separate the concerns of data storage and computation into two separate clusters. As an example, you could use one cluster for Hazelcast IMaps and their event journals and another one for running Hazelcast jobs. This way a single failure doesn't simultaneously hurt both the storage and the computation capacity.
+Another approach to improve fault-tolerance is to separate the concerns of data storage and computation into two separate clusters. As an example, you could use one cluster for Hazelcast `IMap`s and their event journals and another one for running Hazelcast jobs. This way a single failure doesn't simultaneously hurt both the storage and the computation capacity.
 
 ## Start Independent Clusters for Job Performance Isolation
 
@@ -230,7 +230,7 @@ Heap-only:
 
 ### Streaming Use Case
 
-The sample application is a [real-time trade analyzer](https://github.com/hazelcast/big-data-benchmark/tree/master/trade-monitor/jet-trade-monitor). Every second it counts the trades completed over the previous minute for each trading symbol. Hazelcast is also used to ingest and buffer the stream of trades. The remote trading applications write trade events to an IMap data structure in the cluster. The analytical job reads the IMap Event Journal and writes the processed results to a rolling file.
+The sample application is a [real-time trade analyzer](https://github.com/hazelcast/big-data-benchmark/tree/master/trade-monitor/jet-trade-monitor). Every second it counts the trades completed over the previous minute for each trading symbol. Hazelcast is also used to ingest and buffer the stream of trades. The remote trading applications write trade events to an `IMap` data structure in the cluster. The analytical job reads the `IMap` Event Journal and writes the processed results to a rolling file.
 
 The job is configured to be [fault-tolerant](../building-data-pipelines/configuring-jobs.mdx#setting-processing-guarantees) with the [exactly-once](../building-data-pipelines/configuring-jobs.mdx#job-configuration-options) processing guarantee.
 

@@ -170,10 +170,10 @@ docker run -p 127.0.0.1:5701:5701 -e HZ_CLUSTERNAME=source hazelcast/hazelcast:4
 
 To access the cluster and populate it with data - for example, because you are using the DMT to test a migration of a Development cluster - you can do either of the following:
 
-- Use the *source.yaml* configuration file, included in the *migration\_config* folder of the DMT download package
+- Use the `source.yaml` configuration file, included in the `migration_config` folder of the DMT download package
 - Write data to memory as described in the [Step 3. Write Data to Memory](../../../get-started/start-a-local-cluster/get-started-binary.mdx#step-3-write-data-to-memory) section of this documentation
 
-The *source.yaml* file contains the following:
+The `source.yaml` file contains the following:
 
 ```yaml
 cluster:
@@ -197,7 +197,7 @@ If an error relating to CLC being unable to connect to your source cluster is re
 
 - The port mapping is correct
 - The source cluster container is running
-- The configuration in your *source.yaml* file is correct
+- The configuration in your `source.yaml` file is correct
 
 If no errors are returned, you can populate the source cluster with 1000 entries using the following script:
 
@@ -228,11 +228,11 @@ You must update the following configuration:
 To update the cluster information, complete the following steps:
 
 1. Navigate to the folder in which you extracted the DMT package
-2. Open the *migration\_config/source/hazelcast.yaml* file in your favorite editor
+2. Open the `migration_config/source/hazelcast.yaml` file in your favorite editor
 
    :::note
 
-   The *hazelcast.yaml* file is a Hazelcast client configuration file, which can include any supported configuration.
+   The `hazelcast.yaml` file is a Hazelcast client configuration file, which can include any supported configuration.
 
    :::
 3. Update the `cluster-name` field to match the name of your source cluster
@@ -242,7 +242,7 @@ To update the cluster information, complete the following steps:
 To update the data structure information, complete the following steps:
 
 1. Navigate to the folder in which you extracted the DMT package
-2. Open the *migration\_config/data/imap\_names.txt* and/or the *migration\_config/data/replicated\_map\_names.txt* file in your favorite editor
+2. Open the `migration_config/data/imap_names.txt` and/or the `migration_config/data/replicated_map_names.txt` file in your favorite editor
 3. Update the file content to match the names of your maps. To select multiple data structures using a single entry, you can use wildcards. For further information on using wildcards, see the [Using Wildcards](../../../operate-manage/configuration/static-configuration/using-wildcards.mdx) topic.
 
    :::note
@@ -270,11 +270,11 @@ You must update the following configuration:
 To update the target configuration, complete the following steps:
 
 1. Navigate to the folder in which you extracted the DMT package
-2. Open the *migration\_config/target/hazelcast-client.yaml* file in your favorite editor
+2. Open the `migration_config/target/hazelcast-client.yaml` file in your favorite editor
 
    :::note
 
-   The *hazelcast-client.yaml* file is a Hazelcast client configuration file, which can include any supported configuration.
+   The `hazelcast-client.yaml` file is a Hazelcast client configuration file, which can include any supported configuration.
 
    :::
 3. Update the `cluster-name` field to match the name of your source cluster
@@ -346,13 +346,13 @@ To start the migration cluster, complete the following steps:
 
 If the specified port is available, the cluster starts on that port. Otherwise, Hazelcast tries to find a free port as described in the [Port](../../../operate-manage/partition-groups-and-networking/network-configuration.mdx#port) section of the Networking topic. You can confirm the port used by the cluster in the logs displayed in your terminal.
 
-You can find the *migration.yaml* file in the root folder of the DMT download package. If your logs show that the cluster starts on a different port to that specified in this file, you must update the `address` field to match the port number used.
+You can find the `migration.yaml` file in the root folder of the DMT download package. If your logs show that the cluster starts on a different port to that specified in this file, you must update the `address` field to match the port number used.
 
 DMT uses this configuration file to connect to the migration cluster when running the migration.
 
 :::note
 
-The *migration.yaml* file uses the same configuration options as the Hazelcast CLC. For further information on the options, refer to the [Hazelcast CLC documentation](/clc/latest/clc-config).
+The `migration.yaml` file uses the same configuration options as the Hazelcast CLC. For further information on the options, refer to the [Hazelcast CLC documentation](/clc/latest/clc-config).
 
 :::
 
@@ -378,7 +378,7 @@ To run the migration, complete the following steps:
 
 :::note
 
-1. `--log.path migration.log` specifies that the migration logs are saved to the *migration.log* file on completion of the migration. For further information on viewing the migration details, see the [View Migration Results](#view-migration-details)
+1. `--log.path migration.log` specifies that the migration logs are saved to the `migration.log` file on completion of the migration. For further information on viewing the migration details, see the [View Migration Results](#view-migration-details)
 2. The DMT will attempt to connect to the migration cluster indefinitely. This means that it can appear to hang if unable to connect. To avoid this, you can set a timeout for the connection attempt using the `--timeout` flag. For further information on the `--timeout` flag, refer to the [Global Options](/clc/latest/clc-commands#global-options) section of the Hazelcast CLC documentation.
 3. On MacOS, you might need to allow the `dmt*` binary to run. If the command is rejected, go to the **Privacy & Security** settings on your device and update them to allow the binary. After updating the settings, retry the command, and select **Open** when prompted
 
@@ -430,12 +430,12 @@ When the migration completes, details of the migration are created in the follow
 
 - Migration report
 
-  This is written to the *migration\_report\_\[migration\_id\].txt* file in the directory used when running the `dmt` command.
+  This is written to the `migration_report_[migration_id].txt` file in the directory used when running the `dmt` command.
 - DMT log file
 
   This is the file specified in the `--log.path` flag of the `start` command.
 
-  If the flag is not used, the file is saved to the location set in the `CLC_HOME` environment variable. If this environment variable is not set, the default location is the *~/.hazelcast* folder.
+  If the flag is not used, the file is saved to the location set in the `CLC_HOME` environment variable. If this environment variable is not set, the default location is the `~/.hazelcast` folder.
 
   :::note
 
@@ -446,7 +446,7 @@ When the migration completes, details of the migration are created in the follow
   The DMT log file includes migration member logs and other DMT logs.
 
   The migration member logs are in the format `[(migration_id)_(member uuid)] (member log)`.
-- `__datamigration_results` IMap
+- `__datamigration_results` `IMap`
 
   This is created on the target cluster.
 

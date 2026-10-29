@@ -6,7 +6,7 @@ slug: /data-structures/preventing-out-of-memory
 
 <Anchor id="preventing-out-of-memory-exceptions" />
 
-Query-based map methods such as entrySet()\` may trigger an out of memory exception (OOME), depending on the size of your map and the available memory of each member. To prevent these exceptions, you can configure your cluster to limit query results.
+Query-based map methods such as `entrySet()` may trigger an out of memory exception (OOME), depending on the size of your map and the available memory of each member. To prevent these exceptions, you can configure your cluster to limit query results.
 
 For example, on a cluster with five members having 10 GB of data and 25 GB heap size per member, a single call of `IMap.entrySet()` fetches 50 GB of data and crashes the calling instance.
 
@@ -41,7 +41,7 @@ Besides the designated query operations, there are other operations that use pre
 
 The query result size limit is configured via the following system properties.
 
-- `hazelcast.query.result.size.limit`: Result size limit for query operations on maps. This value defines the maximum number of returned elements for a single query result. If a query exceeds this number of elements, a QueryResultSizeExceededException is thrown.
+- `hazelcast.query.result.size.limit`: Result size limit for query operations on maps. This value defines the maximum number of returned elements for a single query result. If a query exceeds this number of elements, a `QueryResultSizeExceededException` is thrown.
 - `hazelcast.query.max.local.partition.limit.for.precheck`: Maximum value of local partitions to trigger local pre-check for `Predicates#alwaysTrue()` query operations on maps.
 
 See [Configuring with System Properties](../../operate-manage/configuration/static-configuration/configuring-with-system-properties.mdx) to learn how to configure Hazelcast Platform using properties, such as the above ones.

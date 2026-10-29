@@ -6,9 +6,9 @@ slug: /architecture/data-partitioning
 
 Partitioning and replication are two common techniques used together in distributed systems to achieve scalable, available, and transparent data distribution.
 
-By default, Hazelcast creates a single replica of each partition. You can configure Hazelcast so that each partition can have multiple replicas. One of these replicas is called *primary* and the others are called *backups*.
+By default, Hazelcast creates a single replica of each partition. You can configure Hazelcast so that each partition can have multiple replicas. One of these replicas is called _primary_ and the others are called _backups_.
 
-The cluster member that owns the *primary* replica of a partition is called the *partition owner*. When you read or write a particular data entry, you transparently talk to the partition owner that contains the data entry.
+The cluster member that owns the _primary_ replica of a partition is called the _partition owner_. When you read or write a particular data entry, you transparently talk to the partition owner that contains the data entry.
 
 By default, Hazelcast offers 271 partitions. When you start a cluster with a single member, it owns all 271 partitions.
 
@@ -58,13 +58,13 @@ Hazelcast distributes data entries into the partitions using a hashing algorithm
 - this byte array is hashed
 - the result of the hash is mod by the number of partitions.
 
-The result of this modulo - **MOD(hash result, partition count)** - is the partition in which the data will be stored, that is the *partition ID*. For all members you have in your cluster, the partition ID for a given key is always the same.
+The result of this modulo - `MOD(hash result, partition count)` - is the partition in which the data will be stored, that is the _partition ID_. For all members you have in your cluster, the partition ID for a given key is always the same.
 
 ## Partition Table
 
 The partition table stores the partition IDs and the addresses of cluster members to which they belong. The purpose of this table is to make all members, including lite members, in the cluster aware of this information so that each member knows where the data is.
 
-When you start your first member, a partition table is created within it. As you start additional members, that first member becomes the oldest member, also known as the *master member* and updates the partition table accordingly. This member periodically sends the partition table to all other members. This way, each member in the cluster is informed about any changes to partition ownership. The ownerships may be changed when, for example, a new member joins the cluster, or when a member leaves the cluster.
+When you start your first member, a partition table is created within it. As you start additional members, that first member becomes the oldest member, also known as the _master member_ and updates the partition table accordingly. This member periodically sends the partition table to all other members. This way, each member in the cluster is informed about any changes to partition ownership. The ownerships may be changed when, for example, a new member joins the cluster, or when a member leaves the cluster.
 
 :::note
 
@@ -84,9 +84,9 @@ In these cases, the partition table in the master member is updated with the new
 
 For AP data structures, Hazelcast employs a combination of primary-copy and configurable lazy replication techniques. Each data entry is mapped to a single Hazelcast partition and put into replicas of that partition. One of the replicas is elected as the primary replica, which is responsible for performing operations on that partition. When you read or write a map entry, you transparently talk to the Hazelcast member to which the primary replica of the corresponding partition is assigned. This way, each request hits the most up-to-date version of a particular data entry in a stable cluster. Backup replicas stay in standby mode until the primary replica fails. Upon failure of the primary replica, one of the backup replicas is promoted to the primary role.
 
-With *lazy replication*, when the primary replica receives an update operation for a key, it executes the update locally and propagates it to backup replicas. It marks each update with a logical timestamp so that backups apply them in the correct order and converge to the same state with the primary. Backup replicas can be used to scale reads with no strong consistency but monotonic reads guarantee. See [Making Your Map Data Safe](../distributed-data-structures/ap-data-structures/map/backing-up-maps.mdx).
+With _lazy replication_, when the primary replica receives an update operation for a key, it executes the update locally and propagates it to backup replicas. It marks each update with a logical timestamp so that backups apply them in the correct order and converge to the same state with the primary. Backup replicas can be used to scale reads with no strong consistency but monotonic reads guarantee. See [Making Your Map Data Safe](../distributed-data-structures/ap-data-structures/map/backing-up-maps.mdx).
 
-Two types of backup replication are available: *sync* and *async*. Despite what their names imply, both types are still implementations of the lazy (async) replication model. The only difference between *sync* and *async* is that, the former makes the caller block until backup updates are applied by backup replicas and acknowledgments are sent back to the caller, but the latter is just fire & forget. Number of sync and async backups are defined in the data structure configurations, and you can use a combination of sync and async backups.
+Two types of backup replication are available: _sync_ and _async_. Despite what their names imply, both types are still implementations of the lazy (async) replication model. The only difference between _sync_ and _async_ is that, the former makes the caller block until backup updates are applied by backup replicas and acknowledgments are sent back to the caller, but the latter is just fire & forget. Number of sync and async backups are defined in the data structure configurations, and you can use a combination of sync and async backups.
 
 When backup updates are propagated, the response of the execution, including the number of sync backup updates, is sent to the caller and after receiving the response, the caller waits to receive the specified number of sync backup acknowledgements for a predefined timeout. This timeout is 5 seconds by default and defined by the system property [`hazelcast.operation.backup.timeout.millis`](../../reference/system-properties.mdx).
 
@@ -102,7 +102,7 @@ In the following failure case, the exactly-once guarantee can be broken: The tar
 
 In the following failure case, invocation state becomes indeterminate: When an invocation does not receive a response in time, invocation fails with an `OperationTimeoutException`. This exception does not say anything about the outcome of the operation, meaning the operation may not be executed at all, or it may be executed once or twice.
 
-### Throwing an IndeterminateOperationStateException
+### Throwing an `IndeterminateOperationStateException`
 
 If the [`hazelcast.operation.fail.on.indeterminate.state`](../../reference/system-properties.mdx) system property is enabled, a **mutating** operation throws an `IndeterminateOperationStateException` when it encounters the following cases:
 
@@ -115,9 +115,9 @@ Please note that `IndeterminateOperationStateException` does not apply to read-o
 
 ### Best-Effort Consistency
 
-The replication algorithm for AP data structures enables Hazelcast clusters to offer high throughput. However, due to temporary situations in the system, such as network interruption, backup replicas can miss some updates and diverge from the primary. Backup replicas can also hit VM or long GC pauses, and fall behind the primary, which is a situation called as *replication lag*. If a Hazelcast partition primary replica member crashes while there is a replication lag between itself and the backups, strong consistency of the data can be lost.
+The replication algorithm for AP data structures enables Hazelcast clusters to offer high throughput. However, due to temporary situations in the system, such as network interruption, backup replicas can miss some updates and diverge from the primary. Backup replicas can also hit VM or long GC pauses, and fall behind the primary, which is a situation called as _replication lag_. If a Hazelcast partition primary replica member crashes while there is a replication lag between itself and the backups, strong consistency of the data can be lost.
 
-Please note that CP systems can have similar problems as well. However, in a CP system, once a replica performs an update locally (i.e., *commits* the update), the underlying consensus algorithm guarantees durability of the update for the rest of the execution.
+Please note that CP systems can have similar problems as well. However, in a CP system, once a replica performs an update locally (i.e., _commits_ the update), the underlying consensus algorithm guarantees durability of the update for the rest of the execution.
 
 On the other hand, in AP systems like Hazelcast, a replica can perform an update locally, even if the update is not to be performed on other replicas. This is a fair trade-off to reduce amount of coordination among replicas and maintain high throughput & high availability of the system. These systems employ additional measurements to maintain consistency in a best-effort manner. In this regard, Hazelcast tries to minimize the effect of such scenarios using an active anti-entropy solution as follows:
 

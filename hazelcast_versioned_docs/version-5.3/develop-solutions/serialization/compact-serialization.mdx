@@ -286,7 +286,7 @@ hazelcast-client:
 
 If you want to override the serialization mechanism used for `Serializable` or `Externalizable` classes and use Compact serialization without writing any serializer in Java, you must add those classes to the configuration.
 
-## Implementing CompactSerializer
+## Implementing `CompactSerializer`
 
 Compact serialization can be used by implementing a `CompactSerializer` for a class and registering it in the configuration.
 
@@ -1072,7 +1072,7 @@ Note that, when an old reader reads data written by an old writer, or a new read
 
 One thing to be careful while evolving the class is to not have any conditional code in the `write` method. That method must write all the fields available in the current version of the class to the writer, with appropriate field names and types. Hazelcast uses the `write` method of the serializer to extract a schema out of the object, hence any conditional code that may or may not run depending on the object in that method might result in an undefined behavior.
 
-## GenericRecord Representation
+## `GenericRecord` Representation
 
 Compact serialized objects can also be represented by a `GenericRecord`, without requiring the class in the classpath. See [Accessing Domain Objects Without Domain Classes](../adding-java-classes-to-members/accessing-domain-objects.mdx).
 

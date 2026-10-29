@@ -85,7 +85,7 @@ hazelcast:
 </TabItem>
 </Tabs>
 
-Hazelcast provides a default SSLContextFactory, `com.hazelcast.nio.ssl.BasicSSLContextFactory`, which uses the configured keystore to initialize `SSLContext`; see the following example configuration for TLS/SSL.
+Hazelcast provides a default `SSLContextFactory`, `com.hazelcast.nio.ssl.BasicSSLContextFactory`, which uses the configured keystore to initialize `SSLContext`; see the following example configuration for TLS/SSL.
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
@@ -239,9 +239,9 @@ TLS connections have two sides: the one opening the connection (TLS client) and 
 
 Hazelcast members can be on both sides of TLS connection - TLS servers and TLS clients. Hazelcast clients are always on the client side of a TLS connection.
 
-By default Hazelcast members have keyStore used to identify themselves to the clients and other members. Both Hazelcast members and Hazelcast clients have trustStore used to define which members they can trust.
+By default Hazelcast members have `keyStore` used to identify themselves to the clients and other members. Both Hazelcast members and Hazelcast clients have `trustStore` used to define which members they can trust.
 
-When the mutual authentication feature is enabled, Hazelcast clients need to provide keyStore. A client proves its identity by providing its certificate to the Hazelcast member it's connecting to. The member only accepts the connection if the client's certificate is present in the member's trustStore.
+When the mutual authentication feature is enabled, Hazelcast clients need to provide `keyStore`. A client proves its identity by providing its certificate to the Hazelcast member it's connecting to. The member only accepts the connection if the client's certificate is present in the member's `trustStore`.
 
 To enable the mutual authentication, set the `mutualAuthentication` property value to `REQUIRED` on the member side, as shown below:
 

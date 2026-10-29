@@ -12,11 +12,11 @@ tutorial_source: "https://github.com/hazelcast-guides/cpsubsystem/tree/master"
 displayed_sidebar: null
 ---
 
-In this tutorial, you will examine the operations of a CP-enabled Hazelcast Platform cluster, then work with the CPMap data structure using the Hazelcast CLC.
+In this tutorial, you will examine the operations of a CP-enabled Hazelcast Platform cluster, then work with the `CPMap` data structure using the Hazelcast CLC.
 
 ## Context
 
-The Hazelcast CP Subsystem adds the capability of true consistency to the primarily AP Hazelcast Platform. When the CP Subsystem is enabled, application developers have access to CPMap, a key-value store similar in function to IMap that provides consistency guarantees. The CP Subsystem also supports Java concurrency primitives, guaranteeing atomic operations of these data structures.
+The Hazelcast CP Subsystem adds the capability of true consistency to the primarily AP Hazelcast Platform. When the CP Subsystem is enabled, application developers have access to `CPMap`, a key-value store similar in function to `IMap` that provides consistency guarantees. The CP Subsystem also supports Java concurrency primitives, guaranteeing atomic operations of these data structures.
 
 ## Before you Begin
 
@@ -47,7 +47,7 @@ In this section, you'll launch a Hazelcast cluster and Management Center using D
    You should see four services up and running: three instances of Hazelcast, and one instance of Management Center.
 
 3. Open the file `hazelcast.yaml` to review the cluster member configuration.
-4. Open a web browser and connect to **localhost:8080**. This will open Management Center. Select Dev Mode to open the main dashboard. Go to **Settings**, then open **License**. Paste in the license key from `hazelcast.yaml`. Verify that the license includes Advanced CP, which is required for CPMap functionality.
+4. Open a web browser and connect to **`localhost:8080`**. This will open Management Center. Select Dev Mode to open the main dashboard. Go to **Settings**, then open **License**. Paste in the license key from `hazelcast.yaml`. Verify that the license includes Advanced CP, which is required for `CPMap` functionality.
 
    ![licensed features](./images/licensed_features.png)
 
@@ -58,11 +58,11 @@ In this section, you'll launch a Hazelcast cluster and Management Center using D
 6. Scroll down to verify that the cluster has a total of three nodes.
 7. From the left side menu, go to **CP Subsystem \> Dashboard**. Note that the CP Subsystem has three nodes in the CP Stats window. Under CP Groups, the only group that exists is METADATA; this group is used for CP Subsystem management.
 
-## Step 2. Create a CPMap Using CLC
+## Step 2. Create a `CPMap` Using CLC
 
-In this step, you'll use the CLC to connect to one of the cluster members. You'll create a CPMap and add data to the map. You'll then retrieve data from the map.
+In this step, you'll use the CLC to connect to one of the cluster members. You'll create a `CPMap` and add data to the map. You'll then retrieve data from the map.
 
-1. Open a separate terminal window. Enable CPMap capabilities in CLC (only needed for CLC 5.3.7).
+1. Open a separate terminal window. Enable `CPMap` capabilities in CLC (only needed for CLC 5.3.7).
 
    ```cli
    export CLC_EXPERIMENTAL_CPMAP=1
@@ -74,7 +74,7 @@ In this step, you'll use the CLC to connect to one of the cluster members. You'l
    clc -c clc_docker.yaml
    ```
 
-3. At the SQL prompt, use the `cpmap` commands to create a CPMap and add data, then retrieve the data.
+3. At the SQL prompt, use the `cpmap` commands to create a `CPMap` and add data, then retrieve the data.
 
    ```cli
    \cpmap -n trektos set 1 "James Kirk"
@@ -87,7 +87,7 @@ In this step, you'll use the CLC to connect to one of the cluster members. You'l
 
    :::
 
-4. Run the `trektos.clc` script to add data to the CPMap.
+4. Run the `trektos.clc` script to add data to the `CPMap`.
 
    ```cli
    \script run trektos.clc
@@ -99,27 +99,27 @@ In this step, you'll use the CLC to connect to one of the cluster members. You'l
    \cpmap -n trektos get 6
    ```
 
-6. In Management Center, examine the CP Subsystem dashboard. Note that there is now a "default" group. This is the group maintaining the RAFT algorithm for the `trektos` CPMap.
-7. In Management Center, select CPMaps from the left side. The screen lists the CPMap you just created, along with map statistics.
-8. (Optional) In the Client subdirectory, we've included a sample Java client that creates an additional CPMap. To run the client, change to the Client subdirectory, then run the following Maven commands.
+6. In Management Center, examine the CP Subsystem dashboard. Note that there is now a "default" group. This is the group maintaining the RAFT algorithm for the `trektos` `CPMap`.
+7. In Management Center, select `CPMap`s from the left side. The screen lists the `CPMap` you just created, along with map statistics.
+8. (Optional) In the Client subdirectory, we've included a sample Java client that creates an additional `CPMap`. To run the client, change to the Client subdirectory, then run the following Maven commands.
 
    ```cli
    mvn clean compile exec:java -Dexec.mainClass="Client4CP"
    ```
 
-   Use CLC and Management Center to verify the creation of a second CPMap.
+   Use CLC and Management Center to verify the creation of a second `CPMap`.
 
 ## Step 3. Simulating a Network Partition
 
 In this section, you will pause and restart individual cluster members to simulate network partition and member failure conditions. You'll learn about when the CP Subsystem can heal itself, and when administrator intervention is required.
 
-1. From the CLC, run the script sw.clc. This creates an IMap. We will use this to compare data accessibility between an AP IMap and a CP CPMap.
+1. From the CLC, run the script `sw.clc`. This creates an `IMap`. We will use this to compare data accessibility between an AP `IMap` and a CP `CPMap`.
 
    ```cli
    \script run sw.clc
    ```
 
-2. Retrieve an entry from the IMap.
+2. Retrieve an entry from the `IMap`.
 
    ```cli
    \map -n starwars get 1
@@ -139,7 +139,7 @@ In this section, you will pause and restart individual cluster members to simula
 
    ![member depart log](./images/member_depart_log.png)
 
-5. Using CLC, verify that you can still access both IMap and CPMap data.
+5. Using CLC, verify that you can still access both `IMap` and `CPMap` data.
 
    ```cli
    \map -n starwars get 1
@@ -175,7 +175,7 @@ In this section, you will pause and restart individual cluster members to simula
 
 In this step, we will add another cluster member, and configure the cluster for automatic member failure.
 
-1. Open the file compose.yaml. Add a fourth instance of Hazelcast to the file. Save your changes.
+1. Open the file `compose.yaml`. Add a fourth instance of Hazelcast to the file. Save your changes.
 
    ```cli
      hz4:
@@ -186,7 +186,7 @@ In this step, we will add another cluster member, and configure the cluster for 
          - ".:/project"
    ```
 
-2. Open the file hazelcast.yaml. Modify the configuration as follows:
+2. Open the file `hazelcast.yaml`. Modify the configuration as follows:
    1. Set the member count to 4
    2. Add the timeout and set it to 60 seconds
    3. Add the auto-removal and set it to 60 seconds
@@ -238,10 +238,10 @@ You now have a working CP Subsystem setup. Experiment with creating multiple gro
 
 ## Summary
 
-In this tutorial, you worked with the CPMap data structure, and experimented with CP Subsystem management.
+In this tutorial, you worked with the `CPMap` data structure, and experimented with CP Subsystem management.
 
 ## See Also
 
 - [CP Subsystem Overview](/hazelcast/latest/cp-subsystem/cp-subsystem)
-- [CPMap Documentation](/hazelcast/latest/data-structures/cpmap)
+- [`CPMap` Documentation](/hazelcast/latest/data-structures/cpmap)
 - [CP Subsystem Persistence](/hazelcast/latest/cp-subsystem/cp-subsystem#persistence)

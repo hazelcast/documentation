@@ -10,7 +10,7 @@ import Ex_hazelcast_expose_externally_yaml from "../../examples/hazelcast_expose
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
-Hazelcast supports connections from both smart and unisocket clients that are outside your Kubernetes cluster. To allow these clients to connect to Hazelcast, you need to configure the \`exposeExternally\` field of the Hazelcast custom resource.
+Hazelcast supports connections from both smart and unisocket clients that are outside your Kubernetes cluster. To allow these clients to connect to Hazelcast, you need to configure the `exposeExternally` field of the Hazelcast custom resource.
 
 :::tip
 
@@ -42,7 +42,7 @@ If you use EKS, consider the following:
 
 :::tip
 
-For **Smart** clients with **LoadBalancer** discovery and member access, the default in-tree controller may create a **Classic Load Balancer** with TCP health checks that can cause noisy member logs. The [recommended approach](#eks-nlb-ip) is to use the **AWS Load Balancer Controller** with **Network Load Balancer (NLB) IP targets** and HTTP health checks on `/hazelcast/health`. Install the controller using [AWS Load Balancer Controller documentation](https://kubernetes-sigs.github.io/aws-load-balancer-controller/) or your EKS add-on workflow. Configuration of the Hazelcast custom resource is described in [Amazon EKS: Network Load Balancer with IP targets (recommended)](#eks-nlb-ip).
+For **Smart** clients with **`LoadBalancer`** discovery and member access, the default in-tree controller may create a **Classic Load Balancer** with TCP health checks that can cause noisy member logs. The [recommended approach](#eks-nlb-ip) is to use the **AWS Load Balancer Controller** with **Network Load Balancer (NLB) IP targets** and HTTP health checks on `/hazelcast/health`. Install the controller using [AWS Load Balancer Controller documentation](https://kubernetes-sigs.github.io/aws-load-balancer-controller/) or your EKS add-on workflow. Configuration of the Hazelcast custom resource is described in [Amazon EKS: Network Load Balancer with IP targets (recommended)](#eks-nlb-ip).
 
 :::
 
@@ -149,14 +149,14 @@ In this configuration, the standard Kubernetes mechanism routes client traffic t
 
 On Amazon EKS, when you use **Smart** clients with `discoveryServiceType: LoadBalancer` and `memberAccess: LoadBalancer`, the default cloud controller may provision a **Classic Load Balancer** that performs **TCP** health checks on the member port. That can produce noisy member logs (for example `connectionType=NONE`) and does not use HTTP health checks on the Hazelcast REST endpoint.
 
-**Recommended:** Install the **AWS Load Balancer Controller** in your cluster (see [AWS Load Balancer Controller documentation](https://kubernetes-sigs.github.io/aws-load-balancer-controller/) or the EKS add-ons console). Then add annotations under `spec.annotations` on the `Hazelcast` custom resource as described below. The operator copies `spec.annotations` to every `Service` it creates for that cluster (the discovery service and each per-member service when using Smart + LoadBalancer).
+**Recommended:** Install the **AWS Load Balancer Controller** in your cluster (see [AWS Load Balancer Controller documentation](https://kubernetes-sigs.github.io/aws-load-balancer-controller/) or the EKS add-ons console). Then add annotations under `spec.annotations` on the `Hazelcast` custom resource as described below. The operator copies `spec.annotations` to every `Service` it creates for that cluster (the discovery service and each per-member service when using Smart + `LoadBalancer`).
 
 With **NLB IP targets**, health checks reach each pod on port **8081** (REST) directly. You do not need to expose REST as a NodePort on nodes for load balancer health checks.
 
 Prerequisites:
 
 - EKS cluster with **AWS Load Balancer Controller** installed and able to reconcile `LoadBalancer` Services.
-- Hazelcast **Enterprise** and `exposeExternally` configured for Smart + LoadBalancer as shown below.
+- Hazelcast **Enterprise** and `exposeExternally` configured for Smart + `LoadBalancer` as shown below.
 
 Add the following annotations under `spec.annotations` on the `Hazelcast` custom resource:
 

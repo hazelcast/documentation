@@ -244,7 +244,7 @@ SessionStore store = ClusteredSessionStore.create(vertx);
 
 From now on, we will start the application with the `-server` parameter, which tells Vert.x to look for a cluster manager implementation.
 
-We also need to provide a Hazelcast configuration file, and create a file cluster.xml in the `src/main/resources` directory:
+We also need to provide a Hazelcast configuration file, and create a file `cluster.xml` in the `src/main/resources` directory:
 
 ```xml vars
 <?xml version="1.0" encoding="UTF-8"?>
@@ -333,7 +333,7 @@ content-type: application/json
 }
 ```
 
-## Using Counter
+## Using `Counter`
 
 Next, we'll use Hazelcast's distributed counter functionality to generate unique, incrementing IDs across a distributed system. The counter is maintained across all nodes in the Hazelcast cluster, ensuring each request gets a unique ID even when multiple servers are handling requests.
 

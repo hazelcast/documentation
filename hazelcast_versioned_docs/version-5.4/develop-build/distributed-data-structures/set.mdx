@@ -9,7 +9,7 @@ import TabItem from "@theme/TabItem";
 import CodeBlock from "@theme/CodeBlock";
 import Ex_dds_set_SetConfiguration_java_tag_sc from "../../examples/dds/set/SetConfiguration.java?tag=sc";
 
-Hazelcast Set, also known as ISet, is a distributed collection that contains no duplicate elements and does not preserve the order of elements.
+Hazelcast Set, also known as `ISet`, is a distributed collection that contains no duplicate elements and does not preserve the order of elements.
 
 Hazelcast Set is a non-partitioned data structure; all the data that belongs to a set lives on one single partition in that member.
 
@@ -325,26 +325,26 @@ The following are the configuration elements and their descriptions:
 - `backup-count`: Count of synchronous backups. Set is a non-partitioned data structure, so all entries of a set reside in one partition. For example, if this parameter is `1`, there is one backup of the set in one other member. If it is `2`, two members will have the backup.
 - `async-backup-count`: Count of asynchronous backups. See [Backup Types](./map/backing-up-maps.mdx#in-memory-backup-types) to learn more about synchronous and asynchronous backups.
 - `statistics-enabled`: Specifies whether the statistics gathering is enabled for your set. If set to `false`, you cannot collect statistics in your implementation. Its default value is `true`.
-- `max-size`: The maximum number of entries for this set. It can be any number between 0 and Integer.MAX\_VALUE. Its default value is 0, meaning there is no capacity constraint.
+- `max-size`: The maximum number of entries for this set. It can be any number between 0 and `Integer.MAX_VALUE`. Its default value is 0, meaning there is no capacity constraint.
 - `item-listeners`: Lets you add listeners (listener classes) for the list items. You can also set the attributes `include-value` to `true` if you want the item event to contain the item values. You can set `local` to `true` if you want to listen to the items on the local member.
-- `split-brain-protection-ref`: Name of the split-brain protection configuration that you want this set to use. See the [Split-Brain Protection for ISet and TransactionalSet section](#split-brain-protection-for-iset-and-transactionalset).
+- `split-brain-protection-ref`: Name of the split-brain protection configuration that you want this set to use. See the [Split-Brain Protection for `ISet` and `TransactionalSet` section](#split-brain-protection-for-iset-and-transactionalset).
 
-## Split-Brain Protection for ISet and TransactionalSet
+## Split-Brain Protection for `ISet` and `TransactionalSet`
 
-ISet & TransactionalSet can be configured to check for a minimum number of available members before applying queue operations (see the [Split-Brain Protection section](../../operate-manage/configuring-for-fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful queue operations on all parts of a cluster during a network partition.
+`ISet` & `TransactionalSet` can be configured to check for a minimum number of available members before applying queue operations (see the [Split-Brain Protection section](../../operate-manage/configuring-for-fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful queue operations on all parts of a cluster during a network partition.
 
 The following is a list of methods, grouped by the protection types, that support split-brain protection checks:
 
-ISet:
+`ISet`:
 
-- WRITE, READ\_WRITE:
+- `WRITE`, `READ_WRITE`:
 
   - `add`
   - `addAll`
   - `clear`
   - `remove`
   - `removeAll`
-- READ, READ\_WRITE:
+- `READ`, `READ_WRITE`:
 
   - `contains`
   - `containsAll`
@@ -353,13 +353,13 @@ ISet:
   - `size`
   - `toArray`
 
-TransactionalSet:
+`TransactionalSet`:
 
-- WRITE, READ\_WRITE:
+- `WRITE`, `READ_WRITE`:
 
   - `add`
   - `remove`
-- READ, READ\_WRITE:
+- `READ`, `READ_WRITE`:
 
   - `size`
 

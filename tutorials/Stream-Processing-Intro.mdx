@@ -45,7 +45,7 @@ In this step, you will set up connections to an external streaming source and an
 
    :::note
 
-   Your screen or prompt will display your cluster name where the examples above say "EdSrvs1".
+   Your screen or prompt will display your cluster name where the examples above say `EdSrvs1`.
 
    :::
 
@@ -128,7 +128,7 @@ In this step, you'll load the in-memory data stores that will be used for stream
    DATA CONNECTION "TrainingPostgresConnection";
    ```
 
-3. Create the mapping for the IMap that will store the local copy of the customer database. Note that the data fields are identical.
+3. Create the mapping for the `IMap` that will store the local copy of the customer database. Note that the data fields are identical.
 
    ```sql
    CREATE OR REPLACE MAPPING "customers"(
@@ -146,13 +146,13 @@ In this step, you'll load the in-memory data stores that will be used for stream
    );
    ```
 
-4. Verify that the local IMap is currently empty.
+4. Verify that the local `IMap` is currently empty.
 
    ```sql
    SELECT * from customers;
    ```
 
-5. Copy the data from the external database to the local IMap.
+5. Copy the data from the external database to the local `IMap`.
 
    ```sql
    INSERT INTO customers(__key, cust_id, last_name, first_name, address1, address2, phone)
@@ -181,7 +181,7 @@ In this step, you'll load the in-memory data stores that will be used for stream
    DATA CONNECTION "TrainingPostgresConnection";
    ```
 
-8. Create the mapping for the IMap that will store the local copy of the inventory.
+8. Create the mapping for the `IMap` that will store the local copy of the inventory.
 
    ```sql
    CREATE or REPLACE MAPPING "inventory" (
@@ -195,7 +195,7 @@ In this step, you'll load the in-memory data stores that will be used for stream
         'valueFormat'='json-flat');
    ```
 
-9. Copy the inventory data from the external database into the IMap
+9. Copy the inventory data from the external database into the `IMap`
 
    ```sql
    INSERT INTO inventory(__key, item_num, unit_price, quantity)
@@ -216,7 +216,7 @@ In this step, you'll load the in-memory data stores that will be used for stream
 
 In this step, you will join the streaming order information with the customer shipping data to generate a pick and ship order for the inventory warehouse.
 
-1. Create an IMap to store pick order data.
+1. Create an `IMap` to store pick order data.
 
    ```sql
    CREATE OR REPLACE MAPPING PickOrder (
@@ -236,16 +236,16 @@ In this step, you will join the streaming order information with the customer sh
    'valueFormat'='json-flat');
    ```
 
-2. Verify that the IMap has been created, but holds no data.
+2. Verify that the `IMap` has been created, but holds no data.
 
    ```sql
    SELECT * FROM PickOrder;
    ```
 
-3. Join the streaming order data with the customer database to produce records to be added to the `PickOrder` IMap. Only add records if there are sufficient items in inventory.
+3. Join the streaming order data with the customer database to produce records to be added to the `PickOrder` `IMap`. Only add records if there are sufficient items in inventory.
 
    The following fields will come from the `orders_topic` stream
-   - Order ID (Use as \_\_key for the IMap)
+   - Order ID (Use as \_\_key for the `IMap`)
    - Order timestamp
    - Order item number
    - Order quantity
@@ -282,7 +282,7 @@ In this step, you will join the streaming order information with the customer sh
    ```
 
 4. Press CTRL-C to stop the join.
-5. Create a job that generates the PickOrder. Creating a job places the process into the background so it is running continuously without user intervention.
+5. Create a job that generates the `PickOrder`. Creating a job places the process into the background so it is running continuously without user intervention.
 
    ```sql
    CREATE JOB PickOrder AS
@@ -304,23 +304,23 @@ In this step, you will join the streaming order information with the customer sh
         WHERE ord.quantity < inventory.quantity;
    ```
 
-6. Verify that the `PickOrder` IMap now contains data.
+6. Verify that the `PickOrder` `IMap` now contains data.
 
    ```sql
    SELECT * FROM PickOrder;
    ```
 
 7. From your cloud console, monitor memory utilization. You should see it increasing.
-8. From Management Center, under Storage, select Maps. You should see the PickOrder map entries increasing.
-9. From Management Center, under Streaming, select Jobs. You should see the PickOrder job running. Select the job, then click the Suspend button to pause the job.
+8. From Management Center, under Storage, select Maps. You should see the `PickOrder` map entries increasing.
+9. From Management Center, under Streaming, select Jobs. You should see the `PickOrder` job running. Select the job, then click the Suspend button to pause the job.
 
 ## Step 4: Generate Order Total
 
 ![step4](./images/step4.jpg)
 
-In this step, you will perform a three-way join with the streaming order information, the customer database, and the inventory database. The output includes a calculation of the amount due for the order, and is passed to an IMap. This map can then be read by a payment processing system.
+In this step, you will perform a three-way join with the streaming order information, the customer database, and the inventory database. The output includes a calculation of the amount due for the order, and is passed to an `IMap`. This map can then be read by a payment processing system.
 
-1. Create a new IMap called `amount_due`.
+1. Create a new `IMap` called `amount_due`.
 
    ```sql
    CREATE OR REPLACE MAPPING amount_due(

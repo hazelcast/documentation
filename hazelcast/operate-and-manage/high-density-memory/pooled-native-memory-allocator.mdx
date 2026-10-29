@@ -46,7 +46,7 @@ Because pages cannot be shared between threads, external fragmentation for TLPMM
 - There is not enough memory available for each partition thread (for example, 2 GB configured native memory capacity and 8 partition threads means each thread will have ~256 MB).
 - The workload includes frequent put/remove operations or a mix of small and large entries or is heavily biased towards some partitions.
 
-Even if only a small amount of the memory is used, one partition thread may still run out of memory because it cannot borrow free blocks from others, and no free page is available from the native memory. As a result, a member can fail with NativeOutOfMemoryError even when total free memory appears large. This happens when a single thread's pool runs out of contiguous free blocks for the requested allocation size.
+Even if only a small amount of the memory is used, one partition thread may still run out of memory because it cannot borrow free blocks from others, and no free page is available from the native memory. As a result, a member can fail with `NativeOutOfMemoryError` even when total free memory appears large. This happens when a single thread's pool runs out of contiguous free blocks for the requested allocation size.
 
 To make fragmentation and memory usage easier to observe, the following details are provided in the Native OOME message:
 

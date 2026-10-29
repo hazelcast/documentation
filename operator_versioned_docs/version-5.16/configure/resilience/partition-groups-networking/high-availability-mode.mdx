@@ -13,9 +13,9 @@ import TabItem from "@theme/TabItem";
 
 In the Hazelcast Platform Operator, you can use partition groups with High Availability Mode to add resilience to your clusters. Avoid data loss even when a Kubernetes node or whole availability zone is down, and all related Hazelcast members are terminated.
 
-Partition groups let you choose where Hazelcast members store backups of a data partition. You can configure a partition group to backup data inside a member in a different availability zone (ZONE\_AWARE) or on a different Kubernetes node (NODE\_AWARE). See [Partition Group Configuration](/hazelcast/latest/clusters/partition-group-configuration) for more details.
+Partition groups let you choose where Hazelcast members store backups of a data partition. You can configure a partition group to backup data inside a member in a different availability zone (`ZONE_AWARE`) or on a different Kubernetes node (`NODE_AWARE`). See [Partition Group Configuration](/hazelcast/latest/clusters/partition-group-configuration) for more details.
 
-When using either type of partition grouping (ZONE\_AWARE or NODE\_AWARE) with a Hazelcast cluster that spans multiple availability zones and nodes, you must have an equal number of members in each zone or node. Otherwise, it results in the uneven distribution of partitions amongst the members.
+When using either type of partition grouping (`ZONE_AWARE` or `NODE_AWARE`) with a Hazelcast cluster that spans multiple availability zones and nodes, you must have an equal number of members in each zone or node. Otherwise, it results in the uneven distribution of partitions amongst the members.
 
 The `highAvailabilityMode` parameter allows you to specify partition groups and to automatically distribute members across availability zones and nodes, using the Kubernetes policy `topologySpreadConstraints`.
 
@@ -83,7 +83,7 @@ Below are the configuration options for the High Availability Mode feature.
 
 <CodeBlock language="yaml">{Ex_hazelcast_high_availability_mode_yaml}</CodeBlock>
 
-## High Availability Mode and MULTI\_MEMBER Routing
+## High Availability Mode and `MULTI_MEMBER` Routing
 
 `MULTI_MEMBER` routing is a client feature that allows a client to connect to a subset of members that is determined by a grouping strategy. To benefit from `MULTI_MEMBER` routing, you must enable high availability mode, because this parameter is used to determine partition groups. Also, if the `MULTI_MEMBER` routing mode is used on the client-side, `exposeExternally.type` must be set to `smart` in the Hazelcast CR.
 

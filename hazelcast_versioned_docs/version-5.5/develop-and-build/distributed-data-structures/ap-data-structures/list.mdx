@@ -9,15 +9,15 @@ import TabItem from "@theme/TabItem";
 import CodeBlock from "@theme/CodeBlock";
 import Ex_dds_list_ListConfiguration_java_tag_lc from "../../../examples/dds/list/ListConfiguration.java?tag=lc";
 
-Hazelcast List, also known as IList, is similar to Hazelcast Set - it is a distributed collection, but it allows duplicate elements and preserves the order of elements.
+Hazelcast `List`, also known as `IList`, is similar to Hazelcast `Set` - it is a distributed collection, but it allows duplicate elements and preserves the order of elements.
 
-Hazelcast List is a non-partitioned data structure where values and each backup are represented by their own single partition.
+Hazelcast `List` is a non-partitioned data structure where values and each backup are represented by their own single partition.
 
-Hazelcast List cannot be scaled beyond the capacity of a single machine. All items are copied to local and iteration occurs locally.
+Hazelcast `List` cannot be scaled beyond the capacity of a single machine. All items are copied to local and iteration occurs locally.
 
-You can also use list as a source or sink for batch processing when building your data pipelines. You can fill a list with data, consume it in a Hazelcast job and send the results to another list. See the [List Connector guide](../../../connectors/hazelcast-data-structure-connectors/list-connector.mdx).
+You can also use `List` as a source or sink for batch processing when building your data pipelines. You can fill a `List` with data, consume it in a Hazelcast job and send the results to another `List`. See the [List Connector guide](../../../connectors/hazelcast-data-structure-connectors/list-connector.mdx).
 
-## Creating a List {/* #getting-a-list-and-putting-items */}
+## Creating a `List` {/* #getting-a-list-and-putting-items */}
 
 When you start a Hazelcast member with default configuration, it will have an empty list named `default`. See [Start a Local Cluster in Docker](../../../get-started/start-a-local-cluster/get-started-docker.mdx) for a quick cluster startup.
 
@@ -97,7 +97,7 @@ In this example, we create a list called `list`, add items to it, and print the 
 
    <CodeCallouts>
 
-   1. Create or access the List called `list`.
+   1. Create or access the `List` called `list`.
    2. Add items to `list`.
 
    </CodeCallouts>
@@ -152,7 +152,7 @@ In this example, we create a list called `list`, add items to it, and print the 
 
    <CodeCallouts>
 
-   1. Create or access the List called `list`.
+   1. Create or access the `List` called `list`.
    2. Add items to `list`.
 
    </CodeCallouts>
@@ -202,7 +202,7 @@ In this example, we create a list called `list`, add items to it, and print the 
 
    <CodeCallouts>
 
-   1. Create or access the List called `list`.
+   1. Create or access the `List` called `list`.
    2. Add items to `list`.
    3. Remove items from `list`.
 
@@ -246,7 +246,7 @@ In this example, we create a list called `list`, add items to it, and print the 
 
    <CodeCallouts>
 
-   1. Create or access the List called `list`.
+   1. Create or access the `List` called `list`.
    2. Add items to `list`.
    3. Remove items from `list`.
 
@@ -311,7 +311,7 @@ In this example, we create a list called `list`, add items to it, and print the 
 
    <CodeCallouts>
 
-   1. Create or access the List called `list`.
+   1. Create or access the `List` called `list`.
    2. Add items to `list`.
 
    </CodeCallouts>
@@ -319,9 +319,9 @@ In this example, we create a list called `list`, add items to it, and print the 
 </TabItem>
 </Tabs>
 
-Hazelcast List uses item listeners to listen to events that occur when items are added to and removed from the list. See the [Listening for Item Events section](../../listening-to-events/object-events.mdx#listening-for-item-events) for information about how to create an item listener class and register it.
+Hazelcast `List` uses item listeners to listen to events that occur when items are added to and removed from the list. See the [Listening for Item Events section](../../listening-to-events/object-events.mdx#listening-for-item-events) for information about how to create an item listener class and register it.
 
-## Configuring List
+## Configuring `List`
 
 The following is an example list configuration.
 
@@ -373,22 +373,22 @@ hazelcast:
 
 The following are the configuration elements and their descriptions:
 
-- `backup-count`: Count of synchronous backups. List is a non-partitioned data structure, so all entries of a list reside in one partition. For example, if this parameter is `1`, there is one backup of the list in one other member. If it is `2`, two members will have the backup.
+- `backup-count`: Count of synchronous backups. `List` is a non-partitioned data structure, so all entries of a list reside in one partition. For example, if this parameter is `1`, there is one backup of the list in one other member. If it is `2`, two members will have the backup.
 - `async-backup-count`: Count of asynchronous backups. See [Backup Types](./map/backing-up-maps.mdx#in-memory-backup-types) to learn more about synchronous and asynchronous backups.
 - `statistics-enabled`: Specifies whether the statistics gathering is enabled for your list. If set to `false`, you cannot collect statistics in your implementation. Its default value is `true`.
 - `max-size`: The maximum number of entries for this list.
 - `item-listeners`: Lets you add listeners (listener classes) for the list items. You can also set the attribute `include-value` to `true` if you want the item event to contain the item values. You can set the attribute `local` to `true` if you want to listen the items on the local member.
-- `split-brain-protection-ref`: Name of the split-brain protection configuration that you want this list to use. See the [Split-Brain Protection for IList and TransactionalList section](#split-brain-protection-for-ilist-and-transactionallist).
+- `split-brain-protection-ref`: Name of the split-brain protection configuration that you want this list to use. See the [Split-Brain Protection for `IList` and `TransactionalList` section](#split-brain-protection-for-ilist-and-transactionallist).
 
-## Split-Brain Protection for IList and TransactionalList
+## Split-Brain Protection for `IList` and `TransactionalList`
 
-IList & TransactionalList can be configured to check for a minimum number of available members before applying queue operations (see the [Split-Brain Protection section](../../../operate-and-manage/fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful queue operations on all parts of a cluster during a network partition.
+`IList` & `TransactionalList` can be configured to check for a minimum number of available members before applying queue operations (see the [Split-Brain Protection section](../../../operate-and-manage/fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful queue operations on all parts of a cluster during a network partition.
 
 The following is a list of methods, grouped by the protection types, that support split-brain protection checks:
 
-IList:
+`IList`:
 
-- WRITE, READ\_WRITE:
+- `WRITE`, `READ_WRITE`:
 
   - `add`
   - `addAll`
@@ -396,7 +396,7 @@ IList:
   - `remove`
   - `removeAll`
   - `set`
-- READ, READ\_WRITE:
+- `READ`, `READ_WRITE`:
 
   - `add`
   - `contains`
@@ -411,13 +411,13 @@ IList:
   - `subList`
   - `toArray`
 
-TransactionalList:
+`TransactionalList`:
 
-- WRITE, READ\_WRITE:
+- `WRITE`, `READ_WRITE`:
 
   - `add`
   - `remove`
-- READ, READ\_WRITE:
+- `READ`, `READ_WRITE`:
 
   - `size`
 
