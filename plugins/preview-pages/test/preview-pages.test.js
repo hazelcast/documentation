@@ -6,50 +6,59 @@ const { pageMap, renderComment, commentOnPr } = require('..')
 
 const PREVIEW = 'https://deploy-preview-45--hazelcast-documentation.netlify.app'
 
-const docsPlugin = (versions) => ({ name: 'docusaurus-plugin-content-docs', content: { loadedVersions: versions } })
+const docsPlugin = (id, versions) => ({ name: 'docusaurus-plugin-content-docs', options: { id, routeBasePath: id }, content: { loadedVersions: versions } })
+const SITE = { themeConfig: { navbar: { items: [{ type: 'docSidebar', docsPluginId: 'hazelcast', label: 'Platform' }] } } }
 
-test('maps each doc source in every version and instance to its permalink', () => {
+test('maps each doc source to its section, title, URL, and path', () => {
   const plugins = [
-    docsPlugin([
-      { docs: [{ source: '@site/hazelcast/sql/index.mdx', permalink: '/hazelcast/6.0-snapshot/sql' }] },
-      { docs: [{ source: '@site/hazelcast_versioned_docs/version-5.7/sql/index.mdx', permalink: '/hazelcast/5.7/sql' }] },
+    docsPlugin('hazelcast', [
+      { label: '6.0-SNAPSHOT', path: '/hazelcast/6.0-snapshot', docs: [{ source: '@site/hazelcast/sql/index.mdx', title: 'SQL', permalink: '/hazelcast/6.0-snapshot/sql' }] },
+      { label: '5.7', path: '/hazelcast/5.7', docs: [{ source: '@site/hazelcast_versioned_docs/version-5.7/index.mdx', title: 'Overview', permalink: '/hazelcast/5.7/' }] },
     ]),
-    docsPlugin([{ docs: [{ source: '@site/cloud/overview.mdx', permalink: '/cloud/overview' }] }]),
+    docsPlugin('operator', [{ label: 'Next', path: '/operator/latest-snapshot', docs: [{ source: '@site/operator/a.mdx', title: 'A', permalink: '/operator/latest-snapshot/a' }] }]),
+    docsPlugin('tutorials', [{ label: 'Next', path: '/tutorials', docs: [{ source: '@site/tutorials/t.mdx', title: 'T', permalink: '/tutorials/t' }] }]),
     { name: 'other-plugin', content: {} },
   ]
-  assert.deepEqual(pageMap(plugins), {
-    'hazelcast/sql/index.mdx': '/hazelcast/6.0-snapshot/sql',
-    'hazelcast_versioned_docs/version-5.7/sql/index.mdx': '/hazelcast/5.7/sql',
-    'cloud/overview.mdx': '/cloud/overview',
+  assert.deepEqual(pageMap(plugins, SITE), {
+    'hazelcast/sql/index.mdx': { section: 'Platform 6.0-SNAPSHOT', title: 'SQL', url: '/hazelcast/6.0-snapshot/sql', path: 'sql' },
+    'hazelcast_versioned_docs/version-5.7/index.mdx': { section: 'Platform 5.7', title: 'Overview', url: '/hazelcast/5.7/', path: '' },
+    'operator/a.mdx': { section: 'Operator latest-snapshot', title: 'A', url: '/operator/latest-snapshot/a', path: 'a' },
+    'tutorials/t.mdx': { section: 'Tutorials', title: 'T', url: '/tutorials/t', path: 't' },
   })
 })
 
-test('links each changed page once and skips files with no page', () => {
-  const pages = { 'hazelcast/sql/index.mdx': '/hazelcast/6.0-snapshot/sql', 'cloud/overview.mdx': '/cloud/overview' }
-  const files = ['hazelcast/sql/index.mdx', 'hazelcast/_partials/note.mdx', 'cloud/overview.mdx', 'README.md']
+const page = (section, path, title = path) => ({ section, title, url: `/${section.toLowerCase().replace(/ /g, '/')}/${path}`, path })
+
+test('lists changed pages under one heading per section and skips files with no page', () => {
+  const pages = {
+    'hazelcast/sql/index.mdx': page('Platform 6.0', 'sql', 'SQL'),
+    'cloud/overview.mdx': page('Cloud', 'overview', 'Overview'),
+    'cloud/unchanged.mdx': page('Cloud', 'unchanged'),
+  }
+  const files = ['cloud/overview.mdx', 'hazelcast/_partials/note.mdx', 'hazelcast/sql/index.mdx', 'README.md']
   assert.equal(renderComment(files, pages, PREVIEW + '/'), [
-    'Direct preview links to changed pages:',
+    '### Direct preview links',
     '',
-    `- [/hazelcast/6.0-snapshot/sql](${PREVIEW}/hazelcast/6.0-snapshot/sql)`,
-    `- [/cloud/overview](${PREVIEW}/cloud/overview)`,
+    '**Platform 6.0**',
+    '',
+    `- [SQL](${PREVIEW}/platform/6.0/sql) \`sql\``,
+    '',
+    '**Cloud**',
+    '',
+    `- [Overview](${PREVIEW}/cloud/overview) \`overview\``,
     '',
   ].join('\n'))
 })
 
-test('caps the list and counts the rest', () => {
-  const pages = Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`cloud/p${i}.mdx`, `/cloud/p${i}`]))
+test('caps each section and counts the rest', () => {
+  const pages = Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`cloud/p${i}.mdx`, page('Cloud', `p${i}`)]))
   const lines = renderComment(Object.keys(pages), pages, PREVIEW).trimEnd().split('\n')
-  assert.equal(lines.length, 2 + 10 + 1)
-  assert.equal(lines.at(-1), '- and 2 more')
+  assert.equal(lines.filter((line) => line.startsWith('- [')).length, 8)
+  assert.equal(lines.at(-1), '- ...and 4 more')
 })
 
 test('prints nothing when no page changed', () => {
   assert.equal(renderComment(['README.md'], {}, PREVIEW), '')
-})
-
-test('uses the singular for one page', () => {
-  const pages = { 'cloud/overview.mdx': '/cloud/overview' }
-  assert.match(renderComment(['cloud/overview.mdx'], pages, PREVIEW), /^Direct preview link to changed page:\n/)
 })
 
 // Replaces fetch with canned GitHub responses and records each request.
@@ -70,26 +79,38 @@ test('posts a comment when the PR has none', async (t) => {
     'GET /repos/hazelcast/documentation/pulls/53/files': [{ filename: 'cloud/overview.mdx' }],
     'GET /repos/hazelcast/documentation/issues/53/comments': [{ id: 1, body: 'Deploy Preview ready!' }],
   })
-  await commentOnPr({ token: 't', pr: '53', previewUrl: PREVIEW, pages: { 'cloud/overview.mdx': '/cloud/overview' } })
+  await commentOnPr({ token: 't', pr: '53', previewUrl: PREVIEW, pages: { 'cloud/overview.mdx': page('Cloud', 'overview', 'Overview') } })
   assert.deepEqual(requests.at(-1), {
     method: 'POST',
     url: '/repos/hazelcast/documentation/issues/53/comments',
-    body: { body: `Direct preview link to changed page:\n\n- [/cloud/overview](${PREVIEW}/cloud/overview)\n` },
+    body: { body: `### Direct preview links\n\n**Cloud**\n\n- [Overview](${PREVIEW}/cloud/overview) \`overview\`\n` },
   })
 })
 
-test('edits the earlier comment, whichever heading it has', async (t) => {
+test('edits the earlier comment', async (t) => {
   const requests = fakeGitHub(t, {
     'GET /repos/hazelcast/documentation/pulls/53/files': [{ filename: 'cloud/a.mdx' }, { filename: 'cloud/b.mdx' }],
-    'GET /repos/hazelcast/documentation/issues/53/comments': [{ id: 7, body: 'Direct preview link to changed page:\n' }],
+    'GET /repos/hazelcast/documentation/issues/53/comments': [{ id: 7, body: '### Direct preview links\n' }],
   })
-  await commentOnPr({ token: 't', pr: '53', previewUrl: PREVIEW, pages: { 'cloud/a.mdx': '/cloud/a', 'cloud/b.mdx': '/cloud/b' } })
+  await commentOnPr({ token: 't', pr: '53', previewUrl: PREVIEW, pages: { 'cloud/a.mdx': page('Cloud', 'a'), 'cloud/b.mdx': page('Cloud', 'b') } })
   assert.equal(requests.at(-1).method, 'PATCH')
   assert.equal(requests.at(-1).url, '/repos/hazelcast/documentation/issues/comments/7')
 })
 
 test('posts nothing when no page changed', async (t) => {
-  const requests = fakeGitHub(t, { 'GET /repos/hazelcast/documentation/pulls/53/files': [{ filename: 'README.md' }] })
+  const requests = fakeGitHub(t, {
+    'GET /repos/hazelcast/documentation/pulls/53/files': [{ filename: 'README.md' }],
+    'GET /repos/hazelcast/documentation/issues/53/comments': [],
+  })
   await commentOnPr({ token: 't', pr: '53', previewUrl: PREVIEW, pages: {} })
-  assert.deepEqual(requests.map((r) => r.method), ['GET'])
+  assert.deepEqual(requests.map((r) => r.method), ['GET', 'GET'])
+})
+
+test('deletes the earlier comment when no page changed', async (t) => {
+  const requests = fakeGitHub(t, {
+    'GET /repos/hazelcast/documentation/pulls/53/files': [{ filename: 'README.md' }],
+    'GET /repos/hazelcast/documentation/issues/53/comments': [{ id: 7, body: '### Direct preview links\n' }],
+  })
+  await commentOnPr({ token: 't', pr: '53', previewUrl: PREVIEW, pages: {} })
+  assert.deepEqual(requests.at(-1), { method: 'DELETE', url: '/repos/hazelcast/documentation/issues/comments/7', body: undefined })
 })
