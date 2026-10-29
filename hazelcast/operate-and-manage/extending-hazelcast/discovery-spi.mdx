@@ -39,11 +39,11 @@ The `com.hazelcast.spi.discovery.DiscoveryStrategyFactory` interface describes t
 
 The `com.hazelcast.spi.discovery.DiscoveryNode` abstract class describes a member in the Discovery SPI. It is used for multiple purposes, since it will be returned from strategies for discovered members. It is also passed to `DiscoveryStrategyFactory`s factory method to define the local member itself if created on a Hazelcast member; on Hazelcast clients, null is passed.
 
-### SimpleDiscoveryNode: Default `DiscoveryNode`
+### `SimpleDiscoveryNode`: Default `DiscoveryNode`
 
 `com.hazelcast.spi.discovery.SimpleDiscoveryNode` is a default implementation of the `DiscoveryNode`. It is meant for convenience use of the Discovery SPI and can be returned from vendor implementations if no special needs are required.
 
-### NodeFilter: Filter Members
+### `NodeFilter`: Filter Members
 
 You can configure `com.hazelcast.spi.discovery.NodeFilter` before startup and you can implement logic to do additional filtering of members. This might be necessary if query languages for discovery strategies are not expressive enough to describe members or to overcome inefficiencies of strategy implementations.
 
@@ -61,11 +61,11 @@ A `com.hazelcast.spi.discovery.integration.DiscoveryService` is part of the inte
 
 Use the `com.hazelcast.spi.discovery.integration.DiscoveryServiceProvider` to provide a `DiscoveryService` to the Hazelcast discovery subsystem. Configure the provider with the Hazelcast configuration API.
 
-### DiscoveryServiceSettings: Configure `DiscoveryService`
+### `DiscoveryServiceSettings`: Configure `DiscoveryService`
 
 A `com.hazelcast.spi.discovery.integration.DiscoveryServiceSettings` instance is passed to the `DiscoveryServiceProvider` at creation time to configure the `DiscoveryService`.
 
-### DiscoveryMode: Member or Client
+### `DiscoveryMode`: Member or Client
 
 The `com.hazelcast.spi.discovery.integration.DiscoveryMode` enum tells if a created `DiscoveryService` is running on a Hazelcast member or client to change the behavior accordingly.
 

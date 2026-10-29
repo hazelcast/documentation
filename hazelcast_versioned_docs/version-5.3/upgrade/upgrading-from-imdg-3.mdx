@@ -59,7 +59,7 @@ A write-through optimization has been performed. This helps to reduce the latenc
 
 Normally, when a request is made, the request is handed over the I/O system where an I/O thread takes care of sending it over the wire. This is great for throughput, but in case of single threaded setups, it adds to the latency and therefore it reduces the throughput because threads need to be notified.
 
-Hazelcast now detects the single threaded usage and tries to write through to the socket directly instead of handing it over to the I/O thread; this optimization is called "write-through".
+Hazelcast now detects the single threaded usage and tries to write through to the socket directly instead of handing it over to the I/O thread; this optimization is called `write-through`.
 
 This technique is being applied on the client, but also on the member. We have something similar when responses are received: normally a response is processed by the response thread, but in case of a single threaded usage, the response is processed on the I/O thread so we can remove a thread notification and therefore get higher throughput.
 
@@ -588,7 +588,7 @@ Hazelcast defaults to use OpenSSL when:
 
 - when you use [TLS/SSL](../configure-and-manage-clusters/securing-a-cluster/tls-ssl/tls-ssl.mdx) and Hazelcast detects some [OpenSSL](../configure-and-manage-clusters/securing-a-cluster/tls-ssl/integrating-openssl.mdx) capabilities
 - the Java version is less than 11
-- no explicit [SSLEngineFactory](../configure-and-manage-clusters/securing-a-cluster/tls-ssl/integrating-openssl.mdx#configuring-hazelcast-for-openssl) is configured.
+- no explicit [`SSLEngineFactory`](../configure-and-manage-clusters/securing-a-cluster/tls-ssl/integrating-openssl.mdx#configuring-hazelcast-for-openssl) is configured.
 
 ## Changes in Security Configurations
 
@@ -1099,7 +1099,7 @@ See the following table for a before/after sample.
 
 See the [Split-Brain Protection section](../configure-and-manage-clusters/configuring-for-fault-tolerance/handling-network-partitions/split-brain-protection.mdx) for more information on network partitioning.
 
-## Renaming getID to `getClassId` in `IdentifiedDataSerializable`
+## Renaming `getID` to `getClassId` in `IdentifiedDataSerializable`
 
 The `getId()` method of the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/nio/serialization/IdentifiedDataSerializable.html" text="IdentifiedDataSerializable" /> interface is a method with a common name, meaning a naming conflict would happen frequently. For example, database entities also have a `getId()` method. Therefore, it has been renamed as `getClassId()`.
 

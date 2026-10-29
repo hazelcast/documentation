@@ -17,7 +17,7 @@ Use the Hazelcast Pipeline API to build an application for modifying machine sho
 
 ACME operates thousands of machines, each reporting many datapoints each second. Measurements include things like bit temperature and RPM. Breakage is expensive, both in replacement parts and in downtime. Maintenance schedules can prevent some loss, but we want to go beyond that to monitor operations in real time. If excessive bit temperatures are caught in time, breakage can be averted by immediately reducing the cutting speed.
 
-In this lab, we will implement a pipeline which processes telemetry events from a Kafka topic. The pipeline will parse the events and, for each machine, compute a 10s tumbling average of the bit temperature. From there the pipeline will fork. One fork will record the current 10s average to another `IMap` which will be used for monitoring. In this lab, a python client uses a listener to watch the `IMap` containing the 10s averages and displays them in real time. The other fork of the pipeline looks up machine specific looks up machine specific limits in the "machine\_profiles" map and applies a "green"/"orange"/"red" label to each 10s average. Finally, the pipeline performs de-duplication so that only changes to the "green"/"orange"/"red" status remain and, finally, each status change is published to a topic there the machine emulator will pick it up and adjust the cutting speed accordingly.
+In this lab, we will implement a pipeline which processes telemetry events from a Kafka topic. The pipeline will parse the events and, for each machine, compute a 10s tumbling average of the bit temperature. From there the pipeline will fork. One fork will record the current 10s average to another `IMap` which will be used for monitoring. In this lab, a python client uses a listener to watch the `IMap` containing the 10s averages and displays them in real time. The other fork of the pipeline looks up machine specific looks up machine specific limits in the `machine_profiles` map and applies a "green"/"orange"/"red" label to each 10s average. Finally, the pipeline performs de-duplication so that only changes to the "green"/"orange"/"red" status remain and, finally, each status change is published to a topic there the machine emulator will pick it up and adjust the cutting speed accordingly.
 
 A schematic is shown below.
 
@@ -131,7 +131,7 @@ When using *Compact* or *Portable* serialization, if a POJO is accessed in serve
 
 :::
 
-In this lab, you will be working with *MachineProfile* objects and *MachineStatusSummary*, both of which are defined in `common/src/main/java`. However, those classes are not deployed with your job, so you will need to access them using `GenericRecord`. An example of `GenericRecord` usage is shown below.
+In this lab, you will be working with `MachineProfile` objects and `MachineStatusSummary`, both of which are defined in `common/src/main/java`. However, those classes are not deployed with your job, so you will need to access them using `GenericRecord`. An example of `GenericRecord` usage is shown below.
 
 ```java
 GenericRecord machineProfile;
@@ -166,7 +166,7 @@ short bitTemp = newEvent.f1();
 
 ## Step 4: Deploy Your First Job
 
-1. In your IDE, navigate to the **monitoring-pipeline** project. Open up the **hazelcast.platform.labs.machineshop.TemperatureMonitorPipeline** class and review the code there.
+1. In your IDE, navigate to the **monitoring-pipeline** project. Open up the **`hazelcast.platform.labs.machineshop.TemperatureMonitorPipeline`** class and review the code there.
 
    The main method, shown below, is boilerplate that helps with deploying the job to a cluster. You do not need to change this.
 
@@ -218,7 +218,7 @@ short bitTemp = newEvent.f1();
    :::
 
    Currently, the `createPipeline` method contains only a source (reading from the `machine_events` map) and a sink, which simply logs the events to the console. This can be useful during debugging. In the next step, you'll make a small change to the Pipeline and walk through a typical code/test cycle.
-2. If you wish, make a small change to the output format in the **writeTo** statement just so we can walk through building and deploying a pipeline. After you've made the change, you can deploy the pipeline using the commands below.
+2. If you wish, make a small change to the output format in the **`writeTo`** statement just so we can walk through building and deploying a pipeline. After you've made the change, you can deploy the pipeline using the commands below.
 
    ```shell
    # build and package the pipeline
@@ -279,12 +279,12 @@ stream-processing-fundamentals-event_generator-1  | XTE831 went RED, reducing sp
 
 If it did not work right away, there are a couple of things you can inspect to help you diagnose and correct the problem.
 
-- use the Kafka UI to Browse the "machine\_control" Kafka topic to verify that control messages are being sent by your Pipeline.
+- use the Kafka UI to Browse the `machine_control` Kafka topic to verify that control messages are being sent by your Pipeline.
 - Using Management Center or CLC to query the `machine_status` map. This map drives the UI and should be receiving updates regularly.
 
 :::note
 
-If at any point you get stuck, you can refer to the solution which you will find in the **hazelcast.platform.labs.machineshop.solutions** package.
+If at any point you get stuck, you can refer to the solution which you will find in the **`hazelcast.platform.labs.machineshop.solutions`** package.
 
 :::
 

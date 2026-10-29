@@ -152,7 +152,7 @@ As the target, pick the internet gateway you created in section [1.1.1](#1-1-1-c
 </TabItem>
 <TabItem value="aws-cli" label="AWS CLI">
 
-To add a route, find the **RouteTableId** of the VPC first:
+To add a route, find the **`RouteTableId`** of the VPC first:
 
 ```shell
 $ aws ec2 describe-route-tables \
@@ -202,7 +202,7 @@ Under `VPC > Subnets` section, choose `Create Subnet`. Pick the proper VPC and g
 </TabItem>
 <TabItem value="aws-cli" label="AWS CLI">
 
-Create a subnet in the VPC using the **VpcId** and note the **`SubnetId`** when created:
+Create a subnet in the VPC using the **`VpcId`** and note the **`SubnetId`** when created:
 
 ```shell
 $ aws ec2 create-subnet --vpc-id vpc-*********** \
@@ -339,7 +339,7 @@ Navigate to `VPC > Security Groups` and create a new one:
 </TabItem>
 <TabItem value="aws-cli" label="AWS CLI">
 
-Create a security group with the **VpcId** and note the returned **`GroupId`**:
+Create a security group with the **`VpcId`** and note the returned **`GroupId`**:
 
 ```shell
 $ aws ec2 create-security-group \
@@ -405,7 +405,7 @@ As the last step, select your [key pair](https://docs.aws.amazon.com/AWSEC2/late
 </TabItem>
 <TabItem value="aws-cli" label="AWS CLI">
 
-Using the id's and the names you set above, now run two EC2 instances. In addition to the steps so far, you need to have a [key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) and pass it via `--key-name` flag. The command below will start two Amazon Linux machines with type t2.micro and assign public IP addresses to each. Also a tag named "cluster-tag" with "guide-ec2-cluster" value will be assigned to the instances:
+Using the id's and the names you set above, now run two EC2 instances. In addition to the steps so far, you need to have a [key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) and pass it via `--key-name` flag. The command below will start two Amazon Linux machines with type `t2.micro` and assign public IP addresses to each. Also a tag named `cluster-tag` with `guide-ec2-cluster` value will be assigned to the instances:
 
 ```shell
 $ aws ec2 run-instances \

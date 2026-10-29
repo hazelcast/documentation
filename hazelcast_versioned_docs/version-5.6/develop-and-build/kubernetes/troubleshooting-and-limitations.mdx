@@ -29,7 +29,7 @@ service/littering-pig-hazelcast-enterprise-mancenter   LoadBalancer   10.104.97.
 
 However, you can still reach Hazelcast Management Center with the [http://MINIKUBE\_IP:30145](http://MINIKUBE_IP:30145) for the case above. `$(minikube ip)` is the command to retrieve minikube IP address.
 
-### "cluster-admin" not found
+### `cluster-admin` not found
 
 In some Kubernetes Clusters, RBAC might not be enabled by default so you might end up seeing RBAC related error while helm install.
 
@@ -167,7 +167,7 @@ rbac:
   userClusterRole: true
 ```
 
-Alternatively, apply the required `ClusterRole` and ClusterRoleBinding for the Hazelcast ServiceAccount and use this service account in the Helm chart:
+Alternatively, apply the required `ClusterRole` and `ClusterRoleBinding` for the Hazelcast `ServiceAccount` and use this service account in the Helm chart:
 
 ```shell
 serviceAccount:

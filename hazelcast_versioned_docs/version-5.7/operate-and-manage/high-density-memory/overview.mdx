@@ -37,14 +37,14 @@ The following are the configuration element descriptions:
 - **capacity:** The total native memory capacity to allocate. Its default value is **512 MB**.
 - **allocator type**: Type of the memory allocator. Available values are as follows:
 
-  - **STANDARD**: This option is used internally by Hazelcast's POOLED allocator type or for debugging/testing purposes.
+  - **`STANDARD`**: This option is used internally by Hazelcast's `POOLED` allocator type or for debugging/testing purposes.
 
     - With this option, the memory is allocated or deallocated using your operating system's default memory manager.
     - It uses GNU C Library's standard `malloc()` and `free()` methods which are subject to contention on multithreaded/multicore systems.
     - Memory operations may become slower when you perform a lot of small allocations and deallocations.
     - It may cause large memory fragmentations, unless you use a method in the background that emphasizes fragmentation avoidance, such as `jemalloc()`. Note that a large memory fragmentation can trigger the Linux Out of Memory Killer if there is no swap space enabled in your system. Even if the swap space is enabled, the killer can be again triggered if there is not enough swap space left.
-    - If you still want to use the operating system's default memory management, you can set the allocator type to STANDARD in your native memory configuration.
-  - **POOLED**: This is the default option, Hazelcast's own pooling memory allocator.
+    - If you still want to use the operating system's default memory management, you can set the allocator type to `STANDARD` in your native memory configuration.
+  - `POOLED`: This is the default option, Hazelcast's own pooling memory allocator.
 
     - With this option, memory blocks are managed using internal memory pools.
     - Memory is allocated in blocks called pages, each of which is 4 MB in size by default. These pages are divided into chunks or merged to create larger chunks when required. Sizing of these chunks follows the [buddy memory allocation](https://en.wikipedia.org/wiki/Buddy_memory_allocation) algorithm, i.e., power-of-two sizing.
@@ -52,9 +52,9 @@ The following are the configuration element descriptions:
     - When memory is needed, the allocator first tries to find a suitable free block inside the internal pools. If it cannot be found, then it interacts with the operating system to request a new page.
     - Note that the POOLED allocator may cause internal fragmentation because it allocates memory in power-of-two block sizes. Requests that do not match these sizes are allocated using the next larger power-of-two block, leaving part of the allocated memory unused.
     - See [Pooled Native Memory](./pooled-native-memory-allocator.mdx) for details on pooling behavior, manager types, and fragmentation.
-- **minimum block size:** Minimum size of the blocks in bytes to split and fragment a page block to assign to an allocation request. It is used only by the **POOLED** memory allocator. Its default value is **16 bytes**.
-- **page size:** Size of the page in bytes to allocate memory as a block. It is used only by the **POOLED** memory allocator. Its default value is `1 << 22` = **4194304 Bytes**, about **4 MB**.
-- **metadata space percentage:** Defines the percentage of the configured native memory that is estimated to be used for internal High-Density Memory data structures. It is used only by the **POOLED** memory allocator. Its default value is **12.5**. Hazelcast will allow the actual metadata usage to exceed this defined threshold but will send warning logs. See [Metadata](#metadata).
+- **minimum block size:** Minimum size of the blocks in bytes to split and fragment a page block to assign to an allocation request. It is used only by the `POOLED` memory allocator. Its default value is **16 bytes**.
+- **page size:** Size of the page in bytes to allocate memory as a block. It is used only by the `POOLED` memory allocator. Its default value is `1 << 22` = **4194304 Bytes**, about **4 MB**.
+- **metadata space percentage:** Defines the percentage of the configured native memory that is estimated to be used for internal High-Density Memory data structures. It is used only by the `POOLED` memory allocator. Its default value is **12.5**. Hazelcast will allow the actual metadata usage to exceed this defined threshold but will send warning logs. See [Metadata](#metadata).
 - **persistent-memory:** See [Using the High-Density Memory Store with Persistent Memory Devices](#using-persistent-memory).
 
 The following is the programmatic configuration example.

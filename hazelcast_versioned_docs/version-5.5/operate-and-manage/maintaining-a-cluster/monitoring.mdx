@@ -432,7 +432,7 @@ The `Job` class has a <Variable href="https://docs.hazelcast.org/docs/{os-versio
 
 This functionality has been developed primarily to give access to metrics of finished jobs, but can in fact be used for jobs in any state.
 
-For details on how to use and filter the metric values consult the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/metrics/JobMetrics.html" text="JobMetrics API docs" />. A simple example for computing the number of data items emitted by a certain vertex (let's call it vertexA), excluding items emitted to the snapshot, would look like this:
+For details on how to use and filter the metric values consult the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/metrics/JobMetrics.html" text="JobMetrics API docs" />. A simple example for computing the number of data items emitted by a certain vertex (let's call it `vertexA`), excluding items emitted to the snapshot, would look like this:
 
 ```java
 Predicate<Measurement> vertexOfInterest =
@@ -1383,7 +1383,7 @@ Above configuration forwards the logs to the `com.hazelcast.diagnostics` logger 
 </Logger>
 ```
 
-By configuring [TimeBasedTriggeringPolicy](https://logging.apache.org/log4j/2.x/manual/configuration.html) and [SizeBasedTriggeringPolicy](https://logging.apache.org/log4j/2.x/manual/configuration.html) for the appender, you can control the size and rolling behavior as you want.
+By configuring [`TimeBasedTriggeringPolicy`](https://logging.apache.org/log4j/2.x/manual/configuration.html) and [`SizeBasedTriggeringPolicy`](https://logging.apache.org/log4j/2.x/manual/configuration.html) for the appender, you can control the size and rolling behavior as you want.
 
 :::note
 
@@ -1403,7 +1403,7 @@ It shows the detailed Hazelcast build information including the Hazelcast releas
 
 It shows all the properties and their values in your system used by and configured for your Hazelcast installation. These are the properties starting with `java` (excluding `java.awt`), `hazelcast`, `sun` and `os`. It also includes the arguments that are used to startup the JVM.
 
-#### ConfigProperties
+#### `ConfigProperties`
 
 It shows the Hazelcast properties and their values explicitly set by you either on the command line (with `-D`) or by using declarative/programmatic configuration.
 
@@ -1421,7 +1421,7 @@ See the [List of Hazelcast Metrics appendix](../../reference/list-of-metrics.mdx
 
 :::
 
-#### SlowOperations
+#### `SlowOperations`
 
 It shows the slow operations and invocations, See the [`SlowOperationDetector` section](../../develop-and-build/best-practices/overview.mdx) for more information.
 
@@ -1434,7 +1434,7 @@ Using the following properties, you can configure the frequency of scanning all 
 - `hazelcast.diagnostics.invocation.sample.period.seconds`: Set a value in seconds. Its default value is `60` seconds.
 - `hazelcast.diagnostics.invocation.slow.threshold.seconds`: Set a value in seconds. Its default value is `5` seconds.
 
-#### InvocationProfiler
+#### `InvocationProfiler`
 
 It shows invocation latencies for each operation. See an example output below:
 
@@ -1469,7 +1469,7 @@ You can control the frequency of scanning all invocations using the following sy
 
 You can increase this period if you would like to decrease the logging noise.
 
-#### OperationProfiler
+#### `OperationProfiler`
 
 It measures the time an operation runs on an operation thread; if the operation is a blocking one or being offloaded, only the time on the operation thread is measured. See an example output below:
 
@@ -1571,7 +1571,7 @@ You can control the `StoreLatency` plugin using the following properties:
 
 #### `OperationHeartbeats`
 
-It shows the deviation between member/member operation heartbeats. Each member, regardless if there is an operation running on behalf of that member, sends an operation heartbeat to every other member. It contains a listing of all `callId`s of the running operations from a given member. This plugin also works fine between members/lite-members.
+It shows the deviation between member/member operation heartbeats. Each member, regardless if there is an operation running on behalf of that member, sends an operation heartbeat to every other member. It contains a listing of all `callId`s of the running operations from a given member. This plugin also works fine between `members/lite-members`.
 
 Because this operation heartbeat is sent periodically; by default 1/4 of the operation call timeout of 60 seconds, we would expect an operation heartbeat to be received every 15 seconds. Operation heartbeats are high priority packets (so they overtake regular packets) and are processed by an isolated thread in the invocation monitor. If there is any deviation in the frequency of receiving these packets, it may be due to the problems such as network latencies.
 
@@ -1652,7 +1652,7 @@ The following shows an example of the output when the property `hazelcast.diagno
 
 As can be seen above, the `MapSizeOperations` run on the operation threads most of the time.
 
-#### WanDiagnostics
+#### `WanDiagnostics`
 
 The WAN diagnostics plugin provides information about the WAN replication.
 
@@ -1993,7 +1993,7 @@ You can find the JMX API definition below with descriptions and the API methods 
   - Partition count ( `partitionCount` )
   - Active partition count ( `activePartitionCount` )
   - Cluster Safe State ( `isClusterSafe` )
-  - LocalMember Safe State ( `isLocalMemberSafe` )
+  - `LocalMember` Safe State ( `isLocalMemberSafe` )
 - **Connection Manager ( `HazelcastInstance.ConnectionManager` )**
 
   - Client connection count ( `clientConnectionCount` )

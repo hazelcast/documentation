@@ -75,7 +75,7 @@ HazelcastInstance member2 = factory.newHazelcastInstance(config);
 - `smallInstanceConfig()` creates a lightweight Config suitable for small test clusters. It reduces partition count and thread counts, while keeping Jet and metrics enabled.
 - `smallInstanceConfigWithoutJetAndMetrics()` creates a lightweight Config with reduced partition count and threads, but disables Jet and metrics entirely. This is useful if your tests don't require Jet pipelines or metrics collection and you want to minimise overhead. Key adjustments:
 - Partition count set to 11
-- Reduced thread pool sizes (partition-operation=2, generic-operation=2, event=1)
+- Reduced thread pool sizes (`partition-operation=2`, `generic-operation=2`, `event=1`)
 - Logging set to log4j2
 - Jet disabled
 - Metrics disabled
@@ -120,7 +120,7 @@ public class MyClusterClientTest {
 }
 ```
 
-**IMPORTANT** make sure to shut down the instances:
+`IMPORTANT` make sure to shut down the instances:
 
 ```java
 if (client!=null) client.shutdown();
