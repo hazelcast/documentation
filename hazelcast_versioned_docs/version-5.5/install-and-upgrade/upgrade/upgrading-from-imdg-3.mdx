@@ -819,7 +819,7 @@ public PermissionCollection getPermissions(Subject subject, Class<? extends Perm
 </tbody>
 </table>
 
-### Changes in ClusterLoginModule
+### Changes in `ClusterLoginModule`
 
 `ClusterLoginModule` in Hazelcast IMDG 3.12.x contained four abstract methods to alter the behavior of `LoginModule`:
 
@@ -1104,7 +1104,7 @@ See the following table for a before/after sample.
 
 See the [Split-Brain Protection section](../../operate-and-manage/fault-tolerance/handling-network-partitions/split-brain-protection.mdx) for more information on network partitioning.
 
-## Renaming getID to getClassId in IdentifiedDataSerializable
+## Renaming getID to `getClassId` in `IdentifiedDataSerializable`
 
 The `getId()` method of the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/nio/serialization/IdentifiedDataSerializable.html" text="IdentifiedDataSerializable" /> interface is a method with a common name, meaning a naming conflict would happen frequently. For example, database entities also have a `getId()` method. Therefore, it has been renamed as `getClassId()`.
 
@@ -1294,9 +1294,9 @@ The data structures and interfaces enhanced in this sense are listed below:
 - `Ringbuffer`
 - `ScheduledExecutor`
 
-## Removal of ICompletableFuture
+## Removal of `ICompletableFuture`
 
-In Hazelcast IMDG 3.12.x series, `com.hazelcast.core.ICompletableFuture` was introduced to enable reactive programming style. `ICompletableFuture` was intended as a temporary, JDK 6 compatible replacement for `java.util.concurrent.CompletableFuture` that was introduced in Java 8. Since Hazelcast 4.0 requires Java 8, the user-facing asynchronous Hazelcast API methods now have their return type changed from `ICompletableFuture` to Java 8's [java.util.concurrent.CompletionStage](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html).
+In Hazelcast IMDG 3.12.x series, `com.hazelcast.core.ICompletableFuture` was introduced to enable reactive programming style. `ICompletableFuture` was intended as a temporary, JDK 6 compatible replacement for `java.util.concurrent.CompletableFuture` that was introduced in Java 8. Since Hazelcast 4.0 requires Java 8, the user-facing asynchronous Hazelcast API methods now have their return type changed from `ICompletableFuture` to Java 8's [`java.util.concurrent.CompletionStage`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html).
 
 Dependent computation stages registered using default async methods which do not accept an explicit `Executor` argument (such as `thenAcceptAsync`, `whenCompleteAsync` etc) are executed by the `java.util.concurrent.ForkJoinPool#commonPool()` (unless it does not support a parallelism level of at least two, in which case, a new `Thread` is created to run each task).
 
@@ -1793,16 +1793,16 @@ public class Main {
 
 All legacy merge policies have been removed. Replacements of legacies are under the `com.hazelcast.spi.merge` package.
 
-These are the replacements for IMap and ICache:
+These are the replacements for `IMap` and `ICache`:
 
-*Removed IMap Merge Policies and Their Replacements*
+*Removed `IMap` Merge Policies and Their Replacements*
 
 - `com.hazelcast.map.merge.HigherHitsMapMergePolicy` → `com.hazelcast.spi.merge.HigherHitsMergePolicy`
 - `com.hazelcast.map.merge.LatestUpdateMapMergePolicy` → `com.hazelcast.spi.merge.LatestUpdateMergePolicy`
 - `com.hazelcast.map.merge.PassThroughMergePolicy` → `com.hazelcast.spi.merge.PassThroughMergePolicy`
 - `com.hazelcast.map.merge.PutIfAbsentMapMergePolicy` → `com.hazelcast.spi.merge.PutIfAbsentMergePolicy`
 
-*Removed ICache Merge Policies and Their Replacements*
+*Removed `ICache` Merge Policies and Their Replacements*
 
 - `com.hazelcast.cache.merge.HigherHitsCacheMergePolicy` → `com.hazelcast.spi.merge.HigherHitsMergePolicy`
 - `com.hazelcast.cache.merge.LatestAccessCacheMergePolicy` → `com.hazelcast.spi.merge.LatestAccessMergePolicy`
@@ -1896,13 +1896,13 @@ The following deprecated methods have been removed:
 
 In declarative configuration `backup-count` property should be used instead.
 
-See [here](../../develop-and-build/distributed-data-structures/ap-data-structures/multimap.mdx#configuring-multimap) for more information on configuring MultiMap.
+See [here](../../develop-and-build/distributed-data-structures/ap-data-structures/multimap.mdx#configuring-multimap) for more information on configuring `MultiMap`.
 
 ## Removal of Deprecations in `PartitioningStrategyConfig`
 
 Misspelled `setPartitionStrategy(PartitioningStrategy)` has been removed, `setPartitioningStrategy(PartitioningStrategy)` should be used instead.
 
-See [here](../../develop-and-build/best-practices/data-affinity.mdx#partitioningstrategy) for more information on configuring MultiMap.
+See [here](../../develop-and-build/best-practices/data-affinity.mdx#partitioningstrategy) for more information on configuring `MultiMap`.
 
 ## Removal of Deprecations in `ServiceConfig`
 
@@ -1945,9 +1945,9 @@ The following `MapListener`-based methods should be used as replacements:
 
 `EntryListener`-based listeners are still supported by the newer `MapListener`-based API and declarative configuration.
 
-## Changes in MapLoader
+## Changes in `MapLoader`
 
-When trying to load map entries from a store with your MapLoader implementation (`loadAll()`), Hazelcast fails to do so if any of the keys or values are null for IMDG 4.x and Platform 5.x releases.
+When trying to load map entries from a store with your `MapLoader` implementation (`loadAll()`), Hazelcast fails to do so if any of the keys or values are null for IMDG 4.x and Platform 5.x releases.
 
 ## Changes in `IMap` Eviction Configuration
 

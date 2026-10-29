@@ -140,8 +140,8 @@ There are several properties to configure, all of which are optional.
   If you don't specify `service-name` and fall back to a `namespace` only discovery, all pods in the namespace must be Hazelcast member pods; other pods might block the member discovery process of the Hazelcast member pods.
 
   :::
-- `service-label-name`, `service-label-value`: service label and value used to tag services, which together form the Hazelcast cluster. These properties can support multiple comma-separated values. For example: "label-1,label-2". You must use the same number of elements in `service-label-name` as `service-label-value`.
-- `pod-label-name`, `pod-label-value`: pod label and value used to tag Pods, which together form the Hazelcast cluster. These properties can support multiple comma-separated values. For example: "label-1,label-2". You must use the same number of elements in `pod-label-name` as `pod-label-value`.
+- `service-label-name`, `service-label-value`: service label and value used to tag services, which together form the Hazelcast cluster. These properties can support multiple comma-separated values. For example: `label-1,label-2`. You must use the same number of elements in `service-label-name` as `service-label-value`.
+- `pod-label-name`, `pod-label-value`: pod label and value used to tag Pods, which together form the Hazelcast cluster. These properties can support multiple comma-separated values. For example: `label-1,label-2`. You must use the same number of elements in `pod-label-name` as `pod-label-value`.
 - `resolve-not-ready-addresses`: if set to `true`, it checks also the addresses of Pods which are not ready; `true` by default
 - `expose-externally`: if set to `true`, it fails fast if an external address cannot be found for each member; if set to `false`, it does not check for external member addresses; by default it tries to resolve external addresses but fails silently
 
@@ -327,10 +327,10 @@ All these properties are already set in <Variable href="/operator/{page-latest-s
 
 :::
 
-- `terminationGracePeriodSeconds`: in your StatefulSet (or Deployment) configuration; the value should be high enough to cover the data migration process
+- `terminationGracePeriodSeconds`: in your `StatefulSet` (or `Deployment`) configuration; the value should be high enough to cover the data migration process
 - `-Dhazelcast.shutdownhook.policy=GRACEFUL`: in the JVM parameters
 - `-Dhazelcast.graceful.shutdown.max.wait`: in the JVM parameters; the value should be high enough to cover the data migration process
-- If you use Deployment (not StatefulSet), you need to set your strategy to [RollingUpdate](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#updating-a-deployment) and ensure Pods are updated one by one.
+- If you use `Deployment` (not `StatefulSet`), you need to set your strategy to [RollingUpdate](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#updating-a-deployment) and ensure Pods are updated one by one.
 - If you upgrade by the minor version, e.g., `3.11.4 ⇒ 3.12` (<Variable name="enterprise-product-name" /> feature), you need to set the `-Dhazelcast.cluster.version.auto.upgrade.enabled=true` JVM property to make sure the cluster version updates automatically.
 
 ## Discovering Members from Hazelcast Clients
@@ -401,7 +401,7 @@ For the complete example, please check [Hazelcast Guides: Hazelcast for Kubernet
 
 ### Outside Kubernetes Cluster
 
-If your Hazelcast cluster is deployed on Kubernetes, but your Hazelcast client is in a completely different network, then it can connect only through the public Internet. This requires exposing each Hazelcast member pod with a dedicated NodePort or LoadBalancer Kubernetes service. For details and a complete example, please check [Hazelcast Guides: Connect External Hazelcast Client to Kubernetes](https://guides.hazelcast.org/kubernetes-external-client/).
+If your Hazelcast cluster is deployed on Kubernetes, but your Hazelcast client is in a completely different network, then it can connect only through the public Internet. This requires exposing each Hazelcast member pod with a dedicated NodePort or `LoadBalancer` Kubernetes service. For details and a complete example, please check [Hazelcast Guides: Connect External Hazelcast Client to Kubernetes](https://guides.hazelcast.org/kubernetes-external-client/).
 
 :::note
 

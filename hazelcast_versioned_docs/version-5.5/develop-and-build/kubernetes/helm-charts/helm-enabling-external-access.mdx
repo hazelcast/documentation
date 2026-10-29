@@ -46,7 +46,7 @@ initContainers:
       - until [ -n "$$(kubectl get svc -n $${POD_NAMESPACE} -l <LABEL_NAME>=<LABEL_VALUE> -ojsonpath="{.items[?(@.spec.selector.statefulset\.kubernetes\.io/pod-name==\"$${POD_NAME}\")].status.loadBalancer.ingress[0].ip}")" ]; do sleep 8; done
 ```
 
-This configuration will create (by default) 3 LoadBalancer services one for each Hazelcast member since default value of member count for Hazelcast cluster is 3. For a full working example you can follow the [Kubernetes External Access Tutorial](/tutorials/kubernetes-external-client#smart-client).
+This configuration will create (by default) 3 `LoadBalancer` services one for each Hazelcast member since default value of member count for Hazelcast cluster is 3. For a full working example you can follow the [Kubernetes External Access Tutorial](/tutorials/kubernetes-external-client#smart-client).
 
 :::note
 

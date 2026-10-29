@@ -50,11 +50,11 @@ Secure connection establishment can become a bottleneck if many clients connect 
 Best practice:
 
 - Use Hazelcast's [role-based access control](../../operate-and-manage/securing-a-cluster/authentication/authentication-overview.mdx) to assign least-privilege permissions, for example, read-only users for analytics, full access for administration.
-- Be aware that every authorized operation adds a small CPU cost. When many operations occur, the total overhead can become measurable. Combine multiple operations into batched calls (putAll(), getAll()) when appropriate — one authorization per bulk request instead of per item.
+- Be aware that every authorized operation adds a small CPU cost. When many operations occur, the total overhead can become measurable. Combine multiple operations into batched calls (`putAll()`, `getAll()`) when appropriate — one authorization per bulk request instead of per item.
 
 Properly configured RBAC limits exposure while maintaining performance.
 
-**Coding for secure outcomes**. Once security is enabled, operations may fail with new types of exceptions (e.g. AccessControlException) that did not occur previously.
+**Coding for secure outcomes**. Once security is enabled, operations may fail with new types of exceptions (e.g. `AccessControlException`) that did not occur previously.
 
 Best practice:
 

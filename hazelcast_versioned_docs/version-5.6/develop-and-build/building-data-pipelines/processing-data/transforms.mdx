@@ -8,11 +8,11 @@ Hazelcast offers several transforms which can be used to process data. Explore t
 
 ## Stateless transforms
 
-Stateless transforms do not have any notion of *state*, meaning that all items must be processed independently of any previous items.
+Stateless transforms do not have any notion of _state_, meaning that all items must be processed independently of any previous items.
 
 These methods transform the input into the correct shape that is required by further, more complex ones. The key feature of these transforms is that they do not have side-effects and they treat each item in isolation.
 
-### map
+### `map`
 
 Mapping is the simplest kind of stateless transformation. It simply applies a function to the input item, and passes the output to the next stage.
 
@@ -20,7 +20,7 @@ Mapping is the simplest kind of stateless transformation. It simply applies a fu
 StreamStage<String> names = stage.map(name -> name.toLowerCase());
 ```
 
-### filter
+### `filter`
 
 Similar to `map`, the `filter` is a stateless operator that applies a predicate to the input to decide whether to pass it to the output.
 
@@ -28,7 +28,7 @@ Similar to `map`, the `filter` is a stateless operator that applies a predicate 
 BatchStage<String> names = stage.filter(name -> !name.isEmpty());
 ```
 
-### flatMap
+### `flatMap`
 
 `flatMap` is equivalent to `map`, with the difference that instead of one output item you can have arbitrary number of output items per input item. The output type is a `Traverser`, which is a Hazelcast type similar to an `Iterator`. For example, the code below will split a sentence into individual items consisting of words:
 
@@ -38,7 +38,7 @@ StreamStage<String> words = stage.flatMap(
 );
 ```
 
-### merge
+### `merge`
 
 This transform merges the contents of two streaming sources into one. The item type in the right-hand stage must be the same or a subtype of the one in the left-hand stage. The items from both sides will be interleaved in arbitrary order.
 
@@ -52,9 +52,9 @@ StreamStage<Trade> tradesTokyo = pipeline
 StreamStage<Trade> tradesNyAndTokyo = tradesNewYork.merge(tradesTokyo);
 ```
 
-### mapUsingIMap
+### `mapUsingIMap`
 
-This transform looks up each incoming item from the corresponding [IMap](../../distributed-data-structures/ap-data-structures/map/map.mdx) and the result of the lookup is combined with the input item.
+This transform looks up each incoming item from the corresponding [`IMap`](../../distributed-data-structures/ap-data-structures/map/map.mdx) and the result of the lookup is combined with the input item.
 
 ```java
 StreamStage<Order> orders = pipeline
@@ -77,9 +77,9 @@ public void getOrderDetails(Order order) {
 
 See [Joining Static Data to a Stream](../stream-processing/map-join.mdx) for a tutorial using this operator.
 
-### mapUsingReplicatedMap
+### `mapUsingReplicatedMap`
 
-This transform is equivalent to [mapUsingIMap](#mapusingimap) with the only difference that a [ReplicatedMap](../../distributed-data-structures/ap-data-structures/replicated-map.mdx) is used instead of an `IMap`.
+This transform is equivalent to [`mapUsingIMap`](#mapusingimap) with the only difference that a [`ReplicatedMap`](../../distributed-data-structures/ap-data-structures/replicated-map.mdx) is used instead of an `IMap`.
 
 ```java
 StreamStage<Order> orders = pipeline
@@ -96,9 +96,9 @@ With a `ReplicatedMap`, as opposed to a standard `IMap`, every lookup is local. 
 
 :::
 
-### mapUsingService
+### `mapUsingService`
 
-This transform takes an input and performs a mapping using a *service* object. Examples are an external HTTP-based service or some library which is loaded and initialized during runtime (such as a machine learning model).
+This transform takes an input and performs a mapping using a _service_ object. Examples are an external HTTP-based service or some library which is loaded and initialized during runtime (such as a machine learning model).
 
 The service itself is defined through a `ServiceFactory` object. The main difference between this operator and a simple `map` is that the service is initialized once per job. This is what makes it useful for calling out to heavy-weight objects which are expensive to initialize (such as HTTP connections).
 
@@ -136,9 +136,9 @@ StreamStage<OrderDetails> details = orders.mapUsingService(productService,
 );
 ```
 
-### mapUsingServiceAsync
+### `mapUsingServiceAsync`
 
-This transform is identical to [mapUsingService](#mapusingservice) with one important distinction: the service in this case supports asynchronous calls, which are compatible with cooperative concurrency and don't need extra threads. It also means that we can have multiple requests in flight at the same time to maximize throughput. Instead of the mapped value, this transform expects the user to supply a `CompletableFuture<T>` as the return value, which will be completed at some later time.
+This transform is identical to [`mapUsingService`](#mapusingservice) with one important distinction: the service in this case supports asynchronous calls, which are compatible with cooperative concurrency and don't need extra threads. It also means that we can have multiple requests in flight at the same time to maximize throughput. Instead of the mapped value, this transform expects the user to supply a `CompletableFuture<T>` as the return value, which will be completed at some later time.
 
 For example, if we extend the previous `ProductService` as follows:
 
@@ -172,7 +172,7 @@ StreamStage<OrderDetails> details = orders.mapUsingServiceAsync(productService,
 
 The main advantage of using async communication is that we can have many invocations to the service in-flight at the same time which will result in better throughput.
 
-### mapUsingServiceAsyncBatched
+### `mapUsingServiceAsyncBatched`
 
 This variant is very similar to the previous one, but instead of sending one request at a time, we can send in so-called "smart batches" (for a more in-depth look at the internals of the Jet engine, see [Cooperative Multithreading](../../architecture/execution-engine.mdx)). Hazelcast will automatically group items as they come, and allows to send requests in batches. This can be very efficient for example for a remote service, where instead of one roundtrip per request, you can send them in groups to maximize throughput. If we would extend our `ProductService` as follows:
 
@@ -207,7 +207,7 @@ StreamStage<OrderDetails> details = orders.mapUsingServiceAsyncBatched(productSe
 
 As you can see, there is some more code to write to combine the results back, but this should give better throughput given the service is able to efficient batching.
 
-### mapUsingPython
+### `mapUsingPython`
 
 Hazelcast can call Python code to perform a mapping step in the pipeline. The prerequisite is that the Hazelcast servers are Linux or Mac with Python installed and that the `hazelcast-jet-python` module is deployed on the classpath, through being present in the `lib` directory. Hazelcast supports Python versions 3.9-3.13.
 
@@ -248,9 +248,9 @@ Finally, Hazelcast also recognizes bash scripts `init.sh` and `cleanup.sh`. It w
 
 One issue with making `requirements.txt` work is that in many production back-end environments the public internet is not available. To work around this you can pre-install all the requirements to the global (or user-local) Python environment on all Hazelcast servers. You can also take full control by writing your own logic in `init.sh` that installs the dependencies to the local virtual environment. For example, you can make use of `pip --find_links`.
 
-### hashJoin
+### `hashJoin`
 
-`hashJoin` is a type of join where you have two or more inputs where all but one of the inputs must be small enough to fit in memory. You can consider a *primary* input which is accompanied by one or more *side inputs* which are small enough to fit in memory. The side inputs are joined to the primary input, which can be either a batch or streaming stage. The side inputs must be batch stages.
+`hashJoin` is a type of join where you have two or more inputs where all but one of the inputs must be small enough to fit in memory. You can consider a _primary_ input which is accompanied by one or more _side inputs_ which are small enough to fit in memory. The side inputs are joined to the primary input, which can be either a batch or streaming stage. The side inputs must be batch stages.
 
 ```java
 StreamStage<Order> orders = pipeline
@@ -281,11 +281,11 @@ Hazelcast also supports hash-joining with more streams at once through `hashJoin
 
 Stateful transforms accumulate data, and the output depends on previously encountered items.
 
-For example, using stateful transforms, you could count how many items have been encountered so far in a stream and emit the current count with every new item. To do so, Hazelcast maintains a current *state* of the number of total items encountered so far.
+For example, using stateful transforms, you could count how many items have been encountered so far in a stream and emit the current count with every new item. To do so, Hazelcast maintains a current _state_ of the number of total items encountered so far.
 
 When it comes to maintaining state, there is also an important distinction between streaming and batch jobs. Windowing only applies to streaming jobs where an element of time is present, whereas applying a one-time aggregation over the whole data set is only possible in batch pipelines.
 
-### aggregate
+### `aggregate`
 
 Data aggregation is the cornerstone of distributed stream processing. It computes an aggregate function (simple examples: sum or average) over the data items.
 
@@ -379,9 +379,9 @@ The Jet API provides several built in aggregation methods, such as:
 </tbody>
 </table>
 
-For a complete list, please refer to the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/aggregate/AggregateOperations.html" text="AggregateOperations" /> class. You can also implement your own aggregate operations using the builder in <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/aggregate/AggregateOperation.html" text="AggregateOperation" /> .
+For a complete list, please refer to the <Variable code href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/aggregate/AggregateOperations.html" text="AggregateOperations" /> class. You can also implement your own aggregate operations using the builder in <Variable code href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/aggregate/AggregateOperation.html" text="AggregateOperation" /> .
 
-### groupingKey
+### `groupingKey`
 
 Typically you don't want to aggregate all the items together, but group them by some key and then aggregate over each group separately. This is achieved by using the `groupingKey` transform and then applying an aggregation on it afterwards.
 
@@ -402,9 +402,9 @@ p.readFrom(TestSources.items(0, 1, 2, 3, 4, 5))
 
 Grouping is critical for aggregating massive data sets in distributed computing - otherwise you would not be able to make use of parallelization as effectively.
 
-### rollingAggregate
+### `rollingAggregate`
 
-Rolling aggregation is similar to [aggregate](#aggregate) but instead of waiting to output until all items are received, it produces an *output item for each input item*. Because of this, it's possible to use it in a streaming pipeline as well, as the aggregation is applied in a continuous way. The same pipeline from [aggregate](#aggregate), can be rewritten to use a `rollingAggregate` transform instead:
+Rolling aggregation is similar to [`aggregate`](#aggregate) but instead of waiting to output until all items are received, it produces an _output item for each input item_. Because of this, it's possible to use it in a streaming pipeline as well, as the aggregation is applied in a continuous way. The same pipeline from [`aggregate`](#aggregate), can be rewritten to use a `rollingAggregate` transform instead:
 
 ```java
 Pipeline p = Pipeline.create();
@@ -425,19 +425,19 @@ Instead of a single line of output, we would get the following output instead:
 12:06:29.406 [ INFO] [c.h.j.i.c.W.loggerSink#0] evens=3
 ```
 
-### window
+### `window`
 
 The process of data aggregation takes a finite batch of data and produces a result. We can make it work with an infinite stream if we break up the stream into finite chunks. This is called windowing and it's almost always defined in terms of a range of event timestamps (a time window).
 
-Window transforms requires a stream which is annotated with *timestamps*, that is each input item has a timestamp associated with it. Timestamps are given in milliseconds and are generally represented in *epoch* format, as a simple `long`.
+Window transforms requires a stream which is annotated with _timestamps_, that is each input item has a timestamp associated with it. Timestamps are given in milliseconds and are generally represented in _epoch_ format, as a simple `long`.
 
 For a more in-depth look at the event time model, please refer to [Event Time and Processing Time](../stream-processing/building-pipelines.mdx#event-time-and-processing-time).
 
 The general way to assign windows to a stream works as follows:
 
-### tumblingWindow
+### `tumblingWindow`
 
-Tumbling windows are the most basic window type - a window of constant size that "tumbles" along the time axis. If you use a window size of 1 second, Hazelcast will group together all events that occur within the same second and you'll get window results for intervals \[0-1) seconds, then \[1-2) seconds, and so on.
+Tumbling windows are the most basic window type - a window of constant size that "tumbles" along the time axis. If you use a window size of 1 second, Hazelcast will group together all events that occur within the same second and you'll get window results for intervals `[0-1) seconds`, then `[1-2) seconds`, and so on.
 
 A simple example is given below:
 
@@ -483,9 +483,9 @@ In this mode, the output would be keyed:
 15:09:27.013 [ INFO] [c.h.j.i.c.W.loggerSink#0] KeyedWindowResult{start=15:09:26.000, end=15:09:27.000, key='odd', value='50', isEarly=false}
 ```
 
-### slidingWindow
+### `slidingWindow`
 
-Sliding window is like a tumbling window that instead of hopping from one time range to another, slides along instead. It slides in discrete steps that are a fraction of the window's length. If you use a window of size 1 second sliding by 100 milliseconds, Hazelcast will output window results for intervals \[0.00-1.00) seconds, then \[0.10-1.1) seconds, and so on.
+Sliding window is like a tumbling window that instead of hopping from one time range to another, slides along instead. It slides in discrete steps that are a fraction of the window's length. If you use a window of size 1 second sliding by 100 milliseconds, Hazelcast will output window results for intervals `[0.00-1.00) seconds`, then `[0.10-1.1) seconds`, and so on.
 
 We can modify the tumbling window example as below:
 
@@ -508,9 +508,9 @@ When you run this pipeline, you will see output like the following, where you ca
 15:07:38.505 [ INFO] [c.h.j.i.c.W.loggerSink#0] WindowResult{start=15:07:37.500, end=15:07:38.500, value='100', isEarly=false}
 ```
 
-### sessionWindow
+### `sessionWindow`
 
-Session window captures periods of activity followed by periods of inactivity. You define the "session timeout", i.e., the length of the inactive period that causes the window to close. The typical example of a session window is a user's activity on a website (hence the name). There are bursts of activity (while the user is browsing website ) followed by rather long periods of inactivity.
+Session window captures periods of activity followed by periods of inactivity. You define the "session timeout", i.e., the length of the inactive period that causes the window to close. The typical example of a session window is a user's activity on a website, hence the name. There are bursts of activity (while the user is browsing website) followed by rather long periods of inactivity.
 
 As with other aggregate transforms, if you define a grouping key, there will be a separate, independent session window for each key.
 
@@ -545,7 +545,7 @@ The early results period works for all windows types. For example in a tumbling 
 
 > Generally, Hazelcast doesn't guarantee that a stage will receive the items in the same order its upstream stage emitted them. For example, it executes a `map` transform with many parallel tasks. One task may get the early result and another one the final result. They may emit the transformed result to the sink in any order. This can lead to a situation where your sink receives an early result after it has already received the final result.
 
-### distinct
+### `distinct`
 
 Suppresses duplicate items from a stream. This operation applies primarily to batch streams, but also works on a windowed unbounded stream.
 
@@ -575,7 +575,7 @@ This is a possible output (Hazelcast can choose any of the names starting in "j"
 14:05:29.383 [ INFO] [c.h.j.i.c.W.loggerSink#0] maria
 ```
 
-### sort
+### `sort`
 
 Sorting only works on a batch stage. It sorts the input according to its natural ordering (the type must be `Comparable`) or according to the `Comparator` you provide. Example:
 
@@ -595,9 +595,9 @@ This is how the output should look:
 10:43:54.524 [ INFO] [c.h.j.i.c.W.loggerSink#0] dan
 ```
 
-Hazelcast sorts the data in two steps: first it sorts the data that is local on each member, and then it merges the sorted streams into the final output. The first step requires O(n) heap memory, but the second step just receives the data in the correct order and has O(1) memory needs.
+Hazelcast sorts the data in two steps: first it sorts the data that is local on each member, and then it merges the sorted streams into the final output. The first step requires `O(n)` heap memory, but the second step just receives the data in the correct order and has `O(1)` memory needs.
 
-### mapStateful
+### `mapStateful`
 
 mapStateful is an extension of the simple [map](#map) transform. It adds the capability to optionally retain mutable state.
 
@@ -657,7 +657,7 @@ p.readFrom(KafkaSources.kafka(.., "transaction-events"))
 
 You will note that we also had to set an expiry time on the states (first parameter of the `mapStateful` method), otherwise would eventually run out of memory as we accumulate more and more transactions.
 
-### co-group / join {/* #co-group-join */}
+### co-group / `join` {/* #co-group-join */}
 
 Co-grouping allows to join any number of inputs on a common key, which can be anything you can calculate from the input item. This makes it possible to correlate data from two or more different sources. In the same transform you are able to apply an aggregate function to all the grouped items.
 
@@ -684,7 +684,7 @@ This gives an item which contains the counts for both events for the same user i
 
 Co-grouping can also be applied to windowed streams, and works exactly the same way as [`aggregate()`](#aggregate). An important consideration is that the timestamps from both streams would be considered, so it's important that the two streams don't have widely different timestamps.
 
-## rebalance
+## `rebalance`
 
 Hazelcast prefers not to send the data around the computing cluster. If your data source retrieves some part of the data stream on member A and you apply stateless mapping on it, this processing will happen on member A. Hazelcast will send the data only when needed to achieve correctness, for example in the case of non-parallelizable operations like `mapStateful`. Such transforms must be performed on a single member, using a single Jet engine and all the data received on any other member must be sent to the processing one.
 
@@ -696,17 +696,17 @@ Round-robin routing takes into account backpressure: if a given processor is ove
 
 You can also apply a less flexible kind of rebalancing, which will enforce sending to other members even when the local ones are more available: `rebalance(keyFn)`. It uses the `keyFn` you supply as a partitioning function. In this case every item is tied to one definite choice of the destination processor and backpressure cannot override it. If some processor must apply backpressure, Hazelcast doesn't try to send the data item to another available processor and instead propagates the backpressure to the upstream vertex. This kind of rebalancing may result in a better balanced CPU load across the cluster, but has the potential for less overall throughput.
 
-## peek
+## `peek`
 
 `stage.peek()` is an identity transform that adds diagnostic side-effects: it logs every item it receives. Since the logging happens on the machine that is processing the item, this transform is primarily intended to be used during development.
 
-## customTransform
+## `customTransform`
 
 All the data processing in a pipeline happens inside the implementations of the `Processor` interface, a central part of the Jet API. With `stage.customTransform` you can provide your own processor implementation that presumably does something that no out-of-the-box processor can. If you get involved with this transform, make sure you are familiar with the internals of Hazelcast, as exposed through the Core [DAG](../../architecture/distributed-computing.mdx) API.
 
 ## JSON
 
-JSON is very frequent data exchange format. To transform the data from/to JSON format you can use `JsonUtil` utility class without adding an extra dependency to the classpath. The utility class uses the lightweight `jackson-jr` JSON library under the hood.
+JSON is a very frequent data exchange format. To transform the data from/to JSON format you can use `JsonUtil` utility class without adding an extra dependency to the classpath. The utility class uses the lightweight `jackson-jr` JSON library under the hood.
 
 For example, you can convert JSON formatted string to a bean. You need to have your bean fields as `public` or have public getters/setters and a no-argument(default) constructor.
 

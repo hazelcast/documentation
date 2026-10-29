@@ -94,7 +94,7 @@ public class SpringHazelcastConfiguration {
 }
 ```
 
-(1) The `HazelcastInstance` bean declaration is a standard way of declaring beans in Spring. It uses a plain old Java method. (2) Declaration of bean for `testMap` IMap, so that you will be able to inject IMap directly into a field.
+(1) The `HazelcastInstance` bean declaration is a standard way of declaring beans in Spring. It uses a plain old Java method. (2) Declaration of bean for `testMap` `IMap`, so that you will be able to inject `IMap` directly into a field.
 
 You can then use Spring's `@Autowired` dependency injection annotation to automatically configure objects such as `HazelcastInstance` and `IMap`. For example:
 
@@ -119,7 +119,7 @@ While Java-based configuration is now widely used and recommended, you may prefe
 
 ### Declare beans using the beans namespace
 
-The following example declares a Hazelcast cluster and IMap using the default Spring `beans` namespace:
+The following example declares a Hazelcast cluster and `IMap` using the default Spring `beans` namespace:
 
 ```xml
 <bean id="instance" class="com.hazelcast.core.Hazelcast" factory-method="newHazelcastInstance">
@@ -241,7 +241,8 @@ The `hazelcast` XML namespace supports the following configuration:
   - [Configuring transaction permissions on the members](../../operate-and-manage/securing-a-cluster/client-authorization.mdx#transaction-permission)
 
   :::
-- Configure MapStore and NearCache
+
+- Configure `MapStore` and `NearCache`
 
   For `map-store`, you should set either the `class-name` or the `implementation` attribute.
 
@@ -312,7 +313,7 @@ Hazelcast supports the `lazy-init`, `scope` and `depends-on` bean attributes.
 
 Once you've set up Hazelcast in your Spring application, you can refer to the following sections to configure Hazelcast for common use cases:
 
-- [Enable SpringAware data structures](./springaware.mdx)
+- [Enable `SpringAware` data structures](./springaware.mdx)
 - [Add caching to Spring](./add-caching.mdx)
 - [Configure Hibernate second-level cache](./hibernate.mdx)
 

@@ -39,7 +39,7 @@ Unless the security provider is set to dev mode, users need an authentication (a
 
 The auth token must be included in the following header:
 
-- Authorization: Bearer \<user\_auth\_token\>
+- `Authorization: Bearer <user_auth_token>`
 
 ### Generate auth tokens
 
@@ -90,19 +90,19 @@ Use Auth `Settings/API` screen on the UI.
 
 #### Use `api/tokens` endpoint
 
-To use the /api/tokens endpoint for security providers except SAML and OIDC, run the following command. Replace the \<username\> and \<password\> placeholders with the credentials of a user logged in to the Management Center.
+To use the `/api/tokens` endpoint for security providers except SAML and OIDC, run the following command. Replace the `<username>` and `<password>` placeholders with the credentials of a user logged in to the Management Center.
 
 ```bash
 curl -u <username>:<password> -d '{"username":"<username>"}' -H "Content-Type: application/json" -X POST http://localhost:8080/api/tokens
 ```
 
-To use the /api/tokens endpoint for SAML and OIDC, run the following command.
+To use the `/api/tokens` endpoint for SAML and OIDC, run the following command.
 
 ```bash
 curl -d '{"username":"<username>"}' -H "X-CSRF-TOKEN: <x-csrf-token>" -H "Cookie: <cookie>" -H "Content-Type: application/json" -X POST http://localhost:8080/api/tokens
 ```
 
-Here, replace the `<username>` placeholders with the username of a user logged in to the Management Center, and replace the `<x-csrf-token>` and `<cookie>` with X-CSRF-TOKEN and Cookie headers. You can get the headers from any request on Network tab in Developer Tools when you are logged into Management Center:
+Here, replace the `<username>` placeholders with the username of a user logged in to the Management Center, and replace the `<x-csrf-token>` and `<cookie>` with `X-CSRF-TOKEN` and `Cookie` headers. You can get the headers from any request on Network tab in Developer Tools when you are logged into Management Center:
 
 ![Clustered Rest Provide Headers](./images/ClusteredRestProvideHeaders.png)
 

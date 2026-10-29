@@ -36,7 +36,7 @@ Near Cache is highly recommended for data structures that are mostly read.
 
 In a client/server system you must enable the Near Cache separately on the client, without the need to configure it on the server. Please note that Near Cache configuration is specific to the server or client itself: a data structure on a server may not have Near Cache configured while the same data structure on a client may have Near Cache configured. They also can have different Near Cache configurations.
 
-If you are using Near Cache, take into account that your hits to the keys in the Near Cache are not reflected as hits to the original keys on the primary members. This has for example an impact on IMap's maximum idle seconds or time-to-live seconds expiration. Therefore, even though there is a hit on a key in Near Cache, your original key on the primary member may expire.
+If you are using Near Cache, take into account that your hits to the keys in the Near Cache are not reflected as hits to the original keys on the primary members. This has for example an impact on `IMap`'s maximum idle seconds or time-to-live seconds expiration. Therefore, even though there is a hit on a key in Near Cache, your original key on the primary member may expire.
 
 :::note
 
@@ -139,39 +139,36 @@ The class <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/c
 The following are the descriptions of all configuration elements and attributes:
 
 - `in-memory-format`: Specifies in which format data is stored in your Near Cache. Note that a map's in-memory format can be different from that of its Near Cache. Available values are as follows:
-
   - `BINARY`: Data is stored in serialized binary format (default value).
   - `OBJECT`: Data is stored in deserialized form.
   - `NATIVE`: Data is stored in the Near Cache that uses Hazelcast's High-Density Memory Store feature. This option is available only in Hazelcast Enterprise. Note that a map and its Near Cache can independently use High-Density Memory Store. For example, while your map does not use High-Density Memory Store, its Near Cache can use it.
+
 - `invalidate-on-change`: Specifies whether the cached entries are evicted when the entries are updated or removed. Its default value is true, that is the cached entries are evicted.
 - `time-to-live-seconds`: Maximum number of seconds for each entry to stay in the Near Cache. Entries that are older than this period are automatically evicted from the Near Cache. Regardless of the eviction policy used, `time-to-live-seconds` still applies. Any integer between 0 and `Integer.MAX_VALUE`. 0 means infinite. Its default value is 0.
 - `max-idle-seconds`: Maximum number of seconds each entry can stay in the Near Cache as untouched (not read). Entries that are not read more than this period are removed from the Near Cache. Any integer between 0 and `Integer.MAX_VALUE`. 0 means `Integer.MAX_VALUE`. Its default value is 0.
 - `eviction`: Specifies the eviction behavior when you use High-Density Memory Store for your Near Cache. It has the following attributes:
-
   - `eviction-policy`: Eviction policy configuration. Available values are as follows:
-
     - `LRU`: Least Recently Used (default value).
     - `LFU`: Least Frequently Used.
     - `NONE`: No items are evicted and the property `max-size` is ignored. You still can combine it with `time-to-live-seconds` and `max-idle-seconds` to evict items from the Near Cache.
     - `RANDOM`: A random item is evicted.
-  - `max-size-policy`: Maximum size policy for eviction of the Near Cache. Available values are as follows:
 
+  - `max-size-policy`: Maximum size policy for eviction of the Near Cache. Available values are as follows:
     - `ENTRY_COUNT`: Maximum size based on the entry count in the Near Cache (default value).
     - `USED_NATIVE_MEMORY_SIZE`: Maximum used native memory size of the specified Near Cache in MB to trigger the eviction. If the used native memory size exceeds this threshold, the eviction is triggered. Available only for `NATIVE` in-memory format. This is supported only by Hazelcast Enterprise.
     - `USED_NATIVE_MEMORY_PERCENTAGE`: Maximum used native memory percentage of the specified Near Cache to trigger the eviction. If the native memory usage percentage (relative to maximum native memory size) exceeds this threshold, the eviction is triggered. Available only for `NATIVE` in-memory format. This is supported only by Hazelcast Enterprise.
     - `FREE_NATIVE_MEMORY_SIZE`: Minimum free native memory size of the specified Near Cache in MB to trigger the eviction. If free native memory size goes below this threshold, eviction is triggered. Available only for `NATIVE` in-memory format. This is supported only by Hazelcast Enterprise.
     - `FREE_NATIVE_MEMORY_PERCENTAGE`: Minimum free native memory percentage of the specified Near Cache to trigger eviction. If free native memory percentage (relative to maximum native memory size) goes below this threshold, eviction is triggered. Available only for `NATIVE` in-memory format. This is supported only by Hazelcast Enterprise.
-  - `size`: Maximum size of the Near Cache used for `max-size-policy`. When this is reached the Near Cache is evicted based on the policy defined. Any integer between `1` and `Integer.MAX_VALUE`. This value has different defaults, depending on the data structure.
 
+  - `size`: Maximum size of the Near Cache used for `max-size-policy`. When this is reached the Near Cache is evicted based on the policy defined. Any integer between `1` and `Integer.MAX_VALUE`. This value has different defaults, depending on the data structure.
     - `IMap`: Its default value is `Integer.MAX_VALUE` for on-heap maps and `10000` for the `NATIVE` in-memory format.
     - `JCache`: Its default value is `10000`.
 - `cache-local-entries`: Specifies whether the local entries are cached. It can be useful when in-memory format for Near Cache is different from that of the map. By default, it is disabled. Is just available on Hazelcast members, not on Hazelcast clients (which have no local entries).
 - `local-update-policy`: Specifies the update policy of the local Near Cache. It is available on JCache clients. Available values are as follows:
-
   - `INVALIDATE`: Removes the Near Cache entry on mutation. After the mutative call to the member completes but before the operation returns to the caller, the Near Cache entry is removed. Until the mutative operation completes, the readers still continue to read the old value. But as soon as the update completes the Near Cache entry is removed. Any threads reading the key after this point will have a Near Cache miss and call through to the member, obtaining the new entry. This setting provides read-your-writes consistency. This is the default setting.
   - `CACHE_ON_UPDATE`: Updates the Near Cache entry on mutation. After the mutative call to the member completes but before the put returns to the caller, the Near Cache entry is updated. So a remove will remove the entry and one of the put methods will update it to the new value. Until the update/remove operation completes, the entry's old value can still be read from the Near Cache. But before the call completes the Near Cache entry is updated. Any threads reading the key after this point read the new entry. If the mutative operation was a remove, the key will no longer exist in the cache, both the Near Cache and the original copy in the member. The member initiates an invalidate event to any other Near Caches, however the caller Near Cache is not invalidated as it already has the new value. This setting also provides read-your-writes consistency.
-- `preloader`: Specifies if the Near Cache stores and preloads its keys for a faster re-population after a Hazelcast client restart. Is only available on IMap and JCache clients. It has the following attributes:
 
+- `preloader`: Specifies if the Near Cache stores and preloads its keys for a faster re-population after a Hazelcast client restart. Is only available on `IMap` and JCache clients. It has the following attributes:
   - `enabled`: Specifies whether the preloader for this Near Cache is enabled or not, `true` or `false`.
   - `directory`: Specifies the parent directory for the preloader of this Near Cache. The filenames for the preloader storage are generated from the Near Cache name. You can additionally specify the parent directory to have multiple clients on the same machine with the same Near Cache names.
   - `store-initial-delay-seconds`: Specifies the delay in seconds until the keys of this Near Cache are stored for the first time. Its default value is `600` seconds.
@@ -181,9 +178,9 @@ The following are the descriptions of all configuration elements and attributes:
 
 This section shows some configuration examples for different Hazelcast data structures.
 
-### Near Cache Example for IMap
+### Near Cache Example for `IMap`
 
-The following are configuration examples for IMap Near Caches for Hazelcast members and clients.
+The following are configuration examples for `IMap` Near Caches for Hazelcast members and clients.
 
 <Tabs groupId="java-api--xml--yaml">
 <TabItem value="xml" label="XML">
@@ -369,7 +366,7 @@ ClientConfig clientConfig = new ClientConfig()
 
 **Hazelcast Enterprise Feature**
 
-The following is a configuration example for an IMap High-Density Near Cache for a Hazelcast member.
+The following is a configuration example for an `IMap` High-Density Near Cache for a Hazelcast member.
 
 <Tabs groupId="java-api--xml--yaml">
 <TabItem value="xml" label="XML">
@@ -467,7 +464,7 @@ The cached `null` value is subject to the same expiration and invalidation rules
 
 ## Near Cache Invalidation
 
-Invalidation is the process of removing an entry from the Near Cache when its value is updated or it is removed from the original data structure (to prevent stale reads). Near Cache invalidation happens asynchronously at the cluster level, but synchronously at the current member. This means that the Near Cache is invalidated within the whole cluster after the modifying operation is finished, but updated from the current member before the modifying operation is done. A modifying operation can be an EntryProcessor, an explicit update or remove as well as an expiration or eviction. Generally, whenever the state of an entry changes in the record store by updating its value or removing it, the invalidation event is sent for that entry.
+Invalidation is the process of removing an entry from the Near Cache when its value is updated or it is removed from the original data structure (to prevent stale reads). Near Cache invalidation happens asynchronously at the cluster level, but synchronously at the current member. This means that the Near Cache is invalidated within the whole cluster after the modifying operation is finished, but updated from the current member before the modifying operation is done. A modifying operation can be an `EntryProcessor`, an explicit update or remove as well as an expiration or eviction. Generally, whenever the state of an entry changes in the record store by updating its value or removing it, the invalidation event is sent for that entry.
 
 Invalidations can be sent from members to client Near Caches or to member Near Caches, either individually or in batches. Default behavior is sending in batches. If there are lots of mutating operations such as put/remove on data structures, it is advised that you configure batch invalidations. This reduces the network traffic and keeps the eventing system less busy, but may increase the delay of individual invalidations.
 
@@ -485,7 +482,7 @@ If there are a lot of clients or many mutating operations, batching should remai
 
 Near Caches are invalidated by invalidation events. Invalidation events can be lost due to the fire-and-forget fashion of the eventing system. If an event is lost, reads from Near Cache can indefinitely be stale.
 
-To solve this problem, Hazelcast provides eventually consistent behavior for IMap/JCache Near Caches by detecting invalidation losses. After detection of an invalidation loss, stale data is made unreachable and Near Cache's `get` calls to that data are directed to the underlying IMap/JCache to fetch the fresh data.
+To solve this problem, Hazelcast provides eventually consistent behavior for `IMap`/JCache Near Caches by detecting invalidation losses. After detection of an invalidation loss, stale data is made unreachable and Near Cache's `get` calls to that data are directed to the underlying `IMap`/JCache to fetch the fresh data.
 
 You can configure eventual consistency with the system properties below (same properties are valid for both member and client side Near Caches):
 
@@ -505,7 +502,7 @@ If you choose `CACHE_ON_UPDATE`, the entry is updated after the update/remove oc
 
 ## Near Cache Preloader
 
-The Near Cache preloader allows you to store the keys from a Near Cache to provide a fast re-population of the previous hot data set after a Hazelcast Client has been restarted. It is available on IMap and JCache clients.
+The Near Cache preloader allows you to store the keys from a Near Cache to provide a fast re-population of the previous hot data set after a Hazelcast Client has been restarted. It is available on `IMap` and JCache clients.
 
 The Near Cache preloader stores the keys (not the values) of Near Cache entries in regular intervals. You can define the initial delay using `store-initial-delay-seconds`; for example, if you know that your hot data set needs some time to build up. You can configure the interval using `store-interval-seconds`, which determines how often the key-set is stored. The persistence does not run continuously. Whenever the storage is scheduled, it is performed on the actual keys in the Near Cache.
 

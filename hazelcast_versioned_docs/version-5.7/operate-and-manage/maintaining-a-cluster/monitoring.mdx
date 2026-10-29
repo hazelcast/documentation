@@ -324,7 +324,7 @@ The possible values for the `mode` placeholder:
 
 ## Metrics
 
-Hazelcast exposes various metrics to facilitate monitoring of the cluster state. They are `<string,value>` key-value pairs of data that capture the runtime information about the members and clients in a Hazelcast cluster. Such a metric can be the number of entries stored in a particular IMap on a given member, JVM metrics like used heap, OS metrics like load average, and so on.
+Hazelcast exposes various metrics to facilitate monitoring of the cluster state. They are `<string,value>` key-value pairs of data that capture the runtime information about the members and clients in a Hazelcast cluster. Such a metric can be the number of entries stored in a particular `IMap` on a given member, JVM metrics like used heap, OS metrics like load average, and so on.
 
 The metrics system is responsible for collecting these metrics and making them available for the [consumers](#exposing-metrics) of the metrics. There are a few hundred metrics collected during every metrics collection cycle by default, but the number of metrics grows as more features and data structures are used. This is because every data structure provides its own metrics. For example, if there are two IMaps used in a cluster, both IMaps produce their metrics on every member.
 
@@ -410,7 +410,7 @@ And the Jet engine related beans are stored under `com.hazelcast.jet/Metrics/<in
 
 Prometheus is a popular monitoring system and time series database. Setting up monitoring via Prometheus consists of two steps. The first step is exposing an HTTP endpoint with metrics. The second step is setting up Prometheus server, which pulls the metrics in a specified interval.
 
-The Prometheus Java agent is already part of the Hazelcast distribution and just needs to be enabled. Enable the agent and expose all metrics via HTTP endpoint by setting an environment variable PROMETHEUS\_PORT, you can change the port to any available port:
+The Prometheus Java agent is already part of the Hazelcast distribution and just needs to be enabled. Enable the agent and expose all metrics via HTTP endpoint by setting an environment variable `PROMETHEUS_PORT`, you can change the port to any available port:
 
 ```bash
 PROMETHEUS_PORT=8080 bin/hz-start
@@ -630,9 +630,9 @@ The following are some of the metrics that you can access via the `NearCacheStat
 
 See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/nearcache/NearCacheStats.html" text="NearCacheStats Javadoc" /> to see all the metrics.
 
-### MultiMap statistics
+### `MultiMap` statistics
 
-To get MultiMap statistics, use the `getLocalMultiMapStats()` method from the `MultiMap` interface. This method returns a `LocalMultiMapStats` object that holds local MultiMap statistics.
+To get `MultiMap` statistics, use the `getLocalMultiMapStats()` method from the `MultiMap` interface. This method returns a `LocalMultiMapStats` object that holds local `MultiMap` statistics.
 
 Below is an example code where the `getLocalMultiMapStats()` method and the `getLastUpdateTime` method from `LocalMultiMapStats` get the last update time.
 
@@ -1035,7 +1035,7 @@ The BIG-IP LTM monitors accept regular expressions in these strings allowing you
 
 As you can see, the HEAD request only checks for a `200 OK` response. A Hazelcast cluster member sends this status code when it is alive and running without an issue. This provides a very basic health check. For increased flexibility, we recommend using the GET request API.
 
-##### TCP\_HALF\_OPEN monitors
+##### `TCP_HALF_OPEN` monitors
 
 - Set the "Type" as `TCP Half Open`.
 - Optionally, set the "Alias Service Port" as the port of Hazelcast cluster member if you want to specify the port in the monitor
@@ -1445,7 +1445,7 @@ The diagnostic logs have the `DEBUG` level by default; if you don't want to see 
 
 ### Diagnostics plugins
 
-As it is stated in the introduction of this section and shown in the log file content above, diagnostics utility consists of plugins such as BuildInfo, SystemProperties and HazelcastInstance.
+As it is stated in the introduction of this section and shown in the log file content above, diagnostics utility consists of plugins such as BuildInfo, SystemProperties and `HazelcastInstance`.
 
 #### BuildInfo
 
@@ -1475,7 +1475,7 @@ See the [List of Hazelcast Metrics appendix](../../reference/list-of-metrics.mdx
 
 #### SlowOperations
 
-It shows the slow operations and invocations, See the [SlowOperationDetector section](../../develop-and-build/best-practices/threading.mdx#slowoperationdetector) for more information.
+It shows the slow operations and invocations, See the [`SlowOperationDetector` section](../../develop-and-build/best-practices/threading.mdx#slowoperationdetector) for more information.
 
 #### Invocations
 
@@ -1548,7 +1548,7 @@ You can control the frequency of scanning all operations using the following sys
 
 - `hazelcast.diagnostics.operation-profiler.period.seconds`: Set a value in seconds. Its default value is `5` seconds. You can set it to `0` to disable the plugin.
 
-#### HazelcastInstance
+#### `HazelcastInstance`
 
 It shows the basic state of your Hazelcast cluster including the count and addresses of current members and the address of oldest cluster member. It is useful to get a fast impression of the cluster without needing to analyze a lot of data.
 
@@ -1587,7 +1587,7 @@ You can enable or disable the system log diagnostics plugin, and configure wheth
 
 #### StoreLatency
 
-It shows statistics including the count of methods for each store (`load`, `loadAll`, `loadAllKeys`, etc.), average and maximum latencies for each store method calls and latency distributions for each store. The following is an example output snippet as part of the diagnostics log file for Hazelcast MapStore:
+It shows statistics including the count of methods for each store (`load`, `loadAll`, `loadAllKeys`, etc.), average and maximum latencies for each store method calls and latency distributions for each store. The following is an example output snippet as part of the diagnostics log file for Hazelcast `MapStore`:
 
 :::note
 
@@ -1807,7 +1807,7 @@ Hazelcast set the naming convention for MBeans as follows:
 final ObjectName mapMBeanName = new ObjectName("com.hazelcast:instance=_hzInstance_1_dev,type=IMap,name=trial");
 ```
 
-The MBeans name consists of the Hazelcast instance name, the type of the data structure and that data structure's name. In the above example, `_hzInstance_1_dev` is the instance name, we connect to an IMap with the name `trial`.
+The MBeans name consists of the Hazelcast instance name, the type of the data structure and that data structure's name. In the above example, `_hzInstance_1_dev` is the instance name, we connect to an `IMap` with the name `trial`.
 
 ### Connecting to JMX Agent
 
@@ -1934,7 +1934,7 @@ You can find the JMX API definition below with descriptions and the API methods 
 - Values ( `values(p)`)
 - Entry Set ( `entrySet(p)` )
 
-**MultiMap ( `MultiMap` )**
+**`MultiMap` ( `MultiMap` )**
 
 - Name ( `name` )
 - Size ( `size` )

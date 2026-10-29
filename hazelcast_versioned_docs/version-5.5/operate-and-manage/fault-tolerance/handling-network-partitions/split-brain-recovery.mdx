@@ -66,8 +66,8 @@ Additionally, you can develop a custom merge policy by implementing the `SplitBr
 
 The following data structures support split-brain recovery:
 
-- `IMap` (including High-Density Memory Store backed IMap)
-- `ICache` (including High-Density Memory Store backed IMap)
+- `IMap` (including High-Density Memory Store backed `IMap`)
+- `ICache` (including High-Density Memory Store backed `IMap`)
 - `ReplicatedMap`
 - `MultiMap`
 - `IAtomicLong`
@@ -441,7 +441,7 @@ If you return `null` on a collection based data structure, the whole data struct
 
 :::
 
-### Accessing Hazelcast UserContext
+### Accessing Hazelcast `UserContext`
 
 If you need access to external references in your merge policy, you can use the Hazelcast `UserContext` to get them injected. An example would be a database connection to check which value is stored in your database. To achieve this your merge policy needs to implement `HazelcastInstanceAware` and call `HazelcastInstance.getUserContext()`:
 
