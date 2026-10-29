@@ -8,8 +8,9 @@
 
 const DOCS_PLUGIN_NAME = 'docusaurus-plugin-content-docs'
 const REPO = 'hazelcast/documentation'
-const HEADING = '### Direct preview links'
-const MAX_LINKS = 8
+const HEADING = '### Deploy Preview links'
+const SHOWN_LINKS = 8
+const MAX_LINKS = 20
 
 // A product's name and position in the navbar, as plugins/llms-txt reads them ('hazelcast' -> 'Platform').
 // Tutorials has no navbar entry, so it takes its capitalized id and goes last.
@@ -52,7 +53,8 @@ function pageMap (plugins, siteConfig) {
   return map
 }
 
-// The comment text, or '' if no page changed: one list per product version, each capped at MAX_LINKS.
+// The comment text, or '' if no page changed: one list per product version. Each list shows SHOWN_LINKS links,
+// puts the rest up to MAX_LINKS in a collapsed dropdown, and counts any beyond that.
 function renderComment (changedFiles, pages, previewUrl) {
   const changed = new Set(changedFiles)
   const sections = new Map()
@@ -64,11 +66,15 @@ function renderComment (changedFiles, pages, previewUrl) {
   }
   if (sections.size === 0) return ''
   const base = previewUrl.replace(/\/$/, '')
-  const lines = [HEADING]
+  const link = (page) => `- [${page.title}](${base}${page.url})${page.path ? ` \`${page.path}\`` : ''}`
+  const lines = [HEADING, '', 'Direct links to changed pages.']
   for (const [section, list] of sections) {
-    lines.push('', `**${section}**`, '')
-    for (const page of list.slice(0, MAX_LINKS)) lines.push(`- [${page.title}](${base}${page.url})${page.path ? ` \`${page.path}\`` : ''}`)
-    if (list.length > MAX_LINKS) lines.push(`- ...and ${list.length - MAX_LINKS} more`)
+    lines.push('', `**${section}**`, '', ...list.slice(0, SHOWN_LINKS).map(link))
+    if (list.length <= SHOWN_LINKS) continue
+    // GitHub renders Markdown inside <details> only after a blank line.
+    lines.push('', '<details>', `<summary>${list.length - SHOWN_LINKS} more</summary>`, '', ...list.slice(SHOWN_LINKS, MAX_LINKS).map(link))
+    if (list.length > MAX_LINKS) lines.push(`- ...and ${list.length - MAX_LINKS} more, too many to list`)
+    lines.push('', '</details>')
   }
   return lines.join('\n') + '\n'
 }

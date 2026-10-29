@@ -37,7 +37,9 @@ test('lists changed pages under one heading per section and skips files with no 
   }
   const files = ['cloud/overview.mdx', 'hazelcast/_partials/note.mdx', 'hazelcast/sql/index.mdx', 'README.md']
   assert.equal(renderComment(files, pages, PREVIEW + '/'), [
-    '### Direct preview links',
+    '### Deploy Preview links',
+    '',
+    'Direct links to changed pages.',
     '',
     '**Platform 6.0**',
     '',
@@ -50,11 +52,36 @@ test('lists changed pages under one heading per section and skips files with no 
   ].join('\n'))
 })
 
-test('caps each section and counts the rest', () => {
-  const pages = Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`cloud/p${i}.mdx`, page('Cloud', `p${i}`)]))
+const cloudPages = (n) => Object.fromEntries(Array.from({ length: n }, (_, i) => [`cloud/p${i}.mdx`, page('Cloud', `p${i}`)]))
+
+test('puts links after the eighth in a dropdown', () => {
+  const pages = cloudPages(10)
+  assert.equal(renderComment(Object.keys(pages), pages, PREVIEW), [
+    '### Deploy Preview links',
+    '',
+    'Direct links to changed pages.',
+    '',
+    '**Cloud**',
+    '',
+    ...Array.from({ length: 8 }, (_, i) => `- [p${i}](${PREVIEW}/cloud/p${i}) \`p${i}\``),
+    '',
+    '<details>',
+    '<summary>2 more</summary>',
+    '',
+    `- [p8](${PREVIEW}/cloud/p8) \`p8\``,
+    `- [p9](${PREVIEW}/cloud/p9) \`p9\``,
+    '',
+    '</details>',
+    '',
+  ].join('\n'))
+})
+
+test('lists at most 20 links per section and counts the rest', () => {
+  const pages = cloudPages(1500)
   const lines = renderComment(Object.keys(pages), pages, PREVIEW).trimEnd().split('\n')
-  assert.equal(lines.filter((line) => line.startsWith('- [')).length, 8)
-  assert.equal(lines.at(-1), '- ...and 4 more')
+  assert.equal(lines.filter((line) => line.startsWith('- [')).length, 20)
+  assert.ok(lines.includes('<summary>1492 more</summary>'))
+  assert.ok(lines.includes('- ...and 1480 more, too many to list'))
 })
 
 test('prints nothing when no page changed', () => {
@@ -83,14 +110,14 @@ test('posts a comment when the PR has none', async (t) => {
   assert.deepEqual(requests.at(-1), {
     method: 'POST',
     url: '/repos/hazelcast/documentation/issues/53/comments',
-    body: { body: `### Direct preview links\n\n**Cloud**\n\n- [Overview](${PREVIEW}/cloud/overview) \`overview\`\n` },
+    body: { body: `### Deploy Preview links\n\nDirect links to changed pages.\n\n**Cloud**\n\n- [Overview](${PREVIEW}/cloud/overview) \`overview\`\n` },
   })
 })
 
 test('edits the earlier comment', async (t) => {
   const requests = fakeGitHub(t, {
     'GET /repos/hazelcast/documentation/pulls/53/files': [{ filename: 'cloud/a.mdx' }, { filename: 'cloud/b.mdx' }],
-    'GET /repos/hazelcast/documentation/issues/53/comments': [{ id: 7, body: '### Direct preview links\n' }],
+    'GET /repos/hazelcast/documentation/issues/53/comments': [{ id: 7, body: '### Deploy Preview links\n' }],
   })
   await commentOnPr({ token: 't', pr: '53', previewUrl: PREVIEW, pages: { 'cloud/a.mdx': page('Cloud', 'a'), 'cloud/b.mdx': page('Cloud', 'b') } })
   assert.equal(requests.at(-1).method, 'PATCH')
@@ -109,7 +136,7 @@ test('posts nothing when no page changed', async (t) => {
 test('deletes the earlier comment when no page changed', async (t) => {
   const requests = fakeGitHub(t, {
     'GET /repos/hazelcast/documentation/pulls/53/files': [{ filename: 'README.md' }],
-    'GET /repos/hazelcast/documentation/issues/53/comments': [{ id: 7, body: '### Direct preview links\n' }],
+    'GET /repos/hazelcast/documentation/issues/53/comments': [{ id: 7, body: '### Deploy Preview links\n' }],
   })
   await commentOnPr({ token: 't', pr: '53', previewUrl: PREVIEW, pages: {} })
   assert.deepEqual(requests.at(-1), { method: 'DELETE', url: '/repos/hazelcast/documentation/issues/comments/7', body: undefined })
