@@ -10,6 +10,38 @@ These release notes list any new features, enhancements, fixes, security issues 
 
 For help downloading Hazelcast <Variable name="enterprise-product-name" />, see [Install Hazelcast Enterprise Edition](./install-enterprise.mdx) or [request a trial license key](https://hazelcast.com/trial-request/?utm_source=docs-website).
 
+## 5.6.3 {/* #5-6-3 */}
+
+**Release date**: TODO
+
+- [Fixes](#5-6-3-fixes)
+- [Security](#5-6-3-security)
+- [Contributors](#5-6-3-contributors)
+
+### Fixes {/* #5-6-3-fixes */}
+
+- **Clarified CP member restart errors**: Removed misleading reset warnings and added cleanup instructions when restarting a removed CP member.
+- **Fixed TLS 1.3 I/O thread stalls**: Resolved an issue where post-handshake TLS 1.3 messages could make an I/O input thread spin, stalling every connection it serves. The affected connection is now closed, and the client reconnects.
+- **Removed Beta annotation from `AdvancedNetworkConfig`**: Removed the outdated Beta annotation from `AdvancedNetworkConfig`, which is supported for production use, and updated its Javadoc.
+- **Fixed Hazelcast V7 license key support**: Added support for Hazelcast V7 license keys that do not include the `environmentType` field.
+- **Fixed lock memory leak on session close**: Prevented lock ownership invocation references from accumulating when CP sessions close while still holding locks.
+- **Fixed CP follower snapshot stalls**: Resolved an issue where a follower could reject an older valid snapshot after retaining an incomplete newer transfer, causing a CP group to lose liveness.
+- **Fixed CP snapshot failures after an interrupted transfer**: Resolved an issue where a CP member could not take local snapshots after the leader failed during a snapshot transfer.
+- **Fixed client cleanup timeout handling**: Corrected `ClientLifecycleMonitor` to compare timeouts configured in milliseconds against elapsed time in the same unit.
+- **Fixed delayed client query cache events**: Events for client query caches with `populate` set to `false` are now published immediately. Previously, they waited for the background scanner, even when `delaySeconds` was `0`.
+- **Fixed stale old values from entry processors on `OBJECT` maps**: Resolved an issue on maps that have no indexes and use the `OBJECT` in-memory format. An entry processor that modified a value in place could leave the Merkle tree out of date, and give the event journal the new value as the old value.
+
+### Security {/* #5-6-3-security */}
+
+- **Resolved high and critical CVEs**: Addressed critical and high-severity vulnerabilities: CVE-2026-59902, CVE-2026-59903, CVE-2026-75595, CVE-2026-75596, CVE-2026-71290, CVE-2026-73334, CVE-2026-68497, CVE-2026-18710, CVE-2026-106451, CVE-2026-91776, CVE-2026-91777, CVE-2026-110879, and CVE-2026-65898.
+
+### Contributors {/* #5-6-3-contributors */}
+
+We would like to thank the contributors from our open source community who worked on this release:
+
+- [zabavalex](https://github.com/zabavalex)
+- [wind57](https://github.com/wind57)
+
 ## 5.6.2 {/* #5-6-2 */}
 
 **Release date**: 2026-09-09
