@@ -161,7 +161,7 @@ Both plugins read a token from `GITHUB_TOKEN`, then `GH_TOKEN`. The specs plugin
 GITHUB_TOKEN=$(gh auth token) npm run start
 ```
 
-Without a token, the dev server uses whatever specs are already downloaded and logs that they were not checked. API pages whose spec was never downloaded do not render. A build without a token fails if any spec is missing, and warns that the specs it did publish were not checked. In CI, the default Actions `GITHUB_TOKEN` cannot read other repos. Use a token with read access to the spec repos.
+Without a token, the dev server uses whatever specs are already downloaded and logs that they were not checked. API pages whose spec was never downloaded do not render. A build without a token also skips the missing specs and warns which API pages do not render. It warns that the specs it did include were not checked. On Netlify, which publishes the site, a build without a token fails if any spec is missing. In CI, the default Actions `GITHUB_TOKEN` cannot read other repos. Use a token with read access to the spec repos.
 
 #### Update a pinned code example
 

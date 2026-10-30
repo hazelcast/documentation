@@ -202,12 +202,11 @@ export default function Renderer({source}: {source: string}): React.ReactElement
     [spec, specUrl, options],
   );
 
-  // Only reachable if the build could not parse the spec (reported at build time).
+  // Reachable if the build had no token to fetch the spec, or could not parse it (both reported at build time).
   if (!store) {
     return (
       <div className={styles.placeholder}>
-        This API reference could not be loaded. The specification is published at{' '}
-        <a href={specUrl}>{specUrl}</a>.
+        This API reference is not included in this build of the documentation.
       </div>
     );
   }

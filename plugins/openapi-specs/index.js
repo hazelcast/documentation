@@ -154,6 +154,9 @@ module.exports = function openapiSpecsPlugin (context, options) {
   const verbose = !!process.env.HZ_OPENAPI_VERBOSE
   // A build publishes what it stages, so a missing spec is fatal there; dev carries on with what's staged.
   const isBuild = process.env.NODE_ENV === 'production'
+  // The spec repos are private, so a build without a token (anyone outside Hazelcast) skips the API pages.
+  // Netlify publishes the site, so there a missing token is still fatal.
+  const isDeploy = process.env.NETLIFY === 'true'
 
   return {
     name: 'openapi-specs',
@@ -180,8 +183,9 @@ module.exports = function openapiSpecsPlugin (context, options) {
       const byUpstream = new Map()
       for (const request of requests) {
         const key = `${request.owner}/${request.repo}@${request.ref}:${request.filePath}`
-        if (!byUpstream.has(key)) byUpstream.set(key, { key, request, targets: [] })
+        if (!byUpstream.has(key)) byUpstream.set(key, { key, request, targets: [], pages: [] })
         byUpstream.get(key).targets.push(path.join(stagingDir, request.url.replace(/^\//, '')))
+        byUpstream.get(key).pages.push(path.relative(siteDir, request.file))
       }
 
       const staged = new Set()
@@ -192,7 +196,7 @@ module.exports = function openapiSpecsPlugin (context, options) {
       let unchecked = 0
 
       await Promise.all(
-        [...byUpstream.values()].map(async ({ key, request, targets }) => {
+        [...byUpstream.values()].map(async ({ key, request, targets, pages }) => {
           const cached = cache[key]
           const present = targets.every((t) => fs.existsSync(t))
           // No token, no request: the repos are private, so it would only burn the anonymous rate limit.
@@ -201,7 +205,7 @@ module.exports = function openapiSpecsPlugin (context, options) {
               targets.forEach((t) => staged.add(t))
               unchecked++
             } else {
-              missingWithoutToken.push(key)
+              missingWithoutToken.push(...pages)
             }
             return
           }
@@ -301,20 +305,20 @@ module.exports = function openapiSpecsPlugin (context, options) {
       if (!failures.length && !missingWithoutToken.length) pruneStale(stagingDir, staged)
 
       // Without a token a build can't check the staged specs against the product repos; say so.
-      if (!token && isBuild && staged.size) {
+      if (!token && isBuild && unchecked) {
         console.warn(
           '[openapi-specs] no GitHub token set. The staged specs were published without being' +
           ' checked against the repos that own them.',
         )
       }
       if (missingWithoutToken.length) {
-        // One message per run: single cause, single fix.
+        // One message per run: single cause, single fix. Names the pages, not the private repos.
+        const pages = [...new Set(missingWithoutToken)].sort()
         const message =
-          `[openapi-specs] ${missingWithoutToken.length} spec(s) are not staged and cannot be fetched ` +
-          'without a GitHub token. The repos that own them are private.' +
-          `\n  ${missingWithoutToken.join('\n  ')}`
-        if (isBuild) throw new Error(message)
-        console.warn(`${message}\n  Those API pages will not render.`)
+          `[openapi-specs] no GitHub token set. ${pages.length} API reference page(s) need a spec ` +
+          `from a private repo and are not included in this build:\n  ${pages.join('\n  ')}`
+        if (isDeploy) throw new Error(message)
+        console.warn(`${message}\n  Links into those pages report as broken anchors.`)
       }
       if (failures.length) {
         const message =

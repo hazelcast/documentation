@@ -73,7 +73,7 @@ function github (t, specsByRef, {status} = {}) {
 
 function env (t, vars) {
   const saved = {}
-  for (const key of ['NODE_ENV', 'GITHUB_TOKEN', 'GH_TOKEN', 'GIT_CREDENTIALS']) {
+  for (const key of ['NODE_ENV', 'NETLIFY', 'GITHUB_TOKEN', 'GH_TOKEN', 'GIT_CREDENTIALS']) {
     saved[key] = process.env[key]
     if (key in vars) process.env[key] = vars[key]
     else delete process.env[key]
@@ -167,13 +167,26 @@ test('a build fails when a spec cannot be fetched, and keeps what was already st
   assert.ok(fs.existsSync(path.join(dir, other)), 'a failed run prunes nothing')
 })
 
-test('without a token a build fails on an unstaged spec and makes no requests', async (t) => {
+test('without a token a build warns about an unstaged spec, skips it, and makes no requests', async (t) => {
   env(t, {NODE_ENV: 'production'})
   quiet(t)
   const calls = github(t, {main: specYaml('A')})
   const dir = site({pages: {[`${COMPONENT}/api.mdx`]: page()}})
-  await assert.rejects(load(dir), /without a GitHub token/)
+  const content = await load(dir)
+  const warning = console.warn.mock.calls.map((c) => c.arguments[0]).join('\n')
+  assert.match(warning, /no GitHub token set/)
+  assert.match(warning, new RegExp(`${COMPONENT}/api\\.mdx`), 'names the affected page')
+  assert.doesNotMatch(warning, /github\.com|@main/, 'does not reveal the private repos')
+  assert.deepEqual(content.specHashByUrl, {})
   assert.equal(calls.length, 0)
+})
+
+test('without a token a Netlify build fails on an unstaged spec', async (t) => {
+  env(t, {NODE_ENV: 'production', NETLIFY: 'true'})
+  quiet(t)
+  github(t, {main: specYaml('A')})
+  const dir = site({pages: {[`${COMPONENT}/api.mdx`]: page()}})
+  await assert.rejects(load(dir), /no GitHub token set/)
 })
 
 test('a token is read from GITHUB_TOKEN, GH_TOKEN or the user of GIT_CREDENTIALS', async (t) => {
