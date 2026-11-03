@@ -543,50 +543,56 @@ Hazelcast uses the `write` method of the `CompactSerializer` to generate a schem
 
 Compact serialization supports the following list as first class types. Any other type can be implemented on top of these, by using these types as building blocks.
 
+<div className="table-scroll">
+<div style={{width: '2200px'}}>
+
 | Type | Java | .NET | C++ | Node.js | Python | Go | Description |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| BOOLEAN | boolean | bool | bool | boolean | bool | bool | True or false represented by a single bit as either 1 or 0. Up to eight booleans are packed into a single byte. |
-| ARRAY\_OF\_BOOLEAN | boolean\[\] | bool\[\] | boost::optional\<std::vector\<bool\>\> | boolean\[\] \| null | Optional\[list\[bool\]\] | \[\]bool | Array of booleans or null. Up to eight boolean array items are packed into a single byte. |
-| NULLABLE\_BOOLEAN | Boolean | bool? | boost::optional\<bool\> | boolean \| null | Optional\[bool\] | \*bool | A boolean that can also be null. |
-| ARRAY\_OF\_NULLABLE\_BOOLEAN | Boolean\[\] | bool?\[\] | boost::optional\<std::vector\<boost::optional\<bool\>\>\> | (boolean \| null)\[\] \| null | Optional\[list\[Optional\[bool\]\]\] | \[\]\*bool | Array of nullable booleans or null. |
-| INT8 | byte | sbyte | int8\_t | number | int | int8 | 8-bit two's complement signed integer. |
-| ARRAY\_OF\_INT8 | byte\[\] | sbyte\[\] | boost::optional\<std::vector\<int8\_t\>\> | Buffer \| null | Optional\[list\[int\]\] | \[\]int8 | Array of int8s or null. |
-| NULLABLE\_INT8 | Byte | sbyte? | boost::optional\<int8\_t\> | number \| null | Optional\[int\] | \*int8 | An int8 that can also be null. |
-| ARRAY\_OF\_NULLABLE\_INT8 | Byte\[\] | sbyte?\[\] | boost::optional\<std::vector\<boost::optional\<int8\_t\>\>\> | (number \| null)\[\] \| null | Optional\[list\[Optional\[int\]\]\] | \[\]\*int8 | Array of nullable int8s or null. |
-| INT16 | short | short | int16\_t | number | int | int16 | 16-bit two's complement signed integer. |
-| ARRAY\_OF\_INT16 | short\[\] | short\[\] | boost::optional\<std::vector\<int16\_t\>\> | number\[\] \| null | Optional\[list\[int\]\] | \[\]int16 | Array of int16s or null. |
-| NULLABLE\_INT16 | Short | short? | boost::optional\<int16\_t\> | number \| null | Optional\[int\] | \*int16 | An int16 that can also be null. |
-| ARRAY\_OF\_NULLABLE\_INT16 | Short\[\] | short?\[\] | boost::optional\<std::vector\<boost::optional\<int16\_t\>\>\> | (number \| null)\[\] \| null | Optional\[list\[Optional\[int\]\]\] | \[\]\*int16 | Array of nullable int16s or null. |
-| INT32 | int | int | int32\_t | number | int | int32 | 32-bit two's complement signed integer. |
-| ARRAY\_OF\_INT32 | int\[\] | int\[\] | boost::optional\<std::vector\<int32\_t\>\> | number\[\] \| null | Optional\[list\[int\]\] | \[\]int32 | Array of int32s or null. |
-| NULLABLE\_INT32 | Integer | int? | boost::optional\<int32\_t\> | number \| null | Optional\[int\] | \*int32 | An int32 that can also be null. |
-| ARRAY\_OF\_NULLABLE\_INT32 | Integer\[\] | int?\[\] | boost::optional\<std::vector\<boost::optional\<int32\_t\>\>\> | (number \| null)\[\] \| null | Optional\[list\[Optional\[int\]\]\] | \[\]\*int32 | Array of nullable int32s or null. |
-| INT64 | long | long | int64\_t | Long | int | int64 | 64-bit two's complement signed integer. |
-| ARRAY\_OF\_INT64 | long\[\] | long\[\] | boost::optional\<std::vector\<int64\_t\>\> | Long\[\] \| null | Optional\[list\[int\]\] | \[\]int64 | Array of int64s or null. |
-| NULLABLE\_INT64 | Long | long? | boost::optional\<int64\_t\> | Long \| null | Optional\[int\] | \*int64 | An int64 that can also be null. |
-| ARRAY\_OF\_NULLABLE\_INT64 | Long\[\] | long?\[\] | boost::optional\<std::vector\<boost::optional\<int64\_t\>\>\> | (Long \| null)\[\] \| null | Optional\[list\[Optional\[int\]\]\] | \[\]\*int64 | Array of nullable int64s or null. |
-| FLOAT32 | float | float | float | number | float | float32 | 32-bit IEEE 754 floating point number. |
-| ARRAY\_OF\_FLOAT32 | float\[\] | float\[\] | boost::optional\<std::vector\<float\>\> | number\[\] \| null | Optional\[list\[float\]\] | \[\]float32 | Array of float32s or null. |
-| NULLABLE\_FLOAT32 | Float | float? | boost::optional\<float\> | number \| null | Optional\[float\] | \*float32 | A float32 that can also be null. |
-| ARRAY\_OF\_NULLABLE\_FLOAT32 | Float\[\] | float?\[\] | boost::optional\<std::vector\<boost::optional\<float\>\>\> | (number \| null)\[\] \| null | Optional\[list\[Optional\[float\]\]\] | \[\]\*float32 | Array of nullable float32s or null. |
-| FLOAT64 | double | double | double | number | float | float64 | 64-bit IEEE 754 floating point number. |
-| ARRAY\_OF\_FLOAT64 | double\[\] | double\[\] | boost::optional\<std::vector\<double\>\> | number\[\] \| null | Optional\[list\[float\]\] | \[\]float64 | Array of float64s or null. |
-| NULLABLE\_FLOAT64 | Double | double? | boost::optional\<double\> | number \| null | Optional\[float\] | \*float64 | A float64 that can also be null. |
-| ARRAY\_OF\_NULLABLE\_FLOAT64 | Double\[\] | double?\[\] | boost::optional\<std::vector\<boost::optional\<double\>\>\> | (number \| null)\[\] \| null | Optional\[list\[Optional\[float\]\]\] | \[\]\*float64 | Array of nullable float64s or null. |
-| STRING | String | string | std::string | string \| null | Optional\[str\] | \*string | A UTF-8 encoded string or null. |
-| ARRAY\_OF\_STRING | String\[\] | string\[\] | boost::optional\<std::vector\<std::string\>\> | (string \| null)\[\] \| null | Optional\[list\[Optional\[str\]\]\] | \[\]\*string | Array of strings or null. |
-| DECIMAL | BigDecimal | HBigDecimal | boost::optional\<hazelcast::client::big\_decimal\> | BigDecimal \| null | Optional\[decimal.Decimal\] | \*types.Decimal | Arbitrary precision and scale floating point number or null. |
-| ARRAY\_OF\_DECIMAL | BigDecimal\[\] | HBigDecimal\[\] | boost::optional\<std::vector\<boost::optional\<hazelcast::client::big\_decimal\>\>\> | (BigDecimal \| null)\[\] \| null | Optional\[list\[decimal.Decimal\]\] | \[\]\*types.Decimal | Array of decimals or null. |
-| TIME | LocalTime | HLocalTime | boost::optional\<hazelcast::client::local\_time\> | LocalTime \| null | Optional\[datetime.time\] | \*types.LocalTime | Time consisting of hours, minutes, seconds, and nanoseconds or null. |
-| ARRAY\_OF\_TIME | LocalTime\[\] | HLocalTime\[\] | boost::optional\<std::vector\<boost::optional\<local\_time\>\>\> | (LocalTime \| null)\[\] \| null | Optional\[list\[Optional\[datetime.time\]\]\] | \[\]\*types.LocalTime | Array of times or null. |
-| DATE | LocalDate | HLocalDate | boost::optional\<hazelcast::client::local\_date\> | LocalDate \| null | Optional\[datetime.date\] | \*types.LocalDate | Date consisting of year, month, and day of the month or null. |
-| ARRAY\_OF\_DATE | LocalDate\[\] | HLocalDate\[\] | boost::optional\<std::vector\<boost::optional\<local\_date\>\>\> | (LocalDate \| null)\[\] \| null | Optional\[list\[Optional\[datetime.date\]\]\] | \[\]\*types.LocalDate | Array of dates or null. |
-| TIMESTAMP | LocalDateTime | HLocalDateTime | boost::optional\<hazelcast::client::local\_date\_time\> | LocalDateTime \| null | Optional\[datetime.datetime\] | \*types.LocalDateTime | Timestamp consisting of year, month, day of the month, hour, minutes, seconds, and nanoseconds or null. |
-| ARRAY\_OF\_TIMESTAMP | LocalDateTime\[\] | HLocalDateTime\[\] | boost::optional\<std::vector\<boost::optional\<hazelcast::client::local\_date\_time\>\>\> | (LocalDateTime \| null)\[\] \| null | Optional\[list\[Optional\[datetime.datetime\]\]\] | \[\]\*types.LocalDateTime | Array of timestamps or null. |
-| TIMESTAMP\_WITH\_TIMEZONE | OffsetDateTime | HOffsetDateTime | boost::optional\<hazelcast::client::offset\_date\_time\> | OffsetDateTime \| null | Optional\[datetime.datetime\] | \*types.OffsetDateTime | Timestamp with timezone consisting of year, month, day of the month, hour, minutes, seconds, nanoseconds, and offset seconds or null. |
-| ARRAY\_OF\_TIMESTAMP\_WITH\_TIMEZONE | OffsetDateTime\[\] | HOffsetDateTime\[\] | boost::optional\<std::vector\<boost::optional\<hazelcast::client::offset\_date\_time\>\>\> | (OffsetDateTime \| null)\[\] \| null | Optional\[list\[Optional\[datetime.datetime\]\]\] | \[\]\*types.OffsetDateTime | Array of timestamp with timezones or null. |
-| COMPACT | Can be any user type. | Can be any user type. | Can be any user type. | Can be any user type. | Can be any user type. | any | A user defined nested Compact serializable object or null. |
-| ARRAY\_OF\_COMPACT | Can be an array of any user type. | Can be an array of any user type. | Can be an array of any user type. | Can be an array of any user type. | Can be an array of any user type. | \[\]any | Array of user defined Compact serializable objects or null. |
+| `BOOLEAN` | `boolean` | `bool` | `bool` | `boolean` | `bool` | `bool` | Either `true` or `false`, represented by a single bit as `1` or `0`. Up to eight booleans are packed into a single byte. |
+| `ARRAY_OF_BOOLEAN` | `boolean[]` | `bool[]` | `boost::optional<std::vector<bool>>` | `boolean[] \| null` | `Optional[list[bool]]` | `[]bool` | Array of booleans or `null`. Up to eight boolean array items are packed into a single byte. |
+| `NULLABLE_BOOLEAN` | `Boolean` | `bool?` | `boost::optional<bool>` | `boolean \| null` | `Optional[bool]` | `*bool` | A boolean that can also be `null`. |
+| `ARRAY_OF_NULLABLE_BOOLEAN` | `Boolean[]` | `bool?[]` | `boost::optional<std::vector<boost::optional<bool>>>` | `(boolean \| null)[] \| null` | `Optional[list[Optional[bool]]]` | `[]*bool` | Array of nullable booleans or `null`. |
+| `INT8` | `byte` | `sbyte` | `int8_t` | `number` | `int` | `int8` | 8-bit two's complement signed integer. |
+| `ARRAY_OF_INT8` | `byte[]` | `sbyte[]` | `boost::optional<std::vector<int8_t>>` | `Buffer \| null` | `Optional[list[int]]` | `[]int8` | Array of `int8` values or `null`. |
+| `NULLABLE_INT8` | `Byte` | `sbyte?` | `boost::optional<int8_t>` | `number \| null` | `Optional[int]` | `*int8` | An `int8` that can also be `null`. |
+| `ARRAY_OF_NULLABLE_INT8` | `Byte[]` | `sbyte?[]` | `boost::optional<std::vector<boost::optional<int8_t>>>` | `(number \| null)[] \| null` | `Optional[list[Optional[int]]]` | `[]*int8` | Array of nullable `int8` values or `null`. |
+| `INT16` | `short` | `short` | `int16_t` | `number` | `int` | `int16` | 16-bit two's complement signed integer. |
+| `ARRAY_OF_INT16` | `short[]` | `short[]` | `boost::optional<std::vector<int16_t>>` | `number[] \| null` | `Optional[list[int]]` | `[]int16` | Array of `int16` values or `null`. |
+| `NULLABLE_INT16` | `Short` | `short?` | `boost::optional<int16_t>` | `number \| null` | `Optional[int]` | `*int16` | An `int16` that can also be `null`. |
+| `ARRAY_OF_NULLABLE_INT16` | `Short[]` | `short?[]` | `boost::optional<std::vector<boost::optional<int16_t>>>` | `(number \| null)[] \| null` | `Optional[list[Optional[int]]]` | `[]*int16` | Array of nullable `int16` values or `null`. |
+| `INT32` | `int` | `int` | `int32_t` | `number` | `int` | `int32` | 32-bit two's complement signed integer. |
+| `ARRAY_OF_INT32` | `int[]` | `int[]` | `boost::optional<std::vector<int32_t>>` | `number[] \| null` | `Optional[list[int]]` | `[]int32` | Array of `int32` values or `null`. |
+| `NULLABLE_INT32` | `Integer` | `int?` | `boost::optional<int32_t>` | `number \| null` | `Optional[int]` | `*int32` | An `int32` that can also be `null`. |
+| `ARRAY_OF_NULLABLE_INT32` | `Integer[]` | `int?[]` | `boost::optional<std::vector<boost::optional<int32_t>>>` | `(number \| null)[] \| null` | `Optional[list[Optional[int]]]` | `[]*int32` | Array of nullable `int32` values or `null`. |
+| `INT64` | `long` | `long` | `int64_t` | `Long` | `int` | `int64` | 64-bit two's complement signed integer. |
+| `ARRAY_OF_INT64` | `long[]` | `long[]` | `boost::optional<std::vector<int64_t>>` | `Long[] \| null` | `Optional[list[int]]` | `[]int64` | Array of `int64` values or `null`. |
+| `NULLABLE_INT64` | `Long` | `long?` | `boost::optional<int64_t>` | `Long \| null` | `Optional[int]` | `*int64` | An `int64` that can also be `null`. |
+| `ARRAY_OF_NULLABLE_INT64` | `Long[]` | `long?[]` | `boost::optional<std::vector<boost::optional<int64_t>>>` | `(Long \| null)[] \| null` | `Optional[list[Optional[int]]]` | `[]*int64` | Array of nullable `int64` values or `null`. |
+| `FLOAT32` | `float` | `float` | `float` | `number` | `float` | `float32` | 32-bit IEEE 754 floating point number. |
+| `ARRAY_OF_FLOAT32` | `float[]` | `float[]` | `boost::optional<std::vector<float>>` | `number[] \| null` | `Optional[list[float]]` | `[]float32` | Array of `float32` values or `null`. |
+| `NULLABLE_FLOAT32` | `Float` | `float?` | `boost::optional<float>` | `number \| null` | `Optional[float]` | `*float32` | A `float32` that can also be `null`. |
+| `ARRAY_OF_NULLABLE_FLOAT32` | `Float[]` | `float?[]` | `boost::optional<std::vector<boost::optional<float>>>` | `(number \| null)[] \| null` | `Optional[list[Optional[float]]]` | `[]*float32` | Array of nullable `float32` values or `null`. |
+| `FLOAT64` | `double` | `double` | `double` | `number` | `float` | `float64` | 64-bit IEEE 754 floating point number. |
+| `ARRAY_OF_FLOAT64` | `double[]` | `double[]` | `boost::optional<std::vector<double>>` | `number[] \| null` | `Optional[list[float]]` | `[]float64` | Array of `float64` values or `null`. |
+| `NULLABLE_FLOAT64` | `Double` | `double?` | `boost::optional<double>` | `number \| null` | `Optional[float]` | `*float64` | A `float64` that can also be `null`. |
+| `ARRAY_OF_NULLABLE_FLOAT64` | `Double[]` | `double?[]` | `boost::optional<std::vector<boost::optional<double>>>` | `(number \| null)[] \| null` | `Optional[list[Optional[float]]]` | `[]*float64` | Array of nullable `float64` values or `null`. |
+| `STRING` | `String` | `string` | `std::string` | `string \| null` | `Optional[str]` | `*string` | A UTF-8 encoded string or `null`. |
+| `ARRAY_OF_STRING` | `String[]` | `string[]` | `boost::optional<std::vector<std::string>>` | `(string \| null)[] \| null` | `Optional[list[Optional[str]]]` | `[]*string` | Array of strings or `null`. |
+| `DECIMAL` | `BigDecimal` | `HBigDecimal` | `boost::optional<hazelcast::client::big_decimal>` | `BigDecimal \| null` | `Optional[decimal.Decimal]` | `*types.Decimal` | Arbitrary precision and scale floating point number or `null`. |
+| `ARRAY_OF_DECIMAL` | `BigDecimal[]` | `HBigDecimal[]` | `boost::optional<std::vector<boost::optional<hazelcast::client::big_decimal>>>` | `(BigDecimal \| null)[] \| null` | `Optional[list[decimal.Decimal]]` | `[]*types.Decimal` | Array of decimals or `null`. |
+| `TIME` | `LocalTime` | `HLocalTime` | `boost::optional<hazelcast::client::local_time>` | `LocalTime \| null` | `Optional[datetime.time]` | `*types.LocalTime` | Time consisting of hours, minutes, seconds, and nanoseconds or `null`. |
+| `ARRAY_OF_TIME` | `LocalTime[]` | `HLocalTime[]` | `boost::optional<std::vector<boost::optional<local_time>>>` | `(LocalTime \| null)[] \| null` | `Optional[list[Optional[datetime.time]]]` | `[]*types.LocalTime` | Array of times or `null`. |
+| `DATE` | `LocalDate` | `HLocalDate` | `boost::optional<hazelcast::client::local_date>` | `LocalDate \| null` | `Optional[datetime.date]` | `*types.LocalDate` | Date consisting of year, month, and day of the month or `null`. |
+| `ARRAY_OF_DATE` | `LocalDate[]` | `HLocalDate[]` | `boost::optional<std::vector<boost::optional<local_date>>>` | `(LocalDate \| null)[] \| null` | `Optional[list[Optional[datetime.date]]]` | `[]*types.LocalDate` | Array of dates or `null`. |
+| `TIMESTAMP` | `LocalDateTime` | `HLocalDateTime` | `boost::optional<hazelcast::client::local_date_time>` | `LocalDateTime \| null` | `Optional[datetime.datetime]` | `*types.LocalDateTime` | Timestamp consisting of year, month, day of the month, hour, minutes, seconds, and nanoseconds or `null`. |
+| `ARRAY_OF_TIMESTAMP` | `LocalDateTime[]` | `HLocalDateTime[]` | `boost::optional<std::vector<boost::optional<hazelcast::client::local_date_time>>>` | `(LocalDateTime \| null)[] \| null` | `Optional[list[Optional[datetime.datetime]]]` | `[]*types.LocalDateTime` | Array of timestamps or `null`. |
+| `TIMESTAMP_WITH_TIMEZONE` | `OffsetDateTime` | `HOffsetDateTime` | `boost::optional<hazelcast::client::offset_date_time>` | `OffsetDateTime \| null` | `Optional[datetime.datetime]` | `*types.OffsetDateTime` | Timestamp with timezone consisting of year, month, day of the month, hour, minutes, seconds, nanoseconds, and offset seconds or `null`. |
+| `ARRAY_OF_TIMESTAMP_WITH_TIMEZONE` | `OffsetDateTime[]` | `HOffsetDateTime[]` | `boost::optional<std::vector<boost::optional<hazelcast::client::offset_date_time>>>` | `(OffsetDateTime \| null)[] \| null` | `Optional[list[Optional[datetime.datetime]]]` | `[]*types.OffsetDateTime` | Array of timestamp with timezones or `null`. |
+| `COMPACT` | Can be any user type. | Can be any user type. | Can be any user type. | Can be any user type. | Can be any user type. | `any` | A user defined nested Compact serializable object or `null`. |
+| `ARRAY_OF_COMPACT` | Can be an array of any user type. | Can be an array of any user type. | Can be an array of any user type. | Can be an array of any user type. | Can be an array of any user type. | `[]any` | Array of user defined Compact serializable objects or `null`. |
+
+</div>
+</div>
 
 :::note
 
