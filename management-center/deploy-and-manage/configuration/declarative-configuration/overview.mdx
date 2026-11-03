@@ -70,7 +70,7 @@ The file is applied entirely **before** Management Center opens its web server p
 
 ## `applyMode`: how re-running the file behaves
 
-By default, every entity the file declares must be absent, or Management Center refuses to start. Set `applyMode: upsert` to also allow updating entities that already exist, so it's safe to leave the same file pointed at `hazelcast.mc.config.file` across restarts. See [Declarative configuration apply modes](./declarative-configuration-apply-mode.mdx) for the full explanation and mixed-configuration examples.
+By default, every entity the file declares must be absent, or Management Center refuses to start. Set `applyMode: upsert` to also allow updating entities that already exist, and to remove clusters, Prometheus authentication, sensitive-properties settings and local users that the file doesn't declare, so it's safe to leave the same file pointed at `hazelcast.mc.config.file` across restarts. See [Declarative configuration apply modes](./declarative-configuration-apply-mode.mdx) for the full explanation and mixed-configuration examples.
 
 ## Cluster connections {/* #clusters */}
 
@@ -140,7 +140,7 @@ If a **different** security provider type is already active (however it got ther
 
 ### Local
 
-Mirrors [Local security provider](../../security/user-authentication/local-security-provider.mdx). Unlike the other providers, the `local` block holds no connection config, only the users to provision once it's active. `role` is one of `readonly`, `readwrite`, `metricsonly`, or `admin`.
+Mirrors [Local security provider](../../security/user-authentication/local-security-provider.mdx). Unlike the other providers, the `local` block holds no connection config, only the users to provision once it's active. The block must declare at least one user with the `admin` role, or Management Center refuses to start. `role` is one of `readonly`, `readwrite`, `metricsonly`, or `admin`.
 
 ```yaml
 securityProvider:
@@ -151,7 +151,7 @@ securityProvider:
         password: "file:/run/secrets/admin-password"
 ```
 
-Two `users` entries sharing the same `username` in the same file are always rejected. Passwords must meet the same complexity rules as [creating a user in the UI or with `hz-mc conf`](../../security/user-authentication/local-security-provider.mdx).
+Two `users` entries sharing the same `username` in the same file are always rejected. Under `applyMode: upsert`, local users that aren't listed are deleted, admins included. Passwords must meet the same complexity rules as [creating a user in the UI or with `hz-mc conf`](../../security/user-authentication/local-security-provider.mdx).
 
 ### LDAP
 
@@ -298,6 +298,7 @@ This is a separate mechanism from [variable replacers](../variable-replacers.mdx
 ```yaml
 # applyMode governs what happens when a declared entity already exists - see
 # "Declarative configuration apply modes" in the docs. Defaults to createOnly when omitted.
+# Under upsert, clusters, prometheusAuth, sensitiveProperties and local users not declared here are removed.
 # applyMode: upsert
 
 clusters:
@@ -341,6 +342,6 @@ Management Center validates the whole file before writing anything: password str
 
 ## Next steps
 
-- [Declarative configuration apply modes](./declarative-configuration-apply-mode.mdx) — `createOnly` vs. `upsert`, in depth, with mixed-configuration examples.
+- [Declarative configuration apply modes](./declarative-configuration-apply-mode.mdx) — `createOnly` vs. `upsert` (including what `upsert` removes), in depth, with mixed-configuration examples.
 - [Management Center Configuration Tool](../mc-conf.mdx) — the imperative alternative, and the tool this feature reuses under the hood.
 - [Switch to a new security provider](../../security/user-authentication/switching-security-provider.mdx) — how to change the active security provider, including the Dev Mode exception.
