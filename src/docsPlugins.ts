@@ -6,7 +6,7 @@
 //   <id>_versioned_sidebars/  sidebar stubs, gitignored (see ensureVersionedSidebars)
 import fs from 'fs';
 import path from 'path';
-import type {PluginConfig} from '@docusaurus/types';
+import type {ParseFrontMatter, PluginConfig} from '@docusaurus/types';
 import type {Options} from '@docusaurus/plugin-content-docs';
 import latestLinks, {type LatestSegs} from './remark/latestLinks';
 import headingVariables from './remark/headingVariables';
@@ -48,6 +48,17 @@ export function canonicalSitemapItems<T extends {url: string}>(items: T[]): T[] 
   });
 }
 
+// `markdown.parseFrontMatter` hook: a page with `hide_in_snapshot: true` in a component's unreleased snapshot becomes `unlisted`.
+// The release script copies frontmatter into each release, so writing `unlisted` in the file would hide the page in releases too.
+export const parseFrontMatter: ParseFrontMatter = async (params) => {
+  const result = await params.defaultParseFrontMatter(params);
+  const [id] = path.relative(siteDir, params.filePath).split(path.sep);
+  if (result.frontMatter.hide_in_snapshot === true && id !== undefined && id in snapshotSegs) {
+    result.frontMatter.unlisted = true;
+  }
+  return result;
+};
+
 // `caution`/`important` are not default Docusaurus admonition keywords; fidelity Layer 2 compares admonition types.
 const admonitions = {keywords: ['caution', 'important'], extendDefaults: true};
 
@@ -62,25 +73,18 @@ type GeneratorArgs = Parameters<NonNullable<Options['sidebarItemsGenerator']>>[0
 type SidebarItems = Awaited<ReturnType<GeneratorArgs['defaultSidebarItemsGenerator']>>;
 
 // Wraps the default generator to tag each doc link, and each category whose landing page is a doc, with its badge class.
-// A doc with `hide_in_snapshot: true` is also dropped from the sidebar of the component's unreleased snapshot (main while no release matches it).
-// The page stays reachable by URL, so links to it do not break.
-const sidebarItemsGenerator = (id: string): NonNullable<Options['sidebarItemsGenerator']> => async ({
+const sidebarItemsGenerator: NonNullable<Options['sidebarItemsGenerator']> = async ({
   defaultSidebarItemsGenerator,
   ...args
 }) => {
   const frontMatterById = new Map(args.docs.map((doc) => [doc.id, doc.frontMatter as {[key: string]: unknown}]));
-  const inSnapshot = args.version.versionName === 'current' && id in snapshotSegs;
-  const hidden = (docId: string | undefined) =>
-    inSnapshot && docId !== undefined && frontMatterById.get(docId)?.hide_in_snapshot === true;
   const tag = (items: SidebarItems): SidebarItems =>
-    items
-      .filter((item) => !(item.type === 'doc' && hidden(item.id)))
-      .map((item) => {
-        const docId = item.type === 'doc' ? item.id : item.type === 'category' && item.link?.type === 'doc' ? item.link.id : undefined;
-        const badge = docId === undefined ? undefined : navBadgeClass(frontMatterById.get(docId));
-        const tagged = badge ? {...item, className: [item.className, badge].filter(Boolean).join(' ')} : item;
-        return tagged.type === 'category' ? {...tagged, items: tag(tagged.items)} : tagged;
-      });
+    items.map((item) => {
+      const docId = item.type === 'doc' ? item.id : item.type === 'category' && item.link?.type === 'doc' ? item.link.id : undefined;
+      const badge = docId === undefined ? undefined : navBadgeClass(frontMatterById.get(docId));
+      const tagged = badge ? {...item, className: [item.className, badge].filter(Boolean).join(' ')} : item;
+      return tagged.type === 'category' ? {...tagged, items: tag(tagged.items)} : tagged;
+    });
   return tag(await defaultSidebarItemsGenerator({...args}));
 };
 
@@ -93,7 +97,7 @@ function contentDocs(options: Options): PluginConfig {
       ...options,
       // Docusaurus appends each page's repo-relative path, so versioned pages link to their own copy under <id>_versioned_docs.
       editUrl: 'https://github.com/hazelcast/documentation/edit/main/',
-      sidebarItemsGenerator: sidebarItemsGenerator(options.id ?? 'default'),
+      sidebarItemsGenerator,
       beforeDefaultRemarkPlugins: [
         ...(options.beforeDefaultRemarkPlugins ?? []),
         [headingVariables, {pluginId: options.id}],

@@ -83,9 +83,9 @@ function styledBadgeClasses () {
   return new Set([...css.matchAll(/\.(nav-badge-[a-z]+) > \.menu__link::after/g)].map((m) => m[1]))
 }
 
-async function sidebar (frontMatterById, items, versionName = '5.7') {
+async function sidebar (frontMatterById, items) {
   const docs = Object.entries(frontMatterById).map(([id, frontMatter]) => ({id, frontMatter}))
-  return configs.hazelcast.sidebarItemsGenerator({defaultSidebarItemsGenerator: async () => items, docs, version: {versionName}})
+  return configs.hazelcast.sidebarItemsGenerator({defaultSidebarItemsGenerator: async () => items, docs})
 }
 
 test('a beta or enterprise page gets the matching sidebar badge class, and the CSS styles it', async () => {
@@ -120,11 +120,19 @@ test('a category takes the badge of its landing page, nested items are tagged, a
   assert.equal(noLanding.items[0].className, 'nav-badge-beta')
 })
 
-test('hide_in_snapshot drops a page from the snapshot sidebar only', async () => {
-  const items = [{type: 'doc', id: 'a'}, {type: 'doc', id: 'b'}]
-  const frontMatter = {a: {hide_in_snapshot: true}, b: {}}
-  assert.deepEqual((await sidebar(frontMatter, items, 'current')).map((i) => i.id), ['b'])
-  assert.deepEqual((await sidebar(frontMatter, items, '5.7')).map((i) => i.id), ['a', 'b'])
+test('hide_in_snapshot makes a page unlisted in an unreleased snapshot only', async () => {
+  const unlisted = async (file, frontMatter = {hide_in_snapshot: true}) => {
+    const {frontMatter: parsed} = await docsPlugins.parseFrontMatter({
+      filePath: path.join(site, file),
+      fileContent: '',
+      defaultParseFrontMatter: async () => ({frontMatter: {...frontMatter}, content: ''}),
+    })
+    return parsed.unlisted === true
+  }
+  assert.equal(await unlisted('hazelcast/page.mdx'), true, 'snapshot main')
+  assert.equal(await unlisted('hazelcast_versioned_docs/version-5.7/page.mdx'), false, 'release')
+  assert.equal(await unlisted('clc/page.mdx'), false, 'main that is the newest release')
+  assert.equal(await unlisted('hazelcast/page.mdx', {}), false, 'no flag')
 })
 
 // Version names are dotted numbers, compared numerically: 5.10 is newer than 5.9.
