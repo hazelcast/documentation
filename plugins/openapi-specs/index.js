@@ -17,6 +17,9 @@ const { menuAnchors, anchorCollisions } = require('../lib/api-anchors')
 // Requests are conditional (If-None-Match). A failed fetch fails the build: a page whose spec 404s must not publish.
 const STAGING_DIR = '.api-specs'
 const CACHE_FILE = 'cache.json'
+const RETRIES = 2
+const RETRY_DELAY_MS = 500
+const CONCURRENCY = 4
 
 // Only `source` is read; it is a plain quoted string (the {ref} token is literal text in the attribute).
 const API_REFERENCE_RE = /<ApiReference\b[^>]*?\bsource=["']([^"']+)["']/g
@@ -107,7 +110,13 @@ async function fetchSpec ({ owner, repo, ref, filePath }, token, etag) {
   if (token) headers.Authorization = `Bearer ${token}`
   if (etag) headers['If-None-Match'] = etag
 
-  const response = await fetch(apiUrl, { headers })
+  // GitHub answers an occasional request in a burst with 5xx or 429; retry those rather than fail the build.
+  let response
+  for (let attempt = 1; ; attempt++) {
+    response = await fetch(apiUrl, { headers })
+    if (attempt > RETRIES || !(response.status >= 500 || response.status === 429)) break
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * attempt))
+  }
   // Conditional hit: the staged file is current and it didn't count against the rate limit.
   if (response.status === 304) return { unchanged: true }
   if (!response.ok) {
@@ -127,6 +136,14 @@ async function fetchSpec ({ owner, repo, ref, filePath }, token, etag) {
     sha: json.sha,
     etag: response.headers.get('etag'),
   }
+}
+
+async function mapLimit (items, limit, fn) {
+  let next = 0
+  const worker = async () => {
+    while (next < items.length) await fn(items[next++])
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker))
 }
 
 // Delete anything under the staging dir this run did not write, so dropped specs aren't served stale.
@@ -195,8 +212,7 @@ module.exports = function openapiSpecsPlugin (context, options) {
       let unchanged = 0
       let unchecked = 0
 
-      await Promise.all(
-        [...byUpstream.values()].map(async ({ key, request, targets, pages }) => {
+      await mapLimit([...byUpstream.values()], CONCURRENCY, async ({ key, request, targets, pages }) => {
           const cached = cache[key]
           const present = targets.every((t) => fs.existsSync(t))
           // No token, no request: the repos are private, so it would only burn the anonymous rate limit.
@@ -242,8 +258,7 @@ module.exports = function openapiSpecsPlugin (context, options) {
               `[openapi-specs] ${result.unchanged ? 'unchanged' : `updated ${result.sha.slice(0, 8)}`}  ${key}`,
             )
           }
-        }),
-      )
+      })
 
       staged.add(cachePath)
       fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2) + '\n')

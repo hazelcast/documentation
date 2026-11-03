@@ -55,13 +55,14 @@ const OPTIONS = {
 const pageUrl = (seg) => specUrlFor(`/${COMPONENT}/${seg}`, SOURCE)
 
 // A GitHub contents API stand-in: one spec per ref, ETags, and a log of what was asked.
-function github (t, specsByRef, {status} = {}) {
+function github (t, specsByRef, {status, failFirst = 0} = {}) {
   const calls = []
   t.mock.method(globalThis, 'fetch', async (url, {headers}) => {
     const u = new URL(url)
     const ref = u.searchParams.get('ref')
     calls.push({path: u.pathname, ref, headers})
     if (status) return new Response('nope', {status})
+    if (calls.length <= failFirst) return new Response('busy', {status: 500})
     const etag = `"${ref}"`
     if (headers['If-None-Match'] === etag) return new Response(null, {status: 304})
     const content = specsByRef[ref]
@@ -159,12 +160,22 @@ test('the dev server does not refetch a spec that is already staged', async (t) 
 test('a build fails when a spec cannot be fetched, and keeps what was already staged', async (t) => {
   env(t, {NODE_ENV: 'production', GITHUB_TOKEN: 't'})
   quiet(t)
-  github(t, {}, {status: 500})
+  github(t, {}, {status: 404})
   const other = path.join('.api-specs', COMPONENT, '5.10', '_attachments/swagger/older.yaml')
   const dir = site({pages: {[`${COMPONENT}/api.mdx`]: page()}, staged: {[other]: specYaml('Other')}})
 
   await assert.rejects(load(dir), /could not fetch 1 spec/)
   assert.ok(fs.existsSync(path.join(dir, other)), 'a failed run prunes nothing')
+})
+
+test('a GitHub server error is retried before the fetch counts as failed', async (t) => {
+  env(t, {NODE_ENV: 'production', GITHUB_TOKEN: 't'})
+  quiet(t)
+  const calls = github(t, {main: specYaml('A')}, {failFirst: 1})
+  const dir = site({pages: {[`${COMPONENT}/api.mdx`]: page()}})
+  await load(dir)
+  assert.equal(calls.length, 2)
+  assert.match(fs.readFileSync(stagedAt(dir, pageUrl(CURRENT_SEG)), 'utf8'), /title: A/)
 })
 
 test('without a token a build warns about an unstaged spec, skips it, and makes no requests', async (t) => {
@@ -252,4 +263,21 @@ test('specs.json is always written, since the renderer imports it statically', a
   })
   assert.deepEqual(written['specs.json'], {specs: {}, specHashByUrl: {}})
   assert.deepEqual(globalData, {anchorsByUrl: {}})
+})
+
+test('a build sends at most four spec requests to GitHub at a time', async (t) => {
+  env(t, {NODE_ENV: 'production', GITHUB_TOKEN: 't'})
+  quiet(t)
+  let inFlight = 0
+  let peak = 0
+  t.mock.method(globalThis, 'fetch', async () => {
+    peak = Math.max(peak, ++inFlight)
+    await new Promise((resolve) => setTimeout(resolve, 5))
+    inFlight--
+    return Response.json({content: Buffer.from(specYaml('A')).toString('base64'), sha: 'sha-0000000000'})
+  })
+  const pages = {}
+  for (let i = 0; i < 10; i++) pages[`${COMPONENT}/api-${i}.mdx`] = page(SOURCE.replace('rest-client-api', `api-${i}`))
+  await load(site({pages}))
+  assert.equal(peak, 4)
 })
