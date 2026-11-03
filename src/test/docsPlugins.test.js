@@ -83,9 +83,9 @@ function styledBadgeClasses () {
   return new Set([...css.matchAll(/\.(nav-badge-[a-z]+) > \.menu__link::after/g)].map((m) => m[1]))
 }
 
-async function sidebar (frontMatterById, items) {
+async function sidebar (frontMatterById, items, versionName = '5.7') {
   const docs = Object.entries(frontMatterById).map(([id, frontMatter]) => ({id, frontMatter}))
-  return configs.hazelcast.sidebarItemsGenerator({defaultSidebarItemsGenerator: async () => items, docs})
+  return configs.hazelcast.sidebarItemsGenerator({defaultSidebarItemsGenerator: async () => items, docs, version: {versionName}})
 }
 
 test('a beta or enterprise page gets the matching sidebar badge class, and the CSS styles it', async () => {
@@ -118,6 +118,13 @@ test('a category takes the badge of its landing page, nested items are tagged, a
   assert.equal(category.items[0].className, 'existing nav-badge-beta')
   assert.equal(noLanding.className, undefined)
   assert.equal(noLanding.items[0].className, 'nav-badge-beta')
+})
+
+test('hide_in_snapshot drops a page from the snapshot sidebar only', async () => {
+  const items = [{type: 'doc', id: 'a'}, {type: 'doc', id: 'b'}]
+  const frontMatter = {a: {hide_in_snapshot: true}, b: {}}
+  assert.deepEqual((await sidebar(frontMatter, items, 'current')).map((i) => i.id), ['b'])
+  assert.deepEqual((await sidebar(frontMatter, items, '5.7')).map((i) => i.id), ['a', 'b'])
 })
 
 // Version names are dotted numbers, compared numerically: 5.10 is newer than 5.9.
