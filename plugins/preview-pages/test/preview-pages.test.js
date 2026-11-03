@@ -27,6 +27,12 @@ test('maps each doc source to its section, title, URL, and path', () => {
   })
 })
 
+const LIVE = 'https://docs.hazelcast.com'
+const INTRO = 'Page in the preview build; published page (where possible); URL path.'
+
+// GitHub's list of PR files, each with the status it gives a new file.
+const added = (files) => files.map((filename) => ({ filename, status: 'added' }))
+
 const page = (section, path, title = path) => ({ section, title, url: `/${section.toLowerCase().replace(/ /g, '/')}/${path}`, path })
 
 test('lists changed pages under one heading per section and skips files with no page', () => {
@@ -36,10 +42,10 @@ test('lists changed pages under one heading per section and skips files with no 
     'cloud/unchanged.mdx': page('Cloud', 'unchanged'),
   }
   const files = ['cloud/overview.mdx', 'hazelcast/_partials/note.mdx', 'hazelcast/sql/index.mdx', 'README.md']
-  assert.equal(renderComment(files, pages, PREVIEW + '/'), [
+  assert.equal(renderComment(added(files), pages, PREVIEW + '/', LIVE), [
     '### Deploy Preview links',
     '',
-    'Direct links to changed pages.',
+    INTRO,
     '',
     '**Platform 6.0**',
     '',
@@ -56,10 +62,10 @@ const cloudPages = (n) => Object.fromEntries(Array.from({ length: n }, (_, i) =>
 
 test('puts links after the eighth in a dropdown', () => {
   const pages = cloudPages(10)
-  assert.equal(renderComment(Object.keys(pages), pages, PREVIEW), [
+  assert.equal(renderComment(added(Object.keys(pages)), pages, PREVIEW, LIVE), [
     '### Deploy Preview links',
     '',
-    'Direct links to changed pages.',
+    INTRO,
     '',
     '**Cloud**',
     '',
@@ -78,14 +84,28 @@ test('puts links after the eighth in a dropdown', () => {
 
 test('lists at most 20 links per section and counts the rest', () => {
   const pages = cloudPages(1500)
-  const lines = renderComment(Object.keys(pages), pages, PREVIEW).trimEnd().split('\n')
+  const lines = renderComment(added(Object.keys(pages)), pages, PREVIEW, LIVE).trimEnd().split('\n')
   assert.equal(lines.filter((line) => line.startsWith('- [')).length, 20)
   assert.ok(lines.includes('<summary>1492 more</summary>'))
   assert.ok(lines.includes('- ...and 1480 more, too many to list'))
 })
 
+test('links modified pages to the live site, but not new or renamed ones', () => {
+  const pages = { 'cloud/a.mdx': page('Cloud', 'a'), 'cloud/b.mdx': page('Cloud', 'b'), 'cloud/c.mdx': page('Cloud', 'c') }
+  const files = [
+    { filename: 'cloud/a.mdx', status: 'modified' },
+    { filename: 'cloud/b.mdx', status: 'added' },
+    { filename: 'cloud/c.mdx', status: 'renamed', previous_filename: 'cloud/old-c.mdx' },
+  ]
+  assert.deepEqual(renderComment(files, pages, PREVIEW, LIVE).trimEnd().split('\n').slice(-3), [
+    `- [a](${PREVIEW}/cloud/a) ([current](${LIVE}/cloud/a)) \`a\``,
+    `- [b](${PREVIEW}/cloud/b) \`b\``,
+    `- [c](${PREVIEW}/cloud/c) \`c\``,
+  ])
+})
+
 test('prints nothing when no page changed', () => {
-  assert.equal(renderComment(['README.md'], {}, PREVIEW), '')
+  assert.equal(renderComment(added(['README.md']), {}, PREVIEW, LIVE), '')
 })
 
 // Replaces fetch with canned GitHub responses and records each request.
@@ -110,7 +130,7 @@ test('posts a comment when the PR has none', async (t) => {
   assert.deepEqual(requests.at(-1), {
     method: 'POST',
     url: '/repos/hazelcast/documentation/issues/53/comments',
-    body: { body: `### Deploy Preview links\n\nDirect links to changed pages.\n\n**Cloud**\n\n- [Overview](${PREVIEW}/cloud/overview) \`overview\`\n` },
+    body: { body: `### Deploy Preview links\n\n${INTRO}\n\n**Cloud**\n\n- [Overview](${PREVIEW}/cloud/overview) \`overview\`\n` },
   })
 })
 

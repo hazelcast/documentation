@@ -9,6 +9,7 @@
 const DOCS_PLUGIN_NAME = 'docusaurus-plugin-content-docs'
 const REPO = 'hazelcast/documentation'
 const HEADING = '### Deploy Preview links'
+const INTRO = 'Page in the preview build; published page (where possible); URL path.'
 const SHOWN_LINKS = 8
 const MAX_LINKS = 20
 
@@ -54,20 +55,21 @@ function pageMap (plugins, siteConfig) {
 }
 
 // The comment text, or '' if no page changed: one list per product version. Each list shows SHOWN_LINKS links,
-// puts the rest up to MAX_LINKS in a collapsed dropdown, and counts any beyond that.
-function renderComment (changedFiles, pages, previewUrl) {
-  const changed = new Set(changedFiles)
+// puts the rest up to MAX_LINKS in a collapsed dropdown, and counts any beyond that. A page the PR modifies also
+// links to its current version on the live site. New and renamed pages have none at the same URL.
+function renderComment (changedFiles, pages, previewUrl, liveUrl) {
+  const status = new Map(changedFiles.map((file) => [file.filename, file.status]))
   const sections = new Map()
   for (const [file, page] of Object.entries(pages)) {
-    if (!changed.has(file)) continue
+    if (!status.has(file)) continue
     const list = sections.get(page.section) ?? []
-    if (!list.some((p) => p.url === page.url)) list.push(page)
+    if (!list.some((p) => p.url === page.url)) list.push({ ...page, modified: status.get(file) === 'modified' })
     sections.set(page.section, list)
   }
   if (sections.size === 0) return ''
   const base = previewUrl.replace(/\/$/, '')
-  const link = (page) => `- [${page.title}](${base}${page.url})${page.path ? ` \`${page.path}\`` : ''}`
-  const lines = [HEADING, '', 'Direct links to changed pages.']
+  const link = (page) => `- [${page.title}](${base}${page.url})${page.modified ? ` ([current](${liveUrl}${page.url}))` : ''}${page.path ? ` \`${page.path}\`` : ''}`
+  const lines = [HEADING, '', INTRO]
   for (const [section, list] of sections) {
     lines.push('', `**${section}**`, '', ...list.slice(0, SHOWN_LINKS).map(link))
     if (list.length <= SHOWN_LINKS) continue
@@ -100,9 +102,9 @@ async function githubList (token, path) {
 }
 
 // Posts the comment, or edits the one an earlier build posted. If no page changed, it deletes the earlier comment.
-async function commentOnPr ({ token, pr, previewUrl, pages }) {
+async function commentOnPr ({ token, pr, previewUrl, liveUrl, pages }) {
   const files = await githubList(token, `/repos/${REPO}/pulls/${pr}/files`)
-  const body = renderComment(files.map((file) => file.filename), pages, previewUrl)
+  const body = renderComment(files, pages, previewUrl, liveUrl)
   const comments = await githubList(token, `/repos/${REPO}/issues/${pr}/comments`)
   const earlier = comments.find((comment) => comment.body.startsWith(HEADING))
   if (!body) {
@@ -125,6 +127,7 @@ module.exports = function previewPagesPlugin () {
           token: process.env.GITHUB_TOKEN || process.env.GH_TOKEN || new URL(process.env.GIT_CREDENTIALS).username,
           pr: REVIEW_ID,
           previewUrl: DEPLOY_PRIME_URL,
+          liveUrl: siteConfig.url,
           pages: pageMap(plugins, siteConfig),
         })
       } catch (err) {
