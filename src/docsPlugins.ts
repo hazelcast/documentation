@@ -62,18 +62,25 @@ type GeneratorArgs = Parameters<NonNullable<Options['sidebarItemsGenerator']>>[0
 type SidebarItems = Awaited<ReturnType<GeneratorArgs['defaultSidebarItemsGenerator']>>;
 
 // Wraps the default generator to tag each doc link, and each category whose landing page is a doc, with its badge class.
-const sidebarItemsGenerator: NonNullable<Options['sidebarItemsGenerator']> = async ({
+// A doc with `hide_in_snapshot: true` is also dropped from the sidebar of the component's unreleased snapshot (main while no release matches it).
+// The page stays reachable by URL, so links to it do not break.
+const sidebarItemsGenerator = (id: string): NonNullable<Options['sidebarItemsGenerator']> => async ({
   defaultSidebarItemsGenerator,
   ...args
 }) => {
   const frontMatterById = new Map(args.docs.map((doc) => [doc.id, doc.frontMatter as {[key: string]: unknown}]));
+  const inSnapshot = args.version.versionName === 'current' && id in snapshotSegs;
+  const hidden = (docId: string | undefined) =>
+    inSnapshot && docId !== undefined && frontMatterById.get(docId)?.hide_in_snapshot === true;
   const tag = (items: SidebarItems): SidebarItems =>
-    items.map((item) => {
-      const docId = item.type === 'doc' ? item.id : item.type === 'category' && item.link?.type === 'doc' ? item.link.id : undefined;
-      const badge = docId === undefined ? undefined : navBadgeClass(frontMatterById.get(docId));
-      const tagged = badge ? {...item, className: [item.className, badge].filter(Boolean).join(' ')} : item;
-      return tagged.type === 'category' ? {...tagged, items: tag(tagged.items)} : tagged;
-    });
+    items
+      .filter((item) => !(item.type === 'doc' && hidden(item.id)))
+      .map((item) => {
+        const docId = item.type === 'doc' ? item.id : item.type === 'category' && item.link?.type === 'doc' ? item.link.id : undefined;
+        const badge = docId === undefined ? undefined : navBadgeClass(frontMatterById.get(docId));
+        const tagged = badge ? {...item, className: [item.className, badge].filter(Boolean).join(' ')} : item;
+        return tagged.type === 'category' ? {...tagged, items: tag(tagged.items)} : tagged;
+      });
   return tag(await defaultSidebarItemsGenerator({...args}));
 };
 
@@ -86,7 +93,7 @@ function contentDocs(options: Options): PluginConfig {
       ...options,
       // Docusaurus appends each page's repo-relative path, so versioned pages link to their own copy under <id>_versioned_docs.
       editUrl: 'https://github.com/hazelcast/documentation/edit/main/',
-      sidebarItemsGenerator,
+      sidebarItemsGenerator: sidebarItemsGenerator(options.id ?? 'default'),
       beforeDefaultRemarkPlugins: [
         ...(options.beforeDefaultRemarkPlugins ?? []),
         [headingVariables, {pluginId: options.id}],
