@@ -6,7 +6,7 @@ slug: /deploy-manage/declarative-configuration-apply-mode
 beta: true
 ---
 
-`applyMode` controls whether Management Center's YAML declarative configuration file can update entities that already exist, and under `upsert` also remove ones it doesn't declare, so you can safely reapply the same file across restarts.
+`applyMode` controls whether Management Center's YAML declarative configuration file can update entities that already exist. Under `upsert`, the file also removes entities that it does not declare. You can then safely reapply the same file across restarts.
 
 :::important
 
@@ -14,12 +14,12 @@ beta: true
 
 :::
 
-A top-level `applyMode` key, `createOnly` or `upsert`, governs what happens when a declared entity — a cluster, a user, sensitive properties, Prometheus authentication, or the security provider — already exists, however it got there: the UI, `hz-mc conf`, or a previous run of the same file. Entities the file does not declare are always left alone under `createOnly`; under `upsert` they are removed (see [What `upsert` removes](#what-upsert-removes)).
+A top-level `applyMode` key, `createOnly` or `upsert`, governs what happens when a declared entity already exists, however it got there: the UI, `hz-mc conf`, or a previous run of the same file. Declared entities are clusters, users, sensitive properties, Prometheus authentication, and the security provider. Under `createOnly`, Management Center leaves entities that the file does not declare alone. Under `upsert`, it removes them. See [What `upsert` removes](#what-upsert-removes).
 
 | applyMode | Behavior when a declared entity already exists |
 | --- | --- |
 | `createOnly (default)` | The **whole file** is rejected and Management Center refuses to start. If the entity is absent, it's created. No partial application, no silent skip, no silent overwrite — a bad `createOnly` file touches nothing. |
-| `upsert` | The entity is updated in place instead of rejecting the file. If it's absent, it's created, same as `createOnly`. Entities the file does not declare are removed. Safe to leave `hazelcast.mc.config.file` pointed at the same file across restarts — each boot reconciles the database to match whatever the file currently says. |
+| `upsert` | The entity is updated in place instead of rejecting the file. If it is absent, Management Center creates it, same as `createOnly`. Management Center removes entities that the file does not declare. Safe to leave `hazelcast.mc.config.file` pointed at the same file across restarts. Each boot reconciles the database to match the file. |
 
 Omitting `applyMode` entirely defaults to `createOnly`. An explicit `applyMode:` key with nothing after it is rejected outright, rather than silently falling back to the default.
 
@@ -99,7 +99,7 @@ If Management Center is restarted with this exact same file still pointed at `ha
 
 ### Ongoing reconciliation: `upsert`
 
-The same instance, later. This file is safe to leave pointed at `hazelcast.mc.config.file` permanently: a second cluster and rotated LDAP bind password are picked up on the next restart, and an existing masked-property XPath entry is left alone because it's omitted here. Any other cluster that exists in Management Center but is not listed below is removed.
+The same instance, later. This file is safe to leave pointed at `hazelcast.mc.config.file` permanently: the next restart picks up a second cluster and a rotated LDAP bind password. An existing masked-property XPath entry stays as it is, because the file omits it. Management Center removes any other cluster that is not listed below.
 
 ```yaml
 applyMode: upsert
@@ -145,7 +145,7 @@ What happens on this restart:
 
 - `prod-cluster` is updated in place; `dr-cluster` didn't exist yet, so it's created.
 - `sensitiveProperties.hidden` is replaced outright with the two entries above; `maskedConfigXPaths` is left exactly as it was, because the key is omitted, not set to an empty list.
-- Any cluster not listed under `clusters` is deleted, along with its query history.
+- Management Center deletes any cluster not listed under `clusters`, along with its query history.
 - The Prometheus scrape-endpoint password is rotated.
 - The LDAP provider's bind password is rotated in place, because LDAP is already the active provider — if a **different** provider had been active instead, this whole file would be rejected regardless of `applyMode`.
 

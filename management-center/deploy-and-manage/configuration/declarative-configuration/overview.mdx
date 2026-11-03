@@ -140,7 +140,7 @@ If a **different** security provider type is already active (however it got ther
 
 ### Local
 
-Mirrors [Local security provider](../../security/user-authentication/local-security-provider.mdx). Unlike the other providers, the `local` block holds no connection config, only the users to provision once it's active. The block must declare at least one user with the `admin` role, or Management Center refuses to start. `role` is one of `readonly`, `readwrite`, `metricsonly`, or `admin`.
+Mirrors [Local security provider](../../security/user-authentication/local-security-provider.mdx). Unlike the other providers, the `local` block holds no connection config, only the users to provision once the provider is active. The block must declare at least one user with the `admin` role, or Management Center refuses to start. `role` is one of `readonly`, `readwrite`, `metricsonly`, or `admin`.
 
 ```yaml
 securityProvider:
@@ -151,7 +151,7 @@ securityProvider:
         password: "file:/run/secrets/admin-password"
 ```
 
-Two `users` entries sharing the same `username` in the same file are always rejected. Under `applyMode: upsert`, local users that aren't listed are deleted, admins included. Passwords must meet the same complexity rules as [creating a user in the UI or with `hz-mc conf`](../../security/user-authentication/local-security-provider.mdx).
+Two `users` entries sharing the same `username` in the same file are always rejected. Under `applyMode: upsert`, Management Center deletes local users that are not listed, admins included. Passwords must meet the same complexity rules as [creating a user in the UI or with `hz-mc conf`](../../security/user-authentication/local-security-provider.mdx).
 
 ### LDAP
 
@@ -342,6 +342,6 @@ Management Center validates the whole file before writing anything: password str
 
 ## Next steps
 
-- [Declarative configuration apply modes](./declarative-configuration-apply-mode.mdx) — `createOnly` vs. `upsert` (including what `upsert` removes), in depth, with mixed-configuration examples.
+- [Declarative configuration apply modes](./declarative-configuration-apply-mode.mdx) — `createOnly` versus `upsert`, including what `upsert` removes, with mixed-configuration examples.
 - [Management Center Configuration Tool](../mc-conf.mdx) — the imperative alternative, and the tool this feature reuses under the hood.
 - [Switch to a new security provider](../../security/user-authentication/switching-security-provider.mdx) — how to change the active security provider, including the Dev Mode exception.
