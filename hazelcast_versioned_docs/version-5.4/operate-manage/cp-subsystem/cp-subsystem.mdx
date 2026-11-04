@@ -20,7 +20,7 @@ CP Subsystem APIs can be used for the following:
 | --- | --- |
 | *caller* | A Hazelcast member or client that interacts with the CP Subsystem through APIs. |
 
-## CP Data Structures
+## CP data structures
 
 When the CP Subsystem is enabled, its data structures maintain linearizability and prefer consistency over availability during network partitions. These data structures are *CP* with respect to the [CAP theorem](https://hazelcast.com/foundations/distributed-computing/cap-theorem/). Other Hazelcast data structures are *AP*, preferring availability during network partitions.
 
@@ -33,7 +33,7 @@ CP Subsystem supports the following Hazelcast data structures:
 - [Countdown latch](../../develop-build/distributed-data-structures/icountdownlatch.mdx)
 - [`CPMap`](../../develop-build/distributed-data-structures/cpmap.mdx) (Enterprise Edition only)
 
-## CP Members
+## CP members
 
 Hazelcast cluster members that take part in the CP Subsystem are called *CP members*. Not all members of a Hazelcast cluster need to take part in the CP Subsystem, and non-CP members are sometimes called *AP members*.
 
@@ -43,14 +43,14 @@ After CP Subsystem is initialized, more CP members can be added at runtime and t
 
 CP members can also contain data for the *AP* data structures, such as map and set.
 
-Each CP member has a CP UUID that other CP members use to identify it. Members that form the CP Subsystem at startup use their member UUID as their CP UUID. A member that is [promoted](./management.mdx#promoting-a-local-member-to-a-cp-member) to a CP member after the CP Subsystem has formed gets a new, randomly generated UUID when it is promoted. You will see this CP UUID in the following places:
+Each CP member has a CP UUID that other CP members use to identify it. Members that form the CP Subsystem at startup use their member UUID as their CP UUID. A member that is [promoted](./management.mdx#promoting-a-local-member-to-a-cp-member) to a CP member after the CP Subsystem has formed gets a new, randomly generated UUID when it is promoted. This CP UUID appears in the following places:
 
 - Requests to REST endpoints in the CP group
 - Responses from REST endpoints in the CP group
 - Member logs
 - Management Center
 
-### Unsafe Mode
+### Unsafe mode
 
 When a cluster is not configured with [CP members](#cp-members), the CP Subsystem is disabled and any CP data structures, except `CPMap`, operate in *unsafe mode*. `CPMap` is not available in unsafe mode.
 
@@ -70,32 +70,34 @@ Unsafe mode provides weaker consistency guarantees than the CP Subsystem. For ex
 
 As a result, unsafe mode is not recommended for use cases that require strong consistency. Instead, this mode is suitable only for development or testing.
 
-## CP Groups
+## CP groups
 
 CP data structures are stored in *CP groups*. The CP Subsystem has two built-in CP groups:
 
 - `METADATA`: An internal CP group, which is responsible for managing CP members and CP groups. This group is initialized during cluster startup when the CP Subsystem is enabled.
 - `default`: The group that CP data structures are stored in when no specific group name is given when they are created. It is created when the first CP data structure in it is created. See [CP Data Structures](../../develop-build/distributed-data-structures/distributed-data-structures.mdx#cp-data).
 
-### Majority and Minority
+### Majority and minority
 
 Operations that change CP data are committed and executed only after they are successfully replicated to the majority of CP members in a CP group. As a result, a CP group must maintain a majority of CP members to continue working.
 
-For example, when 6 accessible CP members are available, the configured CP member count is 7, and `group-size` is not set, the minority is 3 members and the majority is 4 members.
+For example, suppose that the configured CP member count is seven, `group-size` is not set, and six CP members are accessible. The minority is three members and the majority is four members.
 
 To configure the number of CP members that participate in a group, use the [`group-size`](./configuration.mdx#group-size) option.
 
-### Leaders and Followers {/* #consensus */}
+### Leaders and followers {/* #consensus */}
 
 Each CP group elects its own Raft leader, which runs the [Raft consensus algorithm](http://thesecretlivesofdata.com/raft/). All other CP members in the group then become followers.
 
 A Raft leader is responsible for handling incoming requests from [callers](#glossary) and replicating those requests to follower members. To maintain the authority of the Raft leader and to help lagging CP group members to make progress, each CP group uses internal heartbeats.
 
-Each CP member can participate in more than one CP group. However, if a CP member is the leader of too many CP groups compared to other CP members, it can turn into a bottleneck. Therefore, the CP Subsystem runs a periodic background task to try to make sure that each CP member is a leader for an equal number of CP groups. When CP members have different priorities, the task first moves leadership to the members with the highest priority. For example, a cluster has three CP members and three CP groups, each CP member becomes the Raft leader for only one CP group. If one more CP group is created, then one of the CP members becomes the Raft leader for two CP groups.
+Each CP member can participate in more than one CP group. However, if a CP member is the leader of too many CP groups compared to other CP members, it can turn into a bottleneck.
+
+Therefore, the CP Subsystem runs a periodic background task to try to make sure that each CP member is a leader for an equal number of CP groups. When CP members have different priorities, the task first moves leadership to the members with the highest priority. For example, a cluster has three CP members and three CP groups, each CP member becomes the Raft leader for only one CP group. If one more CP group is created, then one of the CP members becomes the Raft leader for two CP groups.
 
 You can also give CP members a priority rating to affect their chances of becoming a leader. See [Configuring Leadership Priority](./configuration.mdx#configuring-leadership-priority).
 
-## CP Sessions {/* #sessions */}
+## CP sessions {/* #sessions */}
 
 For CP data structures that involve resource ownership management, such as fenced locks or semaphores, sessions are required to keep track of liveliness of [callers](#glossary). Semaphores with `jdk-compatible` set to `true` do not use sessions.
 
@@ -109,11 +111,11 @@ To keep its session alive while it holds a lock or permits, a caller commits a p
 
 A session is closed when the caller does not touch the session during a configurable duration. In this case, the caller is assumed to be crashed and all its resources are released automatically.
 
-## CP Member Discovery
+## CP member discovery
 
 When the CP Subsystem is enabled, every member that is not a lite member starts a discovery process to find the CP members. Members that are not chosen as CP members then continue as AP members.
 
-The CP discovery process runs out of the box without requiring any custom configuration for different environments. It is completed when each CP member initializes its local CP member list and commits it to the `METADATA` CP group. A soon-to-be CP member terminates itself if any of the following conditions occur before the CP discovery process is completed:
+The CP discovery process runs out of the box without requiring any custom configuration for different environments. It is completed when each CP member initializes its local CP member list and commits it to the `METADATA` CP group. A member that is about to become a CP member terminates itself if any of the following conditions occur before the CP discovery process is completed:
 
 - Any member that is not a lite member leaves the cluster
 - The local Hazelcast member commits a CP member list which is different from other members' committed CP member lists
@@ -121,7 +123,7 @@ The CP discovery process runs out of the box without requiring any custom config
 
 When CP Subsystem is reset, the CP discovery process is triggered again. However, if discovery fails, members cancel discovery instead of terminating themselves, because Hazelcast members are likely to contain data for AP data structures and their termination can cause data loss. Hence, you need to observe the cluster and check if the CP discovery process completes successfully on the CP Subsystem reset. See the [CP Subsystem Management APIs section](./management.mdx) for more details.
 
-## Fault Tolerance
+## Fault tolerance
 
 By default, the CP Subsystem works only in memory without persisting any state to disk. This means that a crashed CP member is not able to rejoin the cluster by restoring its previous state. Therefore, crashed CP members increase the risk of gradually losing the majority of CP groups and eventually the total loss of the CP Subsystem. To prevent such situations, crashed CP members can be removed from the CP Subsystem and replaced in CP groups with other available CP members. This flexibility provides a good degree of fault tolerance at runtime.
 
@@ -133,20 +135,47 @@ By default, CP Subsystem works in memory without persisting any state to disk. A
 
 CP Subsystem Persistence enables CP members to recover from member or cluster-wide crashes. As long as a majority of CP members are available after the recovery, the CP Subsystem remains operational, and guarantees that no committed operations are lost after recovery. When you restart a majority of CP members, they restore their local state and resume working as if they had never crashed.
 
-### Example Scenarios
+## Example failure scenarios
 
-The following is an example scenario of **a permanent crash** where a CP member either crashes while CP Subsystem Persistence is disabled, or it crashes while CP Subsystem Persistence is enabled but its CP data cannot be recovered:
+The following scenarios describe how the CP Subsystem behaves when CP members crash or disconnect, or when a network partition occurs. In a **permanent crash**, a CP member either crashes while CP Subsystem Persistence is disabled, or it crashes while CP Subsystem Persistence is enabled but its CP data cannot be recovered.
 
-- If a CP member leaves the Hazelcast cluster, it is not removed from the CP Subsystem straight away, because the CP Subsystem cannot determine if that member has actually crashed or just disconnected from the cluster. Until it is removed, an absent CP member is still considered in majority calculations and puts the availability of the CP Subsystem at risk. When CP Subsystem Persistence is disabled, an absent CP member is removed automatically after four hours by default. See [`missing-cp-member-auto-removal-seconds`](./configuration.mdx#missing-cp-member-auto-removal-seconds). If you know for sure that an absent CP member is crashed, you can remove that CP member from CP Subsystem yourself.
-- There might be a small window of unavailability after a CP member crash even if the majority of CP members are still online. For instance, if a crashed CP member is the Raft leader for some CP groups, those CP groups run a new leader election round to elect a new leader among remaining CP group members. CP Subsystem API calls that internally hit those CP groups are retried until they have new Raft leaders or the call times out. If a failed CP member has the Raft follower role, it causes a very minimal disruption since Raft leaders are still able to replicate and commit operations with the majority of their CP group members.
-- If a crashed CP member is restarted after it is removed from CP Subsystem, its behavior depends on whether CP Subsystem Persistence is enabled or disabled. If enabled, a restarted CP member is not able to restore its CP data from disk because after it joins back to the cluster it notices that it is no longer a CP member. Because of that, it fails its startup process and prints an error message. The only thing to do in this case is manually delete its CP Persistence directory since its data is no longer useful. On the other hand, if CP Subsystem Persistence is disabled, a failed CP member cannot remember anything related to its previous CP identity, hence it restarts as a new AP member.
-- A CP member can encounter a network issue and disconnect from the cluster. If you remove this CP member from CP Subsystem even though it is actually alive but only disconnected, you should terminate it to prevent any accidental communication with the other CP members in CP Subsystem.
-- If a network partition occurs, behavior of CP Subsystem depends on how CP members are divided in different sides of the network partition and to which sides Hazelcast clients are connected. Each CP group remains available on the side that contains the majority of its CP members. If a Raft leader falls into the minority side, its CP group elects a new Raft leader on the other side and callers that are talking to the majority side continue to make successful API calls on CP Subsystem. However, callers that are talking to the minority side fail with operation timeouts. When the network problem is resolved, CP members reconnect to each other and CP groups continue their operation normally.
-- Each CP group can tolerate the failure of a minority of its members (fewer than `N / 2 + 1`, where `N` is the group size) for availability. If `N / 2 + 1` or more members of a CP group crash, that CP group loses its availability. If CP Subsystem Persistence is enabled and the majority of CP members become online by successfully restarting some of failed CP members, CP Subsystem regains its availability back. Otherwise, it means that CP Subsystem has lost its majority irrevocably. In this case, the only solution is to wipe-out the whole CP Subsystem state by performing a force-reset.
+### A CP member leaves the cluster
 
-When the CP member count is greater than the CP group size, CP groups are formed by selecting a subset of CP members. In this case, each CP group can have a different set of CP members, therefore different fault tolerance and availability conditions. In the following list, CP Subsystem's additional fault tolerance capabilities are discussed for this configuration case.
+If a CP member leaves the Hazelcast cluster, it is not removed from the CP Subsystem straight away, because the CP Subsystem cannot determine if that member has actually crashed or just disconnected from the cluster. Until it is removed, an absent CP member is still considered in majority calculations and puts the availability of the CP Subsystem at risk.
 
-- When the majority of a CP group, which isn't the `METADATA` group, permanently crash, that CP group cannot make progress anymore, even though other CP groups in CP Subsystem are running fine. Even a new CP member cannot join this CP group because membership changes also go through the Raft consensus algorithm. For this reason, the only option is to force-destroy this CP group.
+When CP Subsystem Persistence is disabled, an absent CP member is removed automatically after four hours by default. See [`missing-cp-member-auto-removal-seconds`](./configuration.mdx#missing-cp-member-auto-removal-seconds). If you know for sure that an absent CP member is crashed, you can remove that CP member from CP Subsystem yourself.
+
+### A CP group leader crashes
+
+There might be a small window of unavailability after a CP member crash even if the majority of CP members are still online. For instance, if a crashed CP member is the Raft leader for some CP groups, those CP groups run a new leader election round to elect a new leader among remaining CP group members. CP Subsystem API calls that internally hit those CP groups are retried until they have new Raft leaders or the call times out.
+
+If a failed CP member has the Raft follower role, it causes a very minimal disruption since Raft leaders are still able to replicate and commit operations with the majority of their CP group members.
+
+### A removed CP member restarts
+
+If a crashed CP member is restarted after it is removed from CP Subsystem, its behavior depends on whether CP Subsystem Persistence is enabled or disabled.
+
+If enabled, a restarted CP member is not able to restore its CP data from disk because after it joins back to the cluster it notices that it is no longer a CP member. Because of that, it fails its startup process and prints an error message. The only thing to do in this case is manually delete its CP Persistence directory since its data is no longer useful.
+
+On the other hand, if CP Subsystem Persistence is disabled, a failed CP member cannot remember anything related to its previous CP identity, hence it restarts as a new AP member.
+
+### A CP member disconnects
+
+A CP member can encounter a network issue and disconnect from the cluster. If you remove this CP member from CP Subsystem even though it is actually alive but only disconnected, you should terminate it to prevent any accidental communication with the other CP members in CP Subsystem.
+
+### A network partition occurs
+
+If a network partition occurs, behavior of CP Subsystem depends on how CP members are divided in different sides of the network partition and to which sides Hazelcast clients are connected.
+
+Each CP group remains available on the side that contains the majority of its CP members. If a Raft leader falls into the minority side, its CP group elects a new Raft leader on the other side and callers that are talking to the majority side continue to make successful API calls on CP Subsystem. However, callers that are talking to the minority side fail with operation timeouts. When the network problem is resolved, CP members reconnect to each other and CP groups continue their operation normally.
+
+### A CP group loses its majority
+
+Each CP group can tolerate the failure of a minority of its members (fewer than `N / 2 + 1`, where `N` is the group size) for availability. If `N / 2 + 1` or more members of a CP group crash, that CP group loses its availability. If CP Subsystem Persistence is enabled and the majority of CP members become online by successfully restarting some of failed CP members, CP Subsystem regains its availability back. Otherwise, it means that CP Subsystem has lost its majority irrevocably. In this case, the only solution is to wipe-out the whole CP Subsystem state by performing a force-reset.
+
+### A CP group other than `METADATA` loses its majority
+
+When the CP member count is greater than the CP group size, each CP group can have a different set of CP members. When the majority of a CP group, which isn't the `METADATA` group, permanently crash, that CP group cannot make progress anymore, even though other CP groups in CP Subsystem are running fine. Even a new CP member cannot join this CP group because membership changes also go through the Raft consensus algorithm. For this reason, the only option is to force-destroy this CP group.
 
 :::note
 
@@ -154,4 +183,8 @@ CP groups that have lost their majority must be force-destroyed immediately, bec
 
 :::
 
-- If the majority of the `METADATA` CP group permanently crash, it is equivalent to the permanent crash of the majority CP members of the whole CP Subsystem, even though other CP groups are running fine. In fact, existing CP groups continue serving to incoming requests, but since the `METADATA` CP group is not available anymore, no management tasks can be performed on the CP Subsystem. For instance, a new CP group cannot be created. In this case, the only solution is to wipe-out the whole CP Subsystem state by performing a force-reset. See [CP Subsystem Management](./management.mdx).
+### The `METADATA` CP group loses its majority
+
+When the CP member count is greater than the CP group size, each CP group can have a different set of CP members. If the majority of the `METADATA` CP group permanently crash, it is equivalent to the permanent crash of the majority CP members of the whole CP Subsystem, even though other CP groups are running fine.
+
+In fact, existing CP groups continue serving to incoming requests, but since the `METADATA` CP group is not available anymore, no management tasks can be performed on the CP Subsystem. For instance, a new CP group cannot be created. In this case, the only solution is to wipe-out the whole CP Subsystem state by performing a force-reset. See [CP Subsystem Management](./management.mdx).

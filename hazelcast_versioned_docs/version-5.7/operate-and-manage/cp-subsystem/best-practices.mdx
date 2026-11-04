@@ -1,15 +1,36 @@
 ---
 title: "CP Subsystem best practices"
-sidebar_label: "Best Practices"
+sidebar_label: "Best practices"
 sidebar_position: 4
 slug: /cp-subsystem/best-practices
 ---
 
 Follow these recommendations to get the best performance out of your CP Subsystem deployment.
 
-- Try to reuse already created or existing [CP objects](./cp-subsystem.mdx#cp-data-structures) (`IAtomicReference`, `FencedLock`, etc.) and try to avoid creating new ones because they will not be garbage collected.
-- Because each CP data structure is bounded by a single [CP group](./cp-subsystem.mdx#cp-groups), a client will create a separate session on each CP group that holds the session-based data structure that the client interacts with. While a client holds locks or permits, it sends separate heartbeat messages to each CP group to keep the sessions alive. For instance, if five clients try to acquire four locks, where each lock is placed into a different CP group, then there will be 5 x 4 = 20 heartbeat operations committed in total. However, if all locks are put into the same CP group, there will be only five heartbeats in each period. We strongly recommend that you store all session-based CP data structures (locks and semaphores) in a single CP group to avoid that cost.
-- If you use fenced locks or semaphores, we recommend using a minimal number of CP groups. For these data structures, a Hazelcast member or client starts a new [session](./cp-subsystem.mdx#sessions) on the corresponding CP group when it makes its first acquisition request, and then, while it holds a lock or permit, periodically commits session heartbeats to this CP group to indicate its liveness. If fenced locks and semaphores are distributed to multiple CP groups, there will be a session management overhead on each CP group. For most use cases, the `DEFAULT` CP group should be sufficient to maintain all CP data structure instances.
-- Custom CP groups are recommended only when you benchmark your deployment and decide that performance of the `DEFAULT` CP group is not sufficient for your workload. In which case, you should use multiple [CP groups](./configuration.mdx#choose-a-group-size), spread CP data structures among those groups and try to distribute load evenly. This allows for more parallel processing across multiple leader nodes, reduces the size of individual group snapshots, and allows for snapshots to be persisted in parallel. We recommend creating the same number of CP groups as CP members to maximize throughput.
-- Distribute CP group members across three data centers to balance resilience and performance. For example, a group of seven members with a 3/3/1 split.
-- Minimize latency across your CP Subsystem deployment. Throughput is limited by the latency between the CP group leader and the slowest follower used for quorum calculations.
+## Reuse CP data structures
+
+Reuse existing [CP data structures](./cp-subsystem.mdx#cp-data-structures), such as `IAtomicReference` and `FencedLock`. Each CP data structure keeps its state in its CP group until you call `destroy()` on it, and a destroyed name cannot be used again in the same CP group.
+
+## Keep locks and semaphores in one CP group
+
+Fenced locks and semaphores are session-based CP data structures. A Hazelcast member or client starts a new [session](./cp-subsystem.mdx#sessions) on the corresponding CP group when it makes its first acquisition request. While it holds a lock or permit, it periodically commits session heartbeats to this CP group to indicate its liveness. Each CP data structure is stored in a single [CP group](./cp-subsystem.mdx#cp-groups). As a result, a client has a separate session, with separate heartbeats, on each CP group that holds a lock or semaphore it uses.
+
+For instance, if five clients try to acquire four locks, where each lock is placed into a different CP group, then `5 x 4 = 20` heartbeat operations are committed in total. However, if all locks are put into the same CP group, there are only five heartbeats in each period.
+
+We strongly recommend that you store all fenced locks and semaphores in a single CP group to avoid that cost. For most use cases, the `default` CP group should be sufficient to maintain all CP data structure instances.
+
+## Use custom CP groups only after benchmarking
+
+Custom CP groups are recommended only when you benchmark your deployment and decide that the performance of the `default` CP group is not sufficient for your workload.
+
+In that case, use multiple [CP groups](./configuration.mdx#choose-a-group-size), spread CP data structures among those groups, and try to distribute load evenly. This allows for more parallel processing across multiple CP group leaders, reduces the size of individual group snapshots, and allows for snapshots to be persisted in parallel.
+
+We recommend creating the same number of CP groups as CP members to maximize throughput.
+
+## Spread CP group members across three data centers
+
+Distribute CP group members across three data centers to balance resilience and performance. For example, use a 3/3/1 split for a group of seven members.
+
+## Minimize latency
+
+Minimize latency across your CP Subsystem deployment. Throughput is limited by the latency between the CP group leader and the slowest follower used for quorum calculations.
