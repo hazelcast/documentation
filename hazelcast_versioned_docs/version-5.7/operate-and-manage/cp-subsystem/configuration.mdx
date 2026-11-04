@@ -21,7 +21,7 @@ Running clusters must be [restarted](../maintaining-a-cluster/restart-cluster.md
 
 :::
 
-1. To enable the CP Subsystem, configure a non-zero value for the [`cp-member-count`](#cp-member-count) option:
+1. To enable the CP Subsystem, set the [`cp-member-count`](#cp-member-count) option to `3` or more:
 
    <Tabs groupId="config-format">
    <TabItem value="xml" label="XML">
@@ -54,7 +54,7 @@ Running clusters must be [restarted](../maintaining-a-cluster/restart-cluster.md
    Config config = new Config();
 
    config.getCPSubsystemConfig()
-   .setCPMemberCount(3)
+   .setCPMemberCount(3);
    ```
 
    </TabItem>
@@ -89,11 +89,11 @@ If you want to distribute CP data to a group other than `DEFAULT`, you must spec
 
 :::
 
-CP groups must consist of three, five, or seven members. An odd number of CP members avoids stalemate scenarios in leadership elections and quorum calculations.
+The configured size of CP groups must be three, five, or seven members. An odd number of CP members avoids stalemate scenarios in leadership elections and quorum calculations.
 
 For a CP group of `N` members:
 
-- the majority of members is calculated as `(N + 1) / 2`.
+- the majority of members is calculated as `N / 2 + 1`, using integer division.
 - the number of failing members the group can tolerate is calculated as `(N - 1) / 2`.
 
 For example, in a CP group of five CP members, operations are committed when they are replicated to at least three CP members. This CP group can tolerate the failure of two CP members and remain available.
@@ -152,7 +152,9 @@ This feature does not apply to the `METADATA` group, which is not sensitive to l
 
 ## Configure CP sessions {/* #sessions */}
 
-[Sessions](./cp-subsystem.mdx#sessions) offer a trade-off between liveness and safety. If you set a small value for the [`session-time-to-live-seconds`](#session-time-to-live-seconds) option, a session owner could be considered crashed very quickly and its resources could be released prematurely. On the other hand, if you set a large value, a session could be kept alive for an unnecessarily long duration after its owner crashes. We recommend using the default `session-time-to-live-seconds` duration. If a session owner is known to have crashed, you can close its session manually by calling this method on the handler side: `CPSessionManagementService#forceCloseSession(String, Long)`.
+[Sessions](./cp-subsystem.mdx#sessions) offer a trade-off between liveness and safety. If you set a small value for the [`session-time-to-live-seconds`](#session-time-to-live-seconds) option, a session owner could be considered crashed very quickly and its resources could be released prematurely. On the other hand, if you set a large value, a session could be kept alive for an unnecessarily long duration after its owner crashes. We recommend using the default `session-time-to-live-seconds` duration.
+
+If a session owner is known to have crashed, you can close its session manually by calling `CPSessionManagementService#forceCloseSession(String, long)`.
 
 ## Configure fenced locks {/* #fencedlock-configuration */}
 
@@ -164,11 +166,11 @@ You can configure the reentrancy behavior with the [`lock-acquire-limit`](#lock-
 
 By default, a caller must acquire permits before releasing them and it cannot release a permit that it has not acquired. This means that you can acquire a permit from one thread and release it from another thread, using the same caller, but not different callers. In this mode, acquired permits are automatically released upon failure of the caller.
 
-To enable a permit to be released without acquiring it first, enable JDK compatibility by setting the `jdk-compatibility` option to `true`.
+To enable a permit to be released without acquiring it first, enable JDK compatibility by setting the `jdk-compatible` option to `true`.
 
 :::warning
 
-When `jdk-compatibility` is set to `true`, Hazelcast does not auto-cleanup acquired permits upon caller failures. If a permit holder fails, its permits must be <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/cp/ISemaphore.html#release(int)" text="released manually" />.
+When `jdk-compatible` is set to `true`, Hazelcast does not auto-cleanup acquired permits upon caller failures. If a permit holder fails, its permits must be <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/cp/ISemaphore.html#release(int)" text="released manually" />.
 
 :::
 
@@ -176,11 +178,11 @@ When `jdk-compatibility` is set to `true`, Hazelcast does not auto-cleanup acqui
 
 If CP Subsystem persistence is disabled, CP members lose their state after shutting down and so cannot rejoin the CP Subsystem. You can configure CP members to be automatically removed from the CP Subsystem after they shut down as well as how long to wait after they shut down before removing them.
 
-By default, missing CP members are automatically removed from the CP Subsystem after four hours and are replaced by other CP members if any are available. You can configure this time using the [`missing-cp-member-auto-removal-seconds`](#missing-cp-member-auto-removal-seconds) option.
+By default, missing CP members are automatically removed from the CP Subsystem after four hours and are replaced by other CP members if any are available. A CP member with `auto-step-down-when-leader` enabled is not used as a replacement if the group would then have too few members that can become leader. You can configure this time using the [`missing-cp-member-auto-removal-seconds`](#missing-cp-member-auto-removal-seconds) option.
 
 If a missing CP member rejoins the cluster after it is automatically removed from the CP Subsystem, that CP member must be terminated manually. See [Shutting Down a Hazelcast Member](../maintaining-a-cluster/shutdown.mdx#shutting-down-a-hazelcast-member).
 
-If no CP members are available to replace a missing CP member, the group size of any groups that it was in is reduced and the majority values are recalculated. The CP group will continue to function as long as a majority of the configured number of CP members remains available.
+If no CP members are available to replace a missing CP member, the group size of any groups that it was in is reduced and the majority values are recalculated. The CP group continues to function as long as a majority of its remaining members is available.
 
 When CP Subsystem persistence is enabled, CP members are not automatically removed from the CP Subsystem. These CP members can restore their CP state from disk and rejoin their CP groups. It is your responsibility to [remove CP members](./management.mdx#remove-a-cp-member) if they do not restart.
 
@@ -191,7 +193,7 @@ When you invoke an API method on a CP data structure, the method replicates an i
 You can handle loss of the response in two ways:
 
 - To allow CP leaders to replicate the operation to the CP group multiple times, set the [`fail-on-indeterminate-operation-state`](#fail-on-indeterminate-operation-state) option to `false` (default).
-- To send an `IndeterminateOperationStateException` back to the caller, set the `fail-on-indeterminate-operation-state` option to `true`.
+- To send an `IndeterminateOperationStateException` back to the caller, set the `fail-on-indeterminate-operation-state` option to `true`. Operations that are safe to repeat, such as reads and `FencedLock` unlocks, are still retried if the CP leader leaves the cluster or loses its leadership before it responds.
 
 ## Global configuration options
 
@@ -246,7 +248,7 @@ hazelcast:
 Config config = new Config();
 
 config.getCPSubsystemConfig()
-.setCPMemberCount(7)
+.setCPMemberCount(7);
 ```
 
 </TabItem>
@@ -257,7 +259,7 @@ config.getCPSubsystemConfig()
 <tr>
 <td><Anchor id="group-size" />`group-size`</td>
 <td>Number of CP members to participate in each CP group. If set, this value must conform to the following rules: - Must be `3`, `5` or `7`. - Must be smaller than or equal to [`cp-member-count`](#cp-member-count).</td>
-<td>[`Same as cp-member-count`](#cp-member-count)</td>
+<td>Derived from [`cp-member-count`](#cp-member-count): the same value if it is odd, one less if it is even, and at most `7`</td>
 <td>
 
 <Tabs groupId="config-format">
@@ -287,7 +289,7 @@ hazelcast:
 Config config = new Config();
 
 config.getCPSubsystemConfig()
-.setGroupSize(7)
+.setGroupSize(7);
 ```
 
 </TabItem>
@@ -301,10 +303,10 @@ config.getCPSubsystemConfig()
 
 Duration for a [CP session](#sessions) to be kept alive after the last received heartbeat. A CP session is closed if no session heartbeat is received during this duration.
 
-Must be greater than `session-heartbeat-interval-seconds`, and smaller than or equal to `missing-cp-member-auto-removal-seconds`.
+Must be greater than `session-heartbeat-interval-seconds`. Unless `missing-cp-member-auto-removal-seconds` is `0`, must also be smaller than or equal to `missing-cp-member-auto-removal-seconds`.
 
 </td>
-<td>`60`</td>
+<td>`300`</td>
 <td>
 
 <Tabs groupId="config-format">
@@ -334,7 +336,7 @@ hazelcast:
 Config config = new Config();
 
 config.getCPSubsystemConfig()
-.setSessionTimeToLiveSeconds(300)
+.setSessionTimeToLiveSeconds(300);
 ```
 
 </TabItem>
@@ -381,7 +383,7 @@ hazelcast:
 Config config = new Config();
 
 config.getCPSubsystemConfig()
-.setSessionHeartbeatIntervalSeconds(5)
+.setSessionHeartbeatIntervalSeconds(5);
 ```
 
 </TabItem>
@@ -395,7 +397,7 @@ config.getCPSubsystemConfig()
 
 Duration in seconds to wait before automatically removing a missing CP member from the CP Subsystem.
 
-Must be greater than or equal to [`session-time-to-live-seconds`](#session-time-to-live-seconds).
+Unless the value is `0`, must be greater than or equal to [`session-time-to-live-seconds`](#session-time-to-live-seconds).
 
 A value of `0` means the time is unlimited, so CP members are never automatically removed.
 
@@ -437,7 +439,7 @@ hazelcast:
 Config config = new Config();
 
 config.getCPSubsystemConfig()
-.setMissingCpMemberAutoRemovalSeconds(14400)
+.setMissingCPMemberAutoRemovalSeconds(14400);
 ```
 
 </TabItem>
@@ -479,7 +481,7 @@ hazelcast:
 Config config = new Config();
 
 config.getCPSubsystemConfig()
-.setFailOnIndeterminateOperationState(false)
+.setFailOnIndeterminateOperationState(false);
 ```
 
 </TabItem>
@@ -521,7 +523,7 @@ hazelcast:
 Config config = new Config();
 
 config.getCPSubsystemConfig()
-.setPersistenceEnabled(false)
+.setPersistenceEnabled(false);
 ```
 
 </TabItem>
@@ -569,7 +571,7 @@ hazelcast:
 Config config = new Config();
 
 config.getCPSubsystemConfig()
-.setBaseDir("/cp-data")
+.setBaseDir(new File("cp-data"));
 ```
 
 </TabItem>
@@ -611,7 +613,7 @@ hazelcast:
 Config config = new Config();
 
 config.getCPSubsystemConfig()
-.setDataLoadTimeoutSeconds(120)
+.setDataLoadTimeoutSeconds(120);
 ```
 
 </TabItem>
@@ -648,7 +650,8 @@ Use the following options to configure fenced locks:
 hazelcast:
   cp-subsystem:
     locks:
-      # insert configuration options here
+      lock1:
+        # insert configuration options here
 ```
 
 </TabItem>
@@ -686,7 +689,7 @@ config.getCPSubsystemConfig().addLockConfig(lockConfig);
 <tr>
 <td><Anchor id="name" />`name`</td>
 <td>The name of the fenced lock to configure.</td>
-<td>`' ' (empty)`</td>
+<td>None (required)</td>
 <td>
 
 <Tabs groupId="config-format">
@@ -720,7 +723,7 @@ hazelcast:
 ```java
 Config config = new Config();
 
-FencedLockConfig lockConfig = new FencedLockConfig(lock1, /*acquire limit*/);
+FencedLockConfig lockConfig = new FencedLockConfig("lock1");
 
 config.getCPSubsystemConfig().addLockConfig(lockConfig);
 ```
@@ -745,7 +748,7 @@ config.getCPSubsystemConfig().addLockConfig(lockConfig);
     <locks>
       <fenced-lock>
         <name>lock1</name>
-        <acquire-limit>1</acquire-limit>
+        <lock-acquire-limit>1</lock-acquire-limit>
       </fenced-lock>
     </locks>
   </cp-subsystem>
@@ -769,7 +772,7 @@ hazelcast:
 ```java
 Config config = new Config();
 
-FencedLockConfig lockConfig = new FencedLockConfig(lock1, 1);
+FencedLockConfig lockConfig = new FencedLockConfig("lock1", 1);
 
 config.getCPSubsystemConfig().addLockConfig(lockConfig);
 ```
@@ -792,11 +795,11 @@ Use the following options to configure semaphores:
 ```xml
 <hazelcast>
   <cp-subsystem>
-    < semaphores >
+    <semaphores>
       <semaphore>
         <!-- insert configuration options here -->
-      </semaphore >
-    </semaphores >
+      </semaphore>
+    </semaphores>
   </cp-subsystem>
 </hazelcast>
 ```
@@ -808,7 +811,8 @@ Use the following options to configure semaphores:
 hazelcast:
   cp-subsystem:
     semaphores:
-      # insert configuration options here
+      sem1:
+        # insert configuration options here
 ```
 
 </TabItem>
@@ -846,7 +850,7 @@ config.getCPSubsystemConfig().addSemaphoreConfig(semaphoreConfig);
 <tr>
 <td><Anchor id="semaphore-name" />`name`</td>
 <td>Name of the semaphore.</td>
-<td>`' ' (empty)`</td>
+<td>None (required)</td>
 <td>
 
 <Tabs groupId="config-format">
@@ -929,7 +933,7 @@ hazelcast:
 ```java
 Config config = new Config();
 
-SemaphoreConfig semaphoreConfig = new SemaphoreConfig("sem1", false);
+SemaphoreConfig semaphoreConfig = new SemaphoreConfig("sem1").setJDKCompatible(false);
 
 config.getCPSubsystemConfig().addSemaphoreConfig(semaphoreConfig);
 ```
@@ -1004,8 +1008,8 @@ Use the following options to configure `CPMap` instances:
     <maps>
       <map>
         <!-- insert configuration options here -->
-      </map >
-    </maps >
+      </map>
+    </maps>
   </cp-subsystem>
 </hazelcast>
 ```
@@ -1017,7 +1021,8 @@ Use the following options to configure `CPMap` instances:
 hazelcast:
   cp-subsystem:
     maps:
-      # insert configuration options here
+      map1:
+        # insert configuration options here
 ```
 
 </TabItem>
@@ -1055,7 +1060,7 @@ config.getCPSubsystemConfig().addCPMapConfig(cpMapConfig);
 <tr>
 <td><Anchor id="cpmap-name" />`name`</td>
 <td>Name of the CPMap.</td>
-<td>`' ' (empty)`</td>
+<td>None (required)</td>
 <td>
 
 <Tabs groupId="config-format">
@@ -1081,6 +1086,7 @@ hazelcast:
   cp-subsystem:
     maps:
       map1:
+        max-size-mb: 100
 ```
 
 </TabItem>
@@ -1353,7 +1359,7 @@ config.getCPSubsystemConfig().setRaftAlgorithmConfig(raftConfig);
 </tr>
 <tr>
 <td><Anchor id="append-request-max-entry-count" />`append-request-max-entry-count`</td>
-<td>Maximum number of Raft log entries that can be sent as a batch in a single append entries request. In Hazelcast's Raft consensus algorithm implementation, a leader maintains a separate replication pipeline for each follower. It sends a new batch of Raft log entries to a follower after the follower acknowledges the last append entries request sent by the leader.</td>
+<td>Maximum number of Raft log entries that can be sent as a batch in a single append entries request. In Hazelcast's Raft consensus algorithm implementation, a leader maintains a separate replication pipeline for each follower. It sends a new batch of Raft log entries to a follower after the follower acknowledges the last append entries request sent by the leader, or after the backoff for that request ends.</td>
 <td>`100`</td>
 <td>
 
@@ -1386,7 +1392,7 @@ hazelcast:
 ```java
 Config config = new Config();
 
-RaftAlgorithmConfig raftConfig = new RaftAlgorithmConfig().setMaxMissedLeaderHeartbeatCount(100);
+RaftAlgorithmConfig raftConfig = new RaftAlgorithmConfig().setAppendRequestMaxEntryCount(100);
 
 config.getCPSubsystemConfig().setRaftAlgorithmConfig(raftConfig);
 ```
@@ -1476,7 +1482,7 @@ hazelcast:
 ```java
 Config config = new Config();
 
-RaftAlgorithmConfig raftConfig = new RaftAlgorithmConfig().setCommitIndexAdvanceCountToSnapshot(200);
+RaftAlgorithmConfig raftConfig = new RaftAlgorithmConfig().setUncommittedEntryCountToRejectNewAppends(200);
 
 config.getCPSubsystemConfig().setRaftAlgorithmConfig(raftConfig);
 ```
@@ -1488,7 +1494,7 @@ config.getCPSubsystemConfig().setRaftAlgorithmConfig(raftConfig);
 </tr>
 <tr>
 <td><Anchor id="append-request-backoff-timeout-in-millis" />`append-request-backoff-timeout-in-millis`</td>
-<td>Timeout duration in milliseconds to apply backoff on append entries requests. After a CP group leader sends an append entries request to a follower, it will not send a subsequent append entries request either until the follower responds or this timeout occurs. Backoff durations are increased exponentially if followers remain unresponsive.</td>
+<td>Length in milliseconds of one append request backoff round. When a CP group leader backs off from a follower, it does not send another append entries request until the follower responds or the backoff ends. The first backoff lasts 4 rounds. Each consecutive backoff doubles in length, up to 20 rounds, while the follower remains unresponsive. With the default of 100 ms, backoffs last 400 ms, 800 ms, 1600 ms, and then 2000 ms.</td>
 <td>`100`</td>
 <td>
 
@@ -1588,7 +1594,7 @@ hazelcast:
 Config config = new Config();
 
 config.getCPSubsystemConfig()
-.setCPMemberPriority(5)
+.setCPMemberPriority(5);
 ```
 
 </TabItem>
@@ -1598,7 +1604,7 @@ config.getCPSubsystemConfig()
 </tr>
 <tr>
 <td><Anchor id="auto-step-down-when-leader" />`auto-step-down-when-leader`</td>
-<td>Whether this member should automatically step down if elected leader. If enabled, `cp-member-priority` must be set to zero or below. This can only be enabled on a minority of CP members in a group (`(N - 1) / 2`, for example, two out of five). Configuration that exceeds this limit will cause deployment exceptions.</td>
+<td>Whether this member should automatically step down if elected leader of a CP group other than `METADATA`. If enabled, `cp-member-priority` must be set to zero or below. Each CP group other than `METADATA` can contain at most `(N - 1) / 2` members with this option enabled, where `N` is the group size (for example, two out of five). If more members enable it, CP Subsystem discovery fails at startup, and creating a CP group fails with an `IllegalStateException`.</td>
 <td>`false`</td>
 <td>
 
@@ -1630,7 +1636,7 @@ hazelcast:
 Config config = new Config();
 
 config.getCPSubsystemConfig()
-.setautoStepDownWhenLeader(true)
+.setAutoStepDownWhenLeader(true);
 ```
 
 </TabItem>

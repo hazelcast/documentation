@@ -29,7 +29,7 @@ You can manage and monitor the CP Subsystem using the following tools:
 
 - <Variable href="/management-center/{page-latest-supported-mc}/cp-subsystem/dashboard" text="Management Center" />
 - <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/cp/CPSubsystemManagementService.html" text="Java member API" />
-- [REST API](../../clients-and-apis/apis/enterprise-rest-api/overview.mdx)
+- [Community Edition REST API](../../clients-and-apis/apis/enterprise-rest-api/rest-api.mdx)
 
   - REST endpoint URL
   - `hz-cluster-cp-admin` shell script, which comes with the Hazelcast package (requires `curl`).
@@ -40,23 +40,33 @@ You can manage and monitor the CP Subsystem using the following tools:
 
     :::
 
+  The REST API and its `CP` endpoint group are disabled by default. Before you use the REST examples on this page, [enable the REST API](../../clients-and-apis/apis/enterprise-rest-api/rest-api.mdx#enabling-rest-api) and the [`CP` endpoint group](../../clients-and-apis/apis/enterprise-rest-api/rest-api.mdx#using-rest-endpoint-groups).
+
+  In the POST examples, `${CLUSTERNAME}` is the cluster name. If security is enabled, use the username instead.
+
 ## Shut down CP members
 
 CP member shutdown behavior varies depending on whether CP Subsystem Persistence is enabled or not.
 
 ### Persistence disabled
 
-When CP Subsystem Persistence is disabled (the default mode in which the CP Subsystem works only in memory), a shutting down CP member is replaced with other available CP members in all of its CP groups to avoid decreasing group size or losing majorities. Because CP members keep their local state only in memory, a shut-down CP member cannot join back with its CP identity and state, so it is better to remove it from the CP Subsystem and avoid harming the availability of CP groups. If there is no other available CP member to replace a shutting down CP member in a CP group, that CP group's size is reduced by one and its majority value is recalculated.
+CP Subsystem Persistence is disabled by default. Without Persistence, CP members keep their state only in memory, and a CP member that shuts down cannot rejoin with its CP identity and state. Therefore, a shutting down CP member is removed from the CP Subsystem and replaced with other available CP members in all of its CP groups. This avoids decreasing group size or losing majorities.
 
-When CP Subsystem Persistence is disabled, if there are `N` CP members in the CP Subsystem, you can shut down `N-2` CP members concurrently. Once these `N-2` CP members complete their shutdown, the remaining CP members must be shut down one at a time. Even though the shutdown API can be called concurrently on multiple members, *the METADATA CP* group handles shutdown requests serially. Therefore, it is simpler to shut down CP members one by one by calling `HazelcastInstance.shutdown()` on the next CP member once the current CP member completes its shutdown.
+A CP member with [`auto-step-down-when-leader`](./configuration.mdx#auto-step-down-when-leader) enabled is not used as a replacement if the group would then have too few members that can become leader. If there is no other available CP member to replace a shutting down CP member in a CP group, that CP group's size is reduced by one and its majority value is recalculated.
+
+When CP Subsystem Persistence is disabled, if there are `N` CP members in the CP Subsystem, you can shut down `N-2` CP members concurrently. Once these `N-2` CP members complete their shutdown, the remaining CP members must be shut down one at a time. Even though the shutdown API can be called concurrently on multiple members, the `METADATA` CP group handles shutdown requests serially. Therefore, it is simpler to shut down CP members one by one by calling `HazelcastInstance.shutdown()` on the next CP member once the current CP member completes its shutdown.
 
 ### Persistence enabled
 
-When CP Subsystem Persistence is enabled, a shut-down CP member can come back by restoring its CP state. Therefore, it is not automatically removed from the CP Subsystem. It is up to you to remove shut-down CP members via `CPSubsystemManagementService.removeCPMember(String)` if they will not come back. Shutting down CP members are still kept in the CP Subsystem, so they will be a part of the CP group majority calculations. You can shut down any number of CP members at the same time.
+When CP Subsystem Persistence is enabled, a shut-down CP member can come back by restoring its CP state. Therefore, it is not automatically removed from the CP Subsystem. It is up to you to remove shut-down CP members via `CPSubsystemManagementService.removeCPMember(UUID)` if they will not come back. Shutting down CP members are still kept in the CP Subsystem, so they will be a part of the CP group majority calculations. You can shut down any number of CP members at the same time.
 
 :::note
 
-The reasoning behind this behavior is as follows. Each shutdown request internally requires a Raft commit to the METADATA CP group when CP Subsystem Persistence is disabled. A CP member proceeds to shutdown after it receives a response to this commit. To be able to perform a Raft commit, the METADATA CP group must have its majority up and running. When only 2 CP members are left after graceful shutdowns, the majority of the METADATA CP group becomes 2. If the last 2 CP members shut down concurrently, one of them is likely to perform its Raft commit faster than the other one and leave the cluster before the other CP member completes its Raft commit. In this case, the last CP member waits for a response to its commit attempt on the METADATA CP group, and times out eventually. This situation causes an unnecessary delay on the shutdown process of the last CP member. If the last 2 CP members instead shut down serially, the `N-1`th member receives the response to its commit after its shutdown request is committed also on the last CP member. The last CP member then checks its local data and notices that it is the last CP member alive, and proceeds to shut down without attempting a Raft commit on the METADATA CP group.
+The reasoning behind this behavior is as follows. Each shutdown request internally requires a Raft commit to the `METADATA` CP group when CP Subsystem Persistence is disabled. A CP member proceeds to shutdown after it receives a response to this commit.
+
+To be able to perform a Raft commit, the `METADATA` CP group must have its majority up and running. When only 2 CP members are left after graceful shutdowns, the majority of the `METADATA` CP group becomes 2. If the last 2 CP members shut down concurrently, one of them is likely to perform its Raft commit faster than the other one and leave the cluster before the other CP member completes its Raft commit.
+
+In this case, the last CP member waits for a response to its commit attempt on the `METADATA` CP group, and times out eventually. This situation causes an unnecessary delay on the shutdown process of the last CP member. If the last 2 CP members instead shut down serially, the `N-1`th member receives the response to its commit after its shutdown request is committed also on the last CP member. The last CP member then checks its local data and notices that it is the last CP member alive, and proceeds to shut down without attempting a Raft commit on the `METADATA` CP group.
 
 :::
 
@@ -344,7 +354,7 @@ hz-cluster-cp-admin -o get-members --address 127.0.0.1 --port 5701
 
 To create a custom CP group, add an `@` symbol to the end of the data structure's name followed by the name of the group that you want to create and store the data structure in. For example, a new CP group is created with the name `myGroup` and then an atomic long called `myAtomicLong` is initialized in this custom CP group: `.getAtomicLong("myAtomicLong@myGroup")`.
 
-For most use cases, the `DEFAULT` CP group should be sufficient to maintain all CP data structure instances. See [CP Subsystem best practices](./best-practices.mdx).
+For most use cases, the `default` CP group should be sufficient to maintain all CP data structure instances. See [CP Subsystem best practices](./best-practices.mdx).
 
 ## Get CP groups
 
@@ -491,9 +501,13 @@ hz-cluster-cp-admin -o get-sessions --group ${CPGROUP_NAME} --address 127.0.0.1 
 
 ## Destroy a CP group by force
 
-You can destroy a specified active CP group without using the Raft algorithm mechanics. This method must be used only when a CP group loses its majority and cannot make progress anymore. Membership changes in CP groups, such as CP member promotion or removal, are usually done via the Raft consensus algorithm. However, when a CP group permanently loses its majority, it will not be able to commit any new operation. You can therefore use this method to ungracefully terminate the remaining members of the specified CP group. This method also performs a Raft commit to the `METADATA` CP group to update the status of the destroyed group. Once a CP group is destroyed, all CP data structure proxies created before the destroy fails with `CPGroupDestroyedException`. However, if a new proxy is created afterwards, this CP group is re-created from scratch with a new set of CP members.
+You can force-destroy any active CP group other than the `METADATA` CP group. A force-destroy does not use the Raft algorithm. Use it only when a CP group loses its majority and cannot make progress anymore.
 
-This method is idempotent. It has no effect if the given CP group is already destroyed.
+Membership changes in CP groups, such as CP member promotion or removal, are usually done via the Raft consensus algorithm. However, a CP group that permanently loses its majority cannot commit any new operations. A force-destroy ungracefully stops the Raft algorithm for the CP group on its remaining members. The members themselves keep running. The force-destroy also performs a Raft commit to the `METADATA` CP group to update the status of the destroyed group.
+
+Once a CP group is destroyed, all CP data structure proxies created before the destroy fail with `CPGroupDestroyedException`. However, if a new proxy is created afterwards, this CP group is re-created from scratch with a new set of CP members.
+
+A force-destroy is idempotent. It has no effect if the CP group is already destroyed.
 
 <Tabs groupId="java-member-api--management-center--rest-api">
 <TabItem value="management-center" label="Management Center">
@@ -509,11 +523,11 @@ You cannot destroy a CP group using Management Center.
 <TabItem value="rest-api" label="REST API">
 
 ```sh
-curl -X POST --data "${GROUPNAME}&${PASSWORD}" http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/groups/${CPGROUP_NAME}/remove
+curl -X POST --data "${CLUSTERNAME}&${PASSWORD}" http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/groups/${CPGROUP_NAME}/remove
 
 # OR
 
-hz-cluster-cp-admin -o force-destroy-group --group ${CPGROUP_NAME} --address 127.0.0.1 --port 5701 --groupname ${GROUPNAME} --password ${PASSWORD}
+hz-cluster-cp-admin -o force-destroy-group --group ${CPGROUP_NAME} --address 127.0.0.1 --port 5701 --clustername ${CLUSTERNAME} --password ${PASSWORD}
 ```
 
 </TabItem>
@@ -521,7 +535,7 @@ hz-cluster-cp-admin -o force-destroy-group --group ${CPGROUP_NAME} --address 127
 
 ## Remove a CP member
 
-You can remove a specified CP member from the active CP members list and all CP groups it belongs to. If any other active CP member is available, it replaces the removed CP member in its CP groups. Otherwise, the affected CP groups shrink and their majority values are recalculated.
+You can remove a specified CP member from the active CP members list and all CP groups it belongs to. If any other active CP member is available, it replaces the removed CP member in its CP groups. Otherwise, the affected CP groups shrink and their majority values are recalculated. A CP member with [`auto-step-down-when-leader`](./configuration.mdx#auto-step-down-when-leader) enabled is not used as a replacement if the group would then have too few members that can become leader.
 
 :::warning
 
@@ -543,11 +557,11 @@ See <Variable href="/management-center/{page-latest-supported-mc}/cp-subsystem/d
 <TabItem value="rest-api" label="REST API">
 
 ```sh
-curl -X POST --data "${GROUPNAME}&${PASSWORD}" http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/members/${CPMEMBER_UUID}/remove
+curl -X POST --data "${CLUSTERNAME}&${PASSWORD}" http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/members/${CPMEMBER_UUID}/remove
 
 # OR
 
-hz-cluster-cp-admin -o remove-member --member ${CPMEMBER_UUID} --address 127.0.0.1 --port 5701 --groupname ${GROUPNAME} --password ${PASSWORD}
+hz-cluster-cp-admin -o remove-member --member ${CPMEMBER_UUID} --address 127.0.0.1 --port 5701 --clustername ${CLUSTERNAME} --password ${PASSWORD}
 ```
 
 </TabItem>
@@ -555,7 +569,7 @@ hz-cluster-cp-admin -o remove-member --member ${CPMEMBER_UUID} --address 127.0.0
 
 ## Promote a local member to a CP member
 
-A new CP member can be added to the CP Subsystem to either increase the number of available CP members for new CP groups or to fill the missing slots in existing CP groups. After the initial Hazelcast cluster startup is done, an existing Hazelcast member can be promoted to the CP member role. This new CP member automatically joins to CP groups that have missing members, and majority values of these CP groups are recalculated.
+A new CP member can be added to the CP Subsystem to either increase the number of available CP members for new CP groups or to fill the missing slots in existing CP groups. After the initial Hazelcast cluster startup is done, an existing Hazelcast member that is not a [lite member](../maintaining-a-cluster/lite-members.mdx) can be promoted to the CP member role. This new CP member automatically joins CP groups that have missing members, and majority values of these CP groups are recalculated. A member with [`auto-step-down-when-leader`](./configuration.mdx#auto-step-down-when-leader) enabled does not join a group that would then have too few members that can become leader.
 
 If the local member is already a CP member, this method has no effect.
 
@@ -563,12 +577,7 @@ The promoted CP member will be added to the CP groups that have missing members.
 
 :::note
 
-When a member becomes a CP member, it generates an additional UUID that other CP members can use to identify it. You will see this CP UUID in the following places:
-
-- Requests to REST endpoints in the CP group
-- Responses from REST endpoints in the CP group
-- Member logs
-- Management Center
+When a member is promoted to a CP member, it generates an additional UUID that other CP members can use to identify it. See [CP members](./cp-subsystem.mdx#cp-members).
 
 :::
 
@@ -586,11 +595,11 @@ See <Variable href="/management-center/{page-latest-supported-mc}/cp-subsystem/d
 <TabItem value="rest-api" label="REST API">
 
 ```sh
-curl -X POST --data "${GROUPNAME}&${PASSWORD}" http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/members
+curl -X POST --data "${CLUSTERNAME}&${PASSWORD}" http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/members
 
 # OR
 
-hz-cluster-cp-admin -o promote-member --address 127.0.0.1 --port 5701 --groupname ${GROUPNAME} --password ${PASSWORD}
+hz-cluster-cp-admin -o promote-member --address 127.0.0.1 --port 5701 --clustername ${CLUSTERNAME} --password ${PASSWORD}
 ```
 
 </TabItem>
@@ -642,11 +651,11 @@ See <Variable href="/management-center/{page-latest-supported-mc}/cp-subsystem/d
 <TabItem value="rest-api" label="REST API">
 
 ```sh
-curl -X POST --data "${GROUPNAME}&${PASSWORD}" http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/reset
+curl -X POST --data "${CLUSTERNAME}&${PASSWORD}" http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/reset
 
 # OR
 
-hz-cluster-cp-admin -o reset --address 127.0.0.1 --port 5701 --groupname ${GROUPNAME} --password ${PASSWORD}
+hz-cluster-cp-admin -o reset --address 127.0.0.1 --port 5701 --clustername ${CLUSTERNAME} --password ${PASSWORD}
 ```
 
 </TabItem>
@@ -670,11 +679,11 @@ See <Variable href="/management-center/{page-latest-supported-mc}/cp-subsystem/d
 <TabItem value="rest-api" label="REST API">
 
 ```sh
-curl -X POST --data "${GROUPNAME}&${PASSWORD}" http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/groups/${CPGROUP_NAME}/sessions/${CP_SESSION_ID}/remove
+curl -X POST --data "${CLUSTERNAME}&${PASSWORD}" http://127.0.0.1:5701/hazelcast/rest/cp-subsystem/groups/${CPGROUP_NAME}/sessions/${CP_SESSION_ID}/remove
 
 # OR
 
-hz-cluster-cp-admin -o force-close-session --group ${CPGROUP_NAME} --session-id ${CP_SESSION_ID} --address 127.0.0.1 --port 5701 --groupname ${GROUPNAME} --password ${PASSWORD}
+hz-cluster-cp-admin -o force-close-session --group ${CPGROUP_NAME} --session-id ${CP_SESSION_ID} --address 127.0.0.1 --port 5701 --clustername ${CLUSTERNAME} --password ${PASSWORD}
 ```
 
 </TabItem>
