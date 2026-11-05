@@ -58,15 +58,15 @@ These properties configure Management Center's configuration file, home director
 
 | Property | Environment variable | Default | Description |
 | --- | --- | --- | --- |
-| <Anchor id="hazelcast-mc-auditlog-enabled" />`hazelcast.mc.auditlog.enabled` | `MC_AUDITLOG_ENABLED` | `false` | Whether Management Center logs auditable events. See [Audit Logging](./logging.mdx#audit-logging). |
-| <Anchor id="hazelcast-mc-config-file" />`hazelcast.mc.config.file` | `HAZELCAST_MC_CONFIG_FILE` |  | Path to a YAML declarative configuration file that Management Center applies automatically before it starts. See [YAML declarative configuration (Beta)](./declarative-configuration/overview.mdx). |
-| <Anchor id="hazelcast-mc-configreplacer-class" />`hazelcast.mc.configReplacer.class` |  |  | Full class name of a variable replacer to use. See [Variable replacers](./variable-replacers.mdx). |
-| <Anchor id="hazelcast-mc-configreplacer-failifvaluemissingissing" />`hazelcast.mc.configReplacer.failIfValueMissing` |  | `true` | Whether the configuration loading process stops when a replacement value is missing. |
-| <Anchor id="hazelcast-mc-home" />`hazelcast.mc.home` | `MC_HOME` |  | Home directory where metrics, executed SQL queries, and configuration settings are saved. See [Configure Management Center](./configuring.mdx). |
-| <Anchor id="starting-with-a-license" /><Anchor id="hazelcast-mc-license" />`hazelcast.mc.license` | `MC_LICENSE` |  | Enterprise license. When this property is set, the license takes precedence over one that is set in the user interface, and you cannot update the license in the UI. For more details about licenses, see [Enterprise licenses](../license-management/license-management.mdx). |
-| <Anchor id="hazelcast-mc-lock-skip" />`hazelcast.mc.lock.skip` | `MC_LOCK_SKIP` | `false` | Whether the `hz-mc conf` tool does not check for an `mc.lock` file in the home directory. See [Skipping the Check for a Lock File](./mc-conf.mdx#skip-the-check-for-a-lock-file) |
-| <Anchor id="hazelcast-mc-phone-home-enabled" />`hazelcast.mc.phone.home.enabled` | `MC_PHONE_HOME_ENABLED` | `true` | Whether Management Center sends usage data to the Hazelcast phone home server. See [Usage analytics](../phone-homes.mdx). |
-| <Anchor id="hazelcast-mc-rest-enabled" />`hazelcast.mc.rest.enabled` | `MC_REST_ENABLED` | `false` | Enable [clustered REST](../../integrate/clustered-rest/clustered-rest.mdx) endpoints. |
+| `hazelcast.mc.auditlog.enabled` | `MC_AUDITLOG_ENABLED` | `false` | Whether Management Center logs auditable events. See [Audit Logging](./logging.mdx#audit-logging). |
+| `hazelcast.mc.config.file` | `HAZELCAST_MC_CONFIG_FILE` |  | Path to a YAML declarative configuration file that Management Center applies automatically before it starts. See [YAML declarative configuration (Beta)](./declarative-configuration/overview.mdx). |
+| `hazelcast.mc.configReplacer.class` |  |  | Full class name of a variable replacer to use. See [Variable replacers](./variable-replacers.mdx). |
+| `hazelcast.mc.configReplacer.failIfValueMissing` |  | `true` | Whether the configuration loading process stops when a replacement value is missing. |
+| `hazelcast.mc.home` | `MC_HOME` |  | Home directory where metrics, executed SQL queries, and configuration settings are saved. See [Configure Management Center](./configuring.mdx). |
+| `hazelcast.mc.license` | `MC_LICENSE` |  | Enterprise license. When this property is set, the license takes precedence over one that is set in the user interface, and you cannot update the license in the UI. For more details about licenses, see [Enterprise licenses](../license-management/license-management.mdx). |
+| `hazelcast.mc.lock.skip` | `MC_LOCK_SKIP` | `false` | Whether the `hz-mc conf` tool does not check for an `mc.lock` file in the home directory. See [Skipping the Check for a Lock File](./mc-conf.mdx#skip-the-check-for-a-lock-file). |
+| `hazelcast.mc.phone.home.enabled` | `MC_PHONE_HOME_ENABLED` | `true` | Whether Management Center sends usage data to the Hazelcast phone home server. See [Usage analytics](../phone-homes.mdx). |
+| `hazelcast.mc.rest.enabled` | `MC_REST_ENABLED` | `false` | Enable [clustered REST](../../integrate/clustered-rest/clustered-rest.mdx) endpoints. |
 
 ## Web server
 
@@ -74,20 +74,20 @@ These properties configure the Management Center web server, including the HTTP 
 
 | Property | Environment variable | Default | Description |
 | --- | --- | --- | --- |
-| <Anchor id="hazelcast-mc-contextpath" />`hazelcast.mc.contextPath` | `MC_CONTEXT_PATH` | `' '` (empty) | Prefix of all URL paths in Management Center. |
-| <Anchor id="hazelcast-mc-cors-allowed-origin-patterns" />`hazelcast.mc.cors.allowedOriginPatterns` | `MC_CORS_ALLOWED_ORIGIN_PATTERNS` |  | A list of origins patterns for which cross-origin requests are allowed. |
-| <Anchor id="hazelcast-mc-cors-allowed-methods" />`hazelcast.mc.cors.allowedMethods` | `MC_CORS_ALLOWED_METHODS` |  | HTTP methods to allow for cross-origin requests.<br/><br/>If any other `hazelcast.mc.cors.*` property is set while `hazelcast.mc.cors.allowedMethods` is not set, only `GET` and `HEAD` HTTP methods will be allowed. |
-| <Anchor id="hazelcast-mc-cors-allowed-headers" />`hazelcast.mc.cors.allowedHeaders` | `MC_CORS_ALLOWED_HEADERS` |  | List of headers that a pre-flight request can list as allowed for use during an actual request.<br/><br/>The special value `*` allows actual requests to send any header. |
-| <Anchor id="hazelcast-mc-cors-exposed-headers" />`hazelcast.mc.cors.exposedHeaders` | `MC_CORS_EXPOSED_HEADERS` |  | List of response headers that an actual response might have and can be exposed to the client.<br/><br/>The special value `*` allows all headers to be exposed. |
-| <Anchor id="hazelcast-mc-cors-allow-credentials" />`hazelcast.mc.cors.allowCredentials` | `MC_CORS_ALLOW_CREDENTIALS` |  | Whether user credentials are supported or not. Setting this property to `true` forbids originPatterns, allowedMethods, allowedHeaders to have a `*` value. Be aware that this option establishes a high level of trust with the configured domains and also increases the surface attack of the web application by exposing sensitive user-specific information such as cookies and CSRF tokens. If this property is not set, user credentials are not supported. |
-| <Anchor id="hazelcast-mc-cors-allow-private-network" />`hazelcast.mc.cors.allowPrivateNetwork` | `MC_CORS_ALLOW_PRIVATE_NETWORK` |  | Whether private network access is supported for user-agents restricting such access by default.<br/><br/>Private network requests are requests whose target server's IP address is more private than that from which the request initiator was fetched. For example, a request from a public website (`https://example.com`) to a private website (`https://router.local`), or a request from a private website to localhost.<br/><br/>If this property is not set, private network access is not supported. |
-| <Anchor id="hazelcast-mc-cors-max-age" />`hazelcast.mc.cors.maxAge` | `MC_CORS_MAX_AGE` |  | Configure how long, in seconds, the response from a pre-flight request can be cached by clients. |
-| <Anchor id="hazelcast-mc-forwarded-requests-enabled" />`hazelcast.mc.forwarded.requests.enabled` | `MC_FORWARDED_REQUESTS_ENABLED` | `true` | Whether Management Center reads `X-Forwarded-*` headers from reverse proxies. |
-| <Anchor id="enabling-health-check-endpoint" /><Anchor id="hazelcast-mc-healthcheck-enable" />`hazelcast.mc.healthCheck.enable` | `MC_HEALTH_CHECK_ENABLED` | `false` | Whether the `/health` endpoint is enabled on port [`hazelcast.mc.http.port`](#hazelcast-mc-http-port) + 1. This endpoint is always served over HTTP, regardless of any TLS/SSL settings. This endpoint responds with `200 OK` HTTP status code if Management Center is running. |
-| <Anchor id="hazelcast-mc-healthcheck-port" />`hazelcast.mc.healthCheck.port` | `MC_HEALTH_CHECK_PORT` | [`hazelcast.mc.http.port`](#hazelcast-mc-http-port) + 1 | The port on which the `/health` endpoint is exposed. |
-| <Anchor id="hazelcast-mc-hostaddress" />`hazelcast.mc.hostAddress` | `MC_HOST_ADDRESS` | `0.0.0.0` (all network interfaces) | Network address that Management Center is reachable on. |
-| <Anchor id="hazelcast-mc-http-port" />`hazelcast.mc.http.port` | `MC_HTTP_PORT` | `8080` | HTTP port for Management Center. |
-| <Anchor id="hazelcast-mc-websocket-buffer-size" />`hazelcast.mc.websocket.buffer-size` | `HAZELCAST_MC_WEBSOCKET_BUFFER_SIZE` | `5MB` | The buffer size of the WebSocket connection MC uses for SQL operations. |
+| `hazelcast.mc.contextPath` | `MC_CONTEXT_PATH` | `' '` (empty) | Prefix of all URL paths in Management Center. |
+| `hazelcast.mc.cors.allowedOriginPatterns` | `MC_CORS_ALLOWED_ORIGIN_PATTERNS` |  | A list of origins patterns for which cross-origin requests are allowed. |
+| `hazelcast.mc.cors.allowedMethods` | `MC_CORS_ALLOWED_METHODS` |  | HTTP methods to allow for cross-origin requests.<br/><br/>If any other `hazelcast.mc.cors.*` property is set while `hazelcast.mc.cors.allowedMethods` is not set, only `GET` and `HEAD` HTTP methods will be allowed. |
+| `hazelcast.mc.cors.allowedHeaders` | `MC_CORS_ALLOWED_HEADERS` |  | List of headers that a pre-flight request can list as allowed for use during an actual request.<br/><br/>The special value `*` allows actual requests to send any header. |
+| `hazelcast.mc.cors.exposedHeaders` | `MC_CORS_EXPOSED_HEADERS` |  | List of response headers that an actual response might have and can be exposed to the client.<br/><br/>The special value `*` allows all headers to be exposed. |
+| `hazelcast.mc.cors.allowCredentials` | `MC_CORS_ALLOW_CREDENTIALS` |  | Whether user credentials are supported or not. Setting this property to `true` forbids originPatterns, allowedMethods, allowedHeaders to have a `*` value. Be aware that this option establishes a high level of trust with the configured domains and also increases the surface attack of the web application by exposing sensitive user-specific information such as cookies and CSRF tokens. If this property is not set, user credentials are not supported. |
+| `hazelcast.mc.cors.allowPrivateNetwork` | `MC_CORS_ALLOW_PRIVATE_NETWORK` |  | Whether private network access is supported for user-agents restricting such access by default.<br/><br/>Private network requests are requests whose target server's IP address is more private than that from which the request initiator was fetched. For example, a request from a public website (`https://example.com`) to a private website (`https://router.local`), or a request from a private website to localhost.<br/><br/>If this property is not set, private network access is not supported. |
+| `hazelcast.mc.cors.maxAge` | `MC_CORS_MAX_AGE` |  | Configure how long, in seconds, the response from a pre-flight request can be cached by clients. |
+| `hazelcast.mc.forwarded.requests.enabled` | `MC_FORWARDED_REQUESTS_ENABLED` | `true` | Whether Management Center reads `X-Forwarded-*` headers from reverse proxies. |
+| `hazelcast.mc.healthCheck.enable` | `MC_HEALTH_CHECK_ENABLED` | `false` | Whether the `/health` endpoint is enabled on port `hazelcast.mc.http.port` + 1. This endpoint is always served over HTTP, regardless of any TLS/SSL settings. This endpoint responds with `200 OK` HTTP status code if Management Center is running. |
+| `hazelcast.mc.healthCheck.port` | `MC_HEALTH_CHECK_PORT` | `hazelcast.mc.http.port` + 1 | The port on which the `/health` endpoint is exposed. |
+| `hazelcast.mc.hostAddress` | `MC_HOST_ADDRESS` | `0.0.0.0` (all network interfaces) | Network address that Management Center is reachable on. |
+| `hazelcast.mc.http.port` | `MC_HTTP_PORT` | `8080` | HTTP port for Management Center. |
+| `hazelcast.mc.websocket.buffer-size` | `HAZELCAST_MC_WEBSOCKET_BUFFER_SIZE` | `5MB` | The buffer size of the WebSocket connection MC uses for SQL operations. |
 
 If none of `hazelcast.mc.cors.*` properties are set, all origins are allowed to make cross-origin HTTP requests, but WebSocket connection could be established only from the same origin.
 
@@ -99,23 +99,23 @@ These properties configure TLS for the Management Center web server:
 
 | Property | Environment variable | Default | Description |
 | --- | --- | --- | --- |
-| <Anchor id="hazelcast-mc-disablehostnameverification" />`hazelcast.mc.disableHostnameVerification` |  | `false` | Whether Management Center does not verify the hostname of signed TLS/SSL certificates. |
-| <Anchor id="hazelcast-mc-exclude-cipher-suites" />`hazelcast.mc.exclude.cipher.suites` | `MC_EXCLUDE_CIPHER_SUITES` |  | A comma separated list of cipher suites to be excluded from the list of supported ciphers in Management Center. Wildcards are supported. |
-| <Anchor id="hazelcast-mc-existingkeystore-path" />`hazelcast.mc.existingKeyStore.path` | `MC_EXISTING_KEYSTORE_PATH` | `' '` (empty) | Path to an existing keystore. You do not have to set this property if you use a Hardware Security Module (HSM). |
-| <Anchor id="hazelcast-mc-existingkeystore-pass" />`hazelcast.mc.existingKeyStore.pass` | `MC_EXISTING_KEYSTORE_PASS` | `' '` (empty) | Password for the keystore. You do not have to set this property if you use a Hardware Security Module (HSM) that provides another means to access the keystore. |
-| <Anchor id="hazelcast-mc-existingkeystore-type" />`hazelcast.mc.existingKeyStore.type` | `MC_EXISTING_KEYSTORE_TYPE` | `JCEKS` | Type of the keystore. |
-| <Anchor id="hazelcast-mc-existingkeystore-provider" />`hazelcast.mc.existingKeyStore.provider` | `MC_EXISTING_KEYSTORE_PROVIDER` | System provider | Provider of the keystore. If you use a Hardware Security Module (HSM), specify the class name of your HSM's `java.security.Provider` implementation. |
-| <Anchor id="hazelcast-mc-include-cipher-suites" />`hazelcast.mc.include.cipher.suites` | `MC_INCLUDE_CIPHER_SUITES` |  | A comma separated list of cipher suits to be included in the list of supported ciphers in Management Center. Wildcards are supported. |
-| <Anchor id="hazelcast-mc-tls-excludeprotocols" />`hazelcast.mc.tls.excludeProtocols` | `MC_TLS_EXCLUDE_PROTOCOLS` |  | A comma separated list of TLS/SSL protocols to be excluded from the list of supported protocols in Management Center. |
-| <Anchor id="hazelcast-mc-tls-openssl" />`hazelcast.mc.tls.openSsl` | `MC_TLS_OPEN_SSL` | `false` | Allow Management Center to use [Google's Conscrypt SSL](https://github.com/google/conscrypt/) that is built on their fork of OpenSSL, BoringSSL. |
-| <Anchor id="hazelcast-mc-tls-enabled" />`hazelcast.mc.tls.enabled` | `MC_TLS_ENABLED` | `false` | Whether TLS/SSL is enabled. |
-| <Anchor id="hazelcast-mc-tls-keystore" />`hazelcast.mc.tls.keyStore` | `MC_TLS_KEY_STORE` |  | Path to a keystore. |
-| <Anchor id="hazelcast-mc-tls-keystorepassword" />`hazelcast.mc.tls.keyStorePassword` | `MC_TLS_KEY_STORE_PASSWORD` |  | Password of the keystore in [`hazelcast.mc.tls.keyStore`](#hazelcast-mc-tls-keystore). |
-| <Anchor id="hazelcast-mc-tls-truststore" />`hazelcast.mc.tls.trustStore` | `MC_TLS_TRUST_STORE` |  | Path to a truststore. If the [`hazelcast.mc.tls.enabled`](#hazelcast-mc-tls-enabled) system property is `true` and this value is empty, Management Center uses the system JVM's own truststore. |
-| <Anchor id="hazelcast-mc-tls-truststorepassword" />`hazelcast.mc.tls.trustStorePassword` | `MC_TLS_TRUST_STORE_PASSWORD` |  | Password of the truststore. |
-| <Anchor id="hazelcast.mc.tls.enableHttpPort" />`hazelcast.mc.tls.enableHttpPort` | `MC_TLS_ENABLE_HTTP_PORT` |  | Whether the HTTP port in the [`hazelcast.mc.http.port`](#hazelcast-mc-http-port) system property is redirected to the HTTPS port in the [`hazelcast.mc.https.port`](../security/tls/serving-https.mdx#override-the-default-https-port) system property. |
-| <Anchor id="hazelcast-mc-tls-mutualauthentication" />`hazelcast.mc.tls.mutualAuthentication` | `MC_TLS_MUTUAL_AUTHENTICATION` | `OPTIONAL` | Whether clients connected to Management Center are authenticated:<br/><br/>`REQUIRED`: If the client does not provide a keystore or the provided keys are not included in the Management Center's truststore, the client will not be authenticated.<br/>`OPTIONAL`: If the client does not provide a keystore, it will be authenticated. But, if the client provides keys that are not included in the Management Center's truststore, the client will not be authenticated. |
-| <Anchor id="hazelcast-mc-useexistingkeystore" />`hazelcast.mc.useExistingKeyStore` | `MC_USE_EXISTING_KEY_STORE` | `false` | Enables use of an existing keystore. |
+| `hazelcast.mc.disableHostnameVerification` |  | `false` | Whether Management Center does not verify the hostname of signed TLS/SSL certificates. |
+| `hazelcast.mc.exclude.cipher.suites` | `MC_EXCLUDE_CIPHER_SUITES` |  | A comma separated list of cipher suites to be excluded from the list of supported ciphers in Management Center. Wildcards are supported. |
+| `hazelcast.mc.existingKeyStore.path` | `MC_EXISTING_KEYSTORE_PATH` | `' '` (empty) | Path to an existing keystore. You do not have to set this property if you use a Hardware Security Module (HSM). |
+| `hazelcast.mc.existingKeyStore.pass` | `MC_EXISTING_KEYSTORE_PASS` | `' '` (empty) | Password for the keystore. You do not have to set this property if you use a Hardware Security Module (HSM) that provides another means to access the keystore. |
+| `hazelcast.mc.existingKeyStore.type` | `MC_EXISTING_KEYSTORE_TYPE` | `JCEKS` | Type of the keystore. |
+| `hazelcast.mc.existingKeyStore.provider` | `MC_EXISTING_KEYSTORE_PROVIDER` | System provider | Provider of the keystore. If you use a Hardware Security Module (HSM), specify the class name of your HSM's `java.security.Provider` implementation. |
+| `hazelcast.mc.include.cipher.suites` | `MC_INCLUDE_CIPHER_SUITES` |  | A comma separated list of cipher suits to be included in the list of supported ciphers in Management Center. Wildcards are supported. |
+| `hazelcast.mc.tls.excludeProtocols` | `MC_TLS_EXCLUDE_PROTOCOLS` |  | A comma separated list of TLS/SSL protocols to be excluded from the list of supported protocols in Management Center. |
+| `hazelcast.mc.tls.openSsl` | `MC_TLS_OPEN_SSL` | `false` | Allow Management Center to use [Google's Conscrypt SSL](https://github.com/google/conscrypt/) that is built on their fork of OpenSSL, BoringSSL. |
+| `hazelcast.mc.tls.enabled` | `MC_TLS_ENABLED` | `false` | Whether TLS/SSL is enabled. |
+| `hazelcast.mc.tls.keyStore` | `MC_TLS_KEY_STORE` |  | Path to a keystore. |
+| `hazelcast.mc.tls.keyStorePassword` | `MC_TLS_KEY_STORE_PASSWORD` |  | Password of the keystore in `hazelcast.mc.tls.keyStore`. |
+| `hazelcast.mc.tls.trustStore` | `MC_TLS_TRUST_STORE` |  | Path to a truststore. If the `hazelcast.mc.tls.enabled` system property is `true` and this value is empty, Management Center uses the system JVM's own truststore. |
+| `hazelcast.mc.tls.trustStorePassword` | `MC_TLS_TRUST_STORE_PASSWORD` |  | Password of the truststore. |
+| `hazelcast.mc.tls.enableHttpPort` | `MC_TLS_ENABLE_HTTP_PORT` |  | Whether the HTTP port in the `hazelcast.mc.http.port` system property is redirected to the HTTPS port in the [`hazelcast.mc.https.port`](../security/tls/serving-https.mdx#override-the-default-https-port) system property. |
+| `hazelcast.mc.tls.mutualAuthentication` | `MC_TLS_MUTUAL_AUTHENTICATION` | `OPTIONAL` | Whether clients connected to Management Center are authenticated:<br/><br/>`REQUIRED`: If the client does not provide a keystore or the provided keys are not included in the Management Center's truststore, the client will not be authenticated.<br/>`OPTIONAL`: If the client does not provide a keystore, it will be authenticated. But, if the client provides keys that are not included in the Management Center's truststore, the client will not be authenticated. |
+| `hazelcast.mc.useExistingKeyStore` | `MC_USE_EXISTING_KEY_STORE` | `false` | Enables use of an existing keystore. |
 
 ## Login, sessions, and passwords
 
@@ -123,15 +123,15 @@ These properties configure user logins, sessions, and password checks:
 
 | Property | Environment variable | Default | Description |
 | --- | --- | --- | --- |
-| <Anchor id="hazelcast-mc-allowmultiplelogin" />`hazelcast.mc.allowMultipleLogin` | `MC_ALLOW_MULTIPLE_LOGIN` | `true` | Whether a user can log into an account in Management Center on multiple devices in different locations at the same time. See [Secure user sessions](../security/sessions.mdx). |
-| <Anchor id="hazelcast-mc-disableloginperiodmultiplier" />`hazelcast.mc.disableLoginPeriodMultiplier` | `MC_DISABLE_LOGIN_PERIOD_MULTIPLIER` | `10` | Multiplier used for extending the disabled login period in case the failed login attempts continue after the disabled login period expires. See [Secure user sessions](../security/sessions.mdx). |
-| <Anchor id="hazelcast-mc-failedattemptsbeforedisablelogin" />`hazelcast.mc.failedAttemptsBeforeDisableLogin` | `MC_FAILED_ATTEMPTS_BEFORE_DISABLE_LOGIN` | `3` | Number of failed login attempts that Management Center allows before disabling logins. See [Secure user sessions](../security/sessions.mdx). |
-| <Anchor id="hazelcast-mc-forcelogoutonmultiplelogin" />`hazelcast.mc.forceLogoutOnMultipleLogin` | `MC_FORCE_LOGOUT_ON_MULTIPLE_LOGIN` | `false` | Whether Management Center forces users to log out when other users try to log into the same account. See [Secure user sessions](../security/sessions.mdx). |
-| <Anchor id="hazelcast-mc-initialdisableloginperiod" />`hazelcast.mc.initialDisableLoginPeriod` | `MC_INITIAL_DISABLE_LOGIN_PERIOD` | `5` | Initial duration for the disabled login period in seconds. See [Secure user sessions](../security/sessions.mdx). |
-| <Anchor id="hazelcast-mc-maxdisableloginperiod" />`hazelcast.mc.maxDisableLoginPeriod` | `MC_MAX_DISABLE_LOGIN_PERIOD` |  | Maximum amount of time for the disable login period. By default, the disabled login period is unlimited. |
-| <Anchor id="hazelcast-mc-security-dictionary-minWordLength" />`hazelcast.mc.security.dictionary.minWordLength` | `MC_SECURITY_DICTIONARY_MIN_WORD_LENGTH` | `3` | Minimum length that words in the dictionary must contain. |
-| <Anchor id="hazelcast-mc-security-dictionary-path" />`hazelcast.mc.security.dictionary.path` | `MC_SECURITY_DICTIONARY_PATH` |  | Path to a text file that contains words that cannot be included in user passwords. |
-| <Anchor id="hazelcast-mc-session-timeout-seconds" />`hazelcast.mc.session.timeout.seconds` | `MC_SESSION_TIMEOUT_SECONDS` | `1800` | Number of seconds that a session can remain inactive before it is invalid and the user must log in again. |
+| `hazelcast.mc.allowMultipleLogin` | `MC_ALLOW_MULTIPLE_LOGIN` | `true` | Whether a user can log into an account in Management Center on multiple devices in different locations at the same time. See [Secure user sessions](../security/sessions.mdx). |
+| `hazelcast.mc.disableLoginPeriodMultiplier` | `MC_DISABLE_LOGIN_PERIOD_MULTIPLIER` | `10` | Multiplier used for extending the disabled login period in case the failed login attempts continue after the disabled login period expires. See [Secure user sessions](../security/sessions.mdx). |
+| `hazelcast.mc.failedAttemptsBeforeDisableLogin` | `MC_FAILED_ATTEMPTS_BEFORE_DISABLE_LOGIN` | `3` | Number of failed login attempts that Management Center allows before disabling logins. See [Secure user sessions](../security/sessions.mdx). |
+| `hazelcast.mc.forceLogoutOnMultipleLogin` | `MC_FORCE_LOGOUT_ON_MULTIPLE_LOGIN` | `false` | Whether Management Center forces users to log out when other users try to log into the same account. See [Secure user sessions](../security/sessions.mdx). |
+| `hazelcast.mc.initialDisableLoginPeriod` | `MC_INITIAL_DISABLE_LOGIN_PERIOD` | `5` | Initial duration for the disabled login period in seconds. See [Secure user sessions](../security/sessions.mdx). |
+| `hazelcast.mc.maxDisableLoginPeriod` | `MC_MAX_DISABLE_LOGIN_PERIOD` |  | Maximum amount of time for the disable login period. By default, the disabled login period is unlimited. |
+| `hazelcast.mc.security.dictionary.minWordLength` | `MC_SECURITY_DICTIONARY_MIN_WORD_LENGTH` | `3` | Minimum length that words in the dictionary must contain. |
+| `hazelcast.mc.security.dictionary.path` | `MC_SECURITY_DICTIONARY_PATH` |  | Path to a text file that contains words that cannot be included in user passwords. |
+| `hazelcast.mc.session.timeout.seconds` | `MC_SESSION_TIMEOUT_SECONDS` | `1800` | Number of seconds that a session can remain inactive before it is invalid and the user must log in again. |
 
 ## LDAP and Active Directory
 
@@ -139,25 +139,25 @@ These properties configure connections to LDAP and Active Directory servers:
 
 | Property | Environment variable | Default | Description |
 | --- | --- | --- | --- |
-| <Anchor id="hazelcast-mc-ldap-timeout" />`hazelcast.mc.ldap.timeout` | `MC_LDAP_CONN_TIMEOUT` | `3000` | Timeout in milliseconds for Active Directory and LDAP search queries. |
-| <Anchor id="hazelcast-mc-ldap-ssl-protocol" />`hazelcast.mc.ldap.ssl.protocol` | `MC_LDAP_SSL_PROTOCOL` | `TLS` | The standard name of the requested SSL protocol for LDAP connection. |
-| <Anchor id="hazelcast-mc-ldap-ssl-keystore" />`hazelcast.mc.ldap.ssl.keyStore` | `MC_LDAP_SSL_KEY_STORE` | `' '` (empty) | Path to a keystore for LDAP SSL connection. |
-| <Anchor id="hazelcast-mc-ldap-ssl-keystoretype" />`hazelcast.mc.ldap.ssl.keyStoreType` | `MC_LDAP_SSL_KEY_STORE_TYPE` | `JKS` | Type of the keystore. |
-| <Anchor id="hazelcast-mc-ldap-ssl-keystorepassword" />`hazelcast.mc.ldap.ssl.keyStorePassword` | `MC_LDAP_SSL_KEY_STORE_PASSWORD` | `' '` (empty) | Password for the keystore for LDAP SSL connection. |
-| <Anchor id="hazelcast-mc-ldap-ssl-keymanageralgorithm" />`mc.ldap.ssl.keyManagerAlgorithm` | `MC_LDAP_SSL_KEY_MANAGER_ALGORITHM` | System default | Name of the algorithm based on which the authentication keys are provided. |
-| <Anchor id="hazelcast-mc-ldap-ssl-truststore" />`hazelcast.mc.ldap.ssl.trustStore` | `MC_LDAP_SSL_TRUST_STORE` | `' '` (empty) | Path to the truststore. |
-| <Anchor id="hazelcast-mc-ldap-ssl-truststorepassword" />`hazelcast.mc.ldap.ssl.trustStorePassword` | `MC_LDAP_SSL_TRUST_STORE_PASSWORD` | `' '` (empty) | Password for the truststore. |
-| <Anchor id="hazelcast-mc-ldap-ssl-truststoretype" />`hazelcast.mc.ldap.ssl.trustStoreType` | `MC_LDAP_SSL_TRUST_STORE_TYPE` | `JKS` | Type of the truststore. |
-| <Anchor id="hazelcast-mc-ldap-ssl-trustmanageralgorithm" />`mc.ldap.ssl.trustManagerAlgorithm` | `MC_LDAP_SSL_TRUST_MANAGER_ALGORITHM` | System default | Name of the algorithm based on which the authentication keys are provided. |
-| <Anchor id="hazelcast-mc-ad-ssl-protocol" />`hazelcast.mc.ad.ssl.protocol` | `MC_AD_SSL_PROTOCOL` | `TLS` | The standard name of the requested SSL protocol for AD connection. |
-| <Anchor id="hazelcast-mc-ad-ssl-keystore" />`hazelcast.mc.ad.ssl.keyStore` | `MC_AD_SSL_KEY_STORE` | `' '` (empty) | Path to a keystore for AD SSL connection. |
-| <Anchor id="hazelcast-mc-ad-ssl-keystoretype" />`hazelcast.mc.ad.ssl.keyStoreType` | `MC_AD_SSL_KEY_STORE_TYPE` | `JKS` | Type of the keystore. |
-| <Anchor id="hazelcast-mc-ad-ssl-keystorepassword" />`hazelcast.mc.ad.ssl.keyStorePassword` | `MC_AD_SSL_KEY_STORE_PASSWORD` | `' '` (empty) | Password for the keystore for AD SSL connection. |
-| <Anchor id="hazelcast-mc-ad-ssl-keymanageralgorithm" />`mc.ad.ssl.keyManagerAlgorithm` | `MC_AD_SSL_KEY_MANAGER_ALGORITHM` | System default | Name of the algorithm based on which the authentication keys are provided. |
-| <Anchor id="hazelcast-mc-ad-ssl-truststore" />`hazelcast.mc.ad.ssl.trustStore` | `MC_AD_SSL_TRUST_STORE` | `' '` (empty) | Path to the truststore. |
-| <Anchor id="hazelcast-mc-ad-ssl-truststorepassword" />`hazelcast.mc.ad.ssl.trustStorePassword` | `MC_AD_SSL_TRUST_STORE_PASSWORD` | `' '` (empty) | Password for the truststore. |
-| <Anchor id="hazelcast-mc-ad-ssl-truststoretype" />`hazelcast.mc.ad.ssl.trustStoreType` | `MC_AD_SSL_TRUST_STORE_TYPE` | `JKS` | Type of the truststore. |
-| <Anchor id="hazelcast-mc-ad-ssl-trustmanageralgorithm" />`mc.ad.ssl.trustManagerAlgorithm` | `MC_AD_SSL_TRUST_MANAGER_ALGORITHM` | System default | Name of the algorithm based on which the authentication keys are provided. |
+| `hazelcast.mc.ldap.timeout` | `MC_LDAP_CONN_TIMEOUT` | `3000` | Timeout in milliseconds for Active Directory and LDAP search queries. |
+| `hazelcast.mc.ldap.ssl.protocol` | `MC_LDAP_SSL_PROTOCOL` | `TLS` | The standard name of the requested SSL protocol for LDAP connection. |
+| `hazelcast.mc.ldap.ssl.keyStore` | `MC_LDAP_SSL_KEY_STORE` | `' '` (empty) | Path to a keystore for LDAP SSL connection. |
+| `hazelcast.mc.ldap.ssl.keyStoreType` | `MC_LDAP_SSL_KEY_STORE_TYPE` | `JKS` | Type of the keystore. |
+| `hazelcast.mc.ldap.ssl.keyStorePassword` | `MC_LDAP_SSL_KEY_STORE_PASSWORD` | `' '` (empty) | Password for the keystore for LDAP SSL connection. |
+| `mc.ldap.ssl.keyManagerAlgorithm` | `MC_LDAP_SSL_KEY_MANAGER_ALGORITHM` | System default | Name of the algorithm based on which the authentication keys are provided. |
+| `hazelcast.mc.ldap.ssl.trustStore` | `MC_LDAP_SSL_TRUST_STORE` | `' '` (empty) | Path to the truststore. |
+| `hazelcast.mc.ldap.ssl.trustStorePassword` | `MC_LDAP_SSL_TRUST_STORE_PASSWORD` | `' '` (empty) | Password for the truststore. |
+| `hazelcast.mc.ldap.ssl.trustStoreType` | `MC_LDAP_SSL_TRUST_STORE_TYPE` | `JKS` | Type of the truststore. |
+| `mc.ldap.ssl.trustManagerAlgorithm` | `MC_LDAP_SSL_TRUST_MANAGER_ALGORITHM` | System default | Name of the algorithm based on which the authentication keys are provided. |
+| `hazelcast.mc.ad.ssl.protocol` | `MC_AD_SSL_PROTOCOL` | `TLS` | The standard name of the requested SSL protocol for AD connection. |
+| `hazelcast.mc.ad.ssl.keyStore` | `MC_AD_SSL_KEY_STORE` | `' '` (empty) | Path to a keystore for AD SSL connection. |
+| `hazelcast.mc.ad.ssl.keyStoreType` | `MC_AD_SSL_KEY_STORE_TYPE` | `JKS` | Type of the keystore. |
+| `hazelcast.mc.ad.ssl.keyStorePassword` | `MC_AD_SSL_KEY_STORE_PASSWORD` | `' '` (empty) | Password for the keystore for AD SSL connection. |
+| `mc.ad.ssl.keyManagerAlgorithm` | `MC_AD_SSL_KEY_MANAGER_ALGORITHM` | System default | Name of the algorithm based on which the authentication keys are provided. |
+| `hazelcast.mc.ad.ssl.trustStore` | `MC_AD_SSL_TRUST_STORE` | `' '` (empty) | Path to the truststore. |
+| `hazelcast.mc.ad.ssl.trustStorePassword` | `MC_AD_SSL_TRUST_STORE_PASSWORD` | `' '` (empty) | Password for the truststore. |
+| `hazelcast.mc.ad.ssl.trustStoreType` | `MC_AD_SSL_TRUST_STORE_TYPE` | `JKS` | Type of the truststore. |
+| `mc.ad.ssl.trustManagerAlgorithm` | `MC_AD_SSL_TRUST_MANAGER_ALGORITHM` | System default | Name of the algorithm based on which the authentication keys are provided. |
 
 ## JMX
 
@@ -165,21 +165,21 @@ These properties configure JMX for Management Center:
 
 | Property | Environment variable | Default | Description |
 | --- | --- | --- | --- |
-| <Anchor id="hazelcast-mc-jmx-enabled" />`hazelcast.mc.jmx.enabled` | `MC_JMX_ENABLED` | `false` | Whether the clustered JMX service is enabled. See [Clustered JMX](../../integrate/clustered-jmx/jmx.mdx). |
-| <Anchor id="hazelcast-mc-jmx-host" />`hazelcast.mc.jmx.host` | `MC_JMX_HOST_NAME` | Server's hostname | Hostname/IP address of the JMX host machine. This is used by the JMX client to connect back into JMX, so the given host must be accessible from the host machine that runs the JMX client. |
-| <Anchor id="hazelcast-mc-jmx-mutualauthentication" />`hazelcast.mc.jmx.mutualAuthentication` | `MC_JMX_SSL_MUTUAL_AUTH_ENABLED` | `false` | Whether mutual authentication is enabled for the JMX interface. |
-| <Anchor id="hazelcast-mc-jmx-port" />`hazelcast.mc.jmx.port` | `MC_JMX_PORT` | `9999` | Port on which the clustered JMX service is exposed. |
-| <Anchor id="hazelcast-mc-jmx-rmi-port" />`hazelcast.mc.jmx.rmi.port` | `MC_JMX_RMI_PORT` | `9998` | Port on which the Java process that you want to monitor listens for incoming connections from the client (Remote management applications) such as JConsole . For monitoring a local Java process, there is no need to specify the JMX RMI port number. |
-| <Anchor id="hazelcast-mc-jmx-ssl-enabled" />`hazelcast.mc.jmx.ssl.enabled` | `MC_JMX_SSL_ENABLED` | `false` | Whether TLS/SSL is enabled for communication between the JMX interface and JMX clients. |
-| <Anchor id="hazelcast-mc-jmx-ssl-protocol" />`hazelcast.mc.jmx.ssl.protocol` | `MC_JMX_SSL_PROTOCOL` | `TLS` | The standard name of the requested SSL protocol. |
-| <Anchor id="hazelcast-mc-jmx-ssl-keystore" />`hazelcast.mc.jmx.ssl.keyStore` | `MC_JMX_SSL_KEY_STORE_TYPE` | `' '` (empty) | Path to a keystore. |
-| <Anchor id="hazelcast-mc-jmx-ssl-keystorepassword" />`hazelcast.mc.jmx.ssl.keyStorePassword` | `MC_JMX_SSL_KEY_STORE_PASSWORD` | `' '` (empty) | Password for the keystore. |
-| <Anchor id="hazelcast-mc-jmx-ssl-truststore" />`hazelcast.mc.jmx.ssl.trustStore` | `MC_JMX_SSL_TRUST_STORE` | `' '` (empty) | Path to a truststore. |
-| <Anchor id="hazelcast-mc-jmx-ssl-truststoretype" />`hazelcast.mc.jmx.ssl.trustStoreType` | `MC_JMX_SSL_TRUST_STORE_TYPE` | `JKS` | Type of the truststore. |
-| <Anchor id="hazelcast-mc-jmx-ssl-truststorepassword" />`hazelcast.mc.jmx.ssl.trustStorePassword` | `MC_JMX_SSL_TRUST_STORE_PASSWORD` | `' '` (empty) | Password for the truststore. |
-| <Anchor id="hazelcast-mc-jmx-ssl-trustmanageralgorithm" />`hazelcast.mc.jmx.ssl.trustManagerAlgorithm` | `MC_JMX_SSL_TRUST_MANAGER_ALGORITHM` |  | Name of the algorithm based on which the authentication keys are provided. System default is used if none is provided. You can find out the default by calling the `javax.net.ssl.TrustManagerFactory#getDefaultAlgorithm` method. |
-| <Anchor id="hazelcast-mc-jmx-ssl-keystoretype" />`hazelcast.mc.jmx.ssl.keyStoreType` | `MC_JMX_SSL_KEY_STORE_TYPE` | `JKS` | Type of the keystore. |
-| <Anchor id="hazelcast-mc-jmx-ssl-keymanageralgorithm" />`hazelcast.mc.jmx.ssl.keyManagerAlgorithm` | `MC_TLS_KEY_MANAGER_ALGORITHM` | System default | Name of the algorithm based on which the authentication keys are provided. You can find out the default by calling the `javax.net.ssl.KeyManagerFactory#getDefaultAlgorithm` method. |
+| `hazelcast.mc.jmx.enabled` | `MC_JMX_ENABLED` | `false` | Whether the clustered JMX service is enabled. See [Clustered JMX](../../integrate/clustered-jmx/jmx.mdx). |
+| `hazelcast.mc.jmx.host` | `MC_JMX_HOST_NAME` | Server's hostname | Hostname/IP address of the JMX host machine. This is used by the JMX client to connect back into JMX, so the given host must be accessible from the host machine that runs the JMX client. |
+| `hazelcast.mc.jmx.mutualAuthentication` | `MC_JMX_SSL_MUTUAL_AUTH_ENABLED` | `false` | Whether mutual authentication is enabled for the JMX interface. |
+| `hazelcast.mc.jmx.port` | `MC_JMX_PORT` | `9999` | Port on which the clustered JMX service is exposed. |
+| `hazelcast.mc.jmx.rmi.port` | `MC_JMX_RMI_PORT` | `9998` | Port on which the Java process that you want to monitor listens for incoming connections from the client (Remote management applications) such as JConsole . For monitoring a local Java process, there is no need to specify the JMX RMI port number. |
+| `hazelcast.mc.jmx.ssl.enabled` | `MC_JMX_SSL_ENABLED` | `false` | Whether TLS/SSL is enabled for communication between the JMX interface and JMX clients. |
+| `hazelcast.mc.jmx.ssl.protocol` | `MC_JMX_SSL_PROTOCOL` | `TLS` | The standard name of the requested SSL protocol. |
+| `hazelcast.mc.jmx.ssl.keyStore` | `MC_JMX_SSL_KEY_STORE_TYPE` | `' '` (empty) | Path to a keystore. |
+| `hazelcast.mc.jmx.ssl.keyStorePassword` | `MC_JMX_SSL_KEY_STORE_PASSWORD` | `' '` (empty) | Password for the keystore. |
+| `hazelcast.mc.jmx.ssl.trustStore` | `MC_JMX_SSL_TRUST_STORE` | `' '` (empty) | Path to a truststore. |
+| `hazelcast.mc.jmx.ssl.trustStoreType` | `MC_JMX_SSL_TRUST_STORE_TYPE` | `JKS` | Type of the truststore. |
+| `hazelcast.mc.jmx.ssl.trustStorePassword` | `MC_JMX_SSL_TRUST_STORE_PASSWORD` | `' '` (empty) | Password for the truststore. |
+| `hazelcast.mc.jmx.ssl.trustManagerAlgorithm` | `MC_JMX_SSL_TRUST_MANAGER_ALGORITHM` |  | Name of the algorithm based on which the authentication keys are provided. System default is used if none is provided. You can find out the default by calling the `javax.net.ssl.TrustManagerFactory#getDefaultAlgorithm` method. |
+| `hazelcast.mc.jmx.ssl.keyStoreType` | `MC_JMX_SSL_KEY_STORE_TYPE` | `JKS` | Type of the keystore. |
+| `hazelcast.mc.jmx.ssl.keyManagerAlgorithm` | `MC_TLS_KEY_MANAGER_ALGORITHM` | System default | Name of the algorithm based on which the authentication keys are provided. You can find out the default by calling the `javax.net.ssl.KeyManagerFactory#getDefaultAlgorithm` method. |
 
 ## Metrics and Prometheus
 
@@ -187,17 +187,17 @@ These properties configure how Management Center stores metrics and exports them
 
 | Property | Environment variable | Default | Description |
 | --- | --- | --- | --- |
-| <Anchor id="hazelcast-mc-metrics-persistence-enabled" />`hazelcast.mc.metrics.persistence.enabled` | `MC_METRICS_PERSISTENCE_ENABLED` | `true` | Whether Management Center persists metrics. See [Historical metrics](../historical-metrics.mdx). |
-| <Anchor id="disk-usage-config" /><Anchor id="hazelcast-mc-metrics-disk-ttl-duration" />`hazelcast.mc.metrics.disk.ttl.duration` | `MC_METRICS_DISK_TTL_DURATION` | `P1D` (one day) | Time-to-Live (TTL) in ISO-8601-based durations format for each record in the metrics persistence. This value must be positive. See [Historical metrics](../historical-metrics.mdx). |
-| <Anchor id="hazelcast-mc-metrics-consumer-thread-pool-size" />`hazelcast.mc.metrics.consumer.thread.pool.size` | `MC_METRICS_CONSUMER_THREAD_POOL_SIZE` | `2` | Number of threads that are used to consume metrics from cluster members. See [Historical metrics](../historical-metrics.mdx). |
-| <Anchor id="hazelcast-mc-metrics-reschedule-delay-millis" />`hazelcast.mc.metrics.reschedule.delay.millis` | `MC_METRICS_RESCHEDULE_DELAY_MILLIS` | `1000` | Interval in milliseconds that Management Center waits before requesting metrics from cluster members. |
-| <Anchor id="hazelcast-mc-jet-metrics-retentionsecs" />`hazelcast.mc.jet.metrics.retentionSecs` | `MC_JET_METRICS_RETENTION_SECS` | `3600` | Interval in seconds that Management Center holds Jet metrics in memory. |
-| <Anchor id="hazelcast-mc-prometheusexporter-enabled" />`hazelcast.mc.prometheusExporter.enabled` | `MC_PROMETHEUS_EXPORTER_ENABLED` | `false` | Whether to expose all metrics to the `/metrics` endpoint to be consumed by Prometheus. All metrics at the endpoint include the `hz_` prefix. |
-| <Anchor id="prometheus-timestamp" />`hazelcast.mc.prometheusExporter.timestamp.enabled` | `MC_PROMETHEUS_EXPORTER_TIMESTAMP_ENABLED` | `true` (enabled) | Whether to send timestamp of the individual members' metrics to Prometheus. |
-| <Anchor id="hazelcast-mc-prometheusExporter-filter-metrics-included" />`hazelcast.mc.prometheusExporter.filter.metrics.included` | `MC_PROMETHEUS_EXPORTER_FILTER_METRICS_INCLUDED` | `' '` (empty) | Comma-separated list of metrics to include in the `/metrics` endpoint. Supports the `*` wildcard. |
-| <Anchor id="hazelcast-mc-prometheusexporter-filter-metrics-excluded" />`hazelcast.mc.prometheusExporter.filter.metrics.excluded` | `MC_PROMETHEUS_EXPORTER_FILTER_METRICS_EXCLUDED` | `' '` (empty) | Comma-separated list of metrics to exclude from the `/metrics` endpoint. Supports the `*` wildcard. |
-| <Anchor id="hazelcast-mc-prometheusexporter-port" />`hazelcast.mc.prometheusExporter.port` | `MC_PROMETHEUS_EXPORTER_PORT` |  | Port on which the `/metrics` endpoint is exposed. |
-| <Anchor id="hazelcast-mc-prometheusexporter-printers" />`hazelcast.mc.prometheusExporter.printers` | `MC_PROMETHEUS_EXPORTER_PRINTERS` | `V1,V2` | Which set of metrics to expose. See [Prometheus metrics](../../integrate/prometheus-monitoring/prometheus-metrics.mdx). |
+| `hazelcast.mc.metrics.persistence.enabled` | `MC_METRICS_PERSISTENCE_ENABLED` | `true` | Whether Management Center persists metrics. See [Historical metrics](../historical-metrics.mdx). |
+| `hazelcast.mc.metrics.disk.ttl.duration` | `MC_METRICS_DISK_TTL_DURATION` | `P1D` (one day) | Time-to-Live (TTL) in ISO-8601-based durations format for each record in the metrics persistence. This value must be positive. See [Historical metrics](../historical-metrics.mdx). |
+| `hazelcast.mc.metrics.consumer.thread.pool.size` | `MC_METRICS_CONSUMER_THREAD_POOL_SIZE` | `2` | Number of threads that are used to consume metrics from cluster members. See [Historical metrics](../historical-metrics.mdx). |
+| `hazelcast.mc.metrics.reschedule.delay.millis` | `MC_METRICS_RESCHEDULE_DELAY_MILLIS` | `1000` | Interval in milliseconds that Management Center waits before requesting metrics from cluster members. |
+| `hazelcast.mc.jet.metrics.retentionSecs` | `MC_JET_METRICS_RETENTION_SECS` | `3600` | Interval in seconds that Management Center holds Jet metrics in memory. |
+| `hazelcast.mc.prometheusExporter.enabled` | `MC_PROMETHEUS_EXPORTER_ENABLED` | `false` | Whether to expose all metrics to the `/metrics` endpoint to be consumed by Prometheus. All metrics at the endpoint include the `hz_` prefix. |
+| `hazelcast.mc.prometheusExporter.timestamp.enabled` | `MC_PROMETHEUS_EXPORTER_TIMESTAMP_ENABLED` | `true` (enabled) | Whether to send timestamp of the individual members' metrics to Prometheus. |
+| `hazelcast.mc.prometheusExporter.filter.metrics.included` | `MC_PROMETHEUS_EXPORTER_FILTER_METRICS_INCLUDED` | `' '` (empty) | Comma-separated list of metrics to include in the `/metrics` endpoint. Supports the `*` wildcard. |
+| `hazelcast.mc.prometheusExporter.filter.metrics.excluded` | `MC_PROMETHEUS_EXPORTER_FILTER_METRICS_EXCLUDED` | `' '` (empty) | Comma-separated list of metrics to exclude from the `/metrics` endpoint. Supports the `*` wildcard. |
+| `hazelcast.mc.prometheusExporter.port` | `MC_PROMETHEUS_EXPORTER_PORT` |  | Port on which the `/metrics` endpoint is exposed. |
+| `hazelcast.mc.prometheusExporter.printers` | `MC_PROMETHEUS_EXPORTER_PRINTERS` | `V1,V2` | Which set of metrics to expose. See [Prometheus metrics](../../integrate/prometheus-monitoring/prometheus-metrics.mdx). |
 
 ## SQL browser and UI
 
@@ -205,9 +205,9 @@ These properties configure limits in the SQL browser and the UI:
 
 | Property | Environment variable | Default | Description |
 | --- | --- | --- | --- |
-| <Anchor id="hazelcast-mc-sql-max-cell-length" />`hazelcast.mc.sql.max-cell-length` | `MC_MC_SQL_MAX_CELL_LENGTH` | `2048` | Max length of a cell in SQL query result, longer values are truncated. |
-| <Anchor id="hazelcast-mc-sql-max-row-count" />`hazelcast.mc.sql.max-row-count` | `MC_MC_SQL_MAX_CELL_LENGTH` | `1000` | Max number of rows returned by SQL batch query. |
-| <Anchor id="hazelcast-mc-ui-asynctablethreshold" />`hazelcast.mc.ui.asyncTableThreshold` | `MC_UI_ASYNC_TABLE_THRESHOLD` | `500` | Tables bigger than the threshold are loaded asynchronously. You can't sort an asynchronous table. |
+| `hazelcast.mc.sql.max-cell-length` | `MC_MC_SQL_MAX_CELL_LENGTH` | `2048` | Max length of a cell in SQL query result, longer values are truncated. |
+| `hazelcast.mc.sql.max-row-count` | `MC_MC_SQL_MAX_CELL_LENGTH` | `1000` | Max number of rows returned by SQL batch query. |
+| `hazelcast.mc.ui.asyncTableThreshold` | `MC_UI_ASYNC_TABLE_THRESHOLD` | `500` | Tables bigger than the threshold are loaded asynchronously. You can't sort an asynchronous table. |
 
 ## Cluster connections
 
@@ -215,9 +215,9 @@ These properties configure how Management Center communicates with clusters:
 
 | Property | Environment variable | Default | Description |
 | --- | --- | --- | --- |
-| <Anchor id="hazelcast-mc-clusterHealthCheck-exclude" />`hazelcast.mc.clusterHealthCheck.exclude` | `MC_CLUSTERHEALTHCHECK_EXCLUDE` |  | List of check identifiers to be excluded from Healthcheck. See [Healthcheck](../../cluster/healthcheck.mdx#excluding-checks). |
-| <Anchor id="hazelcast-mc-cluster-operation-timeout" />`hazelcast.mc.cluster.operation.timeout.millis` |  | 60000 | Timeout in milliseconds for Management Center operations that wait for a response from members. |
-| <Anchor id="metadata-polling-config" /><Anchor id="hazelcast-mc-state-reschedule-delay-millis" />`hazelcast.mc.state.reschedule.delay.millis` | `MC_STATE_RESCHEDULE_DELAY_MILLIS` | 1000 | Duration in milliseconds that Management Center waits before requesting metadata from a Hazelcast cluster. Metadata includes a list of all data structures and their configurations. |
+| `hazelcast.mc.clusterHealthCheck.exclude` | `MC_CLUSTERHEALTHCHECK_EXCLUDE` |  | List of check identifiers to be excluded from Healthcheck. See [Healthcheck](../../cluster/healthcheck.mdx#excluding-checks). |
+| `hazelcast.mc.cluster.operation.timeout.millis` |  | 60000 | Timeout in milliseconds for Management Center operations that wait for a response from members. |
+| `hazelcast.mc.state.reschedule.delay.millis` | `MC_STATE_RESCHEDULE_DELAY_MILLIS` | 1000 | Duration in milliseconds that Management Center waits before requesting metadata from a Hazelcast cluster. Metadata includes a list of all data structures and their configurations. |
 
 ## Client connection strategy configuration {/* #client-config */}
 
@@ -227,9 +227,9 @@ These properties apply to all clients that are started by Management Center.
 
 | Property | Default | Description |
 | --- | --- | --- |
-| <Anchor id="hazelcast-mc-client-max-backoff-millis" />`hazelcast.mc.client.max.backoff.millis` | `30000` | Upper limit of the backoff in milliseconds. Values must be between 30000 and 600000. |
-| <Anchor id="hazelcast-mc-client-backoff-multiplier" />`hazelcast.mc.client.backoff.multiplier` | `2` | Factor by which to multiply the backoff after each failed retry. Values must be between 1 and 10. |
-| <Anchor id="hazelcast-mc-client-initial-backoff-millis" />`hazelcast.mc.client.initial.backoff.millis` | `1000` | Duration in milliseconds that Management Center waits after the first connection failure before retrying. Values must be between 1000 and 60000. |
-| <Anchor id="hazelcast-mc-client-client-filtering-modes" />`hazelcast.mc.clientFiltering.modes` | `ALLOWLIST, DENYLIST` | Adjusts client filtering modes. Value must be set of `ALLOWLIST` and `DENYLIST`. |
-| <Anchor id="hazelcast-mc-info-instanceName" />`hazelcast.mc.info.instanceName` |  | Set the instance name visible in the [Top Bar](../../get-started/user-interface-overview/user-interface.mdx#top-bar). Set blank to not display any instance name. If not set the instance name defaults to the hostname of the machine Manage Center is deployed on. |
-| <Anchor id="maskOpts" />`maskOpts` | `' '` (empty) | Comma-separated list of option keys to be masked. Masks sensitive data in logs passed via JAVA\_OPTS. |
+| `hazelcast.mc.client.max.backoff.millis` | `30000` | Upper limit of the backoff in milliseconds. Values must be between 30000 and 600000. |
+| `hazelcast.mc.client.backoff.multiplier` | `2` | Factor by which to multiply the backoff after each failed retry. Values must be between 1 and 10. |
+| `hazelcast.mc.client.initial.backoff.millis` | `1000` | Duration in milliseconds that Management Center waits after the first connection failure before retrying. Values must be between 1000 and 60000. |
+| `hazelcast.mc.clientFiltering.modes` | `ALLOWLIST, DENYLIST` | Adjusts client filtering modes. Value must be set of `ALLOWLIST` and `DENYLIST`. |
+| `hazelcast.mc.info.instanceName` |  | Set the instance name visible in the [Top Bar](../../get-started/user-interface-overview/user-interface.mdx#top-bar). Set blank to not display any instance name. If not set the instance name defaults to the hostname of the machine Manage Center is deployed on. |
+| `maskOpts` | `' '` (empty) | Comma-separated list of option keys to be masked. Masks sensitive data in logs passed via JAVA\_OPTS. |
