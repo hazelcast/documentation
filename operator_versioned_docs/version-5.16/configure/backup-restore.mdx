@@ -133,26 +133,11 @@ You can schedule backups using the `schedule` and `hotBackupTemplate` fields of 
 
 The `schedule` field takes a valid cron expression. For example, you can configure the following scheduled backups:
 
-<table>
-<colgroup>
-<col style={{width:'50%'}} />
-<col style={{width:'50%'}} />
-</colgroup>
-<tbody>
-<tr>
-<td>`30 10 * * *`</td>
-<td>At 10:30 AM every day</td>
-</tr>
-<tr>
-<td>`0, 0, 1,15,25 * *`</td>
-<td>On 1st, 15th, and 25th of each month at midnight</td>
-</tr>
-<tr>
-<td>`@monthly`</td>
-<td>On the first day of each month at midnight</td>
-</tr>
-</tbody>
-</table>
+| Cron expression | Schedule |
+| --- | --- |
+| `30 10 * * *` | At 10:30 AM every day |
+| `0, 0, 1,15,25 * *` | On 1st, 15th, and 25th of each month at midnight |
+| `@monthly` | On the first day of each month at midnight |
 
 For a full list of supported expressions, see the [library documentation](https://pkg.go.dev/github.com/robfig/cron/v3@v3.0.1#hdr-CRON_Expression_Format).
 
@@ -289,26 +274,11 @@ To choose a data recovery timeout, you can use `dataRecoveryTimeout`. The field 
 
 To decide how a cluster should behave when one or more members cannot rejoin after a cluster-wide restart, you can define one of the following cluster recovery policies. The Operator supports all the policies in the Hazelcast Platform `cluster-data-recovery-policy configuration` options. For complete descriptions and advice on choosing a policy, see the [Platform documentation](/hazelcast/latest/storage/configuring-persistence#policy).
 
-<table>
-<colgroup>
-<col style={{width:'50%'}} />
-<col style={{width:'50%'}} />
-</colgroup>
-<tbody>
-<tr>
-<td>`FullRecoveryOnly`</td>
-<td>Does not allow partial start of the cluster.</td>
-</tr>
-<tr>
-<td>`PartialRecoveryMostRecent`</td>
-<td>Allows partial start with the members that have most recent partition table.</td>
-</tr>
-<tr>
-<td>`PartialRecoveryMostComplete`</td>
-<td>Allows partial start with the member that have most complete partition table.</td>
-</tr>
-</tbody>
-</table>
+| Policy | Description |
+| --- | --- |
+| `FullRecoveryOnly` | Does not allow partial start of the cluster. |
+| `PartialRecoveryMostRecent` | Allows partial start with the members that have most recent partition table. |
+| `PartialRecoveryMostComplete` | Allows partial start with the member that have most complete partition table. |
 
 ### Configuring Force/Partial Start
 

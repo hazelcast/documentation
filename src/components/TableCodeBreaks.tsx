@@ -1,7 +1,8 @@
 import React from 'react';
 
-// Break points inside one word: after `/`, `_`, `.` or `-` between word characters, and at a camelCase hump.
-const BOUNDARY = /(?<=\w[/_.-])(?=\w)|(?<=[a-z0-9])(?=[A-Z])/;
+// Break points inside one word: after `/`, `_`, `.` or `-` between word characters, at a camelCase hump, and at an XML
+// tag boundary (after a `>` that a word or `<` follows, and before `</`).
+const BOUNDARY = /(?<=\w[/_.-])(?=\w)|(?<=[a-z0-9])(?=[A-Z])|(?<=>)(?=[\w<])|(?<=\w)(?=<\/)/;
 const SPACE = /^\s+$/;
 const NOWRAP = {whiteSpace: 'nowrap'} as const;
 
