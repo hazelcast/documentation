@@ -5,22 +5,26 @@ slug: /integrate/prometheus-metrics
 enterprise: true
 ---
 
-Management Center automatically reformats all Hazelcast cluster metrics for compatibility with Prometheus. In addition, Management Center updates a subset of metrics to align with Prometheus best practice recommendations. This makes it easier to construct complex queries, build dashboards, and work alongside metrics from other applications.
+Management Center automatically reformats all <Variable href="/hazelcast/{page-latest-supported-hazelcast}/list-of-metrics" text="Hazelcast cluster metrics" /> for compatibility with Prometheus.
 
-By default, Management Center exposes two versions of metrics based on <Variable href="/hazelcast/{page-latest-supported-hazelcast}/list-of-metrics" text="Hazelcast's JMX metrics system" />:
+In addition, Management Center updates a subset of metrics to align with Prometheus best practice recommendations. This makes it easier to construct complex queries, build dashboards, and work alongside metrics from other applications.
 
-- **Version 1 (V1) metrics** apply a basic transformation for compatibility with Prometheus:
+## Metrics versions
 
-  - Convert `.` to `_`
+By default, Management Center exposes two versions of the <Variable href="/hazelcast/{page-latest-supported-hazelcast}/list-of-metrics" text="Hazelcast Metrics" />:
+
+**Version 1 (V1) metrics** apply a basic transformation for compatibility with Prometheus:
+  - Replace `.`, `:`, and `-` with `_`
   - Add `hz_` prefix
-- **Version 2 (V2) metrics (currently in BETA)** apply an advanced transformation for conformity with [Prometheus naming conventions](https://prometheus.io/docs/practices/naming/):
 
+Every Platform metric is included in the V1 output.
+
+**Version 2 (V2) metrics** apply an advanced transformation for conformity with [Prometheus naming conventions](https://prometheus.io/docs/practices/naming/):
   - Use `snake_case`
   - Add `hazelcast_` prefix
-  - Update metric names where appropriate
+  - Take each metric name from a fixed list in Management Center
   - Combine related metrics and add labels
   - Convert to recommended base units:
-
     - Time in seconds
     - Memory in bytes
     - Percentages as ratios (for example, 50% converts to 0.5)
@@ -28,50 +32,50 @@ By default, Management Center exposes two versions of metrics based on <Variable
   - Remove unit labels
   - Append `_total` to accumulated metrics
 
-You can optionally [change which set of metrics is exposed](#config).
+V2 output contains only the metrics in that list. A metric that is not in the list appears only in V1 output.
 
-The following examples illustrate the differences between the V1 and V2 metrics.
+The tables on this page list only the metrics that have a version 2 (V2) name.
 
-- Rename and remove `unit` label, add `_total` suffix:
+In some cases, several V1 metrics are combined into a single V2 metric differentiated by labels. For example, `hazelcast_map_operations_total` replaces `hz_map_getCount` and `hz_map_setCount` by adding `operation="get"` and `operation="set"` labels.
 
-  ```none
-  # V1
-  hz_map_queryCount{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="COUNT",} 0.0 1737715903399
-  # V2
-  hazelcast_map_queries_total{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",} 0.0 1737715903399
-  ```
-- Rename and append unit, remove `unit` label, convert value (1.7x10<sup>12</sup> milliseconds to 1.7x10<sup>9</sup> seconds):
+### Examples
 
-  ```none
-  # V1
-  hz_map_creationTime{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="MS",} 1.737715861118E12 1737715903399
-  # V2
-  hazelcast_map_creation_timestamp_seconds{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",} 1.737715861118E9 1737715903399
-  ```
-- Rename and append unit, remove `unit` label, add `remove` label:
+This table compares four map metrics in V1 and V2:
 
-  ```none
-  # V1
-  hz_map_totalMaxRemoveLatency{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="MS",} 0.0 1737715903399
-  # V2
-  hazelcast_map_latency_max_seconds{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",operation="remove",} 0.0 1737715903399
-  ```
-- Rename, append unit suffix and `_total` suffix, remove `unit` label, add `remove` label, convert value from milliseconds to seconds:
+| V1 metric | V2 metric | V2 labels | V2 value |
+| --- | --- | --- | --- |
+| `hz_map_queryCount` | `hazelcast_map_queries_total` | No `unit` label | Same as V1 |
+| `hz_map_creationTime` | `hazelcast_map_creation_timestamp_seconds` | No `unit` label | Seconds instead of milliseconds |
+| `hz_map_totalMaxRemoveLatency` | `hazelcast_map_latency_max_seconds` | `operation="remove"` instead of `unit` | Seconds instead of milliseconds |
+| `hz_map_totalPutLatency` | `hazelcast_map_latency_seconds_total` | `operation="put"` instead of `unit` | Seconds instead of milliseconds |
 
-  ```none
-  # V1
-  hz_map_totalPutLatency{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="MS",} 2019.0 1743601193973
-  # V2
-  hazelcast_map_latency_seconds_total{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",operation="put",} 2.019 1743601193973
-  ```
+This is how they would look as `/metrics` output:
 
-## Change the metrics version {/* #config */}
+```none
+# queryCount in V1 and V2
+hz_map_queryCount{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="COUNT",} 0.0 1737715903399
+hazelcast_map_queries_total{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",} 0.0 1737715903399
+
+# creationTime in V1 and V2
+hz_map_creationTime{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="MS",} 1.737715861118E12 1737715903399
+hazelcast_map_creation_timestamp_seconds{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",} 1.737715861118E9 1737715903399
+
+# totalMaxRemoveLatency in V1 and V2
+hz_map_totalMaxRemoveLatency{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="MS",} 0.0 1737715903399
+hazelcast_map_latency_max_seconds{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",operation="remove",} 0.0 1737715903399
+
+# totalPutLatency in V1 and V2
+hz_map_totalPutLatency{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",unit="MS",} 2019.0 1743601193973
+hazelcast_map_latency_seconds_total{name="map-1",mc_member="127.0.0.1:5701",mc_cluster="Cluster-1",operation="put",} 2.019 1743601193973
+```
+
+### Change the metrics version {/* #config */}
 
 To change which set of metrics is exposed to Prometheus, update the `hazelcast.mc.prometheusExporter.printers` system property:
 
-- V1: `hazelcast.mc.prometheusExporter.printers=V1`
-- V2: `hazelcast.mc.prometheusExporter.printers=V2`
 - V1 and V2 (default): `hazelcast.mc.prometheusExporter.printers=V1,V2`
+- V1 only: `hazelcast.mc.prometheusExporter.printers=V1`
+- V2 only: `hazelcast.mc.prometheusExporter.printers=V2`
 
 See [System properties and environment variables](../../deploy-and-manage/configuration/system-properties.mdx).
 
@@ -81,865 +85,744 @@ If you set the property to `V2`, Management Center will only expose the subset o
 
 :::
 
-## Metrics list
-
-The following table lists all V2 metrics with their V1 equivalents. The full <Variable href="/hazelcast/{page-latest-supported-hazelcast}/list-of-metrics" text="list of Hazelcast metrics" /> and descriptions is provided in the Hazelcast Platform documentation.
-
-In some cases, several V1 metrics are combined into a single V2 metric differentiated by labels. For example, `hazelcast_map_operations_total` replaces `hz_map_getCount` and `hz_map_setCount` by adding `operation="get"` and `operation="set"` labels.
-
-<details>
-<summary>Map</summary>
+## Map
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| map\_backupCount | map\_backups\_total | n/a |
-| map\_backupEntryCount | map\_backup\_entries\_total | n/a |
-| map\_backupEntryMemoryCost | map\_backup\_entries\_memory\_cost\_bytes | n/a |
-| map\_creationTime | map\_creation\_timestamp\_seconds | n/a |
-| map\_dirtyEntryCount | map\_dirty\_entries\_total | n/a |
-| map\_evictionCount | map\_evictions\_total | n/a |
-| map\_expirationCount | map\_expirations\_total | n/a |
-| map\_getCount | map\_operations\_total | operation=get |
-| map\_heapCost | map\_heap\_cost\_bytes | n/a |
-| map\_indexedQueryCount | map\_indexed\_queries\_total | n/a |
-| map\_lastAccessTime | map\_last\_access\_timestamp\_seconds | n/a |
-| map\_lastUpdateTime | map\_last\_update\_timestamp\_seconds | n/a |
-| map\_lockedEntryCount | map\_locked\_entries\_total | n/a |
-| map\_merkleTreesCost | map\_merkle\_trees\_cost\_bytes | n/a |
-| map\_numberOfEvents | map\_events\_total | n/a |
-| map\_numberOfOtherOperations | map\_operations\_total | operation=other |
-| map\_ownedEntryCount | map\_owned\_entries\_total | n/a |
-| map\_ownedEntryMemoryCost | map\_owned\_entry\_memory\_cost\_bytes | n/a |
-| map\_putCount | map\_operations\_total | operation=put |
-| map\_queryCount | map\_queries\_total | n/a |
-| map\_removeCount | map\_operations\_total | operation=remove |
-| map\_setCount | map\_operations\_total | operation=set |
-| map\_hits | map\_hits\_total | n/a |
-| map\_totalGetLatency | map\_latency\_seconds\_total | operation=get |
-| map\_totalMaxGetLatency | map\_latency\_max\_seconds | operation=get |
-| map\_totalPutLatency | map\_latency\_seconds\_total | operation=put |
-| map\_totalMaxPutLatency | map\_latency\_max\_seconds | operation=put |
-| map\_totalRemoveLatency | map\_latency\_seconds\_total | operation=remove |
-| map\_totalMaxRemoveLatency | map\_latency\_max\_seconds | operation=remove |
-| map\_totalSetLatency | map\_latency\_seconds\_total | operation=set |
-| map\_totalMaxSetLatency | map\_latency\_max\_seconds | operation=set |
-| map\_index\_creationTime | map\_index\_creation\_timestamp\_seconds | n/a |
-| map\_index\_hitCount | map\_index\_hits\_total | n/a |
-| map\_index\_insertCount | map\_index\_inserts\_total | n/a |
-| map\_index\_memoryCost | map\_index\_memory\_cost\_bytes | n/a |
-| map\_index\_queryCount | map\_index\_queries\_total | n/a |
-| map\_index\_removeCount | map\_index\_removes\_total | n/a |
-| map\_index\_totalInsertLatency | map\_index\_latency\_seconds\_total | operation=insert |
-| map\_index\_totalRemoveLatency | map\_index\_latency\_seconds\_total | operation=remove |
-| map\_index\_totalUpdateLatency | map\_index\_latency\_seconds\_total | operation=update |
-| map\_index\_updateCount | map\_index\_updates\_total | n/a |
+| `map_backupCount` | `map_backups_total` | n/a |
+| `map_backupEntryCount` | `map_backup_entries_total` | n/a |
+| `map_backupEntryMemoryCost` | `map_backup_entries_memory_cost_bytes` | n/a |
+| `map_creationTime` | `map_creation_timestamp_seconds` | n/a |
+| `map_dirtyEntryCount` | `map_dirty_entries_total` | n/a |
+| `map_evictionCount` | `map_evictions_total` | n/a |
+| `map_expirationCount` | `map_expirations_total` | n/a |
+| `map_getCount` | `map_operations_total` | `operation=get` |
+| `map_heapCost` | `map_heap_cost_bytes` | n/a |
+| `map_indexedQueryCount` | `map_indexed_queries_total` | n/a |
+| `map_lastAccessTime` | `map_last_access_timestamp_seconds` | n/a |
+| `map_lastUpdateTime` | `map_last_update_timestamp_seconds` | n/a |
+| `map_lockedEntryCount` | `map_locked_entries_total` | n/a |
+| `map_merkleTreesCost` | `map_merkle_trees_cost_bytes` | n/a |
+| `map_numberOfEvents` | `map_events_total` | n/a |
+| `map_numberOfOtherOperations` | `map_operations_total` | `operation=other` |
+| `map_ownedEntryCount` | `map_owned_entries_total` | n/a |
+| `map_ownedEntryMemoryCost` | `map_owned_entry_memory_cost_bytes` | n/a |
+| `map_putCount` | `map_operations_total` | `operation=put` |
+| `map_queryCount` | `map_queries_total` | n/a |
+| `map_removeCount` | `map_operations_total` | `operation=remove` |
+| `map_setCount` | `map_operations_total` | `operation=set` |
+| `map_hits` | `map_hits_total` | n/a |
+| `map_totalGetLatency` | `map_latency_seconds_total` | `operation=get` |
+| `map_totalMaxGetLatency` | `map_latency_max_seconds` | `operation=get` |
+| `map_totalPutLatency` | `map_latency_seconds_total` | `operation=put` |
+| `map_totalMaxPutLatency` | `map_latency_max_seconds` | `operation=put` |
+| `map_totalRemoveLatency` | `map_latency_seconds_total` | `operation=remove` |
+| `map_totalMaxRemoveLatency` | `map_latency_max_seconds` | `operation=remove` |
+| `map_totalSetLatency` | `map_latency_seconds_total` | `operation=set` |
+| `map_totalMaxSetLatency` | `map_latency_max_seconds` | `operation=set` |
+| `map_index_creationTime` | `map_index_creation_timestamp_seconds` | n/a |
+| `map_index_hitCount` | `map_index_hits_total` | n/a |
+| `map_index_insertCount` | `map_index_inserts_total` | n/a |
+| `map_index_memoryCost` | `map_index_memory_cost_bytes` | n/a |
+| `map_index_queryCount` | `map_index_queries_total` | n/a |
+| `map_index_removeCount` | `map_index_removes_total` | n/a |
+| `map_index_totalInsertLatency` | `map_index_latency_seconds_total` | `operation=insert` |
+| `map_index_totalRemoveLatency` | `map_index_latency_seconds_total` | `operation=remove` |
+| `map_index_totalUpdateLatency` | `map_index_latency_seconds_total` | `operation=update` |
+| `map_index_updateCount` | `map_index_updates_total` | n/a |
 
-</details>
-
-<details>
-<summary>Set</summary>
+## Set
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| set\_creationTime | set\_creation\_timestamp\_seconds | n/a |
-| set\_lastAccessTime | set\_last\_access\_timestamp\_seconds | n/a |
-| set\_lastUpdateTime | set\_last\_update\_timestamp\_seconds | n/a |
+| `set_creationTime` | `set_creation_timestamp_seconds` | n/a |
+| `set_lastAccessTime` | `set_last_access_timestamp_seconds` | n/a |
+| `set_lastUpdateTime` | `set_last_update_timestamp_seconds` | n/a |
 
-</details>
-
-<details>
-<summary>List</summary>
+## List
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| list\_creationTime | list\_creation\_timestamp\_seconds | n/a |
-| list\_lastAccessTime | list\_last\_access\_timestamp\_seconds | n/a |
-| list\_lastUpdateTime | list\_last\_update\_timestamp\_seconds | n/a |
+| `list_creationTime` | `list_creation_timestamp_seconds` | n/a |
+| `list_lastAccessTime` | `list_last_access_timestamp_seconds` | n/a |
+| `list_lastUpdateTime` | `list_last_update_timestamp_seconds` | n/a |
 
-</details>
-
-<details>
-<summary>Operating System</summary>
+## Operating system
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| os.committedVirtualMemorySize | os\_committed\_virtual\_memory\_size\_bytes | n/a |
-| os.freePhysicalMemorySize | os\_free\_physical\_memory\_size\_bytes | n/a |
-| os.freeSwapSpaceSize | os\_free\_swap\_space\_size\_bytes | n/a |
-| os.maxFileDescriptorCount | os\_max\_file\_descriptor\_total | n/a |
-| os.openFileDescriptorCount | os\_open\_file\_descriptor\_total | n/a |
-| os.processCpuLoad | os\_process\_cpu\_load\_ratio | n/a |
-| os.processCpuTime | os\_process\_cpu\_time\_seconds | n/a |
-| os.systemCpuLoad | os\_system\_cpu\_load\_ratio | n/a |
-| os.systemLoadAverage | os\_system\_load\_average\_ratio | n/a |
-| os.totalPhysicalMemorySize | os\_total\_physical\_memory\_size\_bytes | n/a |
-| os.totalSwapSpaceSize | os\_total\_swap\_space\_size\_bytes | n/a |
+| `os_committedVirtualMemorySize` | `os_committed_virtual_memory_size_bytes` | n/a |
+| `os_freePhysicalMemorySize` | `os_free_physical_memory_size_bytes` | n/a |
+| `os_freeSwapSpaceSize` | `os_free_swap_space_size_bytes` | n/a |
+| `os_maxFileDescriptorCount` | `os_max_file_descriptor_total` | n/a |
+| `os_openFileDescriptorCount` | `os_open_file_descriptor_total` | n/a |
+| `os_processCpuLoad` | `os_process_cpu_load_ratio` | n/a |
+| `os_processCpuTime` | `os_process_cpu_time_seconds` | n/a |
+| `os_systemCpuLoad` | `os_system_cpu_load_ratio` | n/a |
+| `os_systemLoadAverage` | `os_system_load_average_ratio` | n/a |
+| `os_totalPhysicalMemorySize` | `os_total_physical_memory_size_bytes` | n/a |
+| `os_totalSwapSpaceSize` | `os_total_swap_space_size_bytes` | n/a |
 
-</details>
-
-<details>
-<summary>Events</summary>
+## Events
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| event.eventQueueSize | event\_queue\_size\_total | n/a |
-| event.eventsProcessed | event\_processed\_total | n/a |
-| event.listenerCount | event\_listeners\_total | n/a |
-| event.publicationCount | event\_publications\_total | n/a |
-| event.queueCapacity | event\_queue\_capacity\_total | n/a |
-| event.rejectedCount | event\_rejected\_total | n/a |
-| event.syncDeliveryFailureCount | event\_sync\_delivery\_failures\_total | n/a |
-| event.threadCount | event\_threads\_total | n/a |
-| event.totalFailureCount | event\_failures\_total | n/a |
+| `event_eventQueueSize` | `event_queue_size_total` | n/a |
+| `event_eventsProcessed` | `event_processed_total` | n/a |
+| `event_listenerCount` | `event_listeners_total` | n/a |
+| `event_publicationCount` | `event_publications_total` | n/a |
+| `event_queueCapacity` | `event_queue_capacity_total` | n/a |
+| `event_rejectedCount` | `event_rejected_total` | n/a |
+| `event_syncDeliveryFailureCount` | `event_sync_delivery_failures_total` | n/a |
+| `event_threadCount` | `event_threads_total` | n/a |
+| `event_totalFailureCount` | `event_failures_total` | n/a |
 
-</details>
-
-<details>
-<summary>Listeners</summary>
+## Listeners
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| listeners.eventsProcessed | listeners\_events\_processed\_total | n/a |
-| listeners.eventQueueSize | listeners\_event\_queue\_size\_total | n/a |
+| `listeners_eventsProcessed` | `listeners_events_processed_total` | n/a |
+| `listeners_eventQueueSize` | `listeners_event_queue_size_total` | n/a |
 
-</details>
-
-<details>
-<summary>Capacity</summary>
+## Capacity
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| file.partition.freeSpace | file\_partition\_free\_space\_bytes | n/a |
-| file.partition.totalSpace | file\_partition\_total\_space\_bytes | n/a |
-| file.partition.usableSpace | file\_partition\_usable\_space\_bytes | n/a |
+| `file_partition_freeSpace` | `file_partition_free_space_bytes` | n/a |
+| `file_partition_totalSpace` | `file_partition_total_space_bytes` | n/a |
+| `file_partition_usableSpace` | `file_partition_usable_space_bytes` | n/a |
 
-</details>
-
-<details>
-<summary>Garbage Collection</summary>
+## Garbage collection
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| gc.majorCount | gc\_major\_total | n/a |
-| gc.majorTime | gc\_major\_time\_seconds\_total | n/a |
-| gc.minorCount | gc\_minor\_total | n/a |
-| gc.minorTime | gc\_minor\_time\_seconds\_total | n/a |
-| gc.unknownCount | gc\_unknown\_total | n/a |
-| gc.unknownTime | gc\_unknown\_time\_seconds\_total | n/a |
+| `gc_majorCount` | `gc_major_total` | n/a |
+| `gc_majorTime` | `gc_major_time_seconds_total` | n/a |
+| `gc_minorCount` | `gc_minor_total` | n/a |
+| `gc_minorTime` | `gc_minor_time_seconds_total` | n/a |
+| `gc_unknownCount` | `gc_unknown_total` | n/a |
+| `gc_unknownTime` | `gc_unknown_time_seconds_total` | n/a |
 
-</details>
-
-<details>
-<summary>Memory</summary>
+## Memory
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| memory.committedHeap | memory\_committed\_heap\_bytes | n/a |
-| memory.committedNative | memory\_committed\_native\_bytes | n/a |
-| memory.freeHeap | memory\_free\_heap\_bytes | n/a |
-| memory.freeNative | memory\_free\_native\_bytes | n/a |
-| memory.freePhysical | memory\_free\_physical\_bytes | n/a |
-| memory.maxHeap | memory\_max\_heap\_bytes | n/a |
-| memory.maxMetadata | memory\_max\_metadata\_bytes | n/a |
-| memory.maxNative | memory\_max\_native\_bytes | n/a |
-| memory.totalPhysical | memory\_total\_physical\_bytes | n/a |
-| memory.usedHeap | memory\_used\_heap\_bytes | n/a |
-| memory.usedMetadata | memory\_used\_metadata\_bytes | n/a |
-| memory.usedNative | memory\_used\_native\_bytes | n/a |
+| `memory_committedHeap` | `memory_committed_heap_bytes` | n/a |
+| `memory_committedNative` | `memory_committed_native_bytes` | n/a |
+| `memory_freeHeap` | `memory_free_heap_bytes` | n/a |
+| `memory_freeNative` | `memory_free_native_bytes` | n/a |
+| `memory_freePhysical` | `memory_free_physical_bytes` | n/a |
+| `memory_maxHeap` | `memory_max_heap_bytes` | n/a |
+| `memory_maxMetadata` | `memory_max_metadata_bytes` | n/a |
+| `memory_maxNative` | `memory_max_native_bytes` | n/a |
+| `memory_totalPhysical` | `memory_total_physical_bytes` | n/a |
+| `memory_usedHeap` | `memory_used_heap_bytes` | n/a |
+| `memory_usedMetadata` | `memory_used_metadata_bytes` | n/a |
+| `memory_usedNative` | `memory_used_native_bytes` | n/a |
 
-</details>
-
-<details>
-<summary>Operations</summary>
+## Operations
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| operation.adhoc.executedOperationsCount | operation\_adhoc\_executed\_operations\_total | n/a |
-| operation.asyncOperations | operation\_async\_operations\_total | n/a |
-| operation.completedCount | operation\_completed\_total | n/a |
-| operation.failedBackups | operation\_failed\_backups\_total | n/a |
-| operation.generic.executedOperationsCount | operation\_generic\_executed\_operations\_total | n/a |
-| operation.genericPriorityQueueSize | operation\_generic\_priority\_queue\_size\_total | n/a |
-| operation.genericQueueSize | operation\_generic\_queue\_size\_total | n/a |
-| operation.genericThreadCount | operation\_generic\_threads\_total | n/a |
-| operation.invocations.backupTimeoutMillis | operation\_invocations\_backup\_timeout\_seconds | n/a |
-| operation.invocations.backupTimeouts | operation\_invocations\_backup\_timeouts\_total | n/a |
-| operation.invocations.delayedExecutionCount | operation\_invocations\_delayed\_executions\_total | n/a |
-| operation.invocations.heartbeatBroadcastPeriodMillis | operation\_invocations\_heartbeat\_broadcast\_period\_seconds | n/a |
-| operation.invocations.heartbeatPacketsReceived | operation\_invocations\_heartbeat\_packets\_received\_total | n/a |
-| operation.invocations.heartbeatPacketsSent | operation\_invocations\_heartbeat\_packets\_sent\_total | n/a |
-| operation.invocations.invocationScanPeriodMillis | operation\_invocations\_invocation\_scan\_period\_seconds | n/a |
-| operation.invocations.invocationTimeoutMillis | operation\_invocations\_invocation\_timeout\_seconds | n/a |
-| operation.invocations.lastCallId | operation\_invocations\_last\_call\_id\_total | n/a |
-| operation.invocations.normalTimeouts | operation\_invocations\_normal\_timeouts\_total | n/a |
-| operation.invocations.pending | operation\_invocations\_pending\_total | n/a |
-| operation.invocations.usedPercentage | operation\_invocations\_used\_ratio | n/a |
-| operation.parker.parkQueueCount | operation\_parker\_park\_queue\_total | n/a |
-| operation.parker.totalParkedOperationCount | operation\_parker\_parked\_operations\_total | n/a |
-| operation.partition.executedOperationsCount | operation\_partition\_executed\_operations\_total | n/a |
-| operation.partitionThreadCount | operation\_partition\_threads\_total | n/a |
-| operation.priorityQueueSize | operation\_priority\_queue\_size\_total | n/a |
-| operation.queueSize | operation\_queue\_size\_total | n/a |
-| operation.responseQueueSize | operation\_response\_queue\_size\_total | n/a |
-| operation.responses.backupCount | operation\_responses\_backups\_total | n/a |
-| operation.responses.errorCount | operation\_responses\_errors\_total | n/a |
-| operation.responses.missingCount | operation\_responses\_missing\_total | n/a |
-| operation.responses.normalCount | operation\_responses\_normal\_total | n/a |
-| operation.responses.timeoutCount | operation\_responses\_timeouts\_total | n/a |
-| operation.retryCount | operation\_retries\_total | n/a |
-| operation.runningCount | operation\_running\_total | n/a |
-| operation.runningGenericCount | operation\_running\_generic\_total | n/a |
-| operation.runningPartitionCount | operation\_running\_partition\_total | n/a |
-| operation.thread.completedOperationCount | operation\_thread\_completed\_operations\_total | n/a |
-| operation.thread.completedOperationBatchCount | operation\_thread\_completed\_operation\_batches\_total | n/a |
-| operation.thread.completedPacketCount | operation\_thread\_completed\_packets\_total | n/a |
-| operation.thread.completedPartitionSpecificRunnableCount | operation\_thread\_completed\_partition\_specific\_runnables\_total | n/a |
-| operation.thread.completedRunnableCount | operation\_thread\_completed\_runnables\_total | n/a |
-| operation.thread.completedTotalCount | operation\_thread\_completed\_total | n/a |
-| operation.thread.errorCount | operation\_thread\_errors\_total | n/a |
-| operation.thread.normalPendingCount | operation\_thread\_normal\_pending\_total | n/a |
-| operation.thread.priorityPendingCount | operation\_thread\_priority\_pending\_total | n/a |
+| `operation_adhoc_executedOperationsCount` | `operation_adhoc_executed_operations_total` | n/a |
+| `operation_asyncOperations` | `operation_async_operations_total` | n/a |
+| `operation_completedCount` | `operation_completed_total` | n/a |
+| `operation_failedBackups` | `operation_failed_backups_total` | n/a |
+| `operation_generic_executedOperationsCount` | `operation_generic_executed_operations_total` | n/a |
+| `operation_genericPriorityQueueSize` | `operation_generic_priority_queue_size_total` | n/a |
+| `operation_genericQueueSize` | `operation_generic_queue_size_total` | n/a |
+| `operation_genericThreadCount` | `operation_generic_threads_total` | n/a |
+| `operation_invocations_backupTimeoutMillis` | `operation_invocations_backup_timeout_seconds` | n/a |
+| `operation_invocations_backupTimeouts` | `operation_invocations_backup_timeouts_total` | n/a |
+| `operation_invocations_delayedExecutionCount` | `operation_invocations_delayed_executions_total` | n/a |
+| `operation_invocations_heartbeatBroadcastPeriodMillis` | `operation_invocations_heartbeat_broadcast_period_seconds` | n/a |
+| `operation_invocations_heartbeatPacketsReceived` | `operation_invocations_heartbeat_packets_received_total` | n/a |
+| `operation_invocations_heartbeatPacketsSent` | `operation_invocations_heartbeat_packets_sent_total` | n/a |
+| `operation_invocations_invocationScanPeriodMillis` | `operation_invocations_invocation_scan_period_seconds` | n/a |
+| `operation_invocations_invocationTimeoutMillis` | `operation_invocations_invocation_timeout_seconds` | n/a |
+| `operation_invocations_lastCallId` | `operation_invocations_last_call_id_total` | n/a |
+| `operation_invocations_normalTimeouts` | `operation_invocations_normal_timeouts_total` | n/a |
+| `operation_invocations_pending` | `operation_invocations_pending_total` | n/a |
+| `operation_invocations_usedPercentage` | `operation_invocations_used_ratio` | n/a |
+| `operation_parker_parkQueueCount` | `operation_parker_park_queue_total` | n/a |
+| `operation_parker_totalParkedOperationCount` | `operation_parker_parked_operations_total` | n/a |
+| `operation_partition_executedOperationsCount` | `operation_partition_executed_operations_total` | n/a |
+| `operation_partitionThreadCount` | `operation_partition_threads_total` | n/a |
+| `operation_priorityQueueSize` | `operation_priority_queue_size_total` | n/a |
+| `operation_queueSize` | `operation_queue_size_total` | n/a |
+| `operation_responseQueueSize` | `operation_response_queue_size_total` | n/a |
+| `operation_responses_backupCount` | `operation_responses_backups_total` | n/a |
+| `operation_responses_errorCount` | `operation_responses_errors_total` | n/a |
+| `operation_responses_missingCount` | `operation_responses_missing_total` | n/a |
+| `operation_responses_normalCount` | `operation_responses_normal_total` | n/a |
+| `operation_responses_timeoutCount` | `operation_responses_timeouts_total` | n/a |
+| `operation_retryCount` | `operation_retries_total` | n/a |
+| `operation_runningCount` | `operation_running_total` | n/a |
+| `operation_runningGenericCount` | `operation_running_generic_total` | n/a |
+| `operation_runningPartitionCount` | `operation_running_partition_total` | n/a |
+| `operation_thread_completedOperationCount` | `operation_thread_completed_operations_total` | n/a |
+| `operation_thread_completedOperationBatchCount` | `operation_thread_completed_operation_batches_total` | n/a |
+| `operation_thread_completedPacketCount` | `operation_thread_completed_packets_total` | n/a |
+| `operation_thread_completedPartitionSpecificRunnableCount` | `operation_thread_completed_partition_specific_runnables_total` | n/a |
+| `operation_thread_completedRunnableCount` | `operation_thread_completed_runnables_total` | n/a |
+| `operation_thread_completedTotalCount` | `operation_thread_completed_total` | n/a |
+| `operation_thread_errorCount` | `operation_thread_errors_total` | n/a |
+| `operation_thread_normalPendingCount` | `operation_thread_normal_pending_total` | n/a |
+| `operation_thread_priorityPendingCount` | `operation_thread_priority_pending_total` | n/a |
 
-</details>
-
-<details>
-<summary>Runtime</summary>
+## Runtime
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| runtime.availableProcessors | runtime\_available\_processors\_total | n/a |
-| runtime.freeMemory | runtime\_free\_memory\_bytes | n/a |
-| runtime.maxMemory | runtime\_max\_memory\_bytes | n/a |
-| runtime.totalMemory | runtime\_total\_memory\_bytes | n/a |
-| runtime.uptime | runtime\_up\_time\_seconds\_total | n/a |
-| runtime.usedMemory | runtime\_used\_memory\_bytes | n/a |
+| `runtime_availableProcessors` | `runtime_available_processors_total` | n/a |
+| `runtime_freeMemory` | `runtime_free_memory_bytes` | n/a |
+| `runtime_maxMemory` | `runtime_max_memory_bytes` | n/a |
+| `runtime_totalMemory` | `runtime_total_memory_bytes` | n/a |
+| `runtime_uptime` | `runtime_up_time_seconds_total` | n/a |
+| `runtime_usedMemory` | `runtime_used_memory_bytes` | n/a |
 
-</details>
-
-<details>
-<summary>TCP</summary>
+## TCP
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| tcp.acceptor.eventCount | tcp\_acceptor\_events\_total | n/a |
-| tcp.acceptor.exceptionCount | tcp\_acceptor\_exceptions\_total | n/a |
-| tcp.acceptor.idleTimeMillis | tcp\_acceptor\_idle\_time\_seconds | n/a |
-| tcp.acceptor.selectorRecreateCount | tcp\_acceptor\_selector\_recreate\_total | n/a |
-| tcp.balancer.imbalanceDetectedCount | tcp\_balancer\_imbalance\_detected\_total | n/a |
-| tcp.balancer.migrationCompletedCount | tcp\_balancer\_migration\_completed\_total | n/a |
-| tcp.bytesReceived | tcp\_received\_bytes | n/a |
-| tcp.bytesSend | tcp\_sent\_bytes | n/a |
-| tcp.connection.acceptedSocketCount | tcp\_connection\_accepted\_socket\_total | n/a |
-| tcp.connection.activeCount | tcp\_connection\_active\_total | n/a |
-| tcp.connection.clientCount | tcp\_connection\_clients\_total | n/a |
-| tcp.connection.closedCount | tcp\_connection\_closed\_total | n/a |
-| tcp.connection.connectionListenerCount | tcp\_connection\_listeners\_total | n/a |
-| tcp.connection.count | tcp\_connection\_total | n/a |
-| tcp.connection.inProgressCount | tcp\_connection\_in\_progress\_total | n/a |
-| tcp.connection.openedCount | tcp\_connection\_opened\_total | n/a |
-| tcp.connection.textCount | tcp\_connection\_text\_total | n/a |
-| tcp.connection.in.completedMigrations | tcp\_connection\_completed\_migrations\_total | direction=in |
-| tcp.connection.out.completedMigrations | tcp\_connection\_completed\_migrations\_total | direction=out |
-| tcp.connection.in.opsInterested | tcp\_connection\_ops\_interested\_total | direction=in |
-| tcp.connection.out.opsInterested | tcp\_connection\_ops\_interested\_total | direction=out |
-| tcp.connection.in.opsReady | tcp\_connection\_ops\_ready\_total | direction=in |
-| tcp.connection.out.opsReady | tcp\_connection\_ops\_ready\_total | direction=out |
-| tcp.connection.in.ownerId | tcp\_connection\_owner\_id\_total | direction=in |
-| tcp.connection.out.ownerId | tcp\_connection\_owner\_id\_total | direction=out |
-| tcp.connection.in.processCount | tcp\_connection\_process\_total | direction=in |
-| tcp.connection.out.processCount | tcp\_connection\_process\_total | direction=out |
-| tcp.connection.in.startedMigrations | tcp\_connection\_started\_migrations\_total | direction=in |
-| tcp.connection.out.startedMigrations | tcp\_connection\_started\_migrations\_total | direction=out |
-| tcp.connection.in.bytesRead | tcp\_connection\_in\_read\_bytes | n/a |
-| tcp.connection.in.idleTimeMs | tcp\_connection\_in\_idle\_time\_seconds | n/a |
-| tcp.connection.in.normalFramesRead | tcp\_connection\_in\_normal\_frames\_read\_total | n/a |
-| tcp.connection.in.priorityFramesRead | tcp\_connection\_in\_priority\_frames\_read\_total | n/a |
-| tcp.connection.out.bytesWritten | tcp\_connection\_out\_written\_bytes | n/a |
-| tcp.connection.out.idleTimeMillis | tcp\_connection\_out\_idle\_time\_seconds | n/a |
-| tcp.connection.out.normalFramesWritten | tcp\_connection\_out\_normal\_frames\_written\_total | n/a |
-| tcp.connection.out.priorityFramesWritten | tcp\_connection\_out\_priority\_frames\_written\_total | n/a |
-| tcp.connection.out.priorityWriteQueuePendingBytes | tcp\_connection\_out\_priority\_write\_queue\_pending\_bytes | n/a |
-| tcp.connection.out.priorityWriteQueueSize | tcp\_connection\_out\_priority\_write\_queue\_size\_total | n/a |
-| tcp.connection.out.scheduled | tcp\_connection\_out\_scheduled\_total | n/a |
-| tcp.connection.out.writeQueuePendingBytes | tcp\_connection\_out\_write\_queue\_pending\_bytes | n/a |
-| tcp.connection.out.writeQueueSize | tcp\_connection\_out\_write\_queue\_size\_total | n/a |
-| tcp.inputThread.bytesTransceived | tcp\_transceived\_bytes | thread=input |
-| tcp.outputThread.bytesTransceived | tcp\_transceived\_bytes | thread=output |
-| tcp.inputThread.completedTaskCount | tcp\_completed\_tasks\_total | thread=input |
-| tcp.outputThread.completedTaskCount | tcp\_completed\_tasks\_total | thread=output |
-| tcp.inputThread.eventCount | tcp\_events\_total | thread=input |
-| tcp.outputThread.eventCount | tcp\_events\_total | thread=output |
-| tcp.inputThread.framesTransceived | tcp\_transceived\_frames\_total | thread=input |
-| tcp.outputThread.framesTransceived | tcp\_transceived\_frames\_total | thread=output |
-| tcp.inputThread.idleTimeMillis | tcp\_idle\_seconds | thread=input |
-| tcp.outputThread.idleTimeMillis | tcp\_idle\_seconds | thread=output |
-| tcp.inputThread.ioThreadId | tcp\_io\_thread\_id\_total | thread=input |
-| tcp.outputThread.ioThreadId | tcp\_io\_thread\_id\_total | thread=output |
-| tcp.inputThread.priorityFramesTransceived | tcp\_priority\_frames\_transceived\_total | thread=input |
-| tcp.outputThread.priorityFramesTransceived | tcp\_priority\_frames\_transceived\_total | thread=output |
-| tcp.inputThread.processCount | tcp\_process\_total | thread=input |
-| tcp.outputThread.processCount | tcp\_process\_total | thread=output |
-| tcp.inputThread.selectorIOExceptionCount | tcp\_selector\_io\_exceptions\_total | thread=input |
-| tcp.outputThread.selectorIOExceptionCount | tcp\_selector\_io\_exceptions\_total | thread=output |
-| tcp.inputThread.taskQueueSize | tcp\_task\_queue\_size\_total | thread=input |
-| tcp.outputThread.taskQueueSize | tcp\_task\_queue\_size\_total | thread=output |
+| `tcp_acceptor_eventCount` | `tcp_acceptor_events_total` | n/a |
+| `tcp_acceptor_exceptionCount` | `tcp_acceptor_exceptions_total` | n/a |
+| `tcp_acceptor_idleTimeMillis` | `tcp_acceptor_idle_time_seconds` | n/a |
+| `tcp_acceptor_selectorRecreateCount` | `tcp_acceptor_selector_recreate_total` | n/a |
+| `tcp_balancer_imbalanceDetectedCount` | `tcp_balancer_imbalance_detected_total` | n/a |
+| `tcp_balancer_migrationCompletedCount` | `tcp_balancer_migration_completed_total` | n/a |
+| `tcp_bytesReceived` | `tcp_received_bytes` | n/a |
+| `tcp_bytesSend` | `tcp_sent_bytes` | n/a |
+| `tcp_connection_acceptedSocketCount` | `tcp_connection_accepted_socket_total` | n/a |
+| `tcp_connection_activeCount` | `tcp_connection_active_total` | n/a |
+| `tcp_connection_clientCount` | `tcp_connection_clients_total` | n/a |
+| `tcp_connection_closedCount` | `tcp_connection_closed_total` | n/a |
+| `tcp_connection_connectionListenerCount` | `tcp_connection_listeners_total` | n/a |
+| `tcp_connection_count` | `tcp_connection_total` | n/a |
+| `tcp_connection_inProgressCount` | `tcp_connection_in_progress_total` | n/a |
+| `tcp_connection_openedCount` | `tcp_connection_opened_total` | n/a |
+| `tcp_connection_textCount` | `tcp_connection_text_total` | n/a |
+| `tcp_connection_in_completedMigrations` | `tcp_connection_completed_migrations_total` | `direction=in` |
+| `tcp_connection_out_completedMigrations` | `tcp_connection_completed_migrations_total` | `direction=out` |
+| `tcp_connection_in_opsInterested` | `tcp_connection_ops_interested_total` | `direction=in` |
+| `tcp_connection_out_opsInterested` | `tcp_connection_ops_interested_total` | `direction=out` |
+| `tcp_connection_in_opsReady` | `tcp_connection_ops_ready_total` | `direction=in` |
+| `tcp_connection_out_opsReady` | `tcp_connection_ops_ready_total` | `direction=out` |
+| `tcp_connection_in_ownerId` | `tcp_connection_owner_id_total` | `direction=in` |
+| `tcp_connection_out_ownerId` | `tcp_connection_owner_id_total` | `direction=out` |
+| `tcp_connection_in_processCount` | `tcp_connection_process_total` | `direction=in` |
+| `tcp_connection_out_processCount` | `tcp_connection_process_total` | `direction=out` |
+| `tcp_connection_in_startedMigrations` | `tcp_connection_started_migrations_total` | `direction=in` |
+| `tcp_connection_out_startedMigrations` | `tcp_connection_started_migrations_total` | `direction=out` |
+| `tcp_connection_in_bytesRead` | `tcp_connection_in_read_bytes` | n/a |
+| `tcp_connection_in_idleTimeMs` | `tcp_connection_in_idle_time_seconds` | n/a |
+| `tcp_connection_in_normalFramesRead` | `tcp_connection_in_normal_frames_read_total` | n/a |
+| `tcp_connection_in_priorityFramesRead` | `tcp_connection_in_priority_frames_read_total` | n/a |
+| `tcp_connection_out_bytesWritten` | `tcp_connection_out_written_bytes` | n/a |
+| `tcp_connection_out_idleTimeMillis` | `tcp_connection_out_idle_time_seconds` | n/a |
+| `tcp_connection_out_normalFramesWritten` | `tcp_connection_out_normal_frames_written_total` | n/a |
+| `tcp_connection_out_priorityFramesWritten` | `tcp_connection_out_priority_frames_written_total` | n/a |
+| `tcp_connection_out_priorityWriteQueuePendingBytes` | `tcp_connection_out_priority_write_queue_pending_bytes` | n/a |
+| `tcp_connection_out_priorityWriteQueueSize` | `tcp_connection_out_priority_write_queue_size_total` | n/a |
+| `tcp_connection_out_scheduled` | `tcp_connection_out_scheduled_total` | n/a |
+| `tcp_connection_out_writeQueuePendingBytes` | `tcp_connection_out_write_queue_pending_bytes` | n/a |
+| `tcp_connection_out_writeQueueSize` | `tcp_connection_out_write_queue_size_total` | n/a |
+| `tcp_inputThread_bytesTransceived` | `tcp_transceived_bytes` | `thread=input` |
+| `tcp_outputThread_bytesTransceived` | `tcp_transceived_bytes` | `thread=output` |
+| `tcp_inputThread_completedTaskCount` | `tcp_completed_tasks_total` | `thread=input` |
+| `tcp_outputThread_completedTaskCount` | `tcp_completed_tasks_total` | `thread=output` |
+| `tcp_inputThread_eventCount` | `tcp_events_total` | `thread=input` |
+| `tcp_outputThread_eventCount` | `tcp_events_total` | `thread=output` |
+| `tcp_inputThread_framesTransceived` | `tcp_transceived_frames_total` | `thread=input` |
+| `tcp_outputThread_framesTransceived` | `tcp_transceived_frames_total` | `thread=output` |
+| `tcp_inputThread_idleTimeMillis` | `tcp_idle_seconds` | `thread=input` |
+| `tcp_outputThread_idleTimeMillis` | `tcp_idle_seconds` | `thread=output` |
+| `tcp_inputThread_ioThreadId` | `tcp_io_thread_id_total` | `thread=input` |
+| `tcp_outputThread_ioThreadId` | `tcp_io_thread_id_total` | `thread=output` |
+| `tcp_inputThread_priorityFramesTransceived` | `tcp_priority_frames_transceived_total` | `thread=input` |
+| `tcp_outputThread_priorityFramesTransceived` | `tcp_priority_frames_transceived_total` | `thread=output` |
+| `tcp_inputThread_processCount` | `tcp_process_total` | `thread=input` |
+| `tcp_outputThread_processCount` | `tcp_process_total` | `thread=output` |
+| `tcp_inputThread_selectorIOExceptionCount` | `tcp_selector_io_exceptions_total` | `thread=input` |
+| `tcp_outputThread_selectorIOExceptionCount` | `tcp_selector_io_exceptions_total` | `thread=output` |
+| `tcp_inputThread_taskQueueSize` | `tcp_task_queue_size_total` | `thread=input` |
+| `tcp_outputThread_taskQueueSize` | `tcp_task_queue_size_total` | `thread=output` |
 
-</details>
-
-<details>
-<summary>Threads</summary>
+## Threads
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| thread.daemonThreadCount | thread\_daemon\_total | n/a |
-| thread.peakThreadCount | thread\_peak\_total | n/a |
-| thread.threadCount | thread\_total | n/a |
-| thread.totalStartedThreadCount | thread\_started\_total | n/a |
+| `thread_daemonThreadCount` | `thread_daemon_total` | n/a |
+| `thread_peakThreadCount` | `thread_peak_total` | n/a |
+| `thread_threadCount` | `thread_total` | n/a |
+| `thread_totalStartedThreadCount` | `thread_started_total` | n/a |
 
-</details>
-
-<details>
-<summary>Topic</summary>
+## Topic
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| topic.creationTime | topic\_creation\_timestamp\_seconds | n/a |
-| topic.totalPublishes | topic\_publishes\_total | n/a |
-| topic.totalReceivedMessages | topic\_received\_messages\_total | n/a |
+| `topic_creationTime` | `topic_creation_timestamp_seconds` | n/a |
+| `topic_totalPublishes` | `topic_publishes_total` | n/a |
+| `topic_totalReceivedMessages` | `topic_received_messages_total` | n/a |
 
-</details>
-
-<details>
-<summary>Reliable Topic</summary>
+## Reliable Topic
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| reliableTopic.creationTime | reliable\_topic\_creation\_timestamp\_seconds | n/a |
-| reliableTopic.totalPublishes | reliable\_topic\_publishes\_total | n/a |
-| reliableTopic.totalReceivedMessages | reliable\_topic\_received\_messages\_total | n/a |
+| `reliableTopic_creationTime` | `reliable_topic_creation_timestamp_seconds` | n/a |
+| `reliableTopic_totalPublishes` | `reliable_topic_publishes_total` | n/a |
+| `reliableTopic_totalReceivedMessages` | `reliable_topic_received_messages_total` | n/a |
 
-</details>
-
-<details>
-<summary>Flake ID Generator</summary>
+## Flake ID Generator
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| flakeIdGenerator.batchCount | flake\_id\_generator\_batches\_total | n/a |
-| flakeIdGenerator.creationTime | flake\_id\_generator\_creation\_timestamp\_seconds | n/a |
-| flakeIdGenerator.idCount | flake\_id\_generator\_ids\_total | n/a |
+| `flakeIdGenerator_batchCount` | `flake_id_generator_batches_total` | n/a |
+| `flakeIdGenerator_creationTime` | `flake_id_generator_creation_timestamp_seconds` | n/a |
+| `flakeIdGenerator_idCount` | `flake_id_generator_ids_total` | n/a |
 
-</details>
-
-<details>
-<summary>PN Counter</summary>
+## PN counter
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| pnCounter.creationTime | pn\_counter\_creation\_timestamp\_seconds | n/a |
-| pnCounter.totalDecrementOperationCount | pn\_counter\_decrement\_operations\_total | n/a |
-| pnCounter.totalIncrementOperationCount | pn\_counter\_increment\_operations\_total | n/a |
-| pnCounter.value | pn\_counter\_value\_total | n/a |
+| `pnCounter_creationTime` | `pn_counter_creation_timestamp_seconds` | n/a |
+| `pnCounter_totalDecrementOperationCount` | `pn_counter_decrement_operations_total` | n/a |
+| `pnCounter_totalIncrementOperationCount` | `pn_counter_increment_operations_total` | n/a |
+| `pnCounter_value` | `pn_counter_value_total` | n/a |
 
-</details>
-
-<details>
-<summary>User Code Deployment</summary>
+## User Code Deployment
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| classloading.loadedClassesCount | user\_code\_deployment\_currently\_loaded\_classes\_total | n/a |
-| classloading.totalLoadedClassesCount | user\_code\_deployment\_loaded\_classes\_total | n/a |
-| classloading.unloadedClassesCount | user\_code\_deployment\_unloaded\_classes\_total | n/a |
+| `classloading_loadedClassesCount` | `user_code_deployment_currently_loaded_classes_total` | n/a |
+| `classloading_totalLoadedClassesCount` | `user_code_deployment_loaded_classes_total` | n/a |
+| `classloading_unloadedClassesCount` | `user_code_deployment_unloaded_classes_total` | n/a |
 
-</details>
-
-<details>
-<summary>Clients</summary>
+## Clients
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| client.endpoint.count | client\_endpoints\_total | n/a |
-| client.endpoint.totalRegistrations | client\_endpoint\_registrations\_total | n/a |
+| `client_endpoint_count` | `client_endpoints_total` | n/a |
+| `client_endpoint_totalRegistrations` | `client_endpoint_registrations_total` | n/a |
 
-</details>
-
-<details>
-<summary>Client Invocations</summary>
+## Client invocations
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| invocations.maxCurrentInvocations | invocations\_max\_current\_total | n/a |
-| invocations.pendingCalls | invocations\_pending\_calls\_total | n/a |
-| invocations.startedInvocations | invocations\_started\_total | n/a |
+| `invocations_maxCurrentInvocations` | `invocations_max_current_total` | n/a |
+| `invocations_pendingCalls` | `invocations_pending_calls_total` | n/a |
+| `invocations_startedInvocations` | `invocations_started_total` | n/a |
 
-</details>
-
-<details>
-<summary>HD Memory Store</summary>
+## HD Memory Store
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| map.usedMemory | map\_hd\_used\_memory\_bytes | n/a |
-| map.forceEvictionCount | map\_hd\_force\_evictions\_total | n/a |
-| map.forceEvictedEntryCount | map\_hd\_force\_evicted\_entries\_total | n/a |
-| map.entryCount | map\_hd\_entries\_total | n/a |
+| `map_usedMemory` | `map_hd_used_memory_bytes` | n/a |
+| `map_forceEvictionCount` | `map_hd_force_evictions_total` | n/a |
+| `map_forceEvictedEntryCount` | `map_hd_force_evicted_entries_total` | n/a |
+| `map_entryCount` | `map_hd_entries_total` | n/a |
 
-</details>
-
-<details>
-<summary>Proxies</summary>
+## Proxies
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| proxy.createdCount | proxy\_created\_total | n/a |
-| proxy.destroyedCount | proxy\_destroyed\_total | n/a |
-| proxy.proxyCount | proxy\_active\_total | n/a |
+| `proxy_createdCount` | `proxy_created_total` | n/a |
+| `proxy_destroyedCount` | `proxy_destroyed_total` | n/a |
+| `proxy_proxyCount` | `proxy_active_total` | n/a |
 
-</details>
-
-<details>
-<summary>Transactions</summary>
+## Transactions
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| transactions.commitCount | transactions\_committed\_total | n/a |
-| transactions.rollbackCount | transactions\_rolled\_back\_total | n/a |
-| transactions.startCount | transactions\_started\_total | n/a |
+| `transactions_commitCount` | `transactions_committed_total` | n/a |
+| `transactions_rollbackCount` | `transactions_rolled_back_total` | n/a |
+| `transactions_startCount` | `transactions_started_total` | n/a |
 
-</details>
-
-<details>
-<summary>User Code Namespace (UCN)</summary>
+## User Code Namespace (UCN)
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| ucn.updateTime | ucn\_update\_timestamp\_seconds | n/a |
-| ucn.resourceCount | ucn\_resources\_total | n/a |
-| ucn.resource.resourceType | ucn\_resource\_type\_info | n/a |
-| ucn.resource.resourceSizeBytes | ucn\_resource\_size\_bytes | n/a |
+| `ucn_updateTime` | `ucn_update_timestamp_seconds` | n/a |
+| `ucn_resourceCount` | `ucn_resources_total` | n/a |
+| `ucn_resource_resourceType` | `ucn_resource_type_info` | n/a |
+| `ucn_resource_resourceSizeBytes` | `ucn_resource_size_bytes` | n/a |
 
-</details>
-
-<details>
-<summary>Persistence</summary>
+## Persistence
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| persistence.liveTombstones | persistence\_live\_tombstones\_total | n/a |
-| persistence.liveValues | persistence\_live\_values\_total | n/a |
-| persistence.tombGarbage | persistence\_tomb\_garbage\_bytes | n/a |
-| persistence.tombOccupancy | persistence\_tomb\_occupancy\_bytes | n/a |
-| persistence.valGarbage | persistence\_val\_garbage\_bytes | n/a |
-| persistence.valOccupancy | persistence\_val\_occupancy\_bytes | n/a |
+| `persistence_liveTombstones` | `persistence_live_tombstones_total` | n/a |
+| `persistence_liveValues` | `persistence_live_values_total` | n/a |
+| `persistence_tombGarbage` | `persistence_tomb_garbage_bytes` | n/a |
+| `persistence_tombOccupancy` | `persistence_tomb_occupancy_bytes` | n/a |
+| `persistence_valGarbage` | `persistence_val_garbage_bytes` | n/a |
+| `persistence_valOccupancy` | `persistence_val_occupancy_bytes` | n/a |
 
-</details>
-
-<details>
-<summary>Streaming Engine</summary>
+## Streaming engine
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| blockingWorkerCount | streaming\_engine\_blocking\_workers\_total | n/a |
-| jobs.submitted | streaming\_engine\_jobs\_submitted\_total | n/a |
-| jobs.completedSuccessfully | streaming\_engine\_jobs\_completed\_successfully\_total | n/a |
-| jobs.completedWithFailure | streaming\_engine\_jobs\_completed\_with\_failure\_total | n/a |
-| jobs.executionStarted | streaming\_engine\_jobs\_executions\_started\_total | n/a |
-| jobs.executionTerminated | streaming\_engine\_jobs\_executions\_terminated\_total | n/a |
-| iterationCount | streaming\_engine\_iterations\_total | n/a |
-| taskletCount | streaming\_engine\_tasklets\_total | n/a |
+| `blockingWorkerCount` | `streaming_engine_blocking_workers_total` | n/a |
+| `jobs_submitted` | `streaming_engine_jobs_submitted_total` | n/a |
+| `jobs_completedSuccessfully` | `streaming_engine_jobs_completed_successfully_total` | n/a |
+| `jobs_completedWithFailure` | `streaming_engine_jobs_completed_with_failure_total` | n/a |
+| `jobs_executionStarted` | `streaming_engine_jobs_executions_started_total` | n/a |
+| `jobs_executionTerminated` | `streaming_engine_jobs_executions_terminated_total` | n/a |
+| `iterationCount` | `streaming_engine_iterations_total` | n/a |
+| `taskletCount` | `streaming_engine_tasklets_total` | n/a |
 
-</details>
-
-<details>
-<summary>Cluster</summary>
+## Cluster
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| cluster.clock.clusterStartTime | cluster\_clock\_cluster\_start\_timestamp\_seconds | n/a |
-| cluster.clock.clusterTime | cluster\_clock\_cluster\_time\_seconds\_total | n/a |
-| cluster.clock.clusterTimeDiff | cluster\_clock\_cluster\_time\_diff\_seconds | n/a |
-| cluster.clock.clusterUpTime | cluster\_clock\_cluster\_up\_time\_seconds\_total | n/a |
-| cluster.clock.localClockTime | cluster\_clock\_local\_clock\_timestamp\_seconds | n/a |
-| cluster.clock.maxClusterTimeDiff | cluster\_clock\_max\_cluster\_time\_diff\_seconds | n/a |
-| cluster.connection.closedTime | cluster\_connection\_closed\_timestamp\_seconds | n/a |
-| cluster.connection.connectionId | cluster\_connection\_connection\_id\_info | n/a |
-| cluster.connection.eventHandlerCount | cluster\_connection\_event\_handlers\_total | n/a |
-| cluster.heartbeat.lastHeartbeat | cluster\_heartbeat\_last\_heartbeat\_timestamp\_seconds | n/a |
-| cluster.size | cluster\_size\_total | n/a |
+| `cluster_clock_clusterStartTime` | `cluster_clock_cluster_start_timestamp_seconds` | n/a |
+| `cluster_clock_clusterTime` | `cluster_clock_cluster_time_seconds_total` | n/a |
+| `cluster_clock_clusterTimeDiff` | `cluster_clock_cluster_time_diff_seconds` | n/a |
+| `cluster_clock_clusterUpTime` | `cluster_clock_cluster_up_time_seconds_total` | n/a |
+| `cluster_clock_localClockTime` | `cluster_clock_local_clock_timestamp_seconds` | n/a |
+| `cluster_clock_maxClusterTimeDiff` | `cluster_clock_max_cluster_time_diff_seconds` | n/a |
+| `cluster_connection_closedTime` | `cluster_connection_closed_timestamp_seconds` | n/a |
+| `cluster_connection_connectionId` | `cluster_connection_connection_id_info` | n/a |
+| `cluster_connection_eventHandlerCount` | `cluster_connection_event_handlers_total` | n/a |
+| `cluster_heartbeat_lastHeartbeat` | `cluster_heartbeat_last_heartbeat_timestamp_seconds` | n/a |
+| `cluster_size` | `cluster_size_total` | n/a |
 
-</details>
-
-<details>
-<summary>Executor Service</summary>
+## Executor service
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| executor.cancelled | executor\_operations\_total | operation=cancelled |
-| executor.completed | executor\_operations\_total | operation=completed |
-| executor.creationTime | executor\_creation\_timestamp\_seconds | n/a |
-| executor.pending | executor\_operations\_total | operation=pending |
-| executor.started | executor\_operations\_total | operation=started |
-| executor.totalExecutionTime | executor\_execution\_time\_seconds\_total | n/a |
-| executor.totalStartLatency | executor\_start\_latency\_seconds\_total | n/a |
-| executor.internal.completedTasks | executor\_internal\_completed\_tasks\_total | n/a |
-| executor.internal.maximumPoolSize | executor\_internal\_maximum\_pool\_size\_total | n/a |
-| executor.internal.poolSize | executor\_internal\_pool\_size\_total | n/a |
-| executor.internal.queueSize | executor\_internal\_queue\_size\_total | n/a |
-| executor.internal.remainingQueueCapacity | executor\_internal\_remaining\_queue\_capacity\_total | n/a |
+| `executor_cancelled` | `executor_operations_total` | `operation=cancelled` |
+| `executor_completed` | `executor_operations_total` | `operation=completed` |
+| `executor_creationTime` | `executor_creation_timestamp_seconds` | n/a |
+| `executor_pending` | `executor_operations_total` | `operation=pending` |
+| `executor_started` | `executor_operations_total` | `operation=started` |
+| `executor_totalExecutionTime` | `executor_execution_time_seconds_total` | n/a |
+| `executor_totalStartLatency` | `executor_start_latency_seconds_total` | n/a |
+| `executor_internal_completedTasks` | `executor_internal_completed_tasks_total` | n/a |
+| `executor_internal_maximumPoolSize` | `executor_internal_maximum_pool_size_total` | n/a |
+| `executor_internal_poolSize` | `executor_internal_pool_size_total` | n/a |
+| `executor_internal_queueSize` | `executor_internal_queue_size_total` | n/a |
+| `executor_internal_remainingQueueCapacity` | `executor_internal_remaining_queue_capacity_total` | n/a |
 
-</details>
-
-<details>
-<summary>Queue</summary>
+## Queue
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| queue.averageAge | queue\_average\_age\_seconds | n/a |
-| queue.backupItemCount | queue\_backup\_items\_total | n/a |
-| queue.creationTime | queue\_creation\_timestamp\_seconds | n/a |
-| queue.eventOperationCount | queue\_event\_operations\_total | n/a |
-| queue.maxAge | queue\_max\_age\_seconds | n/a |
-| queue.minAge | queue\_min\_age\_seconds | n/a |
-| queue.numberOfEmptyPolls | queue\_empty\_polls\_total | n/a |
-| queue.numberOfEvents | queue\_events\_total | n/a |
-| queue.numberOfOffers | queue\_operations\_total | operation=offer |
-| queue.numberOfOtherOperations | queue\_operations\_total | operation=other |
-| queue.numberOfPolls | queue\_operations\_total | operation=poll |
-| queue.numberOfRejectedOffers | queue\_rejected\_offers\_total | n/a |
-| queue.ownedItemCount | queue\_owned\_items\_total | n/a |
-| queue.total | queue\_operations\_total | n/a |
+| `queue_averageAge` | `queue_average_age_seconds` | n/a |
+| `queue_backupItemCount` | `queue_backup_items_total` | n/a |
+| `queue_creationTime` | `queue_creation_timestamp_seconds` | n/a |
+| `queue_eventOperationCount` | `queue_event_operations_total` | n/a |
+| `queue_maxAge` | `queue_max_age_seconds` | n/a |
+| `queue_minAge` | `queue_min_age_seconds` | n/a |
+| `queue_numberOfEmptyPolls` | `queue_empty_polls_total` | n/a |
+| `queue_numberOfEvents` | `queue_events_total` | n/a |
+| `queue_numberOfOffers` | `queue_operations_total` | `operation=offer` |
+| `queue_numberOfOtherOperations` | `queue_operations_total` | `operation=other` |
+| `queue_numberOfPolls` | `queue_operations_total` | `operation=poll` |
+| `queue_numberOfRejectedOffers` | `queue_rejected_offers_total` | n/a |
+| `queue_ownedItemCount` | `queue_owned_items_total` | n/a |
+| `queue_total` | `queue_operations_total` | n/a |
 
-</details>
-
-<details>
-<summary>Near Cache</summary>
+## Near Cache
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| nearcache.creationTime | nearcache\_creation\_timestamp\_seconds | n/a |
-| nearcache.evictions | nearcache\_evictions\_total | n/a |
-| nearcache.expirations | nearcache\_expirations\_total | n/a |
-| nearcache.hits | nearcache\_hits\_total | n/a |
-| nearcache.invalidationRequests | nearcache\_invalidation\_requests\_total | n/a |
-| nearcache.invalidations | nearcache\_invalidations\_total | n/a |
-| nearcache.lastPersistenceDuration | nearcache\_last\_persistence\_duration\_seconds | n/a |
-| nearcache.lastPersistenceKeyCount | nearcache\_last\_persistence\_keys\_total | n/a |
-| nearcache.lastPersistenceTime | nearcache\_last\_persistence\_timestamp\_seconds | n/a |
-| nearcache.lastPersistenceWrittenBytes | nearcache\_last\_persistence\_written\_bytes | n/a |
-| nearcache.misses | nearcache\_misses\_total | n/a |
-| nearcache.ownedEntryCount | nearcache\_owned\_entries\_total | n/a |
-| nearcache.ownedEntryMemoryCost | nearcache\_owned\_entries\_memory\_cost\_bytes | n/a |
-| nearcache.persistenceCount | nearcache\_persistences\_total | n/a |
+| `nearcache_creationTime` | `nearcache_creation_timestamp_seconds` | n/a |
+| `nearcache_evictions` | `nearcache_evictions_total` | n/a |
+| `nearcache_expirations` | `nearcache_expirations_total` | n/a |
+| `nearcache_hits` | `nearcache_hits_total` | n/a |
+| `nearcache_invalidationRequests` | `nearcache_invalidation_requests_total` | n/a |
+| `nearcache_invalidations` | `nearcache_invalidations_total` | n/a |
+| `nearcache_lastPersistenceDuration` | `nearcache_last_persistence_duration_seconds` | n/a |
+| `nearcache_lastPersistenceKeyCount` | `nearcache_last_persistence_keys_total` | n/a |
+| `nearcache_lastPersistenceTime` | `nearcache_last_persistence_timestamp_seconds` | n/a |
+| `nearcache_lastPersistenceWrittenBytes` | `nearcache_last_persistence_written_bytes` | n/a |
+| `nearcache_misses` | `nearcache_misses_total` | n/a |
+| `nearcache_ownedEntryCount` | `nearcache_owned_entries_total` | n/a |
+| `nearcache_ownedEntryMemoryCost` | `nearcache_owned_entries_memory_cost_bytes` | n/a |
+| `nearcache_persistenceCount` | `nearcache_persistences_total` | n/a |
 
-</details>
-
-<details>
-<summary>Cache</summary>
+## Cache
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| cache.averageGetTime | cache\_average\_operation\_time\_seconds | operation=get |
-| cache.averagePutTime | cache\_average\_operation\_time\_seconds | operation=put |
-| cache.averageRemovalTime | cache\_average\_operation\_time\_seconds | operation=remove |
-| cache.cacheEvictions | cache\_evictions\_total | n/a |
-| cache.cacheGets | cache\_operations\_total | operation=get |
-| cache.cacheHits | cache\_hits\_total | n/a |
-| cache.cacheHitPercentage | cache\_hit\_ratio | n/a |
-| cache.cachePuts | cache\_operations\_total | operation=put |
-| cache.cacheRemovals | cache\_operations\_total | operation=remove |
-| cache.cacheMisses | cache\_misses\_total | n/a |
-| cache.cacheMissPercentage | cache\_miss\_ratio | n/a |
-| cache.creationTime | cache\_creation\_timestamp\_seconds | n/a |
-| cache.lastAccessTime | cache\_last\_access\_timestamp\_seconds | n/a |
-| cache.lastUpdateTime | cache\_last\_update\_timestamp\_seconds | n/a |
-| cache.ownedEntryCount | cache\_owned\_entries\_total | n/a |
+| `cache_averageGetTime` | `cache_average_operation_time_seconds` | `operation=get` |
+| `cache_averagePutTime` | `cache_average_operation_time_seconds` | `operation=put` |
+| `cache_averageRemovalTime` | `cache_average_operation_time_seconds` | `operation=remove` |
+| `cache_cacheEvictions` | `cache_evictions_total` | n/a |
+| `cache_cacheGets` | `cache_operations_total` | `operation=get` |
+| `cache_cacheHits` | `cache_hits_total` | n/a |
+| `cache_cacheHitPercentage` | `cache_hit_ratio` | n/a |
+| `cache_cachePuts` | `cache_operations_total` | `operation=put` |
+| `cache_cacheRemovals` | `cache_operations_total` | `operation=remove` |
+| `cache_cacheMisses` | `cache_misses_total` | n/a |
+| `cache_cacheMissPercentage` | `cache_miss_ratio` | n/a |
+| `cache_creationTime` | `cache_creation_timestamp_seconds` | n/a |
+| `cache_lastAccessTime` | `cache_last_access_timestamp_seconds` | n/a |
+| `cache_lastUpdateTime` | `cache_last_update_timestamp_seconds` | n/a |
+| `cache_ownedEntryCount` | `cache_owned_entries_total` | n/a |
 
-</details>
-
-<details>
-<summary>Raft</summary>
+## Raft
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| raft.destroyedGroupIds | raft\_destroyed\_group\_ids\_total | n/a |
-| raft.group.availableLogCapacity | raft\_group\_available\_log\_capacity\_total | n/a |
-| raft.group.commitIndex | raft\_group\_commit\_index\_total | n/a |
-| raft.group.lastApplied | raft\_group\_last\_applied\_total | n/a |
-| raft.group.lastLogIndex | raft\_group\_last\_log\_index\_total | n/a |
-| raft.group.lastLogTerm | raft\_group\_last\_log\_term\_total | n/a |
-| raft.group.memberCount | raft\_group\_members\_total | n/a |
-| raft.group.snapshotIndex | raft\_group\_snapshot\_index\_total | n/a |
-| raft.group.term | raft\_group\_term\_total | n/a |
-| raft.metadata.activeMembersCommitIndex | raft\_metadata\_active\_members\_commit\_index\_total | n/a |
-| raft.metadata.activeMembers | raft\_metadata\_active\_members\_total | n/a |
-| raft.metadata.groups | raft\_metadata\_groups\_total | n/a |
-| raft.missingMembers | raft\_missing\_members\_total | n/a |
-| raft.nodes | raft\_nodes\_total | n/a |
-| raft.terminatedRaftNodeGroupIds | raft\_terminated\_node\_group\_ids\_total | n/a |
+| `raft_destroyedGroupIds` | `raft_destroyed_group_ids_total` | n/a |
+| `raft_group_availableLogCapacity` | `raft_group_available_log_capacity_total` | n/a |
+| `raft_group_commitIndex` | `raft_group_commit_index_total` | n/a |
+| `raft_group_lastApplied` | `raft_group_last_applied_total` | n/a |
+| `raft_group_lastLogIndex` | `raft_group_last_log_index_total` | n/a |
+| `raft_group_lastLogTerm` | `raft_group_last_log_term_total` | n/a |
+| `raft_group_memberCount` | `raft_group_members_total` | n/a |
+| `raft_group_snapshotIndex` | `raft_group_snapshot_index_total` | n/a |
+| `raft_group_term` | `raft_group_term_total` | n/a |
+| `raft_metadata_activeMembersCommitIndex` | `raft_metadata_active_members_commit_index_total` | n/a |
+| `raft_metadata_activeMembers` | `raft_metadata_active_members_total` | n/a |
+| `raft_metadata_groups` | `raft_metadata_groups_total` | n/a |
+| `raft_missingMembers` | `raft_missing_members_total` | n/a |
+| `raft_nodes` | `raft_nodes_total` | n/a |
+| `raft_terminatedRaftNodeGroupIds` | `raft_terminated_node_group_ids_total` | n/a |
 
-</details>
-
-<details>
-<summary>Replicated Map</summary>
+## Replicated Map
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| replicatedMap.creationTime | replicated\_map\_creation\_timestamp\_seconds | n/a |
-| replicatedMap.getCount | replicated\_map\_operations\_total | operation=get |
-| replicatedMap.hits | replicated\_map\_hits\_total | n/a |
-| replicatedMap.lastAccessTime | replicated\_map\_last\_access\_timestamp\_seconds | n/a |
-| replicatedMap.lastUpdateTime | replicated\_map\_last\_update\_timestamp\_seconds | n/a |
-| replicatedMap.maxGetLatency | replicated\_map\_latency\_max\_seconds | operation=get |
-| replicatedMap.maxPutLatency | replicated\_map\_latency\_max\_seconds | operation=put |
-| replicatedMap.maxRemoveLatency | replicated\_map\_latency\_max\_seconds | operation=remove |
-| replicatedMap.numberOfEvents | replicated\_map\_events\_total | n/a |
-| replicatedMap.numberOfOtherOperations | replicated\_map\_operations\_total | operation=other |
-| replicatedMap.ownedEntryCount | replicated\_map\_owned\_entries\_total | n/a |
-| replicatedMap.ownedEntryMemoryCost | replicated\_map\_owned\_entry\_memory\_cost\_bytes | n/a |
-| replicatedMap.putCount | replicated\_map\_operations\_total | operation=put |
-| replicatedMap.removeCount | replicated\_map\_operations\_total | operation=remove |
-| replicatedMap.totalGetLatencies | replicated\_map\_latency\_seconds\_total | operation=get |
-| replicatedMap.totalPutLatencies | replicated\_map\_latency\_seconds\_total | operation=put |
-| replicatedMap.totalRemoveLatencies | replicated\_map\_latency\_seconds\_total | operation=remove |
-| replicatedMap.total | replicated\_map\_operations\_total | n/a |
+| `replicatedMap_creationTime` | `replicated_map_creation_timestamp_seconds` | n/a |
+| `replicatedMap_getCount` | `replicated_map_operations_total` | `operation=get` |
+| `replicatedMap_hits` | `replicated_map_hits_total` | n/a |
+| `replicatedMap_lastAccessTime` | `replicated_map_last_access_timestamp_seconds` | n/a |
+| `replicatedMap_lastUpdateTime` | `replicated_map_last_update_timestamp_seconds` | n/a |
+| `replicatedMap_maxGetLatency` | `replicated_map_latency_max_seconds` | `operation=get` |
+| `replicatedMap_maxPutLatency` | `replicated_map_latency_max_seconds` | `operation=put` |
+| `replicatedMap_maxRemoveLatency` | `replicated_map_latency_max_seconds` | `operation=remove` |
+| `replicatedMap_numberOfEvents` | `replicated_map_events_total` | n/a |
+| `replicatedMap_numberOfOtherOperations` | `replicated_map_operations_total` | `operation=other` |
+| `replicatedMap_ownedEntryCount` | `replicated_map_owned_entries_total` | n/a |
+| `replicatedMap_ownedEntryMemoryCost` | `replicated_map_owned_entry_memory_cost_bytes` | n/a |
+| `replicatedMap_putCount` | `replicated_map_operations_total` | `operation=put` |
+| `replicatedMap_removeCount` | `replicated_map_operations_total` | `operation=remove` |
+| `replicatedMap_totalGetLatencies` | `replicated_map_latency_seconds_total` | `operation=get` |
+| `replicatedMap_totalPutLatencies` | `replicated_map_latency_seconds_total` | `operation=put` |
+| `replicatedMap_totalRemoveLatencies` | `replicated_map_latency_seconds_total` | `operation=remove` |
+| `replicatedMap_total` | `replicated_map_operations_total` | n/a |
 
-</details>
-
-<details>
-<summary>Streaming Engine Job-Specific</summary>
+## Streaming engine job-specific
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| executionStartTime | streaming\_job\_execution\_timestamp\_seconds | phase=start |
-| executionCompletionTime | streaming\_job\_execution\_timestamp\_seconds | phase=completion |
-| status | streaming\_job\_status\_info | n/a |
-| userCancelled | streaming\_job\_user\_cancelled\_info | n/a |
-| snapshotBytes | streaming\_job\_snapshot\_bytes | n/a |
-| snapshotKeys | streaming\_job\_snapshot\_keys\_total | n/a |
-| distributedBytesIn | streaming\_job\_distributed\_bytes | direction=in |
-| distributedBytesOut | streaming\_job\_distributed\_bytes | direction=out |
-| distributedItemsIn | streaming\_job\_distributed\_items\_total | direction=in |
-| distributedItemsOut | streaming\_job\_distributed\_items\_total | direction=out |
-| topObservedWm | streaming\_job\_watermark\_seconds | type=top\_observed |
-| coalescedWm | streaming\_job\_watermark\_seconds | type=coalesced |
-| lastForwardedWm | streaming\_job\_watermark\_seconds | type=last\_forwarded |
-| lastForwardedWmLatency | streaming\_job\_watermark\_latency\_seconds | n/a |
-| queuesCapacity | streaming\_job\_queues\_capacity\_total | n/a |
-| queuesSize | streaming\_job\_queues\_size\_total | n/a |
-| emittedCount | streaming\_job\_items\_emitted\_total | n/a |
-| receivedCount | streaming\_job\_items\_received\_total | n/a |
-| receivedBatches | streaming\_job\_batches\_received\_total | n/a |
-| numInFlightOps | streaming\_job\_operations\_in\_flight\_total | n/a |
-| totalKeys | streaming\_job\_keys\_total | n/a |
-| totalWindows | streaming\_job\_windows\_total | n/a |
-| totalFrames | streaming\_job\_frames\_total | n/a |
-| totalKeysInFrames | streaming\_job\_keys\_in\_frames\_total | n/a |
-| lateEventsDropped | streaming\_job\_late\_events\_dropped\_total | n/a |
+| `executionStartTime` | `streaming_job_execution_timestamp_seconds` | `phase=start` |
+| `executionCompletionTime` | `streaming_job_execution_timestamp_seconds` | `phase=completion` |
+| `status` | `streaming_job_status_info` | n/a |
+| `userCancelled` | `streaming_job_user_cancelled_info` | n/a |
+| `snapshotBytes` | `streaming_job_snapshot_bytes` | n/a |
+| `snapshotKeys` | `streaming_job_snapshot_keys_total` | n/a |
+| `distributedBytesIn` | `streaming_job_distributed_bytes` | `direction=in` |
+| `distributedBytesOut` | `streaming_job_distributed_bytes` | `direction=out` |
+| `distributedItemsIn` | `streaming_job_distributed_items_total` | `direction=in` |
+| `distributedItemsOut` | `streaming_job_distributed_items_total` | `direction=out` |
+| `topObservedWm` | `streaming_job_watermark_seconds` | `type=top_observed` |
+| `coalescedWm` | `streaming_job_watermark_seconds` | `type=coalesced` |
+| `lastForwardedWm` | `streaming_job_watermark_seconds` | `type=last_forwarded` |
+| `lastForwardedWmLatency` | `streaming_job_watermark_latency_seconds` | n/a |
+| `queuesCapacity` | `streaming_job_queues_capacity_total` | n/a |
+| `queuesSize` | `streaming_job_queues_size_total` | n/a |
+| `emittedCount` | `streaming_job_items_emitted_total` | n/a |
+| `receivedCount` | `streaming_job_items_received_total` | n/a |
+| `receivedBatches` | `streaming_job_batches_received_total` | n/a |
+| `numInFlightOps` | `streaming_job_operations_in_flight_total` | n/a |
+| `totalKeys` | `streaming_job_keys_total` | n/a |
+| `totalWindows` | `streaming_job_windows_total` | n/a |
+| `totalFrames` | `streaming_job_frames_total` | n/a |
+| `totalKeysInFrames` | `streaming_job_keys_in_frames_total` | n/a |
+| `lateEventsDropped` | `streaming_job_late_events_dropped_total` | n/a |
 
-</details>
-
-<details>
-<summary>Vector Collection</summary>
+## Vector collection
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| vectorCollection.backupCount | vector\_collection\_backups\_total | n/a |
-| vectorCollection.backupEntryCount | vector\_collection\_backup\_entries\_total | n/a |
-| vectorCollection.backupEntryHeapMemoryCost | vector\_collection\_backup\_entry\_heap\_memory\_cost\_bytes | n/a |
-| vectorCollection.clearCount | vector\_collection\_operations\_total | operation=clear |
-| vectorCollection.creationTime | vector\_collection\_creation\_timestamp\_seconds | n/a |
-| vectorCollection.deleteCount | vector\_collection\_operations\_total | operation=delete |
-| vectorCollection.getCount | vector\_collection\_operations\_total | operation=get |
-| vectorCollection.heapCost | vector\_collection\_heap\_cost\_bytes | n/a |
-| vectorCollection.lastAccessTime | vector\_collection\_last\_access\_timestamp\_seconds | n/a |
-| vectorCollection.lastUpdateTime | vector\_collection\_last\_update\_timestamp\_seconds | n/a |
-| vectorCollection.maxClearLatency | vector\_collection\_latency\_max\_seconds | operation=clear |
-| vectorCollection.maxOptimizeLatency | vector\_collection\_latency\_max\_seconds | operation=optimize |
-| vectorCollection.maxSearchLatency | vector\_collection\_latency\_max\_seconds | operation=search |
-| vectorCollection.maxSizeLatency | vector\_collection\_latency\_max\_seconds | operation=size |
-| vectorCollection.optimizeCount | vector\_collection\_operations\_total | operation=optimize |
-| vectorCollection.ownedEntryCount | vector\_collection\_owned\_entries\_total | n/a |
-| vectorCollection.ownedEntryHeapMemoryCost | vector\_collection\_owned\_entry\_heap\_memory\_cost\_bytes | n/a |
-| vectorCollection.putAllCount | vector\_collection\_operations\_total | operation=put\_all |
-| vectorCollection.putAllEntryCount | vector\_collection\_put\_all\_entries\_total | n/a |
-| vectorCollection.putCount | vector\_collection\_operations\_total | operation=put |
-| vectorCollection.removeCount | vector\_collection\_operations\_total | operation=remove |
-| vectorCollection.searchCount | vector\_collection\_operations\_total | operation=search |
-| vectorCollection.searchIndexQueryCount | vector\_collection\_search\_index\_queries\_total | n/a |
-| vectorCollection.searchIndexVisitedNodes | vector\_collection\_search\_index\_visited\_nodes\_total | n/a |
-| vectorCollection.searchResultsCount | vector\_collection\_search\_results\_total | n/a |
-| vectorCollection.setCount | vector\_collection\_operations\_total | operation=set |
-| vectorCollection.sizeCount | vector\_collection\_operations\_total | operation=size |
-| vectorCollection.totalClearLatency | vector\_collection\_latency\_seconds\_total | operation=clear |
-| vectorCollection.totalDeleteLatency | vector\_collection\_latency\_seconds\_total | operation=delete |
-| vectorCollection.totalGetLatency | vector\_collection\_latency\_seconds\_total | operation=get |
-| vectorCollection.totalMaxDeleteLatency | vector\_collection\_latency\_max\_seconds | operation=delete |
-| vectorCollection.totalMaxGetLatency | vector\_collection\_latency\_max\_seconds | operation=get |
-| vectorCollection.totalMaxPutAllLatency | vector\_collection\_latency\_max\_seconds | operation=put\_all |
-| vectorCollection.totalMaxPutLatency | vector\_collection\_latency\_max\_seconds | operation=put |
-| vectorCollection.totalMaxRemoveLatency | vector\_collection\_latency\_max\_seconds | operation=remove |
-| vectorCollection.totalMaxSetLatency | vector\_collection\_latency\_max\_seconds | operation=set |
-| vectorCollection.totalOptimizeLatency | vector\_collection\_latency\_seconds\_total | operation=optimize |
-| vectorCollection.totalPutAllLatency | vector\_collection\_latency\_seconds\_total | operation=put\_all |
-| vectorCollection.totalPutLatency | vector\_collection\_latency\_seconds\_total | operation=put |
-| vectorCollection.totalRemoveLatency | vector\_collection\_latency\_seconds\_total | operation=remove |
-| vectorCollection.totalSearchLatency | vector\_collection\_latency\_seconds\_total | operation=search |
-| vectorCollection.totalSetLatency | vector\_collection\_latency\_seconds\_total | operation=set |
-| vectorCollection.totalSizeLatency | vector\_collection\_latency\_seconds\_total | operation=size |
+| `vectorCollection_backupCount` | `vector_collection_backups_total` | n/a |
+| `vectorCollection_backupEntryCount` | `vector_collection_backup_entries_total` | n/a |
+| `vectorCollection_backupEntryHeapMemoryCost` | `vector_collection_backup_entry_heap_memory_cost_bytes` | n/a |
+| `vectorCollection_clearCount` | `vector_collection_operations_total` | `operation=clear` |
+| `vectorCollection_creationTime` | `vector_collection_creation_timestamp_seconds` | n/a |
+| `vectorCollection_deleteCount` | `vector_collection_operations_total` | `operation=delete` |
+| `vectorCollection_getCount` | `vector_collection_operations_total` | `operation=get` |
+| `vectorCollection_heapCost` | `vector_collection_heap_cost_bytes` | n/a |
+| `vectorCollection_lastAccessTime` | `vector_collection_last_access_timestamp_seconds` | n/a |
+| `vectorCollection_lastUpdateTime` | `vector_collection_last_update_timestamp_seconds` | n/a |
+| `vectorCollection_maxClearLatency` | `vector_collection_latency_max_seconds` | `operation=clear` |
+| `vectorCollection_maxOptimizeLatency` | `vector_collection_latency_max_seconds` | `operation=optimize` |
+| `vectorCollection_maxSearchLatency` | `vector_collection_latency_max_seconds` | `operation=search` |
+| `vectorCollection_maxSizeLatency` | `vector_collection_latency_max_seconds` | `operation=size` |
+| `vectorCollection_optimizeCount` | `vector_collection_operations_total` | `operation=optimize` |
+| `vectorCollection_ownedEntryCount` | `vector_collection_owned_entries_total` | n/a |
+| `vectorCollection_ownedEntryHeapMemoryCost` | `vector_collection_owned_entry_heap_memory_cost_bytes` | n/a |
+| `vectorCollection_putAllCount` | `vector_collection_operations_total` | `operation=put_all` |
+| `vectorCollection_putAllEntryCount` | `vector_collection_put_all_entries_total` | n/a |
+| `vectorCollection_putCount` | `vector_collection_operations_total` | `operation=put` |
+| `vectorCollection_removeCount` | `vector_collection_operations_total` | `operation=remove` |
+| `vectorCollection_searchCount` | `vector_collection_operations_total` | `operation=search` |
+| `vectorCollection_searchIndexQueryCount` | `vector_collection_search_index_queries_total` | n/a |
+| `vectorCollection_searchIndexVisitedNodes` | `vector_collection_search_index_visited_nodes_total` | n/a |
+| `vectorCollection_searchResultsCount` | `vector_collection_search_results_total` | n/a |
+| `vectorCollection_setCount` | `vector_collection_operations_total` | `operation=set` |
+| `vectorCollection_sizeCount` | `vector_collection_operations_total` | `operation=size` |
+| `vectorCollection_totalClearLatency` | `vector_collection_latency_seconds_total` | `operation=clear` |
+| `vectorCollection_totalDeleteLatency` | `vector_collection_latency_seconds_total` | `operation=delete` |
+| `vectorCollection_totalGetLatency` | `vector_collection_latency_seconds_total` | `operation=get` |
+| `vectorCollection_totalMaxDeleteLatency` | `vector_collection_latency_max_seconds` | `operation=delete` |
+| `vectorCollection_totalMaxGetLatency` | `vector_collection_latency_max_seconds` | `operation=get` |
+| `vectorCollection_totalMaxPutAllLatency` | `vector_collection_latency_max_seconds` | `operation=put_all` |
+| `vectorCollection_totalMaxPutLatency` | `vector_collection_latency_max_seconds` | `operation=put` |
+| `vectorCollection_totalMaxRemoveLatency` | `vector_collection_latency_max_seconds` | `operation=remove` |
+| `vectorCollection_totalMaxSetLatency` | `vector_collection_latency_max_seconds` | `operation=set` |
+| `vectorCollection_totalOptimizeLatency` | `vector_collection_latency_seconds_total` | `operation=optimize` |
+| `vectorCollection_totalPutAllLatency` | `vector_collection_latency_seconds_total` | `operation=put_all` |
+| `vectorCollection_totalPutLatency` | `vector_collection_latency_seconds_total` | `operation=put` |
+| `vectorCollection_totalRemoveLatency` | `vector_collection_latency_seconds_total` | `operation=remove` |
+| `vectorCollection_totalSearchLatency` | `vector_collection_latency_seconds_total` | `operation=search` |
+| `vectorCollection_totalSetLatency` | `vector_collection_latency_seconds_total` | `operation=set` |
+| `vectorCollection_totalSizeLatency` | `vector_collection_latency_seconds_total` | `operation=size` |
 
-</details>
-
-<details>
-<summary>`MultiMap`</summary>
+## `MultiMap`
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| multiMap.backupCount | multi\_map\_backups\_total | n/a |
-| multiMap.backupEntryCount | multi\_map\_backup\_entries\_total | n/a |
-| multiMap.backupEntryMemoryCost | multi\_map\_backup\_entries\_memory\_cost\_bytes | n/a |
-| multiMap.creationTime | multi\_map\_creation\_timestamp\_seconds | n/a |
-| multiMap.dirtyEntryCount | multi\_map\_dirty\_entries\_total | n/a |
-| multiMap.getCount | multi\_map\_operations\_total | operation=get |
-| multiMap.heapCost | multi\_map\_heap\_cost\_bytes | n/a |
-| multiMap.hits | multi\_map\_hits\_total | n/a |
-| multiMap.indexedQueryCount | multi\_map\_indexed\_queries\_total | n/a |
-| multiMap.lastAccessTime | multi\_map\_last\_access\_timestamp\_seconds | n/a |
-| multiMap.lastUpdateTime | multi\_map\_last\_update\_timestamp\_seconds | n/a |
-| multiMap.lockedEntryCount | multi\_map\_locked\_entries\_total | n/a |
-| multiMap.merkleTreesCost | multi\_map\_merkle\_trees\_cost\_bytes | n/a |
-| multiMap.numberOfEvents | multi\_map\_events\_total | n/a |
-| multiMap.numberOfOtherOperations | multi\_map\_operations\_total | operation=other |
-| multiMap.ownedEntryCount | multi\_map\_owned\_entries\_total | n/a |
-| multiMap.ownedEntryMemoryCost | multi\_map\_owned\_entry\_memory\_cost\_bytes | n/a |
-| multiMap.putCount | multi\_map\_operations\_total | operation=put |
-| multiMap.queryCount | multi\_map\_queries\_total | n/a |
-| multiMap.removeCount | multi\_map\_operations\_total | operation=remove |
-| multiMap.setCount | multi\_map\_operations\_total | operation=set |
-| multiMap.totalGetLatency | multi\_map\_latency\_seconds\_total | operation=get |
-| multiMap.totalMaxGetLatency | multi\_map\_latency\_max\_seconds | operation=get |
-| multiMap.totalMaxPutLatency | multi\_map\_latency\_max\_seconds | operation=put |
-| multiMap.totalMaxRemoveLatency | multi\_map\_latency\_max\_seconds | operation=remove |
-| multiMap.totalMaxSetLatency | multi\_map\_latency\_max\_seconds | operation=set |
-| multiMap.totalPutLatency | multi\_map\_latency\_seconds\_total | operation=put |
-| multiMap.totalRemoveLatency | multi\_map\_latency\_seconds\_total | operation=remove |
-| multiMap.totalSetLatency | multi\_map\_latency\_seconds\_total | operation=set |
+| `multiMap_backupCount` | `multi_map_backups_total` | n/a |
+| `multiMap_backupEntryCount` | `multi_map_backup_entries_total` | n/a |
+| `multiMap_creationTime` | `multi_map_creation_timestamp_seconds` | n/a |
+| `multiMap_dirtyEntryCount` | `multi_map_dirty_entries_total` | n/a |
+| `multiMap_getCount` | `multi_map_operations_total` | `operation=get` |
+| `multiMap_hits` | `multi_map_hits_total` | n/a |
+| `multiMap_indexedQueryCount` | `multi_map_indexed_queries_total` | n/a |
+| `multiMap_lastAccessTime` | `multi_map_last_access_timestamp_seconds` | n/a |
+| `multiMap_lastUpdateTime` | `multi_map_last_update_timestamp_seconds` | n/a |
+| `multiMap_lockedEntryCount` | `multi_map_locked_entries_total` | n/a |
+| `multiMap_merkleTreesCost` | `multi_map_merkle_trees_cost_bytes` | n/a |
+| `multiMap_numberOfEvents` | `multi_map_events_total` | n/a |
+| `multiMap_numberOfOtherOperations` | `multi_map_operations_total` | `operation=other` |
+| `multiMap_ownedEntryCount` | `multi_map_owned_entries_total` | n/a |
+| `multiMap_putCount` | `multi_map_operations_total` | `operation=put` |
+| `multiMap_queryCount` | `multi_map_queries_total` | n/a |
+| `multiMap_removeCount` | `multi_map_operations_total` | `operation=remove` |
+| `multiMap_setCount` | `multi_map_operations_total` | `operation=set` |
+| `multiMap_totalGetLatency` | `multi_map_latency_seconds_total` | `operation=get` |
+| `multiMap_totalMaxGetLatency` | `multi_map_latency_max_seconds` | `operation=get` |
+| `multiMap_totalMaxPutLatency` | `multi_map_latency_max_seconds` | `operation=put` |
+| `multiMap_totalMaxRemoveLatency` | `multi_map_latency_max_seconds` | `operation=remove` |
+| `multiMap_totalMaxSetLatency` | `multi_map_latency_max_seconds` | `operation=set` |
+| `multiMap_totalPutLatency` | `multi_map_latency_seconds_total` | `operation=put` |
+| `multiMap_totalRemoveLatency` | `multi_map_latency_seconds_total` | `operation=remove` |
+| `multiMap_totalSetLatency` | `multi_map_latency_seconds_total` | `operation=set` |
 
-</details>
-
-<details>
-<summary>CP Subsystem</summary>
+For historical reasons, these MultiMap metrics also exist, but they always report 0:
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| cp.atomiclong.value | cp\_atomiclong\_value\_info | n/a |
-| cp.countdownlatch.count | cp\_countdownlatch\_total | n/a |
-| cp.countdownlatch.remaining | cp\_countdownlatch\_remaining\_total | n/a |
-| cp.countdownlatch.round | cp\_countdownlatch\_round\_total | n/a |
-| cp.lock.acquireLimit | cp\_lock\_acquire\_limit\_total | n/a |
-| cp.lock.lockCount | cp\_lock\_locks\_total | n/a |
-| cp.lock.owner | cp\_lock\_owner\_info | n/a |
-| cp.lock.ownerSessionId | cp\_lock\_owner\_session\_id\_info | n/a |
-| cp.semaphore.available | cp\_semaphore\_available\_total | n/a |
-| cp.semaphore.initialized | cp\_semaphore\_initialized\_info | n/a |
-| cp.map.size | cp\_map\_size\_total | n/a |
-| cp.map.sizeBytes | cp\_map\_size\_bytes | n/a |
-| cp.session.creationTime | cp\_session\_creation\_timestamp\_seconds | n/a |
-| cp.session.endpoint | cp\_session\_endpoint\_info | n/a |
-| cp.session.endpointType | cp\_session\_endpoint\_type\_info | n/a |
-| cp.session.expirationTime | cp\_session\_expiration\_timestamp\_seconds | n/a |
-| cp.session.version | cp\_session\_version\_total | n/a |
-| cp.atomiclong.summary.destroyed.count | cp\_summary\_total | object\_type=atomiclong, state=destroyed |
-| cp.atomiclong.summary.live.count | cp\_summary\_total | object\_type=atomiclong, state=live |
-| cp.atomicref.summary.destroyed.count | cp\_summary\_total | object\_type=atomicref, state=destroyed |
-| cp.atomicref.summary.live.count | cp\_summary\_total | object\_type=atomicref, state=live |
-| cp.countdownlatch.summary.destroyed.count | cp\_summary\_total | object\_type=countdownlatch, state=destroyed |
-| cp.countdownlatch.summary.live.count | cp\_summary\_total | object\_type=countdownlatch, state=live |
-| cp.lock.summary.destroyed.count | cp\_summary\_total | object\_type=lock, state=destroyed |
-| cp.lock.summary.live.count | cp\_summary\_total | object\_type=lock, state=live |
-| cp.map.summary.destroyed.count | cp\_summary\_total | object\_type=map, state=destroyed |
-| cp.map.summary.live.count | cp\_summary\_total | object\_type=map, state=live |
-| cp.semaphore.summary.destroyed.count | cp\_summary\_total | object\_type=semaphore, state=destroyed |
-| cp.semaphore.summary.live.count | cp\_summary\_total | object\_type=semaphore, state=live |
+| `multiMap_backupEntryMemoryCost` | `multi_map_backup_entries_memory_cost_bytes` | n/a |
+| `multiMap_heapCost` | `multi_map_heap_cost_bytes` | n/a |
+| `multiMap_ownedEntryMemoryCost` | `multi_map_owned_entry_memory_cost_bytes` | n/a |
 
-</details>
-
-<details>
-<summary>Partitions</summary>
+## CP Subsystem
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| partitions.activePartitionCount | partitions\_active\_total | n/a |
-| partitions.completedMigrations | partitions\_completed\_migrations\_total | period=latest\_repartitioning |
-| partitions.elapsedDestinationCommitTime | partitions\_elapsed\_destination\_commit\_time\_seconds\_total | period=latest\_repartitioning |
-| partitions.elapsedMigrationOperationTime | partitions\_elapsed\_migration\_operation\_time\_seconds\_total | period=latest\_repartitioning |
-| partitions.elapsedMigrationTime | partitions\_elapsed\_migration\_time\_seconds\_total | period=latest\_repartitioning |
-| partitions.lastRepartitionTime | partitions\_last\_repartition\_timestamp\_seconds | n/a |
-| partitions.localPartitionCount | partitions\_local\_total | n/a |
-| partitions.maxBackupCount | partitions\_max\_backups\_total | n/a |
-| partitions.memberGroupsSize | partitions\_member\_groups\_size\_total | n/a |
-| partitions.migrationActive | partitions\_migration\_active\_info | n/a |
-| partitions.migrationQueueSize | partitions\_migration\_queue\_size\_total | n/a |
-| partitions.partitionCount | partitions\_total | n/a |
-| partitions.plannedMigrations | partitions\_planned\_migrations\_total | n/a |
-| partitions.replicaSyncRequestsCounter | partitions\_replica\_sync\_requests\_total | n/a |
-| partitions.replicaSyncSemaphore | partitions\_replica\_sync\_semaphore\_permits\_total | n/a |
-| partitions.stateStamp | partitions\_state\_stamp\_info | n/a |
-| partitions.totalCompletedMigrations | partitions\_completed\_migrations\_total | period=since\_beginning |
-| partitions.totalElapsedDestinationCommitTime | partitions\_elapsed\_destination\_commit\_time\_seconds\_total | period=since\_beginning |
-| partitions.totalElapsedMigrationOperationTime | partitions\_elapsed\_migration\_operation\_time\_seconds\_total | period=since\_beginning |
-| partitions.totalElapsedMigrationTime | partitions\_elapsed\_migration\_time\_seconds\_total | period=since\_beginning |
+| `cp_atomiclong_value` | `cp_atomiclong_value_info` | n/a |
+| `cp_countdownlatch_count` | `cp_countdownlatch_total` | n/a |
+| `cp_countdownlatch_remaining` | `cp_countdownlatch_remaining_total` | n/a |
+| `cp_countdownlatch_round` | `cp_countdownlatch_round_total` | n/a |
+| `cp_lock_acquireLimit` | `cp_lock_acquire_limit_total` | n/a |
+| `cp_lock_lockCount` | `cp_lock_locks_total` | n/a |
+| `cp_lock_owner` | `cp_lock_owner_info` | n/a |
+| `cp_lock_ownerSessionId` | `cp_lock_owner_session_id_info` | n/a |
+| `cp_semaphore_available` | `cp_semaphore_available_total` | n/a |
+| `cp_semaphore_initialized` | `cp_semaphore_initialized_info` | n/a |
+| `cp_map_size` | `cp_map_size_total` | n/a |
+| `cp_map_sizeBytes` | `cp_map_size_bytes` | n/a |
+| `cp_session_creationTime` | `cp_session_creation_timestamp_seconds` | n/a |
+| `cp_session_endpoint` | `cp_session_endpoint_info` | n/a |
+| `cp_session_endpointType` | `cp_session_endpoint_type_info` | n/a |
+| `cp_session_expirationTime` | `cp_session_expiration_timestamp_seconds` | n/a |
+| `cp_session_version` | `cp_session_version_total` | n/a |
+| `cp_atomiclong_summary_destroyed_count` | `cp_summary_total` | `object_type=atomiclong`, `state=destroyed` |
+| `cp_atomiclong_summary_live_count` | `cp_summary_total` | `object_type=atomiclong`, `state=live` |
+| `cp_atomicref_summary_destroyed_count` | `cp_summary_total` | `object_type=atomicref`, `state=destroyed` |
+| `cp_atomicref_summary_live_count` | `cp_summary_total` | `object_type=atomicref`, `state=live` |
+| `cp_countdownlatch_summary_destroyed_count` | `cp_summary_total` | `object_type=countdownlatch`, `state=destroyed` |
+| `cp_countdownlatch_summary_live_count` | `cp_summary_total` | `object_type=countdownlatch`, `state=live` |
+| `cp_lock_summary_destroyed_count` | `cp_summary_total` | `object_type=lock`, `state=destroyed` |
+| `cp_lock_summary_live_count` | `cp_summary_total` | `object_type=lock`, `state=live` |
+| `cp_map_summary_destroyed_count` | `cp_summary_total` | `object_type=map`, `state=destroyed` |
+| `cp_map_summary_live_count` | `cp_summary_total` | `object_type=map`, `state=live` |
+| `cp_semaphore_summary_destroyed_count` | `cp_summary_total` | `object_type=semaphore`, `state=destroyed` |
+| `cp_semaphore_summary_live_count` | `cp_summary_total` | `object_type=semaphore`, `state=live` |
 
-</details>
-
-<details>
-<summary>WAN Replication</summary>
-
-| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
-| --- | --- | --- |
-| wan.ackDelayCurrentMillis | wan\_ack\_delay\_current\_time\_seconds | n/a |
-| wan.ackDelayLastEnd | wan\_ack\_delay\_last\_end\_timestamp\_seconds | n/a |
-| wan.ackDelayLastStart | wan\_ack\_delay\_last\_start\_timestamp\_seconds | n/a |
-| wan.ackDelayTotalCount | wan\_ack\_delay\_total | n/a |
-| wan.ackDelayTotalMillis | wan\_ack\_delay\_total\_time\_seconds | n/a |
-| wan.consistencyCheck.lastCheckedPartitionCount | wan\_consistency\_check\_last\_checked\_partitions\_total | n/a |
-| wan.consistencyCheck.lastCheckedLeafCount | wan\_consistency\_check\_last\_checked\_leaves\_total | n/a |
-| wan.consistencyCheck.lastDiffLeafCount | wan\_consistency\_check\_last\_diff\_leaves\_total | n/a |
-| wan.consistencyCheck.lastDiffPartitionCount | wan\_consistency\_check\_last\_diff\_partitions\_total | n/a |
-| wan.consistencyCheck.lastEntriesToSync | wan\_consistency\_check\_last\_entries\_to\_sync\_total | n/a |
-| wan.droppedCount | wan\_events\_total | event\_type=drop |
-| wan.outboundQueueSize | wan\_outbound\_queue\_size\_total | n/a |
-| wan.removeCount | wan\_events\_total | event\_type=remove |
-| wan.syncCount | wan\_events\_total | event\_type=sync |
-| wan.sync.avgEntriesPerLeaf | wan\_sync\_entries\_per\_leaf\_total | aggregation=avg |
-| wan.sync.maxLeafEntryCount | wan\_sync\_entries\_per\_leaf\_total | aggregation=max |
-| wan.sync.minLeafEntryCount | wan\_sync\_entries\_per\_leaf\_total | aggregation=min |
-| wan.sync.nodesSynced | wan\_sync\_nodes\_synced\_total | n/a |
-| wan.sync.partitionsSynced | wan\_sync\_partitions\_synced\_total | n/a |
-| wan.sync.partitionsToSync | wan\_sync\_partitions\_to\_sync\_total | n/a |
-| wan.sync.recordsSynced | wan\_sync\_records\_synced\_total | n/a |
-| wan.sync.syncDurationNanos | wan\_sync\_duration\_seconds | n/a |
-| wan.sync.stdDevEntriesPerLeaf | wan\_sync\_entries\_per\_leaf\_total | aggregation=std\_dev |
-| wan.sync.syncStartNanos | wan\_sync\_start\_time\_seconds | n/a |
-| wan.totalPublishLatency | wan\_publish\_latency\_seconds\_total | n/a |
-| wan.totalPublishedEventCount | wan\_published\_events\_total | n/a |
-| wan.updateCount | wan\_events\_total | event\_type=update |
-| wan.connectionHealth | wan\_connection\_healthy\_info | n/a |
-| wan.failedTransmitCount | wan\_failed\_transmits\_total | n/a |
-
-</details>
-
-<details>
-<summary>Management Center</summary>
+## Partitions
 
 | V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
 | --- | --- | --- |
-| healthcheck\_status\_fail | healthcheck\_failures\_total | n/a |
-| healthcheck\_status\_warning | healthcheck\_warnings\_total | n/a |
-| healthcheck\_status\_info | healthcheck\_info\_total | n/a |
-| healthcheck\_status\_pass | healthcheck\_passes\_total | n/a |
-| healthcheck\_status\_na | healthcheck\_na\_total | n/a |
-| slow\_operation\_invocation\_duration | slow\_operation\_invocations\_duration\_seconds\_total | n/a |
-| slow\_operation\_total\_invocations | slow\_operation\_invocations\_total | n/a |
+| `partitions_activePartitionCount` | `partitions_active_total` | n/a |
+| `partitions_completedMigrations` | `partitions_completed_migrations_total` | `period=latest_repartitioning` |
+| `partitions_elapsedDestinationCommitTime` | `partitions_elapsed_destination_commit_time_seconds_total` | `period=latest_repartitioning` |
+| `partitions_elapsedMigrationOperationTime` | `partitions_elapsed_migration_operation_time_seconds_total` | `period=latest_repartitioning` |
+| `partitions_elapsedMigrationTime` | `partitions_elapsed_migration_time_seconds_total` | `period=latest_repartitioning` |
+| `partitions_lastRepartitionTime` | `partitions_last_repartition_timestamp_seconds` | n/a |
+| `partitions_localPartitionCount` | `partitions_local_total` | n/a |
+| `partitions_maxBackupCount` | `partitions_max_backups_total` | n/a |
+| `partitions_memberGroupsSize` | `partitions_member_groups_size_total` | n/a |
+| `partitions_migrationActive` | `partitions_migration_active_info` | n/a |
+| `partitions_migrationQueueSize` | `partitions_migration_queue_size_total` | n/a |
+| `partitions_partitionCount` | `partitions_total` | n/a |
+| `partitions_plannedMigrations` | `partitions_planned_migrations_total` | n/a |
+| `partitions_replicaSyncRequestsCounter` | `partitions_replica_sync_requests_total` | n/a |
+| `partitions_replicaSyncSemaphore` | `partitions_replica_sync_semaphore_permits_total` | n/a |
+| `partitions_stateStamp` | `partitions_state_stamp_info` | n/a |
+| `partitions_totalCompletedMigrations` | `partitions_completed_migrations_total` | `period=since_beginning` |
+| `partitions_totalElapsedDestinationCommitTime` | `partitions_elapsed_destination_commit_time_seconds_total` | `period=since_beginning` |
+| `partitions_totalElapsedMigrationOperationTime` | `partitions_elapsed_migration_operation_time_seconds_total` | `period=since_beginning` |
+| `partitions_totalElapsedMigrationTime` | `partitions_elapsed_migration_time_seconds_total` | `period=since_beginning` |
 
-</details>
+## WAN replication
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| `wan_ackDelayCurrentMillis` | `wan_ack_delay_current_time_seconds` | n/a |
+| `wan_ackDelayLastEnd` | `wan_ack_delay_last_end_timestamp_seconds` | n/a |
+| `wan_ackDelayLastStart` | `wan_ack_delay_last_start_timestamp_seconds` | n/a |
+| `wan_ackDelayTotalCount` | `wan_ack_delay_total` | n/a |
+| `wan_ackDelayTotalMillis` | `wan_ack_delay_total_time_seconds` | n/a |
+| `wan_consistencyCheck_lastCheckedPartitionCount` | `wan_consistency_check_last_checked_partitions_total` | n/a |
+| `wan_consistencyCheck_lastCheckedLeafCount` | `wan_consistency_check_last_checked_leaves_total` | n/a |
+| `wan_consistencyCheck_lastDiffLeafCount` | `wan_consistency_check_last_diff_leaves_total` | n/a |
+| `wan_consistencyCheck_lastDiffPartitionCount` | `wan_consistency_check_last_diff_partitions_total` | n/a |
+| `wan_consistencyCheck_lastEntriesToSync` | `wan_consistency_check_last_entries_to_sync_total` | n/a |
+| `wan_droppedCount` | `wan_events_total` | `event_type=drop` |
+| `wan_outboundQueueSize` | `wan_outbound_queue_size_total` | n/a |
+| `wan_removeCount` | `wan_events_total` | `event_type=remove` |
+| `wan_syncCount` | `wan_events_total` | `event_type=sync` |
+| `wan_sync_avgEntriesPerLeaf` | `wan_sync_entries_per_leaf_total` | `aggregation=avg` |
+| `wan_sync_maxLeafEntryCount` | `wan_sync_entries_per_leaf_total` | `aggregation=max` |
+| `wan_sync_minLeafEntryCount` | `wan_sync_entries_per_leaf_total` | `aggregation=min` |
+| `wan_sync_nodesSynced` | `wan_sync_nodes_synced_total` | n/a |
+| `wan_sync_partitionsSynced` | `wan_sync_partitions_synced_total` | n/a |
+| `wan_sync_partitionsToSync` | `wan_sync_partitions_to_sync_total` | n/a |
+| `wan_sync_recordsSynced` | `wan_sync_records_synced_total` | n/a |
+| `wan_sync_syncDurationNanos` | `wan_sync_duration_seconds` | n/a |
+| `wan_sync_stdDevEntriesPerLeaf` | `wan_sync_entries_per_leaf_total` | `aggregation=std_dev` |
+| `wan_sync_syncStartNanos` | `wan_sync_start_time_seconds` | n/a |
+| `wan_totalPublishLatency` | `wan_publish_latency_seconds_total` | n/a |
+| `wan_totalPublishedEventCount` | `wan_published_events_total` | n/a |
+| `wan_updateCount` | `wan_events_total` | `event_type=update` |
+| `wan_connectionHealth` | `wan_connection_healthy_info` | n/a |
+| `wan_failedTransmitCount` | `wan_failed_transmits_total` | n/a |
+
+## Management Center
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| `healthcheck_status_fail` | `healthcheck_failures_total` | n/a |
+| `healthcheck_status_warning` | `healthcheck_warnings_total` | n/a |
+| `healthcheck_status_info` | `healthcheck_info_total` | n/a |
+| `healthcheck_status_pass` | `healthcheck_passes_total` | n/a |
+| `healthcheck_status_na` | `healthcheck_na_total` | n/a |
+| `slow_operation_invocation_duration` | `slow_operation_invocations_duration_seconds_total` | n/a |
+| `slow_operation_total_invocations` | `slow_operation_invocations_total` | n/a |

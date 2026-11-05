@@ -19,928 +19,272 @@ If you use Management Center to export cluster-wide metrics to Prometheus, Manag
 
 :::
 
-<details>
-<summary>Streaming Engine Cluster-Wide Metrics</summary>
+## Streaming engine cluster-wide metrics
 
-<table>
-<colgroup>
-<col style={{width:'33.3333%'}} />
-<col style={{width:'33.3333%'}} />
-<col style={{width:'33.3334%'}} />
-</colgroup>
-<thead>
-<tr>
-<th>Name</th>
-<th>Description</th>
-<th>Tags</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>blockingWorkerCount</th>
-<td>Number of non-cooperative workers employed.</td>
-<td rowSpan={7}>
+Each member reports one value for each metric:
 
-*none*
+| Name | Description | Tags |
+| --- | --- | --- |
+| `blockingWorkerCount` | Number of non-cooperative workers employed | None |
+| `jobs.submitted` | Number of computational jobs submitted | None |
+| `jobs.completedSuccessfully` | Number of computational jobs successfully completed | None |
+| `jobs.completedWithFailure` | Number of computational jobs that have failed | None |
+| `jobs.executionStarted` | Number of computational job executions started | None |
+| `jobs.executionTerminated` | Number of computational job executions finished | None |
+| `jobs.executionCompleted` | Number of computational job executions completed successfully or otherwise | None |
 
-Each Hazelcast member will have one instance of each of these metrics.
+A job can execute more than once, for example when it is restarted, or suspended and then resumed. The `jobs.execution*` metrics count each execution.
 
-</td>
-</tr>
-<tr>
-<th>jobs.submitted</th>
-<td>Number of computational jobs submitted.</td>
-</tr>
-<tr>
-<th>jobs.completedSuccessfully</th>
-<td>Number of computational jobs successfully completed.</td>
-</tr>
-<tr>
-<th>jobs.completedWithFailure</th>
-<td>Number of computational jobs that have failed.</td>
-</tr>
-<tr>
-<th>jobs.executionStarted</th>
-<td>Number of computational job executions started. Each job can execute multiple times, for example when it's restarted or suspended and then resumed.</td>
-</tr>
-<tr>
-<th>jobs.executionTerminated</th>
-<td>Number of computational job executions finished. Each job can execute multiple times, for example when it's restarted or suspended and then resumed.</td>
-</tr>
-<tr>
-<th>jobs.executionCompleted</th>
-<td>Number of computational job executions completed (successfully or otherwise).</td>
-</tr>
-<tr>
-<th>iterationCount</th>
-<td>The total number of iterations the driver of tasklets in cooperative thread N made. It should increase by at least 250 iterations/s. Lower value means some of the cooperative processors blocks for too long. Somewhat lower value is normal if there are many tasklets assigned to the processor. Lower value affects the latency.</td>
-<td rowSpan={2}>
+Each member reports one value for each metric for each of its cooperative worker threads:
 
-*cooperativeWorker*
+| Name | Description | Tags |
+| --- | --- | --- |
+| `iterationCount` | Total number of iterations that the tasklet driver in the cooperative worker thread has made | `cooperativeWorker` |
+| `taskletCount` | Number of tasklets assigned to the cooperative worker thread | `cooperativeWorker` |
 
-Each Hazelcast member will have one instance of each of these metrics for each of its cooperative worker threads.
+The `iterationCount` value should increase by at least 250 iterations per second. A lower rate means that some cooperative processors block for too long, which increases latency. A somewhat lower rate is normal when many tasklets are assigned to the processor.
 
-</td>
-</tr>
-<tr>
-<th>taskletCount</th>
-<td>The number of assigned tasklets to cooperative thread N.</td>
-</tr>
-</tbody>
-</table>
+## Streaming engine job-specific metrics {/* #job-metrics */}
 
-</details>
-
-<details>
-<summary>Streaming Engine Job-specific Metrics</summary>
-
-<Anchor id="job-metrics" />All job specific metrics have their `job` (name and ID of the job) and `exec`(job execution ID) tags set, and most also have the `vertex` (vertex name) tag set (with very few exceptions). This means that most of these metrics will have at least one instance for each vertex of each current job execution.
+All job-specific metrics have the `job` tag, which holds the name and ID of the job, and the `exec` tag, which holds the job execution ID. Most of them also have the `vertex` tag, which holds the vertex name. As a result, most of these metrics have at least one instance for each vertex of each current job execution.
 
 Additionally, if the vertex sourcing them is a data source or data sink, then the `source` or `sink` tags will also be set to true.
 
-<table>
-<colgroup>
-<col style={{width:'33.3333%'}} />
-<col style={{width:'33.3333%'}} />
-<col style={{width:'33.3334%'}} />
-</colgroup>
-<thead>
-<tr>
-<th>Name</th>
-<th>Description</th>
-<th>Tags</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>executionStartTime</th>
-<td>Start time of the current execution of the job (epoch time in milliseconds).</td>
-<td rowSpan={4}>
+Each member reports one value for each metric for each job execution:
 
-*job, exec*
+| Name | Description | Tags |
+| --- | --- | --- |
+| `executionStartTime` | Start time of the current execution of the job, as epoch time in milliseconds | `job`, `exec` |
+| `executionCompletionTime` | Completion time of the current execution of the job, as epoch time in milliseconds | `job`, `exec` |
+| `status` | Status of the job, as a number | `job`, `exec` |
+| `userCancelled` | Whether the user canceled the job | `job`, `exec` |
 
-There will be a single instance of these metrics for each job execution.
+The `status` metric has one of these values:
+- `0`: submitted
+- `1`: initialization phase
+- `2`: running
+- `3`: suspended
+- `4`: exporting snapshot
+- `5`: completing phase
+- `6`: failed
+- `7`: completed successfully
 
-</td>
-</tr>
-<tr>
-<th>executionCompletionTime</th>
-<td>Completion time of the current execution of the job (epoch time in milliseconds).</td>
-</tr>
-<tr>
-<th>status</th>
-<td>
+The `userCancelled` metric is `1` if the user canceled the job. It is `0` if the job is running, completed successfully, or failed because of an error other than cancellation by the user. This metric is available only through the [Job API](../operate-and-manage/maintaining-a-cluster/monitoring.mdx#via-job-api).
 
-Information regarding the job's status. Potential values:
+Each member reports one value for each metric for each vertex:
 
-- 0 - submitted
-- 1 - initialization phase
-- 2 - running
-- 3 - suspended
-- 4 - exporting snapshot
-- 5 - completing phase
-- 6 - failed
-- 7 - completed successfully
+| Name | Description | Tags |
+| --- | --- | --- |
+| `snapshotBytes` | Total number of bytes written out in the last snapshot | `job`, `exec`, `vertex` |
+| `snapshotKeys` | Total number of keys written out in the last snapshot | `job`, `exec`, `vertex` |
 
-</td>
-</tr>
-<tr>
-<th>userCancelled</th>
-<td>
+Each member reports one value for each metric for each ordinal of each vertex of each job execution. The metrics are present only for distributed edges, which are edges that produce network traffic:
 
-Details on whether the user canceled the job. Potential values:
+| Name | Description | Tags |
+| --- | --- | --- |
+| `distributedBytesIn` | Total number of bytes received from remote members | `job`, `exec`, `vertex`, `ordinal` |
+| `distributedBytesOut` | Total number of bytes sent to remote members | `job`, `exec`, `vertex`, `ordinal` |
+| `distributedItemsIn` | Total number of items received from remote members | `job`, `exec`, `vertex`, `ordinal` |
+| `distributedItemsOut` | Total number of items sent to remote members | `job`, `exec`, `vertex`, `ordinal` |
 
-- 1 - canceled by the user
-- 0 - means the job is either running, completed successfully, or failed due to an error other than user cancellation
+A processor is the parallel worker that does the work of a vertex, and the `proc` tag holds the global index of the processor instance. Each member reports one value for each metric for each processor instance:
 
-Exposed via [Job API](../operate-and-manage/maintaining-a-cluster/monitoring.mdx#via-job-api) only.
+| Name | Description | Tags |
+| --- | --- | --- |
+| `topObservedWm` | Highest `coalescedWm` value on any input edge of the processor | `job`, `exec`, `vertex`, `proc` |
+| `coalescedWm` | Highest watermark received from all inputs that was sent to the processor to handle | `job`, `exec`, `vertex`, `proc` |
+| `lastForwardedWm` | Last watermark emitted by the processor to output | `job`, `exec`, `vertex`, `proc` |
+| `lastForwardedWmLatency` | Difference between `lastForwardedWm` and the system time when the metrics were collected | `job`, `exec`, `vertex`, `proc` |
+| `queuesCapacity` | Total capacity of the input queues | `job`, `exec`, `vertex`, `proc` |
+| `queuesSize` | Total number of items waiting in the input queues | `job`, `exec`, `vertex`, `proc` |
 
-</td>
-</tr>
-<tr>
-<th>snapshotBytes</th>
-<td>Total number of bytes written out in the last snapshot.</td>
-<td rowSpan={2}>
+Each member reports one value for each metric for each input or output edge of each processor instance. The `ordinal` tag holds the ordinal of the edge, or `snapshot` for output items written to the state snapshot:
 
-*job, exec, vertex*
+| Name | Description | Tags |
+| --- | --- | --- |
+| `topObservedWm` | Highest watermark received from any input on the edge | `job`, `exec`, `vertex`, `proc`, `ordinal` |
+| `coalescedWm` | Highest watermark received from all upstream processors on the edge | `job`, `exec`, `vertex`, `proc`, `ordinal` |
+| `emittedCount` | Number of emitted items including watermarks and snapshot barriers | `job`, `exec`, `vertex`, `proc`, `ordinal` |
+| `receivedCount` | Number of received items excluding watermarks and snapshot barriers | `job`, `exec`, `vertex`, `proc`, `ordinal` |
+| `receivedBatches` | Number of received batches | `job`, `exec`, `vertex`, `proc`, `ordinal` |
 
-There will be a single instance of these metrics for each vertex.
+Unlike `distributedItemsOut`, `emittedCount` includes items emitted to local processors. The `receivedCount` value is the number of items that the `Processor.process` method receives. The `Processor.process` method receives items in batches, and `receivedBatches` counts those batches. To get the average batch size, divide `receivedCount` by `receivedBatches`. Under low load, the average batch size is 1.
 
-</td>
-</tr>
-<tr>
-<th>snapshotKeys</th>
-<td>Total number of keys written out in the last snapshot.</td>
-</tr>
-<tr>
-<th>distributedBytesIn</th>
-<td>Total number of bytes received from remote members.</td>
-<td rowSpan={4}>
+Only some types of processor report these metrics, and the `procType` tag identifies the type of processor. Each member reports one value for each metric for each processor instance:
 
-*job, exec, vertex, ordinal*
+| Name | Description | Tags |
+| --- | --- | --- |
+| `numInFlightOps` | Number of pending, in-flight operations in asynchronous mapping processors. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#mapUsingServiceAsyncP(com.hazelcast.jet.pipeline.ServiceFactory,int,boolean,com.hazelcast.function.FunctionEx,com.hazelcast.function.BiFunctionEx)" text="Processors.mapUsingServiceAsyncP" code />. | `job`, `exec`, `vertex`, `proc`, `procType` |
+| `totalKeys` | Number of active keys tracked by a session window processor. | `job`, `exec`, `vertex`, `proc`, `procType` |
+| `totalWindows` | Number of active windows tracked by a session window processor. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#aggregateToSessionWindowP(long,long,java.util.List,java.util.List,com.hazelcast.jet.aggregate.AggregateOperation,com.hazelcast.jet.core.function.KeyedWindowResultFunction)" text="Processors.aggregateToSessionWindowP" code />. | `job`, `exec`, `vertex`, `proc`, `procType` |
+| `totalFrames` | Number of active frames tracked by a sliding window processor. | `job`, `exec`, `vertex`, `proc`, `procType` |
+| `totalKeysInFrames` | Number of grouping keys associated with the active frames of a sliding window processor. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#aggregateToSlidingWindowP(java.util.List,java.util.List,com.hazelcast.jet.core.TimestampKind,com.hazelcast.jet.core.SlidingWindowPolicy,long,com.hazelcast.jet.aggregate.AggregateOperation,com.hazelcast.jet.core.function.KeyedWindowResultFunction)" text="Processors.aggregateToSlidingWindowP" code />. | `job`, `exec`, `vertex`, `proc`, `procType` |
+| `totalStates` | Number of active state objects held by stateful processors in a running job. | `job`, `exec`, `vertex`, `proc`, `procType` |
+| `lateEventsDropped` | Number of late events dropped by processors because the watermark has already passed their windows. | `job`, `exec`, `vertex`, `proc`, `procType` |
 
-Each Hazelcast member will have an instance of these metrics for each ordinal of each vertex of each job execution.
+For keyed stages, `totalStates` is the number of per-key state objects allocated. For non-keyed stages, it is 1 if the processor has processed at least one item, and 0 otherwise. For the stateful processors, see <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#mapStatefulP(long,com.hazelcast.function.FunctionEx,com.hazelcast.function.ToLongFunctionEx,java.util.function.Supplier,com.hazelcast.jet.function.TriFunction,com.hazelcast.jet.function.TriFunction)" text="Processors.mapStatefulP" code /> and <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#flatMapStatefulP(long,com.hazelcast.function.FunctionEx,com.hazelcast.function.ToLongFunctionEx,java.util.function.Supplier,com.hazelcast.jet.function.TriFunction,com.hazelcast.jet.function.TriFunction)" text="Processors.flatMapStatefulP" code />.
 
-Note: These metrics are only present for distributed edges, i.e., edges producing network traffic.
+## Map
 
-</td>
-</tr>
-<tr>
-<th>distributedBytesOut</th>
-<td>Total number of bytes sent to remote members.</td>
-</tr>
-<tr>
-<th>distributedItemsIn</th>
-<td>Total number of items received from remote members.</td>
-</tr>
-<tr>
-<th>distributedItemsOut</th>
-<td>Total number of items sent to remote members.</td>
-</tr>
-<tr>
-<th>topObservedWm</th>
-<td>This value is equal to the highest coalescedWm on any input edge of this processor.</td>
-<td rowSpan={6}>
+The Reset column shows the reset behavior of the metrics. There are two types of reset: one occurs on a node restart (indicated by `N`), and the other on a cluster restart (indicated by `C`). For example, metrics relating to map operations such as get, put, and remove track operations executed by a member during its runtime, and these are reset upon a node restart. Metrics such as hits, evictions, and expirations are tracked at the cluster level, and these are retained when a member is restarted.
 
-*job, exec, vertex, proc*
+The following metrics describe a map on the member:
 
-Each Hazelcast member will have one instances of these metrics for each processor instance N, the N denotes the global processor index. Processor is the parallel worker doing the work of the vertex.
+| Name | Unit | Description | Reset |
+| --- | --- | --- | --- |
+| `map.backupCount` | count | Number of backups per entry | C |
+| `map.backupEntryCount` | count | Number of backup entries held by the member | C |
+| `map.backupEntryMemoryCost` | bytes | Memory cost of backup entries in this member | C |
+| `map.creationTime` | ms | Creation time of the map on the member | N |
+| `map.dirtyEntryCount` | count | Number of dirty entries that the member owns, which are entries that are updated but not yet persisted | N |
+| `map.entrySetCount` | count | Number of entry set operations on this member | N |
+| `map.evictionCount` | count | Number of evictions of locally owned entries, excluding backups | C |
+| `map.expirationCount` | count | Number of expirations of locally owned entries, excluding backups | C |
+| `map.getCount` | count | Number of local get operations on the map, including gets for entries that do not exist | N |
+| `map.heapCost` | count | Total heap cost for the map on this member | C |
+| `map.hits` | count | Number of reads of existing, locally owned entries by any type of operation, such as get, set, or put | C |
+| `map.indexedQueryCount` | count | Total number of indexed local queries performed on the map | N |
+| `map.indexesSkippedQueryCount` | count | Total number of local queries performed on the map which cannot use indexes | N |
+| `map.noMatchingIndexQueryCount` | count | Total number of local queries performed on the map which had no matching index | N |
+| `map.lastAccessTime` | ms | Last access (read) time of the locally owned entries | C |
+| `map.lastUpdateTime` | ms | Last update time of the locally owned entries | C |
+| `map.lockedEntryCount` | count | Number of locked entries that the member owns | C |
+| `map.merkleTreesCost` | count | Total heap cost of the Merkle trees used | N |
+| `map.numberOfEvents` | count | Number of local events received on the map | N |
+| `map.numberOfOtherOperations` | count | Total number of other operations performed on this member | N |
+| `map.ownedEntryCount` | count | Number of map entries owned by the member | C |
+| `map.ownedEntryMemoryCost` | bytes | Memory cost of owned map entries on this member | C |
+| `map.putCount` | count | Number of local put operations on the map | N |
+| `map.queryCount` | count | Number of queries executed on the map | N |
+| `map.queryLimiterHitCount` | count | Number of times the query result size limiter was hit on this member | N |
+| `map.removeCount` | count | Number of local remove operations on the map | N |
+| `map.setCount` | count | Number of local set operations on the map | N |
+| `map.totalGetLatency` | ms | Total latency of local get operations on the map | N |
+| `map.totalMaxGetLatency` | ms | Maximum latency of local get operations on the map | N |
+| `map.totalMaxPutLatency` | ms | Maximum latency of local put operations on the map | N |
+| `map.totalMaxRemoveLatency` | ms | Maximum latency of local remove operations on the map | N |
+| `map.totalMaxSetLatency` | ms | Maximum latency of local set operations on the map | N |
+| `map.totalPutLatency` | ms | Total latency of local put operations on the map | N |
+| `map.totalRemoveLatency` | ms | Total latency of local remove operations on the map | N |
+| `map.totalSetLatency` | ms | Total latency of local set operations on the map | N |
+| `map.valuesCount` | count | Number of values operations on this member | N |
+| `map.store.offloaded.operations.waitingToBeProcessedCount` | count | Number of offloaded map store operations waiting to be processed | N |
 
-</td>
-</tr>
-<tr>
-<th>coalescedWm</th>
-<td>The highest watermark received from all inputs that was sent to the processor to handle.</td>
-</tr>
-<tr>
-<th>lastForwardedWm</th>
-<td>Last watermark emitted by the processor to output.</td>
-</tr>
-<tr>
-<th>lastForwardedWmLatency</th>
-<td>The difference between \<i\>lastForwardedWn\</i\> and the system time at the moment when metrics were collected.</td>
-</tr>
-<tr>
-<th>queuesCapacity</th>
-<td>The total capacity of input queues.</td>
-</tr>
-<tr>
-<th>queuesSize</th>
-<td>The total number of items waiting in input queues.</td>
-</tr>
-<tr>
-<th>topObservedWm</th>
-<td>The highest received watermark from any input on edge N.</td>
-<td rowSpan={5}>
+The `map.queryCount` value can be imprecise for queries that use partition predicates (`PartitionPredicate`) on off-heap storage.
 
-*job, exec, vertex, proc, ordinal*
+The following metrics describe an index of a map on the member:
 
-Each Hazelcast member will have one instance of these metrics for each edge M (input or output) of each processor N. N is the global processor index and M is either the ordinal of the edge or has the value snapshot for output items written to state snapshot.
+| Name | Unit | Description | Reset |
+| --- | --- | --- | --- |
+| `map.index.averageHitLatency` | ns | Average hit latency for the index on this member | N |
+| `map.index.averageHitSelectivity` | percent | Average selectivity of the hits served by the index on this member, from 0.0 to 1.0 | N |
+| `map.index.creationTime` | ms | Creation time of the index on this member | N |
+| `map.index.hitCount` | count | Total number of index hits | N |
+| `map.index.insertCount` | count | Number of insert operations performed on the index | N |
+| `map.index.memoryCost` | bytes | Local memory cost of the index | N |
+| `map.index.queryCount` | count | Total number of queries served by the index | N |
+| `map.index.removeCount` | count | Number of remove operations performed on the index | N |
+| `map.index.totalInsertLatency` | ns | Total latency of insert operations performed on the index | N |
+| `map.index.totalRemoveLatency` | ns | Total latency of remove operations performed on the index | N |
+| `map.index.totalUpdateLatency` | ns | Total latency of update operations performed on the index | N |
+| `map.index.updateCount` | count | Number of update operations performed on the index | N |
+| `map.index.partitionsIndexed` | count | Number of partitions the index is built for on the local member | N |
+| `map.index.partitionUpdatesStarted` | count | Number of times a partition set change started for the index | N |
+| `map.index.partitionUpdatesFinished` | count | Number of times a partition set change completed for the index | N |
+| `map.index.notReadyQueryCount` | count | Number of queries which matched the index during a partition set change | N |
 
-</td>
-</tr>
-<tr>
-<th>coalescedWm</th>
-<td>The highest watermark received from all upstream processors on edge N.</td>
-</tr>
-<tr>
-<th>emittedCount</th>
-<td>The number of emitted items. This number includes watermarks, snapshot barriers etc. Unlike *distributedItemsOut*, it includes items emitted items to local processors.</td>
-</tr>
-<tr>
-<th>receivedCount</th>
-<td>The number of received items. This number does not include watermarks, snapshot barriers etc. It's the number of items the Processor.process method will receive.</td>
-</tr>
-<tr>
-<th>receivedBatches</th>
-<td>The number of received batches. `Processor.process` receives a batch of items at a time, this is the number of such batches. By dividing *receivedCount* by *receivedBatches*, you get the average batch size. It will be 1 under low load.</td>
-</tr>
-<tr>
-<th>numInFlightOps</th>
-<td>The number of pending (in flight) operations when using asynchronous mapping processors. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#mapUsingServiceAsyncP(com.hazelcast.jet.pipeline.ServiceFactory,int,boolean,com.hazelcast.function.FunctionEx,com.hazelcast.function.BiFunctionEx)" text="Processors.mapUsingServiceAsyncP" />.</td>
-<td rowSpan={7}>
+A `map.index.averageHitSelectivity` value close to 1.0 means high selectivity, and the index is efficient. A value close to 0.0 means low selectivity, and the index is little more efficient than a full scan.
 
-*job, exec, vertex, proc, procType*
+The `map.index.hitCount` value can be greater than `map.index.queryCount`, because a single query can hit the same index more than once.
 
-Processor specific metrics, only certain types of processors have them. The *procType* tag can be used to identify the exact type of processor sourcing them. Like all processor metrics, each Hazelcast member will have one instances of these metrics for each processor instance N, the N denotes the global processor index.
+For on-heap indexes in `OBJECT` or `BINARY` format, the `map.index.memoryCost` value is a best-effort approximation, not the exact on-heap memory usage of the index.
 
-</td>
-</tr>
-<tr>
-<th>totalKeys</th>
-<td>The number of active keys being tracked by a session window processor.</td>
-</tr>
-<tr>
-<th>totalWindows</th>
-<td>The number of active windows being tracked by a session window processor. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#aggregateToSessionWindowP(long,long,java.util.List,java.util.List,com.hazelcast.jet.aggregate.AggregateOperation,com.hazelcast.jet.core.function.KeyedWindowResultFunction)" text="Processors.aggregateToSessionWindowP" />.</td>
-</tr>
-<tr>
-<th>totalFrames</th>
-<td>The number of active frames being tracked by a sliding window processor.</td>
-</tr>
-<tr>
-<th>totalKeysInFrames</th>
-<td>The number of grouping keys associated with the current active frames of a sliding window processor. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#aggregateToSlidingWindowP(java.util.List,java.util.List,com.hazelcast.jet.core.TimestampKind,com.hazelcast.jet.core.SlidingWindowPolicy,long,com.hazelcast.jet.aggregate.AggregateOperation,com.hazelcast.jet.core.function.KeyedWindowResultFunction)" text="Processors.aggregateToSlidingWindowP" />.</td>
-</tr>
-<tr>
-<th>totalStates</th>
-<td>Number of active state objects held by stateful processors in a running job. For keyed stages, the metric shows the number of per-key state objects currently allocated. For non-keyed stages, it reports 1 if the processor has processed at least one item, or 0 otherwise. See <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#mapStatefulP(long,com.hazelcast.function.FunctionEx,com.hazelcast.function.ToLongFunctionEx,java.util.function.Supplier,com.hazelcast.jet.function.TriFunction,com.hazelcast.jet.function.TriFunction)" text="Processors.mapStatefulP" /> <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/processor/Processors.html#flatMapStatefulP(long,com.hazelcast.function.FunctionEx,com.hazelcast.function.ToLongFunctionEx,java.util.function.Supplier,com.hazelcast.jet.function.TriFunction,com.hazelcast.jet.function.TriFunction)" text="Processor.flatMapStatefulP" /></td>
-</tr>
-<tr>
-<th>lateEventsDropped</th>
-<td>The number of late events dropped by various processor, due to the watermark already having passed their windows.</td>
-</tr>
-</tbody>
-</table>
+The `map.total*Latency` and `map.totalMax*Latency` metrics are measured only on members, and do not represent the overall performance of the cluster. To get the average latency of an operation, divide its total latency by its count. For example, divide `map.totalGetLatency` by `map.getCount`.
 
-</details>
+## Vector collection (beta)
 
-<details>
-<summary>Map</summary>
+The following metrics describe a vector collection on the member:
 
-The Reset column shows the reset behavior of the metrics. There are two types of reset: one occurs on a node restart (indicated by 'N'), and the other on a cluster restart (indicated by 'C'). For example, metrics relating to map operations such as get, put, and remove track operations executed by a member during its runtime, and these are reset upon a node restart. Metrics such as hits, evictions, and expirations are tracked at the cluster level, and these are retained when a member is restarted.
+| Name | Unit | Description |
+| --- | --- | --- |
+| `vectorCollection.backupCount` | count | Number of backups per entry |
+| `vectorCollection.backupEntryCount` | count | Number of backup entries held by the member |
+| `vectorCollection.backupEntryHeapMemoryCost` | bytes | Heap memory cost of backup entries in this member |
+| `vectorCollection.clearCount` | count | Number of local clear operations on the vector collection |
+| `vectorCollection.creationTime` | ms | Creation time of the vector collection on the member |
+| `vectorCollection.deleteCount` | count | Number of local delete operations on the vector collection |
+| `vectorCollection.getCount` | count | Number of local get operations on the vector collection, including gets for entries that do not exist |
+| `vectorCollection.heapCost` | count | Total heap cost of the vector collection on this member |
+| `vectorCollection.lastAccessTime` | ms | Last access time of the locally owned entries |
+| `vectorCollection.lastUpdateTime` | ms | Last update time of the locally owned entries |
+| `vectorCollection.maxClearLatency` | ms | Maximum latency of local clear operations on the vector collection |
+| `vectorCollection.maxOptimizeLatency` | ms | Maximum latency of local optimize operations on the vector collection |
+| `vectorCollection.maxSearchLatency` | ms | Maximum latency of search operations coordinated by this member on the vector collection |
+| `vectorCollection.maxSizeLatency` | ms | Maximum latency of local size operations on the vector collection |
+| `vectorCollection.optimizeCount` | count | Number of local optimize operations on the vector collection |
+| `vectorCollection.ownedEntryCount` | count | Number of vector collection entries owned by the member |
+| `vectorCollection.ownedEntryHeapMemoryCost` | bytes | Heap memory cost of owned vector collection entries on this member |
+| `vectorCollection.putAllCount` | count | Number of local `putAll` operations on the vector collection |
+| `vectorCollection.putAllEntryCount` | count | Number of entries passed to local `putAll` operations on the vector collection |
+| `vectorCollection.putCount` | count | Number of local put operations on the vector collection |
+| `vectorCollection.removeCount` | count | Number of local remove operations on the vector collection |
+| `vectorCollection.searchCount` | count | Number of search operations coordinated by this member on the vector collection |
+| `vectorCollection.searchIndexQueryCount` | count | Number of searches on vector index instances (partitions) in the vector collection, summed over all indexes on the collection |
+| `vectorCollection.searchIndexVisitedNodes` | count | Number of graph nodes visited during searches, which equals the number of distance or score calculations |
+| `vectorCollection.searchResultsCount` | count | Number of results returned by search operations coordinated by this member on the vector collection |
+| `vectorCollection.setCount` | count | Number of local set operations on the vector collection |
+| `vectorCollection.sizeCount` | count | Number of local size operations on the vector collection |
+| `vectorCollection.totalClearLatency` | ms | Total latency of local clear operations on the vector collection |
+| `vectorCollection.totalDeleteLatency` | ms | Total latency of local delete operations on the vector collection |
+| `vectorCollection.totalGetLatency` | ms | Total latency of local get operations on the vector collection |
+| `vectorCollection.totalMaxDeleteLatency` | ms | Maximum latency of local delete operations on the vector collection |
+| `vectorCollection.totalMaxGetLatency` | ms | Maximum latency of local get operations on the vector collection |
+| `vectorCollection.totalMaxPutAllLatency` | ms | Maximum latency of local `putAll` operations on the vector collection |
+| `vectorCollection.totalMaxPutLatency` | ms | Maximum latency of local put operations on the vector collection |
+| `vectorCollection.totalMaxRemoveLatency` | ms | Maximum latency of local remove operations on the vector collection |
+| `vectorCollection.totalMaxSetLatency` | ms | Maximum latency of local set operations on the vector collection |
+| `vectorCollection.totalOptimizeLatency` | ms | Total latency of local optimize operations on the vector collection |
+| `vectorCollection.totalPutAllLatency` | ms | Total latency of local `putAll` operations on the vector collection |
+| `vectorCollection.totalPutLatency` | ms | Total latency of local put operations on the vector collection |
+| `vectorCollection.totalRemoveLatency` | ms | Total latency of local remove operations on the vector collection |
+| `vectorCollection.totalSearchLatency` | ms | Total latency of search operations coordinated by this member on the vector collection |
+| `vectorCollection.totalSetLatency` | ms | Total latency of local set operations on the vector collection |
+| `vectorCollection.totalSizeLatency` | ms | Total latency of local size operations on the vector collection |
 
-<table>
-<colgroup>
-<col style={{width:'33.3333%'}} />
-<col style={{width:'8.3333%'}} />
-<col style={{width:'50%'}} />
-<col style={{width:'8.3334%'}} />
-</colgroup>
-<thead>
-<tr>
-<th>Name</th>
-<th>Unit</th>
-<th>Description</th>
-<th>Reset</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>`map.backupCount`</td>
-<td>count</td>
-<td>Number of backups per entry</td>
-<td>C</td>
-</tr>
-<tr>
-<td>`map.backupEntryCount`</td>
-<td>count</td>
-<td>Number of backup entries held by the member</td>
-<td>C</td>
-</tr>
-<tr>
-<td>`map.backupEntryMemoryCost`</td>
-<td>bytes</td>
-<td>Memory cost of backup entries in this member</td>
-<td>C</td>
-</tr>
-<tr>
-<td>`map.creationTime`</td>
-<td>ms</td>
-<td>Creation time of the map on the member</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.dirtyEntryCount`</td>
-<td>count</td>
-<td>Number of updated but not persisted yet entries, dirty entries, that the member owns</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.entrySetCount`</td>
-<td>count</td>
-<td>Number of entry set operations on this member</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.evictionCount`</td>
-<td>count</td>
-<td>Number of evictions happened on locally owned entries, backups are not included</td>
-<td>C</td>
-</tr>
-<tr>
-<td>`map.expirationCount`</td>
-<td>count</td>
-<td>Number of expirations happened on locally owned entries, backups are not included</td>
-<td>C</td>
-</tr>
-<tr>
-<td>`map.getCount`</td>
-<td>count</td>
-<td>Number of local get operations on the map; it is incremented for every get operation even if the entries do not exist</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.heapCost`</td>
-<td>count</td>
-<td>Total heap cost for the map on this member</td>
-<td>C</td>
-</tr>
-<tr>
-<td>`map.hits`</td>
-<td>count</td>
-<td>Number of reads of the locally owned entries; it is incremented for every read by any type of operation (get, set, put). So the entries should exist</td>
-<td>C</td>
-</tr>
-<tr>
-<td>`map.indexedQueryCount`</td>
-<td>count</td>
-<td>Total number of indexed local queries performed on the map</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.indexesSkippedQueryCount`</td>
-<td>count</td>
-<td>Total number of local queries performed on the map which cannot use indexes</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.noMatchingIndexQueryCount`</td>
-<td>count</td>
-<td>Total number of local queries performed on the map which had no matching index</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.lastAccessTime`</td>
-<td>ms</td>
-<td>Last access (read) time of the locally owned entries</td>
-<td>C</td>
-</tr>
-<tr>
-<td>`map.lastUpdateTime`</td>
-<td>ms</td>
-<td>Last update time of the locally owned entries</td>
-<td>C</td>
-</tr>
-<tr>
-<td>`map.lockedEntryCount`</td>
-<td>count</td>
-<td>Number of locked entries that the member owns</td>
-<td>C</td>
-</tr>
-<tr>
-<td>`map.merkleTreesCost`</td>
-<td>count</td>
-<td>Total heap cost of the Merkle trees used</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.numberOfEvents`</td>
-<td>count</td>
-<td>Number of local events received on the map</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.numberOfOtherOperations`</td>
-<td>count</td>
-<td>Total number of other operations performed on this member</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.ownedEntryCount`</td>
-<td>count</td>
-<td>Number of map entries owned by the member</td>
-<td>C</td>
-</tr>
-<tr>
-<td>`map.ownedEntryMemoryCost`</td>
-<td>bytes</td>
-<td>Memory cost of owned map entries on this member</td>
-<td>C</td>
-</tr>
-<tr>
-<td>`map.putCount`</td>
-<td>count</td>
-<td>Number of local put operations on the map</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.queryCount`</td>
-<td>count</td>
-<td>Number of queries executed on the map (it may be imprecise for queries involving partition predicates (PartitionPredicate) on the off-heap storage)</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.queryLimiterHitCount`</td>
-<td>count</td>
-<td>Number of times the query result size limiter was hit on this member</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.removeCount`</td>
-<td>count</td>
-<td>Number of local remove operations on the map</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.setCount`</td>
-<td>count</td>
-<td>Number of local set operations on the map</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.totalGetLatency`</td>
-<td>ms</td>
-<td>Total latency of local get operations on the map</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.totalMaxGetLatency`</td>
-<td>ms</td>
-<td>Maximum latency of local get operations on the map</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.totalMaxPutLatency`</td>
-<td>ms</td>
-<td>Maximum latency of local put operations on the map</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.totalMaxRemoveLatency`</td>
-<td>ms</td>
-<td>Maximum latency of local remove operations on the map</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.totalMaxSetLatency`</td>
-<td>ms</td>
-<td>Maximum latency of local set operations on the map</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.totalPutLatency`</td>
-<td>ms</td>
-<td>Total latency of local put operations on the map</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.totalRemoveLatency`</td>
-<td>ms</td>
-<td>Total latency of local remove operations on the map</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.totalSetLatency`</td>
-<td>ms</td>
-<td>Total latency of local set operations on the map</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.valuesCount`</td>
-<td>count</td>
-<td>Number of values operations on this member</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.store.offloaded.operations.waitingToBeProcessedCount`</td>
-<td>count</td>
-<td>Number of offloaded map store operations waiting to be processed</td>
-<td>N</td>
-</tr>
-<tr>
-<td colSpan={4}>
+A client `putAll` call can increase `vectorCollection.putAllCount` more than once, because the client splits the entries by partition. The client sends a partition's entry as a `set` operation when the partition has only one entry, which increases `vectorCollection.setCount` instead of `vectorCollection.putAllEntryCount`.
 
-The above `*latency` metrics are only measured for the members and they do not represent the overall performance of the cluster. Hazelcast recommends monitoring the average latency for each operation, for example, `map.totalGetLatency` / `map.getCount` and `map.totalSetLatency` / `map.setCount`. Increased average latency is a sign that the cluster would experience performance problems, or there is a spike in the load. The following may be the reasons:
+The `vectorCollection.searchIndexQueryCount` value includes search retries, for example retries caused by concurrent modifications. Without retries, it equals `vectorCollection.searchCount` multiplied by the number of non-empty partitions. With retries, it is larger.
 
-- Increase in the load on the cluster: If the cluster is under heavy load, this can lead to increased latency for all operations, slowing down the overall performance.
-- Increasing member count in the cluster: As the number of cluster members increases, the total latency for operations can also increase. This is because the cluster has to communicate with more members, which can add to the overall latency. This might be a data architecture problem.
-- Increasing the data set size: This causes the cluster to search through more data to find the requested data, which can slow down the overall performance. Creating indexes may solve these kind of problems.
-- Increasing the number of concurrent operations: This causes the cluster to process more requests at the same time, which can slow down the overall performance. This is a potential bottleneck on resources (CPU, memory, network).
+The vector collection latency metrics are measured only on members, and do not represent the overall performance of the cluster. To get the average latency of an operation, divide its total latency by its count. For example, divide `vectorCollection.totalGetLatency` by `vectorCollection.getCount`.
 
-</td>
-</tr>
-<tr>
-<td>`map.index.averageHitLatency`</td>
-<td>ns</td>
-<td>Average hit latency for the index on this member</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.index.averageHitSelectivity`</td>
-<td>percent</td>
-<td>Average selectivity of the hits served by the index on this member (the returned value is in the range from 0.0 to 1.0 - values close to 1.0 indicate a high selectivity meaning the index is efficient; values close to 0.0 indicate a low selectivity meaning the index efficiency is approaching an efficiency of a simple full scan)</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.index.creationTime`</td>
-<td>ms</td>
-<td>Creation time of the index on this member</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.index.hitCount`</td>
-<td>count</td>
-<td>Total number of index hits (the value of this metric may be greater than the `map.index.queryCount` since a single query may hit the same index more than once)</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.index.insertCount`</td>
-<td>count</td>
-<td>Number of insert operations performed on the index</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.index.memoryCost`</td>
-<td>bytes</td>
-<td>Local memory cost of the index (for on-heap indexes in OBJECT or BINARY formats, the returned value is just a best-effort approximation and doesn't indicate a precise on-heap memory usage of the index)</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.index.queryCount`</td>
-<td>count</td>
-<td>Total number of queries served by the index</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.index.removeCount`</td>
-<td>count</td>
-<td>Number of remove operations performed on the index</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.index.totalInsertLatency`</td>
-<td>ns</td>
-<td>Total latency of insert operations performed on the index</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.index.totalRemoveLatency`</td>
-<td>ns</td>
-<td>Total latency of remove operations performed on the index</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.index.totalUpdateLatency`</td>
-<td>ns</td>
-<td>Total latency of update operations performed on the index</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.index.updateCount`</td>
-<td>count</td>
-<td>Number of update operations performed on the index</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.index.partitionsIndexed`</td>
-<td>count</td>
-<td>Number of partitions the index is built for on the local member</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.index.partitionUpdatesStarted`</td>
-<td>count</td>
-<td>Number of times a partition set change started for the index</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.index.partitionUpdatesFinished`</td>
-<td>count</td>
-<td>Number of times a partition set change completed for the index</td>
-<td>N</td>
-</tr>
-<tr>
-<td>`map.index.notReadyQueryCount`</td>
-<td>count</td>
-<td>Number of queries which matched the index during a partition set change</td>
-<td>N</td>
-</tr>
-</tbody>
-</table>
-
-</details>
-
-<details>
-<summary>Vector Collection (Beta)</summary>
-
-<table>
-<colgroup>
-<col style={{width:'36.3636%'}} />
-<col style={{width:'9.0909%'}} />
-<col style={{width:'54.5455%'}} />
-</colgroup>
-<thead>
-<tr>
-<th>Name</th>
-<th>Unit</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>`vectorCollection.backupCount`</td>
-<td>count</td>
-<td>Number of backups per entry</td>
-</tr>
-<tr>
-<td>`vectorCollection.backupEntryCount`</td>
-<td>count</td>
-<td>Number of backup entries held by the member</td>
-</tr>
-<tr>
-<td>`vectorCollection.backupEntryHeapMemoryCost`</td>
-<td>bytes</td>
-<td>Heap memory cost of backup entries in this member</td>
-</tr>
-<tr>
-<td>`vectorCollection.clearCount`</td>
-<td>count</td>
-<td>Number of local clear operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.creationTime`</td>
-<td>ms</td>
-<td>Creation time of the vector collection on the member</td>
-</tr>
-<tr>
-<td>`vectorCollection.deleteCount`</td>
-<td>count</td>
-<td>Number of local delete operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.getCount`</td>
-<td>count</td>
-<td>Number of local get operations on the vector collection; it is incremented for every get operation even if the entries do not exist.</td>
-</tr>
-<tr>
-<td>`vectorCollection.heapCost`</td>
-<td>count</td>
-<td>Total heap cost of the vector collection on this member</td>
-</tr>
-<tr>
-<td>`vectorCollection.lastAccessTime`</td>
-<td>ms</td>
-<td>Last access time of the locally owned entries</td>
-</tr>
-<tr>
-<td>`vectorCollection.lastUpdateTime`</td>
-<td>ms</td>
-<td>Last update time of the locally owned entries</td>
-</tr>
-<tr>
-<td>`vectorCollection.maxClearLatency`</td>
-<td>ms</td>
-<td>Maximum latency of local clear operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.maxOptimizeLatency`</td>
-<td>ms</td>
-<td>Maximum latency of local optimize operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.maxSearchLatency`</td>
-<td>ms</td>
-<td>Maximum latency of search operations coordinated by this member on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.maxSizeLatency`</td>
-<td>ms</td>
-<td>Maximum latency of local size operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.optimizeCount`</td>
-<td>count</td>
-<td>Number of local optimize operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.ownedEntryCount`</td>
-<td>count</td>
-<td>Number of vector collection entries owned by the member</td>
-</tr>
-<tr>
-<td>`vectorCollection.ownedEntryHeapMemoryCost`</td>
-<td>bytes</td>
-<td>Heap memory cost of owned vector collection entries on this member</td>
-</tr>
-<tr>
-<td>`vectorCollection.putAllCount`</td>
-<td>count</td>
-<td>
-
-Number of local putAll operations on the vector collection.
-
-Note that for each `putAll` invocation on the client there can be multiple invocations of `putAll` on the members and some invocations may be translated to `set` if there is only 1 entry.
-
-</td>
-</tr>
-<tr>
-<td>`vectorCollection.putAllEntryCount`</td>
-<td>count</td>
-<td>Number of entries passed to local putAll operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.putCount`</td>
-<td>count</td>
-<td>Number of local put operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.removeCount`</td>
-<td>count</td>
-<td>Number of local remove operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.searchCount`</td>
-<td>count</td>
-<td>Number of search operations coordinated by this member on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.searchIndexQueryCount`</td>
-<td>count</td>
-<td>
-
-Number of actual searches on vector index instance (partition) in this vector collection, aggregated for all indexes on the collection.
-
-Includes search retries caused by concurrent modifications and other reasons. If retries were not needed it should be equal to `searchCount * non-empty partitions count`. In case of retries it will be larger.
-
-</td>
-</tr>
-<tr>
-<td>`vectorCollection.searchIndexVisitedNodes`</td>
-<td>count</td>
-<td>Number of graph nodes visited during searches. It is equal to the number of distance/score calculations during searches.</td>
-</tr>
-<tr>
-<td>`vectorCollection.searchResultsCount`</td>
-<td>count</td>
-<td>Number of results returned by search operations coordinated by this member on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.setCount`</td>
-<td>count</td>
-<td>Number of local set operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.sizeCount`</td>
-<td>count</td>
-<td>Number of local size operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.totalClearLatency`</td>
-<td>ms</td>
-<td>Total latency of local clear operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.totalDeleteLatency`</td>
-<td>ms</td>
-<td>Total latency of local delete operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.totalGetLatency`</td>
-<td>ms</td>
-<td>Total latency of local get operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.totalMaxDeleteLatency`</td>
-<td>ms</td>
-<td>Maximum latency of local delete operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.totalMaxGetLatency`</td>
-<td>ms</td>
-<td>Maximum latency of local get operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.totalMaxPutAllLatency`</td>
-<td>ms</td>
-<td>Maximum latency of local putAll operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.totalMaxPutLatency`</td>
-<td>ms</td>
-<td>Maximum latency of local put operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.totalMaxRemoveLatency`</td>
-<td>ms</td>
-<td>Maximum latency of local remove operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.totalMaxSetLatency`</td>
-<td>ms</td>
-<td>Maximum latency of local set operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.totalOptimizeLatency`</td>
-<td>ms</td>
-<td>Total latency of local optimize operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.totalPutAllLatency`</td>
-<td>ms</td>
-<td>Total latency of local putAll operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.totalPutLatency`</td>
-<td>ms</td>
-<td>Total latency of local put operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.totalRemoveLatency`</td>
-<td>ms</td>
-<td>Total latency of local remove operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.totalSearchLatency`</td>
-<td>ms</td>
-<td>Total latency of search operations coordinated by this member on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.totalSetLatency`</td>
-<td>ms</td>
-<td>Total latency of local set operations on the vector collection</td>
-</tr>
-<tr>
-<td>`vectorCollection.totalSizeLatency`</td>
-<td>ms</td>
-<td>Total latency of local size operations on the vector collection</td>
-</tr>
-<tr>
-<td colSpan={3}>
-
-The above `latency` metrics are only measured for the members and do not represent the overall performance of the cluster. We recommend monitoring the average latency for each operation, for example, `vectorCollection.totalGetLatency / vectorCollection.getCount` and `vectorCollection.totalSetLatency / vectorCollection.setCount`. Increased average latency is a sign that the cluster is experiencing performance problems, or there is a spike in the load. The following list details potential reasons:
-
-- Increase in the load on the cluster: if the cluster is under heavy load, this can lead to increased latency for all operations, slowing down the overall performance.
-- Increasing member count in the cluster: as the number of cluster members increases, the total latency for operations can also increase. This is because the cluster has to communicate with more members, which can add to the overall latency. This might be a data architecture problem.
-- Increasing the data set size: this causes the cluster to search through more data to find the requested data, which can slow down the overall performance.
-- Increasing the number of concurrent operations: this causes the cluster to process more requests at the same time, which can slow down the overall performance. This is a potential bottleneck on resources (CPU, memory, network).
-
-</td>
-</tr>
-</tbody>
-</table>
-
-</details>
-
-<details>
-<summary>`MultiMap`</summary>
+## MultiMap
 
 | Name | Unit | Description |
 | --- | --- | --- |
 | `multiMap.backupCount` | count | Number of backups per entry |
 | `multiMap.backupEntryCount` | count | Number of backup entries held by the member |
-| `multiMap.creationTime` | ms | Creation time of the multimap in the member |
+| `multiMap.creationTime` | ms | Creation time of the MultiMap in the member |
 | `multiMap.dirtyEntryCount` | count | Number of dirty (updated but not persisted yet) entries that the member owns |
 | `multiMap.entrySetCount` | count | Number of entry set operations on this member |
 | `multiMap.evictionCount` | count | Number of evictions completed on locally owned entries, backups are not included |
 | `multiMap.expirationCount` | count | Number of expirations completed on locally owned entries, backups are not included |
-| `multiMap.getCount` | count | Number of local get operations on the multimap |
+| `multiMap.getCount` | count | Number of local get operations on the MultiMap |
 | `multiMap.hits` | count | Number of hits (reads) of the locally owned entries |
-| `multiMap.indexedQueryCount` | count | Total number of indexed local queries performed on the multimap |
-| `multiMap.indexesSkippedQueryCount` | count | Total number of local queries performed on the multimap which cannot use indexes |
-| `multiMap.noMatchingIndexQueryCount` | count | Total number of local queries performed on the multimap which had no matching index |
+| `multiMap.indexedQueryCount` | count | Total number of indexed local queries performed on the MultiMap |
+| `multiMap.indexesSkippedQueryCount` | count | Total number of local queries performed on the MultiMap which cannot use indexes |
+| `multiMap.noMatchingIndexQueryCount` | count | Total number of local queries performed on the MultiMap which had no matching index |
 | `multiMap.lastAccessTime` | ms | Last access (read) time of the locally owned entries |
 | `multiMap.lastUpdateTime` | ms | Last update time of the locally owned entries |
 | `multiMap.lockedEntryCount` | count | Number of locked entries that the member owns |
 | `multiMap.merkleTreesCost` | count | Heap cost of the Merkle trees |
 | `multiMap.numberOfEvents` | count | Number of local events received |
 | `multiMap.numberOfOtherOperations` | count | Total number of other operations |
-| `multiMap.ownedEntryCount` | count | Number of multimap entries owned by the member |
-| `multiMap.putCount` | count | Number of local put operations on the multimap |
-| `multiMap.queryCount` | count | Number of local queries executed on the multimap (it may be imprecise for queries involving partition predicates (PartitionPredicate) on the off-heap storage) |
+| `multiMap.ownedEntryCount` | count | Number of MultiMap entries owned by the member |
+| `multiMap.putCount` | count | Number of local put operations on the MultiMap |
+| `multiMap.queryCount` | count | Number of local queries executed on the MultiMap (it may be imprecise for queries involving partition predicates (`PartitionPredicate`) on the off-heap storage) |
 | `multiMap.queryLimiterHitCount` | count | Number of times the query result size limiter was hit on this member |
-| `multiMap.removeCount` | count | Number of local remove operations on the multimap |
-| `multiMap.setCount` | count | Number of local set operations on the multimap |
+| `multiMap.removeCount` | count | Number of local remove operations on the MultiMap |
+| `multiMap.setCount` | count | Number of local set operations on the MultiMap |
 | `multiMap.totalGetLatency` | ms | Total latency of local get operations |
 | `multiMap.totalMaxGetLatency` | ms | Maximum latency of local get operations |
 | `multiMap.totalMaxPutLatency` | ms | Maximum latency of local put operations |
@@ -951,10 +295,7 @@ The above `latency` metrics are only measured for the members and do not represe
 | `multiMap.totalSetLatency` | ms | Total latency of local set operations |
 | `multiMap.valuesCount` | count | Number of values operations on this member |
 
-</details>
-
-<details>
-<summary>Replicated Map</summary>
+## Replicated Map
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -979,10 +320,7 @@ The above `latency` metrics are only measured for the members and do not represe
 | `replicatedMap.total` | count | Total number of operations on this member |
 | `replicatedMap.valuesCount` | count | Number of values operations on this member |
 
-</details>
-
-<details>
-<summary>Cache</summary>
+## Cache
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -1002,10 +340,7 @@ The above `latency` metrics are only measured for the members and do not represe
 | `cache.lastUpdateTime` | ms | Cache's last update time |
 | `cache.ownedEntryCount` | count | Locally owned entry count in the cache |
 
-</details>
-
-<details>
-<summary>Queue</summary>
+## Queue
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -1016,18 +351,15 @@ The above `latency` metrics are only measured for the members and do not represe
 | `queue.maxAge` | ms | Maximum age of the items in this member |
 | `queue.minAge` | ms | Minimum age of the items in this member |
 | `queue.numberOfEmptyPolls` | count | Number of null returning poll operations |
-| `queue.numberOfEvents` | count | Number of event operations (duplicate of eventOperationCount) |
+| `queue.numberOfEvents` | count | Number of event operations (duplicate of `eventOperationCount`) |
 | `queue.numberOfOffers` | count | Number of offer/put/add operations |
 | `queue.numberOfOtherOperations` | count | Number of other operations |
 | `queue.numberOfPolls` | count | Number of poll/take/remove operations. |
 | `queue.numberOfRejectedOffers` | count | Number of rejected offers |
 | `queue.ownedItemCount` | count | Number of owned items in this member |
-| `queue.total` | count | Total number of operations (numberOfOffers + numberOfPolls + numberOfOtherOperations) |
+| `queue.total` | count | Total number of operations (`numberOfOffers` + `numberOfPolls` + `numberOfOtherOperations`) |
 
-</details>
-
-<details>
-<summary>Set</summary>
+## Set
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -1035,10 +367,7 @@ The above `latency` metrics are only measured for the members and do not represe
 | `set.lastAccessTime` | ms | Last access (read) time of the locally owned items |
 | `set.lastUpdateTime` | ms | Last update time of the locally owned items |
 
-</details>
-
-<details>
-<summary>List</summary>
+## List
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -1046,10 +375,7 @@ The above `latency` metrics are only measured for the members and do not represe
 | `list.lastAccessTime` | ms | Last access (read) time of the locally owned items |
 | `list.lastUpdateTime` | ms | Last update time of the locally owned items |
 
-</details>
-
-<details>
-<summary>Topic</summary>
+## Topic
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -1057,10 +383,7 @@ The above `latency` metrics are only measured for the members and do not represe
 | `topic.totalPublishes` | count | Total number of published messages of this topic on this member |
 | `topic.totalReceivedMessages` | count | Total number of received messages of this topic on this member |
 
-</details>
-
-<details>
-<summary>Reliable Topic</summary>
+## Reliable Topic
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -1068,10 +391,7 @@ The above `latency` metrics are only measured for the members and do not represe
 | `reliableTopic.totalPublishes` | count | Total number of published messages of this reliable topic on this member |
 | `reliableTopic.totalReceivedMessages` | count | Total number of received messages of this reliable topic on this member |
 
-</details>
-
-<details>
-<summary>Flake ID Generator</summary>
+## Flake ID Generator
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -1079,10 +399,7 @@ The above `latency` metrics are only measured for the members and do not represe
 | `flakeIdGenerator.creationTime` | ms | Creation time of this Flake ID Generator on the member |
 | `flakeIdGenerator.idCount` | count | Total number of IDs generated (the sum of IDs for all batches) |
 
-</details>
-
-<details>
-<summary>PN Counter</summary>
+## PN counter
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -1091,10 +408,7 @@ The above `latency` metrics are only measured for the members and do not represe
 | `pnCounter.totalIncrementOperationCount` | count | Number of add (including increment) operations on this PN counter |
 | `pnCounter.value` | count | Current value of the PN counter |
 
-</details>
-
-<details>
-<summary>Executor Service</summary>
+## Executor service
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -1111,10 +425,7 @@ The above `latency` metrics are only measured for the members and do not represe
 | `executor.internal.queueSize` | count | Number of pending tasks in this executor's task queue |
 | `executor.internal.remainingQueueCapacity` | count | Remaining capacity on the executor's task queue |
 
-</details>
-
-<details>
-<summary>User Code Deployment</summary>
+## User Code Deployment
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -1122,17 +433,14 @@ The above `latency` metrics are only measured for the members and do not represe
 | `classloading.totalLoadedClassesCount` | count | Total number of classes that have been loaded since the instance has started execution. |
 | `classloading.unloadedClassesCount` | count | Total number of unloaded classes. |
 
-</details>
-
-<details>
-<summary>Cluster</summary>
+## Cluster
 
 | Name | Unit | Description |
 | --- | --- | --- |
-| `cluster.clock.clusterStartTime` | ms | <Anchor id="clusterStartTime" />Start time of the cluster (when the first member in cluster becomes master, its localClockTime value is saved as clusterStartTime) |
-| `cluster.clock.clusterTime` | ms | Elapsed time since the master member was created ([`cluster.clock.clusterStartTime`](#clusterStartTime)) |
+| `cluster.clock.clusterStartTime` | ms | Start time of the cluster (when the first member in cluster becomes master, its `localClockTime` value is saved as `clusterStartTime`) |
+| `cluster.clock.clusterTime` | ms | Elapsed time since the master member was created (`cluster.clock.clusterStartTime`) |
 | `cluster.clock.clusterTimeDiff` | ms | Difference between the local time (`cluster.clock.localClockTime`) of the local member and the master member |
-| `cluster.clock.clusterUpTime` | ms | Uptime of the cluster (current time - [`cluster.clock.clusterStartTime`](#clusterStartTime)) |
+| `cluster.clock.clusterUpTime` | ms | Uptime of the cluster (current time - `cluster.clock.clusterStartTime`) |
 | `cluster.clock.localClockTime` | ms | Member's local clock timestamp |
 | `cluster.clock.maxClusterTimeDiff` | ms | Maximum observed cluster time difference |
 | `cluster.connection.closedTime` | count | Connection close time for this connection |
@@ -1141,10 +449,7 @@ The above `latency` metrics are only measured for the members and do not represe
 | `cluster.heartbeat.lastHeartbeat` | ms | Last time that this member sent a heartbeat to other known cluster members |
 | `cluster.size` | count | Number of members in the cluster |
 
-</details>
-
-<details>
-<summary>Clients</summary>
+## Clients
 
 Scope: member-side only. These metrics describe clients connected to the local member.
 
@@ -1153,10 +458,7 @@ Scope: member-side only. These metrics describe clients connected to the local m
 | `client.endpoint.count` | count | Number of active client endpoints for this member |
 | `client.endpoint.totalRegistrations` | count | Total number of client endpoint registrations |
 
-</details>
-
-<details>
-<summary>Client Invocations</summary>
+## Client invocations
 
 Scope: client-side only.
 
@@ -1166,30 +468,27 @@ Scope: client-side only.
 | `invocations.pendingCalls` | count | Number of pending client invocations on this client |
 | `invocations.startedInvocations` | count | Number of started client invocations on this client |
 
-</details>
-
-<details>
-<summary>CP Subsystem</summary>
+## CP Subsystem
 
 | Name | Unit | Description |
 | --- | --- | --- |
-| `cp.atomiclong.value` | count | Value of this `IAtomicLong` |
-| `cp.countdownlatch.count` | count | Initial count of `ICountDownLatch` |
-| `cp.countdownlatch.remaining` | count | Remaining number of expected countdowns |
-| `cp.countdownlatch.round` | count | Round number of the `ICountDownLatch`; each time `ICountDownLatch` is initialized with a new count after it downs to zero, a new round begins |
-| `cp.lock.acquireLimit` | count | Maximum number of reentrant acquires of this `FencedLock` |
-| `cp.lock.lockCount` | count | Total number of times this `FencedLock` has been acquired since its creation |
-| `cp.lock.owner` | count | Address of the `FencedLock` owner |
-| `cp.lock.ownerSessionId` | count | Session Id of the `FencedLock` owner |
-| `cp.semaphore.available` | count | Number of the remaining available permits |
-| `cp.semaphore.initialized` | count | State value which shows whether semaphore is initialized with a value or not; in exposed metrics, it shows 0 when semaphore is not initialized, a positive value otherwise |
-| `cp.map.size` | count | Number of keys in this `CPMap` |
-| `cp.map.sizeBytes` | count | Total number of bytes used by key-value pairs for this `CPMap` |
-| `cp.session.creationTime` | ms | Creation time of this session |
-| `cp.session.endpoint` |  | Address of the endpoint which the CP session belongs to |
-| `cp.session.endpointType` |  | Type of the endpoint; either SERVER or CLIENT |
-| `cp.session.expirationTime` | ms | Expiration time of the CP session |
-| `cp.session.version` | count | Version number of the CP session, basically it shows how many times the session heartbeat is received |
+| `cp.atomiclong.value` | count | Value of this `IAtomicLong`. |
+| `cp.countdownlatch.count` | count | Initial count of `ICountDownLatch`. |
+| `cp.countdownlatch.remaining` | count | Remaining number of expected countdowns. |
+| `cp.countdownlatch.round` | count | Round number of the `ICountDownLatch`; each time `ICountDownLatch` is initialized with a new count after it downs to zero, a new round begins. |
+| `cp.lock.acquireLimit` | count | Maximum number of reentrant acquires of this `FencedLock`. |
+| `cp.lock.lockCount` | count | Total number of times this `FencedLock` has been acquired since its creation. |
+| `cp.lock.owner` | count | Address of the `FencedLock` owner. |
+| `cp.lock.ownerSessionId` | count | Session Id of the `FencedLock` owner. |
+| `cp.semaphore.available` | count | Number of the remaining available permits. |
+| `cp.semaphore.initialized` | count | State value which shows whether semaphore is initialized with a value or not; in exposed metrics, it shows 0 when semaphore is not initialized, a positive value otherwise. |
+| `cp.map.size` | count | Number of keys in this `CPMap`. |
+| `cp.map.sizeBytes` | count | Total number of bytes used by key-value pairs for this `CPMap`. |
+| `cp.session.creationTime` | ms | Creation time of this session. |
+| `cp.session.endpoint` |  | Address of the endpoint which the CP session belongs to. |
+| `cp.session.endpointType` |  | Type of the endpoint; either `SERVER` or `CLIENT`. |
+| `cp.session.expirationTime` | ms | Expiration time of the CP session. |
+| `cp.session.version` | count | Version number of the CP session, basically it shows how many times the session heartbeat is received. |
 | `cp.session.summary` |  | Summary information across all CP sessions grouped by CP group. The summary entails `sessionCount` (`count`) which is the count of CP sessions per CP group that are not closed. |
 
 We also have a `summary` section per object type which provides live and destroyed object counts grouped by CP Group. These can be found under `cp.{atomiclong,atomicref,countdownlatch,lock,map,semaphore}.summary` and provide the following child attributes:
@@ -1199,10 +498,7 @@ We also have a `summary` section per object type which provides live and destroy
 | `destroyed.count` | count | Number of objects for the parent object type that have been destroyed. Also referred to as the tombstoned object count. |
 | `live.count` | count | Number of objects for the parent object type that are in use. |
 
-</details>
-
-<details>
-<summary>Events</summary>
+## Events
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -1211,15 +507,12 @@ We also have a `summary` section per object type which provides live and destroy
 | `event.listenerCount` | count | Number of subscribed listeners for the specified service |
 | `event.publicationCount` | count | Number of published events for the specified service |
 | `event.queueCapacity` | count | Queue capacity of the executor processing the events (this capacity is shared for all events) |
-| `event.rejectedCount` | count | Number of rejected events; if the event is not accepted to the executor in `hazelcast.event.queue.timeout.millis`(see [System Properties](./system-properties.mdx)), it will be rejected and not processed |
+| `event.rejectedCount` | count | Number of rejected events; if the event is not accepted to the executor in `hazelcast.event.queue.timeout.millis` (see [System Properties](./system-properties.mdx)), it will be rejected and not processed |
 | `event.syncDeliveryFailureCount` | count | Number of failures of sync event delivery |
 | `event.threadCount` | count | Number of threads for the event service executor (the event thread count) |
 | `event.totalFailureCount` | count | Number of events that fail to be published |
 
-</details>
-
-<details>
-<summary>Listeners</summary>
+## Listeners
 
 Scope: client-side only.
 
@@ -1228,21 +521,15 @@ Scope: client-side only.
 | `listeners.eventsProcessed` | count | Total number of processed events on the client listener service |
 | `listeners.eventQueueSize` | count | Total number of tasks pending to be processed on the client listener service |
 
-</details>
-
-<details>
-<summary>Capacity</summary>
+## Capacity
 
 | Name | Unit | Description |
 | --- | --- | --- |
-| `file.partition.freeSpace` | bytes | Amount of free space in the given directory, user.home |
-| `file.partition.totalSpace` | bytes | Amount of total space in the given directory, user.home |
-| `file.partition.usableSpace` | bytes | Amount of usable space in the given directory, user.home |
+| `file.partition.freeSpace` | bytes | Amount of free space in the given directory, `user.home` |
+| `file.partition.totalSpace` | bytes | Amount of total space in the given directory, `user.home` |
+| `file.partition.usableSpace` | bytes | Amount of usable space in the given directory, `user.home` |
 
-</details>
-
-<details>
-<summary>Garbage Collection</summary>
+## Garbage collection
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -1253,10 +540,7 @@ Scope: client-side only.
 | `gc.unknownCount` | count | Number of unknown GCs that cannot be determined as minor or major (this is usually due to the lack of support of the used garbage collector) |
 | `gc.unknownTime` | ms | Accumulated elapsed time in unknown GCs |
 
-</details>
-
-<details>
-<summary>Memory</summary>
+## Memory
 
 The names in this table use canonical `memory.` metric names.
 
@@ -1270,23 +554,20 @@ The same metric values can be exposed under multiple prefixes. Depending on the 
 
 | Name | Unit | Description |
 | --- | --- | --- |
-| `memory.committedHeap` | bytes | Amount of heap memory that is committed for the JVM to use |
-| `memory.committedNative` | bytes | Amount of native memory that is committed for current instance (member or client) to use |
-| `memory.freeHeap` | bytes | Amount of free memory in the JVM of current instance (member or client) |
-| `memory.freeNative` | bytes | Amount of free native memory in the current instance (member or client) |
-| `memory.freePhysical` | bytes | Amount of free physical memory available in OS |
-| `memory.maxHeap` | bytes | Maximum amount of memory that the JVM will use for the heap |
-| `memory.maxMetadata` | bytes | The threshold for warning about metadata usage |
-| `memory.maxNative` | bytes | Maximum amount of native memory that current instance (member or client) will use. This value is ignored by Hazelcast for metadata allocation and can increase from the initial configured value |
-| `memory.totalPhysical` | bytes | Amount of total physical memory available in OS |
-| `memory.usedHeap` | bytes | Amount of used memory in the JVM of the current instance (member or client) |
-| `memory.usedMetadata` | bytes | Amount of used metadata memory by the current instance (member or client) |
-| `memory.usedNative` | bytes | Amount of used native memory by the current instance (member or client) |
+| `memory.committedHeap` | bytes | Amount of heap memory that is committed for the JVM to use. |
+| `memory.committedNative` | bytes | Amount of native memory that is committed for current instance (member or client) to use. |
+| `memory.freeHeap` | bytes | Amount of free memory in the JVM of current instance (member or client). |
+| `memory.freeNative` | bytes | Amount of free native memory in the current instance (member or client). |
+| `memory.freePhysical` | bytes | Amount of free physical memory available in OS. |
+| `memory.maxHeap` | bytes | Maximum amount of memory that the JVM will use for the heap. |
+| `memory.maxMetadata` | bytes | The threshold for warning about metadata usage. |
+| `memory.maxNative` | bytes | Maximum amount of native memory that current instance (member or client) will use. This value is ignored by Hazelcast for metadata allocation and can increase from the initial configured value. |
+| `memory.totalPhysical` | bytes | Amount of total physical memory available in OS. |
+| `memory.usedHeap` | bytes | Amount of used memory in the JVM of the current instance (member or client). |
+| `memory.usedMetadata` | bytes | Amount of used metadata memory by the current instance (member or client). |
+| `memory.usedNative` | bytes | Amount of used native memory by the current instance (member or client). |
 
-</details>
-
-<details>
-<summary>High-Density (HD) Memory Store</summary>
+## High-Density (HD) Memory Store
 
 Scope: member-side only. <Variable name="enterprise-product-name" /> only.
 
@@ -1294,15 +575,12 @@ These metrics are provided for data structures using HD memory. They will be pre
 
 | Name | Unit | Description |
 | --- | --- | --- |
-| `usedMemory` | bytes | Cost of HD memory for the map to determine whether eviction of map entries is needed |
-| `forceEvictionCount` | bytes | Number of evictions performed for the HD memory store (when your eviction policy does not free enough native memory, operations that add entries to a map or cache such as `map.put()` trigger the forced eviction process.) |
-| `forceEvictedEntryCount` | bytes | Number of entries removed from the HD memory store |
-| `entryCount` | bytes | Number of entries in the HD memory store |
+| `usedMemory` | bytes | Cost of HD memory for the map to determine whether eviction of map entries is needed. |
+| `forceEvictionCount` | bytes | Number of evictions performed for the HD memory store. When your eviction policy does not free enough native memory, operations that add entries to a map or cache, such as `map.put()`, trigger forced eviction. |
+| `forceEvictedEntryCount` | bytes | Number of entries removed from the HD memory store. |
+| `entryCount` | bytes | Number of entries in the HD memory store. |
 
-</details>
-
-<details>
-<summary>Near Cache</summary>
+## Near Cache
 
 Scope: member-side and client-side.
 
@@ -1325,282 +603,72 @@ The names in this table use the client prefix form (`nearcache.`). For member-si
 | `nearcache.ownedEntryMemoryCost` | bytes | Memory cost of Near Cache entries owned by this instance (member or client) |
 | `nearcache.persistenceCount` | count | Number of Near Cache key persistences (when the preload feature is enabled) |
 
-</details>
-
-<details>
-<summary>Operations</summary>
+## Operations
 
 :::note
 
-Within Hazelcast context, the **priority** operations are the ones that are important for the stability of cluster, for example heartbeats and migration requests. The **normal** operations are the ones that manipulate the data, for example `map.get` and `map.put`.
+Within Hazelcast context, the **priority** operations are the ones that are important for the stability of the cluster. Heartbeats and migration requests are examples of priority operations. The **normal** operations are the ones that manipulate the data, for example `map.get` and `map.put`.
 
 :::
 
-<table>
-<colgroup>
-<col style={{width:'36.3636%'}} />
-<col style={{width:'9.0909%'}} />
-<col style={{width:'54.5455%'}} />
-</colgroup>
-<thead>
-<tr>
-<th>Name</th>
-<th>Unit</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>`operation.adhoc.executedOperationsCount`</td>
-<td>count</td>
-<td>Number of executed adhoc operations</td>
-</tr>
-<tr>
-<td>`operation.asyncOperations`</td>
-<td>count</td>
-<td>Number of current executing async operations on the operation service of the member</td>
-</tr>
-<tr>
-<td>`operation.callTimeoutCount`</td>
-<td>count</td>
-<td>Number of operation call timeouts on the member</td>
-</tr>
-<tr>
-<td>`operation.completedCount`</td>
-<td>count</td>
-<td>Number of completed operations</td>
-</tr>
-<tr>
-<td>`operation.failedBackups`</td>
-<td>count</td>
-<td>Number of failed backup operations on the operation service of the member</td>
-</tr>
-<tr>
-<td>`operation.generic.executedOperationsCount`</td>
-<td>count</td>
-<td>Number of executed generic operations</td>
-</tr>
-<tr>
-<td>`operation.genericPriorityQueueSize`</td>
-<td>count</td>
-<td>Number of priority generic operations pending (waiting in the priority queue)</td>
-</tr>
-<tr>
-<td>`operation.genericQueueSize`</td>
-<td>count</td>
-<td>Number of normal generic operations pending (waiting in the queue)</td>
-</tr>
-<tr>
-<td>`operation.genericThreadCount`</td>
-<td>count</td>
-<td>Number of generic operation handler threads in the member</td>
-</tr>
-<tr>
-<td>`operation.invocations.backupTimeoutMillis`</td>
-<td>ms</td>
-<td>Operation backup timeout that specifies how long the invocation will wait for acknowledgements from the backup replicas (if acks are not received from some backups, there will not be any rollback on other successful replicas)</td>
-</tr>
-<tr>
-<td>`operation.invocations.backupTimeouts`</td>
-<td>count</td>
-<td>Number of operation invocations that acknowledgment from backups has timeout</td>
-</tr>
-<tr>
-<td>`operation.invocations.delayedExecutionCount`</td>
-<td>count</td>
-<td>Number of times that the operation invocations have delayed</td>
-</tr>
-<tr>
-<td>`operation.invocations.heartbeatBroadcastPeriodMillis`</td>
-<td>ms</td>
-<td>Broadcast period of operation heartbeats (this heartbeat packets sent to inform the other member about if the operation is still alive). The heartbeat period is configured to be 1/4 of the call timeout. So with default settings, every 15 seconds, every member in the cluster, will notify every other member in the cluster about all calls that are pending.</td>
-</tr>
-<tr>
-<td>`operation.invocations.heartbeatPacketsReceived`</td>
-<td>count</td>
-<td>Number of received heartbeat packets</td>
-</tr>
-<tr>
-<td>`operation.invocations.heartbeatPacketsSent`</td>
-<td>count</td>
-<td>Number of sent heartbeat packets</td>
-</tr>
-<tr>
-<td>`operation.invocations.invocationScanPeriodMillis`</td>
-<td>ms</td>
-<td>Period for scanning over pending invocations for getting rid of duplicates, checking for heartbeat timeout, and checking for backup timeout</td>
-</tr>
-<tr>
-<td>`operation.invocations.invocationTimeoutMillis`</td>
-<td>ms</td>
-<td>Timeout for operation invocations</td>
-</tr>
-<tr>
-<td>`operation.invocations.lastCallId`</td>
-<td>count</td>
-<td>Last issued invocation call ID</td>
-</tr>
-<tr>
-<td>`operation.invocations.normalTimeouts`</td>
-<td>count</td>
-<td>Number of times that the operation invocations have timed out</td>
-</tr>
-<tr>
-<td>`operation.invocations.pending`</td>
-<td>count</td>
-<td>Number of pending invocations</td>
-</tr>
-<tr>
-<td>`operation.invocations.usedPercentage`</td>
-<td>percent</td>
-<td>Usage percentage of the operation invocation capacity (pending invocations/ max concurrent invocations)</td>
-</tr>
-<tr>
-<td>`operation.parker.parkQueueCount`</td>
-<td>count</td>
-<td>Number of separate WaitSet (set of operations waiting for some condition)</td>
-</tr>
-<tr>
-<td>`operation.parker.totalParkedOperationCount`</td>
-<td>count</td>
-<td>Total number of parked operations</td>
-</tr>
-<tr>
-<td>`operation.partition.executedOperationsCount`</td>
-<td>count</td>
-<td>Number of executed partition operations on the specified partition</td>
-</tr>
-<tr>
-<td>`operation.partitionThreadCount`</td>
-<td>count</td>
-<td>Number of partition operation handler threads for given member</td>
-</tr>
-<tr>
-<td>`operation.priorityQueueSize`</td>
-<td>count</td>
-<td>Number of priority operations pending (priority partition ops. + priority generic ops.)</td>
-</tr>
-<tr>
-<td>`operation.queueSize`</td>
-<td>count</td>
-<td>
+| Name | Unit | Description |
+| --- | --- | --- |
+| `operation.adhoc.executedOperationsCount` | count | Number of executed adhoc operations. |
+| `operation.asyncOperations` | count | Number of current executing async operations on the operation service of the member. |
+| `operation.callTimeoutCount` | count | Number of operation call timeouts on the member. |
+| `operation.completedCount` | count | Number of completed operations. |
+| `operation.failedBackups` | count | Number of failed backup operations on the operation service of the member. |
+| `operation.generic.executedOperationsCount` | count | Number of executed generic operations. |
+| `operation.genericPriorityQueueSize` | count | Number of priority generic operations pending (waiting in the priority queue). |
+| `operation.genericQueueSize` | count | Number of normal generic operations pending (waiting in the queue). |
+| `operation.genericThreadCount` | count | Number of generic operation handler threads in the member. |
+| `operation.invocations.backupTimeoutMillis` | ms | Operation backup timeout, which is how long the invocation waits for acknowledgements from the backup replicas. If some backups do not send an acknowledgement, the successful replicas are not rolled back. |
+| `operation.invocations.backupTimeouts` | count | Number of operation invocations that acknowledgment from backups has timeout. |
+| `operation.invocations.delayedExecutionCount` | count | Number of times that the operation invocations have delayed. |
+| `operation.invocations.heartbeatBroadcastPeriodMillis` | ms | Broadcast period of operation heartbeats (this heartbeat packets sent to inform the other member about if the operation is still alive). The heartbeat period is configured to be 1/4 of the call timeout. So with default settings, every 15 seconds, every member in the cluster, will notify every other member in the cluster about all calls that are pending. |
+| `operation.invocations.heartbeatPacketsReceived` | count | Number of received heartbeat packets. |
+| `operation.invocations.heartbeatPacketsSent` | count | Number of sent heartbeat packets. |
+| `operation.invocations.invocationScanPeriodMillis` | ms | Period for scanning over pending invocations for getting rid of duplicates, checking for heartbeat timeout, and checking for backup timeout. |
+| `operation.invocations.invocationTimeoutMillis` | ms | Timeout for operation invocations. |
+| `operation.invocations.lastCallId` | count | Last issued invocation call ID. |
+| `operation.invocations.normalTimeouts` | count | Number of times that the operation invocations have timed out. |
+| `operation.invocations.pending` | count | Number of pending invocations. |
+| `operation.invocations.usedPercentage` | percent | Usage percentage of the operation invocation capacity (pending invocations/ max concurrent invocations). |
+| `operation.parker.parkQueueCount` | count | Number of separate `WaitSet` (set of operations waiting for some condition). |
+| `operation.parker.totalParkedOperationCount` | count | Total number of parked operations. |
+| `operation.partition.executedOperationsCount` | count | Number of executed partition operations on the specified partition. |
+| `operation.partitionThreadCount` | count | Number of partition operation handler threads for given member. |
+| `operation.priorityQueueSize` | count | Number of priority operations pending (priority partition operations + priority generic operations). |
+| `operation.queueSize` | count | Number of normal operations pending (normal partition operations + normal generic operations).<br /><br />It refers to the number of operations sent to the member that have yet to be consumed for processing by the partition operation threads. This is the most critical queue for partition aware operations such as `map.put` and `map.remove`. This value should be zero or close to zero. Based on your latency tolerance in your business use case, you can define a threshold for alerts with your preferred alerting mechanism. For instance, triggering an alert if this value is above 100 for 15 seconds would be useful. |
+| `operation.responseQueueSize` | count | Total number of pending responses (work queue for the response threads) to be processed. |
+| `operation.responses.backupCount` | count | Number of backup acknowledgement responses. |
+| `operation.responses.errorCount` | count | Number of error responses. |
+| `operation.responses.missingCount` | count | Number of responses having missing invocations. |
+| `operation.responses.normalCount` | count | Number of normal responses. |
+| `operation.responses.timeoutCount` | count | Number of call timeout responses. |
+| `operation.retryCount` | count | Number of retried operations. |
+| `operation.runningCount` | count | Number of currently running operations (`runningPartitionCount` + `runningGenericCount`). |
+| `operation.runningGenericCount` | count | Number of currently running generic (non partition specific) operations. |
+| `operation.runningPartitionCount` | count | Number of currently running partition operations. |
+| `operation.thread.completedOperationCount` | count | Number of completed operations by this operation thread. |
+| `operation.thread.completedOperationBatchCount` | count | Number of completed `TaskBatch` (a batch of tasks) by this operation thread. |
+| `operation.thread.completedPacketCount` | count | Number of packets that executed by this operation thread. |
+| `operation.thread.completedPartitionSpecificRunnableCount` | count | Number of `PartitionSpecificRunnable` tasks executed by this operation thread. |
+| `operation.thread.completedRunnableCount` | count | Total number of runnables executed by this operation thread. |
+| `operation.thread.completedTotalCount` | count | Total number of tasks (`Operation` + `PartitionSpecificRunnable` + `Runnable` + `TaskBatch`) completed on this operation thread. |
+| `operation.thread.errorCount` | count | Total number of failed tasks on this operation thread. |
+| `operation.thread.normalPendingCount` | count | Number of normal pending operations (tasks). |
+| `operation.thread.priorityPendingCount` | count | Number of priority pending operations (tasks). |
 
-Number of normal operations pending (normal partition operations + normal generic operations).
-
-It refers to the number of operations sent to the member that have yet to be consumed for processing by the partition operation threads. This is the most critical queue for partition aware operations such as `map.put` and `map.remove`. This value should be zero or very close to zero. Based on your latency tolerance in your business use case, you can define a threshold for alerts with your preferred alerting mechanism. For instance, triggering an alert if this value is above 100 for 15 seconds would be useful.
-
-</td>
-</tr>
-<tr>
-<td>`operation.responseQueueSize`</td>
-<td>count</td>
-<td>Total number of pending responses (work queue for the response threads) to be processed.</td>
-</tr>
-<tr>
-<td>`operation.responses.backupCount`</td>
-<td>count</td>
-<td>Number of backup acknowledgement responses</td>
-</tr>
-<tr>
-<td>`operation.responses.errorCount`</td>
-<td>count</td>
-<td>Number of error responses</td>
-</tr>
-<tr>
-<td>`operation.responses.missingCount`</td>
-<td>count</td>
-<td>Number of responses having missing invocations</td>
-</tr>
-<tr>
-<td>`operation.responses.normalCount`</td>
-<td>count</td>
-<td>Number of normal responses</td>
-</tr>
-<tr>
-<td>`operation.responses.timeoutCount`</td>
-<td>count</td>
-<td>Number of call timeout responses</td>
-</tr>
-<tr>
-<td>`operation.retryCount`</td>
-<td>count</td>
-<td>Number of retried operations</td>
-</tr>
-<tr>
-<td>`operation.runningCount`</td>
-<td>count</td>
-<td>Number of currently running operations (runningPartitionCount + runningGenericCount)</td>
-</tr>
-<tr>
-<td>`operation.runningGenericCount`</td>
-<td>count</td>
-<td>Number of currently running generic (non partition specific) operations</td>
-</tr>
-<tr>
-<td>`operation.runningPartitionCount`</td>
-<td>count</td>
-<td>Number of currently running partition operations</td>
-</tr>
-<tr>
-<td>`operation.thread.completedOperationCount`</td>
-<td>count</td>
-<td>Number of completed operations by this operation thread</td>
-</tr>
-<tr>
-<td>`operation.thread.completedOperationBatchCount`</td>
-<td>count</td>
-<td>Number of completed `TaskBatch` (a batch of tasks) by this operation thread</td>
-</tr>
-<tr>
-<td>`operation.thread.completedPacketCount`</td>
-<td>count</td>
-<td>Number of packets that executed by this operation thread</td>
-</tr>
-<tr>
-<td>`operation.thread.completedPartitionSpecificRunnableCount`</td>
-<td>count</td>
-<td>Number of `PartitionSpecificRunnable` tasks executed by this operation thread</td>
-</tr>
-<tr>
-<td>`operation.thread.completedRunnableCount`</td>
-<td>count</td>
-<td>Total number of runnables executed by this operation thread</td>
-</tr>
-<tr>
-<td>`operation.thread.completedTotalCount`</td>
-<td>count</td>
-<td>Total number of tasks (`Operation` + `PartitionSpecificRunnable` + `Runnable` + `TaskBatch`) completed on this operation thread</td>
-</tr>
-<tr>
-<td>`operation.thread.errorCount`</td>
-<td>count</td>
-<td>Total number of failed tasks on this operation thread</td>
-</tr>
-<tr>
-<td>`operation.thread.normalPendingCount`</td>
-<td>count</td>
-<td>Number of normal pending operations (tasks)</td>
-</tr>
-<tr>
-<td>`operation.thread.priorityPendingCount`</td>
-<td>count</td>
-<td>Number of priority pending operations (tasks)</td>
-</tr>
-</tbody>
-</table>
-
-</details>
-
-<details>
-<summary>Operating System</summary>
+## Operating system
 
 | Name | Unit | Description |
 | --- | --- | --- |
 | `os.committedVirtualMemorySize` | bytes | Amount of committed virtual memory (that is, the amount of virtual memory guaranteed to be available to the running process) |
 | `os.freePhysicalMemorySize` | bytes | Amount of free physical memory |
 | `os.freeSwapSpaceSize` | bytes | Amount of free swap space size |
-| `os.maxFileDescriptorCount` | count | Maximum number of open file descriptors (only for UNIX platforms) |
-| `os.openFileDescriptorCount` | count | Number of open file descriptors (only for UNIX platforms) |
+| `os.maxFileDescriptorCount` | count | Maximum number of open file descriptors (only for Unix platforms) |
+| `os.openFileDescriptorCount` | count | Number of open file descriptors (only for Unix platforms) |
 | `os.processCpuLoad` | percent | Recent CPU usage for the JVM process; a negative value if not available |
 | `os.processCpuTime` | ms | CPU time used by the process on which the JVM is running |
 | `os.systemCpuLoad` | percent | Recent CPU usage for the whole system; a negative value if not available |
@@ -1608,52 +676,43 @@ It refers to the number of operations sent to the member that have yet to be con
 | `os.totalPhysicalMemorySize` | bytes | Total amount of physical memory |
 | `os.totalSwapSpaceSize` | bytes | Total amount of swap space |
 
-</details>
-
-<details>
-<summary>Partitions</summary>
+## Partitions
 
 | Name | Unit | Description |
 | --- | --- | --- |
-| `partitions.activePartitionCount` | count | Number of partitions assigned to the member |
-| `partitions.completedMigrations` | count | Number of completed migrations on the latest repartitioning round |
-| `partitions.elapsedDestinationCommitTime` | ns | Total elapsed time of commit operations' executions to the destination endpoint on the latest repartitioning round |
-| `partitions.elapsedMigrationOperationTime` | ns | Total elapsed time of migration & replication operations' executions from source to destination endpoints on the latest repartitioning round |
-| `partitions.elapsedMigrationTime` | ns | Total elapsed time from the start of migration tasks to their completion (successful or otherwise) on the latest repartitioning round |
-| `partitions.lastRepartitionTime` | ms | Latest time that repartition took place |
-| `partitions.localPartitionCount` | count | Number of partitions currently owned by given member |
-| `partitions.maxBackupCount` | count | Maximum allowed backup count according to current cluster formation and partition group configuration |
-| `partitions.memberGroupsSize` | count | Number of the member groups to be used in partition assignments |
-| `partitions.migrationActive` | boolean | Whether there are any currently active migration tasks |
-| `partitions.migrationQueueSize` | count | Number of migration tasks in the migration queue |
-| `partitions.partitionCount` | count | Total partition count |
-| `partitions.plannedMigrations` | count | Number of planned migrations on the latest repartitioning round |
-| `partitions.replicaSyncRequestsCounter` | count | Number of replica sync requests |
-| `partitions.replicaSyncSemaphore` | count | Permits count of this replica sync semaphore |
-| `partitions.stateStamp` | count | Stamp value for the current partition table; stamp is calculated by hashing the individual partition versions using MurmurHash3 (if stamp has this initial value, 0L, then that means partition table is not initialized yet) |
-| `partitions.totalCompletedMigrations` | count | Total number of completed migrations |
-| `partitions.totalElapsedDestinationCommitTime` | ns | Total elapsed time of commit operations' executions to the destination endpoint since the beginning |
-| `partitions.totalElapsedMigrationOperationTime` | ns | Total elapsed time of migration & replication operations' executions from source to destination endpoints since the beginning |
-| `partitions.totalElapsedMigrationTime` | ns | Total elapsed time from the start of migration tasks to their completion (successful or otherwise) since the beginning |
+| `partitions.activePartitionCount` | count | Number of partitions assigned to the member. |
+| `partitions.completedMigrations` | count | Number of completed migrations on the latest repartitioning round. |
+| `partitions.elapsedDestinationCommitTime` | ns | Total elapsed time of commit operations' executions to the destination endpoint on the latest repartitioning round. |
+| `partitions.elapsedMigrationOperationTime` | ns | Total elapsed time of migration and replication operations' executions from source to destination endpoints on the latest repartitioning round. |
+| `partitions.elapsedMigrationTime` | ns | Total elapsed time from the start of migration tasks to their completion (successful or otherwise) on the latest repartitioning round. |
+| `partitions.lastRepartitionTime` | ms | Latest time that repartition took place. |
+| `partitions.localPartitionCount` | count | Number of partitions currently owned by given member. |
+| `partitions.maxBackupCount` | count | Maximum allowed backup count according to current cluster formation and partition group configuration. |
+| `partitions.memberGroupsSize` | count | Number of the member groups to be used in partition assignments. |
+| `partitions.migrationActive` | boolean | Whether there are any currently active migration tasks. |
+| `partitions.migrationQueueSize` | count | Number of migration tasks in the migration queue. |
+| `partitions.partitionCount` | count | Total partition count. |
+| `partitions.plannedMigrations` | count | Number of planned migrations on the latest repartitioning round. |
+| `partitions.replicaSyncRequestsCounter` | count | Number of replica sync requests. |
+| `partitions.replicaSyncSemaphore` | count | Permits count of this replica sync semaphore. |
+| `partitions.stateStamp` | count | Stamp value for the current partition table, calculated by hashing the individual partition versions with MurmurHash3. A value of `0L` means that the partition table is not initialized yet. |
+| `partitions.totalCompletedMigrations` | count | Total number of completed migrations. |
+| `partitions.totalElapsedDestinationCommitTime` | ns | Total elapsed time of commit operations' executions to the destination endpoint since the beginning. |
+| `partitions.totalElapsedMigrationOperationTime` | ns | Total elapsed time of migration and replication operations' executions from source to destination endpoints since the beginning. |
+| `partitions.totalElapsedMigrationTime` | ns | Total elapsed time from the start of migration tasks to their completion (successful or otherwise) since the beginning. |
 
-</details>
-
-<details>
-<summary>Persistence</summary>
+## Persistence
 
 | Name | Unit | Description |
 | --- | --- | --- |
-| `persistence.liveTombstones` | count | Number of live tombstones in the [persistent store](../operate-and-manage/fault-tolerance/persistence/persistence.mdx) |
-| `persistence.liveValues` | count | Number of live values in the [persistent store](../operate-and-manage/fault-tolerance/persistence/persistence.mdx) |
-| `persistence.tombGarbage` | bytes | Approximate size of the garbage within the tombstone chunks (it does not account for data in the active chunk, it is incremented when a record is retired or an active chunk is turned into a stable one) |
-| `persistence.tombOccupancy` | bytes | Approximate size of tombstone chunks (it does not account for data in the active chunk, it is incremented when the active chunk is turned into a stable one) |
-| `persistence.valGarbage` | bytes | Approximate size of the garbage within the value chunk (it does not account for data in the active chunk, it is incremented when a record is retired or an active chunk is turned into a stable one) |
-| `persistence.valOccupancy` | bytes | Approximate size of value chunks (it does not account for data in the active chunk, it is incremented when the active chunk is turned into a stable one) |
+| `persistence.liveTombstones` | count | Number of live tombstones in the [persistent store](../operate-and-manage/fault-tolerance/persistence/persistence.mdx). |
+| `persistence.liveValues` | count | Number of live values in the [persistent store](../operate-and-manage/fault-tolerance/persistence/persistence.mdx). |
+| `persistence.tombGarbage` | bytes | Approximate size of the garbage within the tombstone chunks. It does not include data in the active chunk. It increases when a record is retired, or when an active chunk becomes a stable one. |
+| `persistence.tombOccupancy` | bytes | Approximate size of tombstone chunks (it does not account for data in the active chunk, it is incremented when the active chunk is turned into a stable one). |
+| `persistence.valGarbage` | bytes | Approximate size of the garbage within the value chunk. It does not include data in the active chunk. It increases when a record is retired, or when an active chunk becomes a stable one. |
+| `persistence.valOccupancy` | bytes | Approximate size of value chunks (it does not account for data in the active chunk, it is incremented when the active chunk is turned into a stable one). |
 
-</details>
-
-<details>
-<summary>Proxies</summary>
+## Proxies
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -1661,10 +720,7 @@ It refers to the number of operations sent to the member that have yet to be con
 | `proxy.destroyedCount` | count | Number of destroyed proxies for a given service |
 | `proxy.proxyCount` | count | Number of active proxies for a given service |
 
-</details>
-
-<details>
-<summary>Raft Algorithm</summary>
+## Raft algorithm
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -1690,10 +746,7 @@ It refers to the number of operations sent to the member that have yet to be con
 | `raft.nodes` | count | Number of local Raft nodes |
 | `raft.terminatedRaftNodeGroupIds` | count | Number of terminated raft node group IDs |
 
-</details>
-
-<details>
-<summary>Runtime</summary>
+## Runtime
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -1701,13 +754,10 @@ It refers to the number of operations sent to the member that have yet to be con
 | `runtime.freeMemory` | bytes | Amount of free memory in the JVM |
 | `runtime.maxMemory` | bytes | Maximum amount of memory that the JVM will attempt to use |
 | `runtime.totalMemory` | bytes | Total amount of memory in the JVM, the value of this metric may vary over time, depending on the host environment |
-| `runtime.upTime` | ms | Uptime of the JVM |
+| `runtime.uptime` | ms | Uptime of the JVM |
 | `runtime.usedMemory` | bytes | Approximation to the total amount of memory currently used |
 
-</details>
-
-<details>
-<summary>TCP</summary>
+## TCP
 
 Protocol-specific TCP byte metrics are available only when Advanced Networking is enabled. `{PROTOCOL}` is one of `MEMBER`, `CLIENT`, `WAN`, `REST`, or `MEMCACHE`; `WAN` includes all WAN protocol endpoints on the reporting member.
 
@@ -1731,7 +781,7 @@ Protocol-specific TCP byte metrics are available only when Advanced Networking i
 | `tcp.connection.count` | count | Number of `TcpServerConnection` |
 | `tcp.connection.inProgressCount` | count | Number of connection establishments in progress |
 | `tcp.connection.openedCount` | count | Number of opened connections |
-| `tcp.connection.textCount` | count | Number of connections used by text-based protocols (REST, Memcache) |
+| `tcp.connection.textCount` | count | Number of connections used by text-based protocols (REST, memcache) |
 | `tcp.connection.in/out.completedMigrations` | count | Number of completed migrations on this pipeline (migrates this pipeline to a different NioThread) |
 | `tcp.connection.in/out.opsInterested` | count |  |
 | `tcp.connection.in/out.opsReady` | count |  |
@@ -1739,13 +789,13 @@ Protocol-specific TCP byte metrics are available only when Advanced Networking i
 | `tcp.connection.in/out.processCount` | count | Number of time the `NioPipeline.process()` method has been called |
 | `tcp.connection.in/out.startedMigrations` | count | Number of started migrations on this pipeline |
 | `tcp.connection.in.bytesRead` | bytes | Total size of frames read on this inbound pipeline |
-| `tcp.connection.in.idleTimeMs` | ms | Idle time that indicates how long since the last read on this inbound nio pipeline |
-| `tcp.connection.in.normalFramesRead` | count | Number of priority frames read on this inbound nio pipeline |
+| `tcp.connection.in.idleTimeMs` | ms | Idle time that indicates how long since the last read on this inbound NIO pipeline |
+| `tcp.connection.in.normalFramesRead` | count | Number of priority frames read on this inbound NIO pipeline |
 | `tcp.connection.in.priorityFramesRead` | count | Number of priority frames read |
 | `tcp.connection.out.bytesWritten` | bytes | Total amount of written frames on this outbound pipeline |
-| `tcp.connection.out.idleTimeMillis` | ms | Idle time that indicates how long since the last write on this outbound nio pipeline |
-| `tcp.connection.out.normalFramesWritten` | count | Number of written normal frames on this outbound nio pipeline |
-| `tcp.connection.out.priorityFramesWritten` | count | Number of priority frames written into this nio pipeline |
+| `tcp.connection.out.idleTimeMillis` | ms | Idle time that indicates how long since the last write on this outbound NIO pipeline |
+| `tcp.connection.out.normalFramesWritten` | count | Number of written normal frames on this outbound NIO pipeline |
+| `tcp.connection.out.priorityFramesWritten` | count | Number of priority frames written into this NIO pipeline |
 | `tcp.connection.out.priorityWriteQueuePendingBytes` | bytes | Total size of priority frames pending in the write queue |
 | `tcp.connection.out.priorityWriteQueueSize` | count | Number of priority frames pending in the write queue |
 | `tcp.connection.out.scheduled` | count | Ordinal of enum state of this outbound pipeline: 0 → UNSCHEDULED, 1 → SCHEDULED, 2 → BLOCKED, 3 → RESCHEDULE |
@@ -1763,10 +813,7 @@ Protocol-specific TCP byte metrics are available only when Advanced Networking i
 | `tcp.inputThread/outputThread.selectorRebuildCount` | count | Number of times the selector was recreated on this NioThread |
 | `tcp.inputThread/outputThread.taskQueueSize` | count | Number of pending tasks on the queue of NioThread |
 
-</details>
-
-<details>
-<summary>Threads</summary>
+## Threads
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -1775,10 +822,7 @@ Protocol-specific TCP byte metrics are available only when Advanced Networking i
 | `thread.threadCount` | count | Current number of live threads including both daemon and non-daemon threads in the JVM |
 | `thread.totalStartedThreadCount` | count | Total number of threads started since the JVM started |
 
-</details>
-
-<details>
-<summary>Transactions</summary>
+## Transactions
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -1786,10 +830,7 @@ Protocol-specific TCP byte metrics are available only when Advanced Networking i
 | `transactions.rollbackCount` | count | Number of rollbacked transactions |
 | `transactions.startCount` | count | Number of started transactions |
 
-</details>
-
-<details>
-<summary>WAN Replication</summary>
+## WAN replication
 
 | Name | Unit | Description |
 | --- | --- | --- |
@@ -1824,16 +865,11 @@ Protocol-specific TCP byte metrics are available only when Advanced Networking i
 | `wan.connectionHealth` | boolean | The health of an individual WAN target endpoint, where 1 is healthy and 0 is not |
 | `wan.failedTransmitCount` | count | Number of attempted WAN replication transmissions that have failed |
 
-</details>
-
-<details>
-<summary>User Code Namespaces</summary>
+## User Code Namespaces
 
 | Name | Unit | Description |
 | --- | --- | --- |
-| `ucn.updateTime` | ms | Update time of a user code namespace configuration |
+| `ucn.updateTime` | ms | Update time of a User Code Namespace configuration |
 | `ucn.resourceCount` | count | Number of resources contained in a namespace |
 | `ucn.resource.resourceType` | enum | The Ordinal of the enum type of the resource contained in a namespace |
 | `ucn.resource.resourceSizeBytes` | bytes | The size in bytes of a resource contained in a namespace |
-
-</details>
