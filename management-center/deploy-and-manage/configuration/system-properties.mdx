@@ -23,9 +23,11 @@ If an environment variable isn't available for a property and you start Manageme
 
 You can use properties to configure both Management Center and Management Center's client connection strategy on startup.
 
-## Management Center configuration
-
 If an environment variable is available, it is listed under the system property in the Property column.
+
+## General
+
+These properties configure Management Center's configuration file, home directory, license, and general behavior:
 
 <table>
 <colgroup>
@@ -44,23 +46,6 @@ If an environment variable is available, it is listed under the system property 
 <tr>
 <td>
 
-<p><Anchor id="hazelcast-mc-allowmultiplelogin" />`hazelcast.mc.allowMultipleLogin`</p>
-
-<p>`MC_ALLOW_MULTIPLE_LOGIN`</p>
-
-</td>
-<td>Whether a user can log into an account in Management Center on multiple devices in different locations at the same time. Default: `true`. See [Secure user sessions](../security/sessions.mdx).</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.allowMultipleLogin=true
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
 <p><Anchor id="hazelcast-mc-auditlog-enabled" />`hazelcast.mc.auditlog.enabled`</p>
 
 <p>`MC_AUDITLOG_ENABLED`</p>
@@ -71,24 +56,6 @@ hz-mc start -Dhazelcast.mc.allowMultipleLogin=true
 
 ```bash vars
 hz-mc start -Dhazelcast.mc.auditlog.enabled=true \
--jar hazelcast-management-center-{full-version}.jar
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-clusterHealthCheck-exclude" />`hazelcast.mc.clusterHealthCheck.exclude`</p>
-
-<p>`MC_CLUSTERHEALTHCHECK_EXCLUDE`</p>
-
-</td>
-<td>List of check identifiers to be excluded from Healthcheck. By default, this is not set. See [Healthcheck](../../cluster/healthcheck.mdx#excluding-checks).</td>
-<td>
-
-```bash vars
-hz-mc start -Dhazelcast.mc.clusterHealthCheck.exclude=E001,U002 \
 -jar hazelcast-management-center-{full-version}.jar
 ```
 
@@ -135,6 +102,112 @@ hz-mc start -Dhazelcast.mc.configReplacer.failIfValueMissing=true \
 
 </td>
 </tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-home" />`hazelcast.mc.home`</p>
+
+<p>`MC_HOME`</p>
+
+</td>
+<td>Home directory where metrics, executed SQL queries, and configuration settings are saved. See [Configure Management Center](./configuring.mdx).</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.home=/home/management-center
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="starting-with-a-license" /><Anchor id="hazelcast-mc-license" />`hazelcast.mc.license`</p>
+
+<p>`MC_LICENSE`</p>
+
+</td>
+<td>Enterprise license. When this property is set, the license takes precedence over one that is set in the user interface, and you cannot update the license in the UI. For more details about licenses, see See [Enterprise licenses](../license-management/license-management.mdx).</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.license={license key}
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-lock-skip" />`hazelcast.mc.lock.skip`</p>
+
+<p>`MC_LOCK_SKIP`</p>
+
+</td>
+<td>Whether the `hz-mc conf` tool does not check for an `mc.lock` file in the home directory. Default: `false`. See [Skipping the Check for a Lock File](./mc-conf.mdx#skip-the-check-for-a-lock-file)</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.lock.skip=true
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-phone-home-enabled" />`hazelcast.mc.phone.home.enabled`</p>
+
+<p>`MC_PHONE_HOME_ENABLED`</p>
+
+</td>
+<td>Whether Management Center sends usage data to the Hazelcast phone home server. Default: `true`. See [Usage analytics](../phone-homes.mdx).</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.phone.home.enabled=false \
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-rest-enabled" />`hazelcast.mc.rest.enabled`</p>
+
+<p>`MC_REST_ENABLED`</p>
+
+</td>
+<td>Enable [clustered REST](../../integrate/clustered-rest/clustered-rest.mdx) endpoints. Default: `false`.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.rest.enabled=true
+```
+
+</td>
+</tr>
+</tbody>
+</table>
+
+## Web server
+
+These properties configure the Management Center web server, including the HTTP port, health check, and CORS:
+
+<table>
+<colgroup>
+<col style={{width:'25%'}} />
+<col style={{width:'50%'}} />
+<col style={{width:'25%'}} />
+</colgroup>
+<thead>
+<tr>
+<th>Property</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
 <tr>
 <td>
 
@@ -323,16 +396,126 @@ hz-mc start -Dhazelcast.mc.cors.maxAge=1600
 </td>
 </tr>
 <tr>
-<td><Anchor id="hazelcast-mc-cluster-operation-timeout" />`hazelcast.mc.cluster.operation.timeout.millis`</td>
-<td>Timeout in milliseconds for Management Center operations that wait for a response from members. Default: 60000.</td>
+<td>
+
+<p><Anchor id="hazelcast-mc-forwarded-requests-enabled" />`hazelcast.mc.forwarded.requests.enabled`</p>
+
+<p>`MC_FORWARDED_REQUESTS_ENABLED`</p>
+
+</td>
+<td>Whether Management Center reads `X-Forwarded-*` headers from reverse proxies. Default: `true`.</td>
 <td>
 
 ```bash
-hz-mc start -Dhazelcast.mc.cluster.operation.timeout.millis=60000
+hz-mc start -Dhazelcast.mc.forwarded.requests.enabled=false
 ```
 
 </td>
 </tr>
+<tr>
+<td>
+
+<p><Anchor id="enabling-health-check-endpoint" /><Anchor id="hazelcast-mc-healthcheck-enable" />`hazelcast.mc.healthCheck.enable`</p>
+
+<p>`MC_HEALTH_CHECK_ENABLED`</p>
+
+</td>
+<td>Whether the `/health` endpoint is enabled on port [`hazelcast.mc.http.port`](#hazelcast-mc-http-port) + 1. Default: `false`. This endpoint is always served over HTTP, regardless of any TLS/SSL settings. This endpoint responds with `200 OK` HTTP status code if Management Center is running.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.healthCheck.enable=true
+```
+
+In this example, the health check would be available at `http://localhost:8081/health`.
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-healthcheck-port" />`hazelcast.mc.healthCheck.port`</p>
+
+<p>`MC_HEALTH_CHECK_PORT`</p>
+
+</td>
+<td>The port on which the `/health` endpoint is exposed. Default: [`hazelcast.mc.http.port`](#hazelcast-mc-http-port) + 1.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.healthCheck.port=2000
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-hostaddress" />`hazelcast.mc.hostAddress`</p>
+
+<p>`MC_HOST_ADDRESS`</p>
+
+</td>
+<td>Network address that Management Center is reachable on. Default: `0.0.0.0` (all network interfaces).</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.hostAddress=127.0.1.1
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-http-port" />`hazelcast.mc.http.port`</p>
+
+<p>`MC_HTTP_PORT`</p>
+
+</td>
+<td>HTTP port for Management Center. Default: `8080`.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.http.port=80
+```
+
+In this example, the URL for Management Center would be `\http:localhost:80`.
+
+</td>
+</tr>
+<tr>
+<td><Anchor id="hazelcast-mc-websocket-buffer-size" />`hazelcast.mc.websocket.buffer-size HAZELCAST_MC_WEBSOCKET_BUFFER_SIZE`</td>
+<td>The buffer size of the WebSocket connection MC uses for SQL operations. Default: `5MB`.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.websocket.buffer-size=10MB
+```
+
+</td>
+</tr>
+</tbody>
+</table>
+
+## TLS
+
+These properties configure TLS for the Management Center web server:
+
+<table>
+<colgroup>
+<col style={{width:'25%'}} />
+<col style={{width:'50%'}} />
+<col style={{width:'25%'}} />
+</colgroup>
+<thead>
+<tr>
+<th>Property</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
 <tr>
 <td><Anchor id="hazelcast-mc-disablehostnameverification" />`hazelcast.mc.disableHostnameVerification`</td>
 <td>Whether Management Center does not verify the hostname of signed TLS/SSL certificates. Default: `false`.</td>
@@ -340,23 +523,6 @@ hz-mc start -Dhazelcast.mc.cluster.operation.timeout.millis=60000
 
 ```bash
 hz-mc start -Dhazelcast.mc.disableHostnameVerification=true
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-disableloginperiodmultiplier" />`hazelcast.mc.disableLoginPeriodMultiplier`</p>
-
-<p>`MC_DISABLE_LOGIN_PERIOD_MULTIPLIER`</p>
-
-</td>
-<td>Multiplier used for extending the disabled login period in case the failed login attempts continue after the disabled login period expires. Default: `10`. See [Secure user sessions](../security/sessions.mdx).</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.disableLoginPeriodMultiplier=20
 ```
 
 </td>
@@ -449,6 +615,257 @@ hz-mc start -Dhazelcast.mc.existingKeyStore.provider=com.yourprovider.MyProvider
 <tr>
 <td>
 
+<p><Anchor id="hazelcast-mc-include-cipher-suites" />`hazelcast.mc.include.cipher.suites`</p>
+
+<p>`MC_INCLUDE_CIPHER_SUITES`</p>
+
+</td>
+<td>A comma separated list of cipher suits to be included in the list of supported ciphers in Management Center. Wildcards are supported.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.include.cipher.suites=^SSL_.*$
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-tls-excludeprotocols" />`hazelcast.mc.tls.excludeProtocols`</p>
+
+<p>`MC_TLS_EXCLUDE_PROTOCOLS`</p>
+
+</td>
+<td>A comma separated list of TLS/SSL protocols to be excluded from the list of supported protocols in Management Center.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.tls.excludeProtocols=SSLv3
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-tls-openssl" />`hazelcast.mc.tls.openSsl`</p>
+
+<p>`MC_TLS_OPEN_SSL`</p>
+
+</td>
+<td>Allow Management Center to use [Google's Conscrypt SSL](https://github.com/google/conscrypt/) that is built on their fork of OpenSSL, BoringSSL. Default: `false`.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.tls.openSsl=true
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-tls-enabled" />`hazelcast.mc.tls.enabled`</p>
+
+<p>`MC_TLS_ENABLED`</p>
+
+</td>
+<td>Whether TLS/SSL is enabled. Default: `false`.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.tls.enabled=true
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-tls-keystore" />`hazelcast.mc.tls.keyStore`</p>
+
+<p>`MC_TLS_KEY_STORE`</p>
+
+</td>
+<td>Path to a keystore.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.tls.keyStore=/keys/mc.keystore
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-tls-keystorepassword" />`hazelcast.mc.tls.keyStorePassword`</p>
+
+<p>`MC_TLS_KEY_STORE_PASSWORD`</p>
+
+</td>
+<td>Password of the keystore in [`hazelcast.mc.tls.keyStore`](#hazelcast-mc-tls-keystore).</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.tls.keyStorePassword=mypassword123
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-tls-truststore" />`hazelcast.mc.tls.trustStore`</p>
+
+<p>`MC_TLS_TRUST_STORE`</p>
+
+</td>
+<td>Path to a truststore. If the [`hazelcast.mc.tls.enabled`](#hazelcast-mc-tls-enabled) system property is `true` and this value is empty, Management Center uses the system JVM's own truststore.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.tls.trustStore=/truststores/mc.truststore
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-tls-truststorepassword" />`hazelcast.mc.tls.trustStorePassword`</p>
+
+<p>`MC_TLS_TRUST_STORE_PASSWORD`</p>
+
+</td>
+<td>Password of the truststore.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.tls.trustStorePassword=mypassword123
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast.mc.tls.enableHttpPort" />`hazelcast.mc.tls.enableHttpPort`</p>
+
+<p>`MC_TLS_ENABLE_HTTP_PORT`</p>
+
+</td>
+<td>Whether the HTTP port in the [`hazelcast.mc.http.port`](#hazelcast-mc-http-port) system property is redirected to the HTTPS port in the [`hazelcast.mc.https.port`](../security/tls/serving-https.mdx#override-the-default-https-port) system property.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.tls.enableHttpPort=true
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-tls-mutualauthentication" />`hazelcast.mc.tls.mutualAuthentication`</p>
+
+<p>`MC_TLS_MUTUAL_AUTHENTICATION`</p>
+
+</td>
+<td>
+
+Whether clients connected to Management Center are authenticated:
+
+- `REQUIRED`: If the client does not provide a keystore or the provided keys are not included in the Management Center's truststore, the client will not be authenticated.
+- `OPTIONAL`: If the client does not provide a keystore, it will be authenticated. But, if the client provides keys that are not included in the Management Center's truststore, the client will not be authenticated.
+
+Default: `OPTIONAL`.
+
+</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.tls.mutualAuthentication=REQUIRED
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-useexistingkeystore" />`hazelcast.mc.useExistingKeyStore`</p>
+
+<p>`MC_USE_EXISTING_KEY_STORE`</p>
+
+</td>
+<td>Enables use of an existing keystore. Default: `false`.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.useExistingKeyStore=true
+```
+
+</td>
+</tr>
+</tbody>
+</table>
+
+## Login, sessions, and passwords
+
+These properties configure user logins, sessions, and password checks:
+
+<table>
+<colgroup>
+<col style={{width:'25%'}} />
+<col style={{width:'50%'}} />
+<col style={{width:'25%'}} />
+</colgroup>
+<thead>
+<tr>
+<th>Property</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-allowmultiplelogin" />`hazelcast.mc.allowMultipleLogin`</p>
+
+<p>`MC_ALLOW_MULTIPLE_LOGIN`</p>
+
+</td>
+<td>Whether a user can log into an account in Management Center on multiple devices in different locations at the same time. Default: `true`. See [Secure user sessions](../security/sessions.mdx).</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.allowMultipleLogin=true
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-disableloginperiodmultiplier" />`hazelcast.mc.disableLoginPeriodMultiplier`</p>
+
+<p>`MC_DISABLE_LOGIN_PERIOD_MULTIPLIER`</p>
+
+</td>
+<td>Multiplier used for extending the disabled login period in case the failed login attempts continue after the disabled login period expires. Default: `10`. See [Secure user sessions](../security/sessions.mdx).</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.disableLoginPeriodMultiplier=20
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
 <p><Anchor id="hazelcast-mc-failedattemptsbeforedisablelogin" />`hazelcast.mc.failedAttemptsBeforeDisableLogin`</p>
 
 <p>`MC_FAILED_ATTEMPTS_BEFORE_DISABLE_LOGIN`</p>
@@ -483,129 +900,6 @@ hz-mc start -Dhazelcast.mc.forceLogoutOnMultipleLogin=true
 <tr>
 <td>
 
-<p><Anchor id="hazelcast-mc-forwarded-requests-enabled" />`hazelcast.mc.forwarded.requests.enabled`</p>
-
-<p>`MC_FORWARDED_REQUESTS_ENABLED`</p>
-
-</td>
-<td>Whether Management Center reads `X-Forwarded-*` headers from reverse proxies. Default: `true`.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.forwarded.requests.enabled=false
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="enabling-health-check-endpoint" /><Anchor id="hazelcast-mc-healthcheck-enable" />`hazelcast.mc.healthCheck.enable`</p>
-
-<p>`MC_HEALTH_CHECK_ENABLED`</p>
-
-</td>
-<td>Whether the `/health` endpoint is enabled on port [`hazelcast.mc.http.port`](#hazelcast-mc-http-port) + 1. Default: `false`. This endpoint is always served over HTTP, regardless of any TLS/SSL settings. This endpoint responds with `200 OK` HTTP status code if Management Center is running.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.healthCheck.enable=true
-```
-
-In this example, the health check would be available at `http://localhost:8081/health`.
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-healthcheck-port" />`hazelcast.mc.healthCheck.port`</p>
-
-<p>`MC_HEALTH_CHECK_PORT`</p>
-
-</td>
-<td>The port on which the `/health` endpoint is exposed. Default: [`hazelcast.mc.http.port`](#hazelcast-mc-http-port) + 1.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.healthCheck.port=2000
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-home" />`hazelcast.mc.home`</p>
-
-<p>`MC_HOME`</p>
-
-</td>
-<td>Home directory where metrics, executed SQL queries, and configuration settings are saved. See [Configure Management Center](./configuring.mdx).</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.home=/home/management-center
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-hostaddress" />`hazelcast.mc.hostAddress`</p>
-
-<p>`MC_HOST_ADDRESS`</p>
-
-</td>
-<td>Network address that Management Center is reachable on. Default: `0.0.0.0` (all network interfaces).</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.hostAddress=127.0.1.1
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-http-port" />`hazelcast.mc.http.port`</p>
-
-<p>`MC_HTTP_PORT`</p>
-
-</td>
-<td>HTTP port for Management Center. Default: `8080`.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.http.port=80
-```
-
-In this example, the URL for Management Center would be `\http:localhost:80`.
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-include-cipher-suites" />`hazelcast.mc.include.cipher.suites`</p>
-
-<p>`MC_INCLUDE_CIPHER_SUITES`</p>
-
-</td>
-<td>A comma separated list of cipher suits to be included in the list of supported ciphers in Management Center. Wildcards are supported.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.include.cipher.suites=^SSL_.*$
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
 <p><Anchor id="hazelcast-mc-initialdisableloginperiod" />`hazelcast.mc.initialDisableLoginPeriod`</p>
 
 <p>`MC_INITIAL_DISABLE_LOGIN_PERIOD`</p>
@@ -623,16 +917,16 @@ hz-mc start -Dhazelcast.mc.initialDisableLoginPeriod=50
 <tr>
 <td>
 
-<p><Anchor id="hazelcast-mc-jmx-enabled" />`hazelcast.mc.jmx.enabled`</p>
+<p><Anchor id="hazelcast-mc-maxdisableloginperiod" />`hazelcast.mc.maxDisableLoginPeriod`</p>
 
-<p>`MC_JMX_ENABLED`</p>
+<p>`MC_MAX_DISABLE_LOGIN_PERIOD`</p>
 
 </td>
-<td>Whether the clustered JMX service is enabled. Default: `false`. See [Clustered JMX](../../integrate/clustered-jmx/jmx.mdx).</td>
+<td>Maximum amount of time for the disable login period. By default, the disabled login period is unlimited.</td>
 <td>
 
 ```bash
-hz-mc start -Dhazelcast.mc.jmx.enabled=true
+hz-mc start -Dhazelcast.mc.maxDisableLoginPeriod= \
 ```
 
 </td>
@@ -640,16 +934,17 @@ hz-mc start -Dhazelcast.mc.jmx.enabled=true
 <tr>
 <td>
 
-<p><Anchor id="hazelcast-mc-jmx-host" />`hazelcast.mc.jmx.host`</p>
+<p><Anchor id="hazelcast-mc-security-dictionary-minWordLength" />`hazelcast.mc.security.dictionary.minWordLength`</p>
 
-<p>`MC_JMX_HOST_NAME`</p>
+<p>`MC_SECURITY_DICTIONARY_MIN_WORD_LENGTH`</p>
 
 </td>
-<td>Hostname/IP address of the JMX host machine. This is used by the JMX client to connect back into JMX, so the given host must be accessible from the host machine that runs the JMX client. Default: Server's hostname.</td>
+<td>Minimum length that words in the dictionary must contain. Default: `3`.</td>
 <td>
 
 ```bash
-hz-mc start -Dhazelcast.mc.jmx.host=127.0.0.1
+hz-mc start -Dhazelcast.mc.security.dictionary.path=/usr/MCtext/pwd.txt \
+     -Dhazelcast.mc.security.dictionary.minWordLength=3 \
 ```
 
 </td>
@@ -657,16 +952,16 @@ hz-mc start -Dhazelcast.mc.jmx.host=127.0.0.1
 <tr>
 <td>
 
-<p><Anchor id="hazelcast-mc-jmx-mutualauthentication" />`hazelcast.mc.jmx.mutualAuthentication`</p>
+<p><Anchor id="hazelcast-mc-security-dictionary-path" />`hazelcast.mc.security.dictionary.path`</p>
 
-<p>`MC_JMX_SSL_MUTUAL_AUTH_ENABLED`</p>
+<p>`MC_SECURITY_DICTIONARY_PATH`</p>
 
 </td>
-<td>Whether mutual authentication is enabled for the JMX interface. Default: `false`.</td>
+<td>Path to a text file that contains words that cannot be included in user passwords.</td>
 <td>
 
 ```bash
-hz-mc start -Dhazelcast.mc.jmx.ssl.mutualAuthentication=false
+hz-mc start -Dhazelcast.mc.security.dictionary.path=/usr/MCtext/pwd.txt \
 ```
 
 </td>
@@ -674,207 +969,41 @@ hz-mc start -Dhazelcast.mc.jmx.ssl.mutualAuthentication=false
 <tr>
 <td>
 
-<p><Anchor id="hazelcast-mc-jmx-port" />`hazelcast.mc.jmx.port`</p>
+<p><Anchor id="hazelcast-mc-session-timeout-seconds" />`hazelcast.mc.session.timeout.seconds`</p>
 
-<p>`MC_JMX_PORT`</p>
+<p>`MC_SESSION_TIMEOUT_SECONDS`</p>
 
 </td>
-<td>Port on which the clustered JMX service is exposed. Default: `9999`.</td>
+<td>Number of seconds that a session can remain inactive before it is invalid and the user must log in again. Default `1800`.</td>
 <td>
 
 ```bash
-hz-mc start -Dhazelcast.mc.jmx.port=9000
+hz-mc start -Dhazelcast.mc.session.timeout.seconds=60
 ```
 
 </td>
 </tr>
+</tbody>
+</table>
+
+## LDAP and Active Directory
+
+These properties configure connections to LDAP and Active Directory servers:
+
+<table>
+<colgroup>
+<col style={{width:'25%'}} />
+<col style={{width:'50%'}} />
+<col style={{width:'25%'}} />
+</colgroup>
+<thead>
 <tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-jmx-rmi-port" />`hazelcast.mc.jmx.rmi.port`</p>
-
-<p>`MC_JMX_RMI_PORT`</p>
-
-</td>
-<td>Port on which the Java process that you want to monitor listens for incoming connections from the client (Remote management applications) such as JConsole . For monitoring a local Java process, there is no need to specify the JMX RMI port number. Default: `9998`.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.jmx.rmi.port=9001
-```
-
-</td>
+<th>Property</th>
+<th>Description</th>
+<th>Example</th>
 </tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-jmx-ssl-enabled" />`hazelcast.mc.jmx.ssl.enabled`</p>
-
-<p>`MC_JMX_SSL_ENABLED`</p>
-
-</td>
-<td>Whether TLS/SSL is enabled for communication between the JMX interface and JMX clients. Default: `false`.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.jmx.ssl.enabled=true
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-jmx-ssl-protocol" />`hazelcast.mc.jmx.ssl.protocol`</p>
-
-<p>`MC_JMX_SSL_PROTOCOL`</p>
-
-</td>
-<td>The standard name of the requested SSL protocol. Default: `TLS`.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.jmx.ssl.protocol=SSLv3
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-jmx-ssl-keystore" />`hazelcast.mc.jmx.ssl.keyStore`</p>
-
-<p>`MC_JMX_SSL_KEY_STORE_TYPE`</p>
-
-</td>
-<td>Path to a keystore. Default: `' '` (empty).</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.jmx.ssl.keyStore=/some/dir/selfsigned.jks
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-jmx-ssl-keystorepassword" />`hazelcast.mc.jmx.ssl.keyStorePassword`</p>
-
-<p>`MC_JMX_SSL_KEY_STORE_PASSWORD`</p>
-
-</td>
-<td>Password for the keystore. Default: `' '` (empty).</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.jmx.ssl.keyStorePassword=myPassword
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-jmx-ssl-truststore" />`hazelcast.mc.jmx.ssl.trustStore`</p>
-
-<p>`MC_JMX_SSL_TRUST_STORE`</p>
-
-</td>
-<td>Path to a truststore. Default: `' '` (empty).</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.jmx.ssl.trustStore=/some/dir/truststore
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-jmx-ssl-truststoretype" />`hazelcast.mc.jmx.ssl.trustStoreType`</p>
-
-<p>`MC_JMX_SSL_TRUST_STORE_TYPE`</p>
-
-</td>
-<td>Type of the truststore. Default: `JKS`.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.jmx.ssl.trustStoreType=DKS
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-jmx-ssl-truststorepassword" />`hazelcast.mc.jmx.ssl.trustStorePassword`</p>
-
-<p>`MC_JMX_SSL_TRUST_STORE_PASSWORD`</p>
-
-</td>
-<td>Password for the truststore. Default: `' '` (empty).</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.jmx.ssl.trustStorePassword=myPassword
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-jmx-ssl-trustmanageralgorithm" />`hazelcast.mc.jmx.ssl.trustManagerAlgorithm`</p>
-
-<p>`MC_JMX_SSL_TRUST_MANAGER_ALGORITHM`</p>
-
-</td>
-<td>Name of the algorithm based on which the authentication keys are provided. System default is used if none is provided. You can find out the default by calling the `javax.net.ssl.TrustManagerFactory#getDefaultAlgorithm` method.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.jmx.ssl.trustManagerAlgorithm=SunX509
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-jmx-ssl-keystoretype" />`hazelcast.mc.jmx.ssl.keyStoreType`</p>
-
-<p>`MC_JMX_SSL_KEY_STORE_TYPE`</p>
-
-</td>
-<td>Type of the keystore. Default: `JKS`.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.jmx.ssl.keyStoreType=JKS
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-jmx-ssl-keymanageralgorithm" />`hazelcast.mc.jmx.ssl.keyManagerAlgorithm`</p>
-
-<p>`MC_TLS_KEY_MANAGER_ALGORITHM`</p>
-
-</td>
-<td>Name of the algorithm based on which the authentication keys are provided. You can find out the default by calling the `javax.net.ssl.KeyManagerFactory#getDefaultAlgorithm` method. Default: System default.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.jmx.ssl.keyManagerAlgorithm=SunX509
-```
-
-</td>
-</tr>
+</thead>
+<tbody>
 <tr>
 <td>
 
@@ -1198,19 +1327,40 @@ hz-mc start -Dmc.ad.ssl.trustManagerAlgorithm=SunX509 \
 
 </td>
 </tr>
+</tbody>
+</table>
+
+## JMX
+
+These properties configure JMX for Management Center:
+
+<table>
+<colgroup>
+<col style={{width:'25%'}} />
+<col style={{width:'50%'}} />
+<col style={{width:'25%'}} />
+</colgroup>
+<thead>
+<tr>
+<th>Property</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
 <tr>
 <td>
 
-<p><Anchor id="starting-with-a-license" /><Anchor id="hazelcast-mc-license" />`hazelcast.mc.license`</p>
+<p><Anchor id="hazelcast-mc-jmx-enabled" />`hazelcast.mc.jmx.enabled`</p>
 
-<p>`MC_LICENSE`</p>
+<p>`MC_JMX_ENABLED`</p>
 
 </td>
-<td>Enterprise license. When this property is set, the license takes precedence over one that is set in the user interface, and you cannot update the license in the UI. For more details about licenses, see See [Enterprise licenses](../license-management/license-management.mdx).</td>
+<td>Whether the clustered JMX service is enabled. Default: `false`. See [Clustered JMX](../../integrate/clustered-jmx/jmx.mdx).</td>
 <td>
 
 ```bash
-hz-mc start -Dhazelcast.mc.license={license key}
+hz-mc start -Dhazelcast.mc.jmx.enabled=true
 ```
 
 </td>
@@ -1218,16 +1368,16 @@ hz-mc start -Dhazelcast.mc.license={license key}
 <tr>
 <td>
 
-<p><Anchor id="hazelcast-mc-lock-skip" />`hazelcast.mc.lock.skip`</p>
+<p><Anchor id="hazelcast-mc-jmx-host" />`hazelcast.mc.jmx.host`</p>
 
-<p>`MC_LOCK_SKIP`</p>
+<p>`MC_JMX_HOST_NAME`</p>
 
 </td>
-<td>Whether the `hz-mc conf` tool does not check for an `mc.lock` file in the home directory. Default: `false`. See [Skipping the Check for a Lock File](./mc-conf.mdx#skip-the-check-for-a-lock-file)</td>
+<td>Hostname/IP address of the JMX host machine. This is used by the JMX client to connect back into JMX, so the given host must be accessible from the host machine that runs the JMX client. Default: Server's hostname.</td>
 <td>
 
 ```bash
-hz-mc start -Dhazelcast.mc.lock.skip=true
+hz-mc start -Dhazelcast.mc.jmx.host=127.0.0.1
 ```
 
 </td>
@@ -1235,20 +1385,245 @@ hz-mc start -Dhazelcast.mc.lock.skip=true
 <tr>
 <td>
 
-<p><Anchor id="hazelcast-mc-maxdisableloginperiod" />`hazelcast.mc.maxDisableLoginPeriod`</p>
+<p><Anchor id="hazelcast-mc-jmx-mutualauthentication" />`hazelcast.mc.jmx.mutualAuthentication`</p>
 
-<p>`MC_MAX_DISABLE_LOGIN_PERIOD`</p>
+<p>`MC_JMX_SSL_MUTUAL_AUTH_ENABLED`</p>
 
 </td>
-<td>Maximum amount of time for the disable login period. By default, the disabled login period is unlimited.</td>
+<td>Whether mutual authentication is enabled for the JMX interface. Default: `false`.</td>
 <td>
 
 ```bash
-hz-mc start -Dhazelcast.mc.maxDisableLoginPeriod= \
+hz-mc start -Dhazelcast.mc.jmx.ssl.mutualAuthentication=false
 ```
 
 </td>
 </tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-jmx-port" />`hazelcast.mc.jmx.port`</p>
+
+<p>`MC_JMX_PORT`</p>
+
+</td>
+<td>Port on which the clustered JMX service is exposed. Default: `9999`.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.jmx.port=9000
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-jmx-rmi-port" />`hazelcast.mc.jmx.rmi.port`</p>
+
+<p>`MC_JMX_RMI_PORT`</p>
+
+</td>
+<td>Port on which the Java process that you want to monitor listens for incoming connections from the client (Remote management applications) such as JConsole . For monitoring a local Java process, there is no need to specify the JMX RMI port number. Default: `9998`.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.jmx.rmi.port=9001
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-jmx-ssl-enabled" />`hazelcast.mc.jmx.ssl.enabled`</p>
+
+<p>`MC_JMX_SSL_ENABLED`</p>
+
+</td>
+<td>Whether TLS/SSL is enabled for communication between the JMX interface and JMX clients. Default: `false`.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.jmx.ssl.enabled=true
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-jmx-ssl-protocol" />`hazelcast.mc.jmx.ssl.protocol`</p>
+
+<p>`MC_JMX_SSL_PROTOCOL`</p>
+
+</td>
+<td>The standard name of the requested SSL protocol. Default: `TLS`.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.jmx.ssl.protocol=SSLv3
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-jmx-ssl-keystore" />`hazelcast.mc.jmx.ssl.keyStore`</p>
+
+<p>`MC_JMX_SSL_KEY_STORE_TYPE`</p>
+
+</td>
+<td>Path to a keystore. Default: `' '` (empty).</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.jmx.ssl.keyStore=/some/dir/selfsigned.jks
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-jmx-ssl-keystorepassword" />`hazelcast.mc.jmx.ssl.keyStorePassword`</p>
+
+<p>`MC_JMX_SSL_KEY_STORE_PASSWORD`</p>
+
+</td>
+<td>Password for the keystore. Default: `' '` (empty).</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.jmx.ssl.keyStorePassword=myPassword
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-jmx-ssl-truststore" />`hazelcast.mc.jmx.ssl.trustStore`</p>
+
+<p>`MC_JMX_SSL_TRUST_STORE`</p>
+
+</td>
+<td>Path to a truststore. Default: `' '` (empty).</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.jmx.ssl.trustStore=/some/dir/truststore
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-jmx-ssl-truststoretype" />`hazelcast.mc.jmx.ssl.trustStoreType`</p>
+
+<p>`MC_JMX_SSL_TRUST_STORE_TYPE`</p>
+
+</td>
+<td>Type of the truststore. Default: `JKS`.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.jmx.ssl.trustStoreType=DKS
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-jmx-ssl-truststorepassword" />`hazelcast.mc.jmx.ssl.trustStorePassword`</p>
+
+<p>`MC_JMX_SSL_TRUST_STORE_PASSWORD`</p>
+
+</td>
+<td>Password for the truststore. Default: `' '` (empty).</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.jmx.ssl.trustStorePassword=myPassword
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-jmx-ssl-trustmanageralgorithm" />`hazelcast.mc.jmx.ssl.trustManagerAlgorithm`</p>
+
+<p>`MC_JMX_SSL_TRUST_MANAGER_ALGORITHM`</p>
+
+</td>
+<td>Name of the algorithm based on which the authentication keys are provided. System default is used if none is provided. You can find out the default by calling the `javax.net.ssl.TrustManagerFactory#getDefaultAlgorithm` method.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.jmx.ssl.trustManagerAlgorithm=SunX509
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-jmx-ssl-keystoretype" />`hazelcast.mc.jmx.ssl.keyStoreType`</p>
+
+<p>`MC_JMX_SSL_KEY_STORE_TYPE`</p>
+
+</td>
+<td>Type of the keystore. Default: `JKS`.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.jmx.ssl.keyStoreType=JKS
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-jmx-ssl-keymanageralgorithm" />`hazelcast.mc.jmx.ssl.keyManagerAlgorithm`</p>
+
+<p>`MC_TLS_KEY_MANAGER_ALGORITHM`</p>
+
+</td>
+<td>Name of the algorithm based on which the authentication keys are provided. You can find out the default by calling the `javax.net.ssl.KeyManagerFactory#getDefaultAlgorithm` method. Default: System default.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.jmx.ssl.keyManagerAlgorithm=SunX509
+```
+
+</td>
+</tr>
+</tbody>
+</table>
+
+## Metrics and Prometheus
+
+These properties configure how Management Center stores metrics and exports them to Prometheus:
+
+<table>
+<colgroup>
+<col style={{width:'25%'}} />
+<col style={{width:'50%'}} />
+<col style={{width:'25%'}} />
+</colgroup>
+<thead>
+<tr>
+<th>Property</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
 <tr>
 <td>
 
@@ -1318,23 +1693,6 @@ hz-mc start -Dhazelcast.mc.metrics.reschedule.delay.millis=5000
 
 ```bash
 hz-mc start -Dhazelcast.mc.jet.metrics.retentionSecs=7200
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-phone-home-enabled" />`hazelcast.mc.phone.home.enabled`</p>
-
-<p>`MC_PHONE_HOME_ENABLED`</p>
-
-</td>
-<td>Whether Management Center sends usage data to the Hazelcast phone home server. Default: `true`. See [Usage analytics](../phone-homes.mdx).</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.phone.home.enabled=false \
 ```
 
 </td>
@@ -1458,271 +1816,27 @@ hz-mc start -Dhazelcast.mc.prometheusExporter.printers=V1
 
 </td>
 </tr>
+</tbody>
+</table>
+
+## SQL browser and UI
+
+These properties configure limits in the SQL browser and the UI:
+
+<table>
+<colgroup>
+<col style={{width:'25%'}} />
+<col style={{width:'50%'}} />
+<col style={{width:'25%'}} />
+</colgroup>
+<thead>
 <tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-rest-enabled" />`hazelcast.mc.rest.enabled`</p>
-
-<p>`MC_REST_ENABLED`</p>
-
-</td>
-<td>Enable [clustered REST](../../integrate/clustered-rest/clustered-rest.mdx) endpoints. Default: `false`.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.rest.enabled=true
-```
-
-</td>
+<th>Property</th>
+<th>Description</th>
+<th>Example</th>
 </tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-security-dictionary-minWordLength" />`hazelcast.mc.security.dictionary.minWordLength`</p>
-
-<p>`MC_SECURITY_DICTIONARY_MIN_WORD_LENGTH`</p>
-
-</td>
-<td>Minimum length that words in the dictionary must contain. Default: `3`.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.security.dictionary.path=/usr/MCtext/pwd.txt \
-     -Dhazelcast.mc.security.dictionary.minWordLength=3 \
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-security-dictionary-path" />`hazelcast.mc.security.dictionary.path`</p>
-
-<p>`MC_SECURITY_DICTIONARY_PATH`</p>
-
-</td>
-<td>Path to a text file that contains words that cannot be included in user passwords.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.security.dictionary.path=/usr/MCtext/pwd.txt \
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-session-timeout-seconds" />`hazelcast.mc.session.timeout.seconds`</p>
-
-<p>`MC_SESSION_TIMEOUT_SECONDS`</p>
-
-</td>
-<td>Number of seconds that a session can remain inactive before it is invalid and the user must log in again. Default `1800`.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.session.timeout.seconds=60
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="metadata-polling-config" /><Anchor id="hazelcast-mc-state-reschedule-delay-millis" />`hazelcast.mc.state.reschedule.delay.millis`</p>
-
-<p>`MC_STATE_RESCHEDULE_DELAY_MILLIS`</p>
-
-</td>
-<td>Duration in milliseconds that Management Center waits before requesting metadata from a Hazelcast cluster. Metadata includes a list of all data structures and their configurations. Default: 1000.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.state.reschedule.delay.millis=2000
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-tls-excludeprotocols" />`hazelcast.mc.tls.excludeProtocols`</p>
-
-<p>`MC_TLS_EXCLUDE_PROTOCOLS`</p>
-
-</td>
-<td>A comma separated list of TLS/SSL protocols to be excluded from the list of supported protocols in Management Center.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.tls.excludeProtocols=SSLv3
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-tls-openssl" />`hazelcast.mc.tls.openSsl`</p>
-
-<p>`MC_TLS_OPEN_SSL`</p>
-
-</td>
-<td>Allow Management Center to use [Google's Conscrypt SSL](https://github.com/google/conscrypt/) that is built on their fork of OpenSSL, BoringSSL. Default: `false`.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.tls.openSsl=true
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-tls-enabled" />`hazelcast.mc.tls.enabled`</p>
-
-<p>`MC_TLS_ENABLED`</p>
-
-</td>
-<td>Whether TLS/SSL is enabled. Default: `false`.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.tls.enabled=true
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-tls-keystore" />`hazelcast.mc.tls.keyStore`</p>
-
-<p>`MC_TLS_KEY_STORE`</p>
-
-</td>
-<td>Path to a keystore.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.tls.keyStore=/keys/mc.keystore
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-tls-keystorepassword" />`hazelcast.mc.tls.keyStorePassword`</p>
-
-<p>`MC_TLS_KEY_STORE_PASSWORD`</p>
-
-</td>
-<td>Password of the keystore in [`hazelcast.mc.tls.keyStore`](#hazelcast-mc-tls-keystore).</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.tls.keyStorePassword=mypassword123
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-tls-truststore" />`hazelcast.mc.tls.trustStore`</p>
-
-<p>`MC_TLS_TRUST_STORE`</p>
-
-</td>
-<td>Path to a truststore. If the [`hazelcast.mc.tls.enabled`](#hazelcast-mc-tls-enabled) system property is `true` and this value is empty, Management Center uses the system JVM's own truststore.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.tls.trustStore=/truststores/mc.truststore
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-tls-truststorepassword" />`hazelcast.mc.tls.trustStorePassword`</p>
-
-<p>`MC_TLS_TRUST_STORE_PASSWORD`</p>
-
-</td>
-<td>Password of the truststore.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.tls.trustStorePassword=mypassword123
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast.mc.tls.enableHttpPort" />`hazelcast.mc.tls.enableHttpPort`</p>
-
-<p>`MC_TLS_ENABLE_HTTP_PORT`</p>
-
-</td>
-<td>Whether the HTTP port in the [`hazelcast.mc.http.port`](#hazelcast-mc-http-port) system property is redirected to the HTTPS port in the [`hazelcast.mc.https.port`](../security/tls/serving-https.mdx#override-the-default-https-port) system property.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.tls.enableHttpPort=true
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-tls-mutualauthentication" />`hazelcast.mc.tls.mutualAuthentication`</p>
-
-<p>`MC_TLS_MUTUAL_AUTHENTICATION`</p>
-
-</td>
-<td>
-
-Whether clients connected to Management Center are authenticated:
-
-- `REQUIRED`: If the client does not provide a keystore or the provided keys are not included in the Management Center's truststore, the client will not be authenticated.
-- `OPTIONAL`: If the client does not provide a keystore, it will be authenticated. But, if the client provides keys that are not included in the Management Center's truststore, the client will not be authenticated.
-
-Default: `OPTIONAL`.
-
-</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.tls.mutualAuthentication=REQUIRED
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-<p><Anchor id="hazelcast-mc-useexistingkeystore" />`hazelcast.mc.useExistingKeyStore`</p>
-
-<p>`MC_USE_EXISTING_KEY_STORE`</p>
-
-</td>
-<td>Enables use of an existing keystore. Default: `false`.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.useExistingKeyStore=true
-```
-
-</td>
-</tr>
+</thead>
+<tbody>
 <tr>
 <td><Anchor id="hazelcast-mc-sql-max-cell-length" />`hazelcast.mc.sql.max-cell-length MC_MC_SQL_MAX_CELL_LENGTH`</td>
 <td>Max length of a cell in SQL query result, longer values are truncated. Default: `2048`.</td>
@@ -1746,23 +1860,79 @@ hz-mc start -Dhazelcast.mc.sql.max-row-count=10000
 </td>
 </tr>
 <tr>
-<td><Anchor id="hazelcast-mc-websocket-buffer-size" />`hazelcast.mc.websocket.buffer-size HAZELCAST_MC_WEBSOCKET_BUFFER_SIZE`</td>
-<td>The buffer size of the WebSocket connection MC uses for SQL operations. Default: `5MB`.</td>
-<td>
-
-```bash
-hz-mc start -Dhazelcast.mc.websocket.buffer-size=10MB
-```
-
-</td>
-</tr>
-<tr>
 <td><Anchor id="hazelcast-mc-ui-asynctablethreshold" />`hazelcast.mc.ui.asyncTableThreshold MC_UI_ASYNC_TABLE_THRESHOLD`</td>
 <td>Tables bigger than the threshold are loaded asynchronously. You can't sort an asynchronous table. Default: `500`.</td>
 <td>
 
 ```bash
 hz-mc start -Dazelcast.mc.ui.asyncTableThreshold=1000
+```
+
+</td>
+</tr>
+</tbody>
+</table>
+
+## Cluster connections
+
+These properties configure how Management Center communicates with clusters:
+
+<table>
+<colgroup>
+<col style={{width:'25%'}} />
+<col style={{width:'50%'}} />
+<col style={{width:'25%'}} />
+</colgroup>
+<thead>
+<tr>
+<th>Property</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+<p><Anchor id="hazelcast-mc-clusterHealthCheck-exclude" />`hazelcast.mc.clusterHealthCheck.exclude`</p>
+
+<p>`MC_CLUSTERHEALTHCHECK_EXCLUDE`</p>
+
+</td>
+<td>List of check identifiers to be excluded from Healthcheck. By default, this is not set. See [Healthcheck](../../cluster/healthcheck.mdx#excluding-checks).</td>
+<td>
+
+```bash vars
+hz-mc start -Dhazelcast.mc.clusterHealthCheck.exclude=E001,U002 \
+-jar hazelcast-management-center-{full-version}.jar
+```
+
+</td>
+</tr>
+<tr>
+<td><Anchor id="hazelcast-mc-cluster-operation-timeout" />`hazelcast.mc.cluster.operation.timeout.millis`</td>
+<td>Timeout in milliseconds for Management Center operations that wait for a response from members. Default: 60000.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.cluster.operation.timeout.millis=60000
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+<p><Anchor id="metadata-polling-config" /><Anchor id="hazelcast-mc-state-reschedule-delay-millis" />`hazelcast.mc.state.reschedule.delay.millis`</p>
+
+<p>`MC_STATE_RESCHEDULE_DELAY_MILLIS`</p>
+
+</td>
+<td>Duration in milliseconds that Management Center waits before requesting metadata from a Hazelcast cluster. Metadata includes a list of all data structures and their configurations. Default: 1000.</td>
+<td>
+
+```bash
+hz-mc start -Dhazelcast.mc.state.reschedule.delay.millis=2000
 ```
 
 </td>
