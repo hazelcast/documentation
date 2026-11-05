@@ -68,7 +68,7 @@ function renderComment (changedFiles, pages, previewUrl, liveUrl) {
   }
   if (sections.size === 0) return ''
   const base = previewUrl.replace(/\/$/, '')
-  const link = (page) => `- [${page.title}](${base}${page.url})${page.modified ? ` ([current](${liveUrl}${page.url}))` : ''}${page.path ? ` \`${page.path}\`` : ''}`
+  const link = (page) => `- [${page.title}](${base}${page.url})${page.modified ? ` ([prod](${liveUrl}${page.url}))` : ''}${page.path ? ` \`${page.path}\`` : ''}`
   const lines = [HEADING, '', INTRO]
   for (const [section, list] of sections) {
     lines.push('', `**${section}**`, '', ...list.slice(0, SHOWN_LINKS).map(link))

@@ -98,7 +98,7 @@ test('links modified pages to the live site, but not new or renamed ones', () =>
     { filename: 'cloud/c.mdx', status: 'renamed', previous_filename: 'cloud/old-c.mdx' },
   ]
   assert.deepEqual(renderComment(files, pages, PREVIEW, LIVE).trimEnd().split('\n').slice(-3), [
-    `- [a](${PREVIEW}/cloud/a) ([current](${LIVE}/cloud/a)) \`a\``,
+    `- [a](${PREVIEW}/cloud/a) ([prod](${LIVE}/cloud/a)) \`a\``,
     `- [b](${PREVIEW}/cloud/b) \`b\``,
     `- [c](${PREVIEW}/cloud/c) \`c\``,
   ])
