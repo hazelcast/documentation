@@ -151,7 +151,7 @@ Each source is downloaded into a gitignored directory, and the pages read it fro
 
 The code examples are pinned: each entry in an `examples.json` records a commit and a hash of the file's contents. A file already downloaded at its commit is never downloaded again. A failed download or a content mismatch stops both the dev server and the build.
 
-The OpenAPI specs follow the branch each page names. The dev server downloads only specs that are missing. A build re-checks every spec against GitHub, because a build is what gets published.
+The OpenAPI specs follow the branch each page names. The dev server downloads only specs that are missing. A build re-checks every spec against GitHub, because a build is what gets published. The dev server finds the specs when it starts. If you add an `<ApiReference>` to a page, restart the dev server to load its spec.
 
 #### GitHub token
 
