@@ -689,11 +689,9 @@ If you set the property to `V2`, Management Center will only expose the subset o
 | --- | --- | --- |
 | `multiMap_backupCount` | `multi_map_backups_total` | n/a |
 | `multiMap_backupEntryCount` | `multi_map_backup_entries_total` | n/a |
-| `multiMap_backupEntryMemoryCost` | `multi_map_backup_entries_memory_cost_bytes` | n/a |
 | `multiMap_creationTime` | `multi_map_creation_timestamp_seconds` | n/a |
 | `multiMap_dirtyEntryCount` | `multi_map_dirty_entries_total` | n/a |
 | `multiMap_getCount` | `multi_map_operations_total` | `operation=get` |
-| `multiMap_heapCost` | `multi_map_heap_cost_bytes` | n/a |
 | `multiMap_hits` | `multi_map_hits_total` | n/a |
 | `multiMap_indexedQueryCount` | `multi_map_indexed_queries_total` | n/a |
 | `multiMap_lastAccessTime` | `multi_map_last_access_timestamp_seconds` | n/a |
@@ -703,7 +701,6 @@ If you set the property to `V2`, Management Center will only expose the subset o
 | `multiMap_numberOfEvents` | `multi_map_events_total` | n/a |
 | `multiMap_numberOfOtherOperations` | `multi_map_operations_total` | `operation=other` |
 | `multiMap_ownedEntryCount` | `multi_map_owned_entries_total` | n/a |
-| `multiMap_ownedEntryMemoryCost` | `multi_map_owned_entry_memory_cost_bytes` | n/a |
 | `multiMap_putCount` | `multi_map_operations_total` | `operation=put` |
 | `multiMap_queryCount` | `multi_map_queries_total` | n/a |
 | `multiMap_removeCount` | `multi_map_operations_total` | `operation=remove` |
@@ -716,6 +713,14 @@ If you set the property to `V2`, Management Center will only expose the subset o
 | `multiMap_totalPutLatency` | `multi_map_latency_seconds_total` | `operation=put` |
 | `multiMap_totalRemoveLatency` | `multi_map_latency_seconds_total` | `operation=remove` |
 | `multiMap_totalSetLatency` | `multi_map_latency_seconds_total` | `operation=set` |
+
+For historical reasons, these MultiMap metrics also exist, but they always report 0:
+
+| V1 metric `hz_` | V2 metric `hazelcast_` | Additional labels |
+| --- | --- | --- |
+| `multiMap_backupEntryMemoryCost` | `multi_map_backup_entries_memory_cost_bytes` | n/a |
+| `multiMap_heapCost` | `multi_map_heap_cost_bytes` | n/a |
+| `multiMap_ownedEntryMemoryCost` | `multi_map_owned_entry_memory_cost_bytes` | n/a |
 
 ## CP Subsystem
 
