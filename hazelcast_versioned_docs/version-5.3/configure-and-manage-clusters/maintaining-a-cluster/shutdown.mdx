@@ -77,7 +77,7 @@ When you gracefully shut down a member, it allows a Hazelcast cluster to migrate
 
 During a graceful shutdown the oldest cluster member (master member) migrates all the replicas owned by the shutdown-requesting member to the other running cluster members.
 
-While the master member is migrating replicas, the rest of the cluster waits for a configured period of time until this process is finished. You can specify this period using the [`hazelcast.graceful.shutdown.max.wait` property](../../reference/system-properties.mdx#hazelcast.graceful.shutdown.max.wait). If migrations are not completed within this period, the shutdown process may continue ungracefully, which may lead to data loss.
+While the master member is migrating replicas, the rest of the cluster waits for a configured period of time until this process is finished. You can specify this period using the [`hazelcast.graceful.shutdown.max.wait` property](../../reference/system-properties.mdx#cluster-versions-and-shutdown). If migrations are not completed within this period, the shutdown process may continue ungracefully, which may lead to data loss.
 
 :::note
 
@@ -131,9 +131,9 @@ Execute the `stop.sh` script in your member's `bin` directory.
 
 This option releases most of the member's used resources.
 
-If you set the [`hazelcast.shutdownhook.enabled` property](../../reference/system-properties.mdx#hazelcast.shutdownhook.enabled) to `false`, your member will ignore the `SIGTERM` signal and the process will terminate ungracefully like it had received a `SIGKILL` signal.
+If you set the [`hazelcast.shutdownhook.enabled` property](../../reference/system-properties.mdx#cluster-versions-and-shutdown) to `false`, your member will ignore the `SIGTERM` signal and the process will terminate ungracefully like it had received a `SIGKILL` signal.
 
-If you set the [`hazelcast.shutdownhook.policy` property](../../reference/system-properties.mdx#hazelcast.shutdownhook.policy) to `GRACEFUL` your member will be gracefully shutdown.
+If you set the [`hazelcast.shutdownhook.policy` property](../../reference/system-properties.mdx#cluster-versions-and-shutdown) to `GRACEFUL` your member will be gracefully shutdown.
 
 </td>
 </tr>

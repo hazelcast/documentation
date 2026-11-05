@@ -36,7 +36,7 @@ Each in-memory minute bucket consumes around 0.5 KB of memory.
 
 ## Change the metrics time to live
 
-To customize the number of days for which Management Center persists metrics, start Management Center with the [`hazelcast.mc.metrics.disk.ttl.duration` property](./configuration/system-properties.mdx#disk-usage-config).
+To customize the number of days for which Management Center persists metrics, start Management Center with the [`hazelcast.mc.metrics.disk.ttl.duration` property](./configuration/system-properties.mdx#metrics-and-prometheus).
 
 This property takes a duration in days, represented in the ISO-8601 format:
 
@@ -83,7 +83,7 @@ These logs provide some basic persistence statistics and details about any activ
 
 ## Disable metrics persistence
 
-If you don't want metrics to be persisted on disk, set the [`hazelcast.mc.metrics.persistence.enabled`](./configuration/system-properties.mdx#hazelcast-mc-metrics-persistence-enabled) property to `false`, which stores metrics only in memory.
+If you don't want metrics to be persisted on disk, set the [`hazelcast.mc.metrics.persistence.enabled`](./configuration/system-properties.mdx#metrics-and-prometheus) property to `false`, which stores metrics only in memory.
 
 :::tip
 
@@ -109,7 +109,7 @@ hz-mc start
 
 Management Center may experience delays while consuming metrics from cluster members, resulting in `N/A` or `0` displayed instead of the metric values. Delays usually occur when Management Center is connected to a large cluster of 30+ members.
 
-To resolve this issue, increase the number of threads that consume metrics from the cluster members by setting the [`hazelcast.mc.metrics.consumer.thread.pool.size` property](./configuration/system-properties.mdx#hazelcast-mc-metrics-consumer-thread-pool-size)
+To resolve this issue, increase the number of threads that consume metrics from the cluster members by setting the [`hazelcast.mc.metrics.consumer.thread.pool.size` property](./configuration/system-properties.mdx#metrics-and-prometheus)
 
 ### Slow background persistence runs
 
