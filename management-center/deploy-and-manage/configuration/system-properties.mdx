@@ -79,7 +79,7 @@ These properties configure the Management Center web server, including the HTTP 
 | `hazelcast.mc.cors.allowedMethods` | `MC_CORS_ALLOWED_METHODS` |  | HTTP methods to allow for cross-origin requests.<br/><br/>If any other `hazelcast.mc.cors.*` property is set while `hazelcast.mc.cors.allowedMethods` is not set, only `GET` and `HEAD` HTTP methods will be allowed. |
 | `hazelcast.mc.cors.allowedHeaders` | `MC_CORS_ALLOWED_HEADERS` |  | List of headers that a pre-flight request can list as allowed for use during an actual request.<br/><br/>The special value `*` allows actual requests to send any header. |
 | `hazelcast.mc.cors.exposedHeaders` | `MC_CORS_EXPOSED_HEADERS` |  | List of response headers that an actual response might have and can be exposed to the client.<br/><br/>The special value `*` allows all headers to be exposed. |
-| `hazelcast.mc.cors.allowCredentials` | `MC_CORS_ALLOW_CREDENTIALS` |  | Whether user credentials are supported or not. Setting this property to `true` forbids originPatterns, allowedMethods, allowedHeaders to have a `*` value. Be aware that this option establishes a high level of trust with the configured domains and also increases the surface attack of the web application by exposing sensitive user-specific information such as cookies and CSRF tokens. If this property is not set, user credentials are not supported. |
+| `hazelcast.mc.cors.allowCredentials` | `MC_CORS_ALLOW_CREDENTIALS` |  | Whether user credentials are supported or not. Setting this property to `true` forbids `originPatterns`, `allowedMethods`, `allowedHeaders` to have a `*` value. Be aware that this option establishes a high level of trust with the configured domains and also increases the surface attack of the web application by exposing sensitive user-specific information such as cookies and CSRF tokens. If this property is not set, user credentials are not supported. |
 | `hazelcast.mc.cors.allowPrivateNetwork` | `MC_CORS_ALLOW_PRIVATE_NETWORK` |  | Whether private network access is supported for user-agents restricting such access by default.<br/><br/>Private network requests are requests whose target server's IP address is more private than that from which the request initiator was fetched. For example, a request from a public website (`https://example.com`) to a private website (`https://router.local`), or a request from a private website to localhost.<br/><br/>If this property is not set, private network access is not supported. |
 | `hazelcast.mc.cors.maxAge` | `MC_CORS_MAX_AGE` |  | Configure how long, in seconds, the response from a pre-flight request can be cached by clients. |
 | `hazelcast.mc.forwarded.requests.enabled` | `MC_FORWARDED_REQUESTS_ENABLED` | `true` | Whether Management Center reads `X-Forwarded-*` headers from reverse proxies. |
@@ -219,7 +219,7 @@ These properties configure how Management Center communicates with clusters:
 | `hazelcast.mc.cluster.operation.timeout.millis` |  | 60000 | Timeout in milliseconds for Management Center operations that wait for a response from members. |
 | `hazelcast.mc.state.reschedule.delay.millis` | `MC_STATE_RESCHEDULE_DELAY_MILLIS` | 1000 | Duration in milliseconds that Management Center waits before requesting metadata from a Hazelcast cluster. Metadata includes a list of all data structures and their configurations. |
 
-## Client connection strategy configuration {/* #client-config */}
+## Client connection strategy {/* #client-config */}
 
 Use the following properties to configure the connection strategy of the Management Center client.
 
@@ -232,4 +232,4 @@ These properties apply to all clients that are started by Management Center.
 | `hazelcast.mc.client.initial.backoff.millis` | `1000` | Duration in milliseconds that Management Center waits after the first connection failure before retrying. Values must be between 1000 and 60000. |
 | `hazelcast.mc.clientFiltering.modes` | `ALLOWLIST, DENYLIST` | Adjusts client filtering modes. Value must be set of `ALLOWLIST` and `DENYLIST`. |
 | `hazelcast.mc.info.instanceName` |  | Set the instance name visible in the [Top Bar](../../get-started/user-interface-overview/user-interface.mdx#top-bar). Set blank to not display any instance name. If not set the instance name defaults to the hostname of the machine Manage Center is deployed on. |
-| `maskOpts` | `' '` (empty) | Comma-separated list of option keys to be masked. Masks sensitive data in logs passed via JAVA\_OPTS. |
+| `maskOpts` | `' '` (empty) | Comma-separated list of option keys to be masked. Masks sensitive data in logs passed via `JAVA_OPTS`. |

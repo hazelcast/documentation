@@ -55,7 +55,7 @@ It's not always necessary to have certificates signed by a well-known certificat
 To use a self-signed certificate, do one of the following:
 
 - Create the certificate with the hostname of the machine you will deploy the Management Center on.
-- Disable hostname verification by setting the [`hazelcast.mc.disableHostnameVerification` property](../../configuration/system-properties.mdx#hazelcast-mc-disablehostnameverification) to `true`.
+- Disable hostname verification by setting the [`hazelcast.mc.disableHostnameVerification` property](../../configuration/system-properties.mdx#tls) to `true`.
 
 Otherwise, you may see this exception in the member logs:
 
@@ -97,7 +97,7 @@ This command starts the Management Center on HTTPS port 443.
 
 ## Redirect the HTTP port to HTTPS {/* #enabling-http-port */}
 
-By default, the HTTP port is disabled when you enable TLS. If you want to have an open HTTP port that redirects to the HTTPS port, set the [`hazelcast.mc.tls.enableHttpPort` property](../../configuration/system-properties.mdx#hazelcast.mc.tls.enableHttpPort) to `true`.
+By default, the HTTP port is disabled when you enable TLS. If you want to have an open HTTP port that redirects to the HTTPS port, set the [`hazelcast.mc.tls.enableHttpPort` property](../../configuration/system-properties.mdx#tls) to `true`.
 
 ## Mutual authentication
 
@@ -105,4 +105,4 @@ To make sure that only authenticated HTTP clients such as web browsers or cURL c
 
 When mutual authentication is enabled, HTTP clients need to present their own TLS certificate to Management Center before they are allowed to connect. You can store trusted clients' TLS certificates in the Management Center truststore so it can authenticate them.
 
-To enable mutual authentication, use the [`hazelcast.mc.tls.mutualAuthentication` property](../../configuration/system-properties.mdx#hazelcast-mc-tls-mutualauthentication).
+To enable mutual authentication, use the [`hazelcast.mc.tls.mutualAuthentication` property](../../configuration/system-properties.mdx#tls).
