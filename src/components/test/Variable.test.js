@@ -71,6 +71,14 @@ test('`code` sets the label in monospace; without it the label is plain text', (
   assert.equal(code.text, value('hazelcast', 'current', name))
 })
 
+test('`breaks` lets a code label wrap at readable points without changing its text', () => {
+  const props = {href: 'https://example.com', text: 'hazelcast.client.event.thread.count', code: true}
+  const $ = cheerio.load(render('hazelcast', 'current', {...props, breaks: true}))
+  assert.equal($('a code').text(), props.text)
+  assert.ok($('a code wbr').length > 0)
+  assert.equal(cheerio.load(render('hazelcast', 'current', props))('a code wbr').length, 0)
+})
+
 test('outside a versioned docs page, the global values are used', () => {
   const name = Object.keys(variables)[0]
   client.active = undefined

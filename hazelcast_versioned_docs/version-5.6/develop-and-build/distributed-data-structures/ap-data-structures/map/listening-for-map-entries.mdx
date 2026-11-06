@@ -210,40 +210,12 @@ The default backwards-compatible event publishing strategy only publishes `UPDAT
 
 When you configure Hazelcast members with property `hazelcast.map.entry.filtering.natural.event.types` set to `true`, handling of entry updates conceptually treats value transition as entry, update or exit with regards to the predicate value space. The following table compares how a listener is notified about an update to a map entry value under the default backwards-compatible Hazelcast behavior (when property `hazelcast.map.entry.filtering.natural.event.types` is not set or is set to `false`) versus when set to `true`:
 
-<table>
-<colgroup>
-<col style={{width:'33.3333%'}} />
-<col style={{width:'33.3333%'}} />
-<col style={{width:'33.3334%'}} />
-</colgroup>
-<tbody>
-<tr>
-<td></td>
-<td>`hazelcast.map.entry.filtering.natural.event.types = false` (default)</td>
-<td>`hazelcast.map.entry.filtering.natural.event.types = true`</td>
-</tr>
-<tr>
-<td>When old value matches predicate, new value does not match predicate</td>
-<td>No event is delivered to entry listener</td>
-<td>`REMOVED` event is delivered to entry listener</td>
-</tr>
-<tr>
-<td>When old value matches predicate, new value matches predicate</td>
-<td>`UPDATED` event is delivered to entry listener</td>
-<td>`UPDATED` event is delivered to entry listener</td>
-</tr>
-<tr>
-<td>When old value does not match predicate, new value does not match predicate</td>
-<td>No event is delivered to entry listener</td>
-<td>No event is delivered to entry listener</td>
-</tr>
-<tr>
-<td>When old value does not match predicate, new value matches predicate</td>
-<td>`UPDATED` event is delivered to entry listener</td>
-<td>`ADDED` event is delivered to entry listener</td>
-</tr>
-</tbody>
-</table>
+|  | `hazelcast.map.entry.filtering.natural.event.types = false` (default) | `hazelcast.map.entry.filtering.natural.event.types = true` |
+| --- | --- | --- |
+| When old value matches predicate, new value does not match predicate | No event is delivered to entry listener | `REMOVED` event is delivered to entry listener |
+| When old value matches predicate, new value matches predicate | `UPDATED` event is delivered to entry listener | `UPDATED` event is delivered to entry listener |
+| When old value does not match predicate, new value does not match predicate | No event is delivered to entry listener | No event is delivered to entry listener |
+| When old value does not match predicate, new value matches predicate | `UPDATED` event is delivered to entry listener | `ADDED` event is delivered to entry listener |
 
 ## Interceptors
 
@@ -269,38 +241,14 @@ The map API has two methods for adding and removing an interceptor to the map: `
 
 Methods available within the `MapInterceptor` interface:
 
-<table>
-<colgroup>
-<col style={{width:'50%'}} />
-<col style={{width:'50%'}} />
-</colgroup>
-<tbody>
-<tr>
-<td>`interceptGet`</td>
-<td>Replace returned `map.get()` value with new value</td>
-</tr>
-<tr>
-<td>`afterGet`</td>
-<td>Action to take after `map.get()` operation is complete</td>
-</tr>
-<tr>
-<td>`interceptPut`</td>
-<td>Replace value in `map.put()` with new value</td>
-</tr>
-<tr>
-<td>`afterPut`</td>
-<td>Action to take after `map.put()` is complete</td>
-</tr>
-<tr>
-<td>`interceptRemove`</td>
-<td>Collects removed map entry</td>
-</tr>
-<tr>
-<td>`afterRemove`</td>
-<td>Action to take after `map.remove()` is complete</td>
-</tr>
-</tbody>
-</table>
+| Method | Description |
+| --- | --- |
+| `interceptGet` | Replace returned `map.get()` value with new value |
+| `afterGet` | Action to take after `map.get()` operation is complete |
+| `interceptPut` | Replace value in `map.put()` with new value |
+| `afterPut` | Action to take after `map.put()` is complete |
+| `interceptRemove` | Collects removed map entry |
+| `afterRemove` | Action to take after `map.remove()` is complete |
 
 The following is an example usage.
 
