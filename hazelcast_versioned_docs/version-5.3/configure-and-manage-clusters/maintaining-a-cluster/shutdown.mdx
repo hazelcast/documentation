@@ -77,7 +77,7 @@ When you gracefully shut down a member, it allows a Hazelcast cluster to migrate
 
 During a graceful shutdown the oldest cluster member (master member) migrates all the replicas owned by the shutdown-requesting member to the other running cluster members.
 
-While the master member is migrating replicas, the rest of the cluster waits for a configured period of time until this process is finished. You can specify this period using the [`hazelcast.graceful.shutdown.max.wait` property](../../reference/system-properties.mdx#hazelcast.graceful.shutdown.max.wait). If migrations are not completed within this period, the shutdown process may continue ungracefully, which may lead to data loss.
+While the master member is migrating replicas, the shutdown-requesting member waits for a configured period of time until this process is finished. You can specify this period using the [`hazelcast.graceful.shutdown.max.wait` property](../../reference/system-properties.mdx#hazelcast.graceful.shutdown.max.wait). If migrations are not completed within this period, the shutdown process may continue ungracefully, which may lead to data loss.
 
 :::note
 
@@ -90,7 +90,7 @@ After these migrations are completed, the shutdown-requesting member will no lon
 To gracefully shut down a Hazelcast member (so that it waits the migration operations to be completed), you have the following options:
 
 - Call the `HazelcastInstance.shutdown()` method.
-- Use the JMX API's shutdown method. You can do this by implementing a JMX client application or using a JMX monitoring tool such as JConsole.
+- Use the JMX API's shutdown method. You can do this by implementing a JMX client application or using a JMX monitoring tool such as JConsole. This option requires setting the `hazelcast.jmx` property to `true`.
 - Use <Variable href="/management-center/{page-latest-supported-mc}/clusters/members" text="Management Center" />.
 
 ### Ungraceful Shutdown
@@ -124,7 +124,7 @@ Use the `kill -15 <PID>` command in the terminal.
 
 Call the `HazelcastInstance.getLifecycleService().terminate()` method.
 
-Execute the `stop.sh` script in your member's `bin` directory.
+Execute the `hz-stop` script (`hz-stop.bat` on Windows) in your member's `bin` directory.
 
 </td>
 <td>

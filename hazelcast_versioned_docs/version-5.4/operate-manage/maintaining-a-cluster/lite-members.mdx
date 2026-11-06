@@ -45,7 +45,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java-member-api" label="Java Member API">
 
-```yaml
+```java
 Config config = new Config();
 config.setLiteMember(true);
 ```
@@ -75,9 +75,6 @@ You can demote data members to lite ones. Similar to the promotions, the demotio
 You can demote a data member programmatically using the `Cluster` interface as follows:
 
 ```java
-Config config = new Config();
-config.setLiteMember(true);
-
 HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
 Cluster cluster = hazelcastInstance.getCluster();
 cluster.demoteLocalDataMember();

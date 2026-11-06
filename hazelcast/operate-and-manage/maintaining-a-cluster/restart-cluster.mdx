@@ -16,7 +16,7 @@ There are two options for restarting a cluster:
 - [Perform a rolling restart](#rolling)
 - [Perform a whole cluster restart](#whole)
 
-Where possible, you should perform a rolling restart. In a rolling restart, members are stopped one at a time and each member's data is automatically repartitioned across the remaining cluster members before shutting down. This minimizes the risk of service interruptions and data loss. When the replacement member joins the cluster, data is repartitioned again.
+Where possible, you should perform a rolling restart. In a rolling restart, members are stopped one at a time. A member that shuts down gracefully first migrates its data to the remaining cluster members. Members do not migrate data in a cluster state that does not allow migration, such as `NO_MIGRATION` or `FROZEN`. This minimizes the risk of service interruptions and data loss. When the replacement member joins the cluster, data is repartitioned again.
 
 Depending on the scope of your configuration changes, you may need to update a single member, a cluster, or multiple clusters. The process is the same in all cases.
 
@@ -26,15 +26,15 @@ You can also use a rolling restart for canarying: testing changes on a single me
 
 :::
 
-Some configuration needs to be consistent across all members in a cluster. To update this configuration, you must restart the whole cluster simultaneously. By default, this causes all data in the cluster to be lost. To avoid data loss, you must enable [persistence](../fault-tolerance/persistence/persistence.mdx). To avoid downtime, you must divert traffic to another Hazelcast cluster before restarting. Hazelcast supports [blue-green deployments](../../get-started/get-started-enterprise/deploy-blue-green-tutorial.mdx) to facilitate this.
+Some configuration needs to be consistent across all members in a cluster. To update this configuration, you must restart the whole cluster simultaneously. By default, this causes all data in the cluster to be lost. To avoid data loss, you must enable [persistence](../fault-tolerance/persistence/persistence.mdx), which requires <Variable name="enterprise-product-name" />. To avoid downtime, you must divert traffic to another Hazelcast cluster before restarting. Hazelcast supports [blue-green deployments](../../get-started/get-started-enterprise/deploy-blue-green-tutorial.mdx) to facilitate this.
 
 Note that member processes are not reused. In all cases, members are terminated, and new members are created to replace them.
 
 ### Persistence
 
-If [persistence](../fault-tolerance/persistence/persistence.mdx) is enabled and the cluster enters `NO_MIGRATION` or `FROZEN` state, replacement members will adopt the UUIDs of the terminated members and attempt to load persisted data from disk. This avoids the repartitioning process, helping the cluster recover more quickly during a rolling restart.
+If [persistence](../fault-tolerance/persistence/persistence.mdx) is enabled and the cluster enters `NO_MIGRATION` or `FROZEN` state, a replacement member can reuse the persistence directory of a terminated member. The replacement member then adopts the terminated member's UUID and attempts to load persisted data from disk. This avoids the repartitioning process, helping the cluster recover more quickly during a rolling restart.
 
-Persistence is required to avoid data loss during a whole cluster restart. See [Configuring Persistence](../fault-tolerance/persistence/configuring-persistence.mdx) for details.
+Persistence is required to avoid data loss during a whole cluster restart. Persistence requires <Variable name="enterprise-product-name" />. See [Configuring Persistence](../fault-tolerance/persistence/configuring-persistence.mdx) for details.
 
 ### Embedded mode
 
@@ -70,6 +70,8 @@ To perform a rolling restart:
 
    :::
 
+   The `hz-stop` command sends `SIGTERM` to each member. By default, the member terminates without a graceful shutdown. To shut down gracefully, add `-Dhazelcast.shutdownhook.policy=GRACEFUL` to `JAVA_OPTS` before you start the member.
+
    ```bash
    hz-stop
    ```
@@ -77,7 +79,7 @@ To perform a rolling restart:
    </TabItem>
    <TabItem value="management-center" label="Management Center">
 
-   Go to **Members**, select the member's row in the table and select **Shutdown**.
+   Go to **Members**, select the member's row in the table and select **Shutdown Member**.
 
    </TabItem>
    <TabItem value="docker" label="Docker">
@@ -124,7 +126,7 @@ To perform a whole cluster restart:
    <TabItem value="cli" label="CLI">
 
    ```bash
-   hz-cluster-admin -a <MEMBER_ADDRESS> -c <CLUSTER_NAME> -s no_migration
+   hz-cluster-admin -o change-state -a <MEMBER_ADDRESS> -c <CLUSTER_NAME> -s no_migration
    ```
 
    You can specify the IP address of any member in the cluster.
@@ -146,6 +148,8 @@ To perform a whole cluster restart:
    This command shuts down all running members on the local machine.
 
    :::
+
+   The `hz-stop` command sends `SIGTERM` to each member. By default, the member terminates without a graceful shutdown. To shut down gracefully, add `-Dhazelcast.shutdownhook.policy=GRACEFUL` to `JAVA_OPTS` before you start the member.
 
    ```bash
    hz-stop

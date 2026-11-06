@@ -81,7 +81,7 @@ All other cluster states restrict the operations on a cluster:
 
 Used internally during graceful cluster-wide shutdowns.
 
-In this state, only read operations such as `map.get()` are allowed.
+In this state, Hazelcast runs read operations such as `map.get()` and rejects write operations such as `map.put()` with an `IllegalStateException`. Adding an index with `IMap.addIndex()` is an exception: Hazelcast allows it.
 
 </td>
 </tr>
@@ -97,7 +97,7 @@ Used internally as a temporary state while the cluster state is still changing.
 
 :::note
 
-If an error occurs during a state change, Hazelcast does not try to change the cluster state again.
+If an error occurs during a state change that you request, Hazelcast does not try to change the cluster state again.
 
 :::
 
@@ -120,7 +120,7 @@ In a `FROZEN` state, when a member leaves the cluster, the partitions owned by t
 
 Individual members can be in the following states:
 
-- `ACTIVE`: Members are in this state when the state of a cluster is `ACTIVE` or `FROZEN`. See [Cluster States](#cluster-states) on this page.
+- `ACTIVE`: Members are in this state when the state of a cluster is `ACTIVE`, `NO_MIGRATION`, or `FROZEN`. See [Cluster States](#cluster-states) on this page.
 - `PASSIVE`: Members transition to this state in the following circumstances:
 
   - During a graceful shutdown.
@@ -139,6 +139,6 @@ To change a cluster's state, you can use one of the following:
 
 :::note
 
-You cannot change a cluster's state to anything other than `ACTIVE` while members are repartitioning or backing up data.
+You cannot change a cluster's state while members are repartitioning or backing up data.
 
 :::
