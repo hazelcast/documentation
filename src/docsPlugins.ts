@@ -6,7 +6,7 @@
 //   <id>_versioned_sidebars/  sidebar stubs, gitignored (see ensureVersionedSidebars)
 import fs from 'fs';
 import path from 'path';
-import type {PluginConfig} from '@docusaurus/types';
+import type {ParseFrontMatter, PluginConfig} from '@docusaurus/types';
 import type {Options} from '@docusaurus/plugin-content-docs';
 import latestLinks, {type LatestSegs} from './remark/latestLinks';
 import headingVariables from './remark/headingVariables';
@@ -47,6 +47,17 @@ export function canonicalSitemapItems<T extends {url: string}>(items: T[]): T[] 
     return !pathnames.has(['', id, latestSeg, ...rest].join('/'));
   });
 }
+
+// `markdown.parseFrontMatter` hook: a page with `hide_in_snapshot: true` in a component's unreleased snapshot becomes `unlisted`.
+// The release script copies frontmatter into each release, so writing `unlisted` in the file would hide the page in releases too.
+export const parseFrontMatter: ParseFrontMatter = async (params) => {
+  const result = await params.defaultParseFrontMatter(params);
+  const [id] = path.relative(siteDir, params.filePath).split(path.sep);
+  if (result.frontMatter.hide_in_snapshot === true && id !== undefined && id in snapshotSegs) {
+    result.frontMatter.unlisted = true;
+  }
+  return result;
+};
 
 // `caution`/`important` are not default Docusaurus admonition keywords; fidelity Layer 2 compares admonition types.
 const admonitions = {keywords: ['caution', 'important'], extendDefaults: true};

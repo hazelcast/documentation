@@ -120,6 +120,21 @@ test('a category takes the badge of its landing page, nested items are tagged, a
   assert.equal(noLanding.items[0].className, 'nav-badge-beta')
 })
 
+test('hide_in_snapshot makes a page unlisted in an unreleased snapshot only', async () => {
+  const unlisted = async (file, frontMatter = {hide_in_snapshot: true}) => {
+    const {frontMatter: parsed} = await docsPlugins.parseFrontMatter({
+      filePath: path.join(site, file),
+      fileContent: '',
+      defaultParseFrontMatter: async () => ({frontMatter: {...frontMatter}, content: ''}),
+    })
+    return parsed.unlisted === true
+  }
+  assert.equal(await unlisted('hazelcast/page.mdx'), true, 'snapshot main')
+  assert.equal(await unlisted('hazelcast_versioned_docs/version-5.7/page.mdx'), false, 'release')
+  assert.equal(await unlisted('clc/page.mdx'), false, 'main that is the newest release')
+  assert.equal(await unlisted('hazelcast/page.mdx', {}), false, 'no flag')
+})
+
 // Version names are dotted numbers, compared numerically: 5.10 is newer than 5.9.
 const compareVersions = (a, b) => {
   const pa = a.split('.').map(Number)

@@ -2,7 +2,7 @@ import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 import {redirects} from './src/redirects';
-import {docs, versionedDocs, versionedInstances, latestSegs, canonicalSitemapItems} from './src/docsPlugins';
+import {docs, versionedDocs, versionedInstances, latestSegs, canonicalSitemapItems, parseFrontMatter} from './src/docsPlugins';
 import {variables, versionedVariables} from './src/variables';
 
 // Retired versions served as static Antora HTML from a separate site. See plugins/archived-versions.
@@ -48,6 +48,7 @@ const config: Config = {
   onBrokenAnchors: 'warn',
 
   markdown: {
+    parseFrontMatter,
     hooks: {
       onBrokenMarkdownLinks: 'throw',
       onBrokenMarkdownImages: 'throw',
