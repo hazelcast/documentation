@@ -449,6 +449,7 @@ export const redirects: {from: string; to: string}[] = [
   { from: "/hazelcast/5.7/cp-subsystem/listeners", to: "/hazelcast/5.7/cp-subsystem/management" },
   { from: "/hazelcast/5.7/cp-subsystem/member-shutdown", to: "/hazelcast/5.7/cp-subsystem/management" },
   { from: "/hazelcast/5.7/cp-subsystem/persistence", to: "/hazelcast/5.7/cp-subsystem/configuration" },
+  { from: "/hazelcast/5.7/cp-subsystem/raft-log-file-exporter", to: "/hazelcast/5.6/cp-subsystem/raft-log-file-exporter" },
   { from: "/hazelcast/5.7/cp-subsystem/sessions", to: "/hazelcast/5.7/cp-subsystem/cp-subsystem" },
   { from: "/hazelcast/5.7/cp-subsystem/unsafe-mode", to: "/hazelcast/5.7/cp-subsystem/cp-subsystem" },
   { from: "/hazelcast/5.7/data-connections/mongo-dc-configuration", to: "/hazelcast/5.7/data-connections/data-connections-configuration" },
