@@ -237,3 +237,95 @@ fmt.Println("Value              :", entry.Value)
 
 </TabItem>
 </Tabs>
+
+## Detect oversized entries
+
+An oversized entry is a map entry whose size is above the map's oversized entry threshold. Large entries can cause memory pressure and slow down migrations and WAN replication. Hazelcast reports writes of oversized entries in three map metrics and in a warning log. The size of an entry is the size of its serialized key plus the size of its serialized value.
+
+### Set the oversized entry threshold
+
+Each map has its own threshold, in bytes. The default is 1048576 bytes (1 MB). To disable tracking for a map, set the threshold to `0`. Hazelcast tracks oversized entries only when [statistics are enabled](#accessing-entry-statistics) for the map, which is the default.
+
+The following example sets the threshold of the `myMap` map to 512 KB:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <map name="myMap">
+        <oversized-entry-threshold-bytes>524288</oversized-entry-threshold-bytes>
+    </map>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  map:
+    myMap:
+      oversized-entry-threshold-bytes: 524288
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+Config config = new Config();
+config.getMapConfig("myMap").setOversizedEntryThresholdBytes(524288);
+```
+
+</TabItem>
+</Tabs>
+
+To set the threshold for every map that has no configuration of its own, set it in the `default` map configuration. See [The Default (Fallback) Map Configuration](./map-config.mdx#the-default-fallback-map-configuration).
+
+Hazelcast disables tracking for its internal maps whose names start with `__jet.`, and for the `__sql.catalog` map.
+
+### Writes that Hazelcast measures
+
+Hazelcast measures each write that stores a value in the map:
+- Put and set operations, including `putAll()`
+- Entry processor results
+- Transactional writes
+- Merges, including entries that a cluster receives through WAN replication
+- Values that a MapStore or MapLoader loads into the map
+
+Hazelcast does not measure `setTtl()`, because it does not write a new value.
+
+### Limitations of the OBJECT in-memory format
+
+For a map with the `OBJECT` in-memory format, the serialized size of an entry can differ significantly from the heap memory that the entry uses.
+
+Hazelcast does not measure some writes to an `OBJECT` map, to avoid serializing values that exist only as objects:
+- Entry processor results, unless WAN replication is enabled for the map
+- Values that a MapLoader loads when a read misses the map
+- Puts to a map that has a map interceptor or a `PostProcessingMapStore`
+
+For details on in-memory formats, see [Setting the In-Memory Format of Map Entries](./setting-data-format.mdx).
+
+### Read the oversized entry metrics
+
+Hazelcast reports oversized entries in the following map metrics, which are also available from `LocalMapStats`:
+
+| Metric | `LocalMapStats` method | Unit | Description |
+| --- | --- | --- | --- |
+| `map.oversizedEntriesSeen` | `getOversizedEntriesSeen()` | Count | Number of writes of an oversized entry |
+| `map.lastOversizedEntrySize` | `getLastOversizedEntrySize()` | Bytes | Size of the most recent oversized entry, or `0` if none was written |
+| `map.lastOversizedEntryTime` | `getLastOversizedEntryTime()` | Milliseconds since the epoch | Time of the most recent oversized write, or `0` if none was written |
+
+The metrics count writes, not the entries that the map stores. Writing the same oversized entry twice increases the count by two. Removing an oversized entry does not decrease the count or reset the size and time of the most recent oversized entry.
+
+Each member reports the oversized entries written to the partitions that it owns. Hazelcast keeps the values with each partition. They move with a partition when it migrates to another member, and when a backup replica is promoted after a member leaves the cluster.
+
+If several oversized entries are written between two metric collections, the size and time show only the last of them. For example, if entries of 2 MB, 10 MB, and 2 MB are written in that order, the size shows 2 MB, and the 10 MB entry is not reported. The count increases by three.
+
+### Find oversized entries in the log
+
+When an oversized entry is written to a primary replica, the member logs a warning. The warning gives the entry, key, and value sizes, the map name, the partition ID, and the threshold.
+
+Each member logs this warning at most once every 30 minutes for each map. Writes to backup replicas do not log a warning.
