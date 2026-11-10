@@ -63,7 +63,7 @@ If you're unsure about how to submit Jet jobs using Operator, follow the [Jet](.
 
 ## Run the data pipeline
 
-In the tutorial, we will walk through a practical example involving a 'transaction' map designed to store crucial transaction data. Our Hazelcast Jet setup will seamlessly retrieve these transactions from the map and process them. First, we'll submit a Jet job that processes transactions from the 'transaction' map. To maintain simplicity in the example, the pipeline will only log the transactions. We'll then explore the process of saving the state of the Jet job using Operator.
+In the tutorial, we will walk through a practical example involving a `transaction` map designed to store crucial transaction data. Our Hazelcast Jet setup will seamlessly retrieve these transactions from the map and process them. First, we'll submit a Jet job that processes transactions from the `transaction` map. To maintain simplicity in the example, the pipeline will only log the transactions. We'll then explore the process of saving the state of the Jet job using Operator.
 
 Before submitting the Jet job, you need to create a map from which the Jet job will fetch the records. To utilize the map as a data source for a Jet job, we need to enable the event journal in the map.
 
@@ -84,7 +84,7 @@ Before submitting the Jet job, you need to create a map from which the Jet job w
    transaction-v1   Running   741632319877545985   2023-08-09T12:22:04Z
    ```
 
-   As new entries are added to the 'transaction' map, the Jet job automatically retrieves and processes them. To see the executed transactions, check the logs. In the example below, three transactions are processed with keys 'transaction-1', 'transaction-2', and 'transaction-3'.
+   As new entries are added to the `transaction` map, the Jet job automatically retrieves and processes them. To see the executed transactions, check the logs. In the example below, three transactions are processed with keys `transaction-1`, `transaction-2`, and `transaction-3`.
 
    ```shell
    kubectl logs -l app.kubernetes.io/name=hazelcast -c hazelcast | grep transaction-v1/Log
@@ -100,7 +100,7 @@ In data pipelines, saving and using computation process state is vital for accur
 1. Export a Snapshot from the Jet job.
 
    <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_job_snapshot_docs_modules_ROOT_examples_operator_jet_job_snapshot_snapshot_yaml + 'EOF'}</CodeBlock>
-2. Check the status of the exported JetJobSnapshot.
+2. Check the status of the exported `JetJobSnapshot`.
 
    ```shell
    kubectl get jetjobsnapshot transaction
@@ -110,7 +110,7 @@ In data pipelines, saving and using computation process state is vital for accur
 
    :::note
 
-   By configuring the 'spec.cancelJob' field to 'true', the Jet job named 'transaction-v1' is canceled after taking the snapshot. This setting is particularly useful before submitting a new version of an existing pipeline.
+   By configuring the `spec.cancelJob` field to `true`, the Jet job named `transaction-v1` is canceled after taking the snapshot. This setting is particularly useful before submitting a new version of an existing pipeline.
 
    :::
 3. The Jet job should not be in the `Running` state anymore. Use the following command to verify this.
@@ -125,14 +125,14 @@ In data pipelines, saving and using computation process state is vital for accur
 
 When creating a new version of a data pipeline, it's essential to initialize the new pipeline from the latest state of the old one. Without this initialization, the new pipeline would start with no state and lack information about its predecessor's state. This could result in data loss or duplicate processing, which is not desirable, particularly for critical pipelines.
 
-1. Continuing with the example, we will now create a new version of the previous Jet job. For simplicity, the new version is similar to the old one: it takes entries from the 'transaction' map and logs them.
+1. Continuing with the example, we will now create a new version of the previous Jet job. For simplicity, the new version is similar to the old one: it takes entries from the `transaction` map and logs them.
 
    <CodeBlock language="java">{Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_job_snapshot_docs_modules_ROOT_examples_operator_jet_job_snapshot_job_v2_yaml}</CodeBlock>
-2. In contrast to the previous Jet job definition, we will set the 'initialSnapshotResourceName' field to refer to the snapshot exported in the preceding step. Submit the new Jet job.
+2. In contrast to the previous Jet job definition, we will set the `initialSnapshotResourceName` field to refer to the snapshot exported in the preceding step. Submit the new Jet job.
 
    <CodeBlock language="shell">{'kubectl apply -f - <<EOF\n' + Ex_hazelcast_code_samples_platform_operator_hazelcast_platform_operator_jet_job_snapshot_docs_modules_ROOT_examples_operator_jet_job_snapshot_job_v2_yaml + 'EOF'}</CodeBlock>
 
-   This Jet job, named 'transaction-v2', will seamlessly resume processing entries from the state we exported in the snapshot. This means transaction entries are processed only once within the pipeline.
+   This Jet job, named `transaction-v2`, will seamlessly resume processing entries from the state we exported in the snapshot. This means transaction entries are processed only once within the pipeline.
 3. Check the new Jet job status is `Running`.
 
    ```shell
@@ -141,7 +141,7 @@ When creating a new version of a data pipeline, it's essential to initialize the
    transaction-v2   Running   741650518446702593   2023-08-09T13:34:22Z
    ```
 
-   When you review the logs after submitting the pipeline, you will only see logs of transaction entries added after the time when we exported the snapshot. This means that the new version of the transaction pipeline, named 'transaction-v2', won't execute transactions already processed by the first version of the pipeline named 'transaction-v1'.
+   When you review the logs after submitting the pipeline, you will only see logs of transaction entries added after the time when we exported the snapshot. This means that the new version of the transaction pipeline, named `transaction-v2`, won't execute transactions already processed by the first version of the pipeline named `transaction-v1`.
 
    ```shell
    kubectl logs -l app.kubernetes.io/name=hazelcast -c hazelcast | grep transaction-v2/Log
@@ -149,7 +149,7 @@ When creating a new version of a data pipeline, it's essential to initialize the
    {"time":"2023-08-09T12:47:53,791", "logger": "com.hazelcast.jet.impl.connector.WriteLoggerP", "level": "INFO", "msg": "[10.36.0.10]:5702 [dev] [5.4.0] [transaction-v2/Log Transactions#0] [Job V2] transaction:'transaction-5' payload:'{\"description\": \"Gasoline Refill\", \"amount\": 50.30, \"transactionDate\": \"2023-08-13T09:00:00Z\"}' "}
    ```
 
-   If the new version of the Jet job is not initialized from the exported snapshot 'transaction', it will begin data processing from the start of the map. This is undesirable because we have already processed some transaction entries in the previous version of the pipeline.
+   If the new version of the Jet job is not initialized from the exported snapshot `transaction`, it will begin data processing from the start of the map. This is undesirable because we have already processed some transaction entries in the previous version of the pipeline.
 
    :::note
 

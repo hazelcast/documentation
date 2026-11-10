@@ -47,17 +47,17 @@ Dynamic configuration is supported for the following data structures:
 - Queue
 - List
 - Set
-- MultiMap
-- ReplicatedMap
+- `MultiMap`
+- `ReplicatedMap`
 - Ringbuffer
 - Topic
-- ReliableTopic
+- `ReliableTopic`
 - Executor
-- DurableExecutor
-- ScheduledExecutor
-- CardinalityEstimator
-- PNCounter
-- FlakeIdGenerator
+- `DurableExecutor`
+- `ScheduledExecutor`
+- `CardinalityEstimator`
+- `PNCounter`
+- `FlakeIdGenerator`
 - ExternalDataStore
 
 ## Persisting Dynamic Configuration {/* #persistence */}
@@ -96,12 +96,12 @@ To persist changes, you must do the following:
 
 To persist changes in Kubernetes, you must do the following:
 
-1. Update the ConfigMap with any of the configuration [options](#options) that are supported by the `/config/reload` or `/config/update` REST endpoints.
-2. Apply your ConfigMap changes to Kubernetes. For example, you can use `kubectl replace configmap`.
+1. Update the `ConfigMap` with any of the configuration [options](#options) that are supported by the `/config/reload` or `/config/update` REST endpoints.
+2. Apply your `ConfigMap` changes to Kubernetes. For example, you can use `kubectl replace configmap`.
 3. Do one of the following:
 
-   - Wait 2-3 minutes for the ConfigMap changes to be applied to your pods, then call the [`/config/reload`](./dynamic-config-update-and-reload.mdx) endpoint.
-   - Call the [`config/update` REST endpoint](./dynamic-config-update-and-reload.mdx) to reflect the changes you made to the ConfigMap in Hazelcast.
+   - Wait 2-3 minutes for the `ConfigMap` changes to be applied to your pods, then call the [`/config/reload`](./dynamic-config-update-and-reload.mdx) endpoint.
+   - Call the [`config/update` REST endpoint](./dynamic-config-update-and-reload.mdx) to reflect the changes you made to the `ConfigMap` in Hazelcast.
 
 ## Dynamic Configuration and User Customizations
 

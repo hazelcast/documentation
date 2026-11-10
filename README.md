@@ -89,7 +89,6 @@ The code that builds the site is in these folders:
 - `static/` holds files served as-is, such as `static/_redirects`.
 - A `test/` folder next to the code holds that code's unit tests, e.g. `plugins/llms-txt/test/`. The top-level `test/helpers/` loads the site's TypeScript and React modules into those tests.
 - `.github/` holds CI workflows and the release script.
-- `migration/` holds throwaway tooling from the Antora migration. See [Migration tooling](MAINTAINING.md#migration-tooling).
 - `AGENTS.md` holds instructions for AI coding agents working in this repo.
 
 ## Contributing

@@ -80,13 +80,13 @@ Tiered Storage feature is still in BETA stage.
 
 ### Security
 
-- <Badge type="enterprise" /> Added the TLS configuration property `keyMaterialDuration` which allows using a configurable timeout for caching keyStores and trustStores. See [TLS Configuration](../configure-and-manage-clusters/securing-a-cluster/tls-ssl/tls-configuration.mdx) for the details on how to configure this property. [\#23307](https://github.com/hazelcast/hazelcast/pull/23307)
+- <Badge type="enterprise" /> Added the TLS configuration property `keyMaterialDuration` which allows using a configurable timeout for caching `keyStores` and trustStores. See [TLS Configuration](../configure-and-manage-clusters/securing-a-cluster/tls-ssl/tls-configuration.mdx) for the details on how to configure this property. [\#23307](https://github.com/hazelcast/hazelcast/pull/23307)
 
 ### Serialization
 
 - Hazelcast now allows serializing unsupported types via [zero-configuration](../develop-solutions/serialization/compact-serialization.mdx#using-compact-serialization-with-zero-configuration) provided that there is an explicit serializer implemented for the unsupported type. [\#23449](https://github.com/hazelcast/hazelcast/pull/23449)
 - Setting a generic record now fails if the value is not of the same type of generic record. [\#23522](https://github.com/hazelcast/hazelcast/pull/23522)
-- Introduced clearer exception messages for Generic MapStore, instead of `UndefinedErrorCodeException`. [\#22765](https://github.com/hazelcast/hazelcast/pull/22765)
+- Introduced clearer exception messages for Generic `MapStore`, instead of `UndefinedErrorCodeException`. [\#22765](https://github.com/hazelcast/hazelcast/pull/22765)
 
 ### WAN Replication
 
@@ -149,7 +149,7 @@ Tiered Storage feature is still in BETA stage.
 - Fixed an issue where the beginning time of a job was being recorded after the job is submitted, which was causing a race condition. [\#23065](https://github.com/hazelcast/hazelcast/pull/23065)
 - Fixed an issue where the `hz-cli` shell script was failing to run in bash on Windows systems since it uses a colon-separated `CLASSPATH` where each path is a Linux-style path. However, Java on Windows expects a semicolon-separated `CLASSPATH` where each path is a Windows-style path. As a consequence, the `hz-cli` could not be used from bash on Windows. [\#22884](https://github.com/hazelcast/hazelcast/pull/22884)
 - Fixed a memory leak due to incomplete clean-up of backup replica sync operations. [\#22769](https://github.com/hazelcast/hazelcast/pull/22769)
-- Fixed an issue where a map was loading old values with map.set() when map store offloading is enabled. [\#22602](https://github.com/hazelcast/hazelcast/pull/22602)
+- Fixed an issue where a map was loading old values with `map.set()` when map store offloading is enabled. [\#22602](https://github.com/hazelcast/hazelcast/pull/22602)
 - Fixed an issue where a CP Subsystem object could be destroyed without a permission even the object has security and permission configurations enabled. [\#22475](https://github.com/hazelcast/hazelcast/pull/22475)
 - Fixed an issue where external data store configurations could not be added dynamically. [\#22450](https://github.com/hazelcast/hazelcast/pull/22450)
 - Fixed an issue where replication over WAN was failing on the source cluster members, when there are multiple batch publishers configured in a single WAN replication. [\#22437](https://github.com/hazelcast/hazelcast/pull/22437)

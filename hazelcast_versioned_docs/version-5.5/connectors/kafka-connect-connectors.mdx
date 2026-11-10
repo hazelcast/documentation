@@ -134,6 +134,6 @@ Kafka Connect Source uses the `tasks.max` configuration property to determine pa
 total parallelism = edge's local parallelism * number of nodes
 ```
 
-Hazelcast Jet requests `tasks.max` task configurations after an instance of SourceConnector has been created. If the SourceConnector returns fewer configurations than specified by the `tasks.max` value, the remaining processors do nothing.
+Hazelcast Jet requests `tasks.max` task configurations after an instance of `SourceConnector` has been created. If the `SourceConnector` returns fewer configurations than specified by the `tasks.max` value, the remaining processors do nothing.
 
-When SourceConnector requests a reconfiguration, Hazelcast requests the new collection of configuration sets and distributes them across the cluster. Existing processors automatically restart to use the updated configuration. If the number of returned task configuration sets has increased, some of the processors that previously did nothing can start processing entries.
+When `SourceConnector` requests a reconfiguration, Hazelcast requests the new collection of configuration sets and distributes them across the cluster. Existing processors automatically restart to use the updated configuration. If the number of returned task configuration sets has increased, some of the processors that previously did nothing can start processing entries.

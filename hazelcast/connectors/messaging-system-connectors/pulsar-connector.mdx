@@ -61,7 +61,7 @@ Pulsar source is a stateful source—it remembers the last processed offset. To 
 
 ## Transactional Guarantees
 
-As a sink, the Pulsar connector provides exactly-once guarantees at the cost of using Pulsar transactions, which must be enabled on the broker and in DataConnecion/provided PulsarClient. Hazelcast commits the produced records messages each snapshot is completed. This greatly increases the latency because consumers see the records only after they are committed.
+As a sink, the Pulsar connector provides exactly-once guarantees at the cost of using Pulsar transactions, which must be enabled on the broker and in `DataConnecion` or the provided `PulsarClient`. Hazelcast commits the produced records messages each snapshot is completed. This greatly increases the latency because consumers see the records only after they are committed.
 
 If you use at-least-once guarantee or user calls `useTransactions(false)` in sink builder, records are visible immediately, but in the case of a failure some records could be duplicated. You can also configure jobs in exactly-once mode and decrease the guarantee just for a particular Pulsar sink.
 

@@ -22,7 +22,7 @@ To deal with such scenarios, you can group members in the same JVM (or physical 
 
 When you enable partition grouping, Hazelcast presents the following choices for you to configure partition groups.
 
-### HOST\_AWARE
+### `HOST_AWARE`
 
 You can group members automatically using the IP addresses of members, so members sharing the same network interface are grouped together. All members on the same host (IP address or domain name) form a single partition group. This helps to avoid data loss when a physical server crashes, because multiple replicas of the same partition are not stored on the same host. But if there are multiple network interfaces or domain names per physical machine, this assumption is invalid.
 
@@ -60,7 +60,7 @@ partitionGroupConfig.setEnabled( true )
 </TabItem>
 </Tabs>
 
-### ZONE\_AWARE
+### `ZONE_AWARE`
 
 You can use `ZONE_AWARE` configuration when you want to back up data on different Availability Zones (AZ) in the following environments:
 
@@ -111,7 +111,7 @@ partitionGroupConfig.setEnabled( true )
 </TabItem>
 </Tabs>
 
-### PLACEMENT\_AWARE
+### `PLACEMENT_AWARE`
 
 You can group members according to their placement metadata provided by the cloud providers. This metadata indicates the placement information, such as rack, fault domain, power sources, network, and resources of a virtual machine in a zone.
 
@@ -153,7 +153,7 @@ partitionGroupConfig.setEnabled( true )
 </TabItem>
 </Tabs>
 
-### NODE\_AWARE {/* #node-aware-partition-grouping */}
+### `NODE_AWARE` {/* #node-aware-partition-grouping */}
 
 You can use `NODE_AWARE` configuration when you want to back up data on different pods in [Kubernetes environments](../../develop-and-build/kubernetes/deploying-in-kubernetes.mdx).
 
@@ -201,7 +201,7 @@ partitionGroupConfig.setEnabled( true )
 </TabItem>
 </Tabs>
 
-### PER\_MEMBER
+### `PER_MEMBER`
 
 You can give every member its own group. Each member is a group of its own and primary and backup partitions are distributed randomly (not on the same physical member). This gives the least amount of protection and is the default configuration for a Hazelcast cluster. This grouping type provides good redundancy when Hazelcast members are on separate hosts. However, if multiple instances run on the same host, this type is not a good option.
 

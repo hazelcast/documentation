@@ -7,19 +7,19 @@ slug: /mapstore/configuration-guide
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
-This topic explains how to configure a map with a MapStore. It includes configuration options for loading data, as well as caching behaviors, and MapStore reuse.
+This topic explains how to configure a map with a `MapStore`. It includes configuration options for loading data, as well as caching behaviors, and `MapStore` reuse.
 
 ## Before you Begin
 
-If you use Hazelcast in client/server mode, make sure to add the MapStore to the cluster's classpath.
+If you use Hazelcast in client/server mode, make sure to add the `MapStore` to the cluster's classpath.
 
 ## Quickstart Configuration
 
-To configure a MapStore, you must provide the the [name](#class-name) of your class that implements the MapStore.
+To configure a `MapStore`, you must provide the the [name](#class-name) of your class that implements the `MapStore`.
 
 :::note
 
-Follow the instructions in [Using the generic MapLoader](./configuring-a-generic-maploader.mdx) or [Using the generic MapStore](./configuring-a-generic-mapstore.mdx) for this step if you are using a pre-built Mapstore.
+Follow the instructions in [Using the generic `MapLoader`](./configuring-a-generic-maploader.mdx) or [Using the generic `MapStore`](./configuring-a-generic-mapstore.mdx) for this step if you are using a pre-built Mapstore.
 
 :::
 
@@ -67,13 +67,13 @@ mapConfig.setMapStoreConfig(mapStoreConfig);
 
 ## Configuring for Write-Behind Caching {/* #write-behind */}
 
-To configure a MapStore to use write-behind caching, set the [`write-delay-seconds`](#write-delay-seconds) configuration to a number greater than 0.
+To configure a `MapStore` to use write-behind caching, set the [`write-delay-seconds`](#write-delay-seconds) configuration to a number greater than 0.
 
-## Configuring the Offloading of MapStore Operations
+## Configuring the Offloading of `MapStore` Operations
 
-To improve cluster throughput, MapStore API calls, such as `load()` and `store()` operations, are offloaded by default. This way partition threads are not blocked by them.
+To improve cluster throughput, `MapStore` API calls, such as `load()` and `store()` operations, are offloaded by default. This way partition threads are not blocked by them.
 
-Because each partition in a member is managed by a single thread, the write operations to a given partition are handled one at a time in first-in-first-out order. However, MapStore operations may take a long time to connect to the data store and complete, blocking the affected partitions. To avoid blocking partition threads, MapStore operations communicate with the data store asynchronously, using an [executor](#configuring-the-offload-executor).
+Because each partition in a member is managed by a single thread, the write operations to a given partition are handled one at a time in first-in-first-out order. However, `MapStore` operations may take a long time to connect to the data store and complete, blocking the affected partitions. To avoid blocking partition threads, `MapStore` operations communicate with the data store asynchronously, using an [executor](#configuring-the-offload-executor).
 
 :::note
 
@@ -83,7 +83,7 @@ Because each partition in a member is managed by a single thread, the write oper
 
 <Anchor id="configuring-the-offload-executor" />
 
-You can configure the executor service that handles asynchronous MapStore operations. The offload executor's name is `hz:map-store-offloadable`. You can configure the number of threads for this executor and its task queue capacity. See [Configuring Executor Service](../../java-executor-service/executor-service.mdx#configuring-executor-service) for a guide.
+You can configure the executor service that handles asynchronous `MapStore` operations. The offload executor's name is `hz:map-store-offloadable`. You can configure the number of threads for this executor and its task queue capacity. See [Configuring Executor Service](../../java-executor-service/executor-service.mdx#configuring-executor-service) for a guide.
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
@@ -116,23 +116,23 @@ hazelcast:
 
 ## Blocking Partition Threads
 
-You can choose not to offload MapStore operations, which is the behavior in previous Hazelcast Platform releases before version 5.2. To block partition threads during MapStore API operations, set the `offload` configuration to `false`.
+You can choose not to offload `MapStore` operations, which is the behavior in previous Hazelcast Platform releases before version 5.2. To block partition threads during `MapStore` API operations, set the `offload` configuration to `false`.
 
-## Delaying the Loading Process of a MapStore
+## Delaying the Loading Process of a `MapStore`
 
-By default, the MapStore is loaded as soon as the first cluster member starts. If you want the cluster to wait until a certain number of members are available, you can use the `hazelcast.initial.min.cluster.size` system property. For example, if you set this value to `3`, the MapStore is not loaded until three cluster members are running.
+By default, the `MapStore` is loaded as soon as the first cluster member starts. If you want the cluster to wait until a certain number of members are available, you can use the `hazelcast.initial.min.cluster.size` system property. For example, if you set this value to `3`, the `MapStore` is not loaded until three cluster members are running.
 
-## Applying the Same MapStore to Multiple Maps {/* #storing-entries-to-multiple-maps */}
+## Applying the Same `MapStore` to Multiple Maps {/* #storing-entries-to-multiple-maps */}
 
-A MapStore can be applied to more than one map, using [wildcards](../../../configure-and-manage-clusters/configuration/static-configuration/using-wildcards.mdx). But a MapStore does not know which entries to store when there is one configuration applied to multiple maps. To store entries when there is one configuration applied to multiple maps, use the Java `MapStoreFactory` interface. Using the `MapStoreFactory` interface, a MapStore for each map can be created when a wildcard configuration is used.
+A `MapStore` can be applied to more than one map, using [wildcards](../../../configure-and-manage-clusters/configuration/static-configuration/using-wildcards.mdx). But a `MapStore` does not know which entries to store when there is one configuration applied to multiple maps. To store entries when there is one configuration applied to multiple maps, use the Java `MapStoreFactory` interface. Using the `MapStoreFactory` interface, a `MapStore` for each map can be created when a wildcard configuration is used.
 
 :::note
 
-This option applies only to custom MapStore implementations, not the generic MapStore.
+This option applies only to custom `MapStore` implementations, not the generic `MapStore`.
 
 :::
 
-To initialize the MapStore with the given map name, configuration properties, and Hazelcast instance, the MapStore must implement the [`MapLoaderLifecycleSupport` interface](./implement-a-mapstore.mdx#managing-the-lifecycle-of-a-mapLoader).
+To initialize the `MapStore` with the given map name, configuration properties, and Hazelcast instance, the `MapStore` must implement the [`MapLoaderLifecycleSupport` interface](./implement-a-mapstore.mdx#managing-the-lifecycle-of-a-mapLoader).
 
 ```java
 Config config = new Config();
@@ -146,7 +146,7 @@ mapStoreConfig.setFactoryImplementation( new MapStoreFactory<Object, Object>() {
 });
 ```
 
-## Configuration Options for All MapStores
+## Configuration Options for All `MapStore`s
 
 Use these configuration options to configure the Mapstore for specific maps.
 
@@ -535,5 +535,5 @@ mapConfig.setMapStoreConfig(mapStoreConfig);
 
 More configuration options:
 
-- For the generic MapStore, see [Using the generic MapStore](./configuring-a-generic-mapstore.mdx).
-- For the generic MapLoader, see [Using the generic MapLoader](./configuring-a-generic-maploader.mdx).
+- For the generic `MapStore`, see [Using the generic `MapStore`](./configuring-a-generic-mapstore.mdx).
+- For the generic `MapLoader`, see [Using the generic `MapLoader`](./configuring-a-generic-maploader.mdx).

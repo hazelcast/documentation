@@ -26,7 +26,7 @@ The tutorial also assumes that you have two running Kubernetes clusters, and the
 
 :::note
 
-The code samples present WAN Replication via LoadBalancer, which may result in the communication over only one of the target members. If you need higher performance, see [External Smart Client](./kubernetes-external-client.mdx) and use such a configuration in the WAN Replication part.
+The code samples present WAN Replication via `LoadBalancer`, which may result in the communication over only one of the target members. If you need higher performance, see [External Smart Client](./kubernetes-external-client.mdx) and use such a configuration in the WAN Replication part.
 
 :::
 
@@ -52,7 +52,7 @@ Now, you can create the cluster with the following command.
 
 :::note
 
-If you use Minikube, you need to execute minikube tunnel now in order to get LoadBalancer External IPs assigned.
+If you use Minikube, you need to execute minikube tunnel now in order to get `LoadBalancer` External IPs assigned.
 
 :::
 
@@ -83,7 +83,7 @@ Again, we need to grant Kubernetes API resource permissions.
 (Publisher) $ kubectl apply -f https://raw.githubusercontent.com/hazelcast/hazelcast/master/kubernetes-rbac.yaml
 ```
 
-Then, update the WAN Replication configuration in publisher/hazelcast.yaml with the external IP of the Receiver cluster.
+Then, update the WAN Replication configuration in `publisher/hazelcast.yaml` with the external IP of the Receiver cluster.
 
 ```yaml
 wan-replication:
@@ -94,7 +94,7 @@ wan-replication:
         target-endpoints: 35.240.109.13
 ```
 
-Create ConfigMap with the Hazelcast configuration.
+Create `ConfigMap` with the Hazelcast configuration.
 
 ```shell
 (Publisher) $ kubectl create configmap hazelcast-configuration --from-file=publisher/hazelcast.yaml

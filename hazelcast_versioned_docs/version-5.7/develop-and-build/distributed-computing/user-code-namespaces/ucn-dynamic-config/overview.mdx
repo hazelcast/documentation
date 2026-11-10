@@ -8,7 +8,7 @@ enterprise: true
 
 import PartialClustersUcnObjRefreshCaution from "@site/hazelcast_versioned_docs/version-5.7/_partials/clusters-ucn-obj-refresh-caution.mdx";
 
-You can use the dynamic configuration API to deploy resources from your client or HazelcastInstance member. This means that you can configure namespaces and their resources, and replace the resources at runtime for use when a user customization is next instantiated or executed.
+You can use the dynamic configuration API to deploy resources from your client or `HazelcastInstance` member. This means that you can configure namespaces and their resources, and replace the resources at runtime for use when a user customization is next instantiated or executed.
 
 For example, you can use the dynamic configuration API to add a namespace on a running cluster's configuration, or replace the resources for an existing namespace.
 
@@ -20,7 +20,7 @@ Before you can use <Variable name="ucn" />, you must enable it as described in t
 
 <PartialClustersUcnObjRefreshCaution />
 
-You must create a *Client.java* file containing the required code and save it to your class configuration folder. The file will be similar to the following:
+You must create a `Client.java` file containing the required code and save it to your class configuration folder. The file will be similar to the following:
 
 ```java conums
 package com.hazelcast.namespace.dynamic;
@@ -52,7 +52,7 @@ public class Client {
 1. Fetches the dynamic <Variable name="ucn" /> configuration instance from the member
 2. Creates a new `UserCodeNamespaceConfig` with the name `my_namespace`
 3. Adds a `Class` resource to the `my_namespace` config, where the `Class` resolved from the client's local context
-4. Adds a `Class` resource using the URL to the *.class* and the supplied identifier. In this case, a null identifier is valid; if null is supplied, the class name is used as the ID
+4. Adds a `Class` resource using the URL to the `.class` file and the supplied identifier. In this case, a null identifier is valid; if null is supplied, the class name is used as the ID
 5. Adds the `my_namespace` configuration with its resources to the parent, which is dynamically applied on the member
 6. Creates a new namespace config with the same name `my_namespace`
 7. Adds different resources which will replace all previously defined resources

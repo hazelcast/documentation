@@ -52,7 +52,7 @@ mc-conf.bat oidc configure
 - **Redirect URL:** URL of the Management Center endpoint that handles responses to authentication requests, including schema (`http://` or `https://`) and port. It is located under the path `/oidc/auth`, so you should append `/oidc/auth` to the Management Center URL. Your OpenID provider should have access to this URL as it will post back responses to authentication requests to this URL. For example, if Management Center and the OpenID provider are on the same machine, you would enter "`http://127.0.0.1:8080/oidc/auth`".
 - **Groups Claim Name:** Name of the claim that contains group(s) of the user.
 - **JWS Algorithm:** JWS algorithm to use.
-- **UserInfo Request HTTP Method:** HTTP method to use for sending a UserInfo request. Either `GET` or `POST`. Default value is `GET`. Note that IBM MCM requires this to be `POST`.
+- **`UserInfo` Request HTTP Method:** HTTP method to use for sending a `UserInfo` request. Either `GET` or `POST`. Default value is `GET`. Note that IBM MCM requires this to be `POST`.
 - **Send Client Info in Token Request:** Whether Management Center should send client ID and client secret as extra parameters in the token request. **No** by default. Note that IBM MCM requires these extra parameters in its token endpoint, so it should be **Yes** when deployed there.
 - **Admin Groups:** Members of this group have admin privileges on the Management Center. To use more than one group, separate them with the group name separator you have configured.
 - **User Groups:** Members of this group have read and write privileges on the Management Center. To use more than one group, separate them with the group name separator you have configured.
@@ -79,7 +79,7 @@ To create and manage additional users, you must register them with your OpenID C
 
 When creating users, be sure to give them a valid role. See [User management](../../user-management.mdx).
 
-## Using --force to configure OpenID Connect {/* #using-force-to-configure-openid-connect */}
+## Using `--force` to configure OpenID Connect {/* #using-force-to-configure-openid-connect */}
 
 Use the `-f` / `--force` flag with `oidc configure` to make configuration idempotent:
 

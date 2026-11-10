@@ -14,13 +14,13 @@ Hazelcast provides extension methods to the Cache API through the interface `com
 It has two sets of extensions:
 
 - Asynchronous version of all cache operations. See [Async Operations](#icache-async-methods).
-- Cache operations with custom `ExpiryPolicy` parameter to apply on that specific operation. See [Custom ExpiryPolicy](#defining-a-custom-expirypolicy).
+- Cache operations with custom `ExpiryPolicy` parameter to apply on that specific operation. See [Custom `ExpiryPolicy`](#defining-a-custom-expirypolicy).
 
 <hr />
 
 :::note
 
-ICache data structure can also be used in [data pipelines](../../building-data-pipelines/overview.mdx) for Real-Time Stream Processing (by enabling the Event Journal on your cache) and Fast Batch Processing.
+`ICache` data structure can also be used in [data pipelines](../../building-data-pipelines/overview.mdx) for Real-Time Stream Processing (by enabling the Event Journal on your cache) and Fast Batch Processing.
 
 :::
 
@@ -84,7 +84,7 @@ CacheManager cacheManager = caching.getCacheManager();
 
 Given a configuration file named `hazelcast-jcache.xml` in the package `com.domain`, a `CacheManager` can be configured to start a new `HazelcastInstance`:
 
-- By passing the URI to the configuration file as the CacheManager's `URI`:
+- By passing the URI to the configuration file as the `CacheManager`'s `URI`:
 
   ```java
   CachingProvider caching = Caching.getCachingProvider();
@@ -331,7 +331,7 @@ CacheManager cacheManagerApp2 = cachingProvider.getCacheManager( nsApp2, null );
 
 That way both applications share the same `HazelcastInstance` instance but not the same caches.
 
-## Retrieving an ICache Instance
+## Retrieving an `ICache` Instance
 
 Besides [Scoping to Join Clusters](#scoping-to-join-clusters) and [Namespacing](#namespacing), which are implemented using the URI feature of the specification, all other extended operations are required to retrieve the `com.hazelcast.cache.ICache` interface instance from the JCache `javax.cache.Cache` instance. For Hazelcast, both interfaces are implemented on the same object instance. It is recommended that you stay with the specification method to retrieve the `ICache` version, since `ICache` might be subject to change without notification.
 
@@ -345,13 +345,13 @@ Cache<Object, Object> cache = cacheManager.getCache( ... );
 ICache<Object, Object> unwrappedCache = cache.unwrap( ICache.class );
 ```
 
-After unwrapping the `Cache` instance into an `ICache` instance, you have access to all the following operations, e.g., [ICache Async Methods](#icache-async-methods) and [ICache Convenience Methods](#icache-convenience-methods).
+After unwrapping the `Cache` instance into an `ICache` instance, you have access to all the following operations, e.g., [`ICache` Async Methods](#icache-async-methods) and [`ICache` Convenience Methods](#icache-convenience-methods).
 
-## ICache Configuration
+## `ICache` Configuration
 
-As mentioned in the [JCache Declarative Configuration section](./setup.mdx#jcache-declarative-configuration), the Hazelcast ICache extension offers additional configuration properties over the default JCache configuration. These additional properties include internal storage format, backup counts, eviction policy and split-brain protection reference.
+As mentioned in the [JCache Declarative Configuration section](./setup.mdx#jcache-declarative-configuration), the Hazelcast `ICache` extension offers additional configuration properties over the default JCache configuration. These additional properties include internal storage format, backup counts, eviction policy and split-brain protection reference.
 
-The declarative configuration for ICache is a superset of the previously discussed JCache configuration:
+The declarative configuration for `ICache` is a superset of the previously discussed JCache configuration:
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
@@ -415,21 +415,21 @@ hazelcast:
 
     - <Anchor id="jcache-lru" />`LRU`: Less Recently Used - finds the best eviction candidate based on the `lastAccessTime`.
     - `LFU`: Less Frequently Used - finds the best eviction candidate based on the number of hits.
-- `partition-lost-listeners` : Defines listeners for dispatching partition lost events for the cache. For more information, see the [ICache Partition Lost Listener section](#icache-partition-lost-listener).
+- `partition-lost-listeners` : Defines listeners for dispatching partition lost events for the cache. For more information, see the [`ICache` Partition Lost Listener section](#icache-partition-lost-listener).
 - `split-brain-protection-ref` : Name of the split-brain protection configuration that you want this cache to use.
 - `disable-per-entry-invalidation-events` : Disables invalidation events for each entry; but full-flush invalidation events are still enabled. Full-flush invalidation means the invalidation of events for all entries when `clear` is called. Its default value is `false`.
 
-Since `javax.cache.configuration.MutableConfiguration` misses the above additional configuration properties, Hazelcast ICache extension provides an extended configuration class called `com.hazelcast.config.CacheConfig`. This class is an implementation of `javax.cache.configuration.CompleteConfiguration` and all the properties shown above can be configured using its corresponding setter methods.
+Since `javax.cache.configuration.MutableConfiguration` misses the above additional configuration properties, Hazelcast `ICache` extension provides an extended configuration class called `com.hazelcast.config.CacheConfig`. This class is an implementation of `javax.cache.configuration.CompleteConfiguration` and all the properties shown above can be configured using its corresponding setter methods.
 
 :::note
 
-ICache can be configured only programmatically on the client side.
+`ICache` can be configured only programmatically on the client side.
 
 :::
 
-### ICache Async Methods
+### `ICache` Async Methods
 
-As another addition of Hazelcast ICache over the normal JCache specification, Hazelcast provides asynchronous versions of almost all methods, returning a `java.util.concurrent.CompletionStage`. By using these methods and the returned objects, you can use JCache in a reactive way by registering dependent computation stages on the returned `CompletionStage` to prevent blocking the current thread.
+As another addition of Hazelcast `ICache` over the normal JCache specification, Hazelcast provides asynchronous versions of almost all methods, returning a `java.util.concurrent.CompletionStage`. By using these methods and the returned objects, you can use JCache in a reactive way by registering dependent computation stages on the returned `CompletionStage` to prevent blocking the current thread.
 
 The asynchronous versions of the methods append the phrase `Async` to the method name. The example code below uses the method `putAsync()`.
 
@@ -479,7 +479,7 @@ Following methods are available in asynchronous versions:
   - `getAndReplaceAsync(key, value)`
   - `getAndReplaceAsync(key, value, expiryPolicy)`
 
-The methods with a given `javax.cache.expiry.ExpiryPolicy` are further discussed in the [Defining a Custom ExpiryPolicy](#defining-a-custom-expirypolicy).
+The methods with a given `javax.cache.expiry.ExpiryPolicy` are further discussed in the [Defining a Custom `ExpiryPolicy`](#defining-a-custom-expirypolicy).
 
 :::note
 
@@ -487,9 +487,9 @@ Asynchronous versions of the methods are not compatible with synchronous events.
 
 :::
 
-### Defining a Custom ExpiryPolicy
+### Defining a Custom `ExpiryPolicy`
 
-The JCache specification has an option to configure a single `ExpiryPolicy` per cache. Hazelcast ICache extension offers the possibility to define a custom `ExpiryPolicy` per key by providing a set of method overloads with an `expirePolicy` parameter, as in the list of asynchronous methods in the [Async Methods section](#icache-async-methods). This means that you can pass custom expiry policies to a cache operation.
+The JCache specification has an option to configure a single `ExpiryPolicy` per cache. Hazelcast `ICache` extension offers the possibility to define a custom `ExpiryPolicy` per key by providing a set of method overloads with an `expirePolicy` parameter, as in the list of asynchronous methods in the [Async Methods section](#icache-async-methods). This means that you can pass custom expiry policies to a cache operation.
 
 Here is how an `ExpiryPolicy` is set on JCache configuration:
 
@@ -538,9 +538,9 @@ The `ExpiryPolicy` instance can be pre-created, cached and re-used, but only for
 
   - `getAndReplace(key, value, expirePolicy)`
 
-Asynchronous method overloads are not listed here. See the [ICache Async Methods section](#icache-async-methods) for the list of asynchronous method overloads.
+Asynchronous method overloads are not listed here. See the [`ICache` Async Methods section](#icache-async-methods) for the list of asynchronous method overloads.
 
-ICache also offers `setExpiryPolicy(key, expirePolicy)` method to associate certain keys with custom expiry policies. Per key expiry policies defined by this method take precedence over cache policies, but they are overridden by the expiry policies specified in above-mentioned overloaded methods.
+`ICache` also offers `setExpiryPolicy(key, expirePolicy)` method to associate certain keys with custom expiry policies. Per key expiry policies defined by this method take precedence over cache policies, but they are overridden by the expiry policies specified in above-mentioned overloaded methods.
 
 ### JCache Eviction
 
@@ -569,7 +569,7 @@ Hazelcast JCache eviction supports both types of caches using a slightly differe
 
 Hazelcast JCache provides two commonly known eviction policies, LRU and LFU, but loosens the rules for predictable runtime behavior. LRU, normally recognized as `Least Recently Used`, is implemented as `Less Recently Used` and LFU known as `Least Frequently Used` is implemented as `Less Frequently Used`. The details about this difference are explained in the [Eviction Algorithm section](#eviction-algorithm).
 
-Eviction Policies are configured by providing the corresponding abbreviation to the configuration as shown in the [ICache Configuration section](#icache-configuration). As already mentioned, two built-in policies are available:
+Eviction Policies are configured by providing the corresponding abbreviation to the configuration as shown in the [`ICache` Configuration section](#icache-configuration). As already mentioned, two built-in policies are available:
 
 To configure the use of the LRU (Less Recently Used) policy:
 
@@ -790,20 +790,20 @@ Near Cache for JCache is only available for clients, NOT members.
 
 :::
 
-### ICache Convenience Methods
+### `ICache` Convenience Methods
 
-In addition to the operations explained in [ICache Async Methods](#icache-async-methods) and [Defining a Custom ExpiryPolicy](#defining-a-custom-expirypolicy), Hazelcast ICache also provides a set of convenience methods. These methods are not part of the JCache specification.
+In addition to the operations explained in [`ICache` Async Methods](#icache-async-methods) and [Defining a Custom `ExpiryPolicy`](#defining-a-custom-expirypolicy), Hazelcast `ICache` also provides a set of convenience methods. These methods are not part of the JCache specification.
 
 - `size()`: Returns the total entry count of the distributed cache.
 - `destroy()`: Destroys the cache and removes its data, which makes it different from the method `javax.cache.Cache.close()`; the `close` method closes the cache so no further operational methods (get, put, remove, etc. See Section 4.1.6 in JCache Specification which can be downloaded from [here](http://download.oracle.com/otndocs/jcp/jcache-1_0-fr-eval-spec/index.html)) can be executed on it - data is not necessarily destroyed, if you get again the same `Cache` from the same `CacheManager`, the data will be there. In the case of `destroy()`, both the cache is destroyed and cache's data is removed.
-- `isDestroyed()`: Determines whether the ICache instance is destroyed or not.
+- `isDestroyed()`: Determines whether the `ICache` instance is destroyed or not.
 - `getLocalCacheStatistics()`: Returns a `com.hazelcast.cache.CacheStatistics` instance, both on Hazelcast members and clients, providing the same statistics data as the JMX beans.
 
-See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/cache/ICache.html" text="ICache Javadoc" /> to see all the methods provided by ICache.
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/cache/ICache.html" text="ICache Javadoc" /> to see all the methods provided by `ICache`.
 
-### Implementing BackupAwareEntryProcessor
+### Implementing `BackupAwareEntryProcessor`
 
-Another feature, especially interesting for distributed environments like Hazelcast, is the JCache specified `javax.cache.processor.EntryProcessor`. For more general information, see the [Implementing EntryProcessor section](./api.mdx#implementing-entryprocessor).
+Another feature, especially interesting for distributed environments like Hazelcast, is the JCache specified `javax.cache.processor.EntryProcessor`. For more general information, see the [Implementing `EntryProcessor` section](./api.mdx#implementing-entryprocessor).
 
 Since Hazelcast provides backups of cached entries on other members, the default way to backup an object changed by an `EntryProcessor` is to serialize the complete object and send it to the backup partition. This can be a huge network overhead for big objects.
 
@@ -811,7 +811,7 @@ Hazelcast offers a sub-interface for `EntryProcessor` called `com.hazelcast.cach
 
 The backup partition `EntryProcessor` can either be the currently running processor (by returning `this`) or it can be a specialized `EntryProcessor` implementation (different from the currently running one) that does different operations or leaves out operations, e.g., sending emails.
 
-If we again take the `EntryProcessor` example from the demonstration application provided in the [Implementing EntryProcessor section](./api.mdx#implementing-entryprocessor), the changed code looks like the following snippet:
+If we again take the `EntryProcessor` example from the demonstration application provided in the [Implementing `EntryProcessor` section](./api.mdx#implementing-entryprocessor), the changed code looks like the following snippet:
 
 ```java
 public class UserUpdateEntryProcessor
@@ -863,7 +863,7 @@ For the backup runs, the returned value from the backup processor is ignored and
 
 :::
 
-### ICache Partition Lost Listener
+### `ICache` Partition Lost Listener
 
 You can listen to `CachePartitionLostEvent` instances by registering an implementation of `CachePartitionLostListener`, which is also a sub-interface of `java.util.EventListener` from `ICache`.
 

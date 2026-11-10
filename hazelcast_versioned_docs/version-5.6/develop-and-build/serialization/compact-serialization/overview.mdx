@@ -281,7 +281,7 @@ hazelcast-client:
 
 If you want to override the serialization mechanism used for `Serializable` or `Externalizable` classes and use Compact serialization without writing any serializer in Java, you must add those classes to the configuration.
 
-## Implementing CompactSerializer
+## Implementing `CompactSerializer`
 
 Compact serialization can be used by implementing a `CompactSerializer` for a class and registering it in the configuration.
 
@@ -598,7 +598,9 @@ The ability to use Compact serialization with no configuration is only available
 
 :::note
 
-Using zero-config Compact serialization is not recommended for performance-critical applications, as the feature relies heavily on reflection to read and write data.<br /> We recommend you use explicit Compact serializers for performance considerations.
+Using zero-config Compact serialization is not recommended for performance-critical applications, as the feature relies heavily on reflection to read and write data.
+
+We recommend you use explicit Compact serializers for performance considerations.
 
 :::
 
@@ -663,7 +665,7 @@ For Java, the zero-config serializer supports the following extra field types on
 
 :::note
 
-\* Arrays of arrays, or collections of collections are not supported by default. An explicit serializer must be written to support such field types. In that serializer, the inner array type must be defined as a separate class which stores the array type as a field. Then, the array of array type can be serialized/deserialized as an array of that separate class.
+Arrays of arrays, or collections of collections are not supported by default. An explicit serializer must be written to support such field types. In that serializer, the inner array type must be defined as a separate class which stores the array type as a field. Then, the array of array type can be serialized/deserialized as an array of that separate class.
 
 :::
 
@@ -1069,7 +1071,7 @@ Note that, when an old reader reads data written by an old writer, or a new read
 
 One thing to be careful while evolving the class is to not have any conditional code in the `write` method. That method must write all the fields available in the current version of the class to the writer, with appropriate field names and types. Hazelcast uses the `write` method of the serializer to extract a schema out of the object, hence any conditional code that may or may not run depending on the object in that method might result in an undefined behavior.
 
-## GenericRecord Representation
+## `GenericRecord` Representation
 
 Compact serialized objects can also be represented by a `GenericRecord`, without requiring the class in the classpath. See [Accessing Domain Objects Without Domain Classes](../../distributed-computing/user-code-namespaces/legacy-ucd/accessing-domain-objects.mdx).
 

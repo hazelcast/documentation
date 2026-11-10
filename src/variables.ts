@@ -135,9 +135,9 @@ export const versionedVariables: Record<string, Record<string, Record<string, st
       "version": "5.7"
     },
     "5.6": {
-      "ee-version": "5.6.2",
+      "ee-version": "5.6.3",
       "enterprise-product-name": "Enterprise Edition",
-      "full-version": "5.6.2",
+      "full-version": "5.6.3",
       "hazelcast-cloud": "Cloud",
       "hz-repo-swagger-branch": "5.6.z",
       "java-client": "Java Client and Embedded Server",

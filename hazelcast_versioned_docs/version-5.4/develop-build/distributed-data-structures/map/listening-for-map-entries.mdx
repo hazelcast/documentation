@@ -261,9 +261,9 @@ When you add the interceptor in this way, be sure to implement the `hashCode()` 
 
 Input values in interceptors are mutable, which means that if you modify the input value in one interceptor, the next interceptor in the chain will receive the updated value.
 
-When using in-memory-format=OBJECT, this mutability also affects the internal state of the system, including indexes and stored values. For this reason, it is strongly recommended not to modify the input value directly. If a modification is required, create and return a new copy instead.
+When using `in-memory-format=OBJECT`, this mutability also affects the internal state of the system, including indexes and stored values. For this reason, it is strongly recommended not to modify the input value directly. If a modification is required, create and return a new copy instead.
 
-The mutability is preserved for performance reasons. However, modifying input values is not supported when in-memory-format=OBJECT is used in combination with indexes. Doing so will lead to runtime errors.
+The mutability is preserved for performance reasons. However, modifying input values is not supported when `in-memory-format=OBJECT` is used in combination with indexes. Doing so will lead to runtime errors.
 
 The map API has two methods for adding and removing an interceptor to the map: `addInterceptor` and `removeInterceptor`. See also the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/MapInterceptor.html" text="MapInterceptor interface" /> to learn about the methods used to intercept the changes in a map.
 

@@ -45,7 +45,7 @@ Enabling Hazelcast persistence is done with the following configuration.
 <CodeCallouts>
 
 1. [Cluster recovery policy](#recovery-policy).
-2. Size of the PersistentVolumeClaim (PVC) where Hazelcast data is persisted.
+2. Size of the `PersistentVolumeClaim` (PVC) where Hazelcast data is persisted.
 3. Agent responsible for moving data from the local storage to external buckets. The agent configuration is optional. If you enable `persistence` and do not pass the agent configuration, Hazelcast Platform Operator uses the latest agent version that is compatible with its version.
 
 </CodeCallouts>
@@ -177,7 +177,7 @@ To restore a cluster from local backups, you can directly reapply the `Hazelcast
 
 Or, to restore from local backups that you have taken using the `HotBackup` resource, give the `HotBackup` resource name in the restore configuration. For the restore to work correctly, make sure the status of the `HotBackup` resource is `Success`.
 
-When this restore mechanism is used, the Restore Agent container is deployed with the Hazelcast container in the same Pod. The agent starts as an initContainer before the Hazelcast container.
+When this restore mechanism is used, the Restore Agent container is deployed with the Hazelcast container in the same Pod. The agent starts as an `initContainer` before the Hazelcast container.
 
 <CodeBlock language="yaml" metastring="conums">{Ex_hazelcast_persistence_restore_cr_name_yaml}</CodeBlock>
 
@@ -199,7 +199,7 @@ You can use a local backup only once to restore a cluster. We recommend you back
 
 To restore a cluster from external backups, you can either set up the bucket configuration or give the `HotBackup` resource name that you used to trigger the external backup. In either case, the backup is restored from the external bucket.
 
-When this restore mechanism is used, the Restore Agent container is deployed with the Hazelcast container in the same Pod. The agent starts as an initContainer before the Hazelcast container.
+When this restore mechanism is used, the Restore Agent container is deployed with the Hazelcast container in the same Pod. The agent starts as an `initContainer` before the Hazelcast container.
 
 :::note
 
@@ -250,7 +250,7 @@ To restore from local backups that are in an existing [Persistent Volume](https:
 2. If you configured maps with persistence, you must create them while creating the Hazelcast CR. To create them while creating the Hazelcast CR, you must use [Custom Config](./configuration-properties/custom-config.mdx). You cannot apply the Hazelcast CR and then the Map CRs.
 3. `pvcNamePrefix` is the prefix of the existing PVCs. It can be set to `persistence` or `hot-restart-persistence` depending on the installation method of the old cluster. In different versions of Hazelcast Helm Chart and Hazelcast Platform Operator, these values are used by default. Run the `kubect get pvc` command to decide which setting best suits your requirements.
 4. `baseDir` is the root directory for persistence.
-5. `backupDir` is the directory that contains a backupFolder for each available backup.
+5. `backupDir` is the directory that contains a `backupFolder` for each available backup.
 6. `backupFolder` is the directory containing the specific backup for the restore.
 
 </CodeCallouts>
@@ -266,7 +266,7 @@ To find the `backupFolder` value, you can run `kubectl exec -it <hazelcast-custo
 <CodeCallouts>
 
 1. Replace `/data/persistence` with the path to your PV, which is mounted inside the container.
-2. Replace `/data/persistence` with the correct mountPath specified in PV.
+2. Replace `/data/persistence` with the correct `mountPath` specified in PV.
 3. Replace with the name of the one of the PVCs, which is mounted to the cluster from which the backup is taken.
 
 </CodeCallouts>
@@ -281,7 +281,7 @@ Agent copies the backup to be restored from `{baseDir}/{backupDir}/{backupFolder
 
 ### Data Recovery Timeout
 
-To choose a data recovery timeout, you can use dataRecoveryTimeout. The field takes an integer value representing the timeout in seconds and uses this value to set [validation-timeout-seconds, data-load-timeout-seconds](/hazelcast/latest/storage/configuring-persistence#global-persistence-options) Hazelcast Persistence options.
+To choose a data recovery timeout, you can use `dataRecoveryTimeout`. The field takes an integer value representing the timeout in seconds and uses this value to set [validation-timeout-seconds, data-load-timeout-seconds](/hazelcast/latest/storage/configuring-persistence#global-persistence-options) Hazelcast Persistence options.
 
 <CodeBlock language="yaml">{Ex_hazelcast_persistence_datarecoverytimeout_yaml}</CodeBlock>
 

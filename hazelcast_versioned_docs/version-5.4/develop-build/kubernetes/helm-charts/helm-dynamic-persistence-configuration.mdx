@@ -8,7 +8,7 @@ If you want to enable `Dynamic Persistence Configuration` feature on your cluste
 
 The first one is to change the Hazelcast configuration file path to `/data/external` directory. It can be achieved by `initContainers`. You also need to provide `PersistentVolumeClaim` as external volume.
 
-PersistentVolumeClaim sample:
+`PersistentVolumeClaim` sample:
 
 ```yaml
 apiVersion: v1
@@ -26,11 +26,11 @@ spec:
 
 :::caution
 
-The `AccessMode` of Persistent Volume has an important role in spreading out pods among nodes in the cluster. \\ *ReadWriteOnce* - the volume can be mounted as read-write by a single node. ReadWriteOnce access mode still can allow multiple pods to access the volume when the pods are running on the same node.\\ *ReadWriteMany* - the volume can be mounted as read-write by many nodes.
+The `AccessMode` of Persistent Volume has an important role in spreading out pods among nodes in the cluster. \\ `ReadWriteOnce` - the volume can be mounted as read-write by a single node. `ReadWriteOnce` access mode still can allow multiple pods to access the volume when the pods are running on the same node.\\ `ReadWriteMany` - the volume can be mounted as read-write by many nodes.
 
 :::
 
-Add initContainers, which changes Hazelcast configuration file path, in your values file.
+Add `initContainers`, which changes Hazelcast configuration file path, in your values file.
 
 ```yaml
 externalVolume:

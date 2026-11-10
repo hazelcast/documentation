@@ -23,7 +23,6 @@ Follow these rules in addition to CONTRIBUTING.md:
 - A change that applies to several versions must be made in each version's folder. See [Versions](#versions).
 - Do not reformat the files the release script rewrites: `src/variables.ts`, `src/redirects.ts`, `src/currentVersions.json`, `static/_redirects`, and `*_versions.json`. If their formatting changes, the release script stops working.
 - Do not run `npm run build` while a dev server is running in the same folder. The build overwrites the files the dev server uses.
-- Ignore `migration/` unless your task is the migration, and never import from it. It holds throwaway Antora conversion tooling with its own `package.json`. Its checks need local mirrors of the Antora source repos. Read `migration/README.md` before running them.
 - Before you change a `cloud_*` frontmatter key, read `plugins/cloud-console-index/index.js`. The keys feed `/api/cloud.json`, which the Hazelcast Cloud console reads.
 - An imported code example can contain `{attribute}` placeholders. The build replaces them with the version's values. Do not replace them with literal values.
 - Do not change `.vale.ini` or the files in `.vale/` to silence an alert, unless the user asks. If you think a rule is wrong, tell the user.

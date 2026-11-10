@@ -23,15 +23,15 @@ To view all possible map settings, refer to the following files included with yo
 
 <IfSnapshot>
 
-- [hazelcast-full-example.xml](https://github.com/hazelcast/hazelcast/blob/master/hazelcast/src/main/resources/hazelcast-full-example.xml)
-- [hazelcast-full-example.yaml](https://github.com/hazelcast/hazelcast/blob/master/hazelcast/src/main/resources/hazelcast-full-example.yaml)
+- [`hazelcast-full-example.xml`](https://github.com/hazelcast/hazelcast/blob/master/hazelcast/src/main/resources/hazelcast-full-example.xml)
+- [`hazelcast-full-example.yaml`](https://github.com/hazelcast/hazelcast/blob/master/hazelcast/src/main/resources/hazelcast-full-example.yaml)
 
 </IfSnapshot>
 
 <IfNotSnapshot>
 
-- <Variable href="https://github.com/hazelcast/hazelcast/blob/v{os-version}/hazelcast/src/main/resources/hazelcast-full-example.xml" text="hazelcast-full-example.xml" />
-- <Variable href="https://github.com/hazelcast/hazelcast/blob/v{os-version}/hazelcast/src/main/resources/hazelcast-full-example.yaml" text="hazelcast-full-example.yaml" />
+- <Variable code href="https://github.com/hazelcast/hazelcast/blob/v{os-version}/hazelcast/src/main/resources/hazelcast-full-example.xml" text="hazelcast-full-example.xml" />
+- <Variable code href="https://github.com/hazelcast/hazelcast/blob/v{os-version}/hazelcast/src/main/resources/hazelcast-full-example.yaml" text="hazelcast-full-example.yaml" />
 
 </IfNotSnapshot>
 
@@ -110,7 +110,7 @@ hazelcast:
 
 Your application may require multiple maps with different settings. To accomplish this, you can create multiple named map configurations. The Hazelcast cluster will apply the stored configuration to each map when the map is created, based on the name of the map. If there's no name match, the map will use the settings in the default configuration.
 
-In this example, we're creating a configuration for the Customers map and setting the in-memory format to OBJECT. When we run our code, Hazelcast will match the map name to the configuration name and apply all the settings included under Customers.
+In this example, we're creating a configuration for the Customers map and setting the in-memory format to `OBJECT`. When we run our code, Hazelcast will match the map name to the configuration name and apply all the settings included under Customers.
 
 ![map multi-config example](./images/MapConfig2.png)
 
@@ -120,7 +120,7 @@ Note that we specified the number of backups as well as the in-memory format. Ha
 
 ![map wildcard example](./images/MapConfig1.png)
 
-Wildcards allow you to create one configuration and apply it to multiple maps. Here we have two map configurations. One sets the eviction timer to mark entries for removal after being untouched for one hour (3600 seconds). The other has no eviction policy. Because we used a wildcard in the configuration name, any map name beginning with Evict1Hr will use the Evict1Hr\* configuration. Any other map will use whatever settings are part of the default configuration.
+Wildcards allow you to create one configuration and apply it to multiple maps. Here we have two map configurations. One sets the eviction timer to mark entries for removal after being untouched for one hour (3600 seconds). The other has no eviction policy. Because we used a wildcard in the configuration name, any map name beginning with `Evict1Hr` will use the `Evict1Hr*` configuration. Any other map will use whatever settings are part of the default configuration.
 
 You can use wildcards to create standard configurations for your application, then apply those configurations to individual maps. As long as the map name passed to the Hazelcast cluster matches the wildcard string, the cluster will apply the specific configuration when it creates the map.
 

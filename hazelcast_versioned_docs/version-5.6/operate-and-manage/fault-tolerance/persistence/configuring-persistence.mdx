@@ -256,7 +256,7 @@ Persisted data on disk such as map entries may contain sensitive information. To
 
 To encrypt data on disk, you'll need one of the following stores in which to keep master encryption keys:
 
-- [Java KeyStore](https://docs.oracle.com/javase/8/docs/api/java/security/KeyStore.html): A Java class for storing cryptographic keys and certificates.
+- [Java `KeyStore`](https://docs.oracle.com/javase/8/docs/api/java/security/KeyStore.html): A Java class for storing cryptographic keys and certificates.
 - [HashiCorp Vault](https://www.vaultproject.io/): A tool for securely accessing secrets.
 
 ### How Encryption at Rest Works
@@ -868,18 +868,18 @@ A secure store represents a secure place outside of the persistence store in whi
 
 Hazelcast provides secure store implementations for storing master encryption keys in the following places:
 
-- [Java KeyStore](https://docs.oracle.com/javase/8/docs/api/java/security/KeyStore.html): A Java class for storing cryptographic keys and certificates.
+- [Java `KeyStore`](https://docs.oracle.com/javase/8/docs/api/java/security/KeyStore.html): A Java class for storing cryptographic keys and certificates.
 - [HashiCorp Vault](https://www.vaultproject.io/): A tool for securely accessing secrets.
 
-#### Java KeyStore
+#### Java `KeyStore`
 
-You can configure members to store your master encryption keys in a Java KeyStore by specifying the following options:
+You can configure members to store your master encryption keys in a Java `KeyStore` by specifying the following options:
 
-- `path`: The path to the KeyStore file.
-- `type`: The type of KeyStore (`PKCS12`, `JCEKS`, etc.).
-- `password`: The KeyStore password.
+- `path`: The path to the `KeyStore` file.
+- `type`: The type of `KeyStore` (`PKCS12`, `JCEKS`, etc.).
+- `password`: The `KeyStore` password.
 - `current-key-alias`: The alias for the current encryption key entry (optional).
-- `polling-interval`: The polling interval (in seconds) for checking for changes in the KeyStore. Disabled by default.
+- `polling-interval`: The polling interval (in seconds) for checking for changes in the `KeyStore`. Disabled by default.
 
 :::note
 
@@ -887,7 +887,7 @@ Sensitive configuration values such as passwords should be protected using [vari
 
 :::
 
-The Java KeyStore treats all `KeyStore.SecretKeyEntry` entries stored in the KeyStore as encryption keys. It expects that these entries use the same protection password as the KeyStore. Entries of other types (private key entries, certificate entries) are ignored. If the `current-key-alias` option is configured, the corresponding entry will be treated as the current encryption key, otherwise the highest entry in the alphabetical order will be used. The remaining entries will represent historical versions of the encryption key.
+The Java `KeyStore` treats all `KeyStore.SecretKeyEntry` entries stored in the `KeyStore` as encryption keys. It expects that these entries use the same protection password as the `KeyStore`. Entries of other types (private key entries, certificate entries) are ignored. If the `current-key-alias` option is configured, the corresponding entry will be treated as the current encryption key, otherwise the highest entry in the alphabetical order will be used. The remaining entries will represent historical versions of the encryption key.
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">

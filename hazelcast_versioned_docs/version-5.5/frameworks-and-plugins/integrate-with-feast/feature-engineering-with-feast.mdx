@@ -113,7 +113,7 @@ To set up Feast, complete the following steps:
 
 ## Feature Transformation Using Jet
 
-You will create several Jet jobs that read transactions from the data file, compute the number of transactions per user in seven-day buckets and populate the user\_transaction\_count\_7d table in the PostgreSQL database.
+You will create several Jet jobs that read transactions from the data file, compute the number of transactions per user in seven-day buckets and populate the `user_transaction_count_7d` table in the PostgreSQL database.
 
 1. To access PostgreSQL tables from Jet jobs, a data connection must be created. You can do that by running an SQL script using CLC:
 
@@ -273,7 +273,7 @@ Materialization is the process of transferring features from the offline store t
    ```shell
    feast -c feature_repo materialize-incremental "2024-07-24T08:00:00"
    ```
-2. Running the command above created an IMap that corresponds to the "user\_transaction\_count\_7d" feature in the Hazelcast cluster. You can list it using the following command:
+2. Running the command above created an `IMap` that corresponds to the `user_transaction_count_7d` feature in the Hazelcast cluster. You can list it using the following command:
 
    ```shell
    clc object list map
@@ -289,7 +289,7 @@ Materialization is the process of transferring features from the offline store t
    ---------------------------------------
        OK Returned 1 row(s).
    ```
-3. Check the contents of the feature IMap to check the data written by Feast:
+3. Check the contents of the feature `IMap` to check the data written by Feast:
 
    ```shell
    clc map -n feast_batch_user_transaction_count_7d entry-set | head -10
@@ -297,7 +297,7 @@ Materialization is the process of transferring features from the offline store t
 
 ## Summary
 
-In this tutorial, you learned how to set up a feature engineering project that uses Hazelcast as the online store and PostgreSQL as the offline store.. You also learned how to write Jet jobs that transform data and store it in a PostgreSQL table to be used by the Feast offline store.
+In this tutorial, you learned how to set up a feature engineering project that uses Hazelcast as the online store and PostgreSQL as the offline store. You also learned how to write Jet jobs that transform data and store it in a PostgreSQL table to be used by the Feast offline store.
 
 ## See Also
 

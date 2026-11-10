@@ -310,9 +310,9 @@ The possible values for the `mode` placeholder:
 
 ## Metrics
 
-Hazelcast exposes various metrics to facilitate monitoring of the cluster state. They are `<string,value>` key-value pairs of data that capture the runtime information about the members and clients in a Hazelcast cluster. Such a metric can be the number of entries stored in a particular IMap on a given member, JVM metrics like used heap, OS metrics like load average, and so on.
+Hazelcast exposes various metrics to facilitate monitoring of the cluster state. They are `<string,value>` key-value pairs of data that capture the runtime information about the members and clients in a Hazelcast cluster. Such a metric can be the number of entries stored in a particular `IMap` on a given member, JVM metrics like used heap, OS metrics like load average, and so on.
 
-The metrics system is responsible for collecting these metrics and making them available for the [consumers](#exposing-metrics) of the metrics. There are a few hundred metrics collected during every metrics collection cycle by default, but the number of metrics grows as more features and data structures are used. This is because every data structure provides its own metrics. For example, if there are two IMaps used in a cluster, both IMaps produce their metrics on every member.
+The metrics system is responsible for collecting these metrics and making them available for the [consumers](#exposing-metrics) of the metrics. There are a few hundred metrics collected during every metrics collection cycle by default, but the number of metrics grows as more features and data structures are used. This is because every data structure provides its own metrics. For example, if there are two `IMap`s used in a cluster, both `IMap`s produce their metrics on every member.
 
 Metrics have associated **tags** which describe which object the metric applies to. For example, the tags for job metrics typically indicate the specific DAG vertex and processor the metric belongs to.
 
@@ -396,7 +396,7 @@ And the Jet engine related beans are stored under `com.hazelcast.jet/Metrics/<in
 
 Prometheus is a popular monitoring system and time series database. Setting up monitoring via Prometheus consists of two steps. First step is exposing an HTTP endpoint with metrics. The second step is setting up Prometheus server, which pulls the metrics in a specified interval.
 
-The Prometheus javaagent is already part of the Hazelcast distribution and just needs to be enabled. Enable the agent and expose all metrics via HTTP endpoint by setting an environment variable PROMETHEUS\_PORT, you can change the port to any available port:
+The Prometheus javaagent is already part of the Hazelcast distribution and just needs to be enabled. Enable the agent and expose all metrics via HTTP endpoint by setting an environment variable `PROMETHEUS_PORT`, you can change the port to any available port:
 
 ```bash
 PROMETHEUS_PORT=8080 bin/hz-start
@@ -418,7 +418,7 @@ The `Job` class has a <Variable href="https://docs.hazelcast.org/docs/{os-versio
 
 This functionality has been developed primarily to give access to metrics of finished jobs, but can in fact be used for jobs in any state.
 
-For details on how to use and filter the metric values consult the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/metrics/JobMetrics.html" text="JobMetrics API docs" />. A simple example for computing the number of data items emitted by a certain vertex (let's call it vertexA), excluding items emitted to the snapshot, would look like this:
+For details on how to use and filter the metric values consult the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/metrics/JobMetrics.html" text="JobMetrics API docs" />. A simple example for computing the number of data items emitted by a certain vertex (let's call it `vertexA`), excluding items emitted to the snapshot, would look like this:
 
 ```java
 Predicate<Measurement> vertexOfInterest =
@@ -515,9 +515,9 @@ Note that the metric names may change between MINOR versions but not between PAT
 
 ### Notes on the Performance
 
-The metrics system is designed with care to make the least possible impact on the performance of the cluster. Since the metrics collection takes place periodically with a few seconds frequency, the main focus is keeping allocation rates and memory footprint at minimum. Therefore, the blobs that store the metrics for Management Center are stored in the memory in a compressed format. The measurements, that use multiple IMaps to scale up the number of metrics, show that one blob occupies only a few KBs and it grows above 10KB only if there are more than 1000 IMaps.
+The metrics system is designed with care to make the least possible impact on the performance of the cluster. Since the metrics collection takes place periodically with a few seconds frequency, the main focus is keeping allocation rates and memory footprint at minimum. Therefore, the blobs that store the metrics for Management Center are stored in the memory in a compressed format. The measurements, that use multiple `IMap`s to scale up the number of metrics, show that one blob occupies only a few KBs and it grows above 10KB only if there are more than 1000 `IMap`s.
 
-The allocation rate of a metric collection cycle is also low. With both Management Center and JMX consumers enabled, the allocation rate with 100 IMaps is below 256KB per cycle, and it grows above 1MB with 1000 IMaps. This means that metrics collection does not increase the frequency of the garbage collection (GC) noticeably.
+The allocation rate of a metric collection cycle is also low. With both Management Center and JMX consumers enabled, the allocation rate with 100 `IMap`s is below 256KB per cycle, and it grows above 1MB with 1000 `IMap`s. This means that metrics collection does not increase the frequency of the garbage collection (GC) noticeably.
 
 While the metrics collection is considered GC friendly, it should be noted that the blobs are not recycled: configuring the retention time should be done with taking the frequency of the GC into account to prevent the blobs from getting promoted into the tenured region of the heap that in the end contributes to major GCs after time.
 
@@ -612,7 +612,7 @@ See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com
 
 ### Multimap Statistics
 
-To get MultiMap statistics, use the `getLocalMultiMapStats()` method from the `MultiMap` interface. This method returns a `LocalMultiMapStats` object that holds local MultiMap statistics.
+To get `MultiMap` statistics, use the `getLocalMultiMapStats()` method from the `MultiMap` interface. This method returns a `LocalMultiMapStats` object that holds local `MultiMap` statistics.
 
 Below is an example code where the `getLocalMultiMapStats()` method and the `getLastUpdateTime` method from `LocalMultiMapStats` get the last update time.
 
@@ -638,7 +638,7 @@ Below is an example code where the `getLocalQueueStats()` method and the `getAve
 
 <CodeBlock language="java">{Ex_management_ExampleQueueStats_java_tag_qs}</CodeBlock>
 
-The following are some of the metrics that you can access via the \`LocalQueueStats \` object:
+The following are some of the metrics that you can access via the `LocalQueueStats` object:
 
 - number of owned items in the member (`getOwnedItemCount()`)
 - number of backup items in the member (`getBackupItemCount()`)
@@ -655,7 +655,7 @@ Below is an example code where the `getLocalTopicStats()` method and the `getPub
 
 <CodeBlock language="java">{Ex_management_ExampleTopicStats_java_tag_ts}</CodeBlock>
 
-The following are the metrics that you can access via the \`LocalTopicStats \` object:
+The following are the metrics that you can access via the `LocalTopicStats` object:
 
 - creation time of the topic on the member (`getCreationTime()`)
 - total number of published messages of the topic on the member (`getPublishOperationCount()`)
@@ -671,7 +671,7 @@ Below is an example code where the `getLocalExecutorStats()` method and the `get
 
 <CodeBlock language="java">{Ex_management_ExampleExecutorStats_java_tag_es}</CodeBlock>
 
-The following are some of the metrics that you can access via the \`LocalExecutorStats \` object:
+The following are some of the metrics that you can access via the `LocalExecutorStats` object:
 
 - number of pending operations of the executor service (`getPendingTaskCount()`)
 - number of started operations of the executor service (`getStartedTaskCount()`)
@@ -989,7 +989,7 @@ The BIG-IP LTM monitors accept regular expressions in these strings allowing you
 
 As you can see, the HEAD request only checks for a `200 OK` response. A Hazelcast cluster member sends this status code when it is alive and running without an issue. This provides a very basic health check. For increased flexibility, we recommend using the GET request API.
 
-##### TCP\_HALF\_OPEN Monitors
+##### `TCP_HALF_OPEN` Monitors
 
 - Set the "Type" as `TCP Half Open`.
 - Optionally, set the "Alias Service Port" as the port of Hazelcast cluster member if you want to specify the port in the monitor
@@ -1369,7 +1369,7 @@ Above configuration forwards the logs to the `com.hazelcast.diagnostics` logger 
 </Logger>
 ```
 
-By configuring [TimeBasedTriggeringPolicy](https://logging.apache.org/log4j/2.x/manual/configuration.html) and [SizeBasedTriggeringPolicy](https://logging.apache.org/log4j/2.x/manual/configuration.html) for the appender, you can control the size and rolling behavior as you want.
+By configuring [`TimeBasedTriggeringPolicy`](https://logging.apache.org/log4j/2.x/manual/configuration.html) and [`SizeBasedTriggeringPolicy`](https://logging.apache.org/log4j/2.x/manual/configuration.html) for the appender, you can control the size and rolling behavior as you want.
 
 :::note
 
@@ -1379,17 +1379,17 @@ The diagnostic logs have the `DEBUG` level by default; if you don't want to see 
 
 ### Diagnostics Plugins
 
-As it is stated in the introduction of this section and shown in the log file content above, diagnostics utility consists of plugins such as BuildInfo, SystemProperties and HazelcastInstance.
+As it is stated in the introduction of this section and shown in the log file content above, diagnostics utility consists of plugins such as `BuildInfo`, `SystemProperties` and `HazelcastInstance`.
 
-#### BuildInfo
+#### `BuildInfo`
 
 It shows the detailed Hazelcast build information including the Hazelcast release number, `Git` revision number and whether you have Hazelcast Enterprise or not.
 
-#### SystemProperties
+#### `SystemProperties`
 
 It shows all the properties and their values in your system used by and configured for your Hazelcast installation. These are the properties starting with `java` (excluding `java.awt`), `hazelcast`, `sun` and `os`. It also includes the arguments that are used to startup the JVM.
 
-#### ConfigProperties
+#### `ConfigProperties`
 
 It shows the Hazelcast properties and their values explicitly set by you either on the command line (with `-D`) or by using declarative/programmatic configuration.
 
@@ -1407,9 +1407,9 @@ See the [List of Hazelcast Metrics appendix](../../reference/list-of-metrics.mdx
 
 :::
 
-#### SlowOperations
+#### `SlowOperations`
 
-It shows the slow operations and invocations, See the [SlowOperationDetector section](../improving-cluster-performance/best-practices.mdx) for more information.
+It shows the slow operations and invocations, See the [`SlowOperationDetector` section](../improving-cluster-performance/best-practices.mdx) for more information.
 
 #### Invocations
 
@@ -1420,7 +1420,7 @@ Using the following properties, you can configure the frequency of scanning all 
 - `hazelcast.diagnostics.invocation.sample.period.seconds`: Set a value in seconds. Its default value is `60` seconds.
 - `hazelcast.diagnostics.invocation.slow.threshold.seconds`: Set a value in seconds. Its default value is `5` seconds.
 
-#### InvocationProfiler
+#### `InvocationProfiler`
 
 It shows invocation latencies for each operation. See an example output below:
 
@@ -1455,7 +1455,7 @@ You can control the frequency of scanning all invocations using the following sy
 
 You can increase this period if you would like to decrease the logging noise.
 
-#### OperationProfiler
+#### `OperationProfiler`
 
 It measures the time an operation runs on an operation thread; if the operation is a blocking one or being offloaded, only the time on the operation thread is measured. See an example output below:
 
@@ -1482,7 +1482,7 @@ You can control the frequency of scanning all operations using the following sys
 
 - `hazelcast.diagnostics.operation-profiler.period.seconds`: Set a value in seconds. Its default value is `5` seconds. You can set it to `0` to disable the plugin.
 
-#### HazelcastInstance
+#### `HazelcastInstance`
 
 It shows the basic state of your Hazelcast cluster including the count and addresses of current members and the address of oldest cluster member. It is useful to get a fast impression of the cluster without needing to analyze a lot of data.
 
@@ -1490,7 +1490,7 @@ You can configure the frequency at which the cluster information is dumped to th
 
 - `hazelcast.diagnostics.memberinfo.period.seconds`: Set a value in seconds. Its default value is `60` seconds.
 
-#### EventQueue
+#### `EventQueue`
 
 It checks the event queues in the data structures and samples the event types if the queue size is above a certain threshold. It is useful to figure out why the event queue is running full.
 
@@ -1510,7 +1510,7 @@ An example output for a Hazelcast map is as follows:
             IMap 'myMap' REMOVED sampleCount=49 49.000%]]
 ```
 
-#### SystemLog
+#### `SystemLog`
 
 It shows the activities in your cluster including when a connection/member is added or removed and if there is a change in the lifecycle of the cluster. It also includes the reasons for connection closings.
 
@@ -1519,9 +1519,9 @@ You can enable or disable the system log diagnostics plugin, and configure wheth
 - `hazelcast.diagnostics.systemlog.enabled`: Its default value is `true`.
 - `hazelcast.diagnostics.systemlog.partitions`: Its default value is `false`. Please note that if you enable this, you may get a lot of log entries if you have many partitions.
 
-#### StoreLatency
+#### `StoreLatency`
 
-It shows statistics including the count of methods for each store (`load`, `loadAll`, `loadAllKeys`, etc.), average and maximum latencies for each store method calls and latency distributions for each store. The following is an example output snippet as part of the diagnostics log file for Hazelcast MapStore:
+It shows statistics including the count of methods for each store (`load`, `loadAll`, `loadAllKeys`, etc.), average and maximum latencies for each store method calls and latency distributions for each store. The following is an example output snippet as part of the diagnostics log file for Hazelcast `MapStore`:
 
 ```none
 17-9-2019 13:12:34 MapStoreLatency[
@@ -1550,14 +1550,14 @@ It shows statistics including the count of methods for each store (`load`, `load
 
 According to your store usage, a similar output can be seen for Hazelcast JCache, Queue and Ringbuffer with persistent datastores.
 
-You can control the StoreLatency plugin using the following properties:
+You can control the `StoreLatency` plugin using the following properties:
 
 - `hazelcast.diagnostics.storeLatency.period.seconds`: The frequency this plugin is writing the collected information to the disk. By default it is disabled. A sensible production value would be `60` seconds.
 - `hazelcast.diagnostics.storeLatency.reset.period.seconds`: The period of resetting the statistics. If, for example, it is set as 300 (5 minutes), all the statistics are cleared for every 5 minutes. By default it is 0, meaning that statistics are not reset.
 
-#### OperationHeartbeats
+#### `OperationHeartbeats`
 
-It shows the deviation between member/member operation heartbeats. Each member, regardless if there is an operation running on behalf of that member, sends an operation heartbeat to every other member. It contains a listing of all `callId`s of the running operations from a given member. This plugin also works fine between members/lite-members.
+It shows the deviation between member/member operation heartbeats. Each member, regardless if there is an operation running on behalf of that member, sends an operation heartbeat to every other member. It contains a listing of all `callId`s of the running operations from a given member. This plugin also works fine between `members/lite-members`.
 
 Because this operation heartbeat is sent periodically; by default 1/4 of the operation call timeout of 60 seconds, we would expect an operation heartbeat to be received every 15 seconds. Operation heartbeats are high priority packets (so they overtake regular packets) and are processed by an isolated thread in the invocation monitor. If there is any deviation in the frequency of receiving these packets, it may be due to the problems such as network latencies.
 
@@ -1574,18 +1574,18 @@ The following shows an example of the output where an operation heartbeat has no
         now(date-time)=20-7-2017 11:12:18]]]
 ```
 
-The OperationHeartbeats plugin is enabled by default since it has very little overhead and only prints to the diagnostics file if the maximum deviation percentage (explained below) is exceeded.
+The `OperationHeartbeats` plugin is enabled by default since it has very little overhead and only prints to the diagnostics file if the maximum deviation percentage (explained below) is exceeded.
 
-You can control the OperationHeartbeats plugin using the following properties:
+You can control the `OperationHeartbeats` plugin using the following properties:
 
 - `hazelcast.diagnostics.operation-heartbeat.seconds`: The frequency this plugin is writing the collected information to the disk. It is configured to be 10 seconds by default. 0 disables the plugin.
 - `hazelcast.diagnostics.operation-heartbeat.max-deviation-percentage`: The maximum allowed deviation percentage. Its default value is 33. For example, with a default 60 call timeout and operation heartbeat interval being 15 seconds, the maximum deviation with a deviation-percentage of 33, is 5 seconds. So there is no problem if a packet is arrived after 19 seconds, but if it arrives after 21 seconds, then the plugin renders.
 
-#### MemberHeartbeats
+#### `MemberHeartbeats`
 
-This plugin looks a lot like the OperationHeartbeats plugin, but instead of relying on operation heartbeats to determine the deviation, it relies on member/member cluster heartbeats. Every member sends a heartbeat to other members periodically (by default every 5 seconds).
+This plugin looks a lot like the `OperationHeartbeats` plugin, but instead of relying on operation heartbeats to determine the deviation, it relies on member/member cluster heartbeats. Every member sends a heartbeat to other members periodically (by default every 5 seconds).
 
-Just like the OperationHeartbeats, the MemberHeartbeats plugin can be used to detect if there are networking problems long before they actually lead to problems such as split-brain syndromes.
+Just like the `OperationHeartbeats`, the `MemberHeartbeats` plugin can be used to detect if there are networking problems long before they actually lead to problems such as split-brain syndromes.
 
 The following shows an example of the output where no member/member heartbeat has been received for 9 seconds:
 
@@ -1600,18 +1600,18 @@ The following shows an example of the output where no member/member heartbeat ha
         now(date-time)=20-7-2017 19:32:22]]
 ```
 
-The MemberHeartbeats plugin is enabled by default since it has very little overhead and only prints to the diagnostics file if the maximum deviation percentage (explained below) is exceeded.
+The `MemberHeartbeats` plugin is enabled by default since it has very little overhead and only prints to the diagnostics file if the maximum deviation percentage (explained below) is exceeded.
 
-You can control the MemberHeartbeats plugin using the following properties:
+You can control the `MemberHeartbeats` plugin using the following properties:
 
 - `hazelcast.diagnostics.member-heartbeat.seconds`: The frequency this plugin is writing the collected information to the disk. It is configured to be 10 seconds by default. 0 disables the plugin.
 - `hazelcast.diagnostics.member-heartbeat.max-deviation-percentage`: The maximum allowed deviation percentage. Its default value is 100. For example, if the interval of member/member heartbeats is 5 seconds, a 100% deviation is fine with heartbeats arriving up to 5 seconds after they are expected. So a heartbeat arriving after 9 seconds is not rendered, but a heartbeat received after 11 seconds is rendered.
 
-#### OperationThreadSamples
+#### `OperationThreadSamples`
 
-This plugin samples the operation threads and checks the running operations/tasks. Hazelcast has the [slow operation detector](../improving-cluster-performance/best-practices.mdx) which is useful for very slow operations. But it may not be efficient for high volumes of not too slow operations. Using the OperationThreadSamples plugin it is more clear to see which operations are actually running.
+This plugin samples the operation threads and checks the running operations/tasks. Hazelcast has the [slow operation detector](../improving-cluster-performance/best-practices.mdx) which is useful for very slow operations. But it may not be efficient for high volumes of not too slow operations. Using the `OperationThreadSamples` plugin it is more clear to see which operations are actually running.
 
-You can control the OperationThreadSamples plugin using the following properties:
+You can control the `OperationThreadSamples` plugin using the following properties:
 
 - `hazelcast.diagnostics.operationthreadsamples.period.seconds`: The frequency this plugin is writing the collected information to the disk. An efficient value for production would be 30, 60 or more seconds. 0, which is the default value, disables the plugin.
 - `hazelcast.diagnostics.operationthreadsamples.sampler.period.millis`: The period in milliseconds between taking samples. The lower the value, the higher the overhead but also the higher the precision. Its default value is 100 ms.
@@ -1638,7 +1638,7 @@ The following shows an example of the output when the property `hazelcast.diagno
 
 As can be seen above, the `MapSizeOperations` run on the operation threads most of the time.
 
-#### WanDiagnostics
+#### `WanDiagnostics`
 
 The WAN diagnostics plugin provides information about the WAN replication.
 
@@ -1735,7 +1735,7 @@ Hazelcast set the naming convention for MBeans as follows:
 final ObjectName mapMBeanName = new ObjectName("com.hazelcast:instance=_hzInstance_1_dev,type=IMap,name=trial");
 ```
 
-The MBeans name consists of the Hazelcast instance name, the type of the data structure and that data structure's name. In the above example, `_hzInstance_1_dev` is the instance name, we connect to an IMap with the name `trial`.
+The MBeans name consists of the Hazelcast instance name, the type of the data structure and that data structure's name. In the above example, `_hzInstance_1_dev` is the instance name, we connect to an `IMap` with the name `trial`.
 
 ### Connecting to JMX Agent
 
@@ -1862,7 +1862,7 @@ You can find the JMX API definition below with descriptions and the API methods 
 - Values ( `values(p)`)
 - Entry Set ( `entrySet(p)` )
 
-**MultiMap ( `MultiMap` )**
+**`MultiMap` ( `MultiMap` )**
 
 - Name ( `name` )
 - Size ( `size` )
@@ -1979,7 +1979,7 @@ You can find the JMX API definition below with descriptions and the API methods 
   - Partition count ( `partitionCount` )
   - Active partition count ( `activePartitionCount` )
   - Cluster Safe State ( `isClusterSafe` )
-  - LocalMember Safe State ( `isLocalMemberSafe` )
+  - `LocalMember` Safe State ( `isLocalMemberSafe` )
 - **Connection Manager ( `HazelcastInstance.ConnectionManager` )**
 
   - Client connection count ( `clientConnectionCount` )

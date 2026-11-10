@@ -19,7 +19,7 @@ Choose from the following components for ingesting data, depending on your use c
 - [Pipeline](../building-data-pipelines/overview.mdx): Import data from external systems using their native protocols and use Hazelcast data structures as a sink. [Built-in Hazelcast connectors](../../integrate/connectors.mdx) and [pre-built Kafka Connect Source connectors](../../integrate/kafka-connect-connectors.mdx) make this task easier.
 
   You can also use the [`SINK INTO` or `INSERT INTO` SQL statements](../sql/statements/sink-into.mdx) to ingest data straight into Hazelcast maps.
-- [MapStore](../working-with-external-data/overview.mdx): Import a subset of a larger dataset into memory with the option to write it back to the data source later. Writing back to the data source allows you to keep your original dataset synchronized with data changes made on the cluster.
+- [`MapStore`](../working-with-external-data/overview.mdx): Import a subset of a larger dataset into memory with the option to write it back to the data source later. Writing back to the data source allows you to keep your original dataset synchronized with data changes made on the cluster.
 
 <table>
 <colgroup>
@@ -126,15 +126,15 @@ For examples of how to use ETL pipelines, see [Extract Transform Load (ETL)](../
 
 If your data is stored in one or multiple data sources that are often updated, it's best to [stream that data into Hazelcast using a pipeline](../building-data-pipelines/stream-processing/building-pipelines.mdx). This way, you can always be sure that you're processing recent data.
 
-## When to use a MapStore
+## When to use a `MapStore`
 
-This section discusses the scenarios in which you might want to use a [MapStore](../working-with-external-data/overview.mdx) to ingest data into Hazelcast.
+This section discusses the scenarios in which you might want to use a [`MapStore`](../working-with-external-data/overview.mdx) to ingest data into Hazelcast.
 
 ### Read and Write-Through Caching
 
-If your data is stored in a data source that is too slow to query, it's best to cache that data in Hazelcast. Such a data source is usually some kind of database or other kind of key-value storage. [MapStore](../working-with-external-data/overview.mdx) is a tool for keeping a Hazelcast cache in sync with the data source.
+If your data is stored in a data source that is too slow to query, it's best to cache that data in Hazelcast. Such a data source is usually some kind of database or other kind of key-value storage. [`MapStore`](../working-with-external-data/overview.mdx) is a tool for keeping a Hazelcast cache in sync with the data source.
 
-With MapStore, you can do the following:
+With `MapStore`, you can do the following:
 
 - Fetch missing records from the data source in reaction to cache misses.
 - Push cache changes back to the original data store.
@@ -143,7 +143,7 @@ With MapStore, you can do the following:
 
 ### Read-Through Caching Only
 
-If you only need to fetch missing records from the data source in reaction to cache misses, consider using the [generic MapLoader](../working-with-external-data/configuring-a-generic-maploader.mdx).
+If you only need to fetch missing records from the data source in reaction to cache misses, consider using the [generic `MapLoader`](../working-with-external-data/configuring-a-generic-maploader.mdx).
 
 :::note
 
@@ -158,8 +158,8 @@ To learn more about pipelines, see the following resources:
 - [Cloud Storage ingestion example](https://github.com/hazelcast/hazelcast-code-samples/tree/master/jet/files-cloud/src/main/java/com/hazelcast/samples/jet/files/cloud)
 - [MySQL ingestion example](https://github.com/hazelcast/hazelcast-code-samples/blob/master/jet/jdbc/src/main/java/com/hazelcast/samples/jet/jdbc/JdbcSource.java)
 
-To learn more about MapStore, see the following resources:
+To learn more about `MapStore`, see the following resources:
 
-- [Building a Cache with MapStore](../working-with-external-data/overview.mdx)
+- [Building a Cache with `MapStore`](../working-with-external-data/overview.mdx)
 - [MapLoader/MapStore reference example](https://github.com/hazelcast/hazelcast-code-samples/blob/master/distributed-map/mapstore/src/main/java/LoadAll.java)
 - [MongoDB example](https://github.com/thejasbabu/hazelcast-mongo-mapstore) (community)

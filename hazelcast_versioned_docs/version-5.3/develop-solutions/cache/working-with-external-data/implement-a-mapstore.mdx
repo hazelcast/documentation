@@ -12,9 +12,9 @@ import Ex_dds_map_LoadAll_java_tag_loadall_indent_0 from "../../../examples/dds/
 import Ex_dds_map_PersonEntryStore_java_tag_personms from "../../../examples/dds/map/PersonEntryStore.java?tag=personms";
 import Ex_dds_map_PersonMapStore_java_tag_personms from "../../../examples/dds/map/PersonMapStore.java?tag=personms";
 
-You can use the Java `MapStore` and `MapLoader` interfaces to implement a custom MapStore with your own logic, such as for database connections, loading data from an external system, and writing data back to the external system.
+You can use the Java `MapStore` and `MapLoader` interfaces to implement a custom `MapStore` with your own logic, such as for database connections, loading data from an external system, and writing data back to the external system.
 
-## Differences Between MapLoader and MapStore
+## Differences Between `MapLoader` and `MapStore`
 
 The <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/MapStore.html" text="MapStore" code /> interface extends the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/MapLoader.html" text="MapLoader" code /> interface. Therefore, all methods and configuration parameters of the `MapLoader` are also available on the `MapStore` interface.
 
@@ -31,15 +31,15 @@ To connect to an external system, you must configure a connection to it, using e
 
 The external system that you choose must be a centralized system that is accessible to all Hazelcast members. Persistence to a local file system is not supported.
 
-The `init()` method initializes the MapStore. Hazelcast calls this method when the map is first created on a Hazelcast member. The MapStore can initialize the required resources such as reading a configuration file, creating a database connection, or accessing a Hazelcast instance.
+The `init()` method initializes the `MapStore`. Hazelcast calls this method when the map is first created on a Hazelcast member. The `MapStore` can initialize the required resources such as reading a configuration file, creating a database connection, or accessing a Hazelcast instance.
 
 :::tip
 
-By default, MapStores are loaded as soon as the first cluster member starts. If you want the cluster to wait until a certain number of members are available, you can use the `hazelcast.initial.min.cluster.size` system property. For example, if you set this value to `3`, the MapStore is not loaded until three cluster members are running.
+By default, `MapStore`s are loaded as soon as the first cluster member starts. If you want the cluster to wait until a certain number of members are available, you can use the `hazelcast.initial.min.cluster.size` system property. For example, if you set this value to `3`, the `MapStore` is not loaded until three cluster members are running.
 
 :::
 
-The `destroy()` method is called during the graceful shutdown of a Hazelcast member. You can override this method to clean up the resources held by the MapStore, such as closing the database connections.
+The `destroy()` method is called during the graceful shutdown of a Hazelcast member. You can override this method to clean up the resources held by the `MapStore`, such as closing the database connections.
 
 See an [example of this interface](https://github.com/hazelcast/hazelcast-code-samples/blob/master/hazelcast-integration/mongodb/src/main/java/com/hazelcast/loader/MongoMapStore.java).
 
@@ -93,7 +93,7 @@ See a [full example](https://github.com/hazelcast/hazelcast-code-samples/tree/ma
 
 ## Populating a New Map {/* #init */}
 
-The first time you create a map that is configured with a MapStore, the map is empty. As a result, the Hazelcast cluster must request data from the external system. Depending on the amount of data Hazelcast needs to request, the map may take a long time to be populated with entries from the external system. The fastest way to retrieve entries from the external system is to use the `MapLoader.loadAllKeys()` method. When you implement this method, each Hazelcast member connects to the database in parallel to request entries in its owned partitions.
+The first time you create a map that is configured with a `MapStore`, the map is empty. As a result, the Hazelcast cluster must request data from the external system. Depending on the amount of data Hazelcast needs to request, the map may take a long time to be populated with entries from the external system. The fastest way to retrieve entries from the external system is to use the `MapLoader.loadAllKeys()` method. When you implement this method, each Hazelcast member connects to the database in parallel to request entries in its owned partitions.
 
 The `MapLoader.loadAllKeys()` method can return all, some, or none of the keys. For example, you can specify a range of keys to be loaded, then rely on read-through to load the remaining keys on demand. Or, you can return a `null` value so that no data is loaded from the external system.
 
@@ -108,9 +108,9 @@ Hazelcast clusters populate new maps following this process:
 3. Each member loads all values of its owned keys by calling `MapLoader.loadAll(keys)`.
 4. Each member puts its owned entries into the map by calling `IMap.putTransient(key,value)`.
 
-## Using a MapStore with Write-Behind
+## Using a `MapStore` with Write-Behind
 
-If you [configure](./configuration-guide.mdx) your MapStore to use the write-behind caching pattern, you can do the following:
+If you [configure](./configuration-guide.mdx) your `MapStore` to use the write-behind caching pattern, you can do the following:
 
 - Apply batch updates to the external system to reduce requests to the data store.
 - Edit entries in the map without writing those changes back to the external system.
@@ -179,24 +179,24 @@ The following example shows you how to implement the `EntryStore` interface.
 
 :::
 
-## Full Example of a MapStore
+## Full Example of a `MapStore`
 
 The following example shows you a complete `MapStore` implementation.
 
 <CodeBlock language="java">{Ex_dds_map_PersonMapStore_java_tag_personms}</CodeBlock>
 
-If you are using Hazelcast in client/server mode, you must add the MapStore and any dependencies to the classpath of your members.
+If you are using Hazelcast in client/server mode, you must add the `MapStore` and any dependencies to the classpath of your members.
 
 If you use multiple threads to access shared state in a `MapStore` implementation, you need to make sure that the implementation is thread safe. Each member receives an instance of the `MapStore` implementation, which means that multiple threads can access it at the same time.
 
 ## Related Resources
 
-To monitor MapStores for each loaded entry, use the `EntryLoadedListener` interface. See the [Listening for Map Events section](../../listening-to-events/object-events.mdx#listening-for-map-events) to learn how you can catch entry-based events.
+To monitor `MapStore`s for each loaded entry, use the `EntryLoadedListener` interface. See the [Listening for Map Events section](../../listening-to-events/object-events.mdx#listening-for-map-events) to learn how you can catch entry-based events.
 
 For a tutorial, see [Use Cloud Standard as a Write-Through Cache with MongoDB Atlas](/tutorials/write-through-cache-serverless-mapstore).
 
 ## Next Steps
 
-If you use Hazelcast in client/server mode, you must add your MapStore and any other dependencies to the classpaths of your members.
+If you use Hazelcast in client/server mode, you must add your `MapStore` and any other dependencies to the classpaths of your members.
 
-After you've created your `MapStore` implementation and it's on the classpath of your members, you need to configure one or more maps to use it. By doing so, you plug the MapStore into the lifecycle of the map. For details about configuring a MapStore, see the [configuration guide](./configuration-guide.mdx).
+After you've created your `MapStore` implementation and it's on the classpath of your members, you need to configure one or more maps to use it. By doing so, you plug the `MapStore` into the lifecycle of the map. For details about configuring a `MapStore`, see the [configuration guide](./configuration-guide.mdx).

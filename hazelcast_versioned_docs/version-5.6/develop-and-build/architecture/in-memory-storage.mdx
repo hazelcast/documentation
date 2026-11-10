@@ -16,9 +16,9 @@ We'll walk through a scenario with 3 Hazelcast members and 12 partitions, as sho
 
 The DAG edge that delivers the data to this processor is of the **partitioned-distributed** kind. For each item Hazelcast first extracts its key, computes the key's partition, looks up the processor in charge of that partition, and sends it there. Every processor maintains its own internal state.
 
-## Snapshots are Stored in IMap
+## Snapshots are Stored in `IMap`
 
-When a processor receives a snapshot barrier from its input streams, it saves its internal state to the Hazelcast IMap which is created for the current snapshot. Figure 2 shows how state objects of the first processor instance end up in the local member's primaries, thanks to the same partitioning scheme used for both processing and storage. Additionally, backup copies of these state objects are sent to the 2nd and the 3rd member.
+When a processor receives a snapshot barrier from its input streams, it saves its internal state to the Hazelcast `IMap` which is created for the current snapshot. Figure 2 shows how state objects of the first processor instance end up in the local member's primaries, thanks to the same partitioning scheme used for both processing and storage. Additionally, backup copies of these state objects are sent to the 2nd and the 3rd member.
 
 ![Processor state replicated to remote members](./images/ram-storage-2.png)
 

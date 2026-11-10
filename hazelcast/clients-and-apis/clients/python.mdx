@@ -17,7 +17,7 @@ To learn how to get started quickly with the Hazelcast Python client, follow our
 The Hazelcast native Python client is an official library that allows Python applications to connect to and interact with Hazelcast clusters. It is implemented using the Hazelcast Open Binary Client Protocol. The key features and benefits include:
 
 - Distributed data structures: the client provides access to Hazelcast's distributed data structures such as maps, queues, topics, lists, sets, and more.
-- SQL support: it offers the ability to query Map data using standard SQL syntax.
+- SQL support: it offers the ability to query `Map` data using standard SQL syntax.
 - JSON object support: it allows using and querying JSON objects.
 - Compact serialization: the client supports compact serialization, which provides efficient serialization of objects.
 - DBAPI support: it implements the DBAPI interface on top of the SQL service, making it compatible with various libraries and tools.
@@ -85,13 +85,13 @@ This section shows how to connect to a Hazelcast cluster and perform some basic 
     client = hazelcast.HazelcastClient()
 ```
 
-**Example: Get or create the "distributed-map" on the cluster**
+**Example: Get or create the `distributed-map` on the cluster**
 
 ```python
     distributed_map = client.get_map("distributed-map")
 ```
 
-**Example: Put "key", "value" pair into the "distributed-map"**
+**Example: Put `key`, `value` pair into the `distributed-map`**
 
 In this example, you will have to wait for the request to complete.
 
@@ -101,7 +101,7 @@ In this example, you will have to wait for the request to complete.
 
 **Example: Get the value associated with the given key from the cluster**
 
-In this example, you will attach a callback to be executed once the response for the get request is received. Note that, the set request above is blocking since it calls ".result()" on the returned Future, whereas the get request below is non-blocking.
+In this example, you will attach a callback to be executed once the response for the get request is received. Note that, the set request above is blocking since it calls `.result()` on the returned `Future`, whereas the get request below is non-blocking.
 
 ```python
     get_future = distributed_map.get("key")

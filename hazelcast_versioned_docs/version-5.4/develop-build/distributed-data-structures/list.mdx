@@ -9,7 +9,7 @@ import TabItem from "@theme/TabItem";
 import CodeBlock from "@theme/CodeBlock";
 import Ex_dds_list_ListConfiguration_java_tag_lc from "../../examples/dds/list/ListConfiguration.java?tag=lc";
 
-Hazelcast List, also known as IList, is similar to Hazelcast Set - it is a distributed collection, but it allows duplicate elements and preserves the order of elements.
+Hazelcast List, also known as `IList`, is similar to Hazelcast Set - it is a distributed collection, but it allows duplicate elements and preserves the order of elements.
 
 Hazelcast List is a non-partitioned data structure where values and each backup are represented by their own single partition.
 
@@ -378,17 +378,17 @@ The following are the configuration elements and their descriptions:
 - `statistics-enabled`: Specifies whether the statistics gathering is enabled for your list. If set to `false`, you cannot collect statistics in your implementation. Its default value is `true`.
 - `max-size`: The maximum number of entries for this list.
 - `item-listeners`: Lets you add listeners (listener classes) for the list items. You can also set the attribute `include-value` to `true` if you want the item event to contain the item values. You can set the attribute `local` to `true` if you want to listen the items on the local member.
-- `split-brain-protection-ref`: Name of the split-brain protection configuration that you want this list to use. See the [Split-Brain Protection for IList and TransactionalList section](#split-brain-protection-for-ilist-and-transactionallist).
+- `split-brain-protection-ref`: Name of the split-brain protection configuration that you want this list to use. See the [Split-Brain Protection for `IList` and `TransactionalList` section](#split-brain-protection-for-ilist-and-transactionallist).
 
-## Split-Brain Protection for IList and TransactionalList
+## Split-Brain Protection for `IList` and `TransactionalList`
 
-IList & TransactionalList can be configured to check for a minimum number of available members before applying queue operations (see the [Split-Brain Protection section](../../operate-manage/configuring-for-fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful queue operations on all parts of a cluster during a network partition.
+`IList` & `TransactionalList` can be configured to check for a minimum number of available members before applying queue operations (see the [Split-Brain Protection section](../../operate-manage/configuring-for-fault-tolerance/handling-network-partitions/split-brain-protection.mdx)). This is a check to avoid performing successful queue operations on all parts of a cluster during a network partition.
 
 The following is a list of methods, grouped by the protection types, that support split-brain protection checks:
 
-IList:
+`IList`:
 
-- WRITE, READ\_WRITE:
+- `WRITE`, `READ_WRITE`:
 
   - `add`
   - `addAll`
@@ -396,7 +396,7 @@ IList:
   - `remove`
   - `removeAll`
   - `set`
-- READ, READ\_WRITE:
+- `READ`, `READ_WRITE`:
 
   - `add`
   - `contains`
@@ -411,13 +411,13 @@ IList:
   - `subList`
   - `toArray`
 
-TransactionalList:
+`TransactionalList`:
 
-- WRITE, READ\_WRITE:
+- `WRITE`, `READ_WRITE`:
 
   - `add`
   - `remove`
-- READ, READ\_WRITE:
+- `READ`, `READ_WRITE`:
 
   - `size`
 

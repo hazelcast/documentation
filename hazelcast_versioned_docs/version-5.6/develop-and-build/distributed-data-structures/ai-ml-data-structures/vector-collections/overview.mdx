@@ -12,7 +12,7 @@ import TabItem from "@theme/TabItem";
 
 The primary object for interacting with vector storage is a Vector Collection. A Vector Collection holds information about the vectors and associated metadata (user values).
 
-For further information on the architecture and considerations for the Beta version of the Vector Collection data structure, see [VectorCollection data structure design](./vector-search-overview.mdx).
+For further information on the architecture and considerations for the Beta version of the Vector Collection data structure, see [`VectorCollection` data structure design](./vector-search-overview.mdx).
 
 A collection consists of one or more indexes, all sharing a common metadata storage. Each index represents a distinct vector space. Vectors from different indexes are stored independently, and indexes can have different configurations.
 
@@ -602,14 +602,14 @@ results = vectorCollection.search_near_vector(
 
 ### Similarity search options
 
-Search parameters are passed as a `searchOptions` argument to the searchAsync method.
+Search parameters are passed as a `searchOptions` argument to the `searchAsync` method.
 
 | Option | Description | Default |
 | --- | --- | --- |
-| limit | The number of results to return in a search result | `10` |
-| includeValue | Whether to include the user value in the search result. By default, the user value is not included. To include the user value, set to `TRUE` | `FALSE` |
-| includeVectors | Whether to include the vector values in the search result. By default, the vector values are not included. To include the vector values, set to `TRUE` | `FALSE` |
-| hints | Extra hints for the search. | `NULL` |
+| `limit` | The number of results to return in a search result | `10` |
+| `includeValue` | Whether to include the user value in the search result. By default, the user value is not included. To include the user value, set to `TRUE` | `FALSE` |
+| `includeVectors` | Whether to include the vector values in the search result. By default, the vector values are not included. To include the vector values, set to `TRUE` | `FALSE` |
+| `hints` | Extra hints for the search. | `NULL` |
 
 :::note
 
@@ -619,10 +619,10 @@ Using a larger `limit` may yield better results than with a smaller `limit` — 
 
 | Hint | Description | Type |
 | --- | --- | --- |
-| efSearch | Size of list of potential candidates during search. Larger value results in better precision but slower execution. | Integer |
-| partitionLimit | Number of results to fetch from each partition. | Integer |
-| memberLimit | Number of results to fetch from member in two-stage search. | Integer |
-| singleStage | Force use of single stage search. | Boolean |
+| `efSearch` | Size of list of potential candidates during search. Larger value results in better precision but slower execution. | Integer |
+| `partitionLimit` | Number of results to fetch from each partition. | Integer |
+| `memberLimit` | Number of results to fetch from member in two-stage search. | Integer |
+| `singleStage` | Force use of single stage search. | Boolean |
 
 <Tabs groupId="java">
 <TabItem value="java" label="Java">

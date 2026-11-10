@@ -147,7 +147,7 @@ public Collection<Employee> getNotWithName( String name ) {
 }
 ```
 
-### Simplifying with PredicateBuilder
+### Simplifying with `PredicateBuilder`
 
 You can simplify predicate usage with the `PredicateBuilder` interface, which offers simpler predicate building. See the below example code which selects all people with a certain name and age.
 
@@ -206,8 +206,8 @@ SQL-like predicates support the following syntax:
 
 The `%` (percentage sign) is placeholder for multiple characters, an `_` (underscore) is placeholder for only one character.
 
-- `name LIKE 'Jo%'` (true for 'Joe', 'Josh', 'Joseph' etc.)
-- `name LIKE 'Jo_'` (true for 'Joe'; false for 'Josh')
+- `name LIKE 'Jo%'` (true for `Joe`, `Josh`, `Joseph`, etc.)
+- `name LIKE 'Jo_'` (true for `Joe`; false for `Josh`)
 - `name NOT LIKE 'Jo_'` (true for 'Josh'; false for 'Joe')
 - `name LIKE 'J_s%'` (true for 'Josh', 'Joseph'; false 'John', 'Joe')
 
@@ -215,12 +215,12 @@ The `%` (percentage sign) is placeholder for multiple characters, an `_` (unders
 
 Similar to LIKE predicate but in a case-insensitive manner.
 
-- `name ILIKE 'Jo%'` (true for 'Joe', 'joe', 'jOe','Josh','joSH', etc.)
-- `name ILIKE 'Jo_'` (true for 'Joe' or 'jOE'; false for 'Josh')
+- `name ILIKE 'Jo%'` (true for `Joe`, `joe`, `jOe`, `Josh`, `joSH`, etc.)
+- `name ILIKE 'Jo_'` (true for `Joe` or `jOE`; false for `Josh`)
 
-**REGEX**: `<attribute> [NOT] REGEX 'expression'`
+`REGEX`: `<attribute> [NOT] REGEX 'expression'`
 
-- `name REGEX 'abc-.*'` (true for 'abc-123'; false for 'abx-123')
+- `name REGEX 'abc-.*'` (true for `abc-123`; false for `abx-123`)
 
 :::note
 
@@ -329,7 +329,7 @@ Paging Predicate, also known as Order & Limit, is not supported in Transactional
 
 :::
 
-### Filtering with Partition Predicate
+### Filtering with `PartitionPredicate` {/* #filtering-with-partition-predicate */}
 
 You can run queries on a single partition in your cluster using the partition predicate (`PartitionPredicate`).
 
@@ -348,13 +348,13 @@ Collection<String> keys = map.keySet(predicate);
 
 By default there are 271 partitions, and using a regular predicate, each partition needs to be accessed. However, if the partition predicate only accesses a single partition, this can lead to a big performance gain.
 
-For the partition predicate to work correctly, you need to know which partition your data belongs to so that you can send the request to the correct partition. One of the ways of doing it is to make use of the `PartitionAware` interface when data is inserted, thereby controlling the owning partition. See the [PartitionAware section](../best-practices/data-affinity.mdx#partitionaware) for more information and examples.
+For the partition predicate to work correctly, you need to know which partition your data belongs to so that you can send the request to the correct partition. One of the ways of doing it is to make use of the `PartitionAware` interface when data is inserted, thereby controlling the owning partition. See the [`PartitionAware` section](../best-practices/data-affinity.mdx#partitionaware) for more information and examples.
 
 A concrete example may be a web shop that sells phones and accessories. To find all the accessories of a phone, a query could be executed that selects all accessories for that phone. This query is executed on all members in the cluster and therefore could generate quite a lot of load. However, if we would store the accessories in the same partition as the phone, the partition predicate could use the `partitionKey` of the phone to select the right partition and then it queries for the accessories for that phone; and this reduces the load on the system and get faster query results.
 
 ### Configuring the Query Thread Pool
 
-You can change the size of thread pool dedicated to query operations using the `pool-size` property. Each query consumes a single thread from a Generic Operations ThreadPool on each Hazelcast member - let's call it the query-orchestrating thread. That thread is blocked throughout the whole execution-span of a query on the member.
+You can change the size of thread pool dedicated to query operations using the `pool-size` property. Each query consumes a single thread from a Generic Operations `ThreadPool` on each Hazelcast member - let's call it the query-orchestrating thread. That thread is blocked throughout the whole execution-span of a query on the member.
 
 The query-orchestrating thread uses the threads from the query-thread pool in the following cases:
 
@@ -423,7 +423,7 @@ You may want to query for `Person` objects that have more than one child. But, y
 
 In this case, you can create a custom attribute called `childrenCount` that returns the number of children for each `Person` object.
 
-### Implementing a ValueExtractor
+### Implementing a `ValueExtractor`
 
 A custom attribute is a "synthetic" attribute that does not exist as a field or a getter in the object that it is extracted from. Thus, it is necessary to define the policy on how the attribute is supposed to be extracted.
 
@@ -437,14 +437,14 @@ Custom attributes are compatible with all Hazelcast [serialization methods](../s
 
 :::
 
-#### ValueExtractor with Portable Serialization
+#### `ValueExtractor` with Portable Serialization
 
 Portable serialization is a special kind of serialization where there is no need to have the class of the serialized object on the classpath of a member in order to read its attributes. That is the reason why the target object passed to the `ValueExtractor.extract()` method is not of the exact type that has been stored. Instead, an instance of a `com.hazelcast.query.extractor.ValueReader` is passed. `ValueReader` enables reading the attributes of a Portable object in a generic and type-agnostic way. It contains two methods:
 
 - `read(String path, ValueCollector<T> collector)` - enables passing all results directly to the `ValueCollector`.
 - `read(String path, ValueCallback<T> callback)` - enables filtering, transforming and grouping the result of the read operation and manually passing it to the `ValueCollector`.
 
-See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/query/extractor/ValueReader.html" text="ValueReader" /> Javadoc.
+See the <Variable code href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/query/extractor/ValueReader.html" text="ValueReader" /> Javadoc.
 
 #### Returning Multiple Values from a Single Extraction
 
@@ -531,7 +531,7 @@ hazelcast:
 
 Analogous to the example above, `currency` is the name of the custom attribute that will be extracted using the `CurrencyExtractor` class.
 
-Please note that an attribute name may begin with an ASCII letter \[A-Za-z\] or digit \[0-9\] and may contain ASCII letters \[A-Za-z\], digits \[0-9\] or underscores later on.
+Please note that an attribute name may begin with an ASCII letter `[A-Za-z]` or digit `[0-9]` and may contain ASCII letters `[A-Za-z]`, digits `[0-9]` or underscores later on.
 
 ### Indexing Custom Attributes
 
@@ -744,7 +744,7 @@ Looking at examples 4, 6 and 8, we can also easily notice that it is impossible 
 
 - `wheels` collection/array is null
 - `index == 1` is out of bound
-- `name` attribute of the wheels\[1\] object is `null`.
+- `name` attribute of the `wheels[1]` object is `null`.
 
 In order to make the query unambiguous, extra conditions would have to be added, e.g., `wheels != null AND wheels[1].name = null`.
 
@@ -752,7 +752,7 @@ In order to make the query unambiguous, extra conditions would have to be added,
 
 Aggregations allow you to compute a value of some function, e.g., `sum` or `max`, over the stored map entries. The computation is performed in a fully distributed manner, so no data other than the computed function value is transferred to a caller, making the computation fast.
 
-Aggregations are available on `com.hazelcast.map.IMap` only. IMap offers the method `aggregate` to apply the aggregation logic on the map entries. This method can be called with or without a predicate. You can refer to its <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/IMap.html#aggregate-com.hazelcast.aggregation.Aggregator-" text="Javadoc" /> to see the method details.
+Aggregations are available on `com.hazelcast.map.IMap` only. `IMap` offers the method `aggregate` to apply the aggregation logic on the map entries. This method can be called with or without a predicate. You can refer to its <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/IMap.html#aggregate-com.hazelcast.aggregation.Aggregator-" text="Javadoc" /> to see the method details.
 
 :::note
 
@@ -841,7 +841,7 @@ There are cases where instead of sending all the data returned by a query from a
 
 For example, you select all employees based on some criteria, but you just want to return their name instead of the whole Employee object. It is easily doable with the Projection API.
 
-Projections are available on `com.hazelcast.map.IMap` only. IMap offers the method `project` to apply the projection logic on the map entries. This method can be called with or without a predicate. See its <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/IMap.html#project-com.hazelcast.projection.Projection-" text="Javadoc" /> to see the method details.
+Projections are available on `com.hazelcast.map.IMap` only. `IMap` offers the method `project` to apply the projection logic on the map entries. This method can be called with or without a predicate. See its <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/IMap.html#project-com.hazelcast.projection.Projection-" text="Javadoc" /> to see the method details.
 
 ### Projection API
 
@@ -849,7 +849,7 @@ The Projection API provides the method `transform()` which is called on each res
 
 ### Example implementation {/* #example-implementation-2 */}
 
-Let's consider the following domain object stored in an IMap:
+Let's consider the following domain object stored in an `IMap`:
 
 ```java
 public class Employee implements Serializable {
@@ -1032,14 +1032,14 @@ Continuous query caches have the following configuration elements:
 - `include-value`: Specifies whether the value will be cached too. Its default value is true.
 - `predicate`: Predicate to filter events which are applied to the query cache.
 - `entry-listeners`: Adds listeners (listener classes) for your query cache entries. See the [Registering Map Listeners section](../listening-to-events/object-events.mdx#registering-map-listeners).
-- `in-memory-format`: Type of the data to be stored in your query cache. See the [in-memory format section](../distributed-data-structures/ap-data-structures/map/setting-data-format.mdx#configuring-in-memory-format). Its default value is BINARY.
+- `in-memory-format`: Type of the data to be stored in your query cache. See the [in-memory format section](../distributed-data-structures/ap-data-structures/map/setting-data-format.mdx#configuring-in-memory-format). Its default value is `BINARY`.
 - `populate`: Specifies whether the initial population of your query cache is enabled. Its default value is true.
 - `coalesce`: Specifies whether the coalescing of your query cache is enabled. Its default value is false.
 - `delay-seconds`: Minimum time in seconds that an event waits in the member's buffer. Its default value is 0.
 - `batch-size`: Batch size used to determine the number of events sent in a batch to your query cache. Its default value is 1.
 - `buffer-size`: Maximum number of events which can be stored in a partition buffer. Its default value is 16.
 - `eviction`: Configuration for the eviction of your query cache. See the [Configuring Map Eviction section](../distributed-data-structures/ap-data-structures/map/managing-map-memory.mdx#eviction-policy).
-- `indexes`: Indexes for your query cache defined by using this element's `<index>` sub-elements. See the [Configuring IMap Indexes section](../improving-query-performance/indexing-maps.mdx).
+- `indexes`: Indexes for your query cache defined by using this element's `<index>` sub-elements. See the [Configuring `IMap` Indexes section](../improving-query-performance/indexing-maps.mdx).
 
 Please take the following configuration considerations and publishing logic into account:
 

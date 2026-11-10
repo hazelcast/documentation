@@ -9,7 +9,7 @@ import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 import PartialDataConnectionsMongoDcConfiguration from "@site/hazelcast_versioned_docs/version-5.7/_partials/data-connections-mongo-dc-configuration.mdx";
 
-A data connection contains the metadata that Hazelcast needs to connect an external system. You can define a data connection in your members' configuration files, in the Java member API, or in SQL, and reuse the same connection details in the Pipeline API, SQL mappings, and MapStores.
+A data connection contains the metadata that Hazelcast needs to connect an external system. You can define a data connection in your members' configuration files, in the Java member API, or in SQL, and reuse the same connection details in the Pipeline API, SQL mappings, and `MapStore`s.
 
 ## Quickstart Configuration
 
@@ -460,7 +460,7 @@ Data connections have the following configuration options.
 
 :::note
 
-If you are using Java to configure the Mapstore, use the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/DataConnectionConfig.html" text="DataConnectionConfig object" />.
+If you are using Java to configure the `MapStore`, use the <Variable code href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/config/DataConnectionConfig.html" text="DataConnectionConfig object" />.
 
 :::
 
@@ -470,11 +470,11 @@ If you are using Java to configure the Mapstore, use the <Variable href="https:/
 | `name` (required) | The unique identifier for the data connection. |
 | `type` (required) | The type of data connection required for your external system. The following types of connection are supported: `JDBC`, `Kafka`, `Mongo`, `Hz` (case-insensitive). |
 | `properties` | Any configuration properties that the data connection expects to receive. |
-| `shared` | Whether the data connection instance is reusable in different MapStores, jobs, and SQL mappings. This behavior depends on the implementation of the specific data connection. The default value is `true`. See the implementation of each data connection type for full details of reusability: <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/kafka/KafkaDataConnection.html" text="KafkaDataConnection" code />, <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/mongodb/dataconnection/MongoDataConnection.html" text="MongoDataConnection" code />, <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/dataconnection/HazelcastDataConnection.html" text="HazelcastDataConnection" code />. |
+| `shared` | Whether the data connection instance is reusable in different `MapStore`s, jobs, and SQL mappings. This behavior depends on the implementation of the specific data connection. The default value is `true`. See the implementation of each data connection type for full details of reusability: <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/kafka/KafkaDataConnection.html" text="KafkaDataConnection" code />, <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/mongodb/dataconnection/MongoDataConnection.html" text="MongoDataConnection" code />, <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/dataconnection/HazelcastDataConnection.html" text="HazelcastDataConnection" code />. |
 
 :::tip
 
-You can use the [EncryptionReplacer class](../../operate-and-manage/configuration/static-configuration/configuring-declaratively.mdx#encryptionreplacer) to hide sensitive data in configuration files.
+You can use the [`EncryptionReplacer` class](../../operate-and-manage/configuration/static-configuration/configuring-declaratively.mdx#encryptionreplacer) to hide sensitive data in configuration files.
 
 :::
 
@@ -501,4 +501,4 @@ Use your configured connection:
 
 - Build a data pipeline with the [Pipeline API](../../connectors/database-connectors/jdbc-connector.mdx).
 - Query your data connection, using a [SQL mapping](../sql/sql-over-jdbc/mapping-to-jdbc.mdx).
-- Build a cache with a [MapStore](../working-with-external-data/configuring-a-generic-mapstore.mdx).
+- Build a cache with a [`MapStore`](../working-with-external-data/configuring-a-generic-mapstore.mdx).

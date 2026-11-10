@@ -75,7 +75,7 @@ The output should include connection information, such as the IP addresses, tran
 
 ## How do I choose keys properly?
 
-When you store a key and value in a distributed map, Hazelcast serializes the key and value and stores the byte array version of them in local ConcurrentHashMaps. These ConcurrentHashMaps use `equals` and `hashCode` methods of byte array version of your key. It does not take into account the actual `equals` and `hashCode` implementations of your objects. So it is important that you choose your keys in an appropriate way.
+When you store a key and value in a distributed map, Hazelcast serializes the key and value and stores the byte array version of them in local `ConcurrentHashMap`s. These `ConcurrentHashMap`s use `equals` and `hashCode` methods of byte array version of your key. It does not take into account the actual `equals` and `hashCode` implementations of your objects. So it is important that you choose your keys in an appropriate way.
 
 Implementing `equals` and `hashCode` is not enough, and it is important that the object is always serialized into the same byte array. All primitive types like String, Long, Integer, etc. are good candidates for keys to be used in Hazelcast. An unsorted set is an example of a bad candidate because Java Serialization may serialize the same unsorted set in two different byte arrays.
 
@@ -195,8 +195,8 @@ Lite member supports task execution (distributed executor service); smart client
 Yes. Hazelcast offers several optional mechanisms to persist data across restarts and failures:
 
 - Persistence: Hazelcast provides a Persistence feature that allows data to be persisted to disk. This feature can be enabled to save data for recovery after planned cluster shutdowns, unplanned single node failures, or unplanned cluster-wide failures.
-- MapStore and MapLoader: the MapStore and MapLoader interfaces allow you to implement custom persistence logic to store and load data from external systems.
-- File-based backups: Hazelcast offers features for backing up in-memory maps to files on local disk, persistent memory, or external databases. This includes the Persistence feature and MapStore.
+- `MapStore` and `MapLoader`: the `MapStore` and `MapLoader` interfaces allow you to implement custom persistence logic to store and load data from external systems.
+- File-based backups: Hazelcast offers features for backing up in-memory maps to files on local disk, persistent memory, or external databases. This includes the Persistence feature and `MapStore`.
 - Persistence for specific data structures: You can configure persistence for specific data structures like maps, job snapshots, and SQL metadata. This allows for data recovery in various scenarios including planned shutdowns and unplanned failures.
 - CP Subsystem Persistence: The CP Subsystem is designed to provide strong consistency and partition tolerance. This means that during network partitions, the system prioritizes consistency over availability, ensuring that all nodes have the most up-to-date and consistent data. The CP Persistence feature enhances the reliability of the CP Subsystem and ensures that the system can recover from failures without data loss.
 

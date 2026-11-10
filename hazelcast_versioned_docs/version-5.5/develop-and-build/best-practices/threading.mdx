@@ -18,7 +18,7 @@ Hazelcast uses a pool of threads for I/O. A single thread does not perform all t
 - I/O threads to read data from other members/clients
 - I/O threads to write data to other members/clients
 
-You can configure the number of I/O threads using the `hazelcast.io.thread.count` system property. Its default value is `3`, which is applied to each member. If the default is used, in total there are 7 I/O threads: one accept I/O thread, three read I/O threads and three write I/O threads. Each I/O thread has its own Selector instance and waits on the `Selector.select` if there is nothing to do.
+You can configure the number of I/O threads using the `hazelcast.io.thread.count` system property. Its default value is `3`, which is applied to each member. If the default is used, in total there are seven I/O threads: one accept I/O thread, three read I/O threads and three write I/O threads. Each I/O thread has its own `Selector` instance and waits on the `Selector.select` if there is nothing to do.
 
 :::note
 
@@ -48,11 +48,11 @@ Multiple components share the same event queues. If there are two topics, say A 
 
 If the events are produced at a higher rate than they are consumed, the queue grows in size. To prevent overloading the system and running into an `OutOfMemoryException`, the queue is given a capacity of one million items. When the maximum capacity is reached, the items are dropped. This means that the event system is a 'best effort' system. There is no guarantee that you are going to get an event. Topic A might have a lot of pending messages and therefore B cannot receive messages because the queue has no capacity and messages for B are dropped.
 
-## IExecutor Threading
+## `IExecutor` Threading
 
-Executor threading is straight forward. When a task is received to be executed on Executor E, then E will have its own `ThreadPoolExecutor` instance and the work is placed in the work queue of this executor. Thus, Executors are fully isolated, but still share the same underlying hardware - most importantly the CPUs.
+`Executor` threading is straight forward. When a task is received to be executed on Executor E, then E will have its own `ThreadPoolExecutor` instance and the work is placed in the work queue of this executor. Thus, `Executor`s are fully isolated, but still share the same underlying hardware - most importantly the CPUs.
 
-You can configure the IExecutor using the `ExecutorConfig` (programmatic configuration) or using `<executor>` (declarative configuration). See also the [Configuring Executor Service section](../distributed-computing/executor-services/executor-service.mdx#configuring-executor-service).
+You can configure the `IExecutor` using the `ExecutorConfig` (programmatic configuration) or using `<executor>` (declarative configuration). See also the [Configuring Executor Service section](../distributed-computing/executor-services/executor-service.mdx#configuring-executor-service).
 
 ## Operation Threading
 
@@ -113,7 +113,7 @@ Since a worker thread blocks the normal work queue (either partition specific or
 
 ### Operation-response and Invocation-future
 
-When an Operation is invoked, a `Future` is returned. See the example code below.
+When an `Operation` is invoked, a `Future` is returned. See the example code below.
 
 ```java
 GetOperation operation = new GetOperation( mapName, key );
@@ -195,7 +195,7 @@ If you want to configure 20 threads on NUMA node 0 and 20 threads on NUMA node 1
 
 Refer to [Non-uniform memory access](https://en.wikipedia.org/wiki/Non-uniform_memory_access) for information about NUMA nodes.
 
-## SlowOperationDetector
+## `SlowOperationDetector`
 
 The `SlowOperationDetector` monitors the operation threads and collects information about all slow operations. An `Operation` is a task executed by a generic or partition thread (see [Operation Threading](#operation-threading)). An operation is considered as slow when it takes more computation time than the configured threshold.
 

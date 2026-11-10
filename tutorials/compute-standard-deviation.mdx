@@ -158,7 +158,7 @@ The sum of the square of the differences is calculated on the cluster-side like 
 
 <CodeBlock language="java">{Ex_standard_deviation_parallel_processing_client_src_main_java_your_company_name_SeniorDeveloper_java_tag_stdev_indent_0}</CodeBlock>
 
-The client uses the ExecutorService API to run a Callable task on each member in the cluster. The Callable class is named `TotalDifferenceSquaredCallable.java` and it runs the calculation on the Hazelcast member where it is invoked.
+The client uses the `ExecutorService` API to run a Callable task on each member in the cluster. The Callable class is named `TotalDifferenceSquaredCallable.java` and it runs the calculation on the Hazelcast member where it is invoked.
 
 Each member calculates a subtotal only for the data that member owns. If you have two members, the calculation takes half the time. If you have ten members, the calculation takes a tenth of the time. Each member runs its calculation independently, the runtime is dependent on how much data each member hosts rather than how much data exists as a whole.
 
@@ -308,4 +308,4 @@ Use these resources in the docs to continue learning:
 - [Working with Cluster-Side Modules in Cloud](/cloud/cluster-side-modules).
 - [Deploying Cluster-Side Modules to Cloud Clusters](/cloud/custom-classes-upload).
 - [Hazelcast Cloud Maven Plugin](/cloud/maven-plugin-hazelcast)
-- [ExecutorService API](https://docs.hazelcast.org/docs/latest/javadoc/com/hazelcast/core/IExecutorService.html)
+- [`ExecutorService` API](https://docs.hazelcast.org/docs/latest/javadoc/com/hazelcast/core/IExecutorService.html)

@@ -235,7 +235,7 @@ Clear the list at the start of each test: `instance.getList("out").clear();`.
 
 :::
 
-### `Sinks.map(…​)` (keyed "last-write-wins") {/* #sinks-map-keyed-last-write-wins */}
+### `Sinks.map(…​)` (keyed `last-write-wins`) {/* #sinks-map-keyed-last-write-wins */}
 
 Writes to an `IMap` using key/value functions. Useful when you want the latest value per key, or to assert on deduplicated/enriched outputs.
 
@@ -278,7 +278,7 @@ pipeline.readFrom(TestSources.items(1, 2, 3))
 
 ### `Sinks.observable("name")` (push to the test thread) {/* #sinks-observablename-push-to-the-test-thread */}
 
-Publishes items to a named \`Observable so the test can subscribe and assert incrementally—especially helpful for streaming jobs that don't terminate.
+Publishes items to a named `Observable` so the test can subscribe and assert incrementally—especially helpful for streaming jobs that don't terminate.
 
 ```java
 Observable<Long> obs = instance.getJet().getObservable("obs");
@@ -307,9 +307,9 @@ Pair `Sinks.observable` with streaming assertions (see [Streaming assertions](#s
 
 Hazelcast Jet guarantees at-least-once delivery for items: each record will be written to the sink at least once, but in some failure/restart scenarios it may be written more than once.
 
-For example, if you write to \`Sinks.list("out"), after a member failure and job restart, some items could appear twice in the list. This is correct behaviour according to at-least-once semantics.
+For example, if you write to `Sinks.list("out")`, after a member failure and job restart, some items could appear twice in the list. This is correct behaviour according to at-least-once semantics.
 
-Because duplicates are possible, asserting strict sequence equality (e.g., \[1,2,3\]) may fail even though the pipeline is correct. Instead, design assertions that are idempotent—not affected by duplicates. Examples:
+Because duplicates are possible, asserting strict sequence equality (e.g., `[1,2,3]`) may fail even though the pipeline is correct. Instead, design assertions that are idempotent—not affected by duplicates. Examples:
 
 - Assert the set of values (`{1,2,3}`), not the exact list with ordering.
 - Assert that at least N items were produced.
@@ -325,7 +325,7 @@ Instead, use the Assertion Sink Builder API (`Assertions.assertionSink(…​)`)
 
 - Collecting items in-memory during the job.
 - Running your condition either continuously (for streaming) or at completion (for batch).
-- Throwing the correct exception (AssertionCompletedException or AssertionError) to end the job cleanly.
+- Throwing the correct exception (`AssertionCompletedException` or `AssertionError`) to end the job cleanly.
 
 ## Assertion sink builder
 
@@ -350,7 +350,7 @@ These sinks do not support fault tolerance, but they comply with at-least-once d
 
 ## Verify job state
 
-In some cases, it's necessary to wait until the job has started before verifying output. The `assertJobStatusEventually` method can be used to check that a job reaches a specific state (e.g. \`RUNNING). This is particularly useful when asserting on jobs that run in continuous ingestion mode or when coordinating multiple test threads.
+In some cases, it's necessary to wait until the job has started before verifying output. The `assertJobStatusEventually` method can be used to check that a job reaches a specific state (e.g. `RUNNING`). This is particularly useful when asserting on jobs that run in continuous ingestion mode or when coordinating multiple test threads.
 
 ```java
 public class DesiredStateTest extends JetTestSupport {

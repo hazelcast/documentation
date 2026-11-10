@@ -92,14 +92,14 @@ User Code Deployment on the member has the following configuration:
   - `LOCAL_AND_CACHED_CLASSES`: Serve classes loaded from both local classpath and from other members. This is the default value.
   - `LOCAL_CLASSES_ONLY`: Serve classes from the local classpath only. Classes loaded from other members are used locally, but they are not served to other members.
   - `OFF`: Never serve classes to other members.
-- `<blacklist-prefixes>`: Comma separated class/package name prefixes that the member will never attempt to load from other members and that the client won't be allowed to upload. For example, if you set it to "com.foo", remote loading of all classes from the "com.foo" package is prevented, including the classes from all its sub-packages. If you set it to "com.foo.Class", then "Class" and all classes starting with "Class" in the "com.foo" package are blacklisted. There are built-in prefixes which are always blacklisted. These are as follows:
+- `<blacklist-prefixes>`: Comma separated class/package name prefixes that the member will never attempt to load from other members and that the client won't be allowed to upload. For example, if you set it to `com.foo`, remote loading of all classes from the `com.foo` package is prevented, including the classes from all its sub-packages. If you set it to `com.foo.Class`, then "Class" and all classes starting with "Class" in the `com.foo` package are blacklisted. There are built-in prefixes which are always blacklisted. These are as follows:
 
   - `javax.`
   - `java.`
   - `sun.`
   - `com.hazelcast.`
-- `<whitelist-prefixes>`: Comma separated name prefixes of classes/packages only from which the classes are allowed to be loaded. It allows to quickly configure remote loading only for classes from selected packages. It can be used together with blacklisting. For example, you can whitelist the prefix "com.foo" and blacklist the prefix "com.foo.secret". If the list is empty, all classes are allowed.
-- `<provider-filter>`: Filter to constrain members that can be used for a class loading request when a class is not available locally. The value is in the format "HAS\_ATTRIBUTE:foo". When it is set to "HAS\_ATTRIBUTE:foo", the class loading request is only sent to the members which have "foo" as a [member attribute](../../../operate-manage/maintaining-a-cluster/member-attributes.mdx). Setting this to null allows loading of classes from all members. See an example in the next section.
+- `<whitelist-prefixes>`: Comma separated name prefixes of classes/packages only from which the classes are allowed to be loaded. It allows to quickly configure remote loading only for classes from selected packages. It can be used together with blacklisting. For example, you can whitelist the prefix `com.foo` and blacklist the prefix `com.foo.secret`. If the list is empty, all classes are allowed.
+- `<provider-filter>`: Filter to constrain members that can be used for a class loading request when a class is not available locally. The value is in the format `HAS_ATTRIBUTE:foo`. When it is set to `HAS_ATTRIBUTE:foo`, the class loading request is only sent to the members which have "foo" as a [member attribute](../../../operate-manage/maintaining-a-cluster/member-attributes.mdx). Setting this to null allows loading of classes from all members. See an example in the next section.
 
 ## Example for Filtering of Members {/* #example-for-filtering-members */}
 

@@ -51,7 +51,7 @@ For more details on installing and using Hazelcast Helm Chart you can see this [
 
 ## Horizontal Pod AutoScaler (Resource Metrics)
 
-As you can read the details from official Kubernetes documentation, [Resource Metrics](https://kubernetes.io/docs/tasks/debug-application-cluster/resource-usage-monitoring/#resource-metrics-pipeline) provide CPU and Memory based metrics for pods and nodes in your Kubernetes Cluster. Those metrics are exposed via the metrics.k8s.io API and one implementation of that API is Metrics Server.
+As you can read the details from official Kubernetes documentation, [Resource Metrics](https://kubernetes.io/docs/tasks/debug-application-cluster/resource-usage-monitoring/#resource-metrics-pipeline) provide CPU and Memory based metrics for pods and nodes in your Kubernetes Cluster. Those metrics are exposed via the `metrics.k8s.io` API and one implementation of that API is Metrics Server.
 
 Before moving forward, verify that Metrics Server is properly installed and visible in the list of API Registration.
 
@@ -66,7 +66,7 @@ Let's create an HPA based on CPU usage.
 $ kubectl autoscale statefulset hazelcast --cpu-percent=50 --min=3 --max=10
 ```
 
-This HPA will periodically check Hazelcast StatefulSet CPU usage and will decide the number of running pods between 3 and 10, based on some [calculations](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#algorithm-details). The simplest way to put some cpu load on Hazelcast Pod is to execute [yes tool](<https://en.wikipedia.org/wiki/Yes_(Unix)>). This is just to show how HPA is triggered to scale up Hazelcast Cluster by printing yes in one of Hazelcast pods. You should use a proper load testing tool to test HPA in your Hazelcast Cluster. Before generating CPU load, you can open 2 new terminals to watch HPA target values and number of Hazelcast pods via watch `kubectl get pods` and watch `kubectl get hpa` commands. Let's move on and execute the following command for 5-10 seconds and terminate via **Ctrl + C**.
+This HPA will periodically check Hazelcast `StatefulSet` CPU usage and will decide the number of running pods between 3 and 10, based on some [calculations](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#algorithm-details). The simplest way to put some cpu load on Hazelcast Pod is to execute [yes tool](<https://en.wikipedia.org/wiki/Yes_(Unix)>). This is just to show how HPA is triggered to scale up Hazelcast Cluster by printing yes in one of Hazelcast pods. You should use a proper load testing tool to test HPA in your Hazelcast Cluster. Before generating CPU load, you can open 2 new terminals to watch HPA target values and number of Hazelcast pods via watch `kubectl get pods` and watch `kubectl get hpa` commands. Let's move on and execute the following command for 5-10 seconds and terminate via **Ctrl + C**.
 
 Now that your HPA target is above 50%, you should see some new pods have been created. As the initial Hazelcast cluster was 3 members cluster, `hazelcast-3` and above are the new pods created by HPA.
 
@@ -194,7 +194,7 @@ The most important part in this output is "value": `108m`. The suffix `m` means 
 
 As we have configured Hazelcast, Prometheus and Prometheus Adapter, let's create a Horizontal Pod AutoScaler based on `on_heap_ratio` metric. `hazelcast-custom-metrics-hpa.yaml` tells HPA if `targetValue > 200m` then scale up my cluster. `200m` as we explained above means actually 20%. You can change that number based on your own use case.
 
-See the content of hazelcast-custom-metrics-hpa.yaml file.
+See the content of `hazelcast-custom-metrics-hpa.yaml` file.
 
 ```yaml
 apiVersion: autoscaling/v2beta2

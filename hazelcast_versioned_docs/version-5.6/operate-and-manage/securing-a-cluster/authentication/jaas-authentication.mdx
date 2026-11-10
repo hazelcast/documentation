@@ -60,7 +60,7 @@ Set<HazelcastPrincipal> hazelcastPrincipals =
 
 ## Callbacks Supported in Login Modules
 
-JAAS [Callback](https://docs.oracle.com/javase/8/docs/api/javax/security/auth/callback/Callback.html) instances are used for accessing different kinds of data from the [LoginModule](http://docs.oracle.com/javase/8/docs/api/javax/security/auth/spi/LoginModule.html) implementations. Hazelcast supports the following `Callback` types:
+JAAS [Callback](https://docs.oracle.com/javase/8/docs/api/javax/security/auth/callback/Callback.html) instances are used for accessing different kinds of data from the [`LoginModule`](http://docs.oracle.com/javase/8/docs/api/javax/security/auth/spi/LoginModule.html) implementations. Hazelcast supports the following `Callback` types:
 
 - `javax.security.auth.callback.NameCallback`: Retrieves a name from `Credentials` object.
 - `javax.security.auth.callback.PasswordCallback`: Retrieves a password from `PasswordCredentials` object.
@@ -75,7 +75,7 @@ The callbacks are usually used in the `login()` method of a login module:
 
 <CodeBlock language="java">{Ex_security_CustomLoginModuleTest_java_tag_callback_sample}</CodeBlock>
 
-## ClusterLoginModule
+## `ClusterLoginModule`
 
 Hazelcast has an abstract implementation of `LoginModule` that contains shared logic and cleanup operations. It automatically creates the `ClusterEndpointPrincipal` instance and it also provides the `addRole(String)` method which simplifies adding the `ClusterRolePrincipal` instances.
 

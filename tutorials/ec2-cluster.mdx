@@ -40,7 +40,7 @@ Under `VPC > Your VPCs` section of AWS console, create a new VPC and give it a n
 </TabItem>
 <TabItem value="aws-cli" label="AWS CLI">
 
-Create a VPC with a cidr block and note the **VpcId** to use afterwards:
+Create a VPC with a cidr block and note the `VpcId` to use afterwards:
 
 ```shell
 $ aws ec2 create-vpc --cidr-block 10.0.0.0/16
@@ -83,7 +83,7 @@ Now create an internet gateway to be attached to your VPC. You will need this ga
 </TabItem>
 <TabItem value="aws-cli" label="AWS CLI">
 
-Note the **InternetGatewayId** when it is created:
+Note the **`InternetGatewayId`** when it is created:
 
 ```shell
 $ aws ec2 create-internet-gateway
@@ -152,7 +152,7 @@ As the target, pick the internet gateway you created in section [1.1.1](#1-1-1-c
 </TabItem>
 <TabItem value="aws-cli" label="AWS CLI">
 
-To add a route, find the **RouteTableId** of the VPC first:
+To add a route, find the **`RouteTableId`** of the VPC first:
 
 ```shell
 $ aws ec2 describe-route-tables \
@@ -177,7 +177,7 @@ RouteTables:
   VpcId: vpc-***********
 ```
 
-Then create the default route using the **InternetGatewayId**:
+Then create the default route using the **`InternetGatewayId`**:
 
 ```shell
 $ aws ec2 create-route --route-table-id rtb-*********** \
@@ -202,7 +202,7 @@ Under `VPC > Subnets` section, choose `Create Subnet`. Pick the proper VPC and g
 </TabItem>
 <TabItem value="aws-cli" label="AWS CLI">
 
-Create a subnet in the VPC using the **VpcId** and note the **SubnetId** when created:
+Create a subnet in the VPC using the **`VpcId`** and note the **`SubnetId`** when created:
 
 ```shell
 $ aws ec2 create-subnet --vpc-id vpc-*********** \
@@ -225,7 +225,7 @@ Subnet:
   VpcId: vpc-***********
 ```
 
-Then add a name tag using the **SubnetId** you can remember in the next steps:
+Then add a name tag using the **`SubnetId`** you can remember in the next steps:
 
 ```tag
 $ aws ec2 create-tags --resources subnet-*********** \
@@ -339,7 +339,7 @@ Navigate to `VPC > Security Groups` and create a new one:
 </TabItem>
 <TabItem value="aws-cli" label="AWS CLI">
 
-Create a security group with the **VpcId** and note the returned **GroupId**:
+Create a security group with the **`VpcId`** and note the returned **`GroupId`**:
 
 ```shell
 $ aws ec2 create-security-group \
@@ -405,7 +405,7 @@ As the last step, select your [key pair](https://docs.aws.amazon.com/AWSEC2/late
 </TabItem>
 <TabItem value="aws-cli" label="AWS CLI">
 
-Using the id's and the names you set above, now run two EC2 instances. In addition to the steps so far, you need to have a [key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) and pass it via `--key-name` flag. The command below will start two Amazon Linux machines with type t2.micro and assign public IP addresses to each. Also a tag named "cluster-tag" with "guide-ec2-cluster" value will be assigned to the instances:
+Using the id's and the names you set above, now run two EC2 instances. In addition to the steps so far, you need to have a [key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) and pass it via `--key-name` flag. The command below will start two Amazon Linux machines with type `t2.micro` and assign public IP addresses to each. Also a tag named `cluster-tag` with `guide-ec2-cluster` value will be assigned to the instances:
 
 ```shell
 $ aws ec2 run-instances \

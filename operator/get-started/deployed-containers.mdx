@@ -10,7 +10,7 @@ Every pod runs the same set of containers:
 
 - `hazelcast`: the Hazelcast Platform member itself. It handles clustering, data storage, and query processing.
 - `sidecar-agent`: a long-running helper that Operator communicates with at runtime to download Jet job JARs, download User Code Namespace bundles, and upload backups to external buckets (AWS S3, GCP, and Azure Blob).
-- `init-container`: a helper that runs once before the member starts, to download user code and modules from external buckets, URLs, and ConfigMaps, and to restore backups into the member's storage.
+- `init-container`: a helper that runs once before the member starts, to download user code and modules from external buckets, URLs, and `ConfigMap`s, and to restore backups into the member's storage.
 
 The `sidecar-agent` and `init-container` run from the same agent image, which you can configure through the `agent` configuration field. See [Change the default image registry](../install-and-upgrade/image-registry.mdx) and [Configure Container Resources](../operate-and-manage/configuration-properties/resource-configuration.mdx).
 

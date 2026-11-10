@@ -7,7 +7,7 @@ slug: /deploy-manage/variable-replacers
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
-Variable replacers are Java classes that replace custom strings in configuration. You can use variable replacers in command line arguments or in the \`hz-mc conf\` tool. A common use case for variable replacers is to mask sensitive information such as usernames and passwords.
+Variable replacers are Java classes that replace custom strings in configuration. You can use variable replacers in command line arguments or in the `hz-mc conf` tool. A common use case for variable replacers is to mask sensitive information such as usernames and passwords.
 
 :::note
 
@@ -25,10 +25,10 @@ The `<prefix>` placeholder tells Management Center which replacer to use to repl
 
 The following replacer classes are provided by Hazelcast as example implementations of the `ConfigReplacer` interface. Note that you can also implement your own replacers.
 
-- [EncryptionReplacer](#encryptionreplacer)
-- [PropertyReplacer](#propertyreplacer)
+- [`EncryptionReplacer`](#encryptionreplacer)
+- [`PropertyReplacer`](#propertyreplacer)
 
-## EncryptionReplacer
+## `EncryptionReplacer`
 
 The `EncryptionReplacer` encrypts and decrypts values. The secret key for encryption/decryption is generated from a password which can be a value in a file and/or environment-specific values, such as a MAC address or user data.
 
@@ -109,7 +109,7 @@ Use these properties to configure the `EncryptionReplacer`.
 - `hazelcast.mc.configReplacer.prop.passwordUserProperties`: Specifies whether the current user properties (`user.name` and `user.home`) should be used as a part of the encryption password. Its default value is true.
 - `hazelcast.mc.configReplacer.prop.saltLengthBytes`: Length (in bytes) of a random password salt. Its default value is 8.
 - `hazelcast.mc.configReplacer.prop.secretKeyAlgorithm`: Name of the secret key algorithm to be associated with the generated secret key. Its default value is AES.
-- `hazelcast.mc.configReplacer.prop.secretKeyFactoryAlgorithm`: Algorithm used to generate a secret key from a password. Its default value is PBKDF2WithHmacSHA256.
+- `hazelcast.mc.configReplacer.prop.secretKeyFactoryAlgorithm`: Algorithm used to generate a secret key from a password. Its default value is `PBKDF2WithHmacSHA256`.
 - `hazelcast.mc.configReplacer.prop.securityProvider`: Name of a Java Security Provider to be used for retrieving the configured secret key factory and the cipher. Its default value is null.
 
 :::note
@@ -118,11 +118,11 @@ Older Java versions may not support all the algorithms used as defaults. Use the
 
 :::
 
-## PropertyReplacer
+## `PropertyReplacer`
 
-The PropertyReplacer replaces variables by properties with the given name. Usually the system properties are used such as\`$\{user.name\}\`.
+The `PropertyReplacer` replaces variables by properties with the given name. Usually the system properties are used such as `${user.name}`.
 
-The full class name is `com.hazelcast.webmonitor.configreplacer.PropertyReplacer` and the replacer prefix is empty string ("").
+The full class name is `com.hazelcast.webmonitor.configreplacer.PropertyReplacer` and the replacer prefix is empty string (`""`).
 
 ## Implement custom replacers
 

@@ -71,7 +71,7 @@ Basically, what we did here is defining a WAN Replication configuration (`wan-re
 
 In the above example, we have configured the map named `replicatedMap` to replicate to the target cluster named `london` on a single endpoint, as specified with the `target-endpoints` element. Notice that the name of `wan-replication` configuration (`london-wan-rep`) is referenced in the `map` configuration using the `wan-replication-ref` element; this is how you make your map to use the WAN Replication feature. For now, only Hazelcast maps and caches support this feature.
 
-The `london` cluster might have more members than the one specified in this example, but only that endpoint will receive the WAN events. In that case and if you want the events to be forwarded to the other cluster members, see the `republishing-enabled` element description in the [Configuring for IMap and ICache section](./configuring-for-map-and-cache.mdx).
+The `london` cluster might have more members than the one specified in this example, but only that endpoint will receive the WAN events. In that case and if you want the events to be forwarded to the other cluster members, see the `republishing-enabled` element description in the [Configuring for `IMap` and `ICache` section](./configuring-for-map-and-cache.mdx).
 
 This example configuration defines a static endpoint to specify the target cluster member, using the `target-endpoints` element or `setTargetEndpoints()` method, respectively. You can also use Hazelcast's Discovery SPI for WAN Replication to specify endpoints on various cloud infrastructures. See the [Using Discovery SPI section](./defining-wan-replication.mdx#wanbatchreplication-discovery-spi).
 
@@ -188,4 +188,4 @@ When WAN replication is enabled between clusters where all members share the sam
 
 As in the Active-Passive example shown in the previous section, this example configuration also uses a static endpoint to specify the target cluster member. See the [Using Discovery SPI section](./defining-wan-replication.mdx#wanbatchreplication-discovery-spi) for information on using the Discovery SPI to specify target members.
 
-As mentioned previously, the above configurations are the minimal ones to get you started. In case you need to configure some additional aspects of your maps or caches that use WAN Replication, see the [Configuring for IMap and ICache section](./configuring-for-map-and-cache.mdx).
+As mentioned previously, the above configurations are the minimal ones to get you started. In case you need to configure some additional aspects of your maps or caches that use WAN Replication, see the [Configuring for `IMap` and `ICache` section](./configuring-for-map-and-cache.mdx).

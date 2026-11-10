@@ -7,17 +7,17 @@ slug: /mapstore/configuring-a-generic-mapstore
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
-With the [generic MapStore](./overview.mdx#options), you can configure a map to cache data from and write data back to an external system. This topic includes an example of how to configure a map with a generic MapStore that connects to a MySQL database.
+With the [generic `MapStore`](./overview.mdx#options), you can configure a map to cache data from and write data back to an external system. This topic includes an example of how to configure a map with a generic `MapStore` that connects to a MySQL database.
 
 :::note
 
-The objects created in the distributed map are stored as GenericRecord. You can use the `type-name` property to store the data in a POJO (Plain Old Java Object).
+The objects created in the distributed map are stored as `GenericRecord`. You can use the `type-name` property to store the data in a POJO (Plain Old Java Object).
 
 :::
 
 :::important
 
-GenericMapStore is designed to handle GenericRecord and does not support automatic transformation between stored data (GenericRecord) and domain objects (POJOs) in embedded mode. While the `type-name` property allows specifying a [Compact type name](../../serialization/compact-serialization.mdx), it does not enable domain object mapping.
+`GenericMapStore` is designed to handle `GenericRecord` and does not support automatic transformation between stored data (`GenericRecord`) and domain objects (POJOs) in embedded mode. While the `type-name` property allows specifying a [Compact type name](../../serialization/compact-serialization.mdx), it does not enable domain object mapping.
 
 :::
 
@@ -45,7 +45,7 @@ If you are using a Hazelcast JAR file, you need to ensure the following is added
 
 :::note
 
-If you are using the slim distribution, you need to add `hazelcast-mapstore`. If you are using MongoDb, you also need to add `hazelcast-jet-mongodb`.
+If you are using the slim distribution, you need to add `hazelcast-mapstore`. If you are using MongoDB, you also need to add `hazelcast-jet-mongodb`.
 
 :::
 
@@ -102,22 +102,22 @@ instance().getConfig().addMapConfig(mapConfig);
 
 <CodeCallouts>
 
-1. The [class name](./configuration-guide.mdx#class-name) of the generic MapStore that's built into Hazelcast. This implementation reads from the data connection configuration to create a [SQL mapping](#mapping).
+1. The [class name](./configuration-guide.mdx#class-name) of the generic `MapStore` that's built into Hazelcast. This implementation reads from the data connection configuration to create a [SQL mapping](#mapping).
 2. The name of your data connection.
 
 </CodeCallouts>
 
-## SQL mapping for the generic MapStore {/* #mapping */}
+## SQL mapping for the generic `MapStore` {/* #mapping */}
 
-When you configure a map with the generic MapStore, Hazelcast creates a [SQL mapping with the JDBC connector](../../sql/sql-over-jdbc/mapping-to-jdbc.mdx). The name of the mapping is the same name as your map prefixed with `__map-store.`. This mapping is used to read data from or write data to the external system and is removed whenever the configured map is removed. You can also configure this SQL mapping, using [configuration properties](#data-connection-ref).
+When you configure a map with the generic `MapStore`, Hazelcast creates a [SQL mapping with the JDBC connector](../../sql/sql-over-jdbc/mapping-to-jdbc.mdx). The name of the mapping is the same name as your map prefixed with `__map-store.`. This mapping is used to read data from or write data to the external system and is removed whenever the configured map is removed. You can also configure this SQL mapping, using [configuration properties](#data-connection-ref).
 
-## Configuration properties for the generic MapStore
+## Configuration properties for the generic `MapStore`
 
-These configuration properties allow you to configure the generic MapStore and its SQL mapping.
+These configuration properties allow you to configure the generic `MapStore` and its SQL mapping.
 
 :::tip
 
-As well as these properties, you can also configure [general MapStore settings](./configuration-guide.mdx).
+As well as these properties, you can also configure [general `MapStore` settings](./configuration-guide.mdx).
 
 :::
 
@@ -419,7 +419,7 @@ mapConfig.setMapStoreConfig(mapStoreConfig);
 
 ## Supported backends
 
-The generic MapStore needs a SQL Connector that supports `SELECT`, `UPDATE`, `SINK INTO` and `DELETE` statements.
+The generic `MapStore` needs a SQL Connector that supports `SELECT`, `UPDATE`, `SINK INTO` and `DELETE` statements.
 
 Officially supported connectors:
 
@@ -428,9 +428,9 @@ Officially supported connectors:
 
 ## Related resources
 
-- To monitor MapStores for each loaded entry, use the `EntryLoadedListener` interface. See the [Listening for Map Events section](../../listening-to-events/object-events.mdx#listening-for-map-events) to learn how you can catch entry-based events.
-- [Map Operations that Trigger Methods on a MapStore](./mapstore-triggers.mdx).
+- To monitor `MapStore`s for each loaded entry, use the `EntryLoadedListener` interface. See the [Listening for Map Events section](../../listening-to-events/object-events.mdx#listening-for-map-events) to learn how you can catch entry-based events.
+- [Map Operations that Trigger Methods on a `MapStore`](./mapstore-triggers.mdx).
 
 ## Next Steps
 
-See the [MapStore configuration guide](./configuration-guide.mdx) for details about configuration options, including caching behaviors.
+See the [`MapStore` configuration guide](./configuration-guide.mdx) for details about configuration options, including caching behaviors.

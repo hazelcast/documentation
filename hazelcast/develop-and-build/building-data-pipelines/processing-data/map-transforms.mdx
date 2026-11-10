@@ -4,9 +4,9 @@ sidebar_position: 6
 slug: /pipelines/map-transforms
 ---
 
-You can use IMap to perform transformations of the items in the pipeline, for example to lookup dictionary values or enrich the data. The simplest [`mapUsingIMap` transformation](./transforms.mdx#_mapusingimap) is available in the stage API itself.
+You can use `IMap` to perform transformations of the items in the pipeline, for example to lookup dictionary values or enrich the data. The simplest [`mapUsingIMap` transformation](./transforms.mdx#_mapusingimap) is available in the stage API itself.
 
-## IMapExtension (<Badge type="enterprise" />) {/* #_map_transforms */}
+## `IMapExtension` (<Badge type="enterprise" />) {/* #_map_transforms */}
 
 More advanced transformations are provided in `IMapExtension`:
 
@@ -41,7 +41,7 @@ p.readFrom(TestSources.items(1, 2, 3, 11, 12, 13, 21, 22, 23))
     .writeTo(Sinks.logger());
 ```
 
-It should produce output similar as below. The tuple contains in order: item, previous IMap value, value attempted to be inserted in `putIfAbsent`. Notice that some entries appear in different order due to parallelism, but the invariant is preserved - only first occurrence updates the IMap.
+It should produce output similar as below. The tuple contains in order: item, previous `IMap` value, value attempted to be inserted in `putIfAbsent`. Notice that some entries appear in different order due to parallelism, but the invariant is preserved - only first occurrence updates the `IMap`.
 
 ```none
 [127.0.0.1]:5702 [dev] [0ee0-e20c-9700-0001/loggerSink#0] (2, null, 2)

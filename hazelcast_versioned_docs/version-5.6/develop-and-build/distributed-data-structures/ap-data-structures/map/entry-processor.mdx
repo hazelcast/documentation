@@ -32,7 +32,7 @@ Hazelcast sends the entry processor to each cluster member and these members app
 
 Entry processors can be used with predicates. Predicates help to process a subset of data by selecting eligible entries. This selection can happen either by doing a full-table scan or by using indexes. To accelerate entry selection step, you can consider to add indexes. If indexes are there, entry processor automatically uses them.
 
-### Using OBJECT In-Memory Format
+### Using `OBJECT` In-Memory Format
 
 If entry processing is the major operation for a map and if the map consists of complex objects, you should use `OBJECT` as the `in-memory-format` to minimize serialization cost. By default, the entry value is stored as a byte array (`BINARY` format). When it is stored as an object (`OBJECT` format), then the entry processor is applied directly on the object. In that case, no serialization or deserialization is performed. However, if there is a defined event listener, a new entry value will be serialized when passing to the event publisher service.
 
@@ -44,7 +44,7 @@ When `in-memory-format` is `OBJECT`, the old value of the updated entry will be 
 
 ### Processing Entries
 
-The <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/IMap.html" text="IMap interface" /> provides the following methods for entry processing:
+The <Variable code href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/IMap.html" text="IMap" /> interface provides the following methods for entry processing:
 
 - `executeOnKey` processes an entry mapped by a key, blocking until the processing is complete and the result is returned.
 - `executeOnKeys` processes entries mapped by a collection of keys, blocking until the processing is complete and the results are returned.
@@ -52,9 +52,9 @@ The <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/haz
 - `executeOnEntries` processes all entries in a map, blocking until the processing is complete and the results are returned.
 - `executeOnEntries` also processes all entries in a map matching the provided predicate, blocking until the processing is complete and the results are returned.
 
-When using the `executeOnEntries` method, if the number of entries is high and you do not need the results, then returning null with the `process()` method is a good practice. This method is offered by the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/EntryProcessor.html" text="EntryProcessor interface" />. By returning null, results of the processing are not collected and thus out of memory errors are eliminated.
+When using the `executeOnEntries` method, if the number of entries is high and you do not need the results, then returning null with the `process()` method is a good practice. This method is offered by the <Variable code href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/EntryProcessor.html" text="EntryProcessor" interface />. By returning null, results of the processing are not collected and thus out of memory errors are eliminated.
 
-If you do not need to read or modify the entry in any way but would like to execute a task on the member owning the entry with that key (i.e. the member is the partition owner for that key), you can also use `executeOnKeyOwner` provided by <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/core/IExecutorService.html#executeOnKeyOwner-java.lang.Runnable-java.lang.Object-" text="IExecutorService" />. You need to make sure that the runnable can be serialized (using any of the available serialization techniques in Hazelcast). The runnable will not receive the map entry key or value and is not running on the same thread as operations reading the map data so operations such as `map.get()` or `map.put()` will not be blocked.
+If you do not need to read or modify the entry in any way but would like to execute a task on the member owning the entry with that key (i.e. the member is the partition owner for that key), you can also use `executeOnKeyOwner` provided by <Variable code href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/core/IExecutorService.html#executeOnKeyOwner-java.lang.Runnable-java.lang.Object-" text="IExecutorService" />. You need to make sure that the runnable can be serialized (using any of the available serialization techniques in Hazelcast). The runnable will not receive the map entry key or value and is not running on the same thread as operations reading the map data so operations such as `map.get()` or `map.put()` will not be blocked.
 
 You can also use entry processors to remove entries from your map simply by setting the value(s) of a single entry or multiple entries to `null`. See the following example code snippet:
 
@@ -68,7 +68,7 @@ class EntryDeletingProcessor implements EntryProcessor<String, MyData, Boolean> 
 }
 ```
 
-Related to above, IMap's `executeOnEntries()` method accepts predicates; you can also remove entries that match to a predicate that you provide.
+Related to above, `IMap`'s `executeOnEntries()` method accepts predicates; you can also remove entries that match to a predicate that you provide.
 
 :::note
 
@@ -78,7 +78,7 @@ Entry processors run via operation threads that are dedicated to specific partit
 
 ### Respecting Locks on Single Keys
 
-The entry processor respects locks ONLY when its executions are performed on a single key. As explained in the above section, the entry processor has the following methods to process a single key:
+The entry processor respects locks only when its executions are performed on a single key. As explained in the above section, the entry processor has the following methods to process a single key:
 
 ```java
 <R> R executeOnKey(K key, EntryProcessor<K, V, R> entryProcessor);
@@ -167,7 +167,7 @@ We have two optimizations:
 
 These are enabled very simply by implementing these interfaces in your `EntryProcessor`.
 
-These optimizations apply to the following IMap methods only:
+These optimizations apply to the following `IMap` methods only:
 
 - `executeOnKey(Object, EntryProcessor)`
 - `submitToKey(Object, EntryProcessor)`
@@ -221,7 +221,7 @@ hazelcast:
 </TabItem>
 </Tabs>
 
-An example of an Offloadable called "OffloadedInventoryEntryProcessor" would be as follows:
+An example of an `Offloadable` called `OffloadedInventoryEntryProcessor` would be as follows:
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
@@ -254,7 +254,7 @@ hazelcast:
 
 Remember to set the `pool-size` (count of executor threads per member) according to your execution needs. See the [Configuring Executor Service section](../../../distributed-computing/executor-services/executor-service.mdx#configuring-executor-service) for the configuration details.
 
-### ReadOnly Entry Processor
+### `ReadOnly` Entry Processor
 
 By default, an entry processor does not run if the key is locked. It waits until the key has been unlocked (it applies to the `executeOnKey`, `submitToKey` methods, that were mentioned before).
 
@@ -262,7 +262,7 @@ If the entry processor implements the `ReadOnly` interface without implementing 
 
 If the entry processor implements `ReadOnly` and modifies the entry, an `UnsupportedOperationException` is thrown.
 
-### ReadOnly and Offloadable Entry Processor
+### `ReadOnly` and Offloadable Entry Processor
 
 If the entry processor implements both `ReadOnly` and `Offloadable` interfaces, we observe the combination of both optimizations described above.
 

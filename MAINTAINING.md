@@ -176,7 +176,7 @@ Each entry in `tutorials/examples.json` and `operator/examples.json` pins one fi
 
 4. Run `npm run start` or `npm run build`. The build fails if the hash does not match.
 
-<!-- TODO: add a script that updates the pins, to replace these manual steps once the migration tooling is removed. -->
+<!-- TODO: add a script that updates the pins, to replace these manual steps. -->
 
 ### Fetched from Wordpress
 
@@ -222,7 +222,3 @@ Before this repo, the site was built with Antora from separate repos. The conten
 In the versioned repos, each released version has its own branch, e.g. `v/5.7` in `hz-docs`.
 
 <!-- TODO: state that the repos are archived, once they are. -->
-
-## Migration tooling
-
-The `migration/` folder holds disposable tooling used to convert the Antora content to Docusaurus. It has its own `package.json`, and normal site work does not need it. See `migration/README.md` before using it.

@@ -16,10 +16,10 @@ To learn how to get started quickly with the Hazelcast C++ client, follow our si
 
 The Hazelcast native C++ client is an official library that allows C++ applications to connect to and interact with Hazelcast clusters. With the Hazelcast C++ client, developers can build high-performance, distributed applications in C++ that leverage Hazelcast's powerful in-memory computing platform. The key features and benefits include:
 
-- Distributed Data Structures: the client offers access to various distributed data structures such as Map, Queue, Reliable Topic, Set, List, MultiMap, Ringbuffer, etc.
+- Distributed Data Structures: the client offers access to various distributed data structures such as `Map`, `Queue`, `ReliableTopic`, `Set`, `List`, `MultiMap`, `Ringbuffer`, etc.
 - Near Cache Support: the Near Cache feature allows frequently read data to be stored for faster read speeds compared to traditional caches.
 - Enterprise-Level security: the client provides SSL support for enhanced security requirements.
-- Distributed synchronization: the client offers distributed synchronization mechanisms through the CP Subsystem, including fenced\_lock, counting\_semaphore and latch.
+- Distributed synchronization: the client offers distributed synchronization mechanisms through the CP Subsystem, including `fenced_lock`, `counting_semaphore` and `latch`.
 - Smart Client functionality: by default, it operates as a smart client, meaning it knows the data location within the cluster and can directly request the correct member (note that you can disable this feature using the `client_config::get_networking_config::set_smart_routing` method if you do not want the clients to connect to every member).
 - Listeners: ability to add cluster listeners to a cluster and entry/item listeners to distributed data structures.
 - Cloud integration: it offers the ability to discover existing Hazelcast clusters in an AWS environment.
@@ -94,17 +94,16 @@ $ mkdir build && cd build
 $ conan install ..
 ```
 
-This generates the `conanbuildinfo.cmake` file to be included in your CMakeLists.txt. Follow the instructions at the [example page](https://docs.conan.io/en/latest/getting_started.html#an-md5-hash-calculator-using-the-poco-libraries) and build your application.
+This generates the `conanbuildinfo.cmake` file to be included in your `CMakeLists.txt`. Follow the instructions at the [example page](https://docs.conan.io/en/latest/getting_started.html#an-md5-hash-calculator-using-the-poco-libraries) and build your application.
 
 ### Install from source code using CMake
 
 #### Requirements
 
 1. Linux, macOS or Windows
-2. A compiler that supports C14 or above: The project detects the minimum C standard supported by the Boost library and uses the same language level for compilation. If you are using Boost 1.83.0 or later, the project requires C++14 or later because Boot.Math requires this language level.
+2. A compiler that supports C14 or above: The project detects the minimum C standard supported by the Boost library and uses the same language level for compilation. If you are using Boost 1.83.0 or later, the project requires C++ 14 or later because `Boot.Math` requires this language level.
 3. [CMake](https://cmake.org) 3.10 or above
 4. [Boost](https://www.boost.org) 1.83 or later. The Boost libraries used are:
-
    - boost-thread
    - boost-asio
    - boost-chrono
@@ -114,6 +113,7 @@ This generates the `conanbuildinfo.cmake` file to be included in your CMakeLists
    - boost-system
    - boost-uuid
    - boost-multiprecision
+
 5. [OpenSSL](https://www.openssl.org) (optional)
 
 #### Download source code
@@ -349,7 +349,7 @@ Make sure you add the installation prefix of the client library to `CMAKE_PREFIX
 
 You can pass the `-lhazelcast-cpp-client` option to the compiler to link against the client library.
 
-The client library depends on Boost.Thread and Boost.Chrono. You should also link your program against these libraries using `-lboost_thread` and `-lboost_chrono`. The Boost.Thread library should be provided with the preprocessor definition `BOOST_THREAD_VERSION=5` for necessary features such as futures and future continuations to be enabled.
+The client library depends on `Boost.Thread` and `Boost.Chrono`. You should also link your program against these libraries using `-lboost_thread` and `-lboost_chrono`. The `Boost.Thread` library should be provided with the preprocessor definition `BOOST_THREAD_VERSION=5` for necessary features such as futures and future continuations to be enabled.
 
 The following shows how to compile an example from the examples directory:
 
@@ -449,10 +449,8 @@ Other important configuration elements include:
 
 - `<cluster-name>`: Specifies which cluster this member belongs to.
 - `<network>`
-
   - `<port>`: Specifies the port number to be used by the member when it starts. Its default value is 5701. You can specify another port number, and if you set `auto-increment` to `true`, then Hazelcast will try the subsequent ports until it finds an available port or the `port-count` is reached.
   - `<join>`: Specifies the strategies to be used by the member to find other cluster members. Choose which strategy you want to use by setting its `enabled` attribute to `true` and the others to `false`.
-
     - `<multicast>`: Members find each other by sending multicast requests to the specified address and port. It is useful if IP addresses of the members are not static.
     - `<tcp>`: This strategy uses a pre-configured list of known members to find an already existing cluster. It is enough for a member to find only one cluster member to connect to the cluster. The rest of the member list is automatically retrieved from that member. We recommend putting multiple known member addresses there to avoid disconnectivity should one of the members in the list is unavailable at the time of connection.
 
@@ -583,7 +581,7 @@ Then, you can run the application using the following command:
 ./IT
 ```
 
-**IT.cpp**
+**`IT.cpp`**
 
 ```cpp
 #include <hazelcast/client/hazelcast_client.h>
@@ -641,7 +639,7 @@ Then, run the application using the following command:
 ./Sales
 ```
 
-**Sales.cpp**
+**`Sales.cpp`**
 
 ```cpp
 #include <hazelcast/client/hazelcast_client.h>

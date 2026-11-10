@@ -11,7 +11,7 @@ For a faster serialization of objects, avoiding reflection and long class names,
 
 `IdentifiedDataSerializable` uses a factory to create a class instance (with reflection) and it is fast during deserialization, which requires new instance creations.
 
-## getClassId and getFactoryId Methods
+## `getClassId` and `getFactoryId` Methods
 
 `IdentifiedDataSerializable` extends [`DataSerializable`](./other-serialization-options/implementing-dataserializable.mdx) and introduces the following methods:
 
@@ -20,7 +20,7 @@ For a faster serialization of objects, avoiding reflection and long class names,
 
 `IdentifiedDataSerializable` uses `getClassId()` instead of class name and it uses `getFactoryId()` to load the class when given the id. To complete the implementation, you should also implement `com.hazelcast.nio.serialization.DataSerializableFactory` and register it into `SerializationConfig`, which can be accessed from `Config.getSerializationConfig()`. Factory's responsibility is to return an instance of the right `IdentifiedDataSerializable` object, given the id. This is currently the most efficient way of Serialization that Hazelcast supports off the shelf.
 
-## Implementing IdentifiedDataSerializable
+## Implementing `IdentifiedDataSerializable`
 
 Let's take a look at the following example code and configuration to see `IdentifiedDataSerializable` in action.
 
@@ -88,7 +88,7 @@ public class EmployeeDataSerializableFactory
 
 The only method you should implement is `create`, as seen in the above example. It is recommended that you use a `switch-case` statement instead of multiple `if-else` blocks if you have a lot of subclasses. Hazelcast throws an exception if null is returned for `typeId`.
 
-## Registering EmployeeDataSerializableFactory {/* #register */}
+## Registering `EmployeeDataSerializableFactory` {/* #register */}
 
 As the last step, you need to register `EmployeeDataSerializableFactory` declaratively (declare in the configuration file `hazelcast.xml/yaml`) as shown below. Note that `factory-id` has the same value of `FACTORY_ID` in the above code. This is crucial to enable Hazelcast to find the correct factory.
 

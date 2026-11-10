@@ -12,9 +12,9 @@ import TabItem from "@theme/TabItem";
 
 High Availability mode avoids data loss when the Kubernetes node or availability zone is down. You can configure partition groups with High Availability mode to add resilience to your clusters.
 
-Partition groups let you choose where Hazelcast members store backups of a data partition. You can configure a partition group to back up data to a member in a different availability zone (ZONE\_AWARE) or on a different Kubernetes node (NODE\_AWARE). See [Partition Group configuration](/hazelcast/latest/clusters/partition-group-configuration) for details.
+Partition groups let you choose where Hazelcast members store backups of a data partition. You can configure a partition group to back up data to a member in a different availability zone (`ZONE_AWARE`) or on a different Kubernetes node (`NODE_AWARE`). See [Partition Group configuration](/hazelcast/latest/clusters/partition-group-configuration) for details.
 
-When using either type of partition grouping (ZONE\_AWARE or NODE\_AWARE) with a Hazelcast cluster that spans multiple availability zones and nodes, you must have an equal number of members in each zone or node. Otherwise, distribution of partitions between members will be uneven.
+When using either type of partition grouping (`ZONE_AWARE` or `NODE_AWARE`) with a Hazelcast cluster that spans multiple availability zones and nodes, you must have an equal number of members in each zone or node. Otherwise, distribution of partitions between members will be uneven.
 
 The `highAvailabilityMode` parameter allows you to specify partition groups and to automatically distribute members across availability zones and nodes using the Kubernetes policy `topologySpreadConstraints`.
 
@@ -80,7 +80,7 @@ High Availability mode supports the following configuration options.
 
 ### Example configuration
 
-The following example configures ZONE\_AWARE high availability.
+The following example configures `ZONE_AWARE` high availability.
 
 <CodeBlock language="yaml">{Ex_hazelcast_high_availability_mode_yaml}</CodeBlock>
 

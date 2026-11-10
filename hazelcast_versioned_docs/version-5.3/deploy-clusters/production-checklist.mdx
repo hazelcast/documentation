@@ -30,11 +30,11 @@ However, the following modules are not supported for the Solaris operating syste
 - `hazelcast-jet-protobuf`
 - `hazelcast-jet-python`
 
-### VMWare ESX
+### VMware ESX
 
-Hazelcast is certified on VMWare VSphere 5.5/ESXi 6.0. Generally speaking, Hazelcast can use all of the resources on a full machine. Splitting a single physical machine into multiple virtual machines and thereby dividing resources are not required.
+Hazelcast is certified on VMware VSphere 5.5/ESXi 6.0. Generally speaking, Hazelcast can use all of the resources on a full machine. Splitting a single physical machine into multiple virtual machines and thereby dividing resources are not required.
 
-Consider the following for VMWare ESX:
+Consider the following for VMware ESX:
 
 - Avoid sharing one Network Interface Card (NIC) between multiple virtual machine environments. A Hazelcast cluster is a distributed system and can be very network-intensive. Trying to share one physical NIC between multiple VMs may cause network-related performance problems.
 - Avoid over-committing memory. Always use dedicated physical memory for guests running Hazelcast.
@@ -42,7 +42,7 @@ Consider the following for VMWare ESX:
 - Be careful overcommitting CPU cores. Monitor CPU steal time metrics.
 - Do not move guests while Hazelcast is running - for ESX this means disabling vMotion. If you want to use vMotion (live migration), first stop the Hazelcast cluster then restart it after the migration completes.
 - Always enable verbose garbage collection (GC) logs in the Java Virtual Machine. When "Real" time is higher than "User" time, this may indicate virtualization issues. The JVM is not using the CPU to execute application code during garbage collection, and is probably waiting on input/output (I/O) operations.
-- Note VMWare guests network types.
+- Note VMware guests network types.
 - Use pass-through hard disks/partitions; do not use image files.
 - Configure partition groups to use a separate underlying physical machine for partition backups.
 - If you want to use automatic snapshots, first stop the Hazelcast cluster then restart it after the snapshot.

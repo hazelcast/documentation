@@ -21,13 +21,13 @@ Your application continues its operations on the remaining operating cluster. An
 
 Split-brain protection is supported for the following Hazelcast data structures:
 
-- IMap
-- Transactional Map
-- ICache
-- ILock
-- IQueue
-- IExecutorService, DurableExecutorService, IScheduledExecutorService, MultiMap, ISet, IList, Ringbuffer, Replicated Map, Cardinality Estimator, IAtomicLong, IAtomicReference, ISemaphore, ICountDownLatch
-- VectorCollection <Badge type="enterprise" />
+- `IMap`
+- `TransactionalMap`
+- `ICache`
+- `ILock`
+- `IQueue`
+- `IExecutorService`, `DurableExecutorService`, `IScheduledExecutorService`, `MultiMap`, `ISet`, `IList`, `Ringbuffer`, `ReplicatedMap`, `CardinalityEstimator`, `IAtomicLong`, `IAtomicReference`, `ISemaphore`, `ICountDownLatch`
+- `VectorCollection` <Badge type="enterprise" />
 
 Each data structure to be protected should have the configuration added to it as explained in the [Configuring Split-Brain Protection section](#configuring-split-brain-protection).
 
@@ -205,13 +205,13 @@ hazelcast:
 The split-brain protection configuration has the following elements:
 
 - `minimum-cluster-size`: Minimum number of members required in a cluster for the cluster to remain in an operational state. If the number of members is below the defined minimum at any time, the operations are rejected and the rejected operations return a `SplitBrainProtectionException` to their callers.
-- `protect-on`: Type of the cluster split-brain protection. Available values are READ, WRITE and READ\_WRITE.
+- `protect-on`: Type of the cluster split-brain protection. Available values are `READ`, `WRITE` and `READ_WRITE`.
 - `split-brain-protection-function-class-name`: Class name of a `SplitBrainProtectionFunction` implementation, allows to configure split-brain protection with a custom split-brain protection function. It cannot be used in conjunction with `probabilistic-split-brain-protection` or `recently-active-split-brain-protection`.
 - `split-brain-protection-listeners`: Declaration of split-brain protection listeners which are notified on split-brain protection status changes.
 - `probabilistic-split-brain-protection`: Configures the split-brain protection with a probabilistic protection function. It cannot be used in conjunction with `split-brain-protection-function-class-name` or `recently-active-split-brain-protection`.
 - `recently-active-split-brain-protection`: Configures the split-brain protection with a recently-active protection function. It cannot be used in conjunction with `split-brain-protection-function-class-name` or `probabilistic-split-brain-protection`.
 
-**Example configuration with custom SplitBrainProtectionFunction implementation**
+**Example configuration with custom `SplitBrainProtectionFunction` implementation**
 
 ```java
 package my.domain;

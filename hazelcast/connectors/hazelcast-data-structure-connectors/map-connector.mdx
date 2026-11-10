@@ -9,7 +9,7 @@ import TabItem from "@theme/TabItem";
 import CodeBlock from "@theme/CodeBlock";
 import Ex_dds_EventJournalConfiguration_java_tag_ejc from "../../examples/dds/EventJournalConfiguration.java?tag=ejc";
 
-A map is a distributed in-memory key-value data structure that can be used as a batch or streaming data source as well as a data sink. See [Distributed Map](../../develop-and-build/distributed-data-structures/ap-data-structures/map/map.mdx). IMaps can also be used in pipeline transforms, see [Map Transforms](../../develop-and-build/building-data-pipelines/processing-data/map-transforms.mdx).
+A map is a distributed in-memory key-value data structure that can be used as a batch or streaming data source as well as a data sink. See [Distributed Map](../../develop-and-build/distributed-data-structures/ap-data-structures/map/map.mdx). `IMap`s can also be used in pipeline transforms, see [Map Transforms](../../develop-and-build/building-data-pipelines/processing-data/map-transforms.mdx).
 
 ## Installing the Connector
 
@@ -164,7 +164,7 @@ The variants above can be used to remove existing map entries by setting their v
 
 :::note
 
-Custom classes, such as an `EntryProcessor`, must be available to all members of the cluster. This can be done by adding the classes to each member's classpath directly, or by using <Variable name="ucn" />. If using <Variable name="ucn" />, ensure that the Job and underlying IMap are both associated with a namespace that contains the same `EntryProcessor` implementation.
+Custom classes, such as an `EntryProcessor`, must be available to all members of the cluster. This can be done by adding the classes to each member's classpath directly, or by using <Variable name="ucn" />. If using <Variable name="ucn" />, ensure that the Job and underlying `IMap` are both associated with a namespace that contains the same `EntryProcessor` implementation.
 
 :::
 
@@ -181,15 +181,15 @@ p.readFrom(Sources.map(personCache,
 );
 ```
 
-## Specific IMap Sinks
+## Specific `IMap` Sinks
 
-This section describes some specific sinks related to IMap.
+This section describes some specific sinks related to `IMap`.
 
-### Flush IMap Sink
+### Flush `IMap` Sink
 
 <Badge type="enterprise" />
 
-The `EnterpriseSinks.mapFlushSink` method forces the flush of the specified IMap to its configured MapStore when a snapshot is taken. Unlike other sink methods, the flush does not occur on new entry processing, but only when a snapshot is triggered. This ensures that all pending write-behind updates are persisted before the snapshot is committed or the job completes.
+The `EnterpriseSinks.mapFlushSink` method forces the flush of the specified `IMap` to its configured `MapStore` when a snapshot is taken. Unlike other sink methods, the flush does not occur on new entry processing, but only when a snapshot is triggered. This ensures that all pending write-behind updates are persisted before the snapshot is committed or the job completes.
 
 Example usage:
 
