@@ -51,15 +51,13 @@ DATA CONNECTION myPulsar <2>
 OPTIONS (
     'keyFormat' = 'VARCHAR',
     'valueFormat' = 'VARCHAR'
-    'preferredLocalParallelism' = '2' <3>
 );
 ```
 
 <CodeCallouts>
 
 1. The name of the Pulsar topic.
-2. The name of Data Connection that will be used. Since we specify Data Connection, we can omit `TYPE` specification.
-3. The preferred number of parallel consumer processors on each member for input mappings. If not specified, the default is `4`. This option is optional.
+2. The name of the data connection to use. When you specify a data connection, you can omit the `TYPE` clause.
 
 </CodeCallouts>
 
@@ -69,14 +67,14 @@ Any key/value pairs in the `OPTIONS()` function that are not recognized by Hazel
 
 :::
 
-Each member of the Hazelcast cluster has a processor running a Pulsar connector for the mapping. For input mappings, preferred local parallelism is the number of parallel consumer processors you would prefer on each member. For balanced distributed processing, ensure that the local parallelism multiplied by the number of members in the cluster is a divisor of the total number of partitions in the input Pulsar topic. If this is not done, some processors will be assigned by Pulsar more input Pulsar topic partitions than others. Where there are more processors in the Hazelcast cluster than partitions in the input Pulsar topic, the additional processors will be idle and waste resources.
+Each member of the Hazelcast cluster runs a processor for the mapping, reading its own subset of the topic's partitions.
 
 When creating a Pulsar mapping, you must tell the Pulsar connector how to serialize/deserialize the keys and values in Pulsar messages. To read Pulsar messages, the Pulsar connector must be able to deserialize them. Similarly, to publish messages to Pulsar topics, the Pulsar connector must be able to serialize them. You can tell Hazelcast how to serialize/deserialize keys and values by specifying the `keyFormat` and `valueFormat` fields in the `OPTIONS()` function.
 
 The Pulsar connector supports serializers for the following formats:
 
 - [Primitive](#primitive-messages)
-- [Avro (`valueFormat` = `pulsarAvro`)](#avro-messages)
+- [Avro (`valueFormat` = `avro`)](#avro-messages)
 - [JSON](#json-messages) (values only)
 - [Java](#java-messages)
 
@@ -97,7 +95,7 @@ The Pulsar connector will apply a suitable Schema automatically, for example `Sc
 
 ### Avro Messages
 
-For Avro messages, you need to specify `valueFormat` as `pulsarAvro`. This way the connector will know to treat objects as POJOs and write them with schema `Schema.AVRO(ClassName)`. The `ClassName` comes from one mandatory (for Avro only) option: `valueJavaClass`, that contains the name of Java class representing your Avro objects.
+For Avro messages, you need to specify `valueFormat` as `avro`. This way the connector will know to treat objects as POJOs and write them with schema `Schema.AVRO(ClassName)`. The `ClassName` comes from one mandatory (for Avro only) option: `valueJavaClass`, that contains the name of Java class representing your Avro objects.
 
 :::note
 
@@ -116,7 +114,7 @@ CREATE MAPPING my_topic (
 DATA CONNECTION myPulsar
 OPTIONS (
     'keyFormat' = 'varchar',
-    'valueFormat' = 'pulsarAvro',
+    'valueFormat' = 'avro',
     'valueJavaClass'='com.hazelcast.example.MyAvroObject' <2>
 );
 ```
@@ -185,7 +183,7 @@ If the Java class is not one of the basic types, Hazelcast will analyze the clas
 
 ### Mapping Column Names
 
-For `json-flat` and `pulsarAvro` formats, you must specify the columns names in the mapping.
+For `json-flat` and `avro` formats, you must specify the columns names in the mapping.
 
 For keys, the format of the external name must be either `__key.<name>` for a field in the key or `this.<name>` for a field in the value.
 

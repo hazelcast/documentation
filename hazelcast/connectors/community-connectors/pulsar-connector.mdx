@@ -38,6 +38,23 @@ Each member of Hazelcast cluster will create a Pulsar Consumer with the same sub
 
 You can also use `PulsarSources#pulsarConsumer` or `PulsarSources#pulsarReader`, which are the same as in old version from hazelcast-jet-contrib. We kept those for easy migration, but please be aware, that they will be removed at some point.
 
+### Reader options
+
+`PulsarSources.pulsarReaderBuilder()` returns a `PulsarReaderBuilder`, which has the following configuration methods:
+
+| Method | Description |
+| --- | --- |
+| `topic` | The Pulsar topic or topics to read from. |
+| `connectionSupplier` | A function that supplies the Pulsar client to use. Use this or `dataConnectionRef`, not both. |
+| `dataConnectionRef` | The data connection to use for connecting to Pulsar. Use this or `connectionSupplier`, not both. |
+| `projectionFn` | Converts each Pulsar message to the item the source emits. |
+| `identityProjectionFn` | Sets the projection function to return the `Message` object unchanged, and disables message pooling to make this safe. |
+| `disableMessagePooling` | Disables Pulsar's message pooling, which is on by default. Disable it if your projection function returns the `Message` object itself rather than a value extracted from it, because a pooled message's underlying buffer can be reused after the source has processed it. |
+| `readerCustomizer` | A function that configures the underlying Pulsar `ReaderBuilder` directly, for options this builder does not expose. |
+| `readerConfig` | Pulsar reader configuration properties, applied directly to the underlying `ReaderBuilder`. |
+| `preferredLocalParallelism` | The preferred number of parallel reader processors on each member. |
+| `initialOffset` | The message to start reading from. After the job restores a snapshot, the source resumes from the snapshotted offset instead of this value. |
+
 When used as a sink, then the only requirement is again the Schema of target topic:
 
 ```java
@@ -50,6 +67,26 @@ p.readFrom(Sources.files("home/logs"))
                         .topic("logs")
                         .build());`
 ```
+
+### Sink options
+
+`PulsarSinks.builder()` returns a `PulsarSinkBuilder`, which has the following configuration methods:
+
+| Method | Description |
+| --- | --- |
+| `topic` | The Pulsar topic to publish to. |
+| `connectionSupplier` | A function that supplies the Pulsar client to use. Use this or `dataConnectionRef`, not both. |
+| `httpServiceUrl` | The URL of Pulsar's HTTP service. The sink uses it to check whether deduplication is enabled on the broker before starting an `EXACTLY_ONCE` job. See [Transactional Guarantees](#transactional-guarantees). |
+| `dataConnectionRef` | The data connection to use for connecting to Pulsar. Use this or `connectionSupplier`, not both. It also lets the sink perform the deduplication check described in [Transactional Guarantees](#transactional-guarantees). |
+| `producerConfig` | Pulsar producer configuration properties, applied directly to the underlying `ProducerBuilder`. |
+| `extractKeyFn` | Extracts the message key from each emitted item. |
+| `extractValueFn` | Extracts the message value from each emitted item. |
+| `extractPropertiesFn` | Extracts the message properties from each emitted item. |
+| `extractTimestampFn` | Extracts the event timestamp from each emitted item. |
+| `transactionTimeout` | The timeout for transactions, used when the job has a processing guarantee. |
+| `useTransactions` | Enables or disables exactly-once behavior for this sink independently of the job's processing guarantee. Defaults to true. Set it to false to use at-least-once for this sink even when the job's guarantee is `EXACTLY_ONCE`. |
+| `preferredLocalParallelism` | The preferred number of parallel producer processors on each member. Defaults to four. |
+| `producerCustomizer` | A function that configures the underlying Pulsar `ProducerBuilder` directly, for options this builder does not expose. |
 
 ## Fault Tolerance
 
@@ -65,7 +102,11 @@ As a sink, the Pulsar connector provides exactly-once guarantees at the cost of 
 
 If you use at-least-once guarantee or user calls `useTransactions(false)` in sink builder, records are visible immediately, but in the case of a failure some records could be duplicated. You can also configure jobs in exactly-once mode and decrease the guarantee just for a particular Pulsar sink.
 
-It is important to enable deduplication on Pulsar sink topic, because in some very rare occasions Pulsar Client may retry message delivery (e.g. network issue caused client to not receive acknowledgment). Sink will automatically check if deduplication is enabled and warn if it isn't or if it is not possible to check.
+Enable deduplication on the Pulsar sink topic. In rare cases, the Pulsar client retries message delivery, for example when a network issue prevents the client from receiving an acknowledgment.
+
+When the job's processing guarantee is `EXACTLY_ONCE`, the sink checks whether deduplication is enabled on the broker before it starts. If deduplication is disabled, the sink fails job initialization with an error, because exactly-once delivery requires it.
+
+If the sink has neither a data connection nor an `httpServiceUrl` configured, it cannot perform this check. In that case, it logs a warning and proceeds instead of failing. Configure one of these options to enforce the check.
 
 ## Version Compatibility
 
