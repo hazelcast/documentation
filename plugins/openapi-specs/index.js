@@ -178,14 +178,6 @@ module.exports = function openapiSpecsPlugin (context, options) {
   return {
     name: 'openapi-specs',
 
-    // Pages that start referencing a spec must be noticed without a restart.
-    getPathsToWatch () {
-      return docs.flatMap(({ id }) => [
-        path.join(siteDir, id, '**/*.{md,mdx}'),
-        path.join(siteDir, `${id}_versioned_docs`, '**/*.{md,mdx}'),
-      ])
-    },
-
     async loadContent () {
       const requests = (await collectRequests(siteDir, docs)).map((request) =>
         resolveRequest(request, variables, versionedVariables),
@@ -225,7 +217,7 @@ module.exports = function openapiSpecsPlugin (context, options) {
             }
             return
           }
-          // Dev re-runs this on every docs edit so it fetches only what is missing; a build always revalidates.
+          // Dev fetches only what is missing, to start fast; a build always revalidates.
           if (present && !isBuild) {
             targets.forEach((t) => staged.add(t))
             unchanged++
