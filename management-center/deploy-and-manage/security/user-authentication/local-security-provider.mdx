@@ -69,7 +69,7 @@ Passwords **must not** include the following:
 
 ## Create users
 
-To create additional users, admin users can use the UI or you can use the `hz-mc conf` tool. You can also list additional users under `securityProvider.local.users` in a [YAML declarative configuration file (Beta)](../../configuration/declarative-configuration/overview.mdx); with `applyMode: upsert`, reapplying the file on a later restart creates any new users it lists.
+To create additional users, admin users can use the UI or you can use the `hz-mc conf` tool. You can also list additional users under `securityProvider.local.users` in a [YAML declarative configuration file (Beta)](../../configuration/declarative-configuration/overview.mdx); the block must include at least one `admin` user. With `applyMode: upsert`, reapplying the file on a later restart creates any new users it lists and deletes local users that it does not list.
 
 When creating users, be sure to give them a valid role. See [User management](../../user-management.mdx).
 
