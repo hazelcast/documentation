@@ -41,6 +41,12 @@ As a result, you can use rolling upgrades to upgrade clusters to the following m
 
 If you deployed your cluster using the Hazelcast Operator, follow the steps in the [Operator documentation](/operator/latest/upgrade).
 
+:::important
+
+If your cluster runs 5.3.8, read [Upgrade a 5.3.8 cluster to 5.4](#upgrade-a-538-cluster-to-54) before you start.
+
+:::
+
 To upgrade your cluster after deploying with Hazelcast Platform, complete the following steps:
 
 1. Gracefully shut down an existing member.
@@ -108,6 +114,24 @@ To upgrade your cluster after deploying with Hazelcast Platform, complete the fo
    - Allow the cluster to [auto-upgrade](#enabling-auto-upgrading).
 
 The cluster is now operating on the new codebase version: Both the codebase version and the cluster version have been upgraded.
+
+## Upgrade a 5.3.8 cluster to 5.4
+
+A rolling upgrade from 5.3.8 to 5.4 fails if a 5.3.8 member becomes the master after a 5.4 member has joined the cluster. The new master logs an exception similar to the following, and the 5.4 member that replaces the old master cannot join the cluster:
+
+```none
+com.hazelcast.nio.serialization.HazelcastSerializationException: There is no suitable de-serializer for type 33554431. This exception is likely caused by differences in the serialization configuration between members or between clients and members.
+```
+
+To upgrade a 5.3.8 cluster to 5.4, use one of the following methods:
+- Roll back to 5.3.7 first. Perform a rolling restart that changes each member from 5.3.8 to 5.3.7, then perform a rolling upgrade from 5.3.7 to 5.4.5.
+- Upgrade the master member last. The master is the oldest member in the cluster, and is the first member in the member list that each member logs when membership changes. When every other member runs 5.4, a 5.4 member becomes the master after the old master shuts down.
+
+:::warning
+
+Kubernetes does not guarantee the order in which a Deployment restarts its pods. The `controller.kubernetes.io/pod-deletion-cost` annotation influences the order, but does not guarantee it. If you cannot control which member restarts last, roll back to 5.3.7 first.
+
+:::
 
 ## Enabling Auto-Upgrading
 
