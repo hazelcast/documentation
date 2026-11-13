@@ -27,14 +27,15 @@ If [security](../../../operate-and-manage/securing-a-cluster/enable-security.mdx
 
 ## Creating a Pulsar Data Connection
 
-Before using Pulsar SQL connector, you must first create a data connection to your Pulsar cluster. It can be done via following code:
+Before using Pulsar SQL connector, it's recommended you first create a data connection to your Pulsar cluster. It can be done via following code:
 
 ```sql
 CREATE DATA CONNECTION myPulsar
 TYPE Pulsar
 OPTIONS (
     'brokerUrl' = 'pulsar://localhost:6650',
-    'httpServiceUrl' = 'http://localhost:8080'
+    'httpServiceUrl' = 'http://localhost:8080',
+    'enableTransactions' = 'true'
 )
 ```
 
@@ -43,7 +44,7 @@ OPTIONS (
 To create a mapping to a Pulsar topic in SQL, you must use the `CREATE MAPPING` statement to tell the Pulsar connector the following:
 
 - The name of the topic
-- The data connection name
+- The data connection name or type of the connector (Pulsar)
 
 ```sql conums
 CREATE MAPPING my_topic <1>
@@ -63,6 +64,26 @@ OPTIONS (
 
 </CodeCallouts>
 
+Alternatively:
+```sql conums
+CREATE MAPPING my_topic <1>
+TYPE Pulsar <2>
+OPTIONS (
+    'keyFormat' = 'VARCHAR',
+    'valueFormat' = 'VARCHAR',
+    'brokerUrl' = 'pulsar://localhost:6650', <3>
+    'httpServiceUrl' = 'http://localhost:8080',
+    'enableTransactions' = 'true'
+);
+```
+<CodeCallouts>
+
+    1. The name of the Pulsar topic.
+    2. The `TYPE` specification of this mapping - "Pulsar" in case of Pulsar connector.
+    3. Connectivity options, same as in Data Connection.
+
+</CodeCallouts>
+
 :::note
 
 Any key/value pairs in the `OPTIONS()` function that are not recognized by Hazelcast and are prefixed with `pulsar.` are passed directly to the Pulsar consumer/producer (with the `pulsar.` prefix cut off).
@@ -76,7 +97,7 @@ When creating a Pulsar mapping, you must tell the Pulsar connector how to serial
 The Pulsar connector supports serializers for the following formats:
 
 - [Primitive](#primitive-messages)
-- [Avro (`valueFormat` = `pulsarAvro`)](#avro-messages)
+- [Avro (valueFormat = `avro`)](#avro-messages)
 - [JSON](#json-messages) (values only)
 - [Java](#java-messages)
 
