@@ -329,3 +329,8 @@ Explain each fact in one place:
 - Explain a fact, meaning the mechanism and the reason it behaves that way, on one page only.
 - On every other page that needs the fact, say what that page's reader needs and link to the explanation. Do not restate it.
 - A feature can still belong on several pages. For example, a setting can appear in a configuration guide, a reference, and a tutorial.
+
+Within a page, state each fact once:
+- Let a table, a list, or a heading carry its facts, and write prose only for what it leaves out.
+- Open a paragraph with its most specific sentence, not a summary that the next sentence restates.
+- Write a list of three or fewer short items as one sentence, unless the reader must scan or compare them.

@@ -109,7 +109,7 @@ const config: Config = {
     './plugins/tutorial-examples',
     './plugins/tutorials-index',
     './plugins/llms-txt',
-    // Emits /preview-pages.json in deploy previews for .github/workflows/preview-links.yml.
+    // Comments on deploy-preview PRs with links to the pages they change.
     './plugins/preview-pages',
     ['./plugins/archived-versions', archivedVersions],
     // rspack's realContentHash string-replaces hashes in the SSG bundle, page text included.
