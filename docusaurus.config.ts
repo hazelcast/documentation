@@ -14,6 +14,12 @@ const archivedVersionsItem = (product: string) => [
   {href: `pathname:///${product}/${archivedVersions.versions[product][0]}/`, label: 'Archives', target: '_self', className: 'archived-versions-link'},
 ];
 
+// DOCS_ESCROW=true builds the HTML for the source code escrow package (hazelcast-release-engineering):
+// only the escrow products, and a hash router so the pages open from the file system.
+const escrow = process.env.DOCS_ESCROW === 'true';
+const escrowProducts = ['hazelcast', 'management-center', 'clc'];
+const included = (id: string) => !escrow || escrowProducts.includes(id);
+
 // Product tabs, also listed in a "Products" dropdown that replaces them at narrow desktop widths (see custom.css).
 const products = [
   {docsPluginId: 'hazelcast', label: 'Platform'},
@@ -21,7 +27,9 @@ const products = [
   {docsPluginId: 'operator', label: 'Operator'},
   {docsPluginId: 'cloud', label: 'Cloud'},
   {docsPluginId: 'clc', label: 'CLC'},
-].map((product) => ({type: 'docSidebar', sidebarId: 'defaultSidebar', ...product}));
+]
+  .filter((product) => included(product.docsPluginId))
+  .map((product) => ({type: 'docSidebar', sidebarId: 'defaultSidebar', ...product}));
 
 const config: Config = {
   title: 'Hazelcast Documentation',
@@ -30,6 +38,7 @@ const config: Config = {
 
   future: {
     v4: true,
+    ...(escrow && {experimental_router: 'hash' as const}),
   },
 
   // The origin baked into every canonical tag and sitemap entry.
@@ -94,9 +103,9 @@ const config: Config = {
     ['./plugins/example-attributes', {variables, versionedVariables}],
 
     versionedDocs('hazelcast'), // navbar label "Platform"
-    docs('cloud'),
-    docs('tutorials'),
-    versionedDocs('operator'),
+    included('cloud') && docs('cloud'),
+    included('tutorials') && docs('tutorials'),
+    included('operator') && versionedDocs('operator'),
     versionedDocs('clc'),
     versionedDocs('management-center'),
     [
@@ -104,9 +113,10 @@ const config: Config = {
       {redirects},
     ],
     // Emits /api/cloud.json for the Cloud console.
-    './plugins/cloud-console-index',
+    included('cloud') && './plugins/cloud-console-index',
     ['./plugins/openapi-specs', {variables, versionedVariables, docs: versionedInstances}],
-    './plugins/tutorial-examples',
+    // Fetches from GitHub. The escrow build must not depend on external Hazelcast sources.
+    included('tutorials') && './plugins/tutorial-examples',
     './plugins/tutorials-index',
     './plugins/llms-txt',
     // Emits /preview-pages.json in deploy previews for .github/workflows/preview-links.yml.
@@ -168,23 +178,23 @@ const config: Config = {
         },
         ...products.map((product) => ({...product, position: 'left' as const, className: 'navbar-product-tab'})),
         // Plain link: tutorials has no sidebar.
-        {
+        ...(included('tutorials') ? [{
           to: '/tutorials',
-          position: 'left',
+          position: 'left' as const,
           label: 'Tutorials',
-        },
+        }] : []),
         {
           type: 'docsVersionDropdown',
           docsPluginId: 'hazelcast',
           position: 'right',
           dropdownItemsAfter: archivedVersionsItem('hazelcast'),
         },
-        {
+        ...(included('operator') ? [{
           type: 'docsVersionDropdown',
           docsPluginId: 'operator',
-          position: 'right',
+          position: 'right' as const,
           dropdownItemsAfter: archivedVersionsItem('operator'),
-        },
+        }] : []),
         {
           type: 'docsVersionDropdown',
           docsPluginId: 'clc',
