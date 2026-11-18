@@ -7,8 +7,6 @@ enterprise: true
 
 The clustered JMX interface exposes metrics as objects that have attributes.
 
-Test
-
 Objects take the following format:
 
 ```plain
@@ -31,16 +29,18 @@ These are the object attributes that are exposed by the clustered JMX interface.
 
 - **ManagementCenter**
 - ManagementCenter
+
   - LicenseExpirationTime
   - Clusters
-
 - **ManagementCenter\[`<ClusterName>`\]**
 - `<ClusterName>`
+
   - MasterAddress
   - LicenseExpirationTime
-
 - ClientStats
+
   - `<Client UUID>`
+
     - UsedHeapMemory
     - FreeHeapMemory
     - MaxHeapMemory
@@ -65,8 +65,11 @@ These are the object attributes that are exposed by the clustered JMX interface.
     - Address
     - Type
     - NearCacheStats
+
       - CACHE
+
         - `<Cache Name>`
+
           - Evictions
           - Expirations
           - Hits
@@ -78,9 +81,10 @@ These are the object attributes that are exposed by the clustered JMX interface.
           - LastPersistenceTime
           - LastPersistenceWrittenBytes
           - CreationTime
-
       - MAP
+
         - `<Map Name>`
+
           - Evictions
           - Expirations
           - Hits
@@ -92,9 +96,10 @@ These are the object attributes that are exposed by the clustered JMX interface.
           - LastPersistenceTime
           - LastPersistenceWrittenBytes
           - CreationTime
-
 - Clients
+
   - `<Client Address>`
+
     - Address
     - CanonicalHostName
     - ClientName
@@ -102,9 +107,10 @@ These are the object attributes that are exposed by the clustered JMX interface.
     - IpAddress
     - Labels
     - Uuid
-
 - Executors
+
   - `<Executor Name>`
+
     - Cluster
     - Name
     - StartedTaskCount
@@ -113,9 +119,10 @@ These are the object attributes that are exposed by the clustered JMX interface.
     - PendingTaskCount
     - TotalExecutionTime
     - TotalStartLatency
-
 - Maps
+
   - `<Map Name>`
+
     - Cluster
     - Name
     - BackupEntryCount
@@ -142,9 +149,10 @@ These are the object attributes that are exposed by the clustered JMX interface.
     - TotalGetLatency
     - TotalRemoveLatency
     - TotalSetLatency
-
 - ReplicatedMaps
+
   - `<Replicated Map Name>`
+
     - Cluster
     - Name
     - CreationTime
@@ -164,9 +172,10 @@ These are the object attributes that are exposed by the clustered JMX interface.
     - TotalPutLatency
     - TotalGetLatency
     - TotalRemoveLatency
-
 - Caches
+
   - `<Cache Name>`
+
     - Cluster
     - Name
     - CreationTime
@@ -182,9 +191,10 @@ These are the object attributes that are exposed by the clustered JMX interface.
     - LastAccessTime
     - LastUpdateTime
     - OwnedEntryCount
-
 - Members
+
   - `<Member Address>`
+
     - Uuid
     - Address
     - CpMemberUuid
@@ -199,9 +209,10 @@ These are the object attributes that are exposed by the clustered JMX interface.
     - CommittedNativeMemory
     - UsedNativeMemory
     - FreeNativeMemory
-
 - MultiMaps
+
   - `<MultiMap Name>`
+
     - Cluster
     - Name
     - BackupEntryCount
@@ -226,9 +237,10 @@ These are the object attributes that are exposed by the clustered JMX interface.
     - TotalPutLatency
     - TotalGetLatency
     - TotalRemoveLatency
-
 - Queues
+
   - `<Queue Name>`
+
     - Cluster
     - Name
     - MinAge
@@ -243,102 +255,114 @@ These are the object attributes that are exposed by the clustered JMX interface.
     - OtherOperationsCount
     - Events
     - CreationTime
-
 - Counters
+
   - `<Counter Name>`
+
     - Cluster
     - Name
     - CreationTime
     - StatsPerMember
+
       - `<Member Address>`
+
         - Value
         - IncOperationCount
         - DecOperationCount
-
 - Services
+
   - ConnectionManager
+
     - ActiveConnectionCount
     - ClientConnectionCount
     - ConnectionCount
-
   - EventService
+
     - EventQueueCapacity
     - EventQueueSize
     - EventThreadCount
-
   - OperationService
+
     - ExecutedOperationCount
     - OperationExecutorQueueSize
     - OperationThreadCount
     - RemoteOperationCount
     - ResponseQueueSize
     - RunningOperationsCount
-
   - PartitionService
+
     - ActivePartitionCount
     - PartitionCount
-
   - ProxyService
+
     - ProxyCount
     - CreatedCount
     - DestroyedCount
-
   - ManagedExecutor\[`<Managed Executor Name>`\]
+
     - Name
     - CompletedTaskCount
     - MaximumPoolSize
     - PoolSize
     - QueueSize
     - RemainingQueueCapacity
-
 - Topics
+
   - `<Topic Name>`
+
     - Cluster
     - Name
     - CreationTime
     - PublishOperationCount
     - ReceiveOperationCount
-
 - ReliableTopics
+
   - `<Reliable Topic Name>`
+
     - Cluster
     - Name
     - CreationTime
     - PublishOperationCount
     - ReceiveOperationCount
-
 - FlakeIdGenerators
+
   - `<Generator Name>`
+
     - Cluster
     - Name
     - CreationTime
     - StatsPerMember
+
       - `<Member Address>`
+
         - BatchRequests
         - IdCount
-
 - WanConfigs
+
   - `<Wan Replication Config>[<Publisher ID>]`
+
     - Cluster
     - ConfigName
     - PublisherId
     - OutboundQueueSize
     - TotalPublishedEventCount
     - TotalPublishLatency
-
 - Jobs (present only if the cluster supports streaming)
+
   - `<Job ID>`
+
     - CompletionTime
     - ConfigJson
     - Edges
+
       - \[0…​n\]
+
         - FromOrdinal
         - LastMinRecordsFlow
         - SourceVertex
         - TargetVertex
         - ToOrdinal
         - TotalRecordsFlow
-
     - Failure
     - Id
     - JobName
@@ -358,7 +382,9 @@ These are the object attributes that are exposed by the clustered JMX interface.
     - TotalNodeCount
     - TotalOut
     - Vertices
+
       - \[0..n\]
+
         - GlobalParallelism
         - Id
         - Incoming
@@ -366,33 +392,36 @@ These are the object attributes that are exposed by the clustered JMX interface.
         - LastMinOut
         - MaxLatencyToRealTime
         - Outgoing
+
           - \[0..n\]
+
             - Info
+
               - LastMin
               - Ordinal
               - Total
-
             - TargetVertex
-
         - Parallelism
         - Processors
+
           - \[0..n\]
+
             - Info
+
               - CapPercentage
               - EmittedCount
               - LastForwardedWmLatency
               - QueueCapacity
               - QueueSize
               - ReceivedCount
-
             - ProcessorId
-
         - Skew
         - TotalIn
         - TotalOut
-
 - ExportedJobSnapshots (present only if the cluster supports streaming)
+
   - `<Snapshot Name>`
+
     - CreationTime
     - JobId
     - JobName
