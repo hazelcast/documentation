@@ -1,0 +1,321 @@
+---
+title: "Health check and monitoring"
+sidebar_position: 3
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+Hazelcast provides the following options for monitoring the health of your Hazelcast clusters:
+
+- HTTP-based health check endpoint
+- Health check script
+- Health monitoring utility
+
+## Enabling the health check endpoint and script {/* #enable-hcheck */}
+
+To use the health check endpoint and script, enable either of the following configuration options:
+
+- Using the `network` configuration element:
+
+  <Tabs groupId="config-format">
+  <TabItem value="xml" label="XML">
+
+  ```xml
+  <hazelcast>
+      ...
+      <network>
+          <rest-api enabled="true">
+              <endpoint-group name="HEALTH_CHECK" enabled="true"/>
+          </rest-api>
+      </network>
+      ...
+  </hazelcast>
+  ```
+
+  </TabItem>
+  <TabItem value="yaml" label="YAML">
+
+  ```yaml
+  hazelcast:
+    network:
+      rest-api:
+        enabled: true
+        endpoint-groups:
+          HEALTH_CHECK:
+            enabled: true
+  ```
+
+  </TabItem>
+  </Tabs>
+- Using the `advanced-network` configuration element:
+
+  <Tabs groupId="config-format">
+  <TabItem value="xml" label="XML">
+
+  ```xml
+  <hazelcast>
+      ...
+      <advanced-network enabled="true">
+          <rest-server-socket-endpoint-config>
+              <endpoint-groups>
+                  <endpoint-group name="HEALTH_CHECK" enabled="true"/>
+              </endpoint-groups>
+          </rest-server-socket-endpoint-config>
+      </advanced-network>
+      ...
+  </hazelcast>
+  ```
+
+  </TabItem>
+  <TabItem value="yaml" label="YAML">
+
+  ```yaml
+  hazelcast:
+    advanced-network:
+      enabled: true
+      rest-server-socket-endpoint-config:
+        endpoint-groups:
+          HEALTH_CHECK:
+            enabled: true
+  ```
+
+  </TabItem>
+  </Tabs>
+
+## Health check
+
+You can use Hazelcast's HTTP-based health check implementation to get basic information about the cluster and member on which it is launched.
+
+To use the HTTP-based health check:
+
+1. Enable the [health check endpoint](#enable-hcheck).
+2. Launch the health check from your preferred browser: `http://<host IP of your member>:5701/hazelcast/health`.
+
+   The health check retrieves information about your cluster's health status, such as member state, cluster state, cluster size, etc. For example:
+
+   ```none
+   {
+     "nodeState": "ACTIVE",
+     "clusterState": "ACTIVE",
+     "clusterSafe": false,
+     "migrationQueueSize": 0,
+     "clusterSize": 3
+   }
+   ```
+
+   - `nodeState`: State of the member on which the health check is launched. See [Cluster and Member States](../maintaining-a-cluster/cluster-member-states.mdx#member-states) to learn more about the states of cluster members.
+   - `clusterState`: State of cluster that the health-checked member belongs to. See [Cluster and Member States](../maintaining-a-cluster/cluster-member-states.mdx#cluster-states) to learn more about cluster states.
+   - `clusterSafe`: Whether the queried member is safe: there are no active partition migrations, and all backups are in sync for each partition that the member owns. See [Shutting Down Members and Clusters](../maintaining-a-cluster/shutdown.mdx#ensuring-members-and-clusters-are-in-a-safe-state) to learn how to check the safety of active clusters.
+
+     :::note
+
+     The `clusterSafe` indicator is useful when your cluster is in a passive state. If the cluster is in an active state, the indicator value continually changes due to the dynamic state of the cluster. Also, checking the cluster safety triggers additional operations for each backup replica of the partitions that the queried member owns. Frequent safety checks of a cluster under load may impact cluster performance.
+
+     :::
+   - `migrationQueueSize`: A count of the remaining migration tasks while the cluster data is being repartitioned. See [Data Partitioning](../../develop-and-build/architecture/data-partitioning.mdx) to learn about Hazelcast's partitioning mechanism.
+   - `clusterSize`: A count of the cluster member count.
+
+## Using the `hz-healthcheck` script {/* #health-check-script */}
+
+The `hz-healthcheck` script comes with the Hazelcast package. Internally, it uses the HTTP-based health check endpoint.
+
+To run the `hz-healthcheck` script:
+
+1. Enable the [health check endpoint](#enable-hcheck).
+2. Run the `hz-healthcheck` script with parameters using the following format:
+
+   ```none
+   ./hz-healthcheck <parameters>
+   ```
+
+You can use the following parameters to perform checks and operations on your Hazelcast clusters:
+
+<table>
+<colgroup>
+<col style={{width:'22.2222%'}} />
+<col style={{width:'22.2222%'}} />
+<col style={{width:'55.5556%'}} />
+</colgroup>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Default Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`-o` or `--operation`</td>
+<td>`all`</td>
+<td>
+
+Health check operation. It can be `all`, `node-state`, `cluster-state`, `cluster-safe`, `migration-queue-size` and `cluster-size`.
+
+:::note
+
+The `cluster-safe` option is useful when your cluster is in a passive state. If the cluster is in an active state, the indicator value continually changes due to the dynamic state of the cluster. Also, checking the cluster safety triggers additional operations for each backup replica of the partitions that the queried member owns. Frequent safety checks of a cluster under load may impact cluster performance.
+
+:::
+
+</td>
+</tr>
+<tr>
+<td>`-a` or `--address`</td>
+<td>`127.0.0.1`</td>
+<td>Defines the IP address of a cluster member. If you want to manage your cluster remotely, you should use this parameter to provide the IP address of a member to this script.</td>
+</tr>
+<tr>
+<td>`-p` or `--port`</td>
+<td>`5701`</td>
+<td>Defines on which port Hazelcast is running on the local or remote machine.</td>
+</tr>
+<tr>
+<td>`-h` or `--help`</td>
+<td>*no argument expected*</td>
+<td>Lists the parameter descriptions. It works only as the first parameter.</td>
+</tr>
+<tr>
+<td>`-d` or `--debug`</td>
+<td>*no argument expected*</td>
+<td>Prints error output.</td>
+</tr>
+<tr>
+<td>`--https`</td>
+<td>*no argument expected*</td>
+<td>Uses HTTPS protocol for REST calls.</td>
+</tr>
+<tr>
+<td>`--cacert`</td>
+<td>*set of well-known CA certificates*</td>
+<td>Defines the path of the trusted PEM-encoded certificate file. It is used to verify member certificates.</td>
+</tr>
+<tr>
+<td>`--cert`</td>
+<td>None</td>
+<td>Defines the path of the PEM-encoded client certificate file. Only needed when client certificate authentication is used.</td>
+</tr>
+<tr>
+<td>`--key`</td>
+<td>None</td>
+<td>Defines the path of the PEM-encoded client private key file. Only needed when client certificate authentication is used.</td>
+</tr>
+<tr>
+<td>`--insecure`</td>
+<td>*no argument expected*</td>
+<td>Disables member certificate verification.</td>
+</tr>
+</tbody>
+</table>
+
+**Example 1: Checking the state of members in a healthy cluster:**
+
+If the member is deployed under the address `127.0.0.1:5701` and it is in the healthy state, the following output is expected:
+
+```none
+./hz-healthcheck -a 127.0.0.1 -p 5701 -o node-state
+ACTIVE
+```
+
+**Example 2: Checking the safety of a non-existent cluster:**
+
+If the cluster has no members running under the address `127.0.0.1:5701`, the following output is expected:
+
+```none
+./hz-healthcheck -a 127.0.0.1 -p 5701 -o cluster-safe
+Error while checking health of hazelcast cluster on ip 127.0.0.1 on port 5701.
+Please check that cluster is running and that health check is enabled in REST API configuration.
+```
+
+## Health monitor
+
+The health monitor periodically prints logs in your console to provide information about your member's state. By default, it is enabled when you start your cluster.
+
+You can set the interval of health monitoring using the `hazelcast.health.monitoring.delay.seconds` system property. Its default value is 20 seconds.
+
+The system property `hazelcast.health.monitoring.level` is used to configure the monitoring's log level. If it is set to OFF, the monitoring is disabled. If it is set to NOISY, monitoring logs are always printed for the defined intervals. When it is SILENT, which is the default value, monitoring logs are printed only when the values exceed some predefined thresholds. These thresholds are related to memory and CPU percentages, and can be configured using the `hazelcast.health.monitoring.threshold.memory.percentage` and `hazelcast.health.monitoring.threshold.cpu.percentage` system properties, whose default values are both 70. Monitoring logs are also printed when pending invocations exceed 70% or a count of 1000.
+
+The following is an example monitoring output
+
+```none vars
+Sep 08, 2017 5:02:28 PM com.hazelcast.internal.diagnostics.HealthMonitor
+
+INFO: [192.168.2.44]:5701 [host-name] [{full-version}] processors=4, physical.memory.total=16.0G, physical.memory.free=5.5G, swap.space.total=0, swap.space.free=0, heap.memory.used=102.4M,
+
+heap.memory.free=249.1M, heap.memory.total=351.5M, heap.memory.max=3.6G, heap.memory.used/total=29.14%, heap.memory.used/max=2.81%, minor.gc.count=4, minor.gc.time=68ms, major.gc.count=1,
+
+major.gc.time=41ms, load.process=0.44%, load.system=1.00%, load.systemAverage=3.15, thread.count=97, thread.peakCount=98, cluster.timeDiff=0, event.q.size=0, executor.q.async.size=0,
+
+executor.q.client.size=0, executor.q.client.query.size=0, executor.q.client.blocking.size=0, executor.q.query.size=0, executor.q.scheduled.size=0, executor.q.io.size=0, executor.q.system.size=0, executor.q.operations.size=0,
+
+executor.q.priorityOperation.size=0, operations.completed.count=226, executor.q.mapLoad.size=0, executor.q.mapLoadAllKeys.size=0, executor.q.cluster.size=0, executor.q.response.size=0,
+
+operations.running.count=0, operations.pending.invocations.percentage=0.00%, operations.pending.invocations.count=0, proxy.count=0, clientEndpoint.count=1,
+
+connection.active.count=2, client.connection.count=1, connection.count=1
+```
+
+:::note
+
+See the [Configuring with System Properties section](../configuration/static-configuration/configuring-with-system-properties.mdx) to learn how to set system properties.
+
+:::
+
+## Using health check on F5 BIG-IP LTM
+
+The F5® BIG-IP® Local Traffic Manager™ (LTM) can be used as a load balancer for Hazelcast cluster members. This section describes how you can configure a health monitor to check the Hazelcast member states.
+
+### Monitor types
+
+Following types of monitors can be used to track Hazelcast cluster members:
+
+- HTTP Monitor: A custom HTTP monitor enables you to send a command to Hazelcast's Health Check API using HTTP requests. This is a good choice if SSL/TLS is not enabled in your cluster.
+- HTTPS Monitor: A custom HTTPS monitor enables you to verify the health of Hazelcast cluster members by sending a command to Hazelcast's Health Check API using Secure Socket Layer (SSL) security. This is a good choice if SSL/TLS is enabled in your cluster.
+- `TCP_HALF_OPEN` monitor: A `TCP_HALF_OPEN` monitor is a basic monitor that only checks that the TCP port used by Hazelcast is open and responding to connection requests. It does not interact with the Hazelcast Health Check API. The `TCP_HALF_OPEN` monitor can be used with or without SSL/TLS.
+
+### Configuration
+
+After signing in to the BIG-IP LTM User Interface, follow F5's [^instructions](https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-monitors-reference-11-6-0/3.html#unique_859105660) to create a new monitor. Next, apply the following configuration according to your monitor type.
+
+#### HTTP/HTTPS monitors
+
+:::note
+
+You must enable the Hazelcast health check for HTTP/HTTPS monitors to run. Enable the endpoint by using the `advanced-network` or the `network` configuration element. See the [Health Check and Monitoring section](./health-check-and-monitoring.mdx).
+
+:::
+
+**Using a GET request:**
+
+- Set the "Send String" as follows:
+
+  ```none
+  GET /hazelcast/health HTTP/1.1\r\n\nHost: [HOST-ADDRESS-OF-HAZELCAST-MEMBER] \r\nConnection: Close\r\n\r\n
+  ```
+- Set the "Receive String" as follows:
+
+  ```none
+  {"nodeState":"ACTIVE","clusterState":"ACTIVE","clusterSafe":true,"migrationQueueSize":0,"clusterSize":([^\s]+)}
+  ```
+
+The BIG-IP LTM monitors accept regular expressions in these strings allowing you to configure them as needed. The example provided above remains green even if the cluster size changes.
+
+**Using a HEAD request:**
+
+- Set the "Send String" as follows:
+
+  ```none
+  HEAD /hazelcast/health HTTP/1.1\r\n\nHost: [HOST-ADDRESS-OF-HAZELCAST-MEMBER] \r\nConnection: Close\r\n\r\n
+  ```
+- Set the "Receive String" as follows:
+
+  ```none
+  200 OK
+  ```
+
+As you can see, the HEAD request only checks for a `200 OK` response. A Hazelcast cluster member sends this status code whenever its REST endpoint handles the request. The status code does not depend on the member state or the cluster state. This provides a basic health check. For increased flexibility, we recommend using the GET request API.
+
+#### `TCP_HALF_OPEN` monitors
+
+- Set the "Type" as `TCP Half Open`.
+- Optionally, set the "Alias Service Port" as the port of Hazelcast cluster member if you want to specify the port in the monitor

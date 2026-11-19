@@ -1,0 +1,150 @@
+---
+title: "Management Center"
+sidebar_position: 9
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+Hazelcast Management Center enables you to monitor and manage your cluster members running Hazelcast. In addition to monitoring the overall state of your clusters, you can also analyze and browse your data structures in detail, update map configurations, and take thread dumps from members. You can run scripts, such as JavaScript or Groovy, and commands on your members with its scripting and console modules. A script runs only if the member classpath contains a scripting engine for its language.
+
+See the <Variable href="/management-center/{page-latest-supported-mc}/getting-started/overview" text="Management Center documentation" /> for more information and find details about its clustered JMX and clustered REST APIs.
+
+Because Management Center is a client that connects to the cluster, you can control the following aspects of Management Center in the member configuration file:
+
+- [Scripting support](#managing-scripting-support)
+- [Console support](#managing-console-support)
+- [Source IP addresses](#limiting-source-addresses)
+
+## Managing scripting support
+
+<Anchor id="toggle-scripting-support" />
+
+Management Center allows you to execute scripts that can automate interactions with the cluster.
+
+By default, scripting is disabled for security. Scripting engines give code access to the underlying system on the members (files and other resources) and run with the same permissions as the current user. You can enable scripting in the member configuration file:
+
+:::important
+
+When scripting is enabled, it grants full, unrestricted access to the cluster and is **not** limited by the permissions assigned to individual Management Center users. Enable it with caution, especially in production, and consider leaving it disabled if granular access control is critical. See the <Variable href="/management-center/{page-latest-supported-mc}/tools/scripting" text="Management Center scripting documentation" /> for details.
+
+:::
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <management-center scripting-enabled="true" />
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  management-center:
+    scripting-enabled: true
+```
+
+</TabItem>
+</Tabs>
+
+Hazelcast uses the [JSR 223](https://jcp.org/en/jsr/detail?id=223) API to support scripting.
+
+## Managing console support
+
+Management Center allows you to execute client operations using built-in Hazelcast Command-Line Client (CLC) in the user interface. This console is useful for testing and development purposes. You can enable the console in the member configuration file:
+
+:::important
+
+When the console is enabled, it grants full access to the cluster through the Command-Line Client and is **not** limited by the permissions assigned to individual Management Center users. Enable it with caution, especially in production, and consider leaving it disabled if granular access control is critical.
+
+:::
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <management-center console-enabled="true" />
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  management-center:
+    console-enabled: true
+```
+
+</TabItem>
+</Tabs>
+
+See the <Variable href="/management-center/{page-latest-supported-mc}/tools/console" text="Management Center documentation"/> for more information.
+
+## Managing data access
+
+Management Center allows you to access contents of Hazelcast data structures (for instance map entries) through SQL Browser or Map Browser. It may be useful to restrict data access for Management Center if sensitive financial or personal information is stored in the cluster. Management Center cannot access the data if at least one member has the data access disabled. You can disable data access for Management Center in the member configuration file:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <management-center data-access-enabled="false" />
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  management-center:
+    data-access-enabled: false
+```
+
+</TabItem>
+</Tabs>
+
+## Limiting source addresses
+
+By default, any instance of Management Center can connect to a cluster as long as it can be authenticated. To restrict access only to trusted instances of Management Center, you can define the trusted IP addresses in the `trusted-interfaces` configuration setting. This setting supports wildcards (`*`) and ranges (`-`).
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <management-center>
+        <trusted-interfaces>
+            <interface>192.168.1.*</interface>
+        </trusted-interfaces>
+    </management-center>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  management-center:
+    trusted-interfaces:
+      - 192.168.1.*
+```
+
+</TabItem>
+</Tabs>
