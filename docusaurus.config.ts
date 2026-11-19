@@ -16,6 +16,7 @@ const archivedVersionsItem = (product: string) => [
 
 // DOCS_ESCROW=true builds the HTML for the source code escrow package (hazelcast-release-engineering):
 // only the escrow products, and a hash router so the pages open from the file system.
+// https://hazelcast.atlassian.net/wiki/spaces/DI/pages/4454711322/Escrow+Deposit+Releases
 const escrow = process.env.DOCS_ESCROW === 'true';
 const escrowProducts = ['hazelcast', 'management-center', 'clc'];
 const included = (id: string) => !escrow || escrowProducts.includes(id);
