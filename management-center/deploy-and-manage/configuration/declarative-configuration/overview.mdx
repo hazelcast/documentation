@@ -37,7 +37,7 @@ The YAML file covers the same **persisted entities** that `hz-mc conf` writes to
 
 In addition, the `properties` key sets Management Center's **static settings**, such as ports, TLS, and LDAP SSL keystores, which you otherwise set with [system properties and environment variables](../system-properties.mdx). See [Static settings](#properties).
 
-The file does not cover anything that isn't a one-time configuration write, such as issuing or revoking REST API auth tokens, or resetting the security provider.
+The file covers only one-time configuration writes. It cannot issue or revoke REST API auth tokens, or reset the security provider.
 
 ## Point Management Center at a configuration file
 
@@ -88,7 +88,7 @@ properties:
 
 Each key is the exact name of a [system property](../system-properties.mdx), written with dots. The environment variable names, such as `MC_LDAP_SSL_KEY_STORE`, are not accepted as keys. Each value is a single scalar: a string, a number, or a boolean.
 
-Unlike the other sections, `properties` is not written to Management Center's database. Management Center reads it at startup, and it takes effect only for that run. To change a setting, edit the file and restart Management Center. For the same reason, [`applyMode`](./declarative-configuration-apply-mode.mdx) does not apply to this section.
+Unlike the other top-level keys of the file, `properties` is not written to Management Center's database. Management Center reads it at startup, and it takes effect only for that run. To change a setting, edit the file and restart Management Center. For the same reason, [`applyMode`](./declarative-configuration-apply-mode.mdx) does not apply to this section.
 
 ### Precedence
 
@@ -123,7 +123,17 @@ Management Center rejects the file, and does not start, in these cases:
 - A value is missing, a list, or a nested map, or a key is repeated.
 - `properties:` is present but has nothing after it.
 
-The error message names the key, never the value.
+The error message names the key, never the value. For example, if you misspell a key as `hazelcast.mc.ldap.ssl.keystore`, Management Center fails to start with this message:
+
+```text
+Description:
+
+Invalid declarative configuration file '/config/mc.yaml': properties contains unknown property 'hazelcast.mc.ldap.ssl.keystore'.
+
+Action:
+
+Fix the declarative configuration file referenced by 'hazelcast.mc.config.file' (or the HAZELCAST_MC_CONFIG_FILE environment variable) and restart Management Center.
+```
 
 ## Cluster connections {/* #clusters */}
 
