@@ -84,7 +84,7 @@ scrape_configs:
     - targets: ['localhost:8080'] # replace this address with the network address of Hazelcast Management Center
 ```
 
-After starting Prometheus with this configuration, all metrics will be exported to Prometheus with the `hz_` prefix. The metrics are also available via the [member JMX API](./monitoring-with-jmx.mdx#jmx-api-per-member). With the default configuration, Management Center exports all metrics reported by the cluster members. Since it can be overly verbose for some use cases, the metrics can be filtered with the `hazelcast.mc.prometheusExporter.filter.metrics.included` or the `hazelcast.mc.prometheusExporter.filter.metrics.excluded` system properties, both being comma-separated lists of metric names.
+After starting Prometheus with this configuration, all metrics will be exported to Prometheus with the `hz_` prefix. The metrics are also available via the [member JMX API](./monitoring-with-jmx.mdx#mbeans-of-a-member). With the default configuration, Management Center exports all metrics reported by the cluster members. Since it can be overly verbose for some use cases, the metrics can be filtered with the `hazelcast.mc.prometheusExporter.filter.metrics.included` or the `hazelcast.mc.prometheusExporter.filter.metrics.excluded` system properties, both being comma-separated lists of metric names.
 
 Example of starting Management Center with specifying the metrics exported to Prometheus:
 

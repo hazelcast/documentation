@@ -6,15 +6,21 @@ sidebar_position: 5
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
-You can monitor your Hazelcast members via the JMX protocol.
+You can monitor Hazelcast members with JMX. When you enable JMX, each member registers MBeans for its distributed data structures and its internal services. Any JMX client, such as JConsole, can read the attributes of these MBeans and call their operations.
 
-To achieve this, first add the following system properties to enable the [JMX agent](http://download.oracle.com/javase/1.5.0/docs/guide/management/agent.html):
+## Enable JMX
 
-- `-Dcom.sun.management.jmxremote`
-- `-Dcom.sun.management.jmxremote.port=<port>` (to specify JMX port, the default is `1099`) (**optional**)
-- `-Dcom.sun.management.jmxremote.authenticate=false` (to disable JMX auth) (**optional**)
+To monitor a member with JMX, enable the JMX agent of the member's JVM, and then enable JMX in Hazelcast.
 
-Then enable JMX by setting the `hazelcast.jmx` property to `true` using the following configuration:
+Start the JVM with the following system properties to enable the [JMX agent](https://docs.oracle.com/en/java/javase/17/management/monitoring-and-management-using-jmx-technology.html):
+
+| System property | Effect |
+| --- | --- |
+| `-Dcom.sun.management.jmxremote` | Enables the JMX agent |
+| `-Dcom.sun.management.jmxremote.port=<port>` | Optional. Accepts remote connections on the given port. |
+| `-Dcom.sun.management.jmxremote.authenticate=false` | Optional. Turns off password authentication of JMX connections. |
+
+Then set the `hazelcast.jmx` property to `true`. The default is `false`.
 
 <Tabs groupId="java--spring--system-property--xml--yaml">
 <TabItem value="xml" label="XML">
@@ -64,307 +70,320 @@ config.setProperty("hazelcast.jmx", "true");
 </TabItem>
 </Tabs>
 
-## MBean naming for Hazelcast data structures
+## MBean names
 
-Hazelcast set the naming convention for MBeans as follows:
+Each Hazelcast MBean has an object name in the `com.hazelcast` domain. The object name has the following keys:
+
+| Key | Value |
+| --- | --- |
+| `instance` | The name of the Hazelcast instance |
+| `type` | The type of the MBean, such as `IMap` or `HazelcastInstance.Node` |
+| `name` | The name of the data structure or service |
+
+For example, the following object name identifies the MBean of the map `trial` on the instance `_hzInstance_1_dev`:
 
 ```java
-final ObjectName mapMBeanName = new ObjectName("com.hazelcast:instance=_hzInstance_1_dev,type=IMap,name=trial");
+ObjectName mapMBeanName = new ObjectName("com.hazelcast:instance=_hzInstance_1_dev,type=IMap,name=trial");
 ```
 
-The MBeans name consists of the Hazelcast instance name, the type of the data structure and that data structure's name. In the above example, `_hzInstance_1_dev` is the instance name, we connect to an `IMap` with the name `trial`.
+If a value contains any of the characters `:`, `"`, `,`, `=`, `*`, or `?`, or a line break, Hazelcast quotes it with `ObjectName.quote()`. For example, the MBean of a map named `orders:eu` has the object name `com.hazelcast:instance=_hzInstance_1_dev,type=IMap,name="orders:eu"`.
 
-## Connecting to JMX Agent
+## Connect to the JMX agent
 
-One of the ways you can connect to JMX agent is using JConsole, jvisualvm (with MBean plugin) or another JMX compliant monitoring tool.
+To connect to a member, use a JMX client such as JConsole or VisualVM with the VisualVM-MBeans plugin. You can also connect from your own Java code.
 
-The other way to connect is to use a custom JMX client.
-
-First, you need to specify the URL where the Hazelcast JMX service is running. See the following code snippet:
+To connect from Java code, first create a `JMXServiceURL` with the host of the member and the port that you set in `com.sun.management.jmxremote.port`:
 
 ```java
-// Parameters for connecting to the JMX Service
 int port = 1099;
 String hostname = InetAddress.getLocalHost().getHostName();
 JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://" + hostname + ":" + port + "/jndi/rmi://" + hostname + ":" + port + "/jmxrmi");
 ```
 
-The `port` in the above example should be the one that you define while setting the JMX remote port number (if different than the default port `1099`).
-
-Then use the URL you acquired to connect to the JMX service and get the `JMXConnector` object. Using this object, get the `MBeanServerConnection` object. The `MBeanServerConnection` object enables you to use the MBean methods. See the example code below.
+Then connect to the URL, and get an `MBeanServerConnection` from the connection:
 
 ```java
-// Connect to the JMX Service
 JMXConnector jmxc = JMXConnectorFactory.connect(url, null);
 MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
 ```
 
-Once you get the `MBeanServerConnection` object, you can call the getter methods of MBeans as follows:
+Use the `MBeanServerConnection` to read attributes and call operations. The following example reads the name of a map and the number of its entries that the member owns:
 
 ```java
-System.out.println("\nTotal entries on map " + mbsc.getAttribute(mapMBeanName, "name") + " : "
+ObjectName mapMBeanName = new ObjectName("com.hazelcast:instance=_hzInstance_1_dev,type=IMap,name=trial");
+System.out.println("Total entries on map " + mbsc.getAttribute(mapMBeanName, "name") + " : "
                 + mbsc.getAttribute(mapMBeanName, "localOwnedEntryCount"));
 ```
 
-## JMX API per member
+## MBeans of a member
 
-Hazelcast members expose various management beans which include statistics about distributed data structures and the states of Hazelcast member internals.
+The following sections list the MBeans that a member registers. Each section lists the attributes and operations of one MBean. Operation names end with parentheses. Attributes whose names start with `local` describe only the member that you connect to, not the whole cluster. For the metrics behind many of these attributes, see [List of Hazelcast metrics](../../reference/list-of-metrics.mdx).
 
-The attributes whose names start with `local` are local to the member and do not reflect cluster-wide values.
+### Instance (`HazelcastInstance`)
 
-:::note
+The `HazelcastInstance` MBean describes the member and its cluster. It has the following attributes and operations:
 
-See the [List of Hazelcast Metrics appendix](../../reference/list-of-metrics.mdx) for the full list of metrics with their descriptions.
+| Attribute or operation | Description |
+| --- | --- |
+| `name` | Name of the instance |
+| `version` | Hazelcast version |
+| `build` | Hazelcast build |
+| `config` | Configuration of the member, as a string |
+| `configSource` | Source of the configuration |
+| `clusterName` | Name of the cluster |
+| `port` | Network port |
+| `clusterTime` | Cluster-wide time |
+| `memberCount` | Number of members in the cluster |
+| `Members` | List of members |
+| `running` | Whether the member is running |
+| `shutdown()` | Shuts down the member |
 
-:::
+### Node (`HazelcastInstance.Node`)
 
-You can find the JMX API definition below with descriptions and the API methods in parenthesis.
+The `HazelcastInstance.Node` MBean has the following attributes:
 
-**Atomic Long (`IAtomicLong`)**
+| Attribute | Description |
+| --- | --- |
+| `address` | Address of the member |
+| `masterAddress` | Address of the master member of the cluster |
 
-- Name ( `name` )
-- Current Value ( `currentValue` )
-- Set Value ( `set(v)` )
-- Add value and Get ( `addAndGet(v)` )
-- Compare and Set ( `compareAndSet(e,v)` )
-- Decrement and Get ( `decrementAndGet()` )
-- Get and Add ( `getAndAdd(v)` )
-- Get and Increment ( `getAndIncrement()` )
-- Get and Set ( `getAndSet(v)` )
-- Increment and Get ( `incrementAndGet()` )
-- Partition key ( `partitionKey` )
+### Partition service (`HazelcastInstance.PartitionServiceMBean`)
 
-**Atomic Reference ( `IAtomicReference` )**
+The `HazelcastInstance.PartitionServiceMBean` MBean has the following attributes:
 
-- Name ( `name` )
-- Partition key ( `partitionKey`)
+| Attribute | Description |
+| --- | --- |
+| `partitionCount` | Number of partitions |
+| `activePartitionCount` | Number of active partitions |
+| `isClusterSafe` | Whether the cluster is in a safe state |
+| `isLocalMemberSafe` | Whether the member is safe to shut down |
 
-**Countdown Latch ( `ICountDownLatch` )**
+### Logging service (`HazelcastInstance.LoggingService`)
 
-- Name ( `name` )
-- Current count ( `count`)
-- Countdown ( `countDown()` )
-- Partition key ( `partitionKey`)
+The `HazelcastInstance.LoggingService` MBean has the following attribute and operations:
 
-**Executor Service ( `IExecutorService` )**
+| Attribute or operation | Description |
+| --- | --- |
+| `level` | Log level that is set on the member |
+| `setLevel(level)` | Sets the log level of the member |
+| `resetLevel()` | Resets the log level of the member |
 
-- Local pending operation count ( `localPendingTaskCount` )
-- Local started operation count ( `localStartedTaskCount` )
-- Local completed operation count ( `localCompletedTaskCount` )
-- Local cancelled operation count ( `localCancelledTaskCount` )
-- Local total start latency ( `localTotalStartLatency` )
-- Local total execution latency ( `localTotalExecutionLatency` )
+### License (`HazelcastInstance.LicenseInfo`) <Badge type="enterprise" />
 
-**List ( `IList` )**
+The `HazelcastInstance.LicenseInfo` MBean holds the details of the member's license. For its attributes, see [Getting license details with the JMX API](../enterprise-licenses.mdx#jmx).
 
-- Name ( `name` )
-- Clear list ( `clear` )
+### Internal executors (`HazelcastInstance.ManagedExecutorService`)
 
-**Map ( `IMap` )**
+A member registers one `HazelcastInstance.ManagedExecutorService` MBean for each of the following internal executors. The `name` key of the object name is the name of the executor:
+- `hz:system`
+- `hz:async`
+- `hz:scheduled`
+- `hz:client`
+- `hz:client-query`
+- `hz:client-blocking-tasks`
+- `hz:query`
+- `hz:io`
+- `hz:offloadable`
 
-- Name ( `name` )
-- Size ( `size` )
-- Config ( `config` )
-- Owned entry count ( `localOwnedEntryCount` )
-- Owned entry memory cost ( `localOwnedEntryMemoryCost` )
-- Backup entry count ( `localBackupEntryCount` )
-- Backup entry cost ( `localBackupEntryMemoryCost` )
-- Backup count ( `localBackupCount` )
-- Creation time ( `localCreationTime` )
-- Last access time ( `localLastAccessTime` )
-- Last update time ( `localLastUpdateTime` )
-- Hits ( `localHits` )
-- Locked entry count ( `localLockedEntryCount` )
-- Dirty entry count ( `localDirtyEntryCount` )
-- Put operation count ( `localPutOperationCount` )
-- Get operation count ( `localGetOperationCount` )
-- Remove operation count ( `localRemoveOperationCount` )
-- Total put latency ( `localTotalPutLatency` )
-- Total get latency ( `localTotalGetLatency` )
-- Total remove latency ( `localTotalRemoveLatency` )
-- Max put latency ( `localMaxPutLatency` )
-- Max get latency ( `localMaxGetLatency` )
-- Max remove latency ( `localMaxRemoveLatency` )
-- Event count ( `localEventOperationCount` )
-- Other (keySet,entrySet etc..) operation count ( `localOtherOperationCount` )
-- Total operation count ( `localTotal` )
-- Heap Cost ( `localHeapCost` )
-- Clear ( `clear()` )
+Each executor MBean has the following attributes:
 
-**`MultiMap` ( `MultiMap` )**
+| Attribute | Description |
+| --- | --- |
+| `name` | Name of the executor |
+| `queueSize` | Number of tasks in the work queue |
+| `poolSize` | Number of threads in the pool |
+| `maximumPoolSize` | Maximum number of threads in the pool |
+| `remainingQueueCapacity` | Remaining capacity of the work queue |
+| `isShutdown` | Whether the executor is shut down |
+| `isTerminated` | Whether the executor is terminated |
+| `completedTaskCount` | Number of tasks that the executor has completed |
 
-- Name ( `name` )
-- Size ( `size` )
-- Owned entry count ( `localOwnedEntryCount` )
-- Owned entry memory cost ( `localOwnedEntryMemoryCost` )
-- Backup entry count ( `localBackupEntryCount` )
-- Backup entry cost ( `localBackupEntryMemoryCost` )
-- Backup count ( `localBackupCount` )
-- Creation time ( `localCreationTime` )
-- Last access time ( `localLastAccessTime` )
-- Last update time ( `localLastUpdateTime` )
-- Hits ( `localHits` )
-- Locked entry count ( `localLockedEntryCount` )
-- Put operation count ( `localPutOperationCount` )
-- Get operation count ( `localGetOperationCount` )
-- Remove operation count ( `localRemoveOperationCount` )
-- Total put latency ( `localTotalPutLatency` )
-- Total get latency ( `localTotalGetLatency` )
-- Total remove latency ( `localTotalRemoveLatency` )
-- Max put latency ( `localMaxPutLatency` )
-- Max get latency ( `localMaxGetLatency` )
-- Max remove latency ( `localMaxRemoveLatency` )
-- Event count ( `localEventOperationCount` )
-- Other (keySet,entrySet etc..) operation count ( `localOtherOperationCount` )
-- Total operation count ( `localTotal` )
-- Clear ( `clear()` )
+### WAN publisher (`WanPublisher`) <Badge type="enterprise" />
 
-**Replicated Map ( `ReplicatedMap` )**
+A member registers one `WanPublisher` MBean for each WAN replication publisher. The `name` key of the object name is the name of the WAN replication and the ID of the publisher, separated by a period. The MBean has the following attribute:
 
-- Name ( `name` )
-- Size ( `size` )
-- Config ( `config` )
-- Owned entry count ( `localOwnedEntryCount` )
-- Creation time ( `localCreationTime` )
-- Last access time ( `localLastAccessTime` )
-- Last update time ( `localLastUpdateTime` )
-- Hits ( `localHits` )
-- Put operation count ( `localPutOperationCount` )
-- Get operation count ( `localGetOperationCount` )
-- Remove operation count ( `localRemoveOperationCount` )
-- Total put latency ( `localTotalPutLatency` )
-- Total get latency ( `localTotalGetLatency` )
-- Total remove latency ( `localTotalRemoveLatency` )
-- Max put latency ( `localMaxPutLatency` )
-- Max get latency ( `localMaxGetLatency` )
-- Max remove latency ( `localMaxRemoveLatency` )
-- Event count ( `localEventOperationCount` )
-- Other (keySet,entrySet etc..) operation count ( `localOtherOperationCount` )
-- Total operation count ( `localTotal` )
-- Clear ( `clear()` )
+| Attribute | Description |
+| --- | --- |
+| `state` | State of the publisher: `REPLICATING`, `PAUSED`, or `STOPPED` |
 
-**Queue ( `IQueue` )**
+### Map (`IMap`)
 
-- Name ( `name` )
-- Config ( `config` )
-- Partition key ( `partitionKey` )
-- Owned item count ( `localOwnedItemCount` )
-- Backup item count ( `localBackupItemCount` )
-- Minimum age ( `localMinAge` )
-- Maximum age ( `localMaxAge` )
-- Average age ( `localAverageAge` )
-- Offer operation count ( `localOfferOperationCount` )
-- Rejected offer operation count ( `localRejectedOfferOperationCount` )
-- Poll operation count ( `localPollOperationCount` )
-- Empty poll operation count ( `localEmptyPollOperationCount` )
-- Other operation count ( `localOtherOperationsCount` )
-- Event operation count ( `localEventOperationCount` )
-- Clear ( `clear()` )
+A member registers an `IMap` MBean for each map. It has the following attributes and operations:
 
-**Semaphore ( `ISemaphore` )**
+| Attribute or operation | Description |
+| --- | --- |
+| `name` | Name of the map |
+| `size` | Number of entries in the map |
+| `config` | Configuration of the map |
+| `localOwnedEntryCount` | Number of entries that the member owns |
+| `localOwnedEntryMemoryCost` | Memory cost of the owned entries, in bytes |
+| `localBackupEntryCount` | Number of backup entries that the member holds |
+| `localBackupEntryMemoryCost` | Memory cost of the backup entries, in bytes |
+| `localBackupCount` | Number of backups of each entry |
+| `localCreationTime` | Time the map was created on the member |
+| `localLastAccessTime` | Time an owned entry was last read |
+| `localLastUpdateTime` | Time an owned entry was last updated |
+| `localHits` | Number of reads of owned entries |
+| `localLockedEntryCount` | Number of owned keys that are locked |
+| `localDirtyEntryCount` | Number of owned entries that are updated but not yet written to the map store |
+| `localPutOperationCount` | Number of put operations |
+| `localSetOperationCount` | Number of set operations |
+| `localGetOperationCount` | Number of get operations |
+| `localRemoveOperationCount` | Number of remove operations |
+| `localTotalPutLatency` | Total latency of put operations |
+| `localTotalSetLatency` | Total latency of set operations |
+| `localTotalGetLatency` | Total latency of get operations |
+| `localTotalRemoveLatency` | Total latency of remove operations |
+| `localMaxPutLatency` | Maximum latency of a put operation |
+| `localMaxSetLatency` | Maximum latency of a set operation |
+| `localMaxGetLatency` | Maximum latency of a get operation |
+| `localMaxRemoveLatency` | Maximum latency of a remove operation |
+| `localEventOperationCount` | Number of events received |
+| `localOtherOperationCount` | Number of other operations |
+| `localTotal` | Total number of operations |
+| `localHeapCost` | Heap cost of the map, including its Near Cache |
+| `clear()` | Removes all entries from the map |
 
-- Name ( `name` )
-- Available permits ( `available` )
-- Partition key ( `partitionKey` )
-- Drain ( `drain()`)
-- Shrink available permits by given number ( `reduce(v)` )
-- Release given number of permits ( `release(v)` )
+To get the average latency of an operation type, divide its total latency by its operation count.
 
-**Set ( `ISet` )**
+### `MultiMap` (`MultiMap`)
 
-- Name ( `name` )
-- Partition key ( `partitionKey` )
-- Clear ( `clear()` )
+A member registers a `MultiMap` MBean for each `MultiMap`. It has the following attributes and operations:
 
-**Topic ( `ITopic` )**
+| Attribute or operation | Description |
+| --- | --- |
+| `name` | Name of the `MultiMap` |
+| `size` | Number of entries in the `MultiMap` |
+| `config` | Configuration of the `MultiMap` |
+| `localOwnedEntryCount` | Number of entries that the member owns |
+| `localOwnedEntryMemoryCost` | Memory cost of the owned entries, in bytes |
+| `localBackupEntryCount` | Number of backup entries that the member holds |
+| `localBackupEntryMemoryCost` | Memory cost of the backup entries, in bytes |
+| `localBackupCount` | Number of backups of each entry |
+| `localCreationTime` | Time the `MultiMap` was created on the member |
+| `localLastAccessTime` | Time an owned entry was last read |
+| `localLastUpdateTime` | Time an owned entry was last updated |
+| `localHits` | Number of reads of owned entries |
+| `localLockedEntryCount` | Number of owned keys that are locked |
+| `localDirtyEntryCount` | Number of owned entries that are dirty |
+| `localPutOperationCount` | Number of put operations |
+| `localGetOperationCount` | Number of get operations |
+| `localRemoveOperationCount` | Number of remove operations |
+| `localTotalPutLatency` | Total latency of put operations |
+| `localTotalGetLatency` | Total latency of get operations |
+| `localTotalRemoveLatency` | Total latency of remove operations |
+| `localMaxPutLatency` | Maximum latency of a put operation |
+| `localMaxGetLatency` | Maximum latency of a get operation |
+| `localMaxRemoveLatency` | Maximum latency of a remove operation |
+| `localEventOperationCount` | Number of events received |
+| `localOtherOperationCount` | Number of other operations |
+| `localTotal` | Total number of operations |
+| `clear()` | Removes all entries from the `MultiMap` |
 
-- Name ( `name` )
-- Config ( `config` )
-- Creation time ( `localCreationTime` )
-- Publish operation count ( `localPublishOperationCount` )
-- Receive operation count ( `localReceiveOperationCount` )
+### Replicated map (`ReplicatedMap`)
 
-**Hazelcast Instance ( `HazelcastInstance` )**
+A member registers a `ReplicatedMap` MBean for each replicated map. It has the following attributes and operations:
 
-- Name ( `name` )
-- Version ( `version` )
-- Build ( `build` )
-- Configuration ( `config` )
-- Configuration source ( `configSource` )
-- Cluster name ( `clusterName` )
-- Network Port ( `port` )
-- Cluster-wide Time ( `clusterTime` )
-- Size of the cluster ( `memberCount` )
-- List of members ( `Members` )
-- Running state ( `running` )
-- Shutdown the member ( `shutdown()` )
-- **Node ( `HazelcastInstance.Node` )**
+| Attribute or operation | Description |
+| --- | --- |
+| `name` | Name of the replicated map |
+| `size` | Number of entries in the replicated map |
+| `config` | Configuration of the replicated map |
+| `localOwnedEntryCount` | Number of entries that the member owns |
+| `localCreationTime` | Time the replicated map was created on the member |
+| `localLastAccessTime` | Time an owned entry was last read |
+| `localLastUpdateTime` | Time an owned entry was last updated |
+| `localHits` | Number of reads of owned entries |
+| `localPutOperationCount` | Number of put operations |
+| `localGetOperationCount` | Number of get operations |
+| `localRemoveOperationCount` | Number of remove operations |
+| `localTotalPutLatency` | Total latency of put operations |
+| `localTotalGetLatency` | Total latency of get operations |
+| `localTotalRemoveLatency` | Total latency of remove operations |
+| `localMaxPutLatency` | Maximum latency of a put operation |
+| `localMaxGetLatency` | Maximum latency of a get operation |
+| `localMaxRemoveLatency` | Maximum latency of a remove operation |
+| `localEventOperationCount` | Number of events received |
+| `localOtherOperationCount` | Number of other operations |
+| `localTotal` | Total number of operations |
+| `clear()` | Removes all entries from the replicated map |
 
-  - Address ( `address` )
-  - Master address ( `masterAddress` )
-- **Partition Service ( `HazelcastInstance.PartitionServiceMBean` )**
+### Queue (`IQueue`)
 
-  - Partition count ( `partitionCount` )
-  - Active partition count ( `activePartitionCount` )
-  - Cluster Safe State ( `isClusterSafe` )
-  - `LocalMember` Safe State ( `isLocalMemberSafe` )
-- **System Executor ( `HazelcastInstance.ManagedExecutorService` )**
+A member registers an `IQueue` MBean for each queue. It has the following attributes and operations:
 
-  - Name ( `name` )
-  - Work queue size ( `queueSize` )
-  - Thread count of the pool ( `poolSize` )
-  - Maximum thread count of the pool ( `maximumPoolSize` )
-  - Remaining capacity of the work queue ( `remainingQueueCapacity` )
-  - Is shutdown ( `isShutdown` )
-  - Is terminated ( `isTerminated` )
-  - Completed task count ( `completedTaskCount` )
-- **Async Executor (`HazelcastInstance.ManagedExecutorService`)**
+| Attribute or operation | Description |
+| --- | --- |
+| `name` | Name of the queue |
+| `config` | Configuration of the queue |
+| `partitionKey` | Partition key of the queue |
+| `localOwnedItemCount` | Number of items that the member owns |
+| `localBackupItemCount` | Number of backup items that the member holds |
+| `localMinAge` | Minimum age of the items |
+| `localMaxAge` | Maximum age of the items |
+| `localAverageAge` | Average age of the items |
+| `localOfferOperationCount` | Number of offer, put, and add operations |
+| `localRejectedOfferOperationCount` | Number of rejected offers |
+| `localPollOperationCount` | Number of poll, take, and remove operations |
+| `localEmptyPollOperationCount` | Number of poll operations that returned `null` |
+| `localOtherOperationsCount` | Number of other operations |
+| `localEventOperationCount` | Number of event operations |
+| `clear()` | Removes all items from the queue |
 
-  - Name ( `name` )
-  - Work queue size ( `queueSize` )
-  - Thread count of the pool ( `poolSize` )
-  - Maximum thread count of the pool ( `maximumPoolSize` )
-  - Remaining capacity of the work queue ( `remainingQueueCapacity` )
-  - Is shutdown ( `isShutdown` )
-  - Is terminated ( `isTerminated` )
-  - Completed task count ( `completedTaskCount` )
-- **Scheduled Executor ( `HazelcastInstance.ManagedExecutorService` )**
+### List (`IList`)
 
-  - Name ( `name` )
-  - Work queue size ( `queueSize` )
-  - Thread count of the pool ( `poolSize` )
-  - Maximum thread count of the pool ( `maximumPoolSize` )
-  - Remaining capacity of the work queue ( `remainingQueueCapacity` )
-  - Is shutdown ( `isShutdown` )
-  - Is terminated ( `isTerminated` )
-  - Completed task count ( `completedTaskCount` )
-- **Client Executor ( `HazelcastInstance.ManagedExecutorService` )**
+A member registers an `IList` MBean for each list. It has the following attribute and operation:
 
-  - Name ( `name` )
-  - Work queue size ( `queueSize` )
-  - Thread count of the pool ( `poolSize` )
-  - Maximum thread count of the pool ( `maximumPoolSize` )
-  - Remaining capacity of the work queue ( `remainingQueueCapacity` )
-  - Is shutdown ( `isShutdown` )
-  - Is terminated ( `isTerminated` )
-  - Completed task count ( `completedTaskCount` )
-- **Query Executor ( `HazelcastInstance.ManagedExecutorService` )**
+| Attribute or operation | Description |
+| --- | --- |
+| `name` | Name of the list |
+| `clear()` | Removes all items from the list |
 
-  - Name ( `name` )
-  - Work queue size ( `queueSize` )
-  - Thread count of the pool ( `poolSize` )
-  - Maximum thread count of the pool ( `maximumPoolSize` )
-  - Remaining capacity of the work queue ( `remainingQueueCapacity` )
-  - Is shutdown ( `isShutdown` )
-  - Is terminated ( `isTerminated` )
-  - Completed task count ( `completedTaskCount` )
-- **I/O Executor ( `HazelcastInstance.ManagedExecutorService` )**
+### Set (`ISet`)
 
-  - Name ( `name` )
-  - Work queue size ( `queueSize` )
-  - Thread count of the pool ( `poolSize` )
-  - Maximum thread count of the pool ( `maximumPoolSize` )
-  - Remaining capacity of the work queue ( `remainingQueueCapacity` )
-  - Is shutdown ( `isShutdown` )
-  - Is terminated ( `isTerminated` )
-  - Completed task count ( `completedTaskCount` )
+A member registers an `ISet` MBean for each set. It has the following attributes and operation:
+
+| Attribute or operation | Description |
+| --- | --- |
+| `name` | Name of the set |
+| `partitionKey` | Partition key of the set |
+| `clear()` | Removes all items from the set |
+
+### Topic (`ITopic`)
+
+A member registers an `ITopic` MBean for each topic. It has the following attributes:
+
+| Attribute | Description |
+| --- | --- |
+| `name` | Name of the topic |
+| `config` | Configuration of the topic |
+| `localCreationTime` | Time the topic was created on the member |
+| `localPublishOperationCount` | Number of messages published on the member |
+| `localReceiveOperationCount` | Number of messages received on the member |
+
+### Reliable topic (`ReliableTopic`)
+
+A member registers a `ReliableTopic` MBean for each reliable topic. It has the following attributes:
+
+| Attribute | Description |
+| --- | --- |
+| `name` | Name of the reliable topic |
+| `config` | Configuration of the reliable topic |
+| `localCreationTime` | Time the reliable topic was created on the member |
+| `localPublishOperationCount` | Number of messages published on the member |
+| `localReceiveOperationCount` | Number of messages received on the member |
+
+### Executor service (`IExecutorService`)
+
+A member registers an `IExecutorService` MBean for each executor service. It has the following attributes:
+
+| Attribute | Description |
+| --- | --- |
+| `name` | Name of the executor service |
+| `localCreationTime` | Time the executor service was created on the member |
+| `localPendingTaskCount` | Number of pending tasks |
+| `localStartedTaskCount` | Number of started tasks |
+| `localCompletedTaskCount` | Number of completed tasks |
+| `localCancelledTaskCount` | Number of cancelled tasks |
+| `localTotalStartLatency` | Total start latency of the started tasks |
+| `localTotalExecutionLatency` | Total execution time of the completed tasks |
