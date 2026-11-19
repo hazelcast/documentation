@@ -1,6 +1,15 @@
 import {useEffect, type ReactNode} from 'react';
-import {useActivePlugin, useActiveDocContext, useVersions} from '@docusaurus/plugin-content-docs/client';
-import DocsVersionDropdownNavbarItem from '@theme-original/NavbarItem/DocsVersionDropdownNavbarItem';
+import {
+  useActivePlugin,
+  useActiveDocContext,
+  useDocsPreferredVersion,
+  useDocsVersionCandidates,
+  useVersions,
+  type GlobalVersion,
+} from '@docusaurus/plugin-content-docs/client';
+import {useLocation} from '@docusaurus/router';
+import {translate} from '@docusaurus/Translate';
+import DropdownNavbarItem from '@theme/NavbarItem/DropdownNavbarItem';
 import type DocsVersionDropdownNavbarItemType from '@theme/NavbarItem/DocsVersionDropdownNavbarItem';
 import type {WrapperProps} from '@docusaurus/types';
 import {pushDataLayer} from '@site/src/lib/analytics';
@@ -82,6 +91,42 @@ function VersionDropdownClickToOpen(): null {
   return null;
 }
 
+// Replaces the stock dropdown, which links to the same doc ID in each version and otherwise to the version's landing page. A page that moved
+// folders between versions keeps its URL through its `slug` but gets a new ID, so a page with the same URL is tried before the stock fallback.
+// Drops the stock `versions` option and single-version button, which no product here uses.
+function VersionDropdown({mobile, docsPluginId, dropdownItemsBefore = [], dropdownItemsAfter = [], ...props}: Props): ReactNode {
+  const versions = useVersions(docsPluginId);
+  const {activeVersion, alternateDocVersions} = useActiveDocContext(docsPluginId);
+  const candidates = useDocsVersionCandidates(docsPluginId);
+  const {savePreferredVersionName} = useDocsPreferredVersion(docsPluginId);
+  const {pathname, search, hash} = useLocation();
+  const rest = activeVersion && pathname.startsWith(`${activeVersion.path}/`) ? pathname.slice(activeVersion.path.length) : undefined;
+
+  const targetPath = (version: GlobalVersion): string =>
+    (rest !== undefined && version.docs.find((d) => d.path === `${version.path}${rest}`)?.path) ||
+    (alternateDocVersions[version.name] ?? version.docs.find((d) => d.id === version.mainDocId)!).path;
+
+  const displayed = candidates.find((c) => versions.includes(c)) ?? versions[0];
+  return (
+    <DropdownNavbarItem
+      {...props}
+      mobile={mobile}
+      label={mobile ? translate({id: 'theme.navbar.mobileVersionsDropdown.label', message: 'Versions'}) : displayed.label}
+      to={mobile ? undefined : targetPath(displayed)}
+      items={[
+        ...dropdownItemsBefore,
+        ...versions.map((version) => ({
+          label: version.label,
+          to: `${targetPath(version)}${search}${hash}`,
+          isActive: () => version === activeVersion,
+          onClick: () => savePreferredVersionName(version.name),
+        })),
+        ...dropdownItemsAfter,
+      ]}
+    />
+  );
+}
+
 // Render a dropdown only while its own docs instance is active (stock shows every instance's selector on every page).
 export default function DocsVersionDropdownNavbarItemWrapper(
   props: Props,
@@ -94,7 +139,7 @@ export default function DocsVersionDropdownNavbarItemWrapper(
     <>
       {!props.mobile && <VersionChangeTracker docsPluginId={props.docsPluginId} />}
       {!props.mobile && <VersionDropdownClickToOpen />}
-      <DocsVersionDropdownNavbarItem {...props} />
+      <VersionDropdown {...props} />
     </>
   );
 }
