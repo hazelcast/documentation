@@ -1,0 +1,93 @@
+---
+title: "Overview"
+sidebar_position: 1
+slug: /maintain-cluster/monitoring
+---
+
+Review Hazelcast Health Monitor logs regularly to understand the system runtime stability. Monitor Hazelcast logs and scan for failure messages regularly. Any incidences should be investigated and documented so as to understand your network better and find ways to provision, configure, and manage your network more efficiently.
+
+Hazelcast provides multi-level tolerance configurations in a cluster:
+
+1. Garbage collection (GC) tolerance: When a member fails to respond to health check probes on the existing socket connection but is actually responding to health probes sent on a new socket, it can be presumed to be stuck either in a long GC or in another long-running task. Adequate tolerance levels configured here may allow the member to come back from its stuck state within permissible SLAs.
+2. Network tolerance: When a member is temporarily unreachable by any means, temporary network communication errors may cause members to become unresponsive. In such a scenario, adequate tolerance levels configured here allow the member to return to healthy operation within permissible SLAs.
+
+You should establish tolerance levels for garbage collection and network connectivity and then set monitors to raise alerts when those tolerance thresholds are crossed. Customers with a Hazelcast subscription can use the extensive monitoring capabilities of the Management Center to set monitors and alerts.
+
+In addition to the Management Center, we recommend that you use `jstat` and keep verbose GC logging turned on and use a log scraping tool like Splunk or similar to monitor GC behavior. Back-to-back full GCs and anything above 90% heap occupancy after a full GC should be cause for alarm. Hazelcast dumps a set of information into the console of each instance that may further be used to create alerts.
+
+## Basic steps for monitoring and auditing
+
+- Make sure that all members are reachable by every other member in the cluster and are also accessible by the clients, for example through their ports and network.
+- Start Hazelcast member instances first. While not mandatory, this is a best practice to avoid clients timing out or complaining that no Hazelcast member is found, which can happen if the clients are started before the members.
+- Enable or start a system monitor tool, such as [nmon](http://nmon.sourceforge.net/pmwiki.php).
+- To add more members to an already running cluster, start a member with a similar configuration to the other members with the possible addition of the IP address of the new member. A maintenance window is not required to add more members to an already running Hazelcast cluster.
+
+  - When a member is added to or removed from a Hazelcast cluster, the clients may see a little pause time, but this is normal. This is essentially the time required by Hazelcast members to rebalance the data upon the arrival or departure of a member.
+  - There is no need to change anything on the clients when adding more members to the running cluster. In the default `ALL_MEMBERS` routing mode, the clients update themselves automatically to connect to the new member once it has successfully joined the cluster.
+  - Rebalancing of data (primary plus backup) on arrival or departure (forced or unforced) of a member is an automated process. In the default `ACTIVE` cluster state, no manual intervention is required.
+  - You can promote your lite members to become data members. To do this, either use the [Cluster API](../maintaining-a-cluster/lite-members.mdx#promoting-lite-members-to-data-members) or Management Center.
+  - Setting `hazelcast.initial.min.cluster.size` to 4 and starting members one by one (empty cluster, no operation) can result in unexpected cluster partitioning behavior: after reaching `hazelcast.initial.min.cluster.size`, partition table arrangement is initialized even though there is no data. When used in large clusters (\>100), this adds an unnecessary overhead of partition assignment on each member addition.
+- Check that you have configured an adequate backup count based on your SLAs.
+- When using distributed computing features, such as executor service or entry processors, any change in the client application logic or in the implementation of these must also be applied to the members. If you do not use <Variable name="ucn" />, which requires <Variable name="enterprise-product-name" />, you must restart all the members after you deploy the new code. Use the typical cluster re-deployment process: first shut down the members, then deploy the new application JARs in the members' classpath, and start the members.
+
+## Alerting
+
+Hazelcast alerts you through various channels as listed below.
+
+- Banners, warnings and exception messages on your application console.
+
+  Example license warning banner:
+
+  ```none
+  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ WARNING @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+  THIS HAZELCAST LICENSE ID AbCdE*********FgHiJ WILL EXPIRE IN 29 DAYS.
+  Your Hazelcast cluster will stop working on the next re-start after
+  expiry.
+
+  Please contact your Hazelcast Account Executive or
+  email sales@hazelcast.com.
+  Phone: +1 (650) 521-5453
+  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+  ```
+
+  Example outdated API warning:
+
+  ```none
+  An outdated version of JCache API was located in the classpath, please use newer versions of
+  JCache API rather than 1.0.0-PFD or 0.x versions.
+  ```
+
+  Example exception message:
+
+  ```none
+  com.hazelcast.sql.HazelcastSqlException: From line 1, column 15 to line 1, column 23: Object 'mapBak1HD' not found, did you forget to CREATE MAPPING?
+  ```
+- Prometheus: You can use this third-party tool to filter alert metrics. See the [Prometheus section](#prometheus-2) for details.
+
+Besides the above channels, you can also benefit from Hazelcast logging mechanism as an indirect way of getting alerts. See the [Logging section](../logging.mdx) for details.
+
+To learn the possible actions on the alerts, see the [Actions and Remedies for Alerts section](../../troubleshoot/remedies-for-alerts.mdx).
+
+## Integrating with third-party tools
+
+<Badge type="enterprise" />
+
+Management Center monitors your entire Hazelcast cluster, making it much easier to integrate with third-party tools without needing to connect to individual members, manage changes from scaling and restarts, or collate metrics from all members.
+
+### Prometheus {/* #prometheus-2 */}
+
+Hazelcast Management Center can expose the metrics collected from cluster members to [Prometheus](https://prometheus.io/). This feature can be turned on by setting the `hazelcast.mc.prometheusExporter.enabled` system property to `true`.
+
+This is an <Variable name="enterprise-product-name" /> feature. See <Variable href="/management-center/{page-latest-supported-mc}/integrate/prometheus-monitoring" text="Prometheus Monitoring" /> for details.
+
+### AppDynamics
+
+You can use the <Variable href="/management-center/{page-latest-supported-mc}/integrate/jmx" text="Clustered JMX" /> interface to integrate the [Hazelcast Management Center](../securing-a-cluster/management-center.mdx) with **AppDynamics**. To perform this integration, attach the AppDynamics Java agent to the Management Center.
+
+This is an <Variable name="enterprise-product-name" /> feature. See <Variable href="/management-center/{page-latest-supported-mc}/integrate/jmx#integrate-jmx-with-appdynamics" text="Integrating JMX with AppDynamics" /> for details.
+
+### New Relic
+
+You can use the <Variable href="/management-center/{page-latest-supported-mc}/integrate/jmx" text="Clustered JMX" /> interface to integrate the [Hazelcast Management Center](../securing-a-cluster/management-center.mdx) with New Relic. To perform this integration, attach the New Relic Java agent and provide an extension file that describes which metrics are sent to New Relic.
+
+This is an <Variable name="enterprise-product-name" /> feature. See <Variable href="/management-center/{page-latest-supported-mc}/integrate/jmx#integrate-jmx-with-new-relic" text="Integrating JMX with New Relic" /> for details.

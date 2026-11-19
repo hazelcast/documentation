@@ -611,7 +611,7 @@ export const redirects: {from: string; to: string}[] = [
   { from: "/hazelcast/6.0-snapshot/secure-cluster/security-best-practices", to: "/hazelcast/6.0-snapshot/cluster-performance/security-best-practices" },
   { from: "/hazelcast/6.0-snapshot/security/cluster-member-security", to: "/hazelcast/6.0-snapshot/security/overview" },
   { from: "/hazelcast/6.0-snapshot/security/enabling-jaas", to: "/hazelcast/6.0-snapshot/security/enable-security" },
-  { from: "/hazelcast/6.0-snapshot/security/management-center", to: "/hazelcast/6.0-snapshot/maintain-cluster/monitoring" },
+  { from: "/hazelcast/6.0-snapshot/security/management-center", to: "/hazelcast/6.0-snapshot/operate-and-manage/securing-a-cluster/management-center" },
   { from: "/hazelcast/6.0-snapshot/security/native-client-security", to: "/hazelcast/6.0-snapshot/clients/java" },
   { from: "/hazelcast/6.0-snapshot/security/security-realms", to: "/hazelcast/6.0-snapshot/security/authentication-overview" },
   { from: "/hazelcast/6.0-snapshot/serialization/comparing-interfaces", to: "/hazelcast/6.0-snapshot/serialization/serialization" },
