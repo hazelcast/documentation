@@ -1876,7 +1876,7 @@ The following deprecated cluster properties were removed:
 - `hazelcast.memcache.enabled`
 - `hazelcast.http.healthcheck.enabled`
 
-Please see [Using the REST Endpoint Groups](../../clients-and-apis/apis/enterprise-rest-api/rest-api.mdx#using-the-rest-endpoint-groups) on how to configure Hazelcast instance to expose REST endpoints. Please see [Health Check and Monitoring](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#health-check-and-monitoring) on how to enable the health check. Please see [Memcache Client](../../clients-and-apis/apis/memcache.mdx) on how to enable memcache client request listener service.
+Please see [Using the REST Endpoint Groups](../../clients-and-apis/apis/enterprise-rest-api/rest-api.mdx#using-the-rest-endpoint-groups) on how to configure Hazelcast instance to expose REST endpoints. Please see [Health Check and Monitoring](../../operate-and-manage/monitoring/health-check-and-monitoring.mdx) on how to enable the health check. Please see [Memcache Client](../../clients-and-apis/apis/memcache.mdx) on how to enable memcache client request listener service.
 
 ## Removal of Deprecations in `LoginModuleConfig`
 
@@ -2113,10 +2113,10 @@ The output of the following endpoints has been changed to JSON:
 
 ## Changes in the Diagnostics Configuration
 
-By introducing the [metrics system](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#metrics) in Hazelcast IMDG 4.0 and afterwards, the metrics collected by [Diagnostics](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#diagnostics) and the metrics system is shared. This has come with the following changes of the system properties that configure diagnostics:
+By introducing the [metrics system](../../operate-and-manage/monitoring/metrics.mdx) in Hazelcast IMDG 4.0 and afterwards, the metrics collected by [Diagnostics](../../operate-and-manage/monitoring/diagnostics.mdx) and the metrics system is shared. This has come with the following changes of the system properties that configure diagnostics:
 
 - `hazelcast.diagnostics.metric.level` is not available anymore. Collecting debug metrics can be enabled by setting the `hazelcast.metrics.debug.enabled` or `hazelcast.client.metrics.debug.enabled` system properties to `true` for the members and clients respectively.
-- `hazelcast.diagnostics.metric.distributed.datastructures` is not anymore available since the data structure metrics are required for the other [metric consumers](../../operate-and-manage/maintaining-a-cluster/monitoring.mdx#exposing-metrics). Therefore, they are collected by default and no need for enabling it for the diagnostics.
+- `hazelcast.diagnostics.metric.distributed.datastructures` is not anymore available since the data structure metrics are required for the other [metric consumers](../../operate-and-manage/monitoring/metrics.mdx#exposing-metrics). Therefore, they are collected by default and no need for enabling it for the diagnostics.
 
 ## Changes in the Management Center Configuration
 
