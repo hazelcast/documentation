@@ -1,6 +1,6 @@
 ---
-title: "Enabling Lite Members"
-sidebar_label: "Lite Members"
+title: "Enabling lite members"
+sidebar_label: "Lite members"
 sidebar_position: 5
 slug: /maintain-cluster/lite-members
 ---
@@ -14,11 +14,11 @@ You can form your cluster to include the regular Hazelcast members to store data
 
 :::important
 
-If you want to use lite members in a Hazelcast Enterprise cluster, they are also subjected to the Enterprise license.
+If you want to use lite members in a Hazelcast <Variable name="enterprise-product-name" /> cluster, they are also subject to the <Variable name="enterprise-product-name" /> license.
 
 :::
 
-## Configuring Lite Members
+## Configuring lite members
 
 You can enable a cluster member to be a lite member using the following configuration.
 
@@ -45,7 +45,7 @@ hazelcast:
 </TabItem>
 <TabItem value="java-member-api" label="Java Member API">
 
-```yaml
+```java
 Config config = new Config();
 config.setLiteMember(true);
 ```
@@ -53,7 +53,7 @@ config.setLiteMember(true);
 </TabItem>
 </Tabs>
 
-## Promoting Lite Members to Data Members
+## Promoting lite members to data members
 
 You can promote lite members to data members. This promotion rebalances the cluster partitions and reassigns the ownerships of partition portions to the newly promoted data members.
 
@@ -68,17 +68,14 @@ Cluster cluster = hazelcastInstance.getCluster();
 cluster.promoteLocalLiteMember();
 ```
 
-## Demoting Data Members to Lite Members
+## Demoting data members to lite members
 
 You can demote data members to lite ones. Similar to the promotions, the demotion leads to performing the rebalancing and reassignment of partitions.
 
 You can demote a data member programmatically using the `Cluster` interface as follows:
 
 ```java
-Config config = new Config();
-config.setLiteMember(true);
-
-HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
+HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance();
 Cluster cluster = hazelcastInstance.getCluster();
 cluster.demoteLocalDataMember();
 ```
