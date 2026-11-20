@@ -9,7 +9,7 @@ beta: true
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
-You can declare cluster connections, the security provider, and other settings in a single YAML file that Management Center applies automatically on startup.
+You can declare cluster connections, the security provider, static `hazelcast.mc.*` settings, and other settings in a single YAML file that Management Center applies automatically on startup.
 
 :::important
 
@@ -32,9 +32,12 @@ The YAML file covers the same **persisted entities** that `hz-mc conf` writes to
 | `clusters` | [Connect with hz-mc conf](../../cluster-connections/connecting-to-clusters-mc-conf.mdx) (both forms, see [Cluster connections](#clusters)) |
 | `sensitiveProperties` | The `set sensitive-properties` task, see [Hide sensitive configuration in the UI](../mc-conf.mdx#hide-sensitive-configuration-in-the-ui) |
 | `prometheusAuth` | [Authenticate the scrape endpoint](../../../integrate/prometheus-monitoring/overview.mdx#authenticate-the-scrape-endpoint) |
+| `properties` | Static `hazelcast.mc.*` settings, see [Static settings](#properties). Not persisted, and not governed by `applyMode`. |
 | `securityProvider` | [Security Providers](../../security/user-authentication/security-providers.mdx) (`local`, `ldap`, `activeDirectory`, `jaas`, `oidc`, `saml`, `devMode`) |
 
-It does **not** cover Management Center's **static/runtime settings** — ports, TLS, CORS, license, home directory, and so on. Those are still configured exclusively with [system properties and environment variables](../system-properties.mdx). It also doesn't cover anything that isn't a one-time configuration write, such as issuing or revoking REST API auth tokens, or resetting the security provider.
+In addition, the `properties` key sets Management Center's **static settings**, such as ports, TLS, and LDAP SSL keystores, which you otherwise set with [system properties and environment variables](../system-properties.mdx). See [Static settings](#properties).
+
+The file covers only one-time configuration writes. It cannot issue or revoke REST API auth tokens, or reset the security provider.
 
 ## Point Management Center at a configuration file
 
@@ -70,7 +73,67 @@ The file is applied entirely **before** Management Center opens its web server p
 
 ## `applyMode`: how re-running the file behaves
 
-By default, every entity the file declares must be absent, or Management Center refuses to start. Set `applyMode: upsert` to also allow updating entities that already exist, so it's safe to leave the same file pointed at `hazelcast.mc.config.file` across restarts. See [Declarative configuration apply modes](./declarative-configuration-apply-mode.mdx) for the full explanation and mixed-configuration examples.
+By default, every entity the file declares must be absent, or Management Center refuses to start. Set `applyMode: upsert` to also allow updating entities that already exist, and to remove clusters, Prometheus authentication, sensitive-properties settings and local users that the file does not declare. This makes it safe to leave the same file pointed at `hazelcast.mc.config.file` across restarts. See [Declarative configuration apply modes](./declarative-configuration-apply-mode.mdx) for the full explanation and mixed-configuration examples.
+
+## Static settings {/* #properties */}
+
+The `properties` key sets static `hazelcast.mc.*` settings, such as the LDAP SSL keystore and its password, without passing `-D` options or `JAVA_OPTS`. In Kubernetes, this lets you mount the whole file, or the part of it that holds passwords, from a Secret instead of putting plain-text values in the StatefulSet's environment variables.
+
+```yaml
+properties:
+  hazelcast.mc.ldap.ssl.keyStore: /run/secrets/ldap/keystore.jks
+  hazelcast.mc.ldap.ssl.keyStoreType: JKS
+  hazelcast.mc.ldap.ssl.keyStorePassword: changeit
+```
+
+Each key is the exact name of a [system property](../system-properties.mdx), written with dots. The environment variable names, such as `MC_LDAP_SSL_KEY_STORE`, are not accepted as keys. Each value is a single scalar: a string, a number, or a boolean.
+
+Unlike the other top-level keys of the file, `properties` is not written to Management Center's database. Management Center reads it at startup, and it takes effect only for that run. To change a setting, edit the file and restart Management Center. For the same reason, [`applyMode`](./declarative-configuration-apply-mode.mdx) does not apply to this section.
+
+### Precedence
+
+If you set the same property in more than one place, Management Center uses the value from the source nearest the top of this list:
+
+1. Command-line arguments.
+1. System properties (`-D` options and `JAVA_OPTS`).
+1. Environment variables.
+1. The `properties` section of the declarative configuration file.
+1. `application.properties` defaults.
+
+The file therefore supplies defaults that an operator can still override for a single run (for example, with `-D`). When a value in the file is overridden, Management Center logs the property name and the source that overrides it at startup. It never logs a value, because values are often passwords.
+
+### Values
+
+Management Center uses a value exactly as you write it. It does not convert unquoted values, so `0123` stays `0123` and is not read as a number, and a password such as `1e3` is not changed to `1000`. Quote a value only when YAML syntax requires it, for example if it contains `#` or starts with `*`.
+
+Values go through the [variable replacers](../variable-replacers.mdx) configured on the instance, the same as system properties and environment variables do. For example, you can use `$ENC{...}` values.
+
+:::note
+
+The [`file:` convention](#secrets-the-file-convention) is not available in `properties`. A value such as `file:/run/secrets/password` is used literally as that text. To keep a secret out of the file, use a variable replacer, or declare the file itself as a Kubernetes Secret.
+
+:::
+
+### Restrictions
+
+Management Center rejects the file, and does not start, in these cases:
+
+- A key is not the name of a Management Center system property. This catches typos that would otherwise be silently ignored.
+- A key is `hazelcast.mc.config.file`. This property locates the declarative configuration file, so you can only set it as a system property or environment variable.
+- A value is missing, a list, or a nested map, or a key is repeated.
+- `properties:` is present but has nothing after it.
+
+The error message names the key, never the value. For example, if you misspell a key as `hazelcast.mc.ldap.ssl.keystore`, Management Center fails to start with this message:
+
+```text
+Description:
+
+Invalid declarative configuration file '/config/mc.yaml': properties contains unknown property 'hazelcast.mc.ldap.ssl.keystore'.
+
+Action:
+
+Fix the declarative configuration file referenced by 'hazelcast.mc.config.file' (or the HAZELCAST_MC_CONFIG_FILE environment variable) and restart Management Center.
+```
 
 ## Cluster connections {/* #clusters */}
 
@@ -140,7 +203,7 @@ If a **different** security provider type is already active (however it got ther
 
 ### Local
 
-Mirrors [Local security provider](../../security/user-authentication/local-security-provider.mdx). Unlike the other providers, the `local` block holds no connection config, only the users to provision once it's active. `role` is one of `readonly`, `readwrite`, `metricsonly`, or `admin`.
+Mirrors [Local security provider](../../security/user-authentication/local-security-provider.mdx). Unlike the other providers, the `local` block holds no connection config, only the users to provision once the provider is active. The block must declare at least one user with the `admin` role, or Management Center refuses to start. `role` is one of `readonly`, `readwrite`, `metricsonly`, or `admin`.
 
 ```yaml
 securityProvider:
@@ -151,7 +214,7 @@ securityProvider:
         password: "file:/run/secrets/admin-password"
 ```
 
-Two `users` entries sharing the same `username` in the same file are always rejected. Passwords must meet the same complexity rules as [creating a user in the UI or with `hz-mc conf`](../../security/user-authentication/local-security-provider.mdx).
+Two `users` entries sharing the same `username` in the same file are always rejected. Under `applyMode: upsert`, Management Center deletes local users that are not listed, admins included. Passwords must meet the same complexity rules as [creating a user in the UI or with `hz-mc conf`](../../security/user-authentication/local-security-provider.mdx).
 
 ### LDAP
 
@@ -298,7 +361,12 @@ This is a separate mechanism from [variable replacers](../variable-replacers.mdx
 ```yaml
 # applyMode governs what happens when a declared entity already exists - see
 # "Declarative configuration apply modes" in the docs. Defaults to createOnly when omitted.
+# Under upsert, clusters, prometheusAuth, sensitiveProperties and local users not declared here are removed.
 # applyMode: upsert
+
+properties:
+  hazelcast.mc.ldap.ssl.keyStore: /run/secrets/ldap/keystore.jks
+  hazelcast.mc.ldap.ssl.keyStorePassword: changeit
 
 clusters:
   - name: prod-cluster
@@ -337,10 +405,10 @@ securityProvider:
 
 ## Validation and errors
 
-Management Center validates the whole file before writing anything: password strength and username format, XPath validity for masked-config properties, and whether declared entities already exist (governed by `applyMode`). The file is either entirely valid and applied in full, or nothing in it is applied — there's no partial application. Any failure aborts startup with a clear console message; Management Center never starts with a half-applied configuration.
+Management Center validates the whole file before writing anything: property names, password strength and username format, XPath validity for masked-config properties, and whether declared entities already exist (governed by `applyMode`). The file is either entirely valid and applied in full, or nothing in it is applied — there's no partial application. Any failure aborts startup with a clear console message; Management Center never starts with a half-applied configuration.
 
 ## Next steps
 
-- [Declarative configuration apply modes](./declarative-configuration-apply-mode.mdx) — `createOnly` vs. `upsert`, in depth, with mixed-configuration examples.
+- [Declarative configuration apply modes](./declarative-configuration-apply-mode.mdx) — `createOnly` versus `upsert`, including what `upsert` removes, with mixed-configuration examples.
 - [Management Center Configuration Tool](../mc-conf.mdx) — the imperative alternative, and the tool this feature reuses under the hood.
 - [Switch to a new security provider](../../security/user-authentication/switching-security-provider.mdx) — how to change the active security provider, including the Dev Mode exception.
