@@ -66,6 +66,7 @@ These properties configure Management Center's configuration file, home director
 | `hazelcast.mc.lock.skip` | `MC_LOCK_SKIP` | `false` | Whether the `hz-mc conf` tool does not check for an `mc.lock` file in the home directory. See [Skipping the Check for a Lock File](./mc-conf.mdx#skip-the-check-for-a-lock-file). |
 | `hazelcast.mc.phone.home.enabled` | `MC_PHONE_HOME_ENABLED` | `true` | Whether Management Center sends usage data to the Hazelcast phone home server. See [Usage analytics](../phone-homes.mdx). |
 | `hazelcast.mc.rest.enabled` | `MC_REST_ENABLED` | `false` | Enable [clustered REST](../../integrate/clustered-rest/clustered-rest.mdx) endpoints. |
+| `maskOpts` |  | `' '` (empty) | Comma-separated list of option keys to be masked. Masks sensitive data in logs passed via `JAVA_OPTS`. |
 
 ## Web server
 
@@ -200,12 +201,13 @@ These properties configure how Management Center stores metrics and exports them
 
 ## SQL browser and UI
 
-These properties configure limits in the SQL browser and the UI:
+These properties configure the SQL browser and the UI:
 
 | Property | Environment variable | Default | Description |
 | --- | --- | --- | --- |
-| `hazelcast.mc.sql.max-cell-length` | `MC_MC_SQL_MAX_CELL_LENGTH` | `2048` | Max length of a cell in SQL query result, longer values are truncated. |
-| `hazelcast.mc.sql.max-row-count` | `MC_MC_SQL_MAX_CELL_LENGTH` | `1000` | Max number of rows returned by SQL batch query. |
+| `hazelcast.mc.info.instanceName` | `MC_INFO_INSTANCE_NAME` |  | Set the instance name visible in the [Top Bar](../../get-started/user-interface-overview/user-interface.mdx#top-bar). Set blank to not display any instance name. If not set the instance name defaults to the hostname of the machine Management Center is deployed on. |
+| `hazelcast.mc.sql.max-cell-length` | `MC_SQL_MAXCELLLENGTH` | `2048` | Max length of a cell in SQL query result, longer values are truncated. |
+| `hazelcast.mc.sql.max-row-count` | `MC_SQL_MAXROWCOUNT` | `1000` | Max number of rows returned by SQL batch query. |
 | `hazelcast.mc.ui.asyncTableThreshold` | `MC_UI_ASYNC_TABLE_THRESHOLD` | `500` | Tables bigger than the threshold are loaded asynchronously. You can't sort an asynchronous table. |
 
 ## Cluster connections
@@ -214,6 +216,7 @@ These properties configure how Management Center communicates with clusters:
 
 | Property | Environment variable | Default | Description |
 | --- | --- | --- | --- |
+| `hazelcast.mc.clientFiltering.modes` | `MC_CLIENT_FILTERING_MODES` | `ALLOWLIST, DENYLIST` | Adjusts client filtering modes. Value must be set of `ALLOWLIST` and `DENYLIST`. |
 | `hazelcast.mc.clusterHealthCheck.exclude` | `MC_CLUSTERHEALTHCHECK_EXCLUDE` |  | List of check identifiers to be excluded from Healthcheck. See [Healthcheck](../../cluster/healthcheck.mdx#excluding-checks). |
 | `hazelcast.mc.cluster.operation.timeout.millis` |  | 60000 | Timeout in milliseconds for Management Center operations that wait for a response from members. |
 | `hazelcast.mc.state.reschedule.delay.millis` | `MC_STATE_RESCHEDULE_DELAY_MILLIS` | 1000 | Duration in milliseconds that Management Center waits before requesting metadata from a Hazelcast cluster. Metadata includes a list of all data structures and their configurations. |
@@ -229,6 +232,3 @@ These properties apply to all clients that are started by Management Center.
 | `hazelcast.mc.client.max.backoff.millis` | `30000` | Upper limit of the backoff in milliseconds. Values must be between 30000 and 600000. |
 | `hazelcast.mc.client.backoff.multiplier` | `2` | Factor by which to multiply the backoff after each failed retry. Values must be between 1 and 10. |
 | `hazelcast.mc.client.initial.backoff.millis` | `1000` | Duration in milliseconds that Management Center waits after the first connection failure before retrying. Values must be between 1000 and 60000. |
-| `hazelcast.mc.clientFiltering.modes` | `ALLOWLIST, DENYLIST` | Adjusts client filtering modes. Value must be set of `ALLOWLIST` and `DENYLIST`. |
-| `hazelcast.mc.info.instanceName` |  | Set the instance name visible in the [Top Bar](../../get-started/user-interface-overview/user-interface.mdx#top-bar). Set blank to not display any instance name. If not set the instance name defaults to the hostname of the machine Manage Center is deployed on. |
-| `maskOpts` | `' '` (empty) | Comma-separated list of option keys to be masked. Masks sensitive data in logs passed via `JAVA_OPTS`. |
