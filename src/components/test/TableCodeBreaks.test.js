@@ -1,7 +1,8 @@
 'use strict'
 
 // Spec: inline code in a table cell reads and copies exactly as written, and the browser may break it only at
-// whitespace, after `/`, `_`, `.` or `-` inside a name, and between the words of a camelCase name.
+// whitespace, after `/`, `_`, `.` or `-` inside a name, between the words of a camelCase name, and at an XML tag
+// boundary (after a `>` that a word or `<` follows, and before `</`).
 // The oracle for a break opportunity is the rendered markup: a <wbr> or whitespace between `white-space: nowrap` spans.
 
 const test = require('node:test')
@@ -37,6 +38,9 @@ const CASES = {
   HTTPServer: ['HTTPServer'],
   '.mdx': ['.mdx'],
   name: ['name'],
+  '<a>b</a>': ['<a>', 'b', '</a>'],
+  '<a><b>': ['<a>', '<b>'],
+  'optional<std::vector<bool>>': ['optional<std::vector<bool>>'],
 }
 
 test('breaks only at the allowed points', () => {

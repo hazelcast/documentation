@@ -4,16 +4,19 @@ import {useActivePluginAndVersion, useAllDocsData} from '@docusaurus/plugin-cont
 import {variables, versionedVariables} from '@site/src/variables';
 import substitute from '@site/plugins/lib/substitute-attributes';
 import inUnbuiltVersion from '@site/src/lib/inUnbuiltVersion';
+import TableCodeBreaks from '@site/src/components/TableCodeBreaks';
 
 // Single-sourced doc variables, resolved per active docs component + version (per-version values win).
 //   <Variable name="x"/>                  -> the value, as text
 //   <Variable href="…{x}…" text="…{y}…"/> -> a link; {name} tokens resolved in both. Off-site links open in a new tab.
 // `code` renders the link label in monospace (Markdown can't carry an unresolved `{attr}` in a code-labelled link href).
+// `breaks` (added in table cells by src/remark/tableCodeBreaks.ts) lets that label wrap at readable points.
 export default function Variable(props: {
   name?: string;
   href?: string;
   text?: string;
   code?: boolean;
+  breaks?: boolean;
 }): React.ReactElement {
   const active = useActivePluginAndVersion();
   const allDocsData = useAllDocsData();
@@ -26,7 +29,7 @@ export default function Variable(props: {
   if (props.href !== undefined) {
     const href = substitute(props.href, lookup);
     const text = substitute(props.text ?? '', lookup);
-    const label = props.code ? <code>{text}</code> : text;
+    const label = props.code ? props.breaks ? <TableCodeBreaks>{text}</TableCodeBreaks> : <code>{text}</code> : text;
     if (href.startsWith('/')) {
       // Only a version this site builds can pass the broken-link check; older versions are served outside the build.
       if (inUnbuiltVersion(href, allDocsData)) {
