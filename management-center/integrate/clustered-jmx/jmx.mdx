@@ -109,7 +109,7 @@ jconsole -J-Djavax.net.ssl.trustStore=/some/dir/selftrusted.ts -J-Djavax.net.ssl
 
 To secure the clustered JMX interface, you can use the following command line parameters to enable TLS mutual authentication:
 
-- `-Dhazelcast.mc.jmx.mutualAuthentication=true`
+- `-Dhazelcast.mc.jmx.ssl.mutualAuthentication=true`
 - `-Dhazelcast.mc.jmx.ssl.trustStore=path to your truststore`
 - `-Dhazelcast.mc.jmx.ssl.trustStorePassword=password for your truststore`
 
@@ -122,7 +122,7 @@ The following is an example on how to start Management Center with a TLS mutual 
 hz-mc start -Dhazelcast.mc.jmx.enabled=true \
     -Dhazelcast.mc.jmx.port=65432 \
     -Dhazelcast.mc.jmx.ssl=true \
-    -Dhazelcast.mc.jmx.mutualAuthentication=true \
+    -Dhazelcast.mc.jmx.ssl.mutualAuthentication=true \
     -Dhazelcast.mc.jmx.ssl.keyStore=/some/dir/selfsigned.jks \
     -Dhazelcast.mc.jmx.ssl.keyStorePassword=yourpassword \
     -Dhazelcast.mc.jmx.ssl.trustStore=/some/dir/truststore.jks \
@@ -136,7 +136,7 @@ hz-mc start -Dhazelcast.mc.jmx.enabled=true \
 mc-start.cmd -Dhazelcast.mc.jmx.enabled=true ^
     -Dhazelcast.mc.jmx.port=65432 ^
     -Dhazelcast.mc.jmx.ssl=true ^
-    -Dhazelcast.mc.jmx.mutualAuthentication=true ^
+    -Dhazelcast.mc.jmx.ssl.mutualAuthentication=true ^
     -Dhazelcast.mc.jmx.ssl.keyStore=/some/dir/selfsigned.jks ^
     -Dhazelcast.mc.jmx.ssl.keyStorePassword=yourpassword ^
     -Dhazelcast.mc.jmx.ssl.trustStore=/some/dir/truststore.jks ^
