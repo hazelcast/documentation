@@ -1,0 +1,136 @@
+---
+title: "Instance tracking"
+sidebar_position: 6
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+Instance tracking writes a file of metadata about a Hazelcast instance when the instance starts. The metadata includes the product name, the version, and the process ID. Other programs can read these files to find out which Hazelcast instances have run on a machine. Members and clients of both <Variable name="open-source-product-name" /> and <Variable name="enterprise-product-name" /> support instance tracking. It is disabled by default.
+
+The instance does not delete the file when it shuts down. The file therefore remains on the machine as a record that the instance ran. If the instance cannot write the file, it logs a warning and starts anyway.
+
+## Configure instance tracking {/* #instance-tracking-configuration */}
+
+You configure instance tracking in the member configuration. The following example enables instance tracking, sets the path of the file, and sets a pattern for its contents:
+
+```java
+Config config = new Config();
+config.getInstanceTrackingConfig()
+      .setEnabled(true)
+      .setFileName("/tmp/hz-tracking.txt")
+      .setFormatPattern("$HZ_INSTANCE_TRACKING{product}:$HZ_INSTANCE_TRACKING{version}");
+```
+
+The equivalent declarative configuration is as follows:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    <instance-tracking enabled="true">
+        <file-name>/tmp/hz-tracking.txt</file-name>
+        <format-pattern>$HZ_INSTANCE_TRACKING{product}:$HZ_INSTANCE_TRACKING{version}</format-pattern>
+    </instance-tracking>
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+  instance-tracking:
+    enabled: true
+    file-name: /tmp/hz-tracking.txt
+    format-pattern: $HZ_INSTANCE_TRACKING{product}:$HZ_INSTANCE_TRACKING{version}
+```
+
+</TabItem>
+</Tabs>
+
+Instance tracking has the following settings:
+
+| Setting | Description | Default |
+| --- | --- | --- |
+| `enabled` | Whether the instance writes a tracking file | `false` |
+| `file-name` | The path of the tracking file | `Hazelcast.process` in the directory that the `java.io.tmpdir` system property names |
+| `format-pattern` | The pattern for the contents of the file | All the metadata as JSON |
+
+To configure instance tracking for a client, add the same settings to the client configuration.
+
+An instance overwrites any existing file at the configured path. To give each instance its own file, add placeholders to the filename. For example, the filename `Hazelcast-$HZ_INSTANCE_TRACKING{pid}-$HZ_INSTANCE_TRACKING{start_timestamp}.process` contains the process ID and the start time. The filename is therefore different each time an instance starts.
+
+## Use placeholders
+
+The filename and the format pattern can contain placeholders in the form `$HZ_INSTANCE_TRACKING{<name>}`. The `HZ_INSTANCE_TRACKING` prefix distinguishes them from other placeholders in the configuration. When the instance writes the file, it replaces each placeholder with its value.
+
+The following placeholders are available:
+
+| Placeholder | Value |
+| --- | --- |
+| `product` | The product name: `Hazelcast`, `Hazelcast Enterprise`, `Hazelcast Client`, or `Hazelcast Client Enterprise` |
+| `version` | The Hazelcast version of the instance |
+| `mode` | `server` for a member started with the `hz-start` or `hz-start.bat` script, `embedded` for a member embedded in another Java program, or `client` for a client |
+| `start_timestamp` | The time the instance started, in milliseconds since the Unix epoch |
+| `licensed` | `1` if the instance uses a license, or `0` if it does not |
+| `pid` | The process ID of the instance, or `-1` if the instance cannot get it. Some JVMs and operating systems do not provide the process ID. |
+
+If a placeholder name is not in this table, the instance writes the placeholder unchanged and continues with the next one. If a placeholder has no closing brace, the instance writes the rest of the pattern unchanged, including any placeholders that follow.
+
+For example, the following format pattern contains a placeholder name that does not exist and a placeholder with no closing brace:
+
+```java
+String format = "mode: $HZ_INSTANCE_TRACKING{mode}\n"
+        + "product: $HZ_INSTANCE_TRACKING{product}\n"
+        + "licensed: $HZ_INSTANCE_TRACKING{licensed}\n"
+        + "missing: $HZ_INSTANCE_TRACKING{missing}\n"
+        + "broken: $HZ_INSTANCE_TRACKING{broken ";
+```
+
+An embedded member with no license writes the following file:
+
+```properties
+mode: embedded
+product: Hazelcast
+licensed: 0
+missing: $HZ_INSTANCE_TRACKING{missing}
+broken: $HZ_INSTANCE_TRACKING{broken
+```
+
+## Read the default file contents
+
+If you do not set a format pattern, the file contains every placeholder and its value as JSON.
+
+A client writes a file such as the following:
+
+```json
+{"product":"Hazelcast", "version":"5.0.0", "pid":27746, "mode":"client", "start_timestamp":1595851430741, "licensed":0}
+```
+
+A member started with the `hz-start` script writes a file such as the following:
+
+```json
+{"product":"Hazelcast", "version":"5.0.0", "pid":27746, "mode":"server", "start_timestamp":1595851430741, "licensed":1}
+```
+
+A member embedded in another Java program writes a file such as the following:
+
+```json
+{"product":"Hazelcast", "version":"5.0.0", "pid":27746, "mode":"embedded", "start_timestamp":1595851430741, "licensed":1}
+```
+
+## Find the tracking file of a running instance
+
+When an instance writes its tracking file, it sets the `hazelcast.config.instance.tracking.file` system property of its JVM to the full path of the file. To check that each running instance writes its file to the right path, read this property with the [`jcmd`](https://docs.oracle.com/en/java/javase/13/docs/specs/man/jcmd.html) utility. Replace `<PID>` with the process ID of the JVM:
+
+```shell
+jcmd <PID> VM.system_properties | grep hazelcast.config.instance.tracking.file
+```
+
+The output is similar to the following:
+
+```shell
+hazelcast.config.instance.tracking.file=/tmp/Hazelcast.process
+```

@@ -6,18 +6,16 @@ slug: /data-structures/reading-map-metrics
 
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
+import CodeBlock from "@theme/CodeBlock";
+import Ex_management_ExampleLocalMapStats_java_tag_lms from "../../../examples/management/ExampleLocalMapStats.java?tag=lms";
 
 By default, you can read metrics for a given map, such as the primary and backup entry count, last update time, and locked entry count on each member of your cluster. You can access these statistics for the entire map, for the map entries on a specific cluster member, or specific map entries.
 
 ## Getting Statistics about All Map Entries {/* #accessing-entry-statistics */}
 
-To get statistics for all map entries that are owned by a member, use the `getLocalMapStats()` method of the Java member API ([embedded mode](../../../install-and-upgrade/overview/choosing-a-deployment-option.mdx)). This method returns data only if the `statistics-enabled` element is set to `true`, which is the default.
+To get statistics for all map entries that are owned by a member, use the `getLocalMapStats()` method of the Java member API ([embedded mode](../../../install-and-upgrade/overview/choosing-a-deployment-option.mdx)).
 
-:::note
-
-If you disable map statistics, statistics will not be available via the API, or in <Variable href="/management-center/{page-latest-supported-mc}/getting-started/overview" text="Hazelcast Management Center" />.
-
-:::
+The `statistics-enabled` element of the map is `true` by default. If you set it to `false`, the member does not record operation statistics for the map, such as operation counts, latencies, and index statistics. The member also then leaves the map out of the statistics that it reports to the [metrics system](../../../operate-manage/monitoring/metrics.mdx) and <Variable href="/management-center/{page-latest-supported-mc}/getting-started/overview" text="Management Center"/>. The `getLocalMapStats()` method still returns the entry counts and memory costs of the map.
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
@@ -45,11 +43,27 @@ hazelcast:
 </TabItem>
 </Tabs>
 
-```java
-LocalMapStats mapStatistics = myMap.getLocalMapStats();
-System.out.println( "Number of entries owned by this member = "
-    + mapStatistics.getOwnedEntryCount() );
-```
+Below is example code where `getLocalMapStats()` and `getOwnedEntryCount()` get the number of entries owned by this member:
+
+<CodeBlock language="java">{Ex_management_ExampleLocalMapStats_java_tag_lms}</CodeBlock>
+
+:::note
+
+The `getOwnedEntryMemoryCost()` method is also supported for the `NATIVE` in-memory format.
+
+:::
+
+The following are some of the metrics that you can access via the `LocalMapStats` object:
+- Number of entries owned by the member (`getOwnedEntryCount()`)
+- Number of backup entries held by the member (`getBackupEntryCount()`)
+- Number of backups per entry (`getBackupCount()`)
+- Memory cost (number of bytes) of owned entries in the member (`getOwnedEntryMemoryCost()`)
+- Creation time of the map on the member (`getCreationTime()`)
+- Number of hits (reads) of the locally owned entries (`getHits()`)
+- Number of get and put operations on the map (`getPutOperationCount()` and `getGetOperationCount()`)
+- Number of queries executed on the map (`getQueryCount()` and `getIndexedQueryCount()`) (it may be imprecise for queries involving partition predicates (`PartitionPredicate`) on the off-heap storage)
+
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/map/LocalMapStats.html" text="LocalMapStats Javadoc" /> to see all the metrics.
 
 :::note
 
@@ -59,7 +73,7 @@ If you need cluster-wide map statistics, you can get the local map statistics fr
 
 ## Getting Statistics about a Specific Map Entry
 
-To get statistics for a specific map entry, you can use the `getEntryView(key)` method of one of the following available client libraries. To use this method, the map must have its `per-entry-stats-enabled` element set to `true`.
+To get statistics for a specific map entry, you can use the `getEntryView(key)` method of one of the following available client libraries. To use this method, the map must have its `per-entry-stats-enabled` element set to `true`. The default is `false`.
 
 This method returns the following statistics:
 

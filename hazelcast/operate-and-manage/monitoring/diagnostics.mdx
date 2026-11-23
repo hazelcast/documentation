@@ -1,0 +1,952 @@
+---
+title: "Diagnostics"
+sidebar_position: 4
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+Hazelcast diagnostic logging helps you troubleshoot and monitor a cluster.
+
+Members and clients both provide a set of diagnostics plugins. Hazelcast writes the diagnostics to a dedicated log file.
+
+You can configure diagnostic logging in two ways:
+- Dynamic configuration: use Management Center or Operator, without restarting the cluster
+- Static configuration: set the properties described on this page
+
+## Enable dynamic logging
+
+With dynamic diagnostic logging, you can turn diagnostic logging on and off at runtime without restarting the cluster.
+
+You can also turn diagnostic logging off automatically after a set period by configuring the auto turn-off feature in Management Center or Operator.
+
+In Operator, you can also control the diagnostic plugins.
+
+To learn how to enable dynamic diagnostic logging and the auto turn-off feature, see the <Variable href="/operator/{page-latest-supported-po}/configure-diagnostic-logging" text="Operator"/> or <Variable href="/management-center/{page-latest-supported-mc}/clusters/diagnostic-logging" text="Management Center" /> documentation.
+
+:::important
+
+A diagnostics property that you set statically overrides the dynamic configuration of the same setting. For example, if you set the `hazelcast.diagnostics.enabled` property to `true`, you cannot disable diagnostics dynamically in Management Center or Operator. If you set it to `false`, you cannot enable diagnostics dynamically. To control a setting dynamically, do not set its property statically.
+
+:::
+
+## Enable static logging
+
+To enable diagnostic logging statically, set the following properties on the members:
+
+<Tabs groupId="java--jvm--xml--yaml">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <properties>
+        <property name="hazelcast.diagnostics.enabled">true</property>
+        <property name="hazelcast.diagnostics.invocation.sample.period.seconds">30</property>
+        <property name="hazelcast.diagnostics.pending.invocations.period.seconds">30</property>
+        <property name="hazelcast.diagnostics.slowoperations.period.seconds">30</property>
+        <property name="hazelcast.diagnostics.storeLatency.period.seconds">60</property>
+    </properties>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+    ...
+    properties:
+      hazelcast.diagnostics.enabled: true
+      hazelcast.diagnostics.invocation.sample.period.seconds: 30
+      hazelcast.diagnostics.pending.invocations.period.seconds: 30
+      hazelcast.diagnostics.slowoperations.period.seconds: 30
+      hazelcast.diagnostics.storeLatency.period.seconds: 60
+    ...
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+Config config = new Config();
+config.setProperty( "hazelcast.diagnostics.enabled", "true" )
+      .setProperty( "hazelcast.diagnostics.invocation.sample.period.seconds", "30" )
+      .setProperty( "hazelcast.diagnostics.pending.invocations.period.seconds", "30" )
+      .setProperty( "hazelcast.diagnostics.slowoperations.period.seconds", "30" )
+      .setProperty( "hazelcast.diagnostics.storeLatency.period.seconds", "60" );
+```
+
+</TabItem>
+<TabItem value="jvm" label="JVM">
+
+```shell title="Java command"
+java -Dhazelcast.diagnostics.enabled=true
+     -Dhazelcast.diagnostics.invocation.sample.period.seconds=30
+     -Dhazelcast.diagnostics.pending.invocations.period.seconds=30
+     -Dhazelcast.diagnostics.slowoperations.period.seconds=30
+     -Dhazelcast.diagnostics.storeLatency.period.seconds=60
+```
+
+```shell title="JAVA_OPTS"
+JAVA_OPTS="-Dhazelcast.diagnostics.enabled=true -Dhazelcast.diagnostics.invocation.sample.period.seconds=30 -Dhazelcast.diagnostics.pending.invocations.period.seconds=30 -Dhazelcast.diagnostics.slowoperations.period.seconds=30 -Dhazelcast.diagnostics.storeLatency.period.seconds=60"
+```
+
+</TabItem>
+</Tabs>
+
+On a Java client, set the following property:
+- `hazelcast.diagnostics.enabled=true`
+
+## Configure the diagnostics log file
+
+To set the directory of the diagnostics log file, use the following property:
+
+<Tabs groupId="java--jvm--xml--yaml">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <properties>
+        <property name="hazelcast.diagnostics.directory">/your/log/directory</property>
+    </properties>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+    ...
+    properties:
+      hazelcast.diagnostics.directory: /your/log/directory
+    ...
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+Config config = new Config();
+config.setProperty( "hazelcast.diagnostics.directory", "/your/log/directory" );
+```
+
+</TabItem>
+<TabItem value="jvm" label="JVM">
+
+```shell title="Java command"
+java -Dhazelcast.diagnostics.directory=/your/log/directory
+```
+
+```shell title="JAVA_OPTS"
+JAVA_OPTS="-Dhazelcast.diagnostics.directory=/your/log/directory"
+```
+
+</TabItem>
+</Tabs>
+
+The name of the log file has the following format:
+
+```none
+diagnostics-<host IP>_<port>-<start time in epoch milliseconds>-<file index>.log
+```
+
+To add a custom prefix to the name of the log file, use the following property:
+
+<Tabs groupId="java--jvm--xml--yaml">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <properties>
+        <property name="hazelcast.diagnostics.filename.prefix">foobar</property>
+    </properties>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+    ...
+    properties:
+      hazelcast.diagnostics.filename.prefix: foobar
+    ...
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+Config config = new Config();
+config.setProperty( "hazelcast.diagnostics.filename.prefix", "foobar" );
+```
+
+</TabItem>
+<TabItem value="jvm" label="JVM">
+
+```shell title="Java command"
+java -Dhazelcast.diagnostics.filename.prefix=foobar
+```
+
+```shell title="JAVA_OPTS"
+JAVA_OPTS="-Dhazelcast.diagnostics.filename.prefix=foobar"
+```
+
+</TabItem>
+</Tabs>
+
+Each entry in the diagnostics log file starts with the date, the time, and the epoch time in milliseconds, followed by the name of the entry. To leave out the epoch time, set the `hazelcast.diagnostics.include.epoch` property to `false`. The content of the entry follows in square brackets. Some plugins write an empty entry when they have nothing to report. For example, when there are no slow operations, the `SlowOperations` plugin writes `SlowOperations[]`.
+
+The following example shows the first entries in a diagnostics log file for a member that is starting. It leaves out the content of the `SystemProperties` and `ConfigProperties` entries, and all but three of the 387 `Metric` entries:
+
+```none
+19-11-2026 15:18:44 1795101524056 BuildInfo[
+                          Build=20260512
+                          BuildNumber=20260512
+                          Revision=b9df48a
+                          Version=5.7.0
+                          SerialVersion=1
+                          Enterprise=false]
+19-11-2026 15:18:44 1795101524056 SystemProperties[
+                          java.version=26.0.2.1]
+19-11-2026 15:18:44 1795101524057 ConfigProperties[
+                          hazelcast.diagnostics.enabled=true]
+19-11-2026 15:18:44 1795101524057 OverloadedConnections[]
+19-11-2026 15:18:44 1795101524057 EventQueues[]
+19-11-2026 15:18:44 1795101524057 PendingInvocations[
+                          count=0
+                          invocations[]]
+19-11-2026 15:18:44 1795101524057 Metric[[metric=classloading.totalLoadedClassesCount]=7564]
+19-11-2026 15:18:44 1795101524057 Metric[[metric=os.systemLoadAverage]=2.89111328125]
+19-11-2026 15:18:44 1795101524057 Metric[[unit=bytes,metric=memory.usedHeap]=96118040]
+19-11-2026 15:18:44 1795101524081 SlowOperations[]
+19-11-2026 15:18:44 1795101524081 Invocations[
+                          Pending[]
+                          History[]
+                          SlowHistory[]]
+19-11-2026 15:18:44 1795101524081 InvocationProfiler[]
+19-11-2026 15:18:44 1795101524081 OperationsProfiler[]
+19-11-2026 15:18:44 1795101524081 HazelcastInstance[
+                          thisAddress=[127.0.0.1]:5701
+                          isRunning=true
+                          isLite=false
+                          joined=false
+                          nodeState=ACTIVE
+                          clusterId=null
+                          clusterSize=1
+                          isMaster=false
+                          masterAddress=null
+                          Members[
+                                  [127.0.0.1]:5701]]
+19-11-2026 15:18:44 1795101524082 ClusterVersionChanged[
+                          5.7]
+19-11-2026 15:18:44 1795101524082 Lifecycle[
+                          STARTING]
+```
+
+To limit the disk space that the diagnostics log files use, Hazelcast starts a new file when the current file reaches a maximum size. By default, it keeps up to 10 files of 50 MB each. To set the size of each file and the number of files, use the following properties:
+
+<Tabs groupId="java--jvm--xml--yaml">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <properties>
+        <property name="hazelcast.diagnostics.max.rolled.file.size.mb">100</property>
+        <property name="hazelcast.diagnostics.max.rolled.file.count">5</property>
+    </properties>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+    ...
+    properties:
+      hazelcast.diagnostics.max.rolled.file.size.mb: 100
+      hazelcast.diagnostics.max.rolled.file.count: 5
+    ...
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+Config config = new Config();
+config.setProperty( "hazelcast.diagnostics.max.rolled.file.size.mb", "100" )
+      .setProperty( "hazelcast.diagnostics.max.rolled.file.count", "5" );
+```
+
+</TabItem>
+<TabItem value="jvm" label="JVM">
+
+```shell title="Java command"
+java -Dhazelcast.diagnostics.max.rolled.file.size.mb=100
+     -Dhazelcast.diagnostics.max.rolled.file.count=5
+```
+
+```shell title="JAVA_OPTS"
+JAVA_OPTS="-Dhazelcast.diagnostics.max.rolled.file.size.mb=100 -Dhazelcast.diagnostics.max.rolled.file.count=5"
+```
+
+</TabItem>
+</Tabs>
+
+## Set the output type
+
+To set the output type of diagnostics, use the following property:
+
+<Tabs groupId="java--jvm--xml--yaml">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <properties>
+        <property name="hazelcast.diagnostics.stdout">STDOUT</property>
+    </properties>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+    ...
+    properties:
+      hazelcast.diagnostics.stdout: STDOUT
+    ...
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+Config config = new Config();
+config.setProperty( "hazelcast.diagnostics.stdout", "STDOUT" );
+```
+
+</TabItem>
+<TabItem value="jvm" label="JVM">
+
+```shell title="Java command"
+java -Dhazelcast.diagnostics.stdout=STDOUT
+```
+
+```shell title="JAVA_OPTS"
+JAVA_OPTS="-Dhazelcast.diagnostics.stdout=STDOUT"
+```
+
+</TabItem>
+</Tabs>
+
+The property accepts the following types:
+- `FILE` outputs to a [set of files](#configure-the-diagnostics-log-file) managed by Hazelcast. This is the default type.
+- `STDOUT` outputs to the standard output.
+- `LOGGER`outputs to the Hazelcast logger. You can then forward the diagnostics to any output that the logging framework supports.
+
+  :::note
+
+  The `LOGGER` type uses more CPU and memory than the other output types, because each diagnostics write passes through the logging framework. It also gives you more flexibility.
+
+  :::
+
+### Send diagnostics to a logging framework
+
+Hazelcast does not require a specific logging framework. To forward the diagnostics to your logging framework, set the `hazelcast.diagnostics.stdout` property to `LOGGER`:
+
+<Tabs groupId="java--jvm--xml--yaml">
+<TabItem value="xml" label="XML">
+
+```xml
+<hazelcast>
+    ...
+    <properties>
+        <property name="hazelcast.diagnostics.stdout">LOGGER</property>
+    </properties>
+    ...
+</hazelcast>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+hazelcast:
+    ...
+    properties:
+      hazelcast.diagnostics.stdout: LOGGER
+    ...
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java
+Config config = new Config();
+config.setProperty( "hazelcast.diagnostics.stdout", "LOGGER" );
+```
+
+</TabItem>
+<TabItem value="jvm" label="JVM">
+
+```shell title="Java command"
+java -Dhazelcast.diagnostics.stdout=LOGGER
+```
+
+```shell title="JAVA_OPTS"
+JAVA_OPTS="-Dhazelcast.diagnostics.stdout=LOGGER"
+```
+
+</TabItem>
+</Tabs>
+
+This configuration forwards the logs to the `com.hazelcast.diagnostics` logger. To write them to a file, reference one of your configured appenders from that logger. The following example does this for Log4j2:
+
+```xml
+<Logger name="com.hazelcast.diagnostics" level="debug" additivity="false">
+    <AppenderRef ref="LogToRollingFile"/>
+</Logger>
+```
+
+To control the file size and rolling behavior, configure [`TimeBasedTriggeringPolicy`](https://logging.apache.org/log4j/2.x/manual/configuration.html) and [`SizeBasedTriggeringPolicy`](https://logging.apache.org/log4j/2.x/manual/configuration.html) for the appender.
+
+:::note
+
+The diagnostic logs have the `DEBUG` level by default. If the root appender uses the `DEBUG` level and you do not want the diagnostic logs in the member logs, set the level of the `com.hazelcast.diagnostics` logger to `INFO`. For Log4j2, see the [configuration documentation](https://logging.apache.org/log4j/2.x/manual/configuration.html).
+
+:::
+
+## Diagnostics plugins
+
+Each diagnostics plugin collects information and writes it to the diagnostics output. The plugins run in two ways:
+- The `BuildInfo`, `SystemProperties`, and `ConfigProperties` plugins do not run at an interval. With the `FILE` output type, their entries appear at the start of each diagnostics log file, including each new file that Hazelcast starts when a file reaches its maximum size. With the `STDOUT` and `LOGGER` output types, their entries appear once each time diagnostics start.
+- Every other plugin runs repeatedly while it is enabled. The section for each plugin lists the properties that enable and configure it. For most plugins, a property sets the interval, and a value of `0` disables the plugin.
+
+You set the plugin properties in the same way as the other diagnostics properties. In Operator, you can also set them dynamically.
+
+Most plugins write entries with the same name as the plugin. The following table lists every plugin, the name of its entries in the diagnostics output, whether it is enabled by default, and where it runs:
+
+| Plugin | Entry name | Enabled by default | Runs on |
+|---|---|---|---|
+| `BuildInfo` | `BuildInfo` | Yes | Members and clients |
+| `SystemProperties` | `SystemProperties` | Yes | Members and clients |
+| `ConfigProperties` | `ConfigProperties` | Yes | Members and clients |
+| `Metrics` | `Metric`, one entry for each metric | Yes | Members and clients |
+| `SlowOperations` | `SlowOperations` | Yes | Members |
+| `Invocations` | `Invocations` | No | Members |
+| `PendingInvocations` | `PendingInvocations` | No | Members |
+| `InvocationProfiler` | `InvocationProfiler` | Yes | Members |
+| `OperationProfiler` | `OperationsProfiler` | Yes | Members |
+| `HazelcastInstance` | `HazelcastInstance` | Yes | Members |
+| `EventQueue` | `EventQueues` | No | Members and clients |
+| `SystemLog` | `Lifecycle`, `MemberAdded`, `MemberRemoved`, `ConnectionAdded`, `ConnectionRemoved`, `ClusterVersionChanged`, `MigrationState`, `MigrationCompleted`, and `MigrationFailed` | Yes | Members and clients |
+| `StoreLatency` | `MapStoreLatency`, `QueueStoreLatency`, `RingbufferStoreLatency`, `CacheStoreLatency`, `CacheLoaderLatency`, and, in <Variable name="enterprise-product-name" />, `WanBatchSenderLatency` | No | Members |
+| `OperationHeartbeats` | `OperationHeartbeat` | Yes | Members |
+| `MemberHeartbeats` | `MemberHeartbeats` | Yes | Members |
+| `OperationThreadSamples` | `OperationThreadSamples` | No | Members |
+| `OverloadedConnections` | `OverloadedConnections` | No | Members |
+| `NetworkingImbalance` | `NetworkingImbalance` | No | Members and clients |
+| `WAN` <Badge type="enterprise" /> | `WAN` | No | Members |
+
+### `BuildInfo`
+
+The `BuildInfo` plugin shows Hazelcast build information, including the release number, the Git revision number, and whether you have Hazelcast <Variable name="enterprise-product-name" />. The following example shows its output:
+
+```none
+19-11-2026 15:18:44 1795101524056 BuildInfo[
+                          Build=20260512
+                          BuildNumber=20260512
+                          Revision=b9df48a
+                          Version=5.7.0
+                          SerialVersion=1
+                          Enterprise=false]
+```
+
+### `SystemProperties`
+
+The `SystemProperties` plugin shows the system properties that are used by and configured for your Hazelcast installation, with their values. These are the properties whose names start with `java` (except `java.awt`), `hazelcast`, `sun`, and `os`. The plugin also shows the arguments used to start the JVM. The following example shows part of its output:
+
+```none
+19-11-2026 15:18:44 1795101524056 SystemProperties[
+                          hazelcast.diagnostics.enabled=true
+                          hazelcast.diagnostics.metrics.period.seconds=5
+                          java.runtime.name=OpenJDK Runtime Environment
+                          java.version=26.0.2.1
+                          java.vm.args=--add-modules=ALL-DEFAULT
+                          java.vm.name=OpenJDK 64-Bit Server VM
+                          os.arch=aarch64
+                          os.name=Mac OS X
+                          sun.arch.data.model=64]
+```
+
+### `ConfigProperties`
+
+The `ConfigProperties` plugin shows the Hazelcast properties that you set explicitly in the declarative or programmatic configuration, with their values. It does not show properties set only on the command line with `-D`. The following example shows part of its output:
+
+```none
+19-11-2026 15:18:44 1795101524057 ConfigProperties[
+                          hazelcast.diagnostics.enabled=true
+                          hazelcast.diagnostics.invocation.sample.period.seconds=2
+                          hazelcast.diagnostics.metrics.period.seconds=5
+                          hazelcast.slow.operation.detector.threshold.millis=500]
+```
+
+### `Metrics` {/* #diagnostics-metrics */}
+
+The Metrics plugin writes a comprehensive log of what is happening in your Hazelcast system. See [Metrics](./metrics.mdx) for more information.
+
+To set how often the plugin writes to the log file, use the following property:
+- `hazelcast.diagnostics.metrics.period.seconds`: Set a value in seconds. Its default value is `60` seconds.
+
+The plugin writes one `Metric` entry for each metric. The entry shows the tags of the metric, such as the name of the data structure and the unit, followed by the value. The following example shows some of these entries:
+
+```none
+19-11-2026 15:18:49 1795101529047 Metric[[unit=bytes,metric=memory.usedHeap]=68306712]
+19-11-2026 15:18:49 1795101529047 Metric[[unit=count,metric=operation.queueSize]=1]
+19-11-2026 15:18:49 1795101529047 Metric[[unit=count,metric=partitions.localPartitionCount]=136]
+19-11-2026 15:18:49 1795101529047 Metric[[name=orders,unit=ms,metric=map.totalGetLatency]=1391]
+19-11-2026 15:18:49 1795101529047 Metric[[name=orders,unit=ms,metric=map.totalPutLatency]=266]
+```
+
+:::note
+
+See the [List of Hazelcast Metrics appendix](../../reference/list-of-metrics.mdx) for the full list of metrics with their descriptions.
+
+:::
+
+### `SlowOperations`
+
+The `SlowOperations` plugin shows slow operations and invocations. See the [`SlowOperationDetector` section](../../develop-and-build/best-practices/threading.mdx#slowoperationdetector) for more information.
+
+The plugin runs only when the slow operation detector is enabled. To set how often the plugin writes to the log file, use the following property:
+- `hazelcast.diagnostics.slowoperations.period.seconds`: Set a value in seconds. Its default value is `60` seconds.
+
+For each type of slow operation, the plugin shows the number of slow invocations, the stack trace of the operation, and details of each slow invocation. The following example shows part of its output, for a slow entry processor:
+
+```none
+19-11-2026 15:18:58 1795101538053 SlowOperations[
+                          com.hazelcast.map.impl.operation.EntryOperation[
+                                  invocations=4
+                                  stackTrace[
+                                          com.example.OrderProcessor.process(OrderProcessor.java:53)
+                                          	com.hazelcast.map.impl.operation.EntryOperator.process(EntryOperator.java:435)
+                                          	com.hazelcast.map.impl.operation.EntryOperation.call(EntryOperation.java:244)
+                                          	com.hazelcast.spi.impl.operationservice.impl.OperationRunnerImpl.run(OperationRunnerImpl.java:217)
+                                          	com.hazelcast.spi.impl.operationexecutor.impl.OperationThread.process(OperationThread.java:171)]
+                                  slowInvocations[
+                                          startedAt=1,795,101,528,042
+                                          started(date-time)=19-11-2026 15:18:48
+                                          duration(ms)=1,005
+                                          operationDetails=com.hazelcast.map.impl.operation.EntryOperation{serviceName='hz:impl:mapService', identityHash=167125456, partitionId=11, replicaIndex=0, callId=4010, invocationTime=1795101527565 (2026-11-19 15:18:47.565), waitTimeout=-1, callTimeout=60000, tenantControl=com.hazelcast.spi.impl.tenantcontrol.NoopTenantControl@0, name=orders}]]]
+```
+
+### `Invocations`
+
+The Invocations plugin shows statistics about current and past invocations, including pending invocations, the history of invocations, and the slow history. The slow history holds every sample where an invocation took longer than the threshold. It includes the invocations whose operations took a long time, and any other invocations that were obstructed.
+
+To set how often the plugin scans all pending invocations, and the threshold above which an invocation counts as slow, use the following properties:
+- `hazelcast.diagnostics.invocation.sample.period.seconds`: Set a value in seconds. Its default value is `0`, which disables the plugin.
+- `hazelcast.diagnostics.invocation.slow.threshold.seconds`: Set a value in seconds. Its default value is `5` seconds.
+
+The following example shows its output, with a threshold of one second:
+
+```none
+19-11-2026 15:18:58 1795101538053 Invocations[
+                          Pending[]
+                          History[
+                                  com.hazelcast.map.impl.operation.EntryOperation samples=6
+                                  com.hazelcast.map.impl.operation.GetOperation samples=6
+                                  com.hazelcast.map.impl.operation.PutOperation samples=1]
+                          SlowHistory[
+                                  com.hazelcast.map.impl.operation.EntryOperation samples=1]]
+```
+
+### `PendingInvocations`
+
+The `PendingInvocations` plugin shows the number of pending invocations on the member, and the number of pending invocations for each type of operation.
+
+To configure the plugin, use the following properties:
+- `hazelcast.diagnostics.pending.invocations.period.seconds`: Interval, in seconds, at which this plugin writes the collected information to disk. The default value `0` disables the plugin.
+- `hazelcast.diagnostics.pending.invocations.threshold`: Minimum number of pending invocations of a type of operation before the plugin shows that type. Its default value is `1`.
+
+The following example shows its output:
+
+```none
+19-11-2026 15:19:12 1795101552047 PendingInvocations[
+                          count=9
+                          invocations[
+                                  com.hazelcast.internal.partition.operation.MigrationRequestOperation=8
+                                  com.hazelcast.internal.partition.operation.PublishCompletedMigrationsOperation=1]]
+```
+
+### `InvocationProfiler`
+
+The `InvocationProfiler` plugin shows invocation latencies for each operation. The following example shows its output:
+
+```none
+06-05-2019 17:15:29 1557152129944 InvocationProfiler[
+                          com.hazelcast.map.impl.query.QueryOperation[
+                                  count=400
+                                  totalTime(us)=56,000
+                                  avg(us)=140
+                                  max(us)=3,000
+                                  latency-distribution[
+                                          64..127us=346
+                                          512..1023us=53
+                                          2048..4095us=1]]
+                          com.hazelcast.map.impl.operation.GetOperation[
+                                  count=100
+                                  totalTime(us)=19,000
+                                  avg(us)=190
+                                  max(us)=1,000
+                                  latency-distribution[
+                                          64..127us=81
+                                          512..1023us=19]]]
+```
+
+To set how often the plugin scans all invocations, use the following system property:
+- `hazelcast.diagnostics.invocation-profiler.period.seconds`: Set a value in seconds. Its default value is `5` seconds. You can set it to `0` to disable the plugin.
+
+To reduce the number of log entries, increase this period.
+
+### `OperationProfiler`
+
+The `OperationProfiler` plugin measures how long each operation runs on an operation thread. For a blocking or offloaded operation, it measures only the time on the operation thread. The following example shows its output:
+
+```none
+06-05-2021 14:53:48 1595332428248 OperationsProfiler[
+                          com.hazelcast.map.impl.operation.GetOperation[
+                                  count=502,501
+                                  totalTime(us)=1,690,645
+                                  avg(us)=3
+                                  max(us)=462
+                                  latency-distribution[
+                                          1..2us=875
+                                          2..4us=359,876
+                                          4..8us=131,775
+                                          8..16us=8,720
+                                          16..32us=887
+                                          32..64us=178
+                                          64..128us=122
+                                          128..256us=62
+                                          256..512us=6]]
+```
+
+To set how often the plugin scans all operations, use the following system property:
+- `hazelcast.diagnostics.operation-profiler.period.seconds`: Set a value in seconds. Its default value is `5` seconds. You can set it to `0` to disable the plugin.
+
+### `HazelcastInstance`
+
+The `HazelcastInstance` plugin shows the basic state of your cluster, including the number and addresses of the current members and the address of the oldest member. Use it to see the state of the cluster without analyzing a lot of data.
+
+To set how often the plugin writes the cluster information to the log file, use the following property:
+- `hazelcast.diagnostics.memberinfo.period.seconds`: Set a value in seconds. Its default value is `60` seconds.
+
+The following example shows its output:
+
+```none
+19-11-2026 15:18:54 1795101534049 HazelcastInstance[
+                          thisAddress=[127.0.0.1]:5701
+                          isRunning=true
+                          isLite=false
+                          joined=true
+                          nodeState=ACTIVE
+                          clusterId=bf09cc10-e2cd-416d-a1d9-8d010552503f
+                          clusterSize=2
+                          isMaster=true
+                          masterAddress=[127.0.0.1]:5701
+                          Members[
+                                  [127.0.0.1]:5701
+                                  [127.0.0.1]:5702]]
+```
+
+### `EventQueue`
+
+The `EventQueue` plugin checks the event queues of data structures, and samples the event types when a queue holds more events than a threshold. Use it to find out why an event queue is filling up.
+
+To configure the plugin, use the following properties:
+- `hazelcast.diagnostics.event.queue.period.seconds`: Interval, in seconds, between the runs in which this plugin gathers information and writes it to the diagnostics log file. The default value `0` disables the plugin.
+- `hazelcast.diagnostics.event.queue.threshold`: Minimum number of events in the queue before the plugin samples it. Its default value is `1000`.
+- `hazelcast.diagnostics.event.queue.samples`: Number of samples to take from the event queue. More samples give a more accurate result, but reduce performance. Its default value is `100`.
+
+The following example shows the output for a map:
+
+```none
+17-04-2019 17:36:37 EventQueues[
+    worker=1[
+        eventCount=441
+        sampleCount=100
+        samples[
+            IMap 'myMap' ADDED sampleCount=51 51.000%
+            IMap 'myMap' REMOVED sampleCount=49 49.000%]]
+```
+
+### `SystemLog`
+
+The `SystemLog` plugin shows the activity in your cluster, such as connections and members being added or removed, and changes in the lifecycle of the cluster. It also shows why connections were closed.
+
+To enable or disable the plugin, and to set whether it shows information about partition migrations, use the following properties:
+- `hazelcast.diagnostics.systemlog.enabled`: Whether the plugin is enabled. Its default value is `true`.
+- `hazelcast.diagnostics.systemlog.partitions`: Whether the plugin shows information about partition migrations. Its default value is `false`. If you enable it on a cluster with many partitions, the plugin can write a large number of log entries.
+
+The plugin does not write entries named `SystemLog`. Each event has its own entry name, such as `MemberAdded` or `ConnectionRemoved`. The following example shows the entries for a member that joins the cluster and then leaves it:
+
+```none
+19-11-2026 15:18:46 1795101526051 MemberAdded[
+                          member=[127.0.0.1]:5702
+                          Members[
+                                  [127.0.0.1]:5701:this:master
+                                  [127.0.0.1]:5702]]
+19-11-2026 15:19:13 1795101553052 ConnectionRemoved[
+                          Connection[id=2, /127.0.0.1:5701->/127.0.0.1:59715, qualifier=null, endpoint=[127.0.0.1]:5702, remoteUuid=12af9f38-a99b-46b8-8b16-76b488a2d0aa, alive=false, connectionType=MEMBER, planeIndex=0]
+                          type=MEMBER
+                          isAlive=false
+                          closeReason=Connection closed by the other side
+                          CloseCause[
+                                  java.io.EOFException: Remote socket closed!
+                                  com.hazelcast.internal.networking.nio.NioInboundPipeline.process(NioInboundPipeline.java:117)]]
+19-11-2026 15:19:13 1795101553052 MemberRemoved[
+                          member=[127.0.0.1]:5702
+                          Members[
+                                  [127.0.0.1]:5701:this:master]]
+```
+
+### `StoreLatency`
+
+The `StoreLatency` plugin shows statistics for each store. The statistics include the call count, the average and maximum latency, and the latency distribution of each store method, such as `load`, `loadAll`, and `loadAllKeys`.
+
+:::note
+
+You cannot enable the `StoreLatency` plugin dynamically.
+
+:::
+
+The following example shows the output in the diagnostics log file for a `MapStore`:
+
+```none
+17-9-2019 13:12:34 MapStoreLatency[
+    map[
+        loadAllKeys[
+            count=1
+            totalTime(us)=8
+            avg(us)=8
+            max(us)=8
+            latency-distribution[
+                0..99us=1]]
+        load[
+            count=100
+            totalTime(us)=4,632,190
+            avg(us)=46,321
+            max(us)=99,178
+            latency-distribution[
+                0..99us=1
+                1600..3199us=3
+                3200..6399us=3
+                6400..12799us=7
+                12800..25599us=13
+                25600..51199us=32
+                51200..102399us=41]]]]
+```
+
+The plugin writes one entry for each type of store, such as `MapStoreLatency` for map stores and loaders. It writes similar entries for JCache, `Queue`, and `Ringbuffer` data structures that use persistent data stores, such as `QueueStoreLatency` for queue stores.
+
+To configure the `StoreLatency` plugin, use the following properties:
+- `hazelcast.diagnostics.storeLatency.period.seconds`: Interval, in seconds, at which this plugin writes the collected information to disk. The plugin is disabled by default. A sensible production value is `60` seconds.
+- `hazelcast.diagnostics.storeLatency.reset.period.seconds`: Interval, in seconds, at which the plugin resets the statistics. For example, with a value of `300`, the plugin clears all statistics every 5 minutes. Its default value is `0`, which means the plugin does not reset the statistics.
+
+### `OperationHeartbeats`
+
+The `OperationHeartbeats` plugin shows the deviation in operation heartbeats between members. Each member sends an operation heartbeat to every other member, whether or not an operation is running on behalf of that member. The heartbeat contains a list of the `callId` values of all running operations from a given member. This plugin also works between members and lite members.
+
+Members send operation heartbeats at an interval of a quarter of the operation call timeout. With the default call timeout of 60 seconds, a member expects an operation heartbeat every 15 seconds. Operation heartbeats are high-priority packets, which overtake regular packets. A separate thread in the invocation monitor processes them. If the interval between these packets deviates, the cause can be a problem such as network latency.
+
+The following example shows the output when a member has not received an operation heartbeat for 37 seconds:
+
+```none
+20-07-2017 11:12:55 OperationHeartbeat[
+    member[10.212.1.119]:5701[
+        deviation(%)=146.6666717529297
+        noHeartbeat(ms)=37,000
+        lastHeartbeat(ms)=1,500,538,338,603
+        lastHeartbeat(date-time)=20-07-2017 11:12:18
+        now(ms)=1,500,538,375,603
+        now(date-time)=20-07-2017 11:12:55]]
+```
+
+The `OperationHeartbeats` plugin is enabled by default because it has little overhead and only prints to the diagnostics file if the maximum deviation percentage (explained below) is exceeded.
+
+To configure the `OperationHeartbeats` plugin, use the following properties:
+- `hazelcast.diagnostics.operation-heartbeat.seconds`: Interval, in seconds, at which this plugin writes the collected information to disk. Its default value is `10`. A value of `0` disables the plugin.
+- `hazelcast.diagnostics.operation-heartbeat.max-deviation-percentage`: The maximum allowed deviation percentage. Its default value is `33`. For example, with the default call timeout of 60 seconds, the operation heartbeat interval is 15 seconds. A deviation percentage of 33 allows a maximum deviation of 5 seconds. A packet that arrives after 19 seconds is within the limit. If a packet arrives after 21 seconds, the plugin writes to the diagnostics file.
+
+### `MemberHeartbeats`
+
+The `MemberHeartbeats` plugin is similar to the `OperationHeartbeats` plugin, but it measures the deviation in cluster heartbeats between members instead of operation heartbeats. Every member sends a heartbeat to the other members every 5 seconds by default.
+
+Like the `OperationHeartbeats` plugin, the `MemberHeartbeats` plugin can detect networking problems long before they lead to problems such as split-brain syndrome.
+
+The following example shows the output when a member has not received a heartbeat from another member for 11 seconds:
+
+```none
+20-07-2017 19:32:22 MemberHeartbeats[
+    member[10.212.1.119]:5701[
+        deviation(%)=120.0
+        noHeartbeat(ms)=11,000
+        lastHeartbeat(ms)=1,500,568,331,645
+        lastHeartbeat(date-time)=20-07-2017 19:32:11
+        now(ms)=1,500,568,342,645
+        now(date-time)=20-07-2017 19:32:22]]
+```
+
+The `MemberHeartbeats` plugin is enabled by default because it has little overhead and only prints to the diagnostics file if the maximum deviation percentage (explained below) is exceeded.
+
+To configure the `MemberHeartbeats` plugin, use the following properties:
+- `hazelcast.diagnostics.member-heartbeat.period.seconds`: Interval, in seconds, at which this plugin writes the collected information to disk. Its default value is `10`. A value of `0` disables the plugin.
+- `hazelcast.diagnostics.member-heartbeat.max-deviation-percentage`: The maximum allowed deviation percentage. Its default value is `100`. For example, if members send heartbeats every 5 seconds, a 100% deviation allows heartbeats to arrive up to 5 seconds after they are expected. The plugin does not write a heartbeat that arrives after 9 seconds, but writes one that arrives after 11 seconds.
+
+### `OperationThreadSamples`
+
+The `OperationThreadSamples` plugin samples the operation threads and checks the running operations and tasks. The Hazelcast [slow operation detector](../../develop-and-build/best-practices/threading.mdx#slowoperationdetector) is useful for slow operations, but it can be inefficient for a high volume of operations that are only slightly slow. The `OperationThreadSamples` plugin shows more clearly which operations are running.
+
+To configure the `OperationThreadSamples` plugin, use the following properties:
+- `hazelcast.diagnostics.operationthreadsamples.period.seconds`: Interval, in seconds, at which this plugin writes the collected information to disk. An efficient value for production is 30 seconds or more. The default value `0` disables the plugin.
+- `hazelcast.diagnostics.operationthreadsamples.sampler.period.millis`: Interval, in milliseconds, between samples. A lower value increases both the overhead and the precision. Its default value is `100`.
+- `hazelcast.diagnostics.operationthreadsamples.includeName`: Whether to include the name of the data structure that the operation targets, if available, in the name of each sample. Its default value is `false`.
+
+The following example shows the output when the `hazelcast.diagnostics.operationthreadsamples.includeName` property is `false`:
+
+```none
+28-08-2019 07:40:07 1535442007330 OperationThreadSamples[
+    Partition[
+        com.hazelcast.map.impl.operation.MapSizeOperation=304623 85.6927%
+        com.hazelcast.map.impl.operation.PutOperation=33061 9.300304%
+        com.hazelcast.map.impl.operation.GetOperation=17799 5.0069904%]
+    Generic[
+        com.hazelcast.internal.nio.Packet=1767 27.361412%
+        com.hazelcast.internal.cluster.impl.operations.JoinRequestOp=821 12.712914%
+        com.hazelcast.spi.impl.operationservice.impl.operations.PartitionIteratingOperation=278 4.3047385%
+        com.hazelcast.internal.cluster.impl.operations.HeartbeatOp=93 1.4400743%
+        com.hazelcast.internal.cluster.impl.operations.OnJoinOp=89 1.3781357%
+        com.hazelcast.internal.cluster.impl.operations.WhoisMasterOp=75 1.1613503%]]
+```
+
+In this example, `MapSizeOperation` operations run on the operation threads most of the time.
+
+### `OverloadedConnections`
+
+The `OverloadedConnections` plugin checks the outgoing packet queue of each connection on the member. When a queue holds more packets than a threshold, the plugin samples the packets and shows the types of operation in them. Use it to find out what fills a connection when pending packets use a large amount of memory.
+
+:::warning
+
+To sample a packet, the plugin deserializes it, which has a high overhead. Use this plugin only for debugging, not in production.
+
+:::
+
+To configure the plugin, use the following properties:
+- `hazelcast.diagnostics.overloaded.connections.period.seconds`: Interval, in seconds, at which this plugin writes the collected information to disk. The default value `0` disables the plugin.
+- `hazelcast.diagnostics.overloaded.connections.threshold`: Minimum number of packets in the queue of a connection before the plugin samples it. Its default value is `10000`.
+- `hazelcast.diagnostics.overloaded.connections.samples`: Number of packets to sample from each overloaded connection. Its default value is `1000`.
+
+For each overloaded connection, the plugin shows the number of packets in the queue, as `packetCount` for regular packets or `urgentPacketCount` for priority packets. The following example shows its output with a threshold of `1`:
+
+```none
+19-11-2026 15:19:12 1795101552046 OverloadedConnections[
+                          Connection[id=1, /127.0.0.1:59711->/127.0.0.1:5702, qualifier=null, endpoint=[127.0.0.1]:5702, remoteUuid=12af9f38-a99b-46b8-8b16-76b488a2d0aa, alive=true, connectionType=MEMBER, planeIndex=0][
+                                  urgentPacketCount=4
+                                  sampleCount=4
+                                  samples[
+                                          com.hazelcast.internal.partition.operation.MigrationRequestOperation sampleCount=4 100.000%]]]
+```
+
+### `NetworkingImbalance`
+
+The `NetworkingImbalance` plugin shows how the network load is spread across the input and output threads of a member or client. For each thread, it shows the number of frames, priority frames, bytes, events, handled events, and tasks. It also shows each value as a percentage of the total for all input or all output threads.
+
+To configure the plugin, use the following property:
+- `hazelcast.diagnostics.networking-imbalance.seconds`: Interval, in seconds, at which this plugin writes the collected information to disk. The default value `0` disables the plugin.
+
+The following example shows part of its output:
+
+```none
+19-11-2026 15:18:54 1795101534052 NetworkingImbalance[
+                          InputThreads[
+                                  hz.example.IO.thread-in-1[
+                                          frames-percentage=99.99 %
+                                          frames=8,686
+                                          priority-frames-percentage=100.00 %
+                                          priority-frames=18
+                                          bytes-percentage=100.00 %
+                                          bytes=4,924,294
+                                          events-percentage=99.97 %
+                                          events=6,787
+                                          handle-count-percentage=99.97 %
+                                          handle-count=6,627
+                                          tasks-percentage=50.00 %
+                                          tasks=9]
+                                  hz.example.IO.thread-in-2[
+                                          frames-percentage=0.01 %
+                                          frames=1
+                                          priority-frames-percentage=0.00 %
+                                          priority-frames=0
+                                          bytes-percentage=0.00 %
+                                          bytes=166
+                                          events-percentage=0.03 %
+                                          events=2
+                                          handle-count-percentage=0.03 %
+                                          handle-count=2
+                                          tasks-percentage=50.00 %
+                                          tasks=9]]]
+```
+
+### `WAN`
+
+<Badge type="enterprise" />
+
+The `WAN` diagnostics plugin shows information about WAN replication.
+
+The plugin is disabled by default. To configure it, use the following property:
+- `hazelcast.diagnostics.wan.period.seconds`: Interval, in seconds, at which this plugin writes the collected information to disk. A value of `0` disables the plugin.
+
+The following shows an example of the output for a member with the WAN replication configuration `london` and the publisher `tokyo`:
+
+```none
+01-01-2026 12:00:00 1767268800000 WAN[
+                          syncCount=0
+                          updateCount=0
+                          removeCount=0
+                          syncState[
+                                  status=READY
+                                  activeWanConfigName=null
+                                  activePublisherName=null]
+                          london[
+                                  tokyo[
+                                          outboundQueueSize=0
+                                          totalPublishedEventCount=1,000
+                                          totalPublishLatency=2,010
+                                          connected=true
+                                          state=REPLICATING
+                                          mapSentEvents-orders[
+                                                  updateCount=1,000
+                                                  removeCount=0
+                                                  syncCount=0
+                                                  droppedCount=0]
+                                          updateCount=1,000
+                                          removeCount=0
+                                          syncCount=0
+                                          droppedCount=0]]]
+```

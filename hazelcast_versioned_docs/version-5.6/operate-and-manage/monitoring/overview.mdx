@@ -1,0 +1,82 @@
+---
+title: "Overview"
+sidebar_position: 1
+slug: /maintain-cluster/monitoring
+---
+
+Hazelcast provides the following ways to monitor a cluster:
+
+| Page | What it provides |
+| --- | --- |
+| [Metrics](./metrics.mdx) | Runtime statistics about members and clients, such as the number of entries in a map, the used heap, and the load average |
+| [Health check and monitoring](./health-check-and-monitoring.mdx) | An HTTP endpoint that reports the state of a member, and a health monitor that writes resource use to the member log |
+| [Diagnostics](./diagnostics.mdx) | A dedicated log file with detailed information for troubleshooting |
+| [Monitoring with JMX](./monitoring-with-jmx.mdx) | MBeans that any JMX client can read |
+| [Instance tracking](./instance-tracking.mdx) | A file that records each instance that starts on a machine |
+| [Management Center](../securing-a-cluster/management-center.mdx) | A tool for monitoring and managing a cluster, which can also export metrics to other tools |
+
+Follow these practices when you run a cluster:
+- Review the log entries of the health monitor and the Hazelcast logs regularly for failure messages. Investigate and record each incident.
+- Set up alerts for long garbage collection pauses and for network problems that make a member unreachable. The failure detectors set how long the cluster tolerates these problems before it removes the member. For the settings, see [Failure Detector Configuration](../fault-tolerance/detecting-failures/failure-detector-configuration.mdx).
+- Use `jstat`, keep verbose GC logging turned on, and monitor GC behavior with a log scraping tool such as Splunk. Raise an alarm on back-to-back full GCs, and on heap occupancy above 90% after a full GC.
+- Make sure that each member can reach every other member through the network and their ports. Make sure that the clients can reach every member as well.
+- Start the members before the clients. This is not required, but clients that start first can time out or report that they cannot find a Hazelcast member.
+- Turn on a system monitoring tool, such as [`nmon`](http://nmon.sourceforge.net/pmwiki.php).
+- To add a member to a running cluster, start it with a configuration similar to that of the other members. You might also need to add the IP address of the new member to the configuration. You do not need a maintenance window to add members to a running cluster.
+
+  - When a member joins or leaves the cluster, the clients can pause briefly while the members rebalance the data. This is expected.
+  - You do not need to change anything on the clients when you add members to a running cluster. In the default `ALL_MEMBERS` routing mode, the clients connect to a new member after it joins the cluster.
+  - The members rebalance the primary and backup data automatically when a member joins or leaves the cluster, including when a member is forced to leave. In the default `ACTIVE` cluster state, you do not need to do anything.
+  - You can promote lite members to data members with the [Cluster API](../maintaining-a-cluster/lite-members.mdx#promoting-lite-members-to-data-members) or with Management Center.
+  - If you set `hazelcast.initial.min.cluster.size`, for example to 4, and start members one by one in an empty cluster, the members initialize the partition table when the cluster reaches that size. They do this even though the cluster has no data. In a cluster of more than 100 members, each member that joins after that causes partition assignment work that is not needed.
+- Check that the backup count is adequate for your SLAs.
+- If you use distributed computing features, such as the executor service or entry processors, keep the members up to date. Apply each change to your client application logic, or to your implementation of these features, to the members as well. Unless you use <Variable name="ucn" />, which requires <Variable name="enterprise-product-name" />, restart all the members after you deploy the new code. Use the usual redeployment process: shut down the members, add the new application JARs to the classpath of the members, and start the members.
+
+## Alerting
+
+Hazelcast writes banners, warnings, and exception messages to the console of your application. For example, the following banner warns that a license is about to expire:
+
+```none
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ WARNING @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+THIS HAZELCAST LICENSE ID AbCdE*********FgHiJ WILL EXPIRE IN 29 DAYS.
+Your Hazelcast cluster will stop working on the next re-start after
+expiry.
+
+Please contact your Hazelcast Account Executive or
+email sales@hazelcast.com.
+Phone: +1 (650) 521-5453
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+```
+
+The following warning reports an outdated API on the classpath:
+
+```none
+An outdated version of JCache API was located in the classpath, please use newer versions of
+JCache API rather than 1.0.0-PFD or 0.x versions.
+```
+
+The following exception message reports an SQL query that refers to a mapping that does not exist:
+
+```none
+com.hazelcast.sql.HazelcastSqlException: From line 1, column 15 to line 1, column 23: Object 'mapBak1HD' not found, did you forget to CREATE MAPPING?
+```
+
+You can also export metrics from Management Center to Prometheus, and filter them there to create alerts. Hazelcast logging is another, indirect source of alerts. For more information, see [Configuring logging](../logging.mdx).
+
+For the actions to take on each alert, see [Actions and remedies for alerts](../../develop-and-build/troubleshooting/remedies-for-alerts.mdx).
+
+## Integrate with third-party tools
+
+<Variable href="/management-center/{page-latest-supported-mc}/getting-started/overview" text="Management Center"/> collects metrics from all the members of a cluster. To send these metrics to a third-party tool, integrate the tool with Management Center instead of with each member. You then do not need to connect to each member, handle members that scale or restart, or combine the metrics of several members.
+
+### Prometheus <Badge type="enterprise" />
+
+Management Center can expose the metrics that it collects from the members to [Prometheus](https://prometheus.io/). To turn on this feature, set the `hazelcast.mc.prometheusExporter.enabled` system property of Management Center to `true`. For details, see <Variable href="/management-center/{page-latest-supported-mc}/integrate/prometheus-monitoring" text="Prometheus monitoring" />.
+
+### AppDynamics <Badge type="enterprise" />
+
+To integrate [Management Center](../securing-a-cluster/management-center.mdx) with AppDynamics, use the <Variable href="/management-center/{page-latest-supported-mc}/integrate/jmx" text="Clustered JMX" /> interface of Management Center, and attach the AppDynamics Java agent to Management Center. For details, see <Variable href="/management-center/{page-latest-supported-mc}/integrate/jmx#integrate-jmx-with-appdynamics" text="Integrate JMX with AppDynamics" />.
+
+### New Relic <Badge type="enterprise" />
+
+To integrate [Management Center](../securing-a-cluster/management-center.mdx) with New Relic, use the <Variable href="/management-center/{page-latest-supported-mc}/integrate/jmx" text="Clustered JMX" /> interface of Management Center. Attach the New Relic Java agent to Management Center, and provide an extension file that describes which metrics Management Center sends to New Relic. For details, see <Variable href="/management-center/{page-latest-supported-mc}/integrate/jmx#integrate-jmx-with-new-relic" text="Integrate JMX with New Relic" />.

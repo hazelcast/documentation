@@ -1,0 +1,214 @@
+---
+title: "Overview"
+sidebar_position: 1
+slug: /maintain-cluster/monitoring
+---
+
+Hazelcast provides the following ways to monitor a cluster:
+
+| Page | What it provides |
+| --- | --- |
+| [Metrics](./metrics.mdx) | Runtime statistics about members and clients, such as the number of entries in a map, the used heap, and the load average |
+| [Health check and monitoring](./health-check-and-monitoring.mdx) | An HTTP endpoint that reports the state of a member, and a health monitor that writes resource use to the member log |
+| [Diagnostics](./diagnostics.mdx) | A dedicated log file with detailed information for troubleshooting |
+| [Monitoring with JMX](./monitoring-with-jmx.mdx) | MBeans that any JMX client can read |
+| [Instance tracking](./instance-tracking.mdx) | A file that records each instance that starts on a machine |
+| [Management Center](../securing-a-cluster/management-center.mdx) | A tool for monitoring and managing a cluster, which can also export metrics to other tools |
+
+Follow these practices when you run a cluster:
+- Review the log entries of the health monitor and the Hazelcast logs regularly for failure messages. Investigate and record each incident.
+- Set up alerts for long garbage collection pauses and for network problems that make a member unreachable. The failure detectors set how long the cluster tolerates these problems before it removes the member. For the settings, see [Failure Detector Configuration](../configuring-for-fault-tolerance/detecting-failures/failure-detector-configuration.mdx).
+- Use `jstat`, keep verbose GC logging turned on, and monitor GC behavior with a log scraping tool such as Splunk. Raise an alarm on back-to-back full GCs, and on heap occupancy above 90% after a full GC.
+- Make sure that each member can reach every other member through the network and their ports. Make sure that the clients can reach every member as well.
+- Start the members before the clients. This is not required, but clients that start first can time out or report that they cannot find a Hazelcast member.
+- Turn on a system monitoring tool, such as [`nmon`](http://nmon.sourceforge.net/pmwiki.php).
+- To add a member to a running cluster, start it with a configuration similar to that of the other members. You might also need to add the IP address of the new member to the configuration. You do not need a maintenance window to add members to a running cluster.
+
+  - When a member joins or leaves the cluster, the clients can pause briefly while the members rebalance the data. This is expected.
+  - You do not need to change anything on the clients when you add members to a running cluster. In the default smart client mode, the clients connect to a new member after it joins the cluster.
+  - The members rebalance the primary and backup data automatically when a member joins or leaves the cluster, including when a member is forced to leave. In the default `ACTIVE` cluster state, you do not need to do anything.
+  - You can promote lite members to data members with the [Cluster API](../maintaining-a-cluster/lite-members.mdx#promoting-lite-members-to-data-members) or with Management Center.
+  - If you set `hazelcast.initial.min.cluster.size`, for example to 4, and start members one by one in an empty cluster, the members initialize the partition table when the cluster reaches that size. They do this even though the cluster has no data. In a cluster of more than 100 members, each member that joins after that causes partition assignment work that is not needed.
+- Check that the backup count is adequate for your SLAs.
+- If you use distributed computing features, such as the executor service or entry processors, keep the members up to date. Apply each change to your client application logic, or to your implementation of these features, to the members as well. Unless you use <Variable name="ucn" />, which requires <Variable name="enterprise-product-name" />, restart all the members after you deploy the new code. Use the usual redeployment process: shut down the members, add the new application JARs to the classpath of the members, and start the members.
+
+## Alerting
+
+Hazelcast writes banners, warnings, and exception messages to the console of your application. For example, the following banner warns that a license is about to expire:
+
+```none
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ WARNING @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+THIS HAZELCAST LICENSE ID AbCdE*********FgHiJ WILL EXPIRE IN 29 DAYS.
+Your Hazelcast cluster will stop working on the next re-start after
+expiry.
+
+Please contact your Hazelcast Account Executive or
+email sales@hazelcast.com.
+Phone: +1 (650) 521-5453
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+```
+
+The following warning reports an outdated API on the classpath:
+
+```none
+An outdated version of JCache API was located in the classpath, please use newer versions of
+JCache API rather than 1.0.0-PFD or 0.x versions.
+```
+
+The following exception message reports an SQL query that refers to a mapping that does not exist:
+
+```none
+com.hazelcast.sql.HazelcastSqlException: From line 1, column 15 to line 1, column 23: Object 'mapBak1HD' not found, did you forget to CREATE MAPPING?
+```
+
+You can also export metrics from Management Center to Prometheus, and filter them there to create alerts. Hazelcast logging is another, indirect source of alerts. For more information, see [Configuring logging](../logging.mdx).
+
+For the actions to take on each alert, see [Actions and remedies for alerts](../../develop-build/troubleshooting/remedies-for-alerts.mdx).
+
+## Integrating with 3rd party tools
+
+### Prometheus {/* #prometheus-2 */}
+
+Hazelcast Management Center can expose the metrics collected from cluster members to [Prometheus](https://prometheus.io/). This feature can be turned on by setting the `hazelcast.mc.prometheusExporter.enabled` system property to `true`.
+
+Prometheus can be configured to scrape Management Center in `prometheus.yml` as follows:
+
+```yaml
+scrape_configs:
+  - job_name: 'HZ MC'
+    # scheme defaults to 'http'.
+    static_configs:
+    - targets: ['localhost:8080'] # replace this address with the network address of Hazelcast Management Center
+```
+
+After starting Prometheus with this configuration, all metrics will be exported to Prometheus with the `hz_` prefix. The metrics are also available via the [member JMX API](./monitoring-with-jmx.mdx#mbeans-of-a-member). With the default configuration, Management Center exports all metrics reported by the cluster members. Since it can be overly verbose for some use cases, the metrics can be filtered with the `hazelcast.mc.prometheusExporter.filter.metrics.included` or the `hazelcast.mc.prometheusExporter.filter.metrics.excluded` system properties, both being comma-separated lists of metric names.
+
+Example of starting Management Center with specifying the metrics exported to Prometheus:
+
+```bash vars
+java -jar -Dhazelcast.mc.prometheusExporter.enabled=true \
+  -Dhazelcast.mc.prometheusExporter.filter.metrics.included=hz_topic_totalReceivedMessages,hz_map_totalPutLatency \
+  -jar hazelcast-management-center-{full-version}.jar
+```
+
+Example of starting Management Center with specifying the metrics to be excluded from the Prometheus export:
+
+```bash vars
+java -jar -Dhazelcast.mc.prometheusExporter.enabled=true \
+  -Dhazelcast.mc.prometheusExporter.filter.metrics.excluded=hz_os_systemLoadAverage,hz_memory_freeHeap \
+  -jar hazelcast-management-center-{full-version}.jar
+```
+
+By default, Prometheus connects via the same IP and port as the Management Center web interface. It is possible to override the port number using the `-Dhazelcast.mc.prometheusExporter.port` system property. Let's say you have started Management Center as shown below:
+
+```bash vars
+java -jar -Dhazelcast.mc.prometheusExporter.enabled=true \
+  -Dhazelcast.mc.prometheusExporter.port=2222 \
+  -jar hazelcast-management-center-{full-version}.jar
+```
+
+Then, the Prometheus endpoint will be available at `http://localhost:2222/metrics`, which should be reflected by the Prometheus configuration as below:
+
+```yaml
+scrape_configs:
+  - job_name: 'HZ MC'
+    static_configs:
+    - targets: ['localhost:2222']
+```
+
+:::note
+
+If you want to visualize the Prometheus metrics using Grafana, then you can start with [this dashboard](https://grafana.com/grafana/dashboards/13183).
+
+:::
+
+### AppDynamics
+
+You can use the <Variable href="/management-center/{page-latest-supported-mc}/integrate/jmx" text="Clustered JMX" /> interface to integrate the [Hazelcast Management Center](../securing-a-cluster/management-center.mdx) with **AppDynamics**. To perform this integration, attach the AppDynamics Java agent to the Management Center.
+
+For agent installation, see the [Install the App Agent for Java](http://docs.appdynamics.com/display/PRO14S/Install%2Bthe%2BApp%2BAgent%2Bfor%2BJava) page.
+
+For monitoring on AppDynamics, see the [Using AppDynamics for JMX Monitoring](http://docs.appdynamics.com/display/PRO14S/Monitor%2BJMX%2BMBeans#MonitorJMXMBeans-UsingAppDynamicsforJMXMonitoring) page.
+
+After installing AppDynamics agent, you can start the Management Center as shown below:
+
+```bash vars
+java -javaagent:/path/to/javaagent.jar \
+     -Dhazelcast.mc.jmx.enabled=true \
+     -Dhazelcast.mc.jmx.port=9999 -jar hazelcast-management-center-{full-version}.jar
+```
+
+When the Management Center starts, you should see the logs below:
+
+```none
+Started AppDynamics Java Agent Successfully.
+Hazelcast Management Center starting on port 8080 at path : /
+```
+
+### New Relic
+
+You can use the <Variable href="/management-center/{page-latest-supported-mc}/integrate/jmx" text="Clustered JMX" /> interface to integrate the [Hazelcast Management Center](../securing-a-cluster/management-center.mdx) with New Relic. To perform this integration, attach the New Relic Java agent and provide an extension file that describes which metrics are sent to New Relic.
+
+See [Custom JMX instrumentation by YAML](http://docs.newrelic.com/docs/java/custom-jmx-instrumentation-by-yml) on the New Relic webpage.
+
+The following is an example Map monitoring `.yml` file for New Relic:
+
+```plain
+name: Clustered JMX
+version: 1.0
+enabled: true
+
+jmx:
+- object_name: ManagementCenter[clustername]:type=Maps,name=mapname
+  metrics:
+  - attributes: PutOperationCount, GetOperationCount, RemoveOperationCount, Hits, BackupEntryCount, OwnedEntryCount, LastAccessTime, LastUpdateTime
+  - type: simple
+- object_name: ManagementCenter[clustername]:type=Members,name="member address in double quotes"
+  metrics:
+  - attributes: OwnedPartitionCount
+  - type: simple
+```
+
+Put the `.yml` file in the `extensions` directory in your New Relic installation. If an `extensions` directory does not exist there, create one.
+
+After you set your extension, attach the New Relic Java agent and start the Management Center as shown below.
+
+```bash vars
+java -javaagent:/path/to/newrelic.jar -Dhazelcast.mc.jmx.enabled=true\
+    -Dhazelcast.mc.jmx.port=9999 -jar hazelcast-management-center-{full-version}.jar
+```
+
+If your logging level is set to `FINER`, you should see the log listing in the file `newrelic_agent.log`, which is located in the `logs` directory in your New Relic installation. The following is an example log listing:
+
+```none
+Jun 5, 2014 14:18:43 +0300 [72696 62] com.newrelic.agent.jmx.JmxService FINE:
+    JMX Service : querying MBeans (1)
+Jun 5, 2014 14:18:43 +0300 [72696 62] com.newrelic.agent.jmx.JmxService FINER:
+    JMX Service : MBeans query ManagementCenter[dev]:type=Members,
+    name="192.168.2.79:5701", matches 1
+Jun 5, 2014 14:18:43 +0300 [72696 62] com.newrelic.agent.jmx.JmxService FINER:
+    Recording JMX metric OwnedPartitionCount : 68
+Jun 5, 2014 14:18:43 +0300 [72696 62] com.newrelic.agent.jmx.JmxService FINER:
+    JMX Service : MBeans query ManagementCenter[dev]:type=Maps,name=orders,
+    matches 1
+Jun 5, 2014 14:18:43 +0300 [72696 62] com.newrelic.agent.jmx.JmxService FINER:
+    Recording JMX metric Hits : 46,593
+Jun 5, 2014 14:18:43 +0300 [72696 62] com.newrelic.agent.jmx.JmxService FINER:
+    Recording JMX metric BackupEntryCount : 1,100
+Jun 5, 2014 14:18:43 +0300 [72696 62] com.newrelic.agent.jmx.JmxService FINER:
+    Recording JMX metric OwnedEntryCount : 1,100
+Jun 5, 2014 14:18:43 +0300 [72696 62] com.newrelic.agent.jmx.JmxService FINER:
+    Recording JMX metric RemoveOperationCount : 0
+Jun 5, 2014 14:18:43 +0300 [72696 62] com.newrelic.agent.jmx.JmxService FINER:
+    Recording JMX metric PutOperationCount : 118,962
+Jun 5, 2014 14:18:43 +0300 [72696 62] com.newrelic.agent.jmx.JmxService FINER:
+    Recording JMX metric GetOperationCount : 0
+Jun 5, 2014 14:18:43 +0300 [72696 62] com.newrelic.agent.jmx.JmxService FINER:
+    Recording JMX metric LastUpdateTime : 1,401,962,426,811
+Jun 5, 2014 14:18:43 +0300 [72696 62] com.newrelic.agent.jmx.JmxService FINER:
+    Recording JMX metric LastAccessTime : 1,401,962,426,811
+```
+
+Then you can navigate to your New Relic account and create custom dashboards. See [Get Started with Dashboards](https://docs.newrelic.com/docs/query-your-data/explore-query-data/dashboards/introduction-dashboards/).
+
+While you are creating the dashboard, you should see the metrics that you are sending to New Relic from the Management Center in the **Metrics** section under the JMX directory.

@@ -1,0 +1,389 @@
+---
+title: "Metrics"
+sidebar_position: 2
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import CodeBlock from "@theme/CodeBlock";
+import Ex_management_ExampleLocalMapStats_java_tag_lms from "../../examples/management/ExampleLocalMapStats.java?tag=lms";
+import Ex_management_ExampleLocalIndexStats_java_tag_lis from "../../examples/management/ExampleLocalIndexStats.java?tag=lis";
+import Ex_management_ExampleNearCacheStats_java_tag_ncs from "../../examples/management/ExampleNearCacheStats.java?tag=ncs";
+import Ex_management_ExampleMultiMapStats_java_tag_mms from "../../examples/management/ExampleMultiMapStats.java?tag=mms";
+import Ex_management_ExampleQueueStats_java_tag_qs from "../../examples/management/ExampleQueueStats.java?tag=qs";
+import Ex_management_ExampleTopicStats_java_tag_ts from "../../examples/management/ExampleTopicStats.java?tag=ts";
+import Ex_management_ExampleExecutorStats_java_tag_es from "../../examples/management/ExampleExecutorStats.java?tag=es";
+import Ex_management_MetricsConfiguration_java_tag_member from "../../examples/management/MetricsConfiguration.java?tag=member";
+import Ex_management_MetricsConfiguration_java_tag_client from "../../examples/management/MetricsConfiguration.java?tag=client";
+
+Hazelcast exposes various metrics to facilitate monitoring of the cluster state. They are `<string,value>` key-value pairs of data that capture the runtime information about the members and clients in a Hazelcast cluster. Such a metric can be the number of entries stored in a particular `IMap` on a given member, JVM metrics like used heap, OS metrics like load average, and so on.
+
+The metrics system is responsible for collecting these metrics and making them available for the [consumers](#exposing-metrics) of the metrics. There are a few hundred metrics collected during every metrics collection cycle by default, and this number grows as more features and data structures are used. This is because every data structure provides its own metrics. For example, if there are two `IMap`s used in a cluster, both `IMap`s produce their metrics on every member.
+
+Metrics have associated tags which describe which object the metric applies to. For example, the tags for job metrics typically indicate the specific DAG vertex and processor the metric belongs to.
+
+Each metric instance provided belongs to a particular Hazelcast cluster member. Different cluster members can have their own versions of the same metric with different values.
+
+The metric collection runs in regular intervals on each member, but note that the metric collection on different cluster members happens at different moments in time. So if you try to correlate metrics from different members, they can be from different moments of time.
+
+## Hazelcast metrics
+
+There is a wide range of metrics and statistics provided by Hazelcast:
+- Cluster-wide metrics
+- Statistics of distributed data structures
+- Executor statistics
+- Partition-related statistics (state, migration, replication)
+- Garbage collection statistics
+- Memory statistics for the JVM that the current Hazelcast member belongs to, for example total physical/free OS memory, max/committed/used/free heap memory, or max/committed/used/free native memory
+- Network traffic-related statistics (traffic and queue sizes)
+- Class loading-related statistics
+- Thread count information (current, peak and daemon thread counts)
+- Job-specific metrics
+
+See the full list of Hazelcast metrics in [List of Hazelcast Metrics](../../reference/list-of-metrics.mdx).
+
+:::note
+
+Metric names can change between minor versions, but not between patch versions. For the compatibility guarantees of each Hazelcast component, see [Supported Versions and Compatibilities](../../upgrade/versioning-compatibility.mdx#compatibility-guarantees).
+
+:::
+
+### User-defined metrics
+
+User-defined metrics are actually a subset of [job metrics](../../reference/list-of-metrics.mdx#job-metrics). What distinguishes them from regular job-specific metrics is exactly what their name implies: they are not built-in, but defined when processing pipelines are written.
+
+Since user-defined metrics are also job metrics, they have all the tags job metrics have. They also have an extra tag, called `user`, which is set to `true`.
+
+:::note
+
+Because of their extra tag, user-defined metrics cannot overwrite a built-in metric, even if they have the exact same name.
+
+:::
+
+For example, to monitor your filtering step, you can write code like this:
+
+```java
+p.readFrom(source)
+ .filter(l -> {
+     boolean pass = l % 2 == 0;
+     if (!pass) {
+         Metrics.metric("dropped").increment();
+     }
+     Metrics.metric("total").increment();
+     return pass;
+ })
+ .writeTo(sink);
+```
+
+User-defined metrics can be used anywhere in pipeline definitions where custom code can be added. The most important places are filtering, mapping, and flat-mapping functions, various constituent functions of aggregations (accumulate, create, combine, deduct, export, and finish), and the key extraction function when grouping. They can also be used in [custom batch sources](../../develop-solutions/building-data-pipelines/ingesting-data-from-sources/custom-batch-source.mdx), [custom stream sources](../../develop-solutions/building-data-pipelines/ingesting-data-from-sources/custom-stream-source.mdx), [custom sinks](../../develop-solutions/building-data-pipelines/sending-results-to-sinks/custom-sink.mdx), processors, and so on.
+
+## Exposing metrics
+
+Use these tools and interfaces to expose the metrics to the outside world:
+- <Variable href="/management-center/{page-latest-supported-mc}/getting-started/overview" text="Management Center"/>
+- JMX
+- [Diagnostics](./diagnostics.mdx)
+- Prometheus
+- Job API
+
+### Management Center
+
+Management Center receives the metrics used for building its view about the Hazelcast cluster from the metrics system. The members collect their metrics with the frequency defined with `collection-frequency-seconds`, which is by default once in every 5 seconds.
+
+The member saves the collected metrics into a blob stored in an in-memory buffer. The blob then is retained for the time configured in the `retention-seconds` under the `management-center` configuration block. This is also 5 seconds by default, which means there is at most one blob stored by default. Management Center periodically reads the metrics from this buffer. A blob stays in the buffer until a newer blob replaces it.
+
+The client metrics are also stored in these blobs on the member side with timestamps assigned to them on the client side.
+
+See the <Variable href="/management-center/{page-latest-supported-mc}/deploy-manage/historical-metrics" text="Management Center metrics documentation" /> for more information.
+
+### JMX
+
+Hazelcast exposes all its metrics using the JVM's standard JMX interface. You can use tools such as Java Mission Control or JConsole to display them.
+
+To connect a JMX client to a member, see [Monitoring with JMX](./monitoring-with-jmx.mdx). That page also describes a separate set of MBeans for data structures and internal services, which you enable with the `hazelcast.jmx` property. The metrics do not need that property. The `jmx` element of the `metrics` configuration controls them, and it is enabled by default.
+
+The Hazelcast metrics are exposed under `com.hazelcast/Metrics/$INSTANCE_NAME` where `$INSTANCE_NAME` is the name of the member or client instance to which the JMX client is connected.
+
+[Jet engine](../../develop-solutions/building-data-pipelines/overview.mdx#what-is-the-jet-engine)-related beans are stored under `com.hazelcast.jet/Metrics/<instanceName>/` node, and the various tags they have form further sub-nodes in the resulting tree structure.
+
+### Prometheus
+
+[Prometheus](https://prometheus.io/docs/prometheus/latest/getting_started) is a monitoring system and time series database. Setting up monitoring via Prometheus consists of two steps. The first step is exposing an HTTP endpoint with metrics. The second step is setting up Prometheus server, which pulls the metrics in a specified interval.
+
+The Prometheus Java agent is already part of the Hazelcast distribution. Enable the agent and expose all metrics via HTTP endpoint by setting an environment variable `PROMETHEUS_PORT`. You can change the port to any available port:
+
+```bash
+PROMETHEUS_PORT=8080 bin/hz-start
+```
+
+You should see the following line printed to the logs:
+
+```text
+Prometheus enabled on port 8080
+```
+
+The metrics are available on `http://localhost:8080`.
+
+
+### Job API
+
+The `Job` class has a <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/Job.html#getMetrics--" text="getMetrics()" code /> method which returns a <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/metrics/JobMetrics.html" text="JobMetrics" /> instance. It contains the latest known metric values for the job.
+
+This functionality has been developed primarily to give access to metrics of finished jobs, but can in fact be used for jobs in any state. For details on how to use and filter the metric values consult the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/metrics/JobMetrics.html" text="JobMetrics API docs" />.
+
+A simple example for computing the number of data items emitted by a certain vertex, `vertexA`, excluding items emitted to the snapshot, looks like this:
+
+```java
+Predicate<Measurement> vertexOfInterest =
+        MeasurementPredicates.tagValueEquals(MetricTags.VERTEX, "vertexA");
+Predicate<Measurement> notSnapshotEdge =
+        MeasurementPredicates.tagValueEquals(MetricTags.ORDINAL, "snapshot").negate();
+
+Collection<Measurement> measurements = jobMetrics
+        .filter(vertexOfInterest.and(notSnapshotEdge))
+        .get(MetricNames.EMITTED_COUNT);
+
+long totalCount = measurements.stream().mapToLong(Measurement::value).sum();
+```
+
+## Configuration
+
+Metrics collection is enabled by default. You can configure the metrics system declaratively, in the XML or YAML [configuration file](../configuration/static-configuration/configuring-declaratively.mdx), or programmatically, with the [Java API](../configuration/static-configuration/configuring-programmatically.mdx). The following example shows the member configuration with the default values:
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<metrics enabled="true">
+    <management-center enabled="true">
+        <retention-seconds>5</retention-seconds>
+    </management-center>
+    <jmx enabled="true"/>
+    <collection-frequency-seconds>5</collection-frequency-seconds>
+</metrics>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+metrics:
+    enabled: true
+    management-center:
+      enabled: true
+      retention-seconds: 5
+    jmx:
+      enabled: true
+    collection-frequency-seconds: 5
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+<CodeBlock language="java">{Ex_management_MetricsConfiguration_java_tag_member}</CodeBlock>
+
+</TabItem>
+</Tabs>
+
+You can override each setting in the `metrics` configuration with a [Hazelcast property](../../reference/system-properties.mdx). Set the property in the `properties` section of the member configuration, or as a JVM system property, such as `-Dhazelcast.metrics.enabled=false`. If you set both, the member uses the value from the `properties` section. The member logs each override when it starts. The following properties override the `metrics` configuration:
+- `hazelcast.metrics.enabled`: Enables the metrics collection if set to `true`, disables it otherwise.
+- `hazelcast.metrics.mc.enabled`: Enables buffering the collected metrics for Management Center if set to `true`, disables it otherwise.
+- `hazelcast.metrics.mc.retention`: Duration, in seconds, for which the metrics are retained for Management Center.
+- `hazelcast.metrics.jmx.enabled`: Enables exposing the collected metrics over JMX if set to `true`, disables it otherwise.
+- `hazelcast.metrics.collection.frequency`: Frequency, in seconds, of the metrics collection cycle.
+
+The `hazelcast.metrics.debug.enabled` property has no element in the `metrics` configuration. If it is `true`, the member collects debug metrics. Enable it only if [diagnostics](./diagnostics.mdx) is enabled, because only the diagnostics feature consumes the debug metrics.
+
+The client configuration is similar. It lacks the Management Center configuration block (`management-center` configuration element), as shown below. This is because the clients are not connected to Management Center and the client metrics are sent to Management Center through a member to which the client is connected.
+
+<Tabs groupId="config-format">
+<TabItem value="xml" label="XML">
+
+```xml
+<metrics enabled="true">
+    <jmx enabled="true"/>
+    <collection-frequency-seconds>5</collection-frequency-seconds>
+</metrics>
+```
+
+</TabItem>
+<TabItem value="yaml" label="YAML">
+
+```yaml
+metrics:
+    enabled: true
+    jmx:
+      enabled: true
+    collection-frequency-seconds: 5
+```
+
+</TabItem>
+<TabItem value="java" label="Java">
+
+<CodeBlock language="java">{Ex_management_MetricsConfiguration_java_tag_client}</CodeBlock>
+
+</TabItem>
+</Tabs>
+
+You can override the client `metrics` configuration in the same way, with the following properties:
+- `hazelcast.client.metrics.enabled`: Enables the metrics collection if set to `true`, disables it otherwise.
+- `hazelcast.client.metrics.jmx.enabled`: Enables exposing the collected metrics over JMX if set to `true`, disables it otherwise.
+- `hazelcast.client.metrics.collection.frequency`: Frequency, in seconds, of the metrics collection cycle.
+
+The `hazelcast.client.metrics.debug.enabled` property has no element in the `metrics` configuration. If it is `true`, the client collects debug metrics. Enable it only if [diagnostics](./diagnostics.mdx) is enabled, because only the diagnostics feature consumes the debug metrics.
+
+## Performance
+
+The metrics system is designed to make the least possible impact on the performance of the cluster. Since the metrics collection takes place periodically with a few seconds frequency, the main focus is keeping allocation rates and memory footprint at minimum. Therefore, the blobs that store the metrics for Management Center are stored in the memory in a compressed format. The measurements that use multiple `IMap`s to scale up the number of metrics show that one blob occupies only a few kilobytes. It grows above 10 KB only if there are more than 1000 `IMap`s.
+
+The allocation rate of a metric collection cycle is also low. With both Management Center and JMX consumers enabled, the allocation rate with 100 `IMap`s is below 256 KB per cycle, and it grows above 1 MB with 1000 `IMap`s. This means that metrics collection does not increase the frequency of the garbage collection (GC) noticeably.
+
+While the metrics collection is considered GC friendly, the blobs are not recycled. Take the frequency of the GC into account when you configure the retention time. This prevents the blobs from getting promoted into the tenured region of the heap, where they contribute to major GCs over time.
+
+
+## Member statistics
+
+You can get various statistics from your distributed data structures with the `getLocal<Type>Stats()` method of each data structure, such as `IMap.getLocalMapStats()`. These methods return statistics from the member that you call them on, not from the whole cluster.
+
+Entry statistics, such as the owned entry count, cover the data in the [partitions](../../reference/architecture/data-partitioning.mdx) that the member owns. Backup statistics cover the backups that the member holds. For maps, operation statistics, such as put counts and latencies, cover the calls that go through the member, whichever member owns the data. These calls come from the member's own code or from clients connected to it.
+
+Each data structure has a `statistics-enabled` configuration setting, which is `true` by default. If you set it to `false`, the member leaves the data structure out of the statistics that it reports to the metrics system and <Variable href="/management-center/{page-latest-supported-mc}/getting-started/overview" text="Management Center"/>. The effect on the local statistics that the API returns depends on the data structure:
+
+| Data structure | Effect on local statistics |
+| --- | --- |
+| `IMap` | The member does not record operation counts, latencies, or index statistics. Entry counts and memory costs are still available. |
+| `MultiMap` | The member does not record operation counts or latencies, except for `putAll()` calls, transactional puts, and received events. Entry counts are still available. |
+| Queue | None. The member still records all queue statistics. |
+| Topic and reliable topic | None. The member still records publish and receive counts. |
+| Executor service | The member does not record any statistics. The `getLocalExecutorStats()` method returns zero values. |
+
+### Map statistics
+
+To get local map statistics, use the `getLocalMapStats()` method from the `IMap` interface. This method returns a `LocalMapStats` object that holds local map statistics.
+
+This example code shows how `getLocalMapStats()` and `getOwnedEntryCount()` can get the number of entries owned by this member:
+
+<CodeBlock language="java">{Ex_management_ExampleLocalMapStats_java_tag_lms}</CodeBlock>
+
+
+For more details on map statistics, see [Reading Map Metrics](../../develop-solutions/distributed-data-structures/map/reading-map-metrics.mdx).
+
+### Map index statistics
+
+To access map index statistics, if you are using indexes to speed up map queries, use the `getIndexStats()` method of the `LocalMapStats` interface returned by `IMap.getLocalMapStats()`.
+
+Below is an example where the `getIndexStats()` method is used to examine an average selectivity of index hits:
+
+<CodeBlock language="java">{Ex_management_ExampleLocalIndexStats_java_tag_lis}</CodeBlock>
+
+The following are some of the metrics that you can obtain via the `LocalIndexStats` interface:
+- Number of queries and hits into an index (`getQueryCount()` and `getHitCount()`). The number of hits and queries may differ since a single query may hit the same index more than once.
+- Average index hit latency measured in nanoseconds (`getAverageHitLatency()`).
+- Average index hit selectivity (`getAverageHitSelectivity`). Returned values are in the range from 0.0 to 1.0. Values close to 1.0 indicate a high selectivity meaning the index is efficient; values close to 0.0 indicate a low selectivity meaning the index efficiency is approaching an efficiency of a simple full scan.
+- Number of index insert, update and remove operations (`getInsertCount()`, `getUpdateCount()` and `getRemoveCount()`).
+- Total latencies of insert, update and remove operations (`getTotalInsertLatency()`, `getTotalUpdateLatency()`, `getTotalRemoveLatency()`). To compute an average latency, divide the returned value by the number of operations of a corresponding type.
+- Memory cost of an index (`getMemoryCost()`). For on-heap storage, this memory cost metric value is a best-effort approximation and does not indicate a precise on-heap memory usage of an index.
+
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/query/LocalIndexStats.html" text="LocalIndexStats Javadoc" /> to see all the metrics.
+
+To compute an aggregated value of `getAverageHitSelectivity()` for all cluster members, you can use a simple averaging computation as shown below:
+
+```none
+(s(1) + s(2) + ... + s(n)) / n
+```
+
+In this computation, `s(i)` is an average hit selectivity on the member `i` and `n` is the total number of cluster members.
+
+A more advanced solution is to compute a weighted average as shown below:
+
+```none
+(s(1) * h(1) + s(2) * h(2) + ... + s(n) * h(n)) / (h(1) + h(2) + ... + h(n))
+```
+
+Here, `s(i)` is an average hit selectivity on the member `i`, `h(i)` is a hit count (`getHitCount()`) on the member `i` and `n` is the total number of cluster members. This more advanced solution may produce more precise results in unstable dynamic clusters where new members do not have enough statistics accumulated. The same technique may be applied to the `getAverageHitLatency()` metric.
+
+Note the following about accuracy and reliability:
+- For on-heap storage, values returned by `getAverageHitSelectivity()` may be 1% more or less than the actual selectivity. For example, if the actual selectivity is 0.9, the returned value could be between 0.89 and 0.91.
+- The values returned by `getQueryCount()` and `getHitCount()` may be imprecise for queries involving partition predicates (`PartitionPredicate`) on off-heap storage.
+- The index statistics may be imprecise after a new cluster member addition or the existing member removal. They stay imprecise until enough fresh statistics are accumulated on a new owner of an index or its partition.
+
+### Near Cache statistics
+
+To get Near Cache statistics, use the `getNearCacheStats()` method from the `LocalMapStats` object. This method returns a `NearCacheStats` object that holds Near Cache statistics.
+
+Below is an example where the `getNearCacheStats()` method and the `getRatio()` method from `NearCacheStats` get a Near Cache hit/miss ratio.
+
+<CodeBlock language="java">{Ex_management_ExampleNearCacheStats_java_tag_ncs}</CodeBlock>
+
+The following are some of the metrics that you can access via the `NearCacheStats` object (applies to both client and member Near Caches):
+- Creation time of the Near Cache on the member (`getCreationTime()`)
+- Number of entries owned by the member (`getOwnedEntryCount()`)
+- Memory cost (number of bytes) of owned entries in the Near Cache (`getOwnedEntryMemoryCost()`)
+- Number of hits (reads) of the locally owned entries (`getHits()`)
+
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/nearcache/NearCacheStats.html" text="NearCacheStats Javadoc" /> to see all the metrics.
+
+### `MultiMap` statistics
+
+To get `MultiMap` statistics, use the `getLocalMultiMapStats()` method from the `MultiMap` interface. This method returns a `LocalMultiMapStats` object that holds local `MultiMap` statistics.
+
+Below is an example where the `getLocalMultiMapStats()` method and the `getLastUpdateTime()` method from `LocalMultiMapStats` get the last update time.
+
+<CodeBlock language="java">{Ex_management_ExampleMultiMapStats_java_tag_mms}</CodeBlock>
+
+The following are some of the metrics that you can access via the `LocalMultiMapStats` object:
+- Number of entries owned by the member (`getOwnedEntryCount()`)
+- Number of backup entries held by the member (`getBackupEntryCount()`)
+- Number of backups per entry (`getBackupCount()`)
+- Memory cost (number of bytes) of owned entries in the member (`getOwnedEntryMemoryCost()`)
+- Creation time of the `MultiMap` on the member (`getCreationTime()`)
+- Number of hits (reads) of the locally owned entries (`getHits()`)
+- Number of get and put operations on the map (`getPutOperationCount()` and `getGetOperationCount()`)
+
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/multimap/LocalMultiMapStats.html" text="LocalMultiMapStats Javadoc" /> to see all the metrics.
+
+### Queue statistics
+
+To get local queue statistics, use the `getLocalQueueStats()` method from the `IQueue` interface. This method returns a `LocalQueueStats` object that holds local queue statistics.
+
+Below is an example where the `getLocalQueueStats()` method and the `getAverageAge()` method from `LocalQueueStats` get the average age of items.
+
+<CodeBlock language="java">{Ex_management_ExampleQueueStats_java_tag_qs}</CodeBlock>
+
+The following are some of the metrics that you can access via the `LocalQueueStats` object:
+- Number of owned items in the member (`getOwnedItemCount()`)
+- Number of backup items in the member (`getBackupItemCount()`)
+- Minimum and maximum ages of the items in the member (`getMinAge()` and `getMaxAge()`)
+- Number of offer, put and add operations (`getOfferOperationCount()`)
+
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/collection/LocalQueueStats.html" text="LocalQueueStats Javadoc" /> to see all the metrics.
+
+### Topic statistics
+
+To get local topic statistics, use the `getLocalTopicStats()` method from the `ITopic` interface. This method returns a `LocalTopicStats` object that holds local topic statistics.
+
+Below is an example where the `getLocalTopicStats()` method and the `getPublishOperationCount()` method from `LocalTopicStats` get the number of publish operations.
+
+<CodeBlock language="java">{Ex_management_ExampleTopicStats_java_tag_ts}</CodeBlock>
+
+The following are the metrics that you can access via the `LocalTopicStats` object:
+- Creation time of the topic on the member (`getCreationTime()`)
+- Total number of published messages of the topic on the member (`getPublishOperationCount()`)
+- Total number of received messages of the topic on the member (`getReceiveOperationCount()`)
+
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/topic/LocalTopicStats.html" text="LocalTopicStats Javadoc" /> to see all the metrics.
+
+### Executor statistics
+
+To get local executor statistics, use the `getLocalExecutorStats()` method from the `IExecutorService` interface. This method returns a `LocalExecutorStats` object that holds local executor statistics.
+
+Below is an example where the `getLocalExecutorStats()` method and the `getCompletedTaskCount()` method from `LocalExecutorStats` get the number of completed operations of the executor service.
+
+<CodeBlock language="java">{Ex_management_ExampleExecutorStats_java_tag_es}</CodeBlock>
+
+The following are some of the metrics that you can access via the `LocalExecutorStats` object:
+- Number of pending operations of the executor service (`getPendingTaskCount()`)
+- Number of started operations of the executor service (`getStartedTaskCount()`)
+- Number of completed operations of the executor service (`getCompletedTaskCount()`)
+
+See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/executor/LocalExecutorStats.html" text="LocalExecutorStats Javadoc" /> to see all the metrics.
