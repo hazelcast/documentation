@@ -15,39 +15,39 @@ import Ex_management_ExampleQueueStats_java_tag_qs from "../../examples/manageme
 import Ex_management_ExampleTopicStats_java_tag_ts from "../../examples/management/ExampleTopicStats.java?tag=ts";
 import Ex_management_ExampleExecutorStats_java_tag_es from "../../examples/management/ExampleExecutorStats.java?tag=es";
 
-## Best Practices {/* #monitoring-best-practices */}
+<Anchor id="monitoring-best-practices" />
 
-Please review Hazelcast Health Monitor logs regularly to understand the system runtime stability. Monitor Hazelcast logs and scan for failure messages regularly. Any incidences should be investigated and documented so as to understand your network better and find ways to provision, configure and manage your network more efficiently.
+Review Hazelcast Health Monitor logs regularly to understand the system runtime stability. Monitor Hazelcast logs and scan for failure messages regularly. Any incidences should be investigated and documented so as to understand your network better and find ways to provision, configure, and manage your network more efficiently.
 
 Hazelcast provides multi-level tolerance configurations in a cluster:
 
-1. Garbage collection (GC) tolerance—When a member fails to respond to health check probes on the existing socket connection but is actually responding to health probes sent on a new socket, it can be presumed to be stuck either in a long GC or in another long-running task. Adequate tolerance levels configured here may allow the member to come back from its stuck state within permissible SLAs.
-2. Network tolerance—When a member is temporarily unreachable by any means, temporary network communication errors may cause members to become unresponsive. In such a scenario, adequate tolerance levels configured here will allow the member to return to healthy operation within permissible SLAs.
+1. Garbage collection (GC) tolerance: When a member fails to respond to health check probes on the existing socket connection but is actually responding to health probes sent on a new socket, it can be presumed to be stuck either in a long GC or in another long-running task. Adequate tolerance levels configured here may allow the member to come back from its stuck state within permissible SLAs.
+2. Network tolerance: When a member is temporarily unreachable by any means, temporary network communication errors may cause members to become unresponsive. In such a scenario, adequate tolerance levels configured here allow the member to return to healthy operation within permissible SLAs.
 
 You should establish tolerance levels for garbage collection and network connectivity and then set monitors to raise alerts when those tolerance thresholds are crossed. Customers with a Hazelcast subscription can use the extensive monitoring capabilities of the Management Center to set monitors and alerts.
 
 In addition to the Management Center, we recommend that you use `jstat` and keep verbose GC logging turned on and use a log scraping tool like Splunk or similar to monitor GC behavior. Back-to-back full GCs and anything above 90% heap occupancy after a full GC should be cause for alarm. Hazelcast dumps a set of information into the console of each instance that may further be used to create alerts.
 
-### Basic Steps for Monitoring and Auditing
+## Basic steps for monitoring and auditing
 
-- Make sure that all members are reachable by every other member in the cluster and are also accessible by the clients (ports, network, etc).
+- Make sure that all members are reachable by every other member in the cluster and are also accessible by the clients, for example through their ports and network.
 - Start Hazelcast member instances first. While not mandatory, this is a best practice to avoid clients timing out or complaining that no Hazelcast member is found, which can happen if the clients are started before the members.
-- Enable/start a system monitor tool, e.g., [nmon](http://nmon.sourceforge.net/pmwiki.php).
+- Enable or start a system monitor tool, such as [nmon](http://nmon.sourceforge.net/pmwiki.php).
 - To add more members to an already running cluster, start a member with a similar configuration to the other members with the possible addition of the IP address of the new member. A maintenance window is not required to add more members to an already running Hazelcast cluster.
 
   - When a member is added to or removed from a Hazelcast cluster, the clients may see a little pause time, but this is normal. This is essentially the time required by Hazelcast members to rebalance the data upon the arrival or departure of a member.
-  - There is no need to change anything on the clients when adding more members to the running cluster. The clients update themselves automatically to connect to the new member once it has successfully joined the cluster.
-  - Rebalancing of data (primary plus backup) on arrival or departure (forced or unforced) of a member is an automated process and no manual intervention is required.
+  - There is no need to change anything on the clients when adding more members to the running cluster. In the default `ALL_MEMBERS` routing mode, the clients update themselves automatically to connect to the new member once it has successfully joined the cluster.
+  - Rebalancing of data (primary plus backup) on arrival or departure (forced or unforced) of a member is an automated process. In the default `ACTIVE` cluster state, no manual intervention is required.
   - You can promote your lite members to become data members. To do this, either use the [Cluster API](./lite-members.mdx#promoting-lite-members-to-data-members) or Management Center.
-  - Setting `hazelcast.initial.min.cluster.size` to 4 and starting members one by one (empty cluster, no operation) can result in unexpected cluster partitioning behavior: After reaching `hazelcast.initial.min.cluster.size`, partition table arrangement is initialized even though there's no data. When used in large clusters (\>100), this adds an unnecessary overhead of partition assignment on each member addition.
+  - Setting `hazelcast.initial.min.cluster.size` to 4 and starting members one by one (empty cluster, no operation) can result in unexpected cluster partitioning behavior: after reaching `hazelcast.initial.min.cluster.size`, partition table arrangement is initialized even though there is no data. When used in large clusters (\>100), this adds an unnecessary overhead of partition assignment on each member addition.
 - Check that you have configured an adequate backup count based on your SLAs.
-- When using distributed computing features, such as executor service or entry processors, any change in the client application logic or in the implementation of these must also be applied to the members. All the members must be restarted after the new code is deployed using the typical cluster re-deployment process: first shutdown the members, then deploy the new application JARs in the members' classpath, and start the members.
+- When using distributed computing features, such as executor service or entry processors, any change in the client application logic or in the implementation of these must also be applied to the members. If you do not use <Variable name="ucn" />, which requires <Variable name="enterprise-product-name" />, you must restart all the members after you deploy the new code. Use the typical cluster re-deployment process: first shut down the members, then deploy the new application JARs in the members' classpath, and start the members.
 
 ## Management Center
 
-Hazelcast Management Center enables you to monitor and manage your cluster members running Hazelcast. In addition to monitoring the overall state of your clusters, you can also analyze and browse your data structures in detail, update map configurations and take thread dumps from members. You can run scripts (JavaScript, Groovy, etc.) and commands on your members with its scripting and console modules.
+Hazelcast Management Center enables you to monitor and manage your cluster members running Hazelcast. In addition to monitoring the overall state of your clusters, you can also analyze and browse your data structures in detail, update map configurations, and take thread dumps from members. You can run scripts, such as JavaScript or Groovy, and commands on your members with its scripting and console modules. A script runs only if the member classpath contains a scripting engine for its language.
 
-See the <Variable href="/management-center/{page-latest-supported-mc}/getting-started/overview" text="Management Center documentation" /> for more information and find details about its clustered JMX and clustered REST APIs
+See the <Variable href="/management-center/{page-latest-supported-mc}/getting-started/overview" text="Management Center documentation" /> for more information and find details about its clustered JMX and clustered REST APIs.
 
 Because Management Center is a client that connects to the cluster, you can control the following aspects of Management Center in the member configuration file:
 
@@ -92,7 +92,7 @@ hazelcast:
 </TabItem>
 </Tabs>
 
-Note that the [JSR 223](https://jcp.org/en/jsr/detail?id=223) API is used in Hazelcast to support scripting.
+Hazelcast uses the [JSR 223](https://jcp.org/en/jsr/detail?id=223) API to support scripting.
 
 ### Managing Console Support
 
@@ -131,7 +131,7 @@ See the <Variable href="/management-center/{page-latest-supported-mc}/tools/cons
 
 ### Managing Data Access
 
-Management Center allows you to access contents of Hazelcast data structures (for instance map entries) via SQL Browser or Map Browser. It may be useful to restrict data access for Management Center if sensitive financial or personal information is stored in the cluster. Management Center can't access the data if at least one member has the data access disabled. You can disable data access for Management Center in the member configuration file:
+Management Center allows you to access contents of Hazelcast data structures (for instance map entries) through SQL Browser or Map Browser. It may be useful to restrict data access for Management Center if sensitive financial or personal information is stored in the cluster. Management Center cannot access the data if at least one member has the data access disabled. You can disable data access for Management Center in the member configuration file:
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
@@ -190,23 +190,25 @@ hazelcast:
 
 ## Instance Tracking
 
-Instance tracking is a feature which, when enabled, writes a file on the instance startup at the configured location. The file contains metadata about the instance, such as version, product name and process ID. This file can then later be used by other programs to detect the kinds of Hazelcast instances that have been running on a particular machine by inspecting the file contents. This feature supports both <Variable name="open-source-product-name" /> and <Variable name="enterprise-product-name" /> members and clients, and is disabled by default. Failing to write the file only generates a warning, and the instance is allowed to start.
+Instance tracking is a feature which, when enabled, writes a file on the instance startup at the configured location. The file contains metadata about the instance, such as version, product name, and process ID. This file can then later be used by other programs to detect the kinds of Hazelcast instances that have been running on a particular machine by inspecting the file contents. This feature supports both <Variable name="open-source-product-name" /> and <Variable name="enterprise-product-name" /> members and clients, and is disabled by default. Failing to write the file only generates a warning, and the instance is allowed to start.
 
 The name and content of the file are configurable and may contain placeholders. The placeholders used for instance tracking have a prefix so that they can be distinguished from the other ones like XML placeholders. We use the same style as the `EncryptionReplacer` by adding a "namespace" to the placeholder prefix; for example, `$HZ_INSTANCE_TRACKING{start_timestamp}` (the namespace here being `HZ_INSTANCE_TRACKING`).
 
-In addition to the above, the Hazelcast instance overwrites any existing file in the configured location. To prevent this, you can configure the file location using the placeholders in the same way they can be used when defining the file contents. For example, if the file name is configured as `Hazelcast-$HZ_INSTANCE_TRACKING{pid}-$HZ_INSTANCE_TRACKING{start_timestamp}.process`, it contains the process ID and the creation time, making it unique every time the instance is started. The created file is not deleted on member shutdown. As such, it leaves a trace of instances started on a particular machine. The file creation process also is fail-safe meaning that the instance will proceed with starting even though it is unable to write the tracking file and the instance will only log a warning.
+In addition to the above, the Hazelcast instance overwrites any existing file in the configured location. To prevent this, you can configure the file location using the placeholders in the same way they can be used when defining the file contents. For example, if the filename is configured as `Hazelcast-$HZ_INSTANCE_TRACKING{pid}-$HZ_INSTANCE_TRACKING{start_timestamp}.process`, it contains the process ID and the creation time, making it unique every time the instance is started.
+
+The created file is not deleted on member shutdown. As such, it leaves a trace of instances started on a particular machine. If the instance cannot write the tracking file, it logs a warning and continues to start.
 
 :::note[Auditing the Instance Tracking File]
 
 When you enable the instance tracking feature and its file is created on a member startup, the full path of the file with its name is set into a system property of the JVM running the Hazelcast member, i.e., `hazelcast.config.instance.tracking.file`.
 
-You can audit that all your running Hazelcast members in your environment have the instance tracking file name set correctly. For this, you can use the [jcmd](https://docs.oracle.com/en/java/javase/13/docs/specs/man/jcmd.html) utility As shown below.
+You can audit that all your running Hazelcast members in your environment have the instance tracking filename set correctly. For this, you can use the [jcmd](https://docs.oracle.com/en/java/javase/13/docs/specs/man/jcmd.html) utility, as shown below.
 
 ```shell
 jcmd <PID> VM.system_properties | grep hazelcast.config.instance.tracking.file
 ```
 
-PID here is the process ID of your JVM on which Hazelcast member runs. It will give you an output similar to following:
+PID here is the process ID of your JVM on which Hazelcast member runs. It gives output similar to the following:
 
 ```shell
 hazelcast.config.instance.tracking.file=/tmp/Hazelcast.process
@@ -225,7 +227,7 @@ Config config = new Config();
 config.getInstanceTrackingConfig()
       .setEnabled(true)
       .setFileName("/tmp/hz-tracking.txt")
-      .setFormatPattern("$HZ_INSTANCE_TRACKING\{product}:$HZ_INSTANCE_TRACKING\{version}");
+      .setFormatPattern("$HZ_INSTANCE_TRACKING{product}:$HZ_INSTANCE_TRACKING{version}");
 ```
 
 The equivalent declarative configuration is as follows:
@@ -241,7 +243,7 @@ The equivalent declarative configuration is as follows:
 
     <instance-tracking enabled="true">
         <file-name>/tmp/hz-tracking.txt</file-name>
-        <format-pattern>$HZ_INSTANCE_TRACKING\{product}:$HZ_INSTANCE_TRACKING\{version}</format-pattern>
+        <format-pattern>$HZ_INSTANCE_TRACKING{product}:$HZ_INSTANCE_TRACKING{version}</format-pattern>
     </instance-tracking>
 
 </hazelcast>
@@ -255,13 +257,13 @@ hazelcast:
   instance-tracking:
     enabled: true
     file-name: /tmp/hz-tracking.txt
-    format-pattern: $HZ_INSTANCE_TRACKING\{product}:$HZ_INSTANCE_TRACKING\{version}
+    format-pattern: $HZ_INSTANCE_TRACKING{product}:$HZ_INSTANCE_TRACKING{version}
 ```
 
 </TabItem>
 </Tabs>
 
-You can use this configuration to enable the instance tracking feature, specify the file name and the pattern for the file contents. By default, the feature is disabled, the file name is `Hazelcast.process` in the OS temporary directory as returned by `System.getProperty("java.io.tmpdir")` and the file contents are JSON-formatted key-value pairs of all available metadata.
+You can use this configuration to enable the instance tracking feature, specify the filename and the pattern for the file contents. By default, the feature is disabled, the filename is `Hazelcast.process` in the OS temporary directory as returned by `System.getProperty("java.io.tmpdir")` and the file contents are JSON-formatted key-value pairs of all available metadata.
 
 The client configuration is analogous and only differs in the name of the outer configuration block or configuration instance containing the instance tracking configuration.
 
@@ -287,7 +289,7 @@ You can specify a custom format by using a predefined set of available metadata 
 
 ```java
 String format = "mode: $HZ_INSTANCE_TRACKING{mode}\n"
-        + "product: $HZ_INSTANCE_TRACKING\{product}\n"
+        + "product: $HZ_INSTANCE_TRACKING{product}\n"
         + "licensed: $HZ_INSTANCE_TRACKING{licensed}\n"
         + "missing: $HZ_INSTANCE_TRACKING{missing}\n"
         + "broken: $HZ_INSTANCE_TRACKING{broken ";
@@ -305,20 +307,20 @@ broken: $HZ_INSTANCE_TRACKING{broken
 
 As you can see, once we encounter a broken placeholder, all subsequent placeholders are ignored. On the other hand, missing placeholders are skipped and subsequent placeholders are resolved.
 
-The currently valid metadata placeholders and their possible values are as follows:
+The valid metadata placeholders and their possible values are as follows:
 
 - `product`: Instance product name, e.g., "Hazelcast" or "Hazelcast Enterprise".
 - `version`: Instance version.
 - `mode`: Instance mode, e.g., "server", "embedded" or "client"
 - `start_timestamp`: the timestamp of when the instance was started as the difference, measured in milliseconds, between the current time and midnight, January 1, 1970 UTC.
 - `licensed`: Specifies whether the instance is using a license or not. The value `0` signifies that there is no license set and the value `1` signifies that a license is in use.
-- `pid`: Attempts to get the process ID value. The algorithm does not guarantee to get the process ID on all JVMs and operating systems so please test before use. In case we are unable to get the PID, the value is `-1`.
+- `pid`: Process ID of the instance.
 
 The possible values for the `product` placeholder: `Hazelcast`, `Hazelcast Enterprise`, `Hazelcast Client`, `Hazelcast Client Enterprise`.
 
 The possible values for the `mode` placeholder:
 
-- `server`: This value is used when the instance was started using the `start.sh` or `start.bat` scripts.
+- `server`: This value is used when the instance was started using the `hz-start` or `hz-start.bat` scripts.
 - `client`: This instance is a Hazelcast client instance.
 - `embedded`: This instance is embedded in another Java program.
 
@@ -330,7 +332,7 @@ The metrics system is responsible for collecting these metrics and making them a
 
 Metrics have associated **tags** which describe which object the metric applies to. For example, the tags for job metrics typically indicate the specific DAG vertex and processor the metric belongs to.
 
-Each metric instance provided belongs to a particular Hazelcast cluster member, so different cluster members can have their own versions of the same metric with different values.
+Each metric instance provided belongs to a particular Hazelcast cluster member. Different cluster members can have their own versions of the same metric with different values.
 
 The metric collection runs in regular intervals on each member, but note that the metric collection on different cluster members happens at different moments in time. So if you try to correlate metrics from different members, they can be from different moments of time.
 
@@ -355,15 +357,15 @@ See the full list of Hazelcast metrics in [List of Metrics appendix](../../refer
 
 User-defined metrics are actually a subset of [job metrics](../../reference/list-of-metrics.mdx#job-metrics). What distinguishes them from regular job-specific metrics is exactly what their name implies: they are not built-in, but defined when processing pipelines are written.
 
-Since user-defined metrics are also job metrics, they will have all the tags job metrics have. They also have an extra tag, called `user` which is of type `boolean` and is set to `true`.
+Since user-defined metrics are also job metrics, they have all the tags job metrics have. They also have an extra tag, called `user`, which is set to `true`.
 
 :::note
 
-Due to the extra tag user-defined metrics have it's not possible for them to overwrite a built-in metric, even if they have the exact same name.
+Because of their extra tag, user-defined metrics cannot overwrite a built-in metric, even if they have the exact same name.
 
 :::
 
-Let's see how one would go about defining such metrics. For example if you would like to monitor your filtering step you could write code like this:
+For example, to monitor your filtering step, you can write code like this:
 
 ```java
 p.readFrom(source)
@@ -378,7 +380,7 @@ p.readFrom(source)
  .writeTo(sink);
 ```
 
-User-defined metrics can be used anywhere in pipeline definitions where custom code can be added. This means (just to name the most important ones): filtering, mapping and flat-mapping functions, various constituent functions of aggregations (accumulate, create, combine, deduct, export & finish), key extraction function when grouping, in [custom batch sources](../../develop-and-build/building-data-pipelines/ingesting-data-from-sources/custom-batch-source.mdx), [custom stream sources](../../develop-and-build/building-data-pipelines/ingesting-data-from-sources/custom-stream-source.mdx), [custom sinks](../../develop-and-build/building-data-pipelines/sending-results-to-sinks/custom-sink.mdx), processors and so on.
+User-defined metrics can be used anywhere in pipeline definitions where custom code can be added. This means (just to name the most important ones): filtering, mapping and flat-mapping functions, various constituent functions of aggregations (accumulate, create, combine, deduct, export, and finish), key extraction function when grouping, in [custom batch sources](../../develop-and-build/building-data-pipelines/ingesting-data-from-sources/custom-batch-source.mdx), [custom stream sources](../../develop-and-build/building-data-pipelines/ingesting-data-from-sources/custom-stream-source.mdx), [custom sinks](../../develop-and-build/building-data-pipelines/sending-results-to-sinks/custom-sink.mdx), processors, and so on.
 
 ### Exposing Metrics
 
@@ -392,7 +394,9 @@ The following are the tools and interfaces to expose the metrics to the outside 
 
 #### Management Center {/* #management-center-2 */}
 
-Management Center receives the metrics used for building its view about the Hazelcast cluster from the metrics system. The members collect their metrics with the frequency defined with `collection-frequency-seconds`, which is by default once in every 5 seconds. Then it saves the collected metrics into a blob stored in an in-memory buffer. The blob then is retained for the time configured in the `retention-seconds` under the `management-center` configuration block. This is also 5 seconds by default, which means there is at most one blob stored by default. Management Center periodically reads out the metrics from this buffer, which frees up the heap occupied by the blob once it is consumed.
+Management Center receives the metrics used for building its view about the Hazelcast cluster from the metrics system. The members collect their metrics with the frequency defined with `collection-frequency-seconds`, which is by default once in every 5 seconds.
+
+The member saves the collected metrics into a blob stored in an in-memory buffer. The blob then is retained for the time configured in the `retention-seconds` under the `management-center` configuration block. This is also 5 seconds by default, which means there is at most one blob stored by default. Management Center periodically reads the metrics from this buffer. A blob stays in the buffer until a newer blob replaces it.
 
 As mentioned earlier, the client metrics are also stored in these blobs on the member side with timestamps assigned to them on the client side.
 
@@ -402,7 +406,7 @@ See the [Management Center documentation](/management-center/latest/deploy-manag
 
 Hazelcast exposes all its metrics using the JVM's standard JMX interface. You can use tools such as **Java Mission Control** or **JConsole** to display them.
 
-The Hazelcast metrics are exposed under `com.hazelcast/$INSTANCE_NAME/Metrics` where `$INSTANCE_NAME` is the name of the member or client instance to which the JMX client is connected.
+The Hazelcast metrics are exposed under `com.hazelcast/Metrics/$INSTANCE_NAME` where `$INSTANCE_NAME` is the name of the member or client instance to which the JMX client is connected.
 
 And the Jet engine related beans are stored under `com.hazelcast.jet/Metrics/<instanceName>/` node and the various tags they have form further sub-nodes in the resulting tree structure.
 
@@ -432,7 +436,7 @@ The `Job` class has a <Variable href="https://docs.hazelcast.org/docs/{os-versio
 
 This functionality has been developed primarily to give access to metrics of finished jobs, but can in fact be used for jobs in any state.
 
-For details on how to use and filter the metric values consult the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/metrics/JobMetrics.html" text="JobMetrics API docs" />. A simple example for computing the number of data items emitted by a certain vertex (let's call it `vertexA`), excluding items emitted to the snapshot, would look like this:
+For details on how to use and filter the metric values consult the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/jet/core/metrics/JobMetrics.html" text="JobMetrics API docs" />. A simple example for computing the number of data items emitted by a certain vertex (here called `vertexA`), excluding items emitted to the snapshot, looks like this:
 
 ```java
 Predicate<Measurement> vertexOfInterest =
@@ -488,9 +492,9 @@ Note that all the metrics configuration values can be overridden with system pro
 - `hazelcast.metrics.mc.retention`: Duration, in seconds, for which the metrics are retained for Management Center.
 - `hazelcast.metrics.jmx.enabled`: Enables exposing the collected metrics over JMX if set to `true`, disables it otherwise.
 - `hazelcast.metrics.collection.frequency`: Frequency, in seconds, of the metrics collection cycle.
-- `hazelcast.metrics.debug.enabled`: Enables collecting debug metrics if set to `true`, disables it otherwise. Note that this can be set with system property only and is meant to be enabled only if diagnostics is enabled, since currently only diagnostics feature consumes the debug metrics.
+- `hazelcast.metrics.debug.enabled`: Enables collecting debug metrics if set to `true`, disables it otherwise. Note that this property has no element in the `metrics` configuration. It is meant to be enabled only if diagnostics is enabled, because only the diagnostics feature consumes the debug metrics.
 
-The client configuration is very similar, it just lacks the Management Center configuration block (`management-center` configuration element), as shown below. This is because the clients are not connected to Management Center and the client metrics are sent to Management Center through a member to which the client is connected.
+The client configuration is similar. It lacks the Management Center configuration block (`management-center` configuration element), as shown below. This is because the clients are not connected to Management Center and the client metrics are sent to Management Center through a member to which the client is connected.
 
 <Tabs groupId="config-format">
 <TabItem value="xml" label="XML">
@@ -521,7 +525,7 @@ Similarly to the member configuration, the client metrics configuration can be o
 - `hazelcast.client.metrics.enabled`: Enables the metrics collection if set to `true`, disables it otherwise.
 - `hazelcast.client.metrics.jmx.enabled`: Enables exposing the collected metrics over JMX if set to `true`, disables it otherwise.
 - `hazelcast.client.metrics.collection.frequency`: Frequency, in seconds, of the metrics collection cycle.
-- `hazelcast.client.metrics.debug.enabled`: Enables collecting debug metrics if set to `true`, disables it otherwise. Note that this can be set with system property only and is meant to be enabled only if diagnostics is enabled, since currently only diagnostics feature consumes the debug metrics.
+- `hazelcast.client.metrics.debug.enabled`: Enables collecting debug metrics if set to `true`, disables it otherwise. Note that this property has no element in the `metrics` configuration. It is meant to be enabled only if diagnostics is enabled, because only the diagnostics feature consumes the debug metrics.
 
 ### Version Compatibility
 
@@ -529,9 +533,9 @@ Note that the metric names may change between MINOR versions but not between PAT
 
 ### Notes on the Performance
 
-The metrics system is designed with care to make the least possible impact on the performance of the cluster. Since the metrics collection takes place periodically with a few seconds frequency, the main focus is keeping allocation rates and memory footprint at minimum. Therefore, the blobs that store the metrics for Management Center are stored in the memory in a compressed format. The measurements, that use multiple `IMap`s to scale up the number of metrics, show that one blob occupies only a few KBs and it grows above 10KB only if there are more than 1000 `IMap`s.
+The metrics system is designed with care to make the least possible impact on the performance of the cluster. Since the metrics collection takes place periodically with a few seconds frequency, the main focus is keeping allocation rates and memory footprint at minimum. Therefore, the blobs that store the metrics for Management Center are stored in the memory in a compressed format. The measurements, that use multiple `IMap`s to scale up the number of metrics, show that one blob occupies only a few KBs and it grows above 10 KB only if there are more than 1000 `IMap`s.
 
-The allocation rate of a metric collection cycle is also low. With both Management Center and JMX consumers enabled, the allocation rate with 100 `IMap`s is below 256KB per cycle, and it grows above 1MB with 1000 `IMap`s. This means that metrics collection does not increase the frequency of the garbage collection (GC) noticeably.
+The allocation rate of a metric collection cycle is also low. With both Management Center and JMX consumers enabled, the allocation rate with 100 `IMap`s is below 256 KB per cycle, and it grows above 1 MB with 1000 `IMap`s. This means that metrics collection does not increase the frequency of the garbage collection (GC) noticeably.
 
 While the metrics collection is considered GC friendly, it should be noted that the blobs are not recycled: configuring the retention time should be done with taking the frequency of the GC into account to prevent the blobs from getting promoted into the tenured region of the heap that in the end contributes to major GCs after time.
 
@@ -581,7 +585,7 @@ The following are some of the metrics that you can obtain via the `LocalIndexSta
 - Average index hit selectivity (`getAverageHitSelectivity`): Returned values are in the range from 0.0 to 1.0. Values close to 1.0 indicate a high selectivity meaning the index is efficient; values close to 0.0 indicate a low selectivity meaning the index efficiency is approaching an efficiency of a simple full scan.
 - Number of index insert, update and remove operations (`getInsertCount()`, `getUpdateCount()` and `getRemoveCount()`).
 - Total latencies of insert, update and remove operations (`getTotalInsertLatency()`, `getTotalUpdateLatency()`, `getTotalRemoveLatency()`): To compute an average latency divide the returned value by the number of operations of a corresponding type.
-- Memory cost of an index (`getMemoryCost()`): For on-heap storages, this memory cost metric value is a best-effort approximation and doesn't indicate a precise on-heap memory usage of an index.
+- Memory cost of an index (`getMemoryCost()`): For on-heap storage, this memory cost metric value is a best-effort approximation and does not indicate a precise on-heap memory usage of an index.
 
 See the <Variable href="https://docs.hazelcast.org/docs/{os-version}/javadoc/com/hazelcast/query/LocalIndexStats.html" text="LocalIndexStats Javadoc" /> to see all the metrics.
 
@@ -714,8 +718,8 @@ To use the health check endpoint and script, enable either of the following conf
   <hazelcast>
       ...
       <network>
-          <rest-api enabled="true">
-              <endpoint-group name="HEALTH_CHECK" enabled=“true”/>
+          <rest-api enabled="true">
+              <endpoint-group name="HEALTH_CHECK" enabled="true"/>
           </rest-api>
       </network>
       ...
@@ -745,10 +749,10 @@ To use the health check endpoint and script, enable either of the following conf
   ```xml
   <hazelcast>
       ...
-      <advanced-network>
+      <advanced-network enabled="true">
           <rest-server-socket-endpoint-config>
               <endpoint-groups>
-                  <endpoint-group name=“HEALTH_CHECK” enabled=“true”/>
+                  <endpoint-group name="HEALTH_CHECK" enabled="true"/>
               </endpoint-groups>
           </rest-server-socket-endpoint-config>
       </advanced-network>
@@ -762,9 +766,10 @@ To use the health check endpoint and script, enable either of the following conf
   ```yaml
   hazelcast:
     advanced-network:
+      enabled: true
       rest-server-socket-endpoint-config:
         endpoint-groups:
-          HEALTCH_CHECK:
+          HEALTH_CHECK:
             enabled: true
   ```
 
@@ -794,11 +799,11 @@ To use the HTTP-based health check:
 
    - `nodeState`: State of the member on which the health check is launched. See [Cluster and Member States](./cluster-member-states.mdx#member-states) to learn more about the states of cluster members.
    - `clusterState`: State of cluster that the health-checked member belongs to. See [Cluster and Member States](./cluster-member-states.mdx#cluster-states) to learn more about cluster states.
-   - `clusterSafe`: Whether the cluster is safe, i.e., there are no active partition migrations and all backups are in sync for each partition in the cluster. See [Shutting Down Members and Clusters](./shutdown.mdx#ensuring-members-and-clusters-are-in-a-safe-state) to learn how to check the safety of active clusters.
+   - `clusterSafe`: Whether the queried member is safe: there are no active partition migrations, and all backups are in sync for each partition that the member owns. See [Shutting Down Members and Clusters](./shutdown.mdx#ensuring-members-and-clusters-are-in-a-safe-state) to learn how to check the safety of active clusters.
 
      :::note
 
-     The `clusterSafe` indicator is useful when your cluster is in a passive state. If the cluster is in an active state, the indicator value continually changes due to the dynamic state of the cluster. Also, checking the cluster safety triggers additional operations for each partition and replica. Frequent safety checks of a cluster under load may impact cluster performance.
+     The `clusterSafe` indicator is useful when your cluster is in a passive state. If the cluster is in an active state, the indicator value continually changes due to the dynamic state of the cluster. Also, checking the cluster safety triggers additional operations for each backup replica of the partitions that the queried member owns. Frequent safety checks of a cluster under load may impact cluster performance.
 
      :::
    - `migrationQueueSize`: A count of the remaining migration tasks while the cluster data is being repartitioned. See [Data Partitioning](../../develop-and-build/architecture/data-partitioning.mdx) to learn about Hazelcast's partitioning mechanism.
@@ -835,14 +840,14 @@ You can use the following parameters to perform checks and operations on your Ha
 <tbody>
 <tr>
 <td>`-o` or `--operation`</td>
-<td>`get-state`</td>
+<td>`all`</td>
 <td>
 
 Health check operation. It can be `all`, `node-state`, `cluster-state`, `cluster-safe`, `migration-queue-size` and `cluster-size`.
 
 :::note
 
-The `cluster-safe` option is useful when your cluster is in a passive state. If the cluster is in an active state, the indicator value continually changes due to the dynamic state of the cluster. Also, checking the cluster safety triggers additional operations for each partition and replica. Frequent safety checks of a cluster under load may impact cluster performance.
+The `cluster-safe` option is useful when your cluster is in a passive state. If the cluster is in an active state, the indicator value continually changes due to the dynamic state of the cluster. Also, checking the cluster safety triggers additional operations for each backup replica of the partitions that the queried member owns. Frequent safety checks of a cluster under load may impact cluster performance.
 
 :::
 
@@ -861,7 +866,7 @@ The `cluster-safe` option is useful when your cluster is in a passive state. If 
 <tr>
 <td>`-h` or `--help`</td>
 <td>*no argument expected*</td>
-<td>Lists the parameter descriptions along with a usage example.</td>
+<td>Lists the parameter descriptions. It works only as the first parameter.</td>
 </tr>
 <tr>
 <td>`-d` or `--debug`</td>
@@ -876,17 +881,17 @@ The `cluster-safe` option is useful when your cluster is in a passive state. If 
 <tr>
 <td>`--cacert`</td>
 <td>*set of well-known CA certificates*</td>
-<td>Defines trusted PEM-encoded certificate file path. It's used to verify member certificates.</td>
+<td>Defines the path of the trusted PEM-encoded certificate file. It is used to verify member certificates.</td>
 </tr>
 <tr>
 <td>`--cert`</td>
 <td>None</td>
-<td>Defines PEM-encoded client certificate file path. Only needed when client certificate authentication is used.</td>
+<td>Defines the path of the PEM-encoded client certificate file. Only needed when client certificate authentication is used.</td>
 </tr>
 <tr>
 <td>`--key`</td>
 <td>None</td>
-<td>Defines PEM-encoded client private key file path. Only needed when client certificate authentication is used.</td>
+<td>Defines the path of the PEM-encoded client private key file. Only needed when client certificate authentication is used.</td>
 </tr>
 <tr>
 <td>`--insecure`</td>
@@ -896,7 +901,7 @@ The `cluster-safe` option is useful when your cluster is in a passive state. If 
 </tbody>
 </table>
 
-***Example 1: Checking the State of Members in a Healthy Cluster:***
+**Example 1: Checking the state of members in a healthy cluster:**
 
 If the member is deployed under the address `127.0.0.1:5701` and it is in the healthy state, the following output is expected:
 
@@ -905,7 +910,7 @@ If the member is deployed under the address `127.0.0.1:5701` and it is in the he
 ACTIVE
 ```
 
-***Example 2: Checking the Safety of a Non-Existent Cluster:***
+**Example 2: Checking the safety of a non-existent cluster:**
 
 If the cluster has no members running under the address `127.0.0.1:5701`, the following output is expected:
 
@@ -921,20 +926,20 @@ The health monitor periodically prints logs in your console to provide informati
 
 You can set the interval of health monitoring using the `hazelcast.health.monitoring.delay.seconds` system property. Its default value is 20 seconds.
 
-The system property `hazelcast.health.monitoring.level` is used to configure the monitoring's log level. If it is set to OFF, the monitoring is disabled. If it is set to NOISY, monitoring logs are always printed for the defined intervals. When it is SILENT, which is the default value, monitoring logs are printed only when the values exceed some predefined thresholds. These thresholds are related to memory and CPU percentages, and can be configured using the `hazelcast.health.monitoring.threshold.memory.percentage` and `hazelcast.health.monitoring.threshold.cpu.percentage` system properties, whose default values are both 70.
+The system property `hazelcast.health.monitoring.level` is used to configure the monitoring's log level. If it is set to OFF, the monitoring is disabled. If it is set to NOISY, monitoring logs are always printed for the defined intervals. When it is SILENT, which is the default value, monitoring logs are printed only when the values exceed some predefined thresholds. These thresholds are related to memory and CPU percentages, and can be configured using the `hazelcast.health.monitoring.threshold.memory.percentage` and `hazelcast.health.monitoring.threshold.cpu.percentage` system properties, whose default values are both 70. Monitoring logs are also printed when pending invocations exceed 70% or a count of 1000.
 
 The following is an example monitoring output
 
-```none
+```none vars
 Sep 08, 2017 5:02:28 PM com.hazelcast.internal.diagnostics.HealthMonitor
 
-INFO: [192.168.2.44]:5701 [host-name] [3.9] processors=4, physical.memory.total=16.0G, physical.memory.free=5.5G, swap.space.total=0, swap.space.free=0, heap.memory.used=102.4M,
+INFO: [192.168.2.44]:5701 [host-name] [{full-version}] processors=4, physical.memory.total=16.0G, physical.memory.free=5.5G, swap.space.total=0, swap.space.free=0, heap.memory.used=102.4M,
 
 heap.memory.free=249.1M, heap.memory.total=351.5M, heap.memory.max=3.6G, heap.memory.used/total=29.14%, heap.memory.used/max=2.81%, minor.gc.count=4, minor.gc.time=68ms, major.gc.count=1,
 
-major.gc.time=41ms, load.process=0.44%, load.system=1.00%, load.systemAverage=315.48%, thread.count=97, thread.peakCount=98, cluster.timeDiff=0, event.q.size=0, executor.q.async.size=0,
+major.gc.time=41ms, load.process=0.44%, load.system=1.00%, load.systemAverage=3.15, thread.count=97, thread.peakCount=98, cluster.timeDiff=0, event.q.size=0, executor.q.async.size=0,
 
-executor.q.client.size=0, executor.q.query.size=0, executor.q.scheduled.size=0, executor.q.io.size=0, executor.q.system.size=0, executor.q.operations.size=0,
+executor.q.client.size=0, executor.q.client.query.size=0, executor.q.client.blocking.size=0, executor.q.query.size=0, executor.q.scheduled.size=0, executor.q.io.size=0, executor.q.system.size=0, executor.q.operations.size=0,
 
 executor.q.priorityOperation.size=0, operations.completed.count=226, executor.q.mapLoad.size=0, executor.q.mapLoadAllKeys.size=0, executor.q.cluster.size=0, executor.q.response.size=0,
 
@@ -959,7 +964,7 @@ Following types of monitors can be used to track Hazelcast cluster members:
 
 - HTTP Monitor: A custom HTTP monitor enables you to send a command to Hazelcast's Health Check API using HTTP requests. This is a good choice if SSL/TLS is not enabled in your cluster.
 - HTTPS Monitor: A custom HTTPS monitor enables you to verify the health of Hazelcast cluster members by sending a command to Hazelcast's Health Check API using Secure Socket Layer (SSL) security. This is a good choice if SSL/TLS is enabled in your cluster.
-- TCP\\\_HALF\\\_OPEN Monitor: A TCP\\\_HALF\\\_OPEN monitor is a very basic monitor that only checks that the TCP port used by Hazelcast is open and responding to connection requests. It does not interact with the Hazelcast Health Check API. The TCP\\\_HALF\\\_OPEN monitor can be used with or without SSL/TLS.
+- `TCP_HALF_OPEN` monitor: A `TCP_HALF_OPEN` monitor is a basic monitor that only checks that the TCP port used by Hazelcast is open and responding to connection requests. It does not interact with the Hazelcast Health Check API. The `TCP_HALF_OPEN` monitor can be used with or without SSL/TLS.
 
 #### Configuration {/* #configuration-2 */}
 
@@ -969,7 +974,7 @@ After signing in to the BIG-IP LTM User Interface, follow F5's [^instructions](h
 
 :::note
 
-Please note that you should enable the Hazelcast health check for HTTP/HTTPS monitors to run. You will need to enable the endpoint by using the `advanced-network` or the `network` configuration element. See the [Health Check and Monitoring section](#health-check-and-monitoring).
+You must enable the Hazelcast health check for HTTP/HTTPS monitors to run. Enable the endpoint by using the `advanced-network` or the `network` configuration element. See the [Health Check and Monitoring section](#health-check-and-monitoring).
 
 :::
 
@@ -1001,7 +1006,7 @@ The BIG-IP LTM monitors accept regular expressions in these strings allowing you
   200 OK
   ```
 
-As you can see, the HEAD request only checks for a `200 OK` response. A Hazelcast cluster member sends this status code when it is alive and running without an issue. This provides a very basic health check. For increased flexibility, we recommend using the GET request API.
+As you can see, the HEAD request only checks for a `200 OK` response. A Hazelcast cluster member sends this status code whenever its REST endpoint handles the request. The status code does not depend on the member state or the cluster state. This provides a basic health check. For increased flexibility, we recommend using the GET request API.
 
 ##### `TCP_HALF_OPEN` Monitors
 
@@ -1024,7 +1029,6 @@ To enable diagnostics logging, you should specify the following properties on th
     ...
     <properties>
         <property name="hazelcast.diagnostics.enabled">true</property>
-        <property name="hazelcast.diagnostics.metric.level">info</property>
         <property name="hazelcast.diagnostics.invocation.sample.period.seconds">30</property>
         <property name="hazelcast.diagnostics.pending.invocations.period.seconds">30</property>
         <property name="hazelcast.diagnostics.slowoperations.period.seconds">30</property>
@@ -1042,7 +1046,6 @@ hazelcast:
     ...
     properties:
       hazelcast.diagnostics.enabled: true
-      hazelcast.diagnostics.metric.level: info
       hazelcast.diagnostics.invocation.sample.period.seconds: 30
       hazelcast.diagnostics.pending.invocations.period.seconds: 30
       hazelcast.diagnostics.slowoperations.period.seconds: 30
@@ -1055,11 +1058,10 @@ hazelcast:
 
 ```java
 Config config = new Config();
-config.setProperty( "hazelcast.diagnostics.enabled", "true" );
-      .setProperty( "hazelcast.diagnostics.metric.level", "info" );
-      .setProperty( "hazelcast.diagnostics.invocation.sample.period.seconds", "30" );
-      .setProperty( "hazelcast.diagnostics.pending.invocations.period.seconds", "30" );
-      .setProperty( "hazelcast.diagnostics.slowoperations.period.seconds", "30" );
+config.setProperty( "hazelcast.diagnostics.enabled", "true" )
+      .setProperty( "hazelcast.diagnostics.invocation.sample.period.seconds", "30" )
+      .setProperty( "hazelcast.diagnostics.pending.invocations.period.seconds", "30" )
+      .setProperty( "hazelcast.diagnostics.slowoperations.period.seconds", "30" )
       .setProperty( "hazelcast.diagnostics.storeLatency.period.seconds", "60" );
 ```
 
@@ -1068,7 +1070,6 @@ config.setProperty( "hazelcast.diagnostics.enabled", "true" );
 
 ```shell title="Java command"
 java -Dhazelcast.diagnostics.enabled=true
-     -Dhazelcast.diagnostics.metric.level=info
      -Dhazelcast.diagnostics.invocation.sample.period.seconds=30
      -Dhazelcast.diagnostics.pending.invocations.period.seconds=30
      -Dhazelcast.diagnostics.slowoperations.period.seconds=30
@@ -1076,7 +1077,7 @@ java -Dhazelcast.diagnostics.enabled=true
 ```
 
 ```shell title="JAVA_OPTS"
-JAVA_OPTS="-Dhazelcast.diagnostics.enabled=true -Dhazelcast.diagnostics.metric.level=info -Dhazelcast.diagnostics.invocation.sample.period.seconds=30 -Dhazelcast.diagnostics.pending.invocations.period.seconds=30 -Dhazelcast.diagnostics.slowoperations.period.seconds=30 -Dhazelcast.diagnostics.storeLatency.period.seconds=60"
+JAVA_OPTS="-Dhazelcast.diagnostics.enabled=true -Dhazelcast.diagnostics.invocation.sample.period.seconds=30 -Dhazelcast.diagnostics.pending.invocations.period.seconds=30 -Dhazelcast.diagnostics.slowoperations.period.seconds=30 -Dhazelcast.diagnostics.storeLatency.period.seconds=60"
 ```
 
 </TabItem>
@@ -1085,7 +1086,6 @@ JAVA_OPTS="-Dhazelcast.diagnostics.enabled=true -Dhazelcast.diagnostics.metric.l
 On the Java client side, it is enough to set the following properties:
 
 - `hazelcast.diagnostics.enabled=true`
-- `hazelcast.diagnostics.metric.level=info`
 
 ### Diagnostics Log File
 
@@ -1140,7 +1140,7 @@ JAVA_OPTS="-Dhazelcast.diagnostics.directory=/your/log/directory"
 The name of the log file has the following format:
 
 ```none
-diagnostics-<host IP>#<port>-<unique ID>.log
+diagnostics-<host IP>_<port>-<start time in epoch milliseconds>-<file index>.log
 ```
 
 You can set a custom string prefix for the name of log file using the following property.
@@ -1194,24 +1194,24 @@ JAVA_OPTS="-Dhazelcast.diagnostics.filename.prefix=foobar"
 The content format of the diagnostics log file is depicted below:
 
 ```none
-<Date> BuildInfo[
+<Date> <Epoch time> BuildInfo[
 	<log content for BuildInfo diagnostics plugin>]
-<Date> SystemProperties[
+<Date> <Epoch time> SystemProperties[
 	<log content for SystemProperties diagnostics plugin>]
-<Date> ConfigProperties[
+<Date> <Epoch time> ConfigProperties[
 	<log content for ConfigProperties diagnostics plugin>]
-<Date> Metrics[
-	<log content for Metrics diagnostics plugin>]
-<Date> SlowOperations[
+<Date> <Epoch time> Metric[<metric>=<value>]
+<Date> <Epoch time> Metric[<metric>=<value>]
+<Date> <Epoch time> SlowOperations[
 	<log content for SlowOperations diagnostics plugin>]
-<Date> HazelcastInstance[
+<Date> <Epoch time> HazelcastInstance[
 	<log content for HazelcastInstance diagnostics plugin>]
 ...
 ...
 ...
 ```
 
-A rolling file approach is used to prevent creating too much data. By default 10 files of 50MB each are allowed to exist. You can set the size of each file and number of files using the following properties.
+A rolling file approach is used to prevent creating too much data. By default 10 files of 50 MB each are allowed to exist. You can set the size of each file and number of files using the following properties.
 
 <Tabs groupId="java--jvm--xml--yaml">
 <TabItem value="xml" label="XML">
@@ -1244,7 +1244,7 @@ hazelcast:
 
 ```java
 Config config = new Config();
-config.setProperty( "hazelcast.diagnostics.max.rolled.file.size.mb", "100" );
+config.setProperty( "hazelcast.diagnostics.max.rolled.file.size.mb", "100" )
       .setProperty( "hazelcast.diagnostics.max.rolled.file.count", "5" );
 ```
 
@@ -1274,7 +1274,7 @@ You can use the following property to specify the output type of diagnostics.
 <hazelcast>
     ...
     <properties>
-        <property name="hazelcast.diagnostics.stdout">FILE|STDOUT|LOGGER</property>
+        <property name="hazelcast.diagnostics.stdout">STDOUT</property>
     </properties>
     ...
 </hazelcast>
@@ -1287,7 +1287,7 @@ You can use the following property to specify the output type of diagnostics.
 hazelcast:
     ...
     properties:
-      hazelcast.diagnostics.stdout: FILE|STDOUT|LOGGER
+      hazelcast.diagnostics.stdout: STDOUT
     ...
 ```
 
@@ -1296,18 +1296,18 @@ hazelcast:
 
 ```java
 Config config = new Config();
-config.setProperty( "hazelcast.diagnostics.stdout", "FILE|STDOUT|LOGGER" );
+config.setProperty( "hazelcast.diagnostics.stdout", "STDOUT" );
 ```
 
 </TabItem>
 <TabItem value="jvm" label="JVM">
 
 ```shell title="Java command"
-java -Dhazelcast.diagnostics.stdout=FILE|STDOUT|LOGGER
+java -Dhazelcast.diagnostics.stdout=STDOUT
 ```
 
 ```shell title="JAVA_OPTS"
-JAVA_OPTS="-Dhazelcast.diagnostics.stdout=FILE|STDOUT|LOGGER"
+JAVA_OPTS="-Dhazelcast.diagnostics.stdout=STDOUT"
 ```
 
 </TabItem>
@@ -1387,7 +1387,7 @@ By configuring [`TimeBasedTriggeringPolicy`](https://logging.apache.org/log4j/2.
 
 :::note
 
-The diagnostic logs have the `DEBUG` level by default; if you don't want to see them in the member logs while they are running in the `DEBUG` mode for the root level appender, you need to change the level to `INFO` for the `com.hazelcast.diagnostics` logger. For Log4j2, see the [configuration documentation](https://logging.apache.org/log4j/2.x/manual/configuration.html) for more details.
+The diagnostic logs have the `DEBUG` level by default; if you do not want to see them in the member logs while they are running in the `DEBUG` mode for the root level appender, you need to change the level to `INFO` for the `com.hazelcast.diagnostics` logger. For Log4j2, see the [configuration documentation](https://logging.apache.org/log4j/2.x/manual/configuration.html) for more details.
 
 :::
 
@@ -1405,7 +1405,7 @@ It shows all the properties and their values in your system used by and configur
 
 #### `ConfigProperties`
 
-It shows the Hazelcast properties and their values explicitly set by you either on the command line (with `-D`) or by using declarative/programmatic configuration.
+It shows the Hazelcast properties and their values explicitly set by you in the declarative or programmatic configuration. It does not show properties set only on the command line with `-D`.
 
 #### Metrics {/* #diagnostics-metrics */}
 
@@ -1431,7 +1431,7 @@ It shows all kinds of statistics about current and past invocations including cu
 
 Using the following properties, you can configure the frequency of scanning all pending invocations and the threshold that makes an invocation to be considered as slow:
 
-- `hazelcast.diagnostics.invocation.sample.period.seconds`: Set a value in seconds. Its default value is `60` seconds.
+- `hazelcast.diagnostics.invocation.sample.period.seconds`: Set a value in seconds. Its default value is `0`, which disables the plugin.
 - `hazelcast.diagnostics.invocation.slow.threshold.seconds`: Set a value in seconds. Its default value is `5` seconds.
 
 #### `InvocationProfiler`
@@ -1439,28 +1439,24 @@ Using the following properties, you can configure the frequency of scanning all 
 It shows invocation latencies for each operation. See an example output below:
 
 ```none
-06-05-2021 17:15:29 1557152129944 Invocations[
-                          Pending[]
-                          History[]
-                          SlowHistory[]
-                          Profiler[
-                                  com.hazelcast.map.impl.query.QueryOperation[
-                                          count=400
-                                          totalTime(us)=56,000
-                                          avg(us)=140
-                                          max(us)=3,000
-                                          latency-distribution[
-                                                  0..99us=346
-                                                  800..1599us=53
-                                                  1600..3199us=1]]
-                                  com.hazelcast.map.impl.operation.GetOperation[
-                                          count=100
-                                          totalTime(us)=19,000
-                                          avg(us)=190
-                                          max(us)=1,000
-                                          latency-distribution[
-                                                  0..99us=81
-                                                  800..1599us=19]]
+06-05-2019 17:15:29 1557152129944 InvocationProfiler[
+                          com.hazelcast.map.impl.query.QueryOperation[
+                                  count=400
+                                  totalTime(us)=56,000
+                                  avg(us)=140
+                                  max(us)=3,000
+                                  latency-distribution[
+                                          64..127us=346
+                                          512..1023us=53
+                                          2048..4095us=1]]
+                          com.hazelcast.map.impl.operation.GetOperation[
+                                  count=100
+                                  totalTime(us)=19,000
+                                  avg(us)=190
+                                  max(us)=1,000
+                                  latency-distribution[
+                                          64..127us=81
+                                          512..1023us=19]]]
 ```
 
 You can control the frequency of scanning all invocations using the following system property:
@@ -1508,7 +1504,7 @@ You can configure the frequency at which the cluster information is dumped to th
 
 It checks the event queues in the data structures and samples the event types if the queue size is above a certain threshold. It is useful to figure out why the event queue is running full.
 
-- `hazelcast.diagnostics.event.queue.period.seconds`: Duration, in seconds, that this plugin runs, gathers information and writes to the diagnostics log file. When set to `0` (its default value), it is disabled.
+- `hazelcast.diagnostics.event.queue.period.seconds`: Interval, in seconds, between the runs in which this plugin gathers information and writes it to the diagnostics log file. When set to `0` (its default value), it is disabled.
 - `hazelcast.diagnostics.event.queue.threshold`: Minimum number of events in the queue before it is being sampled. Its default value is `1000`.
 - `hazelcast.diagnostics.event.queue.samples`: Number of samples to take from the event queue. Increasing the number of samples gives more accuracy of the content, but it has a negative performance effect. Its default value is `100`.
 
@@ -1531,7 +1527,7 @@ It shows the activities in your cluster including when a connection/member is ad
 You can enable or disable the system log diagnostics plugin, and configure whether it shows information about partition migrations using the following properties:
 
 - `hazelcast.diagnostics.systemlog.enabled`: Its default value is `true`.
-- `hazelcast.diagnostics.systemlog.partitions`: Its default value is `false`. Please note that if you enable this, you may get a lot of log entries if you have many partitions.
+- `hazelcast.diagnostics.systemlog.partitions`: Its default value is `false`. If you enable this, you may get a lot of log entries if you have many partitions.
 
 #### `StoreLatency`
 
@@ -1562,7 +1558,7 @@ It shows statistics including the count of methods for each store (`load`, `load
                 51200..102399us=41]]]]
 ```
 
-According to your store usage, a similar output can be seen for Hazelcast JCache, Queue and Ringbuffer with persistent datastores.
+According to your store usage, a similar output can be seen for Hazelcast JCache, `Queue`, and `Ringbuffer` data structures with persistent data stores.
 
 You can control the `StoreLatency` plugin using the following properties:
 
@@ -1578,17 +1574,17 @@ Because this operation heartbeat is sent periodically; by default 1/4 of the ope
 The following shows an example of the output where an operation heartbeat has not been received for 37 seconds:
 
 ```none
-20-7-2019 11:12:55 OperationHeartbeats[
+20-07-2017 11:12:55 OperationHeartbeat[
     member[10.212.1.119]:5701[
         deviation(%)=146.6666717529297
         noHeartbeat(ms)=37,000
-        lastHeartbeat(ms)=1,500,538,375,603
-        lastHeartbeat(date-time)=20-7-2017 11:12:55
-        now(ms)=1,500,538,338,603
-        now(date-time)=20-7-2017 11:12:18]]]
+        lastHeartbeat(ms)=1,500,538,338,603
+        lastHeartbeat(date-time)=20-07-2017 11:12:18
+        now(ms)=1,500,538,375,603
+        now(date-time)=20-07-2017 11:12:55]]
 ```
 
-The `OperationHeartbeats` plugin is enabled by default since it has very little overhead and only prints to the diagnostics file if the maximum deviation percentage (explained below) is exceeded.
+The `OperationHeartbeats` plugin is enabled by default because it has little overhead and only prints to the diagnostics file if the maximum deviation percentage (explained below) is exceeded.
 
 You can control the `OperationHeartbeats` plugin using the following properties:
 
@@ -1601,58 +1597,58 @@ This plugin looks a lot like the `OperationHeartbeats` plugin, but instead of re
 
 Just like the `OperationHeartbeats`, the `MemberHeartbeats` plugin can be used to detect if there are networking problems long before they actually lead to problems such as split-brain syndromes.
 
-The following shows an example of the output where no member/member heartbeat has been received for 9 seconds:
+The following shows an example of the output where no member/member heartbeat has been received for 11 seconds:
 
 ```none
-20-7-2019 19:32:22 MemberHeartbeats[
+20-07-2017 19:32:22 MemberHeartbeats[
     member[10.212.1.119]:5701[
-        deviation(%)=80.0
-        noHeartbeat(ms)=9,000
-        lastHeartbeat(ms)=1,500,568,333,645
-        lastHeartbeat(date-time)=20-7-2017 19:32:13
+        deviation(%)=120.0
+        noHeartbeat(ms)=11,000
+        lastHeartbeat(ms)=1,500,568,331,645
+        lastHeartbeat(date-time)=20-07-2017 19:32:11
         now(ms)=1,500,568,342,645
-        now(date-time)=20-7-2017 19:32:22]]
+        now(date-time)=20-07-2017 19:32:22]]
 ```
 
-The `MemberHeartbeats` plugin is enabled by default since it has very little overhead and only prints to the diagnostics file if the maximum deviation percentage (explained below) is exceeded.
+The `MemberHeartbeats` plugin is enabled by default because it has little overhead and only prints to the diagnostics file if the maximum deviation percentage (explained below) is exceeded.
 
 You can control the `MemberHeartbeats` plugin using the following properties:
 
-- `hazelcast.diagnostics.member-heartbeat.seconds`: The frequency this plugin is writing the collected information to the disk. It is configured to be 10 seconds by default. 0 disables the plugin.
+- `hazelcast.diagnostics.member-heartbeat.period.seconds`: The frequency this plugin is writing the collected information to the disk. It is configured to be 10 seconds by default. 0 disables the plugin.
 - `hazelcast.diagnostics.member-heartbeat.max-deviation-percentage`: The maximum allowed deviation percentage. Its default value is 100. For example, if the interval of member/member heartbeats is 5 seconds, a 100% deviation is fine with heartbeats arriving up to 5 seconds after they are expected. So a heartbeat arriving after 9 seconds is not rendered, but a heartbeat received after 11 seconds is rendered.
 
 #### `OperationThreadSamples`
 
-This plugin samples the operation threads and checks the running operations/tasks. Hazelcast has the [slow operation detector](../../develop-and-build/best-practices/overview.mdx) which is useful for very slow operations. But it may not be efficient for high volumes of not too slow operations. Using the `OperationThreadSamples` plugin it is more clear to see which operations are actually running.
+This plugin samples the operation threads and checks the running operations/tasks. Hazelcast has the [slow operation detector](../../develop-and-build/best-practices/overview.mdx) which is useful for slow operations. But it may not be efficient for high volumes of not too slow operations. Using the `OperationThreadSamples` plugin it is more clear to see which operations are actually running.
 
 You can control the `OperationThreadSamples` plugin using the following properties:
 
-- `hazelcast.diagnostics.operationthreadsamples.period.seconds`: The frequency this plugin is writing the collected information to the disk. An efficient value for production would be 30, 60 or more seconds. 0, which is the default value, disables the plugin.
+- `hazelcast.diagnostics.operationthreadsamples.period.seconds`: The frequency this plugin is writing the collected information to the disk. An efficient value for production would be 30, 60, or more seconds. 0, which is the default value, disables the plugin.
 - `hazelcast.diagnostics.operationthreadsamples.sampler.period.millis`: The period in milliseconds between taking samples. The lower the value, the higher the overhead but also the higher the precision. Its default value is 100 ms.
 - `hazelcast.diagnostics.operationthreadsamples.includeName`: Specifies whether the data structures' name pointed to by the operation (if available) should be included in the name of the samples. Its default value is false.
 
 The following shows an example of the output when the property `hazelcast.diagnostics.operationthreadsamples.includeName` is false:
 
-```shell
+```none
 28-08-2019 07:40:07 1535442007330 OperationThreadSamples[
     Partition[
         com.hazelcast.map.impl.operation.MapSizeOperation=304623 85.6927%
         com.hazelcast.map.impl.operation.PutOperation=33061 9.300304%
         com.hazelcast.map.impl.operation.GetOperation=17799 5.0069904%]
     Generic[
-        com.hazelcast.client.impl.ClientEngineImpl$PriorityPartitionSpecificRunnable=2308 35.738617%
-        com.hazelcast.nio.Packet=1767 27.361412%
+        com.hazelcast.internal.nio.Packet=1767 27.361412%
         com.hazelcast.internal.cluster.impl.operations.JoinRequestOp=821 12.712914%
         com.hazelcast.spi.impl.operationservice.impl.operations.PartitionIteratingOperation=278 4.3047385%
         com.hazelcast.internal.cluster.impl.operations.HeartbeatOp=93 1.4400743%
         com.hazelcast.internal.cluster.impl.operations.OnJoinOp=89 1.3781357%
-        com.hazelcast.internal.cluster.impl.operations.WhoisMasterOp=75 1.1613503%
-        com.hazelcast.client.impl.operations.ClientReAuthOperation=33 0.51099414%]]
+        com.hazelcast.internal.cluster.impl.operations.WhoisMasterOp=75 1.1613503%]]
 ```
 
 As can be seen above, the `MapSizeOperations` run on the operation threads most of the time.
 
-#### `WanDiagnostics`
+#### `WAN`
+
+<Badge type="enterprise" />
 
 The WAN diagnostics plugin provides information about the WAN replication.
 
@@ -1660,25 +1656,33 @@ It is disabled by default and can be configured using the following property:
 
 - `hazelcast.diagnostics.wan.period.seconds`: The frequency this plugin is writing the collected information to the disk. 0 disables the plugin.
 
-The following shows an example of the output:
+The following shows an example of the output for a member with the WAN replication configuration `london` and the publisher `tokyo`:
 
 ```none
-10-11-2019 14:11:32 1510319492497 WanBatchSenderLatency[
-  targetClusterName[
-    [127.0.0.1]:5801[
-      count=1
-      totalTime(us)=2,010,567
-      avg(us)=2,010,567
-      max(us)=2,010,567
-      latency-distribution[
-        1638400..3276799us=1]]
-      [127.0.0.1]:5802[
-        count=1
-        totalTime(us)=1,021,867
-        avg(us)=1,021,867
-        max(us)=1,021,867
-        latency-distribution[
-          819200..1638399us=1]]]]
+01-01-2026 12:00:00 1767268800000 WAN[
+                          syncCount=0
+                          updateCount=0
+                          removeCount=0
+                          syncState[
+                                  status=READY
+                                  activeWanConfigName=null
+                                  activePublisherName=null]
+                          london[
+                                  tokyo[
+                                          outboundQueueSize=0
+                                          totalPublishedEventCount=1,000
+                                          totalPublishLatency=2,010
+                                          connected=true
+                                          state=REPLICATING
+                                          mapSentEvents-orders[
+                                                  updateCount=1,000
+                                                  removeCount=0
+                                                  syncCount=0
+                                                  droppedCount=0]
+                                          updateCount=1,000
+                                          removeCount=0
+                                          syncCount=0
+                                          droppedCount=0]]]
 ```
 
 ## Monitoring with JMX
@@ -1688,7 +1692,7 @@ You can monitor your Hazelcast members via the JMX protocol.
 To achieve this, first add the following system properties to enable the [JMX agent](http://download.oracle.com/javase/1.5.0/docs/guide/management/agent.html):
 
 - `-Dcom.sun.management.jmxremote`
-- `-Dcom.sun.management.jmxremote.port=_portNo\_` (to specify JMX port, the default is `1099`) (**optional**)
+- `-Dcom.sun.management.jmxremote.port=<port>` (to specify JMX port, the default is `1099`) (**optional**)
 - `-Dcom.sun.management.jmxremote.authenticate=false` (to disable JMX auth) (**optional**)
 
 Then enable JMX by setting the `hazelcast.jmx` property to `true` using the following configuration:
@@ -1727,7 +1731,7 @@ config.setProperty("hazelcast.jmx", "true");
 
 ```xml
 <hz:properties>
-    <hz: property name="hazelcast.jmx">true</hz:property>
+    <hz:property name="hazelcast.jmx">true</hz:property>
 </hz:properties>
 ```
 
@@ -1753,7 +1757,7 @@ The MBeans name consists of the Hazelcast instance name, the type of the data st
 
 ### Connecting to JMX Agent
 
-One of the ways you can connect to JMX agent is using jconsole, jvisualvm (with MBean plugin) or another JMX compliant monitoring tool.
+One of the ways you can connect to JMX agent is using JConsole, jvisualvm (with MBean plugin) or another JMX compliant monitoring tool.
 
 The other way to connect is to use a custom JMX client.
 
@@ -1787,7 +1791,7 @@ System.out.println("\nTotal entries on map " + mbsc.getAttribute(mapMBeanName, "
 
 Hazelcast members expose various management beans which include statistics about distributed data structures and the states of Hazelcast member internals.
 
-The metrics are local to the members, i.e., they do not reflect cluster wide values.
+The attributes whose names start with `local` are local to the member and do not reflect cluster-wide values.
 
 :::note
 
@@ -1837,12 +1841,6 @@ You can find the JMX API definition below with descriptions and the API methods 
 - Name ( `name` )
 - Clear list ( `clear` )
 
-**Lock ( `ILock` )**
-
-- Name ( `name` )
-- Lock Object ( `lockObject` )
-- Partition key ( `partitionKey` )
-
 **Map ( `IMap` )**
 
 - Name ( `name` )
@@ -1873,8 +1871,6 @@ You can find the JMX API definition below with descriptions and the API methods 
 - Total operation count ( `localTotal` )
 - Heap Cost ( `localHeapCost` )
 - Clear ( `clear()` )
-- Values ( `values(p)`)
-- Entry Set ( `entrySet(p)` )
 
 **`MultiMap` ( `MultiMap` )**
 
@@ -1927,13 +1923,11 @@ You can find the JMX API definition below with descriptions and the API methods 
 - Other (keySet,entrySet etc..) operation count ( `localOtherOperationCount` )
 - Total operation count ( `localTotal` )
 - Clear ( `clear()` )
-- Values ( `values()`)
-- Entry Set ( `entrySet()` )
 
 **Queue ( `IQueue` )**
 
 - Name ( `name` )
-- Config ( `QueueConfig` )
+- Config ( `config` )
 - Partition key ( `partitionKey` )
 - Owned item count ( `localOwnedItemCount` )
 - Backup item count ( `localBackupItemCount` )
@@ -1986,19 +1980,15 @@ You can find the JMX API definition below with descriptions and the API methods 
 - Running state ( `running` )
 - Shutdown the member ( `shutdown()` )
 - **Node ( `HazelcastInstance.Node` )**
-- Address ( `address` )
-- Master address ( `masterAddress` )
+
+  - Address ( `address` )
+  - Master address ( `masterAddress` )
 - **Partition Service ( `HazelcastInstance.PartitionServiceMBean` )**
 
   - Partition count ( `partitionCount` )
   - Active partition count ( `activePartitionCount` )
   - Cluster Safe State ( `isClusterSafe` )
   - `LocalMember` Safe State ( `isLocalMemberSafe` )
-- **Connection Manager ( `HazelcastInstance.ConnectionManager` )**
-
-  - Client connection count ( `clientConnectionCount` )
-  - Active connection count ( `activeConnectionCount` )
-  - Connection count ( `connectionCount` )
 - **System Executor ( `HazelcastInstance.ManagedExecutorService` )**
 
   - Name ( `name` )
@@ -2070,14 +2060,13 @@ Hazelcast alerts you through various channels as listed below.
 
   ```none
   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ WARNING @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-  HAZELCAST LICENSE WILL EXPIRE IN 29 DAYS.
-  Your Hazelcast cluster will stop working after this time.
+  THIS HAZELCAST LICENSE ID AbCdE*********FgHiJ WILL EXPIRE IN 29 DAYS.
+  Your Hazelcast cluster will stop working on the next re-start after
+  expiry.
 
-  Your license holder is customer@example-company.com, you should have them contact
-  our license renewal department, urgently on sales@hazelcast.com
-  or call us on +1 (650) 521-5453
-
-  Please quote license id CUSTOM_TEST_KEY
+  Please contact your Hazelcast Account Executive or
+  email sales@hazelcast.com.
+  Phone: +1 (650) 521-5453
   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
   ```
 
@@ -2091,8 +2080,7 @@ Hazelcast alerts you through various channels as listed below.
   Example exception message:
 
   ```none
-  com.hazelcast.sql.HazelcastSqlException: Cannot resolve IMap schema because it doesn't have entries on the local member: mapBak1HD
-  	at com.hazelcast.sql.impl.client.SqlClientService.handleResponseError(SqlClientService.java:264)
+  com.hazelcast.sql.HazelcastSqlException: From line 1, column 15 to line 1, column 23: Object 'mapBak1HD' not found, did you forget to CREATE MAPPING?
   ```
 - Prometheus: You can use this 3rd party tool to filter alert metrics. See the [Prometheus section](#prometheus-2) for details.
 
@@ -2182,7 +2170,7 @@ Hazelcast Management Center starting on port 8080 at path : /
 
 ### New Relic
 
-You can use the <Variable href="/management-center/{page-latest-supported-mc}/integrate/jmx" text="Clustered JMX" /> interface to integrate the [Hazelcast Management Center](#management-center) with New Relic. To perform this integration, attach the New Relic Java agent and provide an extension file that describes which metrics will be sent to New Relic.
+You can use the <Variable href="/management-center/{page-latest-supported-mc}/integrate/jmx" text="Clustered JMX" /> interface to integrate the [Hazelcast Management Center](#management-center) with New Relic. To perform this integration, attach the New Relic Java agent and provide an extension file that describes which metrics are sent to New Relic.
 
 See [Custom JMX instrumentation by YAML](http://docs.newrelic.com/docs/java/custom-jmx-instrumentation-by-yml) on the New Relic webpage.
 
