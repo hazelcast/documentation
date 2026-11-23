@@ -62,7 +62,7 @@ To connect to the clustered JMX interface, you can use any JMX client such as JC
 
 By default, clustered JMX is served unencrypted. To enable TLS/SSL for Clustered JMX, use the following system properties for your Management Center deployment:
 
-- `-Dhazelcast.mc.jmx.ssl=true`
+- `-Dhazelcast.mc.jmx.ssl.enabled=true`
 - `-Dhazelcast.mc.jmx.ssl.keyStore=path to your keystore`
 - `-Dhazelcast.mc.jmx.ssl.keyStorePassword=password for your keystore`
 
@@ -74,7 +74,7 @@ The following is an example on how to start Management Center with a TLS/SSL ena
 ```bash
 hz-mc start -Dhazelcast.mc.jmx.enabled=true \
     -Dhazelcast.mc.jmx.port=65432 \
-    -Dhazelcast.mc.jmx.ssl=true \
+    -Dhazelcast.mc.jmx.ssl.enabled=true \
     -Dhazelcast.mc.jmx.ssl.keyStore=/some/dir/selfsigned.jks \
     -Dhazelcast.mc.jmx.ssl.keyStorePassword=yourpassword
 ```
@@ -85,7 +85,7 @@ hz-mc start -Dhazelcast.mc.jmx.enabled=true \
 ```bash
 mc-start.cmd -Dhazelcast.mc.jmx.enabled=true ^
     -Dhazelcast.mc.jmx.port=65432 ^
-    -Dhazelcast.mc.jmx.ssl=true ^
+    -Dhazelcast.mc.jmx.ssl.enabled=true ^
     -Dhazelcast.mc.jmx.ssl.keyStore=/some/dir/selfsigned.jks ^
     -Dhazelcast.mc.jmx.ssl.keyStorePassword=yourpassword
 ```
@@ -109,7 +109,7 @@ jconsole -J-Djavax.net.ssl.trustStore=/some/dir/selftrusted.ts -J-Djavax.net.ssl
 
 To secure the clustered JMX interface, you can use the following command line parameters to enable TLS mutual authentication:
 
-- `-Dhazelcast.mc.jmx.mutualAuthentication=true`
+- `-Dhazelcast.mc.jmx.ssl.mutualAuthentication=true`
 - `-Dhazelcast.mc.jmx.ssl.trustStore=path to your truststore`
 - `-Dhazelcast.mc.jmx.ssl.trustStorePassword=password for your truststore`
 
@@ -121,8 +121,8 @@ The following is an example on how to start Management Center with a TLS mutual 
 ```bash
 hz-mc start -Dhazelcast.mc.jmx.enabled=true \
     -Dhazelcast.mc.jmx.port=65432 \
-    -Dhazelcast.mc.jmx.ssl=true \
-    -Dhazelcast.mc.jmx.mutualAuthentication=true \
+    -Dhazelcast.mc.jmx.ssl.enabled=true \
+    -Dhazelcast.mc.jmx.ssl.mutualAuthentication=true \
     -Dhazelcast.mc.jmx.ssl.keyStore=/some/dir/selfsigned.jks \
     -Dhazelcast.mc.jmx.ssl.keyStorePassword=yourpassword \
     -Dhazelcast.mc.jmx.ssl.trustStore=/some/dir/truststore.jks \
@@ -135,8 +135,8 @@ hz-mc start -Dhazelcast.mc.jmx.enabled=true \
 ```bash
 mc-start.cmd -Dhazelcast.mc.jmx.enabled=true ^
     -Dhazelcast.mc.jmx.port=65432 ^
-    -Dhazelcast.mc.jmx.ssl=true ^
-    -Dhazelcast.mc.jmx.mutualAuthentication=true ^
+    -Dhazelcast.mc.jmx.ssl.enabled=true ^
+    -Dhazelcast.mc.jmx.ssl.mutualAuthentication=true ^
     -Dhazelcast.mc.jmx.ssl.keyStore=/some/dir/selfsigned.jks ^
     -Dhazelcast.mc.jmx.ssl.keyStorePassword=yourpassword ^
     -Dhazelcast.mc.jmx.ssl.trustStore=/some/dir/truststore.jks ^
