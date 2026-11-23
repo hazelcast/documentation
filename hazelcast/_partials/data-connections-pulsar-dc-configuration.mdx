@@ -3,6 +3,8 @@ import TabItem from "@theme/TabItem";
 
 ### Example Apache Pulsar Data Connection {/* #Pulsar */}
 
+Use component prefixes for properties passed through to the Pulsar client or admin. Built-in data connection properties use their own names. See [Configure Pulsar properties](../connectors/messaging-system-connectors/pulsar-connector.mdx#configure-pulsar-properties).
+
 <Tabs groupId="java--sql--xml--yaml">
 <TabItem value="xml" label="XML">
 
@@ -13,6 +15,7 @@ import TabItem from "@theme/TabItem";
     <properties>
       <property name="brokerUrl">pulsar://pulsar.mydomain.com:6650</property> <1>
       <property name="httpServiceUrl">http://pulsar.mydomain.com:8080</property> <2>
+      <property name="pulsar.client.lookupTimeoutMs">3000</property>
     </properties>
     <shared>true</shared>
   </data-connection>
@@ -21,6 +24,7 @@ import TabItem from "@theme/TabItem";
     <properties>
       <property name="brokerUrl">pulsar://pulsar.mydomain.com:6650</property> <1>
       <property name="httpServiceUrl">http://pulsar.mydomain.com:8080</property> <2>
+      <property name="pulsar.client.lookupTimeoutMs">3000</property>
       <property name="tenant">myTenant</property> <3>
       <property name="namespace">myNamespace</property> <3>
       <property name="enableTransactions">true</property> <4>
@@ -52,12 +56,14 @@ hazelcast:
       properties:
         brokerUrl: pulsar://pulsar.mydomain.com:6650 <1>
         httpServiceUrl: http://pulsar.mydomain.com:8080 <2>
+        pulsar.client.lookupTimeoutMs: 3000
       shared: true
     my-other-pulsar:
       type: Pulsar
       properties:
         brokerUrl: pulsar://pulsar.mydomain.com:6650 <1>
         httpServiceUrl: http://pulsar.mydomain.com:8080 <2>
+        pulsar.client.lookupTimeoutMs: 3000
         tenant: myTenant <3>
         namespace: myNamespace <3>
         enableTransactions: true <4>
@@ -85,6 +91,7 @@ config
       .setType("Pulsar")
       .setProperty("brokerUrl", "pulsar://pulsar.mydomain.com:6650") <1>
       .setProperty("httpServiceUrl", "http://pulsar.mydomain.com:8080") <2>
+      .setProperty("pulsar.client.lookupTimeoutMs", "3000")
       .setShared(true)
   )
   .addDataConnectionConfig(
@@ -92,6 +99,7 @@ config
       .setType("Pulsar")
       .setProperty("brokerUrl", "pulsar://pulsar.mydomain.com:6650") <1>
       .setProperty("httpServiceUrl", "http://pulsar.mydomain.com:8080") <2>
+      .setProperty("pulsar.client.lookupTimeoutMs", "3000")
       .setProperty("tenant", "myTenant") <3>
       .setProperty("namespace", "myNamespace") <3>
       .setProperty("enableTransactions", "true") <4>
@@ -123,8 +131,9 @@ CREATE DATA CONNECTION my_pulsar
 TYPE Pulsar
 SHARED
 OPTIONS (
-    'brokerUrl' = 'pulsar://pulsar.mydomain.com:6650' <1>
-    'httpServiceUrl' = 'http://pulsar.mydomain.com:8080 '<2>
+    'brokerUrl' = 'pulsar://pulsar.mydomain.com:6650' <1>,
+    'httpServiceUrl' = 'http://pulsar.mydomain.com:8080' <2>,
+    'pulsar.client.lookupTimeoutMs' = '3000'
 )
 ```
 
@@ -140,8 +149,9 @@ CREATE DATA CONNECTION my_pulsar
 TYPE Pulsar
 SHARED
 OPTIONS (
-    'brokerUrl' = 'pulsar://pulsar.mydomain.com:6650' <1>
-    'httpServiceUrl' = 'http://pulsar.mydomain.com:8080 '<2>
+    'brokerUrl' = 'pulsar://pulsar.mydomain.com:6650' <1>,
+    'httpServiceUrl' = 'http://pulsar.mydomain.com:8080' <2>,
+    'pulsar.client.lookupTimeoutMs' = '3000',
     'tenant' = 'myTenant' <3>
     'namespace' = 'myNamespace' <3>
     'enableTransactions' = 'true' <4>

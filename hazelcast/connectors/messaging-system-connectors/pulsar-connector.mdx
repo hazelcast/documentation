@@ -20,21 +20,63 @@ If you're using the slim distribution, you must add the <Variable href="https://
 
 If [security](../../operate-and-manage/securing-a-cluster/enable-security.mdx) is enabled, your clients may need permissions to use this connector. For details, see [Securing Jobs](../../develop-and-build/building-data-pipelines/job-security.mdx).
 
+## Configure Pulsar properties
+
+When you pass Pulsar component properties to a data connection, a SQL mapping, or a connector builder, prefix each property name for the component that uses it. The connector removes the prefix before passing the property to Pulsar. Replace the generic `pulsar.` prefix with the component prefix for properties passed through to Pulsar.
+
+Use the prefix for the target component.
+
+| Prefix | Component | Example |
+| --- | --- | --- |
+| `pulsar.client.` | `PulsarClient` | `pulsar.client.numIoThreads` |
+| `pulsar.admin.` | `PulsarAdmin` | `pulsar.admin.requestTimeoutMs` |
+| `pulsar.reader.` | `Reader` in the source | `pulsar.reader.receiverQueueSize` |
+| `pulsar.producer.` | `Producer` in the sink | `pulsar.producer.sendTimeoutMs` |
+
+Set client and admin properties on the [Pulsar data connection](../../develop-and-build/data-connections/data-connections-configuration.mdx) when you use one. Set reader and producer properties on the SQL mapping or in the Java connector builder's configuration map. When you configure a Pulsar builder directly in a supplier or customizer, use the Pulsar API's own methods and property names.
+
+## Choose a schema in Java
+
+Pass a `PulsarSchema` to a Pulsar source or sink builder to use a built-in schema. `PulsarSchema` covers most Pulsar schema types, including primitive and temporal types, JSON, and Avro. For a schema outside this table, pass a serializable `SupplierEx<Schema<T>>` to the builder.
+
+Each factory method corresponds to a Pulsar `Schema` constant or factory method.
+
+| `PulsarSchema` method | Pulsar `Schema` equivalent |
+| --- | --- |
+| `PulsarSchema.bytes()` | `Schema.BYTES` |
+| `PulsarSchema.byteBuffer()` | `Schema.BYTEBUFFER` |
+| `PulsarSchema.string()` | `Schema.STRING` |
+| `PulsarSchema.bool()` | `Schema.BOOL` |
+| `PulsarSchema.int8()` | `Schema.INT8` |
+| `PulsarSchema.int16()` | `Schema.INT16` |
+| `PulsarSchema.int32()` | `Schema.INT32` |
+| `PulsarSchema.int64()` | `Schema.INT64` |
+| `PulsarSchema.float32()` | `Schema.FLOAT` |
+| `PulsarSchema.float64()` | `Schema.DOUBLE` |
+| `PulsarSchema.date()` | `Schema.DATE` |
+| `PulsarSchema.time()` | `Schema.TIME` |
+| `PulsarSchema.timestamp()` | `Schema.TIMESTAMP` |
+| `PulsarSchema.instant()` | `Schema.INSTANT` |
+| `PulsarSchema.localDate()` | `Schema.LOCAL_DATE` |
+| `PulsarSchema.localTime()` | `Schema.LOCAL_TIME` |
+| `PulsarSchema.localDateTime()` | `Schema.LOCAL_DATE_TIME` |
+| `PulsarSchema.json(MyType.class)` | `Schema.JSON(MyType.class)` |
+| `PulsarSchema.avro(MyType.class)` | `Schema.AVRO(MyType.class)` |
+
 ## Configuration Options
 
-To read from Pulsar as a source you must provide at least Schema, which Pulsar uses for given topic:
+To read from a Pulsar topic with a reader, pass the topic schema to the source builder.
 
 ```java
-Pipeline p = Pipeline.reate();
-p.readFrom(PulsarSources.pulsarConsumerBuilder(json(MyPojo.class))
+Pipeline p = Pipeline.create();
+p.readFrom(PulsarSources.pulsarReaderBuilder(PulsarSchema.json(MyPojo.class))
                         .connectionSupplier(() -> PulsarClient.builder().serviceUrl("pulsar://localhost:6650").build())
                         .topic("myTopic")
+                        .readerConfig(Map.of("pulsar.reader.receiverQueueSize", 1000))
                         .build())
  .withNativeTimestamps(0)
  .writeTo(Sinks.logger());
 ```
-
-Each member of Hazelcast cluster will create a Pulsar Consumer with the same subscription name and subscription type "Shared", meaning that the reading will be spread across Hazelcast cluster.
 
 You can also use `PulsarSources#pulsarConsumer` or `PulsarSources#pulsarReader`, which are the same as in old version from hazelcast-jet-contrib. We kept those for easy migration, but please be aware, that they will be removed at some point.
 
@@ -51,21 +93,22 @@ You can also use `PulsarSources#pulsarConsumer` or `PulsarSources#pulsarReader`,
 | `identityProjectionFn` | Sets the projection function to return the `Message` object unchanged, and disables message pooling to make this safe. |
 | `disableMessagePooling` | Disables Pulsar's message pooling, which is on by default. Disable it if your projection function returns the `Message` object itself rather than a value extracted from it, because a pooled message's underlying buffer can be reused after the source has processed it. |
 | `readerCustomizer` | A function that configures the underlying Pulsar `ReaderBuilder` directly, for options this builder does not expose. |
-| `readerConfig` | Pulsar reader configuration properties, applied directly to the underlying `ReaderBuilder`. |
+| `readerConfig` | A map of reader properties with the `pulsar.reader.` prefix. |
 | `preferredLocalParallelism` | The preferred number of parallel reader processors on each member. |
 | `initialOffset` | The message to start reading from. After the job restores a snapshot, the source resumes from the snapshotted offset instead of this value. |
 
-When used as a sink, then the only requirement is again the Schema of target topic:
+To write to a Pulsar topic, pass the target topic schema to the sink builder.
 
 ```java
 Pipeline p = Pipeline.create();
 p.readFrom(Sources.files("home/logs"))
  .map(line -> LogParser.parse(line))
  .map(log -> new LogEntry(log))
- .writeTo(PulsarSinks.builder(json(LogEntry.class))
+ .writeTo(PulsarSinks.builder(PulsarSchema.json(LogEntry.class))
                         .connectionSupplier(() -> PulsarClient.builder().serviceUrl("pulsar://localhost:6650").build())
                         .topic("logs")
-                        .build());`
+                        .producerConfig(Map.of("pulsar.producer.sendTimeoutMs", 30000))
+                        .build());
 ```
 
 ### Sink options
@@ -78,7 +121,7 @@ p.readFrom(Sources.files("home/logs"))
 | `connectionSupplier` | A function that supplies the Pulsar client to use. Use this or `dataConnectionRef`, not both. |
 | `httpServiceUrl` | The URL of Pulsar's HTTP service. The sink uses it to check whether deduplication is enabled on the broker before starting an `EXACTLY_ONCE` job. See [Transactional Guarantees](#transactional-guarantees). |
 | `dataConnectionRef` | The data connection to use for connecting to Pulsar. Use this or `connectionSupplier`, not both. It also lets the sink perform the deduplication check described in [Transactional Guarantees](#transactional-guarantees). |
-| `producerConfig` | Pulsar producer configuration properties, applied directly to the underlying `ProducerBuilder`. |
+| `producerConfig` | A map of producer properties with the `pulsar.producer.` prefix. |
 | `extractKeyFn` | Extracts the message key from each emitted item. |
 | `extractValueFn` | Extracts the message value from each emitted item. |
 | `extractPropertiesFn` | Extracts the message properties from each emitted item. |
@@ -107,6 +150,15 @@ Enable deduplication on the Pulsar sink topic. In rare cases, the Pulsar client 
 When the job's processing guarantee is `EXACTLY_ONCE`, the sink checks whether deduplication is enabled on the broker before it starts. If deduplication is disabled, the sink fails job initialization with an error, because exactly-once delivery requires it.
 
 If the sink has neither a data connection nor an `httpServiceUrl` configured, it cannot perform this check. In that case, it logs a warning and proceeds instead of failing. Configure one of these options to enforce the check.
+
+## Pulsar metrics
+
+The Pulsar connector exposes these processor metrics in addition to the standard Jet metrics. See [Accessing Job Metrics](../../develop-and-build/building-data-pipelines/job-monitoring.mdx#accessing-job-metrics).
+
+| Metric | Processor | Description |
+| --- | --- | --- |
+| `assignedPartitionsCount` | Pulsar reader source | Number of Pulsar topic partitions assigned to the source processor |
+| `inFlightMessages` | Pulsar sink | Number of messages with a send operation pending completion in the sink processor |
 
 ## Version Compatibility
 
