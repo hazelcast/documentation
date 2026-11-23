@@ -3,6 +3,8 @@ import TabItem from "@theme/TabItem";
 
 ### Example Apache Pulsar Data Connection {/* #Pulsar */}
 
+Use component prefixes for properties passed through to the Pulsar client or admin. Built-in data connection properties use their own names. See [Configure Pulsar properties](../connectors/messaging-system-connectors/pulsar-connector.mdx#configure-pulsar-properties).
+
 <Tabs groupId="java--sql--xml--yaml">
 <TabItem value="xml" label="XML">
 
@@ -13,6 +15,7 @@ import TabItem from "@theme/TabItem";
     <properties>
       <property name="brokerUrl">pulsar://pulsar.mydomain.com:6650</property> <1>
       <property name="httpServiceUrl">http://pulsar.mydomain.com:8080</property> <2>
+      <property name="pulsar.client.lookupTimeoutMs">3000</property>
     </properties>
     <shared>true</shared>
   </data-connection>
@@ -21,9 +24,11 @@ import TabItem from "@theme/TabItem";
     <properties>
       <property name="brokerUrl">pulsar://pulsar.mydomain.com:6650</property> <1>
       <property name="httpServiceUrl">http://pulsar.mydomain.com:8080</property> <2>
+      <property name="pulsar.client.lookupTimeoutMs">3000</property>
       <property name="tenant">myTenant</property> <3>
       <property name="namespace">myNamespace</property> <3>
       <property name="enableTransactions">true</property> <4>
+      <property name="closeTimeoutSeconds">60</property> <5>
     </properties>
     <shared>true</shared>
   </data-connection>
@@ -33,9 +38,10 @@ import TabItem from "@theme/TabItem";
 <CodeCallouts>
 
 1. (Required) Broker URL, mandatory property.
-2. (Optional) Broker HTTP Service - necessary for resource listing.
+2. (Required) Broker HTTP Service, also used to list resources with `listResources`.
 3. (Optional) Options to limit which resources are visible when querying for resource list using this `DataConnection` (call to `listResources`).
 4. (Optional) If true, transactions will be enabled on the client. Default is false. Please note, that transactions must be first enabled in the broker configuration.
+5. (Optional) How long, in seconds, a shared data connection waits for its underlying Pulsar client to close before forcing a shutdown. Defaults to 300 seconds (5 minutes).
 
 </CodeCallouts>
 
@@ -50,24 +56,28 @@ hazelcast:
       properties:
         brokerUrl: pulsar://pulsar.mydomain.com:6650 <1>
         httpServiceUrl: http://pulsar.mydomain.com:8080 <2>
+        pulsar.client.lookupTimeoutMs: 3000
       shared: true
     my-other-pulsar:
       type: Pulsar
       properties:
         brokerUrl: pulsar://pulsar.mydomain.com:6650 <1>
         httpServiceUrl: http://pulsar.mydomain.com:8080 <2>
+        pulsar.client.lookupTimeoutMs: 3000
         tenant: myTenant <3>
         namespace: myNamespace <3>
         enableTransactions: true <4>
+        closeTimeoutSeconds: 60 <5>
       shared: true
 ```
 
 <CodeCallouts>
 
 1. (Required) Broker URL, mandatory property.
-2. (Optional) Broker HTTP Service - necessary for resource listing.
+2. (Required) Broker HTTP Service, also used to list resources with `listResources`.
 3. (Optional) Options to limit which resources are accessible using this `DataConnection`.
 4. (Optional) If true, transactions will be enabled on the client. Default is false. Please note, that transactions must be first enabled in the broker configuration.
+5. (Optional) How long, in seconds, a shared data connection waits for its underlying Pulsar client to close before forcing a shutdown. Defaults to 300 seconds (5 minutes).
 
 </CodeCallouts>
 
@@ -81,6 +91,7 @@ config
       .setType("Pulsar")
       .setProperty("brokerUrl", "pulsar://pulsar.mydomain.com:6650") <1>
       .setProperty("httpServiceUrl", "http://pulsar.mydomain.com:8080") <2>
+      .setProperty("pulsar.client.lookupTimeoutMs", "3000")
       .setShared(true)
   )
   .addDataConnectionConfig(
@@ -88,9 +99,11 @@ config
       .setType("Pulsar")
       .setProperty("brokerUrl", "pulsar://pulsar.mydomain.com:6650") <1>
       .setProperty("httpServiceUrl", "http://pulsar.mydomain.com:8080") <2>
+      .setProperty("pulsar.client.lookupTimeoutMs", "3000")
       .setProperty("tenant", "myTenant") <3>
       .setProperty("namespace", "myNamespace") <3>
       .setProperty("enableTransactions", "true") <4>
+      .setProperty("closeTimeoutSeconds", "60") <5>
       .setShared(true)
   );
 ```
@@ -98,9 +111,10 @@ config
 <CodeCallouts>
 
 1. (Required) Broker URL, mandatory property.
-2. (Optional) Broker HTTP Service - necessary for resource listing.
+2. (Required) Broker HTTP Service, also used to list resources with `listResources`.
 3. (Optional) Options to limit which resources are accessible using this `DataConnection`.
 4. (Optional) If true, transactions will be enabled on the client. Default is false. Please note, that transactions must be first enabled in the broker configuration.
+5. (Optional) How long, in seconds, a shared data connection waits for its underlying Pulsar client to close before forcing a shutdown. Defaults to 300 seconds (5 minutes).
 
 </CodeCallouts>
 
@@ -117,15 +131,16 @@ CREATE DATA CONNECTION my_pulsar
 TYPE Pulsar
 SHARED
 OPTIONS (
-    'brokerUrl' = 'pulsar://pulsar.mydomain.com:6650' <1>
-    'httpServiceUrl' = 'http://pulsar.mydomain.com:8080 '<2>
+    'brokerUrl' = 'pulsar://pulsar.mydomain.com:6650' <1>,
+    'httpServiceUrl' = 'http://pulsar.mydomain.com:8080' <2>,
+    'pulsar.client.lookupTimeoutMs' = '3000'
 )
 ```
 
 <CodeCallouts>
 
 1. (Required) Broker URL, mandatory property.
-2. (Optional) Broker HTTP Service - necessary for resource listing.
+2. (Required) Broker HTTP Service, also used to list resources with `listResources`.
 
 </CodeCallouts>
 
@@ -134,20 +149,23 @@ CREATE DATA CONNECTION my_pulsar
 TYPE Pulsar
 SHARED
 OPTIONS (
-    'brokerUrl' = 'pulsar://pulsar.mydomain.com:6650' <1>
-    'httpServiceUrl' = 'http://pulsar.mydomain.com:8080 '<2>
+    'brokerUrl' = 'pulsar://pulsar.mydomain.com:6650' <1>,
+    'httpServiceUrl' = 'http://pulsar.mydomain.com:8080' <2>,
+    'pulsar.client.lookupTimeoutMs' = '3000',
     'tenant' = 'myTenant' <3>
     'namespace' = 'myNamespace' <3>
     'enableTransactions' = 'true' <4>
+    'closeTimeoutSeconds' = '60' <5>
 );
 ```
 
 <CodeCallouts>
 
 1. (Required) Broker URL, mandatory property.
-2. (Optional) Broker HTTP Service - necessary for resource listing.
+2. (Required) Broker HTTP Service, also used to list resources with `listResources`.
 3. (Optional) Options to limit which resources are accessible using this `DataConnection`.
 4. (Optional) If true, transactions will be enabled on the client. Default is false. Please note, that transactions must be first enabled in the broker configuration.
+5. (Optional) How long, in seconds, a shared data connection waits for its underlying Pulsar client to close before forcing a shutdown. Defaults to 300 seconds (5 minutes).
 
 </CodeCallouts>
 
@@ -157,7 +175,8 @@ OPTIONS (
 | Property | Default value | Description | When to use |
 | --- | --- | --- | --- |
 | `brokerUrl` |  | Pulsar Broker URL, in a form of `pulsar://myhost:port/` | Mandatory |
-| `httpServiceUrl` |  | URL of Pulsar's instance HTTP service, typically on port 8080. Example: [`http://myhost:8080/`](http://myhost:8080/) | If you want to be able to list resources via Data Connections (not just treat like a connection pool). |
+| `httpServiceUrl` |  | URL of Pulsar's instance HTTP service, typically on port 8080. Example: [`http://myhost:8080/`](http://myhost:8080/) | Mandatory. Also used to list resources with this data connection. |
 | `tenant` |  | If set, it limits which resources (topics) will be listed to only those of given tenant. | Only if you want to restrict access to subset of topics. |
 | `namespace` |  | If set, it limits which resources (topics) will be listed to only those of given namespace. | Only if you want to restrict access to subset of topics. |
 | `enableTransactions` | false | Enables transaction for returned Pulsar Clients. | If you want to use transactions with clients returned by this Data Connection. **Must** be set to true if used with Pulsar sink / SQL "INSERT INTO" Pulsar topic with `EXACTLY_ONCE` processing guarantee. |
+| `closeTimeoutSeconds` | 300 | How long a shared data connection waits for its underlying Pulsar client to close gracefully before forcing a shutdown. | Only if you want a shorter or longer wait than the default 5 minutes before falling back to a forced shutdown. Applies only to shared data connections. |

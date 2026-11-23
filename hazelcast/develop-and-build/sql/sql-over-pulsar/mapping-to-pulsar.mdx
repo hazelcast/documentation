@@ -27,14 +27,16 @@ If [security](../../../operate-and-manage/securing-a-cluster/enable-security.mdx
 
 ## Creating a Pulsar Data Connection
 
-Before using Pulsar SQL connector, you must first create a data connection to your Pulsar cluster. It can be done via following code:
+To reuse a Pulsar connection across SQL mappings, create a data connection.
 
 ```sql
 CREATE DATA CONNECTION myPulsar
 TYPE Pulsar
 OPTIONS (
     'brokerUrl' = 'pulsar://localhost:6650',
-    'httpServiceUrl' = 'http://localhost:8080'
+    'httpServiceUrl' = 'http://localhost:8080',
+    'enableTransactions' = 'true',
+    'pulsar.client.lookupTimeoutMs' = '3000'
 )
 ```
 
@@ -43,31 +45,52 @@ OPTIONS (
 To create a mapping to a Pulsar topic in SQL, you must use the `CREATE MAPPING` statement to tell the Pulsar connector the following:
 
 - The name of the topic
-- The data connection name
+- The data connection name or type of the connector (Pulsar)
 
 ```sql conums
 CREATE MAPPING my_topic <1>
 DATA CONNECTION myPulsar <2>
 OPTIONS (
     'keyFormat' = 'VARCHAR',
-    'valueFormat' = 'VARCHAR'
-    'preferredLocalParallelism' = '2' <3>
+    'valueFormat' = 'VARCHAR',
+    'preferredLocalParallelism' = '2', <3>
+    'pulsar.reader.receiverQueueSize' = '1000' <4>
 );
 ```
 
 <CodeCallouts>
 
 1. The name of the Pulsar topic.
-2. The name of Data Connection that will be used. Since we specify Data Connection, we can omit `TYPE` specification.
+2. The name of the data connection to use. When you specify a data connection, you can omit the `TYPE` clause.
 3. The preferred number of parallel consumer processors on each member for input mappings. If not specified, the default is `4`. This option is optional.
+4. Properties to override default Pulsar Reader properties (therefore prefixed with `pulsar.reader`).
 
 </CodeCallouts>
 
-:::note
+To connect directly from a mapping, specify `TYPE Pulsar` and provide the connection settings in `OPTIONS`.
 
-Any key/value pairs in the `OPTIONS()` function that are not recognized by Hazelcast and are prefixed with `pulsar.` are passed directly to the Pulsar consumer/producer (with the `pulsar.` prefix cut off).
+```sql conums
+CREATE MAPPING my_topic <1>
+TYPE Pulsar <2>
+OPTIONS (
+    'keyFormat' = 'VARCHAR',
+    'valueFormat' = 'VARCHAR',
+    'brokerUrl' = 'pulsar://localhost:6650', <3>
+    'httpServiceUrl' = 'http://localhost:8080',
+    'enableTransactions' = 'true',
+    'pulsar.client.lookupTimeoutMs' = '3000' <4>
+);
+```
+<CodeCallouts>
 
-:::
+    1. The name of the Pulsar topic.
+    2. The `TYPE` specification of this mapping - "Pulsar" in case of Pulsar connector.
+    3. The broker URL for a mapping that connects directly to Pulsar.
+    4. Properties to override default Pulsar Client properties (therefore prefixed with `pulsar.client`).
+
+</CodeCallouts>
+
+Prefix reader and producer properties in mapping options with `pulsar.reader.` or `pulsar.producer.`. When the mapping uses a data connection, set client and admin properties on that connection. See [Configure Pulsar properties](../../../connectors/messaging-system-connectors/pulsar-connector.mdx#configure-pulsar-properties).
 
 Each member of the Hazelcast cluster has a processor running a Pulsar connector for the mapping. For input mappings, preferred local parallelism is the number of parallel consumer processors you would prefer on each member. For balanced distributed processing, ensure that the local parallelism multiplied by the number of members in the cluster is a divisor of the total number of partitions in the input Pulsar topic. If this is not done, some processors will be assigned by Pulsar more input Pulsar topic partitions than others. Where there are more processors in the Hazelcast cluster than partitions in the input Pulsar topic, the additional processors will be idle and waste resources.
 
@@ -76,7 +99,7 @@ When creating a Pulsar mapping, you must tell the Pulsar connector how to serial
 The Pulsar connector supports serializers for the following formats:
 
 - [Primitive](#primitive-messages)
-- [Avro (`valueFormat` = `pulsarAvro`)](#avro-messages)
+- [Avro (valueFormat = `avro`)](#avro-messages)
 - [JSON](#json-messages) (values only)
 - [Java](#java-messages)
 
@@ -97,7 +120,7 @@ The Pulsar connector will apply a suitable Schema automatically, for example `Sc
 
 ### Avro Messages
 
-For Avro messages, you need to specify `valueFormat` as `pulsarAvro`. This way the connector will know to treat objects as POJOs and write them with schema `Schema.AVRO(ClassName)`. The `ClassName` comes from one mandatory (for Avro only) option: `valueJavaClass`, that contains the name of Java class representing your Avro objects.
+For Avro messages, you need to specify `valueFormat` as `avro`. This way the connector will know to treat objects as POJOs and write them with schema `Schema.AVRO(ClassName)`. The `ClassName` comes from one mandatory (for Avro only) option: `valueJavaClass`, that contains the name of Java class representing your Avro objects.
 
 :::note
 
@@ -116,7 +139,7 @@ CREATE MAPPING my_topic (
 DATA CONNECTION myPulsar
 OPTIONS (
     'keyFormat' = 'varchar',
-    'valueFormat' = 'pulsarAvro',
+    'valueFormat' = 'avro',
     'valueJavaClass'='com.hazelcast.example.MyAvroObject' <2>
 );
 ```
@@ -185,7 +208,7 @@ If the Java class is not one of the basic types, Hazelcast will analyze the clas
 
 ### Mapping Column Names
 
-For `json-flat` and `pulsarAvro` formats, you must specify the columns names in the mapping.
+For `json-flat` and `avro` formats, you must specify the columns names in the mapping.
 
 For keys, the format of the external name must be either `__key.<name>` for a field in the key or `this.<name>` for a field in the value.
 

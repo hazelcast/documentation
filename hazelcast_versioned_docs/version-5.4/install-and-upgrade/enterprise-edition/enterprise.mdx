@@ -36,6 +36,10 @@ For help downloading Hazelcast <Variable name="enterprise-product-name" />, see 
 - **Resolved [CVE-2025-5115](https://nvd.nist.gov/vuln/detail/CVE-2025-5115) in Jetty:** Fixed a vulnerability by upgrading the Jetty BOM dependency.
 - **Security advisory regarding Elasticsearch 7:** [CVE-2025-66566](https://nvd.nist.gov/vuln/detail/CVE-2025-66566) has been identified in Elasticsearch 7. As Elasticsearch 7 is currently End of Life (EOL), no upstream fix is available from the vendor. We strongly recommend that users evaluate the security risks associated with this CVE. Support for Elasticsearch 7 will be removed in a future version of Hazelcast.
 
+### Known issues
+
+- **Rolling upgrade from 5.3.8 to 5.4 can fail**: A rolling upgrade from 5.3.8 to 5.4 fails if a 5.3.8 member becomes the master after a 5.4 member has joined the cluster. The new master logs `There is no suitable de-serializer for type 33554431`, and the replacement 5.4 member cannot join the cluster. To avoid the failure, roll back to 5.3.7 before you upgrade, or upgrade the master member last. See [Upgrade a 5.3.8 cluster to 5.4](../upgrade/rolling-upgrades/overview.mdx#upgrade-a-538-cluster-to-54).
+
 ## 5.4.4 {/* #5-4-4 */}
 
 **Release date**: 2025-12-01

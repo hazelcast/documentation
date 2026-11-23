@@ -6,7 +6,7 @@ slug: /deploy-manage/declarative-configuration-apply-mode
 beta: true
 ---
 
-`applyMode` controls whether Management Center's YAML declarative configuration file can update entities that already exist, so you can safely reapply the same file across restarts.
+`applyMode` controls whether Management Center's YAML declarative configuration file can update entities that already exist. Under `upsert`, the file also removes entities that it does not declare. You can then safely reapply the same file across restarts.
 
 :::important
 
@@ -14,12 +14,12 @@ beta: true
 
 :::
 
-A top-level `applyMode` key, `createOnly` or `upsert`, governs what happens when a declared entity — a cluster, a user, sensitive properties, Prometheus authentication, or the security provider — already exists, however it got there: the UI, `hz-mc conf`, or a previous run of the same file. It has no effect on entities the file doesn't declare; those are always left alone, under either mode.
+A top-level `applyMode` key, `createOnly` or `upsert`, governs what happens when a declared entity already exists, however it got there: the UI, `hz-mc conf`, or a previous run of the same file. Declared entities are clusters, users, sensitive properties, Prometheus authentication, and the security provider. Under `createOnly`, Management Center leaves entities that the file does not declare alone. Under `upsert`, it removes them. See [What `upsert` removes](#what-upsert-removes).
 
 | applyMode | Behavior when a declared entity already exists |
 | --- | --- |
 | `createOnly (default)` | The **whole file** is rejected and Management Center refuses to start. If the entity is absent, it's created. No partial application, no silent skip, no silent overwrite — a bad `createOnly` file touches nothing. |
-| `upsert` | The entity is updated in place instead of rejecting the file. If it's absent, it's created, same as `createOnly`. Safe to leave `hazelcast.mc.config.file` pointed at the same file across restarts — each boot reconciles the database to match whatever the file currently says. |
+| `upsert` | The entity is updated in place instead of rejecting the file. If it is absent, Management Center creates it, same as `createOnly`. Management Center removes entities that the file does not declare. Safe to leave `hazelcast.mc.config.file` pointed at the same file across restarts. Each boot reconciles the database to match the file. |
 
 Omitting `applyMode` entirely defaults to `createOnly`. An explicit `applyMode:` key with nothing after it is rejected outright, rather than silently falling back to the default.
 
@@ -27,13 +27,36 @@ Omitting `applyMode` entirely defaults to `createOnly`. An explicit `applyMode:`
 applyMode: upsert
 ```
 
+## What `upsert` removes
+
+While declarative configuration is in beta, `upsert` treats the file as the source of truth: anything Management Center holds that the file does not declare is removed. The following table shows what is removed for each undeclared item:
+
+| Not declared in the file | What `upsert` does |
+| --- | --- |
+| A cluster missing from `clusters` | The cluster is deleted. For example, declaring `cluster-1` and `cluster-3` deletes an existing `cluster-2`. Its query history and CLC console configuration are removed with it, the same as `hz-mc conf cluster remove`; the console configuration is deleted only after the file has been applied successfully. |
+| `prometheusAuth` omitted | Prometheus authentication is removed. |
+| `sensitiveProperties` omitted | Both the `hidden` and `maskedConfigXPaths` settings are cleared. |
+| A local user missing from `securityProvider.local.users` | The user is deleted, admins included. Nothing is silently kept. |
+
+`upsert` deliberately does not remove the following:
+
+- **The security provider itself.** Omitting `securityProvider` leaves the active provider and its users alone, and declaring a different provider type is still rejected. Local users are pruned only when the file declares the `local` provider.
+- **A single omitted key inside a declared `sensitiveProperties` block.** Omitting `hidden` or `maskedConfigXPaths` there still leaves that setting untouched, see below.
+
+:::warning
+
+Under `upsert`, anything created with the UI or `hz-mc conf` that the file does not declare is removed the next time the file is applied. Declare every cluster and local user you want to keep.
+
+:::
+
 ## What `upsert` does and doesn't merge
 
 For most sections, `upsert` is a whole-entity replace: re-declaring a cluster replaces its member addresses outright, it doesn't merge them with what's already there. The one exception is `sensitiveProperties`: omitting one of `hidden` or `maskedConfigXPaths` from an `upsert` file leaves that setting untouched rather than wiping it, because omitting a YAML key and writing it as an empty list (`hidden: []`) are different, distinguishable things. Only a key you actually write replaces its existing value.
 
-## Two things `applyMode` never relaxes
+## Things `applyMode` never relaxes
 
 - **Switching security provider types.** If a **different** security provider type is already active than the one declared, the whole file is rejected regardless of `applyMode` — `upsert` only updates an already-active provider's own configuration in place, it never switches which provider is active. Run `hz-mc conf security reset` first, then restart with the file, to change provider type. The one exception is Dev Mode: since it isn't a deliberately-configured provider, a file may declare any other provider type — including `local` — while Dev Mode is active, and it's applied as a first-time activation instead, in either `applyMode`. See [Switch to a new security provider](../../security/user-authentication/switching-security-provider.mdx).
+- **Declaring `local` without an admin.** A `securityProvider.local` block must declare at least one user with the `admin` role, in either mode, or Management Center refuses to start. Activating the local provider closes the setup wizard. Without a declared admin, nobody could manage the instance. Under `upsert`, the declared admin is also the only admin left after undeclared users are removed.
 - **Two entries in the same file sharing a name or username.** Two `clusters` entries, or two `securityProvider.local.users` entries, declared with the same name or username in one file are always rejected, in either mode — there's no sensible "update in place" reading of two conflicting declarations arriving at once.
 
 ## Mixed-configuration examples
@@ -76,7 +99,7 @@ If Management Center is restarted with this exact same file still pointed at `ha
 
 ### Ongoing reconciliation: `upsert`
 
-The same instance, later. This file is safe to leave pointed at `hazelcast.mc.config.file` permanently: a second cluster and rotated LDAP bind password are picked up on the next restart, and an existing masked-property XPath entry is left alone because it's omitted here.
+The same instance, later. This file is safe to leave pointed at `hazelcast.mc.config.file` permanently: the next restart picks up a second cluster and a rotated LDAP bind password. An existing masked-property XPath entry stays as it is, because the file omits it. Management Center removes any other cluster that is not listed below.
 
 ```yaml
 applyMode: upsert
@@ -122,6 +145,7 @@ What happens on this restart:
 
 - `prod-cluster` is updated in place; `dr-cluster` didn't exist yet, so it's created.
 - `sensitiveProperties.hidden` is replaced outright with the two entries above; `maskedConfigXPaths` is left exactly as it was, because the key is omitted, not set to an empty list.
+- Management Center deletes any cluster not listed under `clusters`, along with its query history.
 - The Prometheus scrape-endpoint password is rotated.
 - The LDAP provider's bind password is rotated in place, because LDAP is already the active provider — if a **different** provider had been active instead, this whole file would be rejected regardless of `applyMode`.
 
