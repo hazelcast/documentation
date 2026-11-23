@@ -134,6 +134,8 @@ These properties configure user logins, sessions, and password checks:
 
 ## LDAP and Active Directory
 
+If you do not set one of these `ssl.*` properties, Management Center uses the Java system property with the same name after the `javax.net.ssl.` prefix. For example, if `hazelcast.mc.ldap.ssl.keyStore` is not set, Management Center uses `javax.net.ssl.keyStore`. The default valueapplies only when neither property is set.
+
 These properties configure connections to LDAP and Active Directory servers:
 
 | Property | Environment variable | Default | Description |
@@ -159,6 +161,8 @@ These properties configure connections to LDAP and Active Directory servers:
 | `hazelcast.mc.ad.ssl.trustManagerAlgorithm` | `MC_AD_SSL_TRUST_MANAGER_ALGORITHM` | System default | Name of the algorithm based on which the authentication keys are provided. |
 
 ## JMX
+
+The `hazelcast.mc.jmx.ssl.*` protocol, keystore, truststore, and algorithm properties fall back to `javax.net.ssl.*` Java system properties. The `hazelcast.mc.jmx.ssl.enabled` and `hazelcast.mc.jmx.ssl.mutualAuthentication` properties do not.
 
 These properties configure JMX for Management Center:
 
