@@ -224,7 +224,7 @@ These properties configure how Management Center communicates with clusters:
 | --- | --- | --- | --- |
 | `hazelcast.mc.clientFiltering.modes` | `MC_CLIENT_FILTERING_MODES` | `ALLOWLIST, DENYLIST` | Adjusts client filtering modes. Value must be set of `ALLOWLIST` and `DENYLIST`. |
 | `hazelcast.mc.clusterHealthCheck.exclude` | `MC_CLUSTERHEALTHCHECK_EXCLUDE` |  | List of check identifiers to be excluded from Healthcheck. See [Healthcheck](../../cluster/healthcheck.mdx#excluding-checks). |
-| `hazelcast.mc.cluster.operation.timeout.millis` |  | 60000 | Timeout in milliseconds for Management Center operations that wait for a response from members. |
+| `hazelcast.mc.cluster.operation.timeout.millis` | `MC_CLUSTER_OPERATION_TIMEOUT_MILLIS` | 60000 | Timeout in milliseconds for Management Center operations that wait for a response from members. |
 | `hazelcast.mc.state.reschedule.delay.millis` | `MC_STATE_RESCHEDULE_DELAY_MILLIS` | 1000 | Duration in milliseconds that Management Center waits before requesting metadata from a Hazelcast cluster. Metadata includes a list of all data structures and their configurations. |
 
 ## Client connection strategy {/* #client-config */}
@@ -233,8 +233,8 @@ Use the following properties to configure the connection strategy of the Managem
 
 These properties apply to all clients that are started by Management Center.
 
-| Property | Default | Description |
-| --- | --- | --- |
-| `hazelcast.mc.client.max.backoff.millis` | `32000` | Upper limit of the backoff in milliseconds. Values must be between 32000 and 600000. |
-| `hazelcast.mc.client.backoff.multiplier` | `2` | Factor by which to multiply the backoff after each failed retry. Values must be between 1 and 10. |
-| `hazelcast.mc.client.initial.backoff.millis` | `1000` | Duration in milliseconds that Management Center waits after the first connection failure before retrying. Values must be between 1000 and 60000. |
+| Property | Environment variable | Default | Description |
+| --- | --- | --- | --- |
+| `hazelcast.mc.client.max.backoff.millis` | `MC_CLIENT_MAX_BACKOFF_MILLIS` | `32000` | Upper limit of the backoff in milliseconds. Values must be between 32000 and 600000. |
+| `hazelcast.mc.client.backoff.multiplier` | `MC_CLIENT_BACKOFF_MULTIPLIER` | `2` | Factor by which to multiply the backoff after each failed retry. Values must be between 1 and 10. |
+| `hazelcast.mc.client.initial.backoff.millis` | `MC_CLIENT_INITIAL_BACKOFF_MILLIS` | `1000` | Duration in milliseconds that Management Center waits after the first connection failure before retrying. Values must be between 1000 and 60000. |
