@@ -68,11 +68,15 @@ These properties configure Management Center's configuration file, home director
 | `hazelcast.mc.configReplacer.class` |  |  | Full class name of a variable replacer to use. See [Variable replacers](./variable-replacers.mdx). |
 | `hazelcast.mc.configReplacer.failIfValueMissing` |  | `true` | Whether the configuration loading process stops when a replacement value is missing. |
 | `hazelcast.mc.home` | `MC_HOME` | `hazelcast-mc` in the user's home directory | Home directory where metrics, executed SQL queries, and configuration settings are saved. See [Configure Management Center](./configuring.mdx). |
+| `hazelcast.mc.housekeeping.disk.freeSpaceThreshold` | `MC_HOUSEKEEPING_DISK_FREE_SPACE_THRESHOLD` | `100MB` | Free disk space below which Management Center reports that disk space is low. |
+| `hazelcast.mc.housekeeping.disk.usedSpaceRatioThreshold` | `MC_HOUSEKEEPING_DISK_USED_SPACE_RATIO_THRESHOLD` | `80` | Percentage of used disk space above which Management Center reports that disk space is low. Values must be between 1 and 100. |
 | `hazelcast.mc.license` | `MC_LICENSE` |  | Enterprise license. When this property is set, the license takes precedence over one that is set in the user interface, and you cannot update the license in the UI. For more details about licenses, see [Enterprise licenses](../license-management/license-management.mdx). |
 | `hazelcast.mc.lock.skip` | `MC_LOCK_SKIP` | `false` | Whether the `hz-mc conf` tool does not check for an `mc.lock` file in the home directory. See [Skipping the Check for a Lock File](./mc-conf.mdx#skip-the-check-for-a-lock-file). |
 | `hazelcast.mc.phone.home.enabled` | `MC_PHONE_HOME_ENABLED` | `true` | Whether Management Center sends usage data to the Hazelcast phone home server. See [Usage analytics](../phone-homes.mdx). |
 | `hazelcast.mc.rest.enabled` | `MC_REST_ENABLED` | `false` | Enable [clustered REST](../../integrate/clustered-rest/clustered-rest.mdx) endpoints. |
 | `maskOpts` |  | `' '` (empty) | Comma-separated list of option keys to be masked. Masks sensitive data in logs passed via `JAVA_OPTS`. |
+
+Management Center checks the disk that holds its home directory every minute. When disk space is low, it logs a warning and shows a notification in the UI. When free disk space is below half of the `hazelcast.mc.housekeeping.disk.freeSpaceThreshold` value, it is considered critically low, and Management Center also stops saving metrics to disk until more space is free.
 
 ## Web server
 
@@ -88,12 +92,19 @@ These properties configure the Management Center web server, including the HTTP 
 | `hazelcast.mc.cors.allowCredentials` | `MC_CORS_ALLOW_CREDENTIALS` |  | Whether user credentials are supported or not. Setting this property to `true` forbids `originPatterns`, `allowedMethods`, `allowedHeaders` to have a `*` value. Be aware that this option establishes a high level of trust with the configured domains and also increases the surface attack of the web application by exposing sensitive user-specific information such as cookies and CSRF tokens. If this property is not set, user credentials are not supported. |
 | `hazelcast.mc.cors.allowPrivateNetwork` | `MC_CORS_ALLOW_PRIVATE_NETWORK` |  | Whether private network access is supported for user-agents restricting such access by default.<br/><br/>Private network requests are requests whose target server's IP address is more private than that from which the request initiator was fetched. For example, a request from a public website (`https://example.com`) to a private website (`https://router.local`), or a request from a private website to localhost.<br/><br/>If this property is not set, private network access is not supported. |
 | `hazelcast.mc.cors.maxAge` | `MC_CORS_MAX_AGE` |  | Configure how long, in seconds, the response from a pre-flight request can be cached by clients. |
+| `hazelcast.mc.disable.csrf` | `MC_DISABLE_CSRF` | `false` | Whether Management Center turns off cross-site request forgery (CSRF) protection for all requests. |
 | `hazelcast.mc.forwarded.requests.enabled` | `MC_FORWARDED_REQUESTS_ENABLED` | `true` | Whether Management Center reads `X-Forwarded-*` headers from reverse proxies. |
 | `hazelcast.mc.healthCheck.enable` | `MC_HEALTH_CHECK_ENABLED` | `false` | Whether the `/health` endpoint is enabled on port `hazelcast.mc.http.port` + 1. This endpoint is always served over HTTP, regardless of any TLS/SSL settings. This endpoint responds with `200 OK` HTTP status code if Management Center is running. |
 | `hazelcast.mc.healthCheck.port` | `MC_HEALTH_CHECK_PORT` | `hazelcast.mc.http.port` + 1 | The port on which the `/health` endpoint is exposed. This property takes effect only when `hazelcast.mc.healthCheck.enable` is `true`. |
 | `hazelcast.mc.hostAddress` | `MC_HOST_ADDRESS` | `0.0.0.0` (all network interfaces) | Network address that Management Center is reachable on. |
 | `hazelcast.mc.http.port` | `MC_HTTP_PORT` | `8080` | HTTP port for Management Center. |
 | `hazelcast.mc.websocket.buffer-size` | `MC_WEBSOCKET_BUFFERSIZE` | `5MB` | The buffer size of the WebSocket connection MC uses for SQL operations. |
+
+:::warning
+
+Setting `hazelcast.mc.disable.csrf` to `true` turns off CSRF protection. A malicious website could then send requests to Management Center using the session of a user who is logged in.
+
+:::
 
 If none of `hazelcast.mc.cors.*` properties are set, all origins are allowed to make cross-origin HTTP requests, but WebSocket connection could be established only from the same origin.
 
@@ -118,6 +129,10 @@ These properties configure TLS for the Management Center web server:
 | `hazelcast.mc.tls.keyStorePassword` | `MC_TLS_KEY_STORE_PASSWORD` |  | Password of the keystore in `hazelcast.mc.tls.keyStore`. |
 | `hazelcast.mc.tls.trustStore` | `MC_TLS_TRUST_STORE` |  | Path to a truststore. If the `hazelcast.mc.tls.enabled` system property is `true` and this value is empty, Management Center uses the system JVM's own truststore. |
 | `hazelcast.mc.tls.trustStorePassword` | `MC_TLS_TRUST_STORE_PASSWORD` |  | Password of the truststore. |
+| `hazelcast.mc.tls.protocol` | `MC_TLS_PROTOCOL` | `TLS` | Standard name of the TLS protocol for HTTPS connections to Management Center, such as `TLSv1.3`. |
+| `hazelcast.mc.tls.keyManagerAlgorithm` | `MC_TLS_KEY_MANAGER_ALGORITHM` | System default | Key manager algorithm for the keystore in `hazelcast.mc.tls.keyStore`. |
+| `hazelcast.mc.tls.trustManagerAlgorithm` | `MC_TLS_TRUST_MANAGER_ALGORITHM` | System default | Trust manager algorithm for the truststore in `hazelcast.mc.tls.trustStore`. |
+| `hazelcast.mc.tls.sniHostCheckEnabled` | `MC_TLS_SNI_HOST_CHECK_ENABLED` | `false` | Whether Management Center checks that the host name in each HTTPS request matches its TLS certificate. |
 | `hazelcast.mc.tls.enableHttpPort` | `MC_TLS_ENABLE_HTTP_PORT` | `false` | Whether the HTTP port in the `hazelcast.mc.http.port` system property is redirected to the HTTPS port in the [`hazelcast.mc.https.port`](../security/tls/serving-https.mdx#override-the-default-https-port) system property. |
 | `hazelcast.mc.tls.mutualAuthentication` | `MC_TLS_MUTUAL_AUTHENTICATION` |  | Whether Management Center requests a TLS certificate from clients. If this property is not set, Management Center does not request client certificates:<br/><br/>`REQUIRED`: Clients must present a certificate that the Management Center truststore trusts. Otherwise, the connection fails.<br/>`OPTIONAL`: Management Center requests a certificate, but clients can connect without one. If a client presents a certificate that the Management Center truststore does not trust, the connection fails. |
 | `hazelcast.mc.useExistingKeyStore` | `MC_USE_EXISTING_KEY_STORE` | `false` | Enables use of an existing keystore. |
@@ -146,6 +161,7 @@ These properties configure connections to LDAP and Active Directory servers:
 
 | Property | Environment variable | Default | Description |
 | --- | --- | --- | --- |
+| `hazelcast.mc.keyStore.password` | `MC_KEYSTORE_PASS` |  | Password of the keystore that Management Center creates to encrypt the LDAP password. See [Provide a master key for encryption](../security/user-authentication/ldap.mdx#providing-a-master-key-for-encryption). |
 | `hazelcast.mc.ldap.timeout` | `MC_LDAP_TIMEOUT` | `3000` | Timeout in milliseconds for Active Directory and LDAP search queries. |
 | `hazelcast.mc.ldap.ssl.protocol` | `MC_LDAP_SSL_PROTOCOL` | `TLS` | The standard name of the requested SSL protocol for LDAP connection. |
 | `hazelcast.mc.ldap.ssl.keyStore` | `MC_LDAP_SSL_KEY_STORE` | `' '` (empty) | Path to a keystore for LDAP SSL connection. |
@@ -199,6 +215,7 @@ These properties configure how Management Center stores metrics and exports them
 | `hazelcast.mc.metrics.persistence.enabled` | `MC_METRICS_PERSISTENCE_ENABLED` | `true` | Whether Management Center persists metrics. See [Historical metrics](../historical-metrics.mdx). |
 | `hazelcast.mc.metrics.disk.ttl.duration` | `MC_METRICS_DISK_TTL_DURATION` | `P1D` (one day) | Time-to-Live (TTL) in ISO-8601-based durations format for each record in the metrics persistence. This value must be positive. See [Historical metrics](../historical-metrics.mdx). |
 | `hazelcast.mc.metrics.consumer.thread.pool.size` | `MC_METRICS_CONSUMER_THREAD_POOL_SIZE` | Number of CPU cores minus one, with a minimum of `2` | Number of threads that are used to consume metrics from cluster members. See [Historical metrics](../historical-metrics.mdx). |
+| `hazelcast.mc.metrics.accumulation.period.seconds` | `MC_METRICS_ACCUMULATION_PERIOD_SECONDS` | `70` | Time in seconds that Management Center keeps each minute of metrics in memory before it saves the minute to disk. The time starts when Management Center receives the first data point for that minute. The minimum value is 70. This property applies only when `hazelcast.mc.metrics.persistence.enabled` is `true`. |
 | `hazelcast.mc.metrics.reschedule.delay.millis` | `MC_METRICS_RESCHEDULE_DELAY_MILLIS` | `1000` | Interval in milliseconds that Management Center waits before requesting metrics from cluster members. |
 | `hazelcast.mc.jet.metrics.retentionSecs` | `MC_JET_METRICS_RETENTION_SECS` | `3600` | Interval in seconds that Management Center holds Jet metrics in memory. |
 | `hazelcast.mc.prometheusExporter.enabled` | `MC_PROMETHEUS_EXPORTER_ENABLED` | `false` | Whether to expose all metrics to the `/metrics` endpoint to be consumed by Prometheus. All metrics at the endpoint include the `hz_` prefix. |
@@ -214,6 +231,7 @@ These properties configure the SQL browser and the UI:
 
 | Property | Environment variable | Default | Description |
 | --- | --- | --- | --- |
+| `hazelcast.mc.clc.command.timeout.seconds` | `HAZELCAST_MC_CLC_COMMAND_TIMEOUT_SECONDS` | `120` | Time in seconds that Management Center waits for CLC to import a cluster's client configuration when it sets up the [console](../../tools/console.mdx) for that cluster. If the import takes longer, Management Center stops it. |
 | `hazelcast.mc.sql.max-cell-length` | `MC_SQL_MAXCELLLENGTH` | `2048` | Max length of a cell in SQL query result, longer values are truncated. |
 | `hazelcast.mc.sql.max-row-count` | `MC_SQL_MAXROWCOUNT` | `1000` | Max number of rows returned by SQL batch query. |
 | `hazelcast.mc.ui.asyncTableThreshold` |  | `500` | Tables bigger than the threshold are loaded asynchronously. You can't sort an asynchronous table. |
