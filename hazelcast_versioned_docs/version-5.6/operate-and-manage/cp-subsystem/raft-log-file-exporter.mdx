@@ -12,7 +12,7 @@ From Hazelcast <Variable name="enterprise-product-name" /> version 5.6, Raft sna
 
 The RaftLogFileExporter tool:
 
-- Creates a complete copy of the existing directory before converting files.
+- Creates a copy of the existing directory and writes converted Raft log files to the copy.
 - Processes all CP member directories found in the source path.
 - Will fail if the output directory already exists.
 - Only converts from version 5.6 to 5.5. Other versions are not supported.
@@ -69,13 +69,15 @@ The following example migrates Raft logs from a Hazelcast V5.6 cluster to V5.5 f
    /data/hazelcast/
    └── cp-data/
        ├── cp-member-dir-1/
-       │   ├── raft-log-1
-       │   ├── members
-       │   └── term
+       │   └── METADATA@0@0/
+       │       ├── raftlog-0000000000000001
+       │       ├── members
+       │       └── term
        └── cp-member-dir-2/
-           ├── raft-log-1
-           ├── members
-           └── term
+           └── METADATA@0@0/
+               ├── raftlog-0000000000000001
+               ├── members
+               └── term
    ```
 2. Run the tool:
 
@@ -91,29 +93,33 @@ The following example migrates Raft logs from a Hazelcast V5.6 cluster to V5.5 f
    /data/hazelcast/
    └── cp-data/
        ├── cp-member-dir-1/         # Source data
-       │   ├── raft-log-1
-       │   ├── members
-       │   └── term
+       │   └── METADATA@0@0/
+       │       ├── raftlog-0000000000000001
+       │       ├── members
+       │       └── term
        └── cp-member-dir-2/
-           ├── raft-log-1
-           ├── members
-           └── term
+           └── METADATA@0@0/
+               ├── raftlog-0000000000000001
+               ├── members
+               └── term
    └── migrated_v55/               # Output data
        ├── cp-member-dir-1/
-       │   ├── raft-log-1          # Converted to V5.5 format
-       │   ├── members
-       │   └── term
+       │   └── METADATA@0@0/
+       │       ├── raftlog-0000000000000001   # Converted to V5.5 format
+       │       ├── members
+       │       └── term
        └── cp-member-dir-2/
-           ├── raft-log-1          # Converted to V5.5 format
-           ├── members
-           └── term
+           └── METADATA@0@0/
+               ├── raftlog-0000000000000001   # Converted to V5.5 format
+               ├── members
+               └── term
    ```
 4. Results:
 
    - The original data in `cp-data/` is not modified in any way.
    - A new directory named `migrated_v55/` is created alongside it, with the same structure.
-   - All `raft-log-*` files are automatically converted to the V5.5 format.
-   - Metadata files (`members`, `term`) and the folder structure are copied exactly as-is.
+   - All `raftlog-*` files are automatically converted to the V5.5 format.
+   - The `members` and `term` files are rewritten for V5.5, and the folder structure is copied.
 5. Configure the cluster to use the new `migrated_v55/` directory as the base directory for persisted CP state. See `base-dir` in [Configure the CP Subsystem](./configuration.mdx#base-dir).
 
 ## Troubleshooting
