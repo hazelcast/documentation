@@ -32,12 +32,19 @@ Follow these rules in addition to CONTRIBUTING.md:
 
 When the user asks you to apply or backport a change to other versions, follow [Change content for several versions](CONTRIBUTING.md#change-content-for-several-versions). In addition:
 - Use the backport script. Do not copy the change into each folder by hand.
-- Before you run it, confirm with the user which versions the change applies to, even if they named versions in the request. List the versions you will apply it to, and point out any where the change might not be true, such as a release that does not have the feature.
+- Before you run it, confirm with the user which versions the change applies to, even if they named versions in the request. Run the script with `--dry-run` and list the versions it would change. If the change states a fact about the product, such as a feature, a default, or a configuration key, check that the fact is true in each version. See [Check the product code](#check-the-product-code). Tell the user which versions you could not confirm.
 - When you resolve a conflict, keep that version's own text, and apply only the change you are backporting.
 - For a `missing` file, search that version's folder for the page with the same title, because older releases often have the page at a different path. If the version has no such page, do not create one unless the user asks.
 - "All versions" means every release in `<product>_versions.json`, and `main`.
 - Version numbers are not decimals: 5.10 is newer than 5.9. Take the order of releases from `<product>_versions.json`, which lists them newest first, and never sort them yourself.
 - When you finish, tell the user which versions have the change and which do not.
+
+## Check the product code
+
+To check a statement about the product, read the code in the product's source repo. See the table in [Accuracy](CONTRIBUTING.md#accuracy). In addition:
+- Use a local clone. If you do not know where it is, ask the user for its path. Do not clone a repo unless the user asks.
+- Read the code at the release tag without checking it out, e.g. `git grep <term> v5.7.2` or `git show v5.7.2:<path>`. Do not change the branch of the user's clone.
+- If no clone is available, tell the user which statements you could not verify. Do not guess.
 
 ## Running the site
 
