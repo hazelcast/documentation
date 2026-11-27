@@ -243,6 +243,17 @@ Every statement on a page must be true of the shipped product:
 - State a limitation plainly. Readers use these pages to decide what to run in production.
 - Release notes are generated at release time. Do not hand-edit them. Record a removal or a breaking change in the migration or upgrade guide instead.
 
+To verify a statement against the product code, use the product's source repo. These repos are private:
+
+| Product folder      | Source repo                             |
+| ------------------- | --------------------------------------- |
+| `hazelcast`         | `hazelcast/hazelcast-mono`              |
+| `management-center` | `hazelcast/management-center`           |
+| `operator`          | `hazelcast/hazelcast-platform-operator` |
+| `clc`               | `hazelcast/clc`                         |
+
+Each release has a tag in the form `vX.Y.Z`. To check a version, use the tag for that version's `full-version` in `src/variables.ts`, e.g. `v5.7.2`. Do not use `hazelcast/hazelcast` to check Platform: it has only the open source code.
+
 ### Voice
 
 Write in a plain, direct, and formal voice:
